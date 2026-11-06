@@ -133,6 +133,21 @@ prueba_f1 <- list(
   ))
 )
 
+# Vía (b) de las tablas de paso: viviendas de los edificios del Catastro, solo en los municipios
+# de la provincia de prueba con secciones «estimado» por el callejero. Se compara con la vía (a).
+via_catastro <- list(
+  tar_target(municipios_catastro_prueba, seleccionar_municipios_catastro(
+    list(paso_2022_2021, paso_2025_2021), fichero_adrh_demografia, PROVINCIA_PRUEBA)),
+  tar_target(zips_catastro, vapply(stats::na.omit(municipios_catastro_prueba$url), descargar_catastro_edificios, ""),
+             format = "file"),
+  tar_target(edificios_catastro, leer_catastro_varios(zips_catastro)),
+  tar_target(secciones_2021_prueba, leer_ine_seccionado(zip_seccionado_2021, 2021, PROVINCIA_PRUEBA)),
+  tar_target(secciones_2025_prueba, leer_ine_seccionado(zip_seccionado_2025, 2025, PROVINCIA_PRUEBA)),
+  tar_target(paso_catastro_2025_2021, geo_tabla_paso_catastro(edificios_catastro, secciones_2025_prueba, secciones_2021_prueba)),
+  tar_target(comparacion_vias, comparar_vias_paso(poblacion_adrh, paso_2025_2021, paso_catastro_2025_2021, 2024L,
+                                                   municipios_catastro_prueba$municipio[!is.na(municipios_catastro_prueba$url)]))
+)
+
 # Tarea 7: indicadores 1–3 (renta del ADRH) de punta a punta en la provincia de prueba:
 # descarga → lectura → compuerta → seccionado de 2021 con estado → tabla larga en Parquet.
 # Años con tabla de paso: 2020 (nativo), 2015, 2021 y 2024. Para 2016–2019 y 2022–2023 hacen
@@ -182,4 +197,4 @@ bloque_tabla_larga <- list(
              format = "file")
 )
 
-list(inventario, sobrecarga, prueba_f1, bloque_renta_adrh, modulo_acceso, bloque_tabla_larga)
+list(inventario, sobrecarga, prueba_f1, via_catastro, bloque_renta_adrh, modulo_acceso, bloque_tabla_larga)
