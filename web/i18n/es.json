@@ -1,0 +1,25 @@
+{
+  "sitio": {
+    "titulo": "Casilla de salida",
+    "lema": "Dónde, desde cuándo y para quién se ha roto la relación entre lo que cuesta vivir y lo que se cobra"
+  },
+  "nav": {
+    "mapa": "Mapa",
+    "tu_sueldo": "Tu sueldo",
+    "sobrecarga": "Sobrecarga",
+    "datos": "Datos",
+    "metodo": "Método"
+  },
+  "fichas": {
+    "llave": "Hogar del barrio",
+    "mochila": "Joven menor de 35",
+    "tartera": "Salario mínimo",
+    "transistor": "Pensionista",
+    "peon": "Tu ficha"
+  },
+  "avisos": {
+    "ejemplo": "Datos de ejemplo",
+    "secreto": "Sin dato por secreto estadístico",
+    "muestra_pequena": "Muestra pequeña: leer con cautela"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "sitio": {
+    "titulo": "Square One",
+    "lema": "Where, since when and for whom the link between the cost of living and what people earn has broken"
+  },
+  "nav": {
+    "mapa": "Map",
+    "tu_sueldo": "Your pay",
+    "sobrecarga": "Overburden",
+    "datos": "Data",
+    "metodo": "Method"
+  },
+  "fichas": {
+    "llave": "Neighbourhood household",
+    "mochila": "Under-35",
+    "tartera": "Minimum wage",
+    "transistor": "Pensioner",
+    "peon": "Your token"
+  },
+  "avisos": {
+    "ejemplo": "Sample data",
+    "secreto": "No data (statistical confidentiality)",
+    "muestra_pequena": "Small sample: read with caution"
+  }
+}

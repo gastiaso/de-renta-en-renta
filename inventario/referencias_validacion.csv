@@ -1,0 +1,13 @@
+id,indicador,comprobacion,referencia,tolerancia,tipo,estado
+sobrecarga_es_total,22,Tasa de sobrecarga de España calculada con microdatos de la ECV,Eurostat ilc_lvho07a (total),"±0,1 puntos",bloqueo,pendiente
+sobrecarga_es_mercado,22,Tasa de los inquilinos a precio de mercado,Eurostat ilc_lvho07c (RENT_MKT),"±0,1 puntos",bloqueo,pendiente
+sobrecarga_ccaa,22,Tasa total de cada comunidad,Eurostat ilc_lvho07_r (NUTS 2),"±0,1 puntos",bloqueo,pendiente
+adrh_municipio,1;2,Medias de sección agregadas a municipio (ponderadas),ADRH municipal publicado,a fijar,bloqueo,pendiente
+serpavi_provincia,8;9,Agregado provincial de las secciones,Totales provinciales del SERPAVI,a fijar,bloqueo,pendiente
+aeat_provincia,7,Salario medio provincial leído,Tabla publicada de la AEAT,exacto,bloqueo,pendiente
+smi_neto,15;21,Ingreso de la tartera,"17.094 € × (1 − 0,065) / 12 ≈ 1.332 €",exacto con los parámetros del año,bloqueo,pendiente
+cierre_poblacional,geo,Padrón por sección reproyectado al seccionado de referencia,Totales municipales publicados,"±0,5 %",bloqueo,pendiente
+mochila_ecv,15,Mochila provincial agregada a comunidad,"Intervalo de la mediana neta de la ECV (26–35, año completo)",dentro del intervalo,alerta,pendiente
+adrh_aeat,1;2,Renta del ADRH frente a renta bruta de la AEAT por municipio,"AEAT, IRPF por municipio",tendencia coherente,alerta,pendiente
+serpavi_ipva,8;10,Tendencia del SERPAVI frente al IPVA,"INE, IPVA",tendencia coherente,alerta,pendiente
+notariado_tasado,11;12,Notariado frente a valor tasado,"MIVAU, valor tasado",umbral razonado,alerta,pendiente

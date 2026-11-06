@@ -1,0 +1,28 @@
+# R y entorno
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+_targets/
+renv/library/
+renv/staging/
+renv/local/
+
+# Datos que se regeneran con el pipeline
+datos/brutos/
+datos/intermedios/
+datos/portales/
+
+# Capas y salidas pesadas
+*.pmtiles
+geo/brutos/
+*.zip
+
+# Secretos
+.Renviron
+.env
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,15 @@
+# Finales de línea LF en el repositorio, también en Windows
+* text=auto eol=lf
+
+*.R text eol=lf
+*.md text eol=lf
+*.csv text eol=lf
+*.json text eol=lf
+*.svg text eol=lf
+
+*.parquet binary
+*.pmtiles binary
+*.xlsx binary
+*.xls binary
+*.zip binary
+*.png binary

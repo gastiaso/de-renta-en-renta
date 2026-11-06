@@ -1,0 +1,24 @@
+id,codigo,nombre_es,nombre_en,familia,fuentes,nivel_nativo,serie,fase,nucleo_v01,notas
+1,renta_persona,Renta neta media por persona,Average net income per person,A capacidad de pago,ine_adrh,sección censal,2015–2024,F2,TRUE,
+2,renta_hogar,Renta neta media por hogar,Average net income per household,A capacidad de pago,ine_adrh,sección censal,2015–2024,F2,TRUE,Ingreso de la llave
+3,renta_uc_mediana,Mediana de la renta por unidad de consumo,Median income per consumption unit,A capacidad de pago,ine_adrh,sección censal,2015–2024,F2,TRUE,No se agrega: cifra publicada en cada escala
+4,peso_salarios,Peso de los salarios en la renta,Share of wages in income,A capacidad de pago,ine_adrh,sección censal (a confirmar),2015–2024,F3,FALSE,
+5,bajo_60_mediana,Población por debajo del 60 % de la mediana de renta por unidad de consumo,Population below 60% of median income per consumption unit,A capacidad de pago,ine_adrh;eustat_nastat,sección censal,2015–2024,F3,FALSE,Sin País Vasco ni Navarra en el ADRH
+6,gini,Índice de Gini,Gini index,A capacidad de pago,ine_adrh,sección censal o municipio (a confirmar),2015–2024,F3,FALSE,
+7,salario_medio,Salario medio anual por asalariado (total y menores de 35),Average annual wage per employee (total and under 35),A capacidad de pago,aeat_mercado_trabajo,provincia,~2004–2024,F3,FALSE,Base de la mochila (plan §3.1)
+8,alquiler_mes,Alquiler medio mensual,Average monthly rent,B coste de la vivienda,mivau_serpavi;gv_emal,sección censal,2015–último,F2,TRUE,"Contratos declarados (parque), no contratos nuevos"
+9,alquiler_m2,Alquiler por metro cuadrado,Rent per square metre,B coste de la vivienda,mivau_serpavi;gv_emal,sección censal,2015–último,F2,TRUE,
+10,var_alquiler,Variación anual del alquiler,Annual change in rents,B coste de la vivienda,ine_ipva,municipio y distrito de capitales,2015–2024,F4,FALSE,"Índice, no nivel"
+11,precio_compra_m2,Precio de compraventa por metro cuadrado,Sale price per square metre,B coste de la vivienda,notariado,código postal y municipio,a confirmar,F4,FALSE,Precio escriturado
+12,valor_tasado_m2,Valor tasado por metro cuadrado,Appraised value per square metre,B coste de la vivienda,mivau_valor_tasado,municipios de más de 25.000 habitantes (a confirmar),serie larga,F4,FALSE,
+13,precio_oferta,Precio de oferta (alquiler y venta),Asking price (rent and sale),B coste de la vivienda,portales,municipio y distrito,mensual,F5,FALSE,Capa desmontable
+14,esfuerzo_residentes,Esfuerzo de residentes en alquiler,Resident rent burden,C esfuerzo y acceso,mivau_serpavi;ine_adrh,sección censal,2015–último,F2,TRUE,"Mide vulnerabilidad, no acceso"
+15,barrera_acceso,Barrera de acceso al alquiler,Rental access barrier,C esfuerzo y acceso,mivau_serpavi;aeat_mercado_trabajo;boe_smi;inss_pensiones,sección censal × ingreso de la ficha,2015–último,F2,TRUE,Indicador central de la pregunta rectora
+16,anios_salario_compra,Años de salario para comprar,Years of wages to buy a home,C esfuerzo y acceso,notariado;mivau_valor_tasado;aeat_mercado_trabajo,código postal o municipio × provincia,a confirmar,F4,FALSE,Superficie tipo seleccionable (80 m² por defecto)
+17,esfuerzo_hipotecario,Esfuerzo hipotecario teórico,Theoretical mortgage burden,C esfuerzo y acceso,mivau_valor_tasado;aeat_mercado_trabajo,municipio,a confirmar,F4,FALSE,"80 % de financiación, 25 años, tipo medio"
+18,hogares_alquiler,Hogares en alquiler,Renting households,D estructura y presión,ine_censo2021,sección censal,"2011, 2021",F2,TRUE,"Fotografía, no serie"
+19,viviendas_turisticas,Viviendas de uso turístico sobre el total de viviendas,Tourist dwellings as a share of all dwellings,D estructura y presión,ine_vut,sección censal,2020–,F2,TRUE,
+20,zona_tensionada,Zona de mercado residencial tensionado declarada,Declared stressed housing market area,D estructura y presión,zonas_tensionadas,municipio o ámbito declarado,2024–,F5,FALSE,
+21,sueldo_necesario,Sueldo neto necesario para no pasar del umbral,Net monthly pay needed to stay under the threshold,C esfuerzo y acceso,mivau_serpavi;gv_emal,sección censal,2015–último,F2,TRUE,"Mapa por defecto: 50 m², umbral del 30 %"
+22,sobrecarga,Tasa de sobrecarga por gastos de vivienda (método Eurostat),Housing cost overburden rate (Eurostat method),E sobrecarga y acceso,ine_ecv;eurostat_ilc_lvho07;eurostat_ilc_lvho07_r,comunidad (España); región NUTS 2 y país (Europa),2008– (países); 2021– (regiones),F1b,FALSE,Personas; hipoteca solo intereses; renta del año anterior
+23,busqueda_sin_exito,Búsqueda de vivienda sin éxito,Unsuccessful housing search,E sobrecarga y acceso,ine_ecv,comunidad,2025 (corte único),F1b,FALSE,Módulo de acceso de la ECV 2025
