@@ -91,19 +91,28 @@ geo_tabla_paso_callejero <- function(origen, destino, topes = NULL) {
 # 6-nov-2026). Una sección de origen «cae entera» si su fracción hacia ese destino es ≥ umbral.
 #   recuentos y medias ponderadas: «dato» si todos sus orígenes caen enteros (sumar o
 #     promediar con pesos es exacto); «estimado» si alguno se reparte;
-#   medianas: «dato» solo con un único origen que cae entero (la misma sección, aunque cambie
-#     de código); «estimado» con un único origen repartido (se copia su mediana); «ausente»
-#     con varios orígenes, porque las medianas no se combinan.
-geo_estado_paso <- function(tabla, umbral = 0.99) {
+#   medianas: no se combinan; se copia la de un solo origen. «dato» con un único origen que
+#     cae entero (la misma sección, aunque cambie de código); «estimado» con un único origen
+#     repartido o con un origen dominante (≥ umbral_dominante de los portales que recibe la
+#     sección); «ausente» si ningún origen domina. `origen_mediana` dice de dónde se copia.
+geo_estado_paso <- function(tabla, umbral = 0.99, umbral_dominante = 0.95) {
   tabla |>
+    mutate(peso_entrada = dplyr::coalesce(as.numeric(portales), 1)) |>
     group_by(seccion = destino) |>
-    summarise(n_origenes = n_distinct(origen), enteros = all(fraccion >= umbral), .groups = "drop") |>
+    summarise(
+      n_origenes       = n_distinct(origen),
+      enteros          = all(fraccion >= umbral),
+      origen_dominante = origen[which.max(peso_entrada)],
+      cuota_dominante  = max(peso_entrada) / sum(peso_entrada),
+      .groups = "drop"
+    ) |>
     mutate(
       estado_recuento = if_else(enteros, "dato", "estimado"),
       estado_media    = estado_recuento,
       estado_mediana  = case_when(n_origenes == 1 & enteros ~ "dato",
-                                  n_origenes == 1 ~ "estimado",
-                                  TRUE ~ "ausente")
+                                  n_origenes == 1 | cuota_dominante >= umbral_dominante ~ "estimado",
+                                  TRUE ~ "ausente"),
+      origen_mediana  = if_else(estado_mediana == "ausente", NA_character_, origen_dominante)
     )
 }
 
@@ -137,16 +146,13 @@ geo_reproyectar_media <- function(valores, tabla, umbral = 0.99) {
     left_join(geo_estado_paso(tabla, umbral) |> select(seccion, estado = estado_media), by = "seccion")
 }
 
-# Medianas (e índices): se copian solo desde un único origen; con varios, sin dato.
-geo_reproyectar_mediana <- function(valores, tabla, umbral = 0.99) {
+# Medianas (e índices): se copia la del único origen o la del origen dominante; si ninguno
+# domina, sin dato.
+geo_reproyectar_mediana <- function(valores, tabla, umbral = 0.99, umbral_dominante = 0.95) {
   avisar_sin_paso(valores, tabla)
-  estado <- geo_estado_paso(tabla, umbral) |> select(seccion, estado = estado_mediana)
-  unico <- tabla |> semi_join(filter(estado, estado != "ausente"), by = c("destino" = "seccion"))
-  valores |>
-    inner_join(unico, by = c("seccion" = "origen"), relationship = "one-to-many") |>
-    select(seccion = destino, valor) |>
-    right_join(estado, by = "seccion") |>
-    mutate(valor = if_else(estado == "ausente", NA_real_, valor)) |>
+  geo_estado_paso(tabla, umbral, umbral_dominante) |>
+    left_join(select(valores, origen_mediana = seccion, valor), by = "origen_mediana") |>
+    transmute(seccion, valor, estado = estado_mediana, origen = origen_mediana) |>
     arrange(seccion)
 }
 

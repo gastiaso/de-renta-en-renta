@@ -1,6 +1,8 @@
 # Casilla de salida — Plan de integración por fases
 
-*Borrador v0.7 · 6 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.8 · 6 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.8:** medianas reproyectadas desde el origen dominante (≥ 95 % de los portales) como `estimado`, contrastado con la prueba de un año (§6.3; cierra la pregunta abierta 6).
 
 **Cambios en la v0.7:** adoptada la regla de estado de las cifras reproyectadas (`dato`, `estimado`, `ausente`; §1 y §6.3), que sustituye al tratamiento por direcciones. Nueva pregunta abierta sobre las medianas `ausente` por aportes pequeños (§11).
 
@@ -25,7 +27,7 @@
 | Naturaleza | Escaparate personal y contribución cívica |
 | Escala y periodo | Sección censal (SC), de 2015 al último dato disponible |
 | Seccionado de referencia | El del Censo 2021 (1 de enero de 2021), en el que el SERPAVI publica toda su serie (§6.3) |
-| Cifras reproyectadas | `dato` si las secciones de origen caen enteras en la de 2021; `estimado` si alguna se reparte; medianas `dato` solo 1:1 y `ausente` con varios orígenes (§6.3) |
+| Cifras reproyectadas | `dato` si las secciones de origen caen enteras en la de 2021; `estimado` si alguna se reparte; medianas `dato` solo 1:1, `estimado` desde un origen dominante (≥ 95 % de los portales) y `ausente` si ninguno domina (§6.3) |
 | Alcance | 23 indicadores: los 20 iniciales y 3 añadidos el 6-nov (catálogo en §5) |
 | Código previo | Se reutiliza el código propio que sirva (§2.1) |
 | Para quién | Cinco fichas con ingreso neto mensual y superficie propia: llave, mochila, tartera, transistor y «Tu ficha» (§3.1) |
@@ -249,9 +251,11 @@ pruebas/      testthat + prueba de la web con chromote
 - **Años y direcciones** (ADRH y padrón, que se publican cada año en su seccionado). El año *t* del ADRH está en el seccionado de 1 de enero de *t* + 1 (Madrid: el ADRH 2020 coincide código a código con el seccionado de 2021, y el 2024 con el de 2025). Así, el ADRH 2020 es nativo; 2015–2019 van hacia delante (las divisiones obligan a repartir) y 2021–2024, hacia atrás (casi siempre es juntar).
 - **Estado de las cifras reproyectadas** (adoptado el 6-nov-2026, a partir de la prueba de un año; decide la sección, no la dirección). Una sección de origen «cae entera» en la de 2021 si su fracción hacia ella es ≥ 0,99:
   - recuentos y medias ponderadas: `dato` si todos los orígenes que recibe caen enteros (sumar, o promediar con su denominador, es exacto); `estimado` si alguno se reparte;
-  - medianas e índices: `dato` solo con un único origen que cae entero (la misma sección, aunque cambie de código); `estimado` con un único origen repartido (se copia su mediana); `ausente` con varios orígenes, porque las medianas no se combinan, y se remite a la escala superior;
+  - medianas e índices: no se combinan, se copia la de un solo origen. `dato` con un único origen que cae entero (la misma sección, aunque cambie de código); `estimado` con un único origen repartido o con un origen dominante, que aporta al menos el 95 % de los portales de la sección (adoptado el 6-nov-2026, pregunta abierta 6); `ausente` si ninguno domina, y se remite a la escala superior;
   - el `estimado` es una excepción declarada a la regla del nivel nativo, limitada a esas secciones y años.
-  - En Madrid, secciones `dato` para recuentos y medias: 3.693 (2015 → 2021), 3.952 (2022 → 2021) y 3.859 (2025 → 2021) de 4.417. Para medianas, `ausente` en 525, 455 y 459: basta con que la sección reciba una pequeña parte de una vecina. Implementado en `geo_estado_paso()` y en `geo_reproyectar_recuento()`, `geo_reproyectar_media()` y `geo_reproyectar_mediana()`.
+  - En Madrid, secciones `dato` para recuentos y medias: 3.693 (2015 → 2021), 3.952 (2022 → 2021) y 3.859 (2025 → 2021) de 4.417. Para medianas, `ausente` en 91, 191 y 233 (sin la regla del origen dominante eran 525, 455 y 459: bastaba con que la sección recibiera una pequeña parte de una vecina).
+  - **Contraste del origen dominante** (prueba de un año, con dos indicadores del ADRH que no se suman: edad media y tamaño medio del hogar, copiados de 2021 y comparados con 2020). Con un origen que aporta ≥ 95 % (264 secciones), el error es el de las secciones 1:1: en la edad media, mediana de 0,4 años y percentil 90 de 0,87 (0,90 en las 1:1); en el tamaño del hogar, igual. Entre el 80 y el 95 % (100 secciones) la cola empeora (percentil 99 de 2,7 años frente a 1,4), y por debajo del 80 %, más. Las 24 secciones con un único origen repartido tienen la peor cola (percentil 99 de 17 años): son divisiones donde la parte nueva no se parece a la madre.
+  - Implementado en `geo_estado_paso()` y en `geo_reproyectar_recuento()`, `geo_reproyectar_media()` y `geo_reproyectar_mediana()`.
 - **Prueba de cierre:** la población del padrón por sección reproyectada debe cuadrar con los totales municipales publicados (±0,5 %).
   - **Resultado en Madrid (6-nov-2026):** ADRH 2015 → 2021 y ADRH 2024 → 2021, desviación máxima 0,001 % en 169 y 179 municipios; ninguna sección sin tabla de paso.
   - **Es una prueba débil por construcción:** las tablas no cruzan municipios y cada sección reparte el 100 %, así que solo detecta secciones sin tabla y municipios que cambian. Un primer error de casado (tramos sin vía casados entre sí en todo el municipio) la pasaba igual.
@@ -494,7 +498,7 @@ Terna inicial: **Años de sueldo** (claridad para periodistas), **Nivel de vida*
 3. **Nombre.** ¿*Casilla de salida* definitivo? Falta comprobar GitHub, dominios y OEPM.
 4. **Seccionado de referencia.** Cerrada el 6-nov-2026: el del Censo 2021 (§1 y §6.3). Se descartó el último porque obligaba a repartir las medianas del SERPAVI: 227 de las 26.137 secciones con dato en 2024 tienen un código que desaparece antes de 2025 (0,6 % de los testigos).
 5. **Estado de las cifras reproyectadas.** Cerrada el 6-nov-2026 (§1 y §6.3). Las medias ponderadas siguen a los recuentos, como manda la regla del nivel nativo; el 1:1 se exige solo a las medianas.
-6. **Medianas `ausente` por aportes pequeños.** Con la regla adoptada, una sección que recibe un 1 % de una vecina pierde su mediana (en Madrid, unas 460–525 secciones según el año, el 10–12 %). Se podría copiar la mediana del origen dominante (p. ej., ≥ 95 % de los portales) como `estimado`. Por decidir antes de reproyectar el indicador 3.
+6. **Medianas `ausente` por aportes pequeños.** Cerrada el 6-nov-2026: se copia la mediana del origen dominante (≥ 95 % de los portales) como `estimado` (§6.3). En Madrid, las medianas `ausente` bajan a 91, 191 y 233 según el año.
 
 **Por verificar en F0** (no son decisiones, son comprobaciones):
 - cortes de edad de la AEAT y año de inicio del módulo de año completo;

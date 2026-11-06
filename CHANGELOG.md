@@ -20,6 +20,7 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 - Pruebas de las tablas de paso con tramos inventados, incluido el caso de las pseudovías.
 - Prueba de un año en Madrid (tabla 2022 → 2021 y diagnóstico frente al ADRH 2020).
 - Regla de estado de las cifras reproyectadas (`dato`, `estimado`, `ausente`), adoptada en el plan v0.7: `geo_estado_paso()`, `geo_reproyectar_media()` y `geo_reproyectar_mediana()`; `geo_reproyectar_recuento()` devuelve el estado.
+- Medianas reproyectadas: se copia la del origen dominante (≥ 95 % de los portales) como `estimado` en lugar de dejarlas `ausente` (plan v0.8). `geo_estado_paso()` devuelve el origen de la copia.
 
 ### Añadido (6-nov-2026, segunda tanda)
 

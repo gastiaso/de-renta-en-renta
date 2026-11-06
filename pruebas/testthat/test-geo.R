@@ -76,10 +76,23 @@ test_that("medias ponderadas y medianas se reproyectan según su estado", {
   expect_equal(medias$valor[medias$seccion == "AB"], 17.5)
   expect_equal(medias$estado[medias$seccion == "AB"], "dato")
   medianas <- geo_reproyectar_mediana(tibble::tibble(seccion = c("A", "B", "C"), valor = c(10, 20, 5)), union)
-  expect_true(is.na(medianas$valor[medianas$seccion == "AB"]))
+  expect_true(is.na(medianas$valor[medianas$seccion == "AB"]))       # A y B pesan lo mismo
   expect_equal(medianas$estado[medianas$seccion == "AB"], "ausente")
   expect_equal(medianas$valor[medianas$seccion == "C2"], 5)          # renumerada, misma sección
   expect_equal(medianas$estado[medianas$seccion == "C2"], "dato")
+})
+
+test_that("con un origen dominante (≥ 95 % de los portales) se copia su mediana como estimada", {
+  tabla <- tibble::tibble(origen = c("A", "B", "B", "C", "D"), destino = c("X", "X", "Y", "Z", "Z"),
+                          portales = c(99L, 1L, 49L, 80L, 20L), metodo = "callejero",
+                          fraccion = c(1, 0.02, 0.98, 1, 1))
+  m <- geo_reproyectar_mediana(tibble::tibble(seccion = c("A", "B", "C", "D"), valor = c(10, 20, 30, 40)), tabla)
+  expect_equal(m$valor[m$seccion == "X"], 10)                        # A aporta el 99 %
+  expect_equal(m$estado[m$seccion == "X"], "estimado")
+  expect_equal(m$estado[m$seccion == "Y"], "estimado")               # único origen, repartido
+  expect_equal(m$valor[m$seccion == "Y"], 20)
+  expect_equal(m$estado[m$seccion == "Z"], "ausente")                # C aporta el 80 %: no domina
+  expect_true(is.na(m$valor[m$seccion == "Z"]))
 })
 
 test_that("los recuentos se conservan al reproyectar", {
