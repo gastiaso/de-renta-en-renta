@@ -1,0 +1,65 @@
+/* Casilla de salida · tokens del tablero.
+   Generado desde diseno/tokens.json con generar_tokens_css(): no editar a mano. */
+
+@font-face { font-family: "Jost"; src: url("fuentes/jost-latin.woff2") format("woff2"); font-weight: 400 800; font-display: swap; }
+@font-face { font-family: "Marcellus SC"; src: url("fuentes/marcellus-sc-latin.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Archivo Narrow"; src: url("fuentes/archivo-narrow-latin.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
+@font-face { font-family: "Yellowtail"; src: url("fuentes/yellowtail-latin.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+:root {
+  --color-crema: #f6efe0;
+  --color-placa: #fffaf0;
+  --color-tinta: #2b2b2b;
+  --color-tenue: #5c554b;
+  --color-rojo: #b8322a;
+  --color-mesa: #2f6b4f;
+  --color-mar: #dbe7ea;
+  --color-fuera: #d7d0c1;
+  --color-aviso: #e9c46a;
+
+  --rampa-1: #d9b25e;
+  --rampa-2: #d08a3c;
+  --rampa-3: #b9572b;
+  --rampa-4: #8e2f21;
+  --rampa-5: #4f1814;
+
+  --ficha-llave: #2a9d8f;
+  --ficha-llave-texto: #1d6f66;
+  --ficha-mochila: #c8412f;
+  --ficha-mochila-texto: #b8322a;
+  --ficha-tartera: #457b9d;
+  --ficha-tartera-texto: #2f5f7f;
+  --ficha-transistor: #8d5a97;
+  --ficha-transistor-texto: #6f4479;
+  --ficha-peon: #2f6b4f;
+  --ficha-peon-texto: #2f6b4f;
+
+  --fuente-tablero: "Jost", "Futura", "Century Gothic", sans-serif;
+  --fuente-escritura: "Marcellus SC", "Copperplate", serif;
+  --fuente-carta: "Archivo Narrow", "Arial Narrow", sans-serif;
+  --fuente-cabecera-carta: "Yellowtail", cursive;
+
+  --borde: 2px solid var(--color-tinta);
+  --marco-pagina: 4px solid var(--color-tinta);
+  --radio-tarjeta: 6px;
+  --radio-control: 8px;
+  --radio-mapa: 10px;
+  --sombra-ficha: 0 2px 0 var(--color-tinta);
+  --objetivo-tactil: 44px;
+}
+
+/* Rampa secuencial. Los tramos 1 y 2 no llegan a 3:1 sobre la crema: llevan siempre contorno
+   (en los mapas de MapLibre, una capa de línea del mismo color que el texto). Nunca como texto. */
+.tramo-1 { background: var(--rampa-1); outline: 1px solid var(--color-tinta); outline-offset: -1px; }
+.tramo-2 { background: var(--rampa-2); outline: 1px solid var(--color-tinta); outline-offset: -1px; }
+.tramo-3 { background: var(--rampa-3); }
+.tramo-4 { background: var(--rampa-4); }
+.tramo-5 { background: var(--rampa-5); }
+
+/* Huecos: secreto estadístico y muestra pequeña */
+.secreto { background: repeating-linear-gradient(45deg, var(--color-tenue) 0 2px, transparent 2px 6px); border: 1px solid var(--color-tenue); }
+.muestra-pequena { background-image: repeating-linear-gradient(45deg, var(--color-placa) 0 2px, transparent 2px 6px); }
+
+/* Yellowtail solo en titulares de 22 px o más */
+.cabecera-carta { font-family: var(--fuente-cabecera-carta); font-size: max(22px, 1.5rem); font-weight: 400; }
+

@@ -77,7 +77,9 @@ Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decid
 - Completar `inventario/indicadores.csv` para los 23 indicadores, en castellano e inglés: definición, cálculo, lectura, unidad, fuentes, nivel, serie.
 - **Hecho cuando:** cada indicador tiene su ficha completa en los dos idiomas.
 
-## 9. Kit de diseño a CSS
+## 9. Kit de diseño a CSS · HECHA (7-nov-2026)
+
+**Resultado:** `web/estilo/tokens.css` generado desde `diseno/tokens.json` (`generar_tokens_css()`), con las cuatro tipografías autoalojadas en `web/estilo/fuentes/` (woff2 latino, 78 KB en total, con su licencia). Compuertas: `contraste_texto` (13 de 13 pares de texto por encima de 4,5:1, recalculados con la fórmula WCAG), `contraste_declarado` (lo de `tokens.json` cuadra con lo recalculado) y `rampa_contorno` (los tramos 1 y 2, por debajo de 3:1, llevan contorno). Corrección: Yellowtail tiene licencia Apache 2.0, no OFL.
 
 - `web/estilo/tokens.css` a partir de `diseno/tokens.json`; tipografías autoalojadas.
 - **Hecho cuando:** los contrastes de texto cumplen 4,5:1 y los dos tramos claros de la rampa llevan siempre contorno.

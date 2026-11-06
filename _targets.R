@@ -29,7 +29,16 @@ inventario <- list(
   tar_target(vocabulario, readr::read_csv(fichero_vocabulario, show_col_types = FALSE)),
   # Diccionarios ES/EN de la web: las secciones de indicadores, fuentes y vocabulario salen del inventario
   tar_target(ficheros_i18n, exportar_i18n(indicadores, fuentes, vocabulario), format = "file"),
-  tar_target(validacion_i18n, validar_referencias(comprobar_i18n(ficheros_i18n), referencias))
+  tar_target(validacion_i18n, validar_referencias(comprobar_i18n(ficheros_i18n), referencias)),
+  # Kit de diseño (tarea 9): tokens.css, tipografías autoalojadas y contrastes
+  tar_target(fichero_tokens, "diseno/tokens.json", format = "file"),
+  tar_target(tokens, jsonlite::read_json(fichero_tokens)),
+  tar_target(ficheros_tipografias, descargar_tipografias(), format = "file"),
+  tar_target(fichero_tokens_css, {
+    ficheros_tipografias
+    generar_tokens_css(tokens)
+  }, format = "file"),
+  tar_target(validacion_diseno, validar_referencias(comprobar_contrastes(tokens, fichero_tokens_css), referencias))
 )
 
 version_de <- function(ruta) format(file.mtime(ruta[1]), "%Y-%m-%d")

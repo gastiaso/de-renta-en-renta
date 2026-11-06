@@ -502,7 +502,7 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 
 **Elegido (6-nov-2026): tablero, *Casilla de salida*.**
 - **Portada:** el tablero completo.
-- **Tipografía:** el juego de cartas clásico, con equivalentes libres (OFL):
+- **Tipografía:** el juego de cartas clásico, con equivalentes libres (OFL; Yellowtail, Apache 2.0):
   - Jost para el tablero, los titulares y las cifras (en lugar de Kabel y Futura);
   - Marcellus SC para las cabeceras de escritura (en lugar de Copperplate Gothic);
   - Archivo Narrow para el texto de las cartas (grotesca condensada);

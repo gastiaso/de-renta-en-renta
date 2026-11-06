@@ -16,3 +16,6 @@ adrh_aeat,1;2,Renta del ADRH frente a renta bruta de la AEAT por municipio,"AEAT
 serpavi_ipva,8;10,Tendencia del SERPAVI frente al IPVA,"INE, IPVA",tendencia coherente,alerta,pendiente
 notariado_tasado,11;12,Notariado frente a valor tasado,"MIVAU, valor tasado",umbral razonado,alerta,pendiente
 i18n_completo,web,Los diccionarios de castellano e inglés tienen las mismas claves y ningún texto vacío,web/i18n/es.json y en.json,exacto,bloqueo,en el pipeline
+contraste_texto,web,"Colores de texto (tinta, tenue, rojo, mesa y texto de las fichas) por debajo de 4,5:1 sobre crema o placa, recalculados con la fórmula WCAG",diseno/tokens.json,exacto,bloqueo,en el pipeline
+contraste_declarado,web,Diferencia entre el contraste declarado en tokens.json y el recalculado,diseno/tokens.json,"±0,05",alerta,en el pipeline
+rampa_contorno,web,Tramos de la rampa por debajo de 3:1 sobre la crema que no llevan contorno en tokens.css,web/estilo/tokens.css,exacto,bloqueo,en el pipeline

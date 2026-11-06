@@ -55,13 +55,15 @@ F0 → en paralelo **F1b** (sobrecarga y Europa: publicable pronto, no depende d
 
 ## Identidad
 
-Tablero, *Casilla de salida*: `diseno/tokens.json` (colores con contrastes calculados, tipografías OFL, formas) y `diseno/fichas/*.svg` (cinco fichas). Nada de elementos propios de Monopoly. Maquetas: `docs/maquetas.md`.
+Tablero, *Casilla de salida*: `diseno/tokens.json` (colores con contrastes calculados, tipografías libres, formas), `web/estilo/tokens.css` (generado) y `diseno/fichas/*.svg` (cinco fichas). Nada de elementos propios de Monopoly. Maquetas: `docs/maquetas.md`.
 
 ## Cómo verificar
 
-Se completará con el pipeline. Por ahora:
-
 ```r
-targets::tar_make()                       # lee el inventario sin errores
-testthat::test_dir("pruebas/testthat")    # coherencia del inventario
+renv::restore()                           # solo la primera vez (R 4.6)
+targets::tar_make()                       # descarga, calcula y pasa las compuertas
+testthat::test_dir("pruebas/testthat")    # pruebas con datos inventados
+targets::tar_outdated()                   # debe salir vacío
 ```
+
+`tar_make()` se detiene si falla una comprobación de tipo `bloqueo` de `inventario/referencias_validacion.csv`; las de tipo `alerta` salen como avisos al final (hoy: geometrías NUTS de códigos agrupados y municipios de renta muy alta en el ADRH). Para ver una compuerta: `targets::tar_read(validacion_sobrecarga)` (o `validacion_f1`, `validacion_adrh`, `validacion_modulo`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`).
