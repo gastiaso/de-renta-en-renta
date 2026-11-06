@@ -1,6 +1,8 @@
 # Casilla de salida — Plan de integración por fases
 
-*Borrador v0.8 · 6 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.9 · 6 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.9:** comprobaciones de F0 (backlog, tareas 3 y 4). El método de la mochila no se puede aplicar tal cual (§3.1; pregunta abierta 7). El País Vasco no tiene alquiler por sección antes de entrar en el SERPAVI y Navarra no tiene nada antes de 2021 (pregunta abierta 8). Las viviendas turísticas del INE también usan el seccionado de 2021. La vía (b) del Catastro es viable, pero su licencia es contradictoria (§6.3). Huecos y versiones NUTS del mapa europeo y licencia de las geometrías de GISCO (§6.6).
 
 **Cambios en la v0.8:** medianas reproyectadas desde el origen dominante (≥ 95 % de los portales) como `estimado`, contrastado con la prueba de un año (§6.3; cierra la pregunta abierta 6).
 
@@ -34,7 +36,7 @@
 | Tu sueldo | Entrada en neto mensual; cálculo en el navegador; mapa por defecto: sueldo neto necesario en euros para 50 m² (§6.6) |
 | Sobrecarga | Sección propia con método Eurostat y un solo mapa de Europa: regiones NUTS 2 para el total; con desgloses, países, y España por comunidades; fase F1b en paralelo a F1 |
 | Precios privados | Se usan (ver objeción en §2.2) |
-| País Vasco y Navarra | Se integran (Eustat, Nastat, Gobierno Vasco, Haciendas Forales) |
+| País Vasco y Navarra | Se integran (Eustat, Nastat, Gobierno Vasco, Haciendas Forales). El alquiler por sección solo existe desde que entran en el SERPAVI (Navarra 2021, Gipuzkoa 2022, Álava y Bizkaia 2024): ver pregunta abierta 8 |
 | Formato | Web exploratoria con fichas; las historias, después |
 | Idioma | Castellano e inglés desde el primer día |
 | Identidad | Tablero, *Casilla de salida* (§10.2): propia, retro, que no parezca *barómetros* con otros datos |
@@ -120,9 +122,9 @@ Regla común: **ingreso neto mensual repartido en 12**. El alquiler se paga doce
 | Ficha | Ingreso de referencia | Fuente | Escala | Vivienda | Pendiente |
 |---|---|---|---|---|---|
 | Llave · hogar del barrio | Renta neta media por hogar ÷ 12 | INE, ADRH | Sección censal | Alquiler mensual mediano de su propia sección (sin m² fijos) | Mide esfuerzo de residentes, no acceso. Es renta del hogar (varios perceptores), no un sueldo |
-| Mochila · joven menor de 35 | Mediana estimada del salario de 26–35 años, año completo, neta, ÷ 12 | AEAT, *Mercado de trabajo y pensiones* (media por provincia y edad, y deciles por comunidad y edad); control con microdatos de la ECV | Provincia | 50 m² | Ver «Método de la mochila». Confirmar los cortes de edad de la AEAT y desde qué año existe el módulo de año completo |
+| Mochila · joven menor de 35 | Mediana estimada del salario de 26–35 años, año completo, neta, ÷ 12 | AEAT, *Mercado de trabajo y pensiones* (media por provincia y edad, y deciles por comunidad y edad); control con microdatos de la ECV | Provincia | 50 m² | Ver «Método de la mochila». Tramo 26–35 confirmado; método en revisión tras comprobar la AEAT (pregunta abierta 7) |
 | Tartera · salario mínimo | SMI neto anual ÷ 12 | RD 126/2026: 1.221 € × 14 = 17.094 € brutos; exento de IRPF; menos cotizaciones (≈ 6,5 %) → **≈ 1.332 €/mes** (cálculo propio aproximado) | Nacional | 50 m² | Revisar cada año con el real decreto |
-| Transistor · pensionista | Pensión media de **jubilación**, neta de IRPF, ÷ 12 | INSS, *Pensiones contributivas del Sistema de la Seguridad Social* por provincia (mensual) | Provincia | 50 m² | Responde a «si tuviera que alquilar hoy»: el 89,1 % de los mayores de 65 años vive en casa propia (ECV 2023), y la ficha lo dice. No incluye Clases Pasivas. La AEAT no separa por clase de pensión: por eso cambia la fuente |
+| Transistor · pensionista | Pensión media de **jubilación**, neta de IRPF, ÷ 12 | INSS, *Pensiones contributivas del Sistema de la Seguridad Social* por provincia (mensual) | Provincia | 50 m² | Responde a «si tuviera que alquilar hoy»: el 89,1 % de los mayores de 65 años vive en casa propia (ECV 2023), y la ficha lo dice. No incluye Clases Pasivas. La AEAT no separa por clase de pensión: por eso cambia la fuente. Comprobado: Excel mensual por provincia y clase; pensión bruta por paga (14 pagas): × 14 / 12 antes del IRPF; la provincia es la de la dirección provincial que la gestiona, no la de residencia |
 | Tu ficha (peón) | Lo que escriba el usuario: neto mensual, 12 o 14 pagas, segundo sueldo opcional | — | — | 50 m² con un sueldo, 70 m² con dos; cambiable a 50/70/90 | Se calcula en el navegador; no se guarda |
 
 **Superficie.** Las tres fichas de una persona comparten 50 m² para que sus mapas solo difieran por el ingreso; con superficies distintas, la diferencia mezclaría ingreso y tamaño, y la regla de la leyenda dejaría de servir. El mapa por defecto (sueldo necesario) usa también 50 m². Las fichas de escala provincial o nacional varían solo por el lado del alquiler; la llave varía por los dos lados.
@@ -134,6 +136,17 @@ Regla común: **ingreso neto mensual repartido en 12**. El alquiler se paga doce
 4. **Año completo:** se usa el salario de quien trabaja los doce meses. Si ni así llega, el argumento es más difícil de rebatir; lo cobrado en el año reflejaría mejor la precariedad, pero mezcla trabajos de verano.
 5. **Control con la ECV:** mediana neta de los asalariados de 26–35 años a año completo por comunidad, con tres olas agrupadas e intervalos. Si la estimación provincial agregada se aleja del intervalo, se marca. Desde 2013 los ingresos de la ECV salen de registros administrativos, así que no mide los salarios mejor que la AEAT; aporta el neto directo, los meses trabajados y si el joven vive con sus padres (posible variante de ficha más adelante).
 6. **Descartada:** la MCVL con datos fiscales (provincia × edad), porque solo se cede con fines científicos a una entidad; solo sería viable si la solicita una universidad o un centro de investigación.
+
+**Comprobación en la AEAT (6-nov-2026): el método no se puede aplicar tal cual** (pregunta abierta 7).
+- La tabla provincial (salario medio anual bruto por provincia, edad y sexo) tiene el tramo de 26–35 años. Es salario real del año: incluye a quien trabajó pocos meses.
+- El «módulo salarial de año completo» (desde la edición 2019) no recoge a quien trabaja los doce meses: anualiza el salario por días cotizados (salario medio estimado, SME) y excluye los SME por debajo del SMI. Media de 26–35 años en 2024: 28.628 €, frente a 21.506 € de salario real.
+- No publica la mediana por comunidad y edad: solo la media y el recuento de asalariados en cada decil nacional (con los límites de cada decil en otra tabla). La mediana se puede interpolar con esos recuentos.
+- No publica la retención por edad, pero sí por tramos de retribución en múltiplos del SMI: sirve para el paso 3 aplicada al bruto estimado.
+- Sin País Vasco ni Navarra en ninguna de las dos tablas (forales aparte) y sin Ceuta ni Melilla en el módulo de año completo.
+- Opciones:
+  - **A (recomendada):** mediana del SME de 26–35 por comunidad (interpolada de los deciles), llevada a cada provincia con la posición de su salario medio real de 26–35 respecto al de su comunidad. Mantiene la provincia y el «año completo» del paso 4; supuesto: las diferencias relativas entre provincias de una comunidad son las mismas en salario real y anualizado.
+  - **B:** salario medio real provincial × relación mediana/media del SME de su comunidad. Más cerca del plan, pero aplica la forma de una distribución anualizada a otra que no lo está (la real tiene más peso de empleos de pocos meses): la mediana saldría alta.
+  - **C:** mediana del SME por comunidad, sin escala provincial. La más sencilla; pierde la provincia.
 
 ---
 
@@ -238,12 +251,14 @@ pruebas/      testthat + prueba de la web con chromote
 
 - **Insumos:** el seccionado anual del INE (shapefile a 1 de enero, 2015 → último) y el callejero del censo electoral, cuyas variaciones entre fechas publica el INE desde 2011.
 - **Referencia: el seccionado del Censo 2021** (decidido el 6-nov-2026). El mapa se dibuja con sus límites.
-- **Por qué 2021 y no el último:** el SERPAVI publica toda su serie 2011–2024 en ese seccionado (según sus metadatos, agrega los inmuebles que constan a la vez en la fuente tributaria y en el Catastro), y el Censo 2021 (indicador 18) también. Así, el alquiler y el Censo no necesitan tabla de paso, y el núcleo de la v0.1 cumple la regla del nivel nativo sin excepciones. Con el último habría que repartir las medianas del SERPAVI en las secciones divididas después de 2021.
+- **Por qué 2021 y no el último:** el SERPAVI publica toda su serie 2011–2024 en ese seccionado (según sus metadatos, agrega los inmuebles que constan a la vez en la fuente tributaria y en el Catastro), y el Censo 2021 (indicador 18) y las viviendas turísticas del INE (indicador 19, todos sus periodos) también. Así, el alquiler, el Censo y las viviendas turísticas no necesitan tabla de paso, y el núcleo de la v0.1 cumple la regla del nivel nativo sin excepciones. Con el último habría que repartir las medianas del SERPAVI en las secciones divididas después de 2021.
 - **Coste:** las secciones que han cambiado desde 2021 se ven con sus límites antiguos. Por códigos, de 2021 a 2025 conservan el suyo 35.955 de 36.293 (99,1 %); desaparecen 338 y aparecen 599, con Madrid a la cabeza. Con la geometría, en la provincia de Madrid (prueba de F1, 6-nov-2026): de 2021 a 2025 desaparecen 48 códigos y otras 204 secciones conservan el código pero cambian más de un 1 % de su superficie (162, más de un 25 %), es decir, 252 de 4.417 secciones (5,7 %). Entre 2015 y 2021 son 140 las que conservan el código y cambian de límites. El coste real es mayor que el estimado por códigos (1–3 %) y se concentra en los barrios en crecimiento.
 - **Tablas de paso** sección del año *t* → sección de 2021, con pesos de dos fuentes alternativas:
   - (a) tramos del callejero (portales asignados a cada sección);
   - (b) edificios residenciales del Catastro (INSPIRE) ponderados por número de viviendas.
 - Se documenta cuál se usa y se contrastan ambas.
+- **Vía (b), viable:** cada edificio del servicio INSPIRE del Catastro trae su número de viviendas (`numberOfDwellings`), con descarga por municipio. Sin País Vasco ni Navarra (servicios forales aparte). Su licencia es contradictoria (CC BY 4.0 en los metadatos de la IDEE; una licencia de 2016 en la web del Catastro): hay que aclararla antes de publicar derivados.
+- **Población por sección para las pruebas:** además del ADRH, el Censo anual de población por secciones (2021–2025, con sexo y edad) y el Padrón continuo por secciones (2004–2022).
 - **Vía (a) en la práctica** (prueba de Madrid):
   - cada tabla compara tramos de la misma aplicación del INE: el callejero de enero de 2021 se publicó con la antigua y con la nueva, así que 2015 → 2021 usa la antigua en los dos extremos y 2025 → 2021, la nueva;
   - los tramos sin vía (código 00000) se identifican por su pseudovía; los rangos genéricos 0001–9999 de la aplicación antigua se recortan al último portal real que da la nueva;
@@ -300,6 +315,9 @@ Junto a ella, `metadatos.json` con fichas bilingües, rupturas, supuestos por de
   - el color se recalcula en el navegador cambiando la expresión de estilo de MapLibre, sin volver a descargar teselas;
   - el sueldo no sale del dispositivo; solo va en el enlace si el usuario pulsa «Compartir», con aviso previo.
 - **Sobrecarga:** un solo mapa de Europa que cambia de escala según el corte. Para toda la población, regiones NUTS 2 (Eurostat; Canarias en recuadro). Con tenencia o edad, que Eurostat no publica por regiones, países, y España siempre por comunidades con los microdatos del INE. «La escalera» ordena en una sola lista lo que muestra el mapa en tres bloques: lo más alto de Europa (sin comunidades), las referencias (UE-27 y España) y las 19 comunidades, cada una con su puesto en la lista completa; caja de método y módulo de acceso. Se presenta como otro tablero: encuesta, no registro.
+  - **Huecos del mapa regional** (`ilc_lvho07_r`, comprobado el 6-nov-2026): 204 regiones NUTS 2 de 26 países en 2025, de 2021 a 2025. Francia y Austria solo publican el dato del país y Países Bajos, solo NUTS 1; Dinamarca entra en 2025. Propuesta: pintar en esos países el dato disponible (país o NUTS 1) con una trama y una nota fija.
+  - **Versión NUTS de cada año:** la serie mezcla NUTS 2021 (2021–2023) y NUTS 2024 (desde 2024; cambian las regiones de Portugal). La geometría se elige por año.
+  - **Licencia de las geometrías:** las de GISCO (NUTS) son de uso no comercial y exigen el aviso «© EuroGeographics para los límites administrativos» en el mapa. No entran en la licencia CC BY 4.0 de los datos del atlas (`LICENCIA_DATOS.md`).
 - **Datos:** binarios por indicador y año, que se cargan bajo demanda; sin servidor ni analítica.
 - **Uso:** URL con el estado de la vista, ES/EN, modo daltónico, exportación CSV y PNG, descarga del Parquet.
 - **Límites a vigilar:** 100 MB por fichero en GitHub y 1 GB por sitio de Pages. Una sola geometría de referencia mantiene el PMTiles bajo control.
@@ -499,11 +517,13 @@ Terna inicial: **Años de sueldo** (claridad para periodistas), **Nivel de vida*
 4. **Seccionado de referencia.** Cerrada el 6-nov-2026: el del Censo 2021 (§1 y §6.3). Se descartó el último porque obligaba a repartir las medianas del SERPAVI: 227 de las 26.137 secciones con dato en 2024 tienen un código que desaparece antes de 2025 (0,6 % de los testigos).
 5. **Estado de las cifras reproyectadas.** Cerrada el 6-nov-2026 (§1 y §6.3). Las medias ponderadas siguen a los recuentos, como manda la regla del nivel nativo; el 1:1 se exige solo a las medianas.
 6. **Medianas `ausente` por aportes pequeños.** Cerrada el 6-nov-2026: se copia la mediana del origen dominante (≥ 95 % de los portales) como `estimado` (§6.3). En Madrid, las medianas `ausente` bajan a 91, 191 y 233 según el año.
+7. **Método de la mochila.** La AEAT no publica la mediana por comunidad y edad, y su «año completo» es un salario anualizado, no el de quien trabaja doce meses (§3.1). Opciones A (recomendada), B y C. Por decidir antes de F3; la v0.1 solo necesita el salario provincial medio (indicador 7, versión mínima).
+8. **Alquiler del País Vasco (y Navarra) en los años sin SERPAVI.** La estadística del Gobierno Vasco (fianzas) no baja a sección censal (municipios de más de 5.000 habitantes y barrios de las capitales) y da la media, no la mediana. Navarra no tiene ninguna fuente antes de 2021. Propuesta: sin dato por sección esos años y la estadística de fianzas como capa aparte de contexto municipal, sin mezclarla con el indicador 8 (regla 5: cada fuente dice qué mide). Por decidir antes de F2.
 
-**Por verificar en F0** (no son decisiones, son comprobaciones):
-- cortes de edad de la AEAT y año de inicio del módulo de año completo;
-- si la AEAT publica la retención media por tramo de edad;
-- cobertura de `ilc_lvho07_r` país a país (algunos países pueden publicar solo el dato nacional).
+**Por verificar en F0** (no son decisiones, son comprobaciones), hechas el 6-nov-2026:
+- cortes de edad de la AEAT (<18, 18–25, 26–35, 36–45, 46–55, 56–65, >65) y módulo de año completo (desde 2019; ver §3.1);
+- retención media: no por edad; sí por tramos de renta y de retribución (§3.1);
+- cobertura de `ilc_lvho07_r` país a país (§6.6).
 
 ---
 

@@ -25,14 +25,18 @@ Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decid
 - Evitar coincidencias con otros atlas de vivienda ya publicados.
 - **Hecho cuando:** nombre decidido y anotado en el plan (§10). Hasta entonces, el repositorio de GitHub usa un nombre de trabajo neutro.
 
-## 3. Comprobaciones pendientes del plan (§11)
+## 3. Comprobaciones pendientes del plan (§11) · HECHA (6-nov-2026)
+
+**Resultado:** las tres, respondidas en `inventario/fuentes.csv` y en el plan v0.9. AEAT: tramo 26–35 confirmado; el módulo de «año completo» (desde 2019) es un salario anualizado por días cotizados y no hay mediana por comunidad y edad ni retención por edad, así que el método de la mochila se revisa (pregunta abierta 7). INSS: Excel mensual por provincia y clase; pensión bruta por paga (14 pagas), provincia de gestión. Eurostat: 204 regiones de 26 países en 2025; Francia, Austria y Países Bajos sin NUTS 2; NUTS 2021 hasta 2023 y NUTS 2024 desde 2024.
 
 - **AEAT, Mercado de trabajo:** cortes de edad de las tablas por provincia; desde qué año existe el módulo de año completo (deciles por comunidad y edad); si publica la retención media por tramo.
 - **INSS:** pensión media de jubilación por provincia: formato, serie y si hay descarga estable.
 - **Eurostat, `ilc_lvho07_r`:** cobertura por país y años. España, hecho: las 19 comunidades, 2021–2025 (ES30 Madrid: 13,4 % en 2021, 11,2 % en 2024 y 9,9 % en 2025). Falta el resto de países.
 - **Hecho cuando:** cada punto tiene respuesta en `inventario/fuentes.csv` (columnas `estado` y `notas`) y, si cambia algo del método, en el plan.
 
-## 4. Inventario de fuentes
+## 4. Inventario de fuentes · HECHA (6-nov-2026)
+
+**Resultado:** ninguna fuente de la v0.0 ni de la v0.1 queda en «a confirmar» en acceso y licencia; siguen así las de fases posteriores o de referencia (valor tasado, Eustat y Nastat para el indicador 5, Idescat, Banco de España y la estadística de alquiler de Nastat). INE, Eurostat y Gobierno Vasco: CC BY 4.0; MIVAU, AEAT y Seguridad Social: reutilización citando fuente y fecha; GISCO: uso no comercial con aviso de EuroGeographics; Catastro: licencia contradictoria, por aclarar. Nueva fuente de referencia `nastat_epav` y ruptura `vut_calendario_2024`. Hallazgos que llevan a decisiones: preguntas abiertas 7 (mochila) y 8 (País Vasco y Navarra sin SERPAVI).
 
 - Completar `inventario/fuentes.csv`: dirección estable, forma de acceso, licencia (con el texto citado), cadencia y desfase.
 - **Hecho cuando:** ninguna fila de las fuentes de la v0.0 y la v0.1 queda en «a confirmar» en acceso y licencia.
