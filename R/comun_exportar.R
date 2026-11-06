@@ -22,6 +22,44 @@ validar_tabla_larga <- function(tabla, indicadores = NULL, fuentes = NULL) {
   tabla
 }
 
+# Diccionarios de la web (web/i18n/es.json y en.json). Las secciones «indicadores», «fuentes»
+# y «vocabulario» se generan desde inventario/ (no se editan a mano); las demás (sitio, nav,
+# fichas, avisos…) se escriben a mano y se conservan.
+exportar_i18n <- function(indicadores, fuentes, vocabulario, dir = file.path("web", "i18n")) {
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  rutas <- file.path(dir, c("es.json", "en.json"))
+  for (i in 1:2) {
+    idioma <- c("es", "en")[i]
+    col <- function(base) indicadores[[paste0(base, "_", idioma)]]
+    dic <- if (file.exists(rutas[i])) jsonlite::read_json(rutas[i]) else list()
+    dic$indicadores <- stats::setNames(lapply(seq_len(nrow(indicadores)), function(k) list(
+      nombre = col("nombre")[k], unidad = col("unidad")[k], definicion = col("definicion")[k],
+      calculo = col("calculo")[k], lectura = col("lectura")[k]
+    )), indicadores$codigo)
+    dic$fuentes <- stats::setNames(as.list(if (idioma == "es") fuentes$nombre else fuentes$nombre_en), fuentes$id)
+    dic$vocabulario <- lapply(split(vocabulario, vocabulario$grupo),
+                              function(v) stats::setNames(as.list(v[[idioma]]), v$clave))
+    jsonlite::write_json(dic, rutas[i], auto_unbox = TRUE, pretty = TRUE)
+  }
+  rutas
+}
+
+# Comprueba que los dos diccionarios tienen las mismas claves y ningún texto vacío.
+comprobar_i18n <- function(rutas) {
+  claves <- function(x, prefijo = "") {
+    if (!is.list(x)) return(prefijo)
+    unlist(lapply(names(x), function(n) claves(x[[n]], paste0(prefijo, "/", n))))
+  }
+  vacios <- function(x) if (is.list(x)) sum(vapply(x, vacios, numeric(1))) else as.numeric(is.null(x) || is.na(x) || !nzchar(x))
+  es <- jsonlite::read_json(rutas[1]); en <- jsonlite::read_json(rutas[2])
+  tibble::tibble(
+    id = "i18n_completo", anio = NA_integer_,
+    detalle = c("claves solo en es", "claves solo en en", "textos vacíos"),
+    calculado = c(length(setdiff(claves(es), claves(en))), length(setdiff(claves(en), claves(es))), vacios(es) + vacios(en)),
+    referencia = 0
+  )
+}
+
 # Sobrecarga (F1b): cifras anuales de España por corte, cruces con varias olas y «escalera».
 # Van aparte de la tabla larga, que no tiene dimensión de corte (tenencia, edad).
 exportar_sobrecarga <- function(anual, agrupada, escalera, dir = file.path("datos", "intermedios", "sobrecarga")) {

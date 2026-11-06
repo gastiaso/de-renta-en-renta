@@ -1,0 +1,20 @@
+grupo,clave,es,en
+familia,A,Capacidad de pago,Ability to pay
+familia,B,Coste de la vivienda,Housing cost
+familia,C,Esfuerzo y acceso,Burden and access
+familia,D,Estructura y presión,Structure and pressure
+familia,E,Sobrecarga y acceso (encuesta),Overburden and access (survey)
+nivel,sc,Sección censal,Census tract
+nivel,distrito,Distrito,District
+nivel,municipio,Municipio,Municipality
+nivel,cp,Código postal,Postcode
+nivel,provincia,Provincia,Province
+nivel,ccaa,Comunidad autónoma,Autonomous community
+nivel,nacional,España,Spain
+estado,dato,Dato publicado o calculado sin estimar,Published or computed value
+estado,estimado,"Estimado: la sección cambió de límites y hubo que repartir","Estimated: the tract boundaries changed and values had to be split"
+estado,secreto,Sin dato por secreto estadístico,No data (statistical confidentiality)
+estado,ausente,Sin dato,No data
+fiabilidad,normal,Muestra suficiente,Sufficient sample
+fiabilidad,baja,"Muestra pequeña (20 a 49 observaciones): leer con cautela","Small sample (20 to 49 observations): read with caution"
+fiabilidad,no publicable,Muestra insuficiente (menos de 20 observaciones),Insufficient sample (fewer than 20 observations)

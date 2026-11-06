@@ -15,3 +15,4 @@ mochila_ecv,15,Mochila provincial agregada a comunidad,"Intervalo de la mediana 
 adrh_aeat,1;2,Renta del ADRH frente a renta bruta de la AEAT por municipio,"AEAT, IRPF por municipio",tendencia coherente,alerta,pendiente
 serpavi_ipva,8;10,Tendencia del SERPAVI frente al IPVA,"INE, IPVA",tendencia coherente,alerta,pendiente
 notariado_tasado,11;12,Notariado frente a valor tasado,"MIVAU, valor tasado",umbral razonado,alerta,pendiente
+i18n_completo,web,Los diccionarios de castellano e inglés tienen las mismas claves y ningún texto vacío,web/i18n/es.json y en.json,exacto,bloqueo,en el pipeline

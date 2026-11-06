@@ -77,3 +77,24 @@ test_that("la renta se lleva a 2021 con su estado: secreto, estimado y dato", {
   expect_equal(nrow(t[t$nivel == "municipio", ]), 1L)
   expect_silent(validar_tabla_larga(t))
 })
+
+test_that("los diccionarios se generan del inventario y conservan lo escrito a mano", {
+  dir <- tempfile("i18n_")
+  dir.create(dir)
+  jsonlite::write_json(list(sitio = list(titulo = "Casilla")), file.path(dir, "es.json"), auto_unbox = TRUE)
+  jsonlite::write_json(list(sitio = list(titulo = "Square")), file.path(dir, "en.json"), auto_unbox = TRUE)
+  ind <- tibble::tibble(codigo = "sobrecarga", nombre_es = "Sobrecarga", nombre_en = "Overburden",
+                        unidad_es = "%", unidad_en = "%", definicion_es = "d", definicion_en = "d",
+                        calculo_es = "c", calculo_en = "c", lectura_es = "l", lectura_en = "l")
+  fue <- tibble::tibble(id = "ine_ecv", nombre = "Encuesta", nombre_en = "Survey")
+  voc <- tibble::tibble(grupo = "estado", clave = "dato", es = "Dato", en = "Value")
+  rutas <- exportar_i18n(ind, fue, voc, dir)
+  en <- jsonlite::read_json(rutas[2])
+  expect_equal(en$sitio$titulo, "Square")
+  expect_equal(en$indicadores$sobrecarga$nombre, "Overburden")
+  expect_equal(en$vocabulario$estado$dato, "Value")
+  expect_true(all(comprobar_i18n(rutas)$calculado == 0))
+  # Una clave que solo está en un idioma se detecta
+  jsonlite::write_json(c(jsonlite::read_json(rutas[1]), list(extra = "x")), rutas[1], auto_unbox = TRUE)
+  expect_equal(comprobar_i18n(rutas)$calculado[1], 1)
+})

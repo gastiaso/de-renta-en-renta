@@ -21,5 +21,226 @@
     "ejemplo": "Sample data",
     "secreto": "No data (statistical confidentiality)",
     "muestra_pequena": "Small sample: read with caution"
+  },
+  "indicadores": {
+    "renta_persona": {
+      "nombre": "Average net income per person",
+      "unidad": "€ per person per year",
+      "definicion": "Average disposable income of residents: total income net of taxes and contributions of all households in the tract, divided by its population.",
+      "calculo": "Published by INE (ADRH) from tax records. Years published on another tract map are carried to the 2021 tracts as a population-weighted mean; where a tract has to be split, the status becomes «estimated».",
+      "lectura": "Income for year t with population on 1 January of t + 1. Excludes imputed rent of owner-occupied housing. Published about 22 months after the reference year."
+    },
+    "renta_hogar": {
+      "nombre": "Average net income per household",
+      "unidad": "€ per household per year",
+      "definicion": "Average disposable income of households in the tract.",
+      "calculo": "Published by INE (ADRH). On other tract maps, mean weighted by the number of households (population divided by average household size), with the same status rules as indicator 1.",
+      "lectura": "This is household income, often with several earners, not a wage. It is the denominator of resident rent burden (14) and the income of the «neighbourhood household» token."
+    },
+    "renta_uc_mediana": {
+      "nombre": "Median income per consumption unit",
+      "unidad": "€ per consumption unit per year",
+      "definicion": "Median disposable income per consumption unit (modified OECD scale): half of the tract population lives in households with lower equivalised income and half with higher.",
+      "calculo": "Published by INE (ADRH) at each scale; medians are not aggregated. On other tract maps the value of a single source tract is copied (the same tract or one contributing at least 95% of street numbers); if none dominates, it is left blank.",
+      "lectura": "Comparable across household sizes. It underlies the relative poverty thresholds (indicator 5)."
+    },
+    "peso_salarios": {
+      "nombre": "Share of wages in income",
+      "unidad": "% of gross income",
+      "definicion": "Share of the tract average gross income that comes from wages.",
+      "calculo": "Published by INE (ADRH, income by source).",
+      "lectura": "Links neighbourhood income to wages: a low share means income depends more on pensions, benefits or other income."
+    },
+    "bajo_60_mediana": {
+      "nombre": "Population below 60% of median income per consumption unit",
+      "unidad": "% of population",
+      "definicion": "Population with income per consumption unit below 60% of the national median.",
+      "calculo": "Published by INE (ADRH); for the Basque Country and Navarre, by Eustat and Nastat.",
+      "lectura": "National threshold, not regional: the same income counts the same everywhere, although living costs differ."
+    },
+    "gini": {
+      "nombre": "Gini index",
+      "unidad": "index (0–100)",
+      "definicion": "Gini index of income per consumption unit in the tract: 0 if everyone has the same income, 100 if one person holds all of it.",
+      "calculo": "Published by INE (ADRH).",
+      "lectura": "Measures inequality within the neighbourhood, not between neighbourhoods."
+    },
+    "salario_medio": {
+      "nombre": "Average annual wage per employee (total and under 35)",
+      "unidad": "€ per employee per year (gross)",
+      "definicion": "Average gross annual wage of employees with tax residence in the province, overall and aged 26 to 35.",
+      "calculo": "Published by the Spanish Tax Agency (AEAT); the Basque Country and Navarre, from their regional tax authorities.",
+      "lectura": "Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the conversion to median and net pay for the «under-35» token is under review (plan, open question 7)."
+    },
+    "alquiler_mes": {
+      "nombre": "Monthly rent (median)",
+      "unidad": "€ per month",
+      "definicion": "Median monthly rent of current main-residence tenancies in the tract, by building type (apartment and single-family); the first and third quartiles are also published.",
+      "calculo": "Published by the Housing Ministry (SERPAVI) from rents declared in personal income tax and the Cadastre, on the 2021 tracts for the whole series. Not published with fewer than 10 tenancies.",
+      "lectura": "Covers the whole rented stock, not new contracts: newcomers pay more. The Basque Country and Navarre join SERPAVI between 2021 and 2024."
+    },
+    "alquiler_m2": {
+      "nombre": "Rent per square metre",
+      "unidad": "€ per m² per month",
+      "definicion": "Median monthly rent per square metre of current main-residence tenancies in the tract, by building type (apartment and single-family).",
+      "calculo": "Published by the Housing Ministry (SERPAVI), using Cadastre floor area.",
+      "lectura": "Allows comparing tracts with different dwelling sizes and underlies the pay needed (21)."
+    },
+    "var_alquiler": {
+      "nombre": "Annual change in rents",
+      "unidad": "annual % change",
+      "definicion": "Annual change in the Rental Housing Price Index.",
+      "calculo": "Published by INE (IPVA), which follows the same tenancies and separates new from existing contracts.",
+      "lectura": "An index, not a price level: it shows trends, not how much is paid."
+    },
+    "precio_compra_m2": {
+      "nombre": "Sale price per square metre",
+      "unidad": "€ per m²",
+      "definicion": "Average price per square metre of housing sales signed before a notary.",
+      "calculo": "Published by the General Council of Notaries.",
+      "lectura": "A closing price, not an asking price or an appraisal."
+    },
+    "valor_tasado_m2": {
+      "nombre": "Appraised value per square metre",
+      "unidad": "€ per m²",
+      "definicion": "Average appraised value per square metre of open-market housing.",
+      "calculo": "Published by the Housing Ministry from mortgage appraisals.",
+      "lectura": "An appraisal value, not a price paid; only municipalities above 25,000 inhabitants."
+    },
+    "precio_oferta": {
+      "nombre": "Asking price (rent and sale)",
+      "unidad": "€ per m² (rent: per m² per month)",
+      "definicion": "Average price per square metre in rental and sale listings.",
+      "calculo": "Taken from the portals’ aggregated press reports; never individual listings. A removable layer.",
+      "lectura": "An asking price: not combined with contracts, deeds or appraisals."
+    },
+    "esfuerzo_residentes": {
+      "nombre": "Resident rent burden",
+      "unidad": "% of household income",
+      "definicion": "Share of the average household’s annual income in the tract that the median rent of that same tract would take.",
+      "calculo": "Median monthly rent × 12 / average net household income, same year.",
+      "lectura": "Measures the vulnerability of current residents, not access: expensive areas look affordable because higher-income people live there."
+    },
+    "barrera_acceso": {
+      "nombre": "Rental access barrier",
+      "unidad": "% of reference income",
+      "definicion": "Share of a token’s net monthly income (minimum wage, under-35, pensioner or the user’s own pay) that 50 m² of rent in the tract would take.",
+      "calculo": "Median rent per m² × 50 / token’s net monthly income spread over 12 payments.",
+      "lectura": "Measures the barrier to moving in with a given income. Read by bands (up to 30%, 30–40% and over 40%), not as an exact figure."
+    },
+    "anios_salario_compra": {
+      "nombre": "Years of wages to buy a home",
+      "unidad": "years",
+      "definicion": "Years of reference gross pay needed to buy a standard dwelling.",
+      "calculo": "Price per m² × standard floor area (80 m² by default) / reference annual pay.",
+      "lectura": "Ignores financing and down payment; see the theoretical mortgage burden (17)."
+    },
+    "esfuerzo_hipotecario": {
+      "nombre": "Theoretical mortgage burden",
+      "unidad": "% of income",
+      "definicion": "Share of income taken by the first-year payment of a mortgage on a standard dwelling.",
+      "calculo": "Annual payment financing 80% of the value over 25 years at the average interest rate, divided by the reference income.",
+      "lectura": "A theoretical burden: it assumes the remaining 20% and purchase costs are available."
+    },
+    "hogares_alquiler": {
+      "nombre": "Renting households",
+      "unidad": "% of households",
+      "definicion": "Households renting as a share of all households (main residences) in the tract.",
+      "calculo": "From INE’s 2021 (and 2011) Population and Housing Census, on the 2021 tracts.",
+      "lectura": "A snapshot at two dates, not an annual series."
+    },
+    "viviendas_turisticas": {
+      "nombre": "Tourist dwellings as a share of all dwellings",
+      "unidad": "% of dwellings",
+      "definicion": "Tourist dwellings as a share of all dwellings in the tract.",
+      "calculo": "From INE’s experimental statistics based on platform listings, on the 2021 tracts; twice a year.",
+      "lectura": "Measures pressure from tourist use. Reference months changed in 2024 (from February and August to May and November)."
+    },
+    "zona_tensionada": {
+      "nombre": "Declared stressed housing market area",
+      "unidad": "category (yes / no)",
+      "definicion": "Municipality or area declared a stressed residential market zone.",
+      "calculo": "Declarations published in official gazettes under Law 12/2023, with their effective date.",
+      "lectura": "A public policy layer, not a market measure."
+    },
+    "sueldo_necesario": {
+      "nombre": "Net monthly pay needed to stay under the threshold",
+      "unidad": "net € per month",
+      "definicion": "Net monthly pay needed so that 50 m² of rent in the tract does not exceed 30% of pay.",
+      "calculo": "Median rent per m² × 50 / 0.30 (threshold can be changed to 40%).",
+      "lectura": "It is rent expressed in another unit, not a new indicator. The 30% threshold draws on the stressed-zone criterion of Law 12/2023, which uses household income and utilities; it is not that criterion."
+    },
+    "sobrecarga": {
+      "nombre": "Housing cost overburden rate (Eurostat method)",
+      "unidad": "% of people",
+      "definicion": "People living in households whose total housing costs, net of housing allowances, exceed 40% of disposable income, also net of allowances.",
+      "calculo": "EU-SILC microdata (INE) with Eurostat’s method: only mortgage interest counts; previous-year income; person weights. Reproduces Eurostat figures (±0.1 points). Region × tenure and age breakdowns pool three waves.",
+      "lectura": "Measures the burden on those already housed; outright owners dominate it and it misses people unable to leave home. Read it alongside unsuccessful housing search (23) and by tenure, especially market-rate renting."
+    },
+    "busqueda_sin_exito": {
+      "nombre": "Unsuccessful housing search",
+      "unidad": "% of people aged 16 and over",
+      "definicion": "People aged 16 and over who actively looked for housing in the last 12 months without moving.",
+      "calculo": "Published by INE in the tables of the 2025 EU-SILC module on housing access difficulties, with the main reason (mostly price).",
+      "lectura": "A one-off measure (2025). It captures those trying to move in and failing, unlike the overburden rate."
+    }
+  },
+  "fuentes": {
+    "ine_adrh": "Household Income Distribution Atlas (ADRH)",
+    "mivau_serpavi": "State Rental Price Reference System (SERPAVI): database",
+    "gv_emal": "Rental Market Statistics (deposits)",
+    "nastat_epav": "Housing Rental Price Statistics (EPAV)",
+    "ine_ipva": "Rental Housing Price Index (IPVA)",
+    "notariado": "Notaries’ Statistical Portal",
+    "mivau_valor_tasado": "Appraised value of open-market housing",
+    "portales": "Asking-price reports (Idealista and Fotocasa press rooms)",
+    "aeat_mercado_trabajo": "Labour market and pensions in tax sources",
+    "inss_pensiones": "Social Security contributory pensions (in payment)",
+    "boe_smi": "Royal Decree on the minimum wage",
+    "ine_censo2021": "Population and Housing Census 2021",
+    "ine_vut": "Tourist dwellings (experimental statistics)",
+    "zonas_tensionadas": "Declarations of stressed residential market zones",
+    "ine_seccionado": "Census tract boundaries (annual)",
+    "ine_callejero": "Electoral census street directory (street segments by tract)",
+    "catastro_inspire": "Cadastre buildings (INSPIRE)",
+    "ine_padron_sc": "Population by census tract (annual population census; municipal register)",
+    "ine_ecv": "Living Conditions Survey, EU-SILC (microdata)",
+    "ine_ecv_modulo": "Living Conditions Survey 2025: housing access difficulties module (tables)",
+    "eurostat_ilc_lvho07": "Housing cost overburden rate (ilc_lvho07a, ilc_lvho07c)",
+    "eurostat_ilc_lvho07_r": "Housing cost overburden rate by NUTS 2 region (ilc_lvho07_r)",
+    "eurostat_nuts": "NUTS 2021 and 2024 boundaries (Nuts2json / GISCO)",
+    "eustat_nastat": "Income indicators for the Basque Country (Eustat) and Navarre (Nastat)",
+    "ine_epa_deciles": "Wage deciles of the main job (Labour Force Survey)",
+    "idescat_e02": "Territorial wage statistics (experimental)",
+    "bde_accesibilidad": "Housing affordability indicators (years of income, theoretical burden)"
+  },
+  "vocabulario": {
+    "estado": {
+      "dato": "Published or computed value",
+      "estimado": "Estimated: the tract boundaries changed and values had to be split",
+      "secreto": "No data (statistical confidentiality)",
+      "ausente": "No data"
+    },
+    "familia": {
+      "A": "Ability to pay",
+      "B": "Housing cost",
+      "C": "Burden and access",
+      "D": "Structure and pressure",
+      "E": "Overburden and access (survey)"
+    },
+    "fiabilidad": {
+      "normal": "Sufficient sample",
+      "baja": "Small sample (20 to 49 observations): read with caution",
+      "no publicable": "Insufficient sample (fewer than 20 observations)"
+    },
+    "nivel": {
+      "sc": "Census tract",
+      "distrito": "District",
+      "municipio": "Municipality",
+      "cp": "Postcode",
+      "provincia": "Province",
+      "ccaa": "Autonomous community",
+      "nacional": "Spain"
+    }
   }
 }

@@ -70,7 +70,9 @@ Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decid
 - Esquema de la tabla larga en Parquet.
 - **Hecho cuando:** un indicador de prueba (por ejemplo, la renta media por hogar del ADRH de una provincia) recorre el pipeline de punta a punta y pasa su comprobación.
 
-## 8. Fichas de indicador
+## 8. Fichas de indicador · HECHA (7-nov-2026)
+
+**Resultado:** los 23 indicadores tienen nombre, unidad, definición, cálculo y lectura en castellano e inglés en `inventario/indicadores.csv`; la prueba `test-inventario.R` exige que no falte ninguno. Fuentes, nivel y serie ya estaban. Quedan a la espera de decisiones: el método de la mochila (indicador 7 y ficha «joven», pregunta abierta 7) y el umbral del indicador 5 (confirmar en la metodología del ADRH). Los textos son borradores para revisar.
 
 - Completar `inventario/indicadores.csv` para los 23 indicadores, en castellano e inglés: definición, cálculo, lectura, unidad, fuentes, nivel, serie.
 - **Hecho cuando:** cada indicador tiene su ficha completa en los dos idiomas.
@@ -80,7 +82,9 @@ Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decid
 - `web/estilo/tokens.css` a partir de `diseno/tokens.json`; tipografías autoalojadas.
 - **Hecho cuando:** los contrastes de texto cumplen 4,5:1 y los dos tramos claros de la rampa llevan siempre contorno.
 
-## 10. Diccionario i18n base
+## 10. Diccionario i18n base · HECHA (7-nov-2026)
+
+**Resultado:** `exportar_i18n()` vuelca en `web/i18n/es.json` y `en.json` las fichas de los 23 indicadores, los nombres de las 27 fuentes (`nombre_en` nuevo en `fuentes.csv`) y el vocabulario de la web (`inventario/vocabulario.csv`: familias, niveles, estados y fiabilidad), conservando las secciones escritas a mano. Compuerta `i18n_completo`: mismas claves en los dos idiomas y ningún texto vacío.
 
 - Ampliar `web/i18n/es.json` y `en.json` con las etiquetas de los 23 indicadores y de las fuentes.
 - **Hecho cuando:** ninguna etiqueta visible de la v0.0 queda sin traducir.

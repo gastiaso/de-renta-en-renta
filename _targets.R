@@ -24,7 +24,12 @@ inventario <- list(
   tar_target(indicadores, readr::read_csv(fichero_indicadores, show_col_types = FALSE)),
   tar_target(referencias, readr::read_csv(fichero_referencias, show_col_types = FALSE)),
   tar_target(fichero_ccaa, "geo/ccaa.csv", format = "file"),
-  tar_target(ccaa, readr::read_csv(fichero_ccaa, col_types = "ccc"))
+  tar_target(ccaa, readr::read_csv(fichero_ccaa, col_types = "ccc")),
+  tar_target(fichero_vocabulario, "inventario/vocabulario.csv", format = "file"),
+  tar_target(vocabulario, readr::read_csv(fichero_vocabulario, show_col_types = FALSE)),
+  # Diccionarios ES/EN de la web: las secciones de indicadores, fuentes y vocabulario salen del inventario
+  tar_target(ficheros_i18n, exportar_i18n(indicadores, fuentes, vocabulario), format = "file"),
+  tar_target(validacion_i18n, validar_referencias(comprobar_i18n(ficheros_i18n), referencias))
 )
 
 version_de <- function(ruta) format(file.mtime(ruta[1]), "%Y-%m-%d")
