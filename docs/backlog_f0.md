@@ -19,7 +19,9 @@ Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decid
 - Precedente: el SERPAVI en PDF solo se ha podido transcribir **a mano**, y por comunidad. Hay una solicitud de acceso reutilizable en datos.gob.es (agosto de 2026). No consta descarga por sección.
 - **Hecho cuando:** la fila `mivau_serpavi` de `inventario/fuentes.csv` está completa y hay una decisión anotada: (a) descarga directa; (b) solicitud formal al MIVAU, mientras se avanza con otra escala; (c) plan B a escala de municipio o distrito, con su efecto en la v0.1.
 
-## 2. Nombre
+## 2. Nombre · COMPROBADO, FALTA DECIDIR (6-nov-2026)
+
+**Comprobación hecha** (plan §10.1): «Casilla de salida» está libre en GitHub, dominios y marcas; «Square One» está ocupado en GitHub, dominios y con marcas vigentes en las clases 9, 35, 41 y 42. Antes de registrar nada: confirmar el .es en dominios.es y repetir la búsqueda en el localizador de la OEPM. La decisión es del autor.
 
 - Comprobar «Casilla de salida» y «Square One»: repositorios en GitHub, dominios (.es, .org, .com) y marcas en la OEPM (clases 9, 35, 41 y 42).
 - Evitar coincidencias con otros atlas de vivienda ya publicados.

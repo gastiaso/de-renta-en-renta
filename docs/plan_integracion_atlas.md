@@ -474,6 +474,17 @@ Consecuencia: el atlas siempre irá **uno o dos años por detrás** en renta y s
 
 Terna inicial: **Años de sueldo** (claridad para periodistas), **Nivel de vida** (el mejor juego de palabras en castellano) y **Casilla de salida** (encaja con el «para quién» y la emancipación). Antes de decidir hay que comprobar que no choquen con otros proyectos (GitHub, dominios, OEPM).
 
+**Comprobación (6-nov-2026; DNS, RDAP, API de GitHub y TMview, que reúne OEPM y EUIPO):**
+
+| | Casilla de salida / *Square One* | Años de sueldo / *Years of Pay* | Nivel de vida / *Living Level* |
+|---|---|---|---|
+| GitHub | Libre en castellano. *Square One*: organizaciones `square-one` y `squareone` ocupadas y cientos de repositorios (ninguno de vivienda) | Libre | Libre (solo repositorios escolares parecidos) |
+| Dominios | `casilladesalida` y `casilla-de-salida` (.es, .org, .com) no existen en DNS. *Square One*: todos registrados | Todos parecen libres | `niveldevida.com` registrado en octubre de 2026 (tienda); `livinglevel.com` a la venta; .es y .org parecen libres |
+| Marcas (ES y UE, vigentes) | Ninguna «Casilla de salida». *Square One*: varias en las clases 9, 35, 41 y 42 (una de software de datos, otra de inmuebles) | Ninguna | Ninguna exacta; ocho «… Niveles de vida» en las clases 5 y 35 (complementos) |
+| Choques | Frase hecha muy usada en prensa; *Square One*, ONG de vivienda en Oregón y modismo inglés | Es la métrica que publican portales y tasadoras («8,4 años de sueldo») | Término genérico; el ADRH del INE habla de «nivel de renta» |
+
+Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en dominios.es); TMview no tiene valor legal (confirmar en el localizador de la OEPM, clases 9, 35, 41 y 42).
+
 ### 10.2 Maquetas de estilo
 
 22 maquetas de estilo: 20 retro, una de cartografía antigua y una de control sobria. Usan el mismo contenido: mapa pixelado ilustrativo y cifras nacionales de referencia del Banco de España (1987, 2007, 2023 y el 72 % de 1990), que hay que verificar en la serie original antes de publicarlas.
@@ -513,7 +524,7 @@ Terna inicial: **Años de sueldo** (claridad para periodistas), **Nivel de vida*
 
 1. **Escalonado.** v0.0 (sobrecarga), v0.1 con 10 indicadores y los 23 para la v1.0 (§2.3): por confirmar.
 2. **Portales.** Capa desmontable, solo informes agregados y repo satélite (§2.2): por confirmar.
-3. **Nombre.** ¿*Casilla de salida* definitivo? Falta comprobar GitHub, dominios y OEPM.
+3. **Nombre.** ¿*Casilla de salida* definitivo? Comprobado (§10.1): en castellano está libre en GitHub, dominios y marcas; el riesgo es *Square One*, ocupado en todos los frentes. Decisión del autor (también, si el nombre inglés cambia).
 4. **Seccionado de referencia.** Cerrada el 6-nov-2026: el del Censo 2021 (§1 y §6.3). Se descartó el último porque obligaba a repartir las medianas del SERPAVI: 227 de las 26.137 secciones con dato en 2024 tienen un código que desaparece antes de 2025 (0,6 % de los testigos).
 5. **Estado de las cifras reproyectadas.** Cerrada el 6-nov-2026 (§1 y §6.3). Las medias ponderadas siguen a los recuentos, como manda la regla del nivel nativo; el 1:1 se exige solo a las medianas.
 6. **Medianas `ausente` por aportes pequeños.** Cerrada el 6-nov-2026: se copia la mediana del origen dominante (≥ 95 % de los portales) como `estimado` (§6.3). En Madrid, las medianas `ausente` bajan a 91, 191 y 233 según el año.
