@@ -8,8 +8,10 @@
 | `comun_descargar.R` | `descargar_con_cache()`: descarga a `datos/brutos/`, no repite y conserva la versión anterior si falla |
 | `comun_validar.R` | Compuerta: `leer_tolerancia()` y `validar_referencias()` |
 | `fuente_<id>.R` | Una fuente: `descargar_<id>()`, `leer_<id>()`, `armonizar_<id>()`. El `id` es el de `inventario/fuentes.csv` |
-| `fuente_ine_ecv.R` | ECV: descarga, extracción y lectura de los microdatos; sobrecarga con el método de Eurostat y su comparación con Eurostat |
-| `fuente_eurostat_ilc_lvho07.R` | Eurostat: sobrecarga publicada (`ilc_lvho07a`, `ilc_lvho07c`, `ilc_lvho07_r`) |
+| `fuente_ine_ecv.R` | ECV: descarga, extracción y lectura de los microdatos; sobrecarga con el método de Eurostat (total, tenencia, edad, región), olas agrupadas con marca de fiabilidad, comparación con Eurostat y paso a la tabla larga |
+| `fuente_ine_ecv_modulo.R` | Tablas del módulo de acceso a la vivienda de la ECV 2025 (indicador 23) |
+| `fuente_eurostat_ilc_lvho07.R` | Eurostat: sobrecarga publicada de España (compuerta) y de Europa, y «escalera» |
+| `fuente_gisco_nuts.R` | Geometrías NUTS de GISCO por versión y comprobación de que cada región con dato tiene geometría |
 | `fuente_ine_seccionado.R` | Cartografía de secciones del INE: descarga y lectura de una provincia dentro del zip |
 | `fuente_ine_callejero.R` | Callejero del censo electoral: descarga y lectura de los tramos de una provincia (aplicaciones antigua y nueva) |
 | `fuente_ine_adrh.R` | ADRH: descarga de tablas de INEbase, lectura de la renta (indicadores 1–3) y de la demografía, pesos (población y hogares), compuerta `adrh_municipio` y armonización al seccionado de 2021 en formato largo |

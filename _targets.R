@@ -1,5 +1,5 @@
 # Casilla de salida · pipeline (targets)
-# F0: inventario y primer indicador (22, sobrecarga) con su compuerta.
+# F0: inventario, sobrecarga (22) y acceso (23) de la v0.0, prueba de F1 en Madrid y renta (1–3) de punta a punta.
 # Ejecutar: targets::tar_make()      Ver el grafo: targets::tar_visnetwork()
 
 library(targets)
@@ -9,8 +9,9 @@ tar_option_set(packages = c("dplyr", "readr"))
 # Capa de precios de oferta de los portales (plan, §2.2). Apagada por defecto.
 PORTALES <- identical(toupper(Sys.getenv("PORTALES", "FALSE")), "TRUE")
 
-# Ola de la ECV (año de la encuesta; las rentas son del año anterior)
-ANIO_ECV <- 2025L
+# Olas de la ECV (año de la encuesta; las rentas son del año anterior). Cada ola da sus cifras
+# anuales; las tres juntas, los cruces que una sola ola no sostiene (comunidad × tenencia).
+ANIOS_ECV <- c(2023L, 2024L, 2025L)
 
 # Funciones del proyecto (R/*.R)
 tar_source("R")
@@ -21,18 +22,43 @@ inventario <- list(
   tar_target(fichero_referencias, "inventario/referencias_validacion.csv", format = "file"),
   tar_target(fuentes, readr::read_csv(fichero_fuentes, show_col_types = FALSE)),
   tar_target(indicadores, readr::read_csv(fichero_indicadores, show_col_types = FALSE)),
-  tar_target(referencias, readr::read_csv(fichero_referencias, show_col_types = FALSE))
+  tar_target(referencias, readr::read_csv(fichero_referencias, show_col_types = FALSE)),
+  tar_target(fichero_ccaa, "geo/ccaa.csv", format = "file"),
+  tar_target(ccaa, readr::read_csv(fichero_ccaa, col_types = "ccc"))
 )
 
-# Indicador 22: sobrecarga por gastos de vivienda (F1b)
-sobrecarga <- list(
-  tar_target(csv_ine_ecv, obtener_csv_ine_ecv(ANIO_ECV), format = "file"),
+version_de <- function(ruta) format(file.mtime(ruta[1]), "%Y-%m-%d")
+
+# Indicador 22: sobrecarga por gastos de vivienda (F1b, v0.0)
+olas_ecv <- tarchetypes::tar_map(
+  values = list(anio = ANIOS_ECV), names = "anio",
+  tar_target(csv_ine_ecv, obtener_csv_ine_ecv(anio), format = "file"),
   tar_target(ine_ecv, leer_ine_ecv(csv_ine_ecv)),
-  tar_target(sobrecarga_ecv, calcular_sobrecarga_ecv(ine_ecv)),
+  tar_target(sobrecarga_ecv, calcular_sobrecarga_ecv(ine_ecv))
+)
+
+sobrecarga <- list(
+  olas_ecv,
+  tarchetypes::tar_combine(sobrecarga_ecv, olas_ecv$sobrecarga_ecv, command = dplyr::bind_rows(!!!.x)),
+  tarchetypes::tar_combine(olas_ine_ecv, olas_ecv$ine_ecv, command = list(!!!.x)),
+  tar_target(sobrecarga_agrupada, calcular_sobrecarga_agrupada(olas_ine_ecv)),
   tar_target(fichero_eurostat_sobrecarga, descargar_eurostat_ilc_lvho07(), format = "file"),
   tar_target(eurostat_sobrecarga, leer_eurostat_ilc_lvho07(fichero_eurostat_sobrecarga)),
-  tar_target(comprobaciones_sobrecarga, comprobar_sobrecarga_ecv(sobrecarga_ecv, eurostat_sobrecarga)),
-  tar_target(validacion_sobrecarga, validar_referencias(comprobaciones_sobrecarga, referencias))
+  tar_target(fichero_eurostat_europa, descargar_eurostat_europa(), format = "file"),
+  tar_target(eurostat_europa, leer_eurostat_europa(fichero_eurostat_europa)),
+  tar_target(comprobaciones_sobrecarga,
+             comprobar_sobrecarga_ecv(sobrecarga_ecv, eurostat_sobrecarga, eurostat_europa)),
+  tar_target(validacion_sobrecarga, validar_referencias(comprobaciones_sobrecarga, referencias)),
+  tar_target(fichero_nuts_2021, descargar_gisco_nuts("2021"), format = "file"),
+  tar_target(fichero_nuts_2024, descargar_gisco_nuts("2024"), format = "file"),
+  tar_target(comprobaciones_nuts, comprobar_geometrias_nuts(
+    eurostat_europa, c("2021" = fichero_nuts_2021, "2024" = fichero_nuts_2024))),
+  tar_target(validacion_nuts, validar_referencias(comprobaciones_nuts, referencias)),
+  tar_target(escalera, armar_escalera(eurostat_europa)),
+  tar_target(ficheros_sobrecarga, {
+    validacion_sobrecarga   # la compuerta va antes
+    exportar_sobrecarga(sobrecarga_ecv, sobrecarga_agrupada, escalera)
+  }, format = "file")
 )
 
 # F1, prueba de la geografía constante en una provincia (backlog, tarea 6).
@@ -111,14 +137,35 @@ bloque_renta_adrh <- list(
     "2021" = paso_2022_2021,
     "2024" = paso_2025_2021
   )),
-  tar_target(tabla_larga_adrh, {
+  tar_target(larga_adrh, {
     validacion_adrh   # la compuerta va antes que la armonización
-    armonizar_ine_adrh(renta_adrh, pesos_adrh_prueba, tablas_paso_adrh,
-                       version = format(file.mtime(fichero_adrh_renta), "%Y-%m-%d")) |>
+    armonizar_ine_adrh(renta_adrh, pesos_adrh_prueba, tablas_paso_adrh, version = version_de(fichero_adrh_renta))
+  })
+)
+
+# Indicador 23: módulo de la ECV 2025 sobre dificultades de acceso a la vivienda (tablas)
+modulo_acceso <- list(
+  tar_target(fichero_modulo_ccaa, descargar_ine_ecv_modulo("79637"), format = "file"),
+  tar_target(fichero_modulo_edad, descargar_ine_ecv_modulo("79629"), format = "file"),
+  tar_target(fichero_modulo_tenencia, descargar_ine_ecv_modulo("79635"), format = "file"),
+  tar_target(modulo_ccaa, leer_ine_ecv_modulo(fichero_modulo_ccaa)),
+  tar_target(comprobaciones_modulo, comprobar_ine_ecv_modulo(modulo_ccaa)),
+  tar_target(validacion_modulo, validar_referencias(comprobaciones_modulo, referencias))
+)
+
+# Tabla larga única: cada bloque entra después de pasar su compuerta
+bloque_tabla_larga <- list(
+  tar_target(tabla_larga, {
+    validacion_sobrecarga; validacion_modulo
+    bind_rows(
+      larga_adrh,
+      armonizar_sobrecarga_ecv(sobrecarga_ecv, ccaa, version = version_de(csv_ine_ecv_2025)),
+      armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa))
+    ) |>
       validar_tabla_larga(indicadores, fuentes)
   }),
-  tar_target(fichero_tabla_larga, exportar_tabla_larga(tabla_larga_adrh, "datos/intermedios/tabla_larga.parquet"),
+  tar_target(fichero_tabla_larga, exportar_tabla_larga(tabla_larga, "datos/intermedios/tabla_larga.parquet"),
              format = "file")
 )
 
-list(inventario, sobrecarga, prueba_f1, bloque_renta_adrh)
+list(inventario, sobrecarga, prueba_f1, bloque_renta_adrh, modulo_acceso, bloque_tabla_larga)

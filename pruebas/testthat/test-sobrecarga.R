@@ -15,9 +15,33 @@ ecv_prueba <- list(
   personas = tibble::tibble(
     id_persona   = c("101", "102", "201", "301", "401", "402", "403", "501", "601"),
     id_hogar     = c("1", "1", "2", "3", "4", "4", "4", "5", "6"),
-    peso_persona = c(1, 1, 2, 1, 1, 1, 1, 1, 1)
+    peso_persona = c(1, 1, 2, 1, 1, 1, 1, 1, 1),
+    edad         = c(40L, 10L, 70L, 25L, 50L, 50L, 50L, 20L, 66L)
   )
 )
+
+test_that("la tasa por edad usa los grupos de Eurostat y el de 15–29 se solapa", {
+  r <- calcular_sobrecarga_ecv(ecv_prueba)
+  valor <- function(g) r$valor[r$corte == "edad" & r$grupo == g]
+  # Menores de 18: solo el 102 (hogar 1, sobrecargado)
+  expect_equal(valor("Y_LT18"), 100)
+  # 65 y más: el 201 (hogar 2, peso 2, no) y el 601 (hogar 6, en el 40 %, no)
+  expect_equal(valor("Y_GE65"), 0)
+  # 15–29: el 301 (hogar 3, sobrecargado) y el 501 (hogar 5, no)
+  expect_equal(valor("Y15-29"), 50)
+})
+
+test_that("las olas agrupadas reparten el peso y marcan la fiabilidad por tamaño de muestra", {
+  otra <- ecv_prueba
+  otra$hogares$anio <- 2024L
+  a <- calcular_sobrecarga_agrupada(list(otra, ecv_prueba))
+  mercado <- a[a$corte == "tenencia" & a$grupo == "RENT_MKT" & a$region == "ES30", ]
+  expect_equal(mercado$valor, 100)                 # el mismo hogar en las dos olas
+  expect_equal(mercado$n_personas, 4L)             # 2 personas × 2 olas
+  expect_equal(mercado$fiabilidad, "no publicable")
+  expect_equal(unique(a$olas), 2L)
+  expect_equal(c(unique(a$anio_inicio), unique(a$anio_fin)), c(2024L, 2025L))
+})
 
 test_that("el cociente descuenta las ayudas y trata la renta neta no positiva como sobrecarga", {
   expect_equal(cociente_sobrecarga(500, 12000, 0), 0.5)

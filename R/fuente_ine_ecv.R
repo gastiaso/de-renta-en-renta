@@ -77,7 +77,7 @@ leer_ine_ecv <- function(rutas) {
   }
   d <- leer(ruta("d"), c("DB010", "DB030", "DB040", "DB090"))
   h <- leer(ruta("h"), c("HB030", "HH021", "HH070", "HY020", "HY070G"))
-  r <- leer(ruta("r"), c("RB030", "RB050"))
+  r <- leer(ruta("r"), c("RB030", "RB050", "RB081"))
 
   hogares <- d |>
     inner_join(h, by = c("DB030" = "HB030")) |>
@@ -97,7 +97,8 @@ leer_ine_ecv <- function(rutas) {
     transmute(
       id_persona   = RB030,
       id_hogar     = substr(RB030, 1, nchar(RB030) - 2),
-      peso_persona = as.numeric(RB050)
+      peso_persona = as.numeric(RB050),
+      edad         = as.integer(RB081)    # edad al final del año de ingresos (la de Eurostat; con la de la entrevista, RB082, el corte por edad de 2025 se desvía 0,12 puntos)
     )
   huerfanas <- sum(!personas$id_hogar %in% hogares$id_hogar)
   if (huerfanas > 0) stop(huerfanas, " personas sin hogar en Td/Th", call. = FALSE)
@@ -121,44 +122,89 @@ cociente_sobrecarga <- function(gasto_mes, renta, ayuda) {
 # HH021 → categorías de tenencia de Eurostat (ilc_lvho07c)
 TENENCIA_EUROSTAT <- c("1" = "OWN_NL", "2" = "OWN_L", "3" = "RENT_MKT", "4" = "RENT_FR", "5" = "RENT_FR")
 
-# Tasa de sobrecarga (%): personas que viven en hogares cuyo cociente supera el umbral,
-# ponderadas por RB050. Cortes: total, tenencia (y propietarios e inquilinos agregados)
-# y región NUTS 2.
-calcular_sobrecarga_ecv <- function(ecv, umbral = 0.40) {
+# Grupos de edad de Eurostat (ilc_lvho07a) que usa el atlas. Y15-29 se solapa con los otros.
+grupo_edad_eurostat <- function(edad) {
+  dplyr::case_when(is.na(edad) ~ NA_character_, edad < 18 ~ "Y_LT18", edad < 65 ~ "Y18-64", TRUE ~ "Y_GE65")
+}
+
+# Personas con su cociente, su tenencia y su grupo de edad (una fila por persona).
+personas_sobrecarga <- function(ecv, umbral = 0.40) {
   hogares <- ecv$hogares |>
     mutate(
       cociente  = cociente_sobrecarga(gasto_vivienda_mes, renta_disponible, ayuda_vivienda),
       sobrecarga = cociente > umbral,
       tenencia_eurostat = unname(TENENCIA_EUROSTAT[as.character(tenencia)])
     )
-  personas <- ecv$personas |>
+  ecv$personas |>
     inner_join(hogares, by = "id_hogar") |>
-    filter(!is.na(cociente), !is.na(peso_persona))
-
-  tasa <- function(datos, corte, grupo) {
-    datos |>
-      mutate(corte = corte, grupo = grupo) |>
-      group_by(anio, corte, grupo) |>
-      summarise(
-        valor      = 100 * sum(peso_persona[sobrecarga]) / sum(peso_persona),
-        n_personas = n(),
-        n_hogares  = n_distinct(id_hogar),
-        .groups = "drop"
-      )
-  }
-  propietario <- personas$tenencia_eurostat %in% c("OWN_NL", "OWN_L")
-  bind_rows(
-    tasa(personas, "total", "TOTAL"),
-    tasa(personas, "tenencia", personas$tenencia_eurostat),
-    tasa(personas, "tenencia", ifelse(propietario, "OWN", "RENT")),
-    tasa(personas, "region", personas$region)
-  ) |>
-    mutate(indicador = "sobrecarga", umbral = umbral, .before = 1)
+    filter(!is.na(cociente), !is.na(peso_persona)) |>
+    mutate(propietario = tenencia_eurostat %in% c("OWN_NL", "OWN_L"),
+           grupo_edad = grupo_edad_eurostat(edad))
 }
 
-# Empareja lo calculado con las cifras de Eurostat para la compuerta
-# (referencias sobrecarga_es_total, sobrecarga_es_mercado y sobrecarga_ccaa).
-comprobar_sobrecarga_ecv <- function(sobrecarga, eurostat) {
+# Tasa ponderada por grupos, con el tamaño de la muestra detrás.
+tasa_sobrecarga <- function(datos, corte, grupo, ambito = "ES") {
+  datos |>
+    mutate(corte = .env$corte, grupo = .env$grupo, ambito = .env$ambito) |>
+    group_by(ambito, corte, grupo) |>
+    summarise(
+      valor      = 100 * sum(peso_persona[sobrecarga]) / sum(peso_persona),
+      n_personas = n(),
+      n_hogares  = n_distinct(id_hogar),
+      .groups = "drop"
+    )
+}
+
+# Tasa de sobrecarga (%): personas que viven en hogares cuyo cociente supera el umbral,
+# ponderadas por RB050. Cortes: total, tenencia (y propietarios e inquilinos agregados),
+# edad y región NUTS 2.
+calcular_sobrecarga_ecv <- function(ecv, umbral = 0.40) {
+  p <- personas_sobrecarga(ecv, umbral)
+  jovenes <- filter(p, !is.na(edad), edad >= 15, edad <= 29)
+  bind_rows(
+    tasa_sobrecarga(p, "total", "TOTAL"),
+    tasa_sobrecarga(p, "tenencia", p$tenencia_eurostat),
+    tasa_sobrecarga(p, "tenencia", ifelse(p$propietario, "OWN", "RENT")),
+    tasa_sobrecarga(filter(p, !is.na(grupo_edad)), "edad", filter(p, !is.na(grupo_edad))$grupo_edad),
+    tasa_sobrecarga(jovenes, "edad", "Y15-29"),
+    tasa_sobrecarga(p, "region", p$region)
+  ) |>
+    select(-ambito) |>
+    mutate(anio = unique(ecv$hogares$anio), indicador = "sobrecarga", umbral = umbral, .before = 1)
+}
+
+# Varias olas agrupadas para los cruces que una sola ola no sostiene (comunidad × tenencia,
+# comunidad × edad; plan §7, F1b). Cada ola pesa lo mismo: su factor se divide por el número
+# de olas. Fiabilidad según la convención de EU-SILC: con menos de 20 observaciones no se
+# publica; de 20 a 49, se marca como poco fiable.
+calcular_sobrecarga_agrupada <- function(olas, umbral = 0.40) {
+  p <- bind_rows(lapply(olas, personas_sobrecarga, umbral = umbral)) |>
+    mutate(peso_persona = peso_persona / length(olas), id_hogar = paste(anio, id_hogar))
+  anios <- range(p$anio)
+  bind_rows(
+    tasa_sobrecarga(p, "tenencia", p$tenencia_eurostat, ambito = p$region),
+    tasa_sobrecarga(p, "tenencia", ifelse(p$propietario, "OWN", "RENT"), ambito = p$region),
+    tasa_sobrecarga(filter(p, !is.na(grupo_edad)), "edad", filter(p, !is.na(grupo_edad))$grupo_edad,
+                    ambito = filter(p, !is.na(grupo_edad))$region)
+  ) |>
+    rename(region = ambito) |>
+    mutate(
+      fiabilidad = case_when(n_personas < 20 ~ "no publicable", n_personas < 50 ~ "baja", TRUE ~ "normal"),
+      anio_inicio = anios[1], anio_fin = anios[2], olas = length(olas),
+      indicador = "sobrecarga", umbral = umbral, .before = 1
+    )
+}
+
+# Empareja lo calculado con las cifras de Eurostat para la compuerta, año a año
+# (referencias sobrecarga_es_total, sobrecarga_es_mercado, sobrecarga_ccaa y, si se da
+# `europa`, sobrecarga_es_edad).
+comprobar_sobrecarga_ecv <- function(sobrecarga, eurostat, europa = NULL) {
+  bind_rows(lapply(sort(unique(sobrecarga$anio)), function(a) {
+    comprobar_sobrecarga_anio(filter(sobrecarga, anio == a), eurostat, europa)
+  }))
+}
+
+comprobar_sobrecarga_anio <- function(sobrecarga, eurostat, europa = NULL) {
   anio_ecv <- unique(sobrecarga$anio)
   ref <- filter(eurostat, anio == anio_ecv)
   calc <- function(c, g) sobrecarga$valor[sobrecarga$corte == c & sobrecarga$grupo == g]
@@ -193,5 +239,25 @@ comprobar_sobrecarga_ecv <- function(sobrecarga, eurostat) {
     message("Sin referencia de Eurostat en ", anio_ecv, ": ", paste(sin_ref, collapse = ", "))
     regional <- filter(regional, !is.na(referencia))
   }
-  bind_rows(nacional, regional) |> mutate(anio = anio_ecv, .after = id)
+  edades <- NULL
+  if (!is.null(europa)) {
+    calc_edad <- filter(sobrecarga, corte == "edad")
+    ref_edad <- filter(europa, conjunto == "ilc_lvho07a", geo == "ES", anio == anio_ecv)
+    edades <- inner_join(calc_edad, ref_edad, by = c("grupo" = "edad"), suffix = c("", "_ref")) |>
+      transmute(id = "sobrecarga_es_edad", detalle = paste("ES,", grupo), calculado = valor, referencia = valor_ref)
+  }
+  bind_rows(nacional, regional, edades) |> mutate(anio = anio_ecv, .after = id)
+}
+
+# Indicador 22 en la tabla larga: total nacional («00») y comunidades (código del INE,
+# desde la región NUTS 2 de la ECV). Los desgloses por tenencia y edad van aparte
+# (exportar_sobrecarga), porque la tabla larga no tiene dimensión de corte.
+armonizar_sobrecarga_ecv <- function(sobrecarga, ccaa, version) {
+  sobrecarga |>
+    filter(corte %in% c("total", "region")) |>
+    left_join(select(ccaa, codigo, nuts2), by = c("grupo" = "nuts2")) |>
+    transmute(geo_id = if_else(corte == "total", "00", codigo),
+              nivel = if_else(corte == "total", "nacional", "ccaa"),
+              anio, indicador = "sobrecarga", valor, estado = "dato", fuente = "ine_ecv",
+              geo_ref = NA_character_, version = version)
 }

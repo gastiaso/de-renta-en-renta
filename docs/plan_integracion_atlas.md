@@ -358,6 +358,12 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
   - primera versión pública de la identidad, el bilingüe y la compuerta.
 - **Hecho cuando:** pasa el doble control de §6.5 (España y cada comunidad frente a Eurostat, ±0,1 puntos).
 - **Condición:** si el cruce comunidad × tenencia no sale con intervalos publicables, la sección pierde su valor añadido frente al visor de Eurostat y se aplaza a F6.
+- **Avance (7-nov-2026):**
+  - Tres olas de la ECV (2023–2025) en el pipeline; las tres pasan la compuerta: España, inquilinos a precio de mercado, las 19 comunidades y los cuatro grupos de edad (diferencia máxima con Eurostat, 0,05 puntos). La edad es la del final del año de ingresos (RB081): con la de la entrevista, el corte de 2025 se desviaba 0,12 puntos.
+  - Comunidad × tenencia y comunidad × edad con las tres olas agrupadas: todas las celdas superan las 50 observaciones (la menor, 261 personas en alquiler de mercado en Melilla), así que pasan los umbrales de publicación de EU-SILC. Faltan los intervalos de confianza (pregunta abierta 9).
+  - Europa: todos los países (tenencia y edad) y las regiones NUTS 2, con su versión de geometría (GISCO 2021 y 2024); solo faltan geometrías para el código agrupado FI19_20 y para Bosnia y Herzegovina en 2022–2023. «La escalera» de 2025: 214 entradas; las comunidades van del puesto 23 (Melilla, 13,8 %) al 185 (Navarra, 3,5 %).
+  - Indicador 23 desde las tablas del módulo (comunidades, edad y sexo, tenencia).
+  - Ficheros intermedios en `datos/intermedios/sobrecarga/`; total y comunidades de los indicadores 22 y 23, también en la tabla larga.
 
 ### F2 · Núcleo renta y alquiler → v0.1 pública — L
 
@@ -530,6 +536,8 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 6. **Medianas `ausente` por aportes pequeños.** Cerrada el 6-nov-2026: se copia la mediana del origen dominante (≥ 95 % de los portales) como `estimado` (§6.3). En Madrid, las medianas `ausente` bajan a 91, 191 y 233 según el año.
 7. **Método de la mochila.** La AEAT no publica la mediana por comunidad y edad, y su «año completo» es un salario anualizado, no el de quien trabaja doce meses (§3.1). Opciones A (recomendada), B y C. Por decidir antes de F3; la v0.1 solo necesita el salario provincial medio (indicador 7, versión mínima).
 8. **Alquiler del País Vasco (y Navarra) en los años sin SERPAVI.** La estadística del Gobierno Vasco (fianzas) no baja a sección censal (municipios de más de 5.000 habitantes y barrios de las capitales) y da la media, no la mediana. Navarra no tiene ninguna fuente antes de 2021. Propuesta: sin dato por sección esos años y la estadística de fianzas como capa aparte de contexto municipal, sin mezclarla con el indicador 8 (regla 5: cada fuente dice qué mide). Por decidir antes de F2.
+9. **Intervalos de confianza de la sobrecarga.** Los microdatos públicos de la ECV no traen estratos ni unidades primarias de muestreo, así que no se puede calcular el error de diseño. Opciones: (a) sin intervalos, con el número de observaciones y la marca de fiabilidad de EU-SILC, que ya están; (b) intervalos aproximados con muestreo aleatorio simple corregido por un efecto de diseño calibrado con los coeficientes de variación que publica el INE por comunidad (tablas 79669–79671, para la tasa AROPE). Recomendada: (b), declarando la aproximación.
+10. **Desgloses en la tabla larga.** El esquema (§6.4) no tiene dimensión de corte, así que la sobrecarga por tenencia o edad va en ficheros aparte. Propuesta: añadir dos columnas, `corte` y `grupo` (`total` por defecto), para que todo viva en la misma tabla.
 
 **Por verificar en F0** (no son decisiones, son comprobaciones), hechas el 6-nov-2026:
 - cortes de edad de la AEAT (<18, 18–25, 26–35, 36–45, 46–55, 56–65, >65) y módulo de año completo (desde 2019; ver §3.1);

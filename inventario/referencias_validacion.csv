@@ -1,9 +1,12 @@
 id,indicador,comprobacion,referencia,tolerancia,tipo,estado
-sobrecarga_es_total,22,Tasa de sobrecarga de España calculada con microdatos de la ECV,Eurostat ilc_lvho07a (total),"±0,1 puntos",bloqueo,en el pipeline; pasa en 2025
-sobrecarga_es_mercado,22,Tasa de los inquilinos a precio de mercado,Eurostat ilc_lvho07c (RENT_MKT),"±0,1 puntos",bloqueo,en el pipeline; pasa en 2025
-sobrecarga_ccaa,22,Tasa total de cada comunidad,Eurostat ilc_lvho07_r (NUTS 2),"±0,1 puntos",bloqueo,en el pipeline; pasa en 2025
+sobrecarga_es_total,22,Tasa de sobrecarga de España calculada con microdatos de la ECV,Eurostat ilc_lvho07a (total),"±0,1 puntos",bloqueo,en el pipeline; 2023–2025
+sobrecarga_es_mercado,22,Tasa de los inquilinos a precio de mercado,Eurostat ilc_lvho07c (RENT_MKT),"±0,1 puntos",bloqueo,en el pipeline; 2023–2025
+sobrecarga_ccaa,22,Tasa total de cada comunidad,Eurostat ilc_lvho07_r (NUTS 2),"±0,1 puntos",bloqueo,en el pipeline; 2023–2025
+sobrecarga_es_edad,22,"Tasa de sobrecarga de España por grupos de edad (menores de 18, 18–64, 65 y más, 15–29) calculada con microdatos de la ECV",Eurostat ilc_lvho07a (edad),"±0,1 puntos",alerta,en el pipeline; 2023–2025
+nuts_geometria,22,Regiones con dato de ilc_lvho07_r sin geometría en la versión NUTS de su año (2021 hasta 2023; 2024 desde 2024),Geometrías NUTS de GISCO,exacto,alerta,en el pipeline
+modulo_acceso_lectura,23,Suma de las comunidades (miles de personas que buscaron vivienda sin cambiarse) frente al total nacional,Tabla 79637 del módulo de la ECV 2025,"±0,1 %",bloqueo,en el pipeline
 adrh_municipio,1;2,"Mediana, por año e indicador, de la desviación absoluta (%) entre las medias de sección agregadas a municipio (por persona, con la población; por hogar, con los hogares) y la cifra municipal",ADRH municipal publicado,"±0,1 %",bloqueo,en el pipeline (Madrid); pasa en 2015–2024
-adrh_municipio_detalle,1;2,"Desviación (%) de cada municipio entre las medias de sección agregadas y la cifra municipal",ADRH municipal publicado,"±1 %",alerta,"en el pipeline (Madrid); avisa en 12 municipios. Por encima del 5 %, Alcobendas y Pozuelo de Alarcón todos los años y Boadilla del Monte casi todos (diferencia de la propia fuente entre escalas, con todas las secciones con dato)"
+adrh_municipio_detalle,1;2,Desviación (%) de cada municipio entre las medias de sección agregadas y la cifra municipal,ADRH municipal publicado,±1 %,alerta,"en el pipeline (Madrid); avisa en 12 municipios. Por encima del 5 %, Alcobendas y Pozuelo de Alarcón todos los años y Boadilla del Monte casi todos (diferencia de la propia fuente entre escalas, con todas las secciones con dato)"
 serpavi_provincia,8;9,"Recuento de testigos de las secciones sumado a provincia, por año y tipología (las medianas no se agregan)",Hoja Provincias de la base de datos del SERPAVI,exacto,bloqueo,pendiente
 aeat_provincia,7,Salario medio provincial leído,Tabla publicada de la AEAT,exacto,bloqueo,pendiente
 smi_neto,15;21,Ingreso de la tartera,"17.094 € × (1 − 0,065) / 12 ≈ 1.332 €",exacto con los parámetros del año,bloqueo,pendiente

@@ -17,6 +17,37 @@ test_that("la tabla larga rechaza códigos, estados y combinaciones incoherentes
                "catálogo")
 })
 
+ccaa_prueba <- tibble::tibble(codigo = c("13", "04"), nombre_ine = c("Madrid, Comunidad de", "Balears, Illes"),
+                              nuts2 = c("ES30", "ES53"))
+
+test_that("el módulo de acceso se lee en formato español y pasa a comunidades y nacional", {
+  ruta <- tempfile(fileext = ".csv")
+  writeLines(c("﻿Comunidad Autónoma;Razón principal;Total",
+               "Total;Ha buscado vivienda activamente pero no se ha cambiado (%);7,6",
+               "Total;Ha buscado vivienda activamente pero no se ha cambiado (miles);3.182,4",
+               "Madrid, Comunidad de;Ha buscado vivienda activamente pero no se ha cambiado (%);10,2",
+               "Madrid, Comunidad de;Ha buscado vivienda activamente pero no se ha cambiado (miles);2.000,0",
+               "Balears, Illes;Ha buscado vivienda activamente pero no se ha cambiado (%);10,6",
+               "Balears, Illes;Ha buscado vivienda activamente pero no se ha cambiado (miles);1.182,4"),
+             ruta, useBytes = TRUE)
+  m <- leer_ine_ecv_modulo(ruta)
+  expect_equal(m$valor[2], 3182.4)
+  expect_equal(comprobar_ine_ecv_modulo(m)$calculado, 0)
+  t <- armonizar_ine_ecv_modulo(m, ccaa_prueba, version = "prueba")
+  expect_equal(t$geo_id, c("00", "13", "04"))
+  expect_equal(t$nivel, c("nacional", "ccaa", "ccaa"))
+  expect_silent(validar_tabla_larga(t))
+})
+
+test_that("la sobrecarga entra en la tabla larga por comunidad (código del INE) y nacional", {
+  s <- tibble::tibble(anio = 2025L, indicador = "sobrecarga", umbral = 0.4,
+                      corte = c("total", "region", "region", "tenencia"), grupo = c("TOTAL", "ES30", "ES53", "RENT_MKT"),
+                      valor = c(7.2, 9.9, 6.4, 26.8))
+  t <- armonizar_sobrecarga_ecv(s, ccaa_prueba, version = "prueba")
+  expect_equal(t$geo_id, c("00", "13", "04"))
+  expect_silent(validar_tabla_larga(t))
+})
+
 test_that("la renta se lleva a 2021 con su estado: secreto, estimado y dato", {
   renta <- tibble::tribble(
     ~anio, ~nivel,      ~codigo,      ~indicador,         ~valor,

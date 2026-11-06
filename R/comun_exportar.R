@@ -2,7 +2,7 @@
 
 # Tabla larga única (guía de trabajo, «Modelo de datos»).
 COLUMNAS_TABLA_LARGA <- c("geo_id", "nivel", "anio", "indicador", "valor", "estado", "fuente", "geo_ref", "version")
-NIVELES <- c(sc = 10L, distrito = 7L, municipio = 5L, cp = 5L, provincia = 2L, ccaa = 2L)
+NIVELES <- c(sc = 10L, distrito = 7L, municipio = 5L, cp = 5L, provincia = 2L, ccaa = 2L, nacional = 2L)   # nacional: «00»
 ESTADOS <- c("dato", "secreto", "ausente", "estimado")
 
 # Comprueba el esquema y la coherencia de la tabla larga; se detiene con el primer problema.
@@ -20,6 +20,21 @@ validar_tabla_larga <- function(tabla, indicadores = NULL, fuentes = NULL) {
   if (!is.null(indicadores)) problema(!tabla$indicador %in% indicadores$codigo, "Indicador fuera del catálogo")
   if (!is.null(fuentes)) problema(!tabla$fuente %in% fuentes$id, "Fuente fuera del inventario")
   tabla
+}
+
+# Sobrecarga (F1b): cifras anuales de España por corte, cruces con varias olas y «escalera».
+# Van aparte de la tabla larga, que no tiene dimensión de corte (tenencia, edad).
+exportar_sobrecarga <- function(anual, agrupada, escalera, dir = file.path("datos", "intermedios", "sobrecarga")) {
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  rutas <- c(
+    file.path(dir, "espana_anual.csv"),
+    file.path(dir, "espana_agrupada.csv"),
+    file.path(dir, sprintf("escalera_%d.csv", unique(escalera$anio)))
+  )
+  readr::write_csv(anual |> mutate(valor = round(valor, 2)), rutas[1])
+  readr::write_csv(agrupada |> mutate(valor = round(valor, 2)), rutas[2])
+  readr::write_csv(escalera, rutas[3])
+  rutas
 }
 
 # Escribe la tabla larga en Parquet, ordenada, con los tipos fijos del esquema.
