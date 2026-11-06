@@ -2,13 +2,17 @@
 
 Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decida en cada una se anota en el plan (`docs/plan_integracion_atlas.md`) o en `CHANGELOG.md`. Todo provisional.
 
-## 0. Entorno y git
+## 0. Entorno y git · HECHA (6-nov-2026)
+
+**Decisión:** R 4.6.1 con `renv` (`snapshot.type = "all"`: todo lo instalado en la biblioteca del proyecto queda en `renv.lock`). Git en `main`, sin remoto, primer commit hecho. `tar_make()` lee los tres CSV del inventario y las pruebas pasan.
 
 - En Windows, desde la carpeta del proyecto: `git init -b main`. Sin remoto. Primer commit tras revisar `git status`.
 - Paquetes de R: `targets`, `tarchetypes`, `httr2`, `readr`, `readxl`, `dplyr`, `arrow`, `sf`, `testthat`, `eurostat`, `giscoR`. Decidir si se usa `renv` (recomendable: el proyecto va a durar años).
 - **Hecho cuando:** `targets::tar_make()` ejecuta el esqueleto (lee los dos CSV del inventario) y `testthat::test_dir("pruebas/testthat")` pasa.
 
-## 1. SERPAVI por sección censal · BLOQUEANTE
+## 1. SERPAVI por sección censal · HECHA (6-nov-2026)
+
+**Decisión: (a) descarga directa.** El MIVAU publica la base de datos completa, 2011–2024, con una hoja por sección censal en el seccionado del Censo 2021 para toda la serie. Detalle en `inventario/fuentes.csv` (`mivau_serpavi`) y en el plan v0.4. Queda para F2: País Vasco antes de 2022/2024 (`gv_emal`) y Navarra antes de 2021.
 
 - Comprobar si existe descarga reutilizable a escala de sección: años, variables (mediana, cuartiles, número de testigos, €/m², tipología), formato, licencia y cobertura.
 - País Vasco: estadística de fianzas del Gobierno Vasco. Navarra: a confirmar.
@@ -25,7 +29,7 @@ Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decid
 
 - **AEAT, Mercado de trabajo:** cortes de edad de las tablas por provincia; desde qué año existe el módulo de año completo (deciles por comunidad y edad); si publica la retención media por tramo.
 - **INSS:** pensión media de jubilación por provincia: formato, serie y si hay descarga estable.
-- **Eurostat, `ilc_lvho07_r`:** cobertura por país y años (las regiones españolas están comprobadas para 2021–2024; ES30 Madrid: 13,4 % en 2021 y 11,2 % en 2024).
+- **Eurostat, `ilc_lvho07_r`:** cobertura por país y años. España, hecho: las 19 comunidades, 2021–2025 (ES30 Madrid: 13,4 % en 2021, 11,2 % en 2024 y 9,9 % en 2025). Falta el resto de países.
 - **Hecho cuando:** cada punto tiene respuesta en `inventario/fuentes.csv` (columnas `estado` y `notas`) y, si cambia algo del método, en el plan.
 
 ## 4. Inventario de fuentes
@@ -33,15 +37,22 @@ Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decid
 - Completar `inventario/fuentes.csv`: dirección estable, forma de acceso, licencia (con el texto citado), cadencia y desfase.
 - **Hecho cuando:** ninguna fila de las fuentes de la v0.0 y la v0.1 queda en «a confirmar» en acceso y licencia.
 
-## 5. F1b · primer paso: sobrecarga de España
+## 5. F1b · primer paso: sobrecarga de España · HECHA (6-nov-2026)
+
+**Resultado (ECV 2025):** España 7,17 % (Eurostat 7,2); inquilinos a precio de mercado 26,80 % (26,8); las 19 comunidades, dentro de ±0,05 puntos de `ilc_lvho07_r`. Las otras tenencias también cuadran (3,45 / 3,4; 1,87 / 1,9; 8,44 / 8,4). Código: `R/fuente_ine_ecv.R`, `R/fuente_eurostat_ilc_lvho07.R` y `R/comun_validar.R` (primera versión de `validar_referencias()`, adelantada de la tarea 7). Pendiente para F1b: intervalos de confianza y olas anteriores.
 
 - Funciones `descargar_ine_ecv()` y `leer_ine_ecv()` para los microdatos de la ECV (última ola: 2025), reaprovechando código propio previo si lo hay.
 - Calcular la tasa de sobrecarga con el método de Eurostat: personas; gastos de vivienda menos ayudas entre renta disponible menos ayudas, por encima del 40 %; de la hipoteca, solo los intereses.
 - **Hecho cuando:** España total e inquilinos a precio de mercado coinciden con Eurostat en ±0,1 puntos (`referencias_validacion.csv`: `sobrecarga_es_total`, `sobrecarga_es_mercado`).
 
-## 6. F1 · prueba de la geografía constante
+## 6. F1 · prueba de la geografía constante · HECHA (6-nov-2026)
 
-- Con los seccionados de 2015 y 2025 del INE, construir la tabla de paso de **una provincia** (por ejemplo, Madrid) por la vía del callejero.
+**Resultado (Madrid):** tablas de paso 2015 → 2021 y 2025 → 2021 por el callejero, en `geo/tablas_paso/`. Prueba de cierre: desviación máxima 0,001 % (ADRH 2015 y 2024); ninguna sección sin tabla. La prueba es débil por construcción, así que se añade un diagnóstico sección a sección frente al ADRH 2020 (nativo en 2021): 63 y 26 atípicos, sobre todo en barrios en crecimiento. Geometría: de 2021 a 2025 cambian 252 de 4.417 secciones (5,7 %). Detalle en el plan v0.6, §6.3.
+
+**Prueba de un año (2022 → 2021):** donde cada sección de origen cae entera en la de 2021 (89,5 % de las secciones), el error es el ruido de un año (94,6 % dentro de ±5 %); donde hay que repartir (10,5 %), no (66,5 %, con errores de hasta el doble). De ahí la regla de estado `dato` / `estimado` / `ausente`, adoptada e implementada (plan v0.7, §6.3). Pendiente: la vía (b), Catastro, en las secciones `estimado`, y decidir las medianas `ausente` por aportes pequeños (plan, pregunta abierta 6).
+
+- Referencia: el seccionado de 2021 (plan v0.5, §6.3). Con los seccionados de 2015, 2021 y 2025 del INE, construir las tablas de paso 2015 → 2021 (hacia delante: reparte) y 2025 → 2021 (hacia atrás: agrega) de **una provincia** (por ejemplo, Madrid, la que más secciones ha cambiado) por la vía del callejero.
+- Medir con la geometría cuántas secciones de 2021 conservan el código pero cambian de límites.
 - **Hecho cuando:** la prueba de cierre poblacional queda dentro de ±0,5 %, o hay un diagnóstico de por qué no y de qué cambia en el plan.
 
 ## 7. Esqueleto del pipeline

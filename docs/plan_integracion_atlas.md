@@ -1,6 +1,14 @@
 # Casilla de salida — Plan de integración por fases
 
-*Borrador v0.3 · 6 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.7 · 6 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.7:** adoptada la regla de estado de las cifras reproyectadas (`dato`, `estimado`, `ausente`; §1 y §6.3), que sustituye al tratamiento por direcciones. Nueva pregunta abierta sobre las medianas `ausente` por aportes pequeños (§11).
+
+**Cambios en la v0.6:** prueba de F1 en Madrid (backlog, tarea 6): tablas de paso 2015 → 2021 y 2025 → 2021 por el callejero, prueba de cierre superada, diagnóstico sección a sección y prueba de un año (2022 → 2021), con una propuesta de estado `dato` / `estimado` (§6.3; pregunta abierta 5). El año *t* del ADRH está en el seccionado de *t* + 1. El coste del seccionado de 2021 es mayor que el estimado por códigos: en Madrid, el 5,7 % de las secciones ha cambiado en 2025.
+
+**Cambios en la v0.5:** seccionado de referencia: el del Censo 2021, no el último (§1, §6.3; cierra la pregunta abierta 4). El indicador 8 pasa a llamarse «Alquiler mensual (mediana)», porque el SERPAVI no publica la media.
+
+**Cambios en la v0.4:** SERPAVI por sección censal resuelto (backlog, tarea 1): el MIVAU publica la base de datos completa en un Excel descargable y reutilizable, 2011–2024, con secciones, distritos, municipios, provincias y comunidades; toda la serie va en el seccionado del Censo 2021 (§2.4, §6.3); mediana, P25 y P75 de alquiler, €/m² y superficie, con recuento de testigos y por tipología; los territorios forales entran entre 2021 y 2024 (`inventario/rupturas.csv`). Nueva pregunta abierta sobre el seccionado de referencia (§11).
 
 **Cambios en la v0.3:** método de la mochila (AEAT provincial pasada a mediana, con la ECV como control, año completo); transistor solo con pensiones de jubilación (INSS); 50 m² para las fichas de una persona; un solo mapa europeo (regiones NUTS 2 para el total; países, y España por comunidades, para los desgloses), tras comprobar que la serie regional de Eurostat existe e incluye las comunidades.
 
@@ -16,6 +24,8 @@
 | Público | Principal: periodistas de datos y técnicos de administraciones y entidades. Secundario: capa ciudadana |
 | Naturaleza | Escaparate personal y contribución cívica |
 | Escala y periodo | Sección censal (SC), de 2015 al último dato disponible |
+| Seccionado de referencia | El del Censo 2021 (1 de enero de 2021), en el que el SERPAVI publica toda su serie (§6.3) |
+| Cifras reproyectadas | `dato` si las secciones de origen caen enteras en la de 2021; `estimado` si alguna se reparte; medianas `dato` solo 1:1 y `ausente` con varios orígenes (§6.3) |
 | Alcance | 23 indicadores: los 20 iniciales y 3 añadidos el 6-nov (catálogo en §5) |
 | Código previo | Se reutiliza el código propio que sirva (§2.1) |
 | Para quién | Cinco fichas con ingreso neto mensual y superficie propia: llave, mochila, tartera, transistor y «Tu ficha» (§3.1) |
@@ -68,7 +78,7 @@ Veinte indicadores, a nivel de sección censal, por una sola persona, retrasan m
 Aceptado, pero con su coste explícito:
 
 - **El seccionado cambia cada año** (altas, bajas y correcciones de límites, consolidadas a 1 de enero). Comparar en el tiempo obliga a construir una **geografía constante** con tablas de paso (§6.3). Es la pieza más arriesgada del proyecto y va en la Fase 1, antes que cualquier indicador.
-- **Cobertura y secreto estadístico.** El SERPAVI cubre unas 26.300 secciones de unas 36.000. El ADRH no publica las que no superan los umbrales de población. El mapa tendrá huecos, y hay que diseñarlos como información («sin dato por secreto estadístico»), no como error.
+- **Cobertura y secreto estadístico.** El SERPAVI publica en 2024 la mediana del alquiler de vivienda colectiva en 26.137 de 36.293 secciones (28.735 si se cuenta también la unifamiliar); por debajo de 10 testigos solo da el recuento. El ADRH no publica las que no superan los umbrales de población. El mapa tendrá huecos, y hay que diseñarlos como información («sin dato por secreto estadístico»), no como error.
 - **Mezcla de escalas.** Varios indicadores no existen a nivel de sección (salarios por provincia, compraventa por código postal). Principio: **cada indicador se muestra en su nivel nativo; nunca se desagrega hacia abajo** (§4).
 
 ### 2.5 La nostalgia de la identidad tiene trampa
@@ -107,7 +117,7 @@ Regla común: **ingreso neto mensual repartido en 12**. El alquiler se paga doce
 
 | Ficha | Ingreso de referencia | Fuente | Escala | Vivienda | Pendiente |
 |---|---|---|---|---|---|
-| Llave · hogar del barrio | Renta neta media por hogar ÷ 12 | INE, ADRH | Sección censal | Alquiler medio de su propia sección (sin m² fijos) | Mide esfuerzo de residentes, no acceso. Es renta del hogar (varios perceptores), no un sueldo |
+| Llave · hogar del barrio | Renta neta media por hogar ÷ 12 | INE, ADRH | Sección censal | Alquiler mensual mediano de su propia sección (sin m² fijos) | Mide esfuerzo de residentes, no acceso. Es renta del hogar (varios perceptores), no un sueldo |
 | Mochila · joven menor de 35 | Mediana estimada del salario de 26–35 años, año completo, neta, ÷ 12 | AEAT, *Mercado de trabajo y pensiones* (media por provincia y edad, y deciles por comunidad y edad); control con microdatos de la ECV | Provincia | 50 m² | Ver «Método de la mochila». Confirmar los cortes de edad de la AEAT y desde qué año existe el módulo de año completo |
 | Tartera · salario mínimo | SMI neto anual ÷ 12 | RD 126/2026: 1.221 € × 14 = 17.094 € brutos; exento de IRPF; menos cotizaciones (≈ 6,5 %) → **≈ 1.332 €/mes** (cálculo propio aproximado) | Nacional | 50 m² | Revisar cada año con el real decreto |
 | Transistor · pensionista | Pensión media de **jubilación**, neta de IRPF, ÷ 12 | INSS, *Pensiones contributivas del Sistema de la Seguridad Social* por provincia (mensual) | Provincia | 50 m² | Responde a «si tuviera que alquilar hoy»: el 89,1 % de los mayores de 65 años vive en casa propia (ECV 2023), y la ficha lo dice. No incluye Clases Pasivas. La AEAT no separa por clase de pensión: por eso cambia la fuente |
@@ -128,7 +138,7 @@ Regla común: **ingreso neto mensual repartido en 12**. El alquiler se paga doce
 ## 4. Principios de diseño
 
 1. **Nivel nativo.** Cada indicador se publica en la escala en que lo produce su fuente. No se desagrega hacia abajo. Hacia arriba solo se agrega si es aritméticamente válido (medias ponderadas sí; medianas e índices no, en ese caso se toma la cifra publicada).
-2. **Geografía constante.** Todas las series se reproyectan a un seccionado de referencia con tablas de paso documentadas.
+2. **Geografía constante.** Todas las series se reproyectan al seccionado de referencia, el del Censo 2021, con tablas de paso documentadas.
 3. **Supuestos a la vista.** Los indicadores derivados (esfuerzo, barrera, años de salario) exponen sus supuestos y permiten cambiarlos, como «Construye tu estimación» en *barómetros*.
 4. **Alineación temporal explícita.** Regla única para emparejar años de precio y de renta (por defecto, el mismo año de referencia; nunca el último de cada fuente sin avisar).
 5. **No se publica lo que no valida.** Ninguna cifra sale si el pipeline no reproduce las publicadas por la fuente (§6.5).
@@ -159,7 +169,7 @@ Las marcas ★ son el núcleo de la v0.1. «A confirmar» indica que hay que ver
 
 | # | Indicador | Fuente | Nivel nativo | Serie | Notas |
 |---|---|---|---|---|---|
-| 8 ★ | Alquiler medio mensual (€/mes) | MIVAU, SERPAVI; Gobierno Vasco (estadística de fianzas) | SC | 2015–último | Contratos declarados (parque alquilado), no contratos nuevos |
+| 8 ★ | Alquiler mensual, mediana (€/mes) | MIVAU, SERPAVI; Gobierno Vasco (estadística de fianzas) | SC | 2015–último | Contratos declarados (parque alquilado), no contratos nuevos |
 | 9 ★ | Alquiler por m² (€/m²/mes) | MIVAU, SERPAVI | SC | 2015–último | Ídem |
 | 10 | Variación anual del alquiler | INE, IPVA | Municipio / distrito de capitales | 2015–2024 | Índice, no nivel; separa contratos nuevos y existentes |
 | 11 | Precio de compraventa (€/m²) | Portal Estadístico del Notariado | Código postal / municipio | A confirmar | Precio escriturado; condiciones de reutilización por verificar |
@@ -225,12 +235,33 @@ pruebas/      testthat + prueba de la web con chromote
 ### 6.3 Geografía constante (la pieza crítica)
 
 - **Insumos:** el seccionado anual del INE (shapefile a 1 de enero, 2015 → último) y el callejero del censo electoral, cuyas variaciones entre fechas publica el INE desde 2011.
-- **Referencia:** el seccionado del último año.
-- **Tablas de paso** sección del año *t* → sección de referencia, con pesos de dos fuentes alternativas:
+- **Referencia: el seccionado del Censo 2021** (decidido el 6-nov-2026). El mapa se dibuja con sus límites.
+- **Por qué 2021 y no el último:** el SERPAVI publica toda su serie 2011–2024 en ese seccionado (según sus metadatos, agrega los inmuebles que constan a la vez en la fuente tributaria y en el Catastro), y el Censo 2021 (indicador 18) también. Así, el alquiler y el Censo no necesitan tabla de paso, y el núcleo de la v0.1 cumple la regla del nivel nativo sin excepciones. Con el último habría que repartir las medianas del SERPAVI en las secciones divididas después de 2021.
+- **Coste:** las secciones que han cambiado desde 2021 se ven con sus límites antiguos. Por códigos, de 2021 a 2025 conservan el suyo 35.955 de 36.293 (99,1 %); desaparecen 338 y aparecen 599, con Madrid a la cabeza. Con la geometría, en la provincia de Madrid (prueba de F1, 6-nov-2026): de 2021 a 2025 desaparecen 48 códigos y otras 204 secciones conservan el código pero cambian más de un 1 % de su superficie (162, más de un 25 %), es decir, 252 de 4.417 secciones (5,7 %). Entre 2015 y 2021 son 140 las que conservan el código y cambian de límites. El coste real es mayor que el estimado por códigos (1–3 %) y se concentra en los barrios en crecimiento.
+- **Tablas de paso** sección del año *t* → sección de 2021, con pesos de dos fuentes alternativas:
   - (a) tramos del callejero (portales asignados a cada sección);
   - (b) edificios residenciales del Catastro (INSPIRE) ponderados por número de viviendas.
 - Se documenta cuál se usa y se contrastan ambas.
-- **Prueba de cierre:** la población del padrón por sección reproyectada debe cuadrar con los totales municipales publicados (tolerancia a fijar, p. ej. ±0,5 %).
+- **Vía (a) en la práctica** (prueba de Madrid):
+  - cada tabla compara tramos de la misma aplicación del INE: el callejero de enero de 2021 se publicó con la antigua y con la nueva, así que 2015 → 2021 usa la antigua en los dos extremos y 2025 → 2021, la nueva;
+  - los tramos sin vía (código 00000) se identifican por su pseudovía; los rangos genéricos 0001–9999 de la aplicación antigua se recortan al último portal real que da la nueva;
+  - el peso es el número de portales, no de viviendas: un bloque de cien viviendas pesa lo mismo que una casa. Es la razón de la vía (b).
+- **Años y direcciones** (ADRH y padrón, que se publican cada año en su seccionado). El año *t* del ADRH está en el seccionado de 1 de enero de *t* + 1 (Madrid: el ADRH 2020 coincide código a código con el seccionado de 2021, y el 2024 con el de 2025). Así, el ADRH 2020 es nativo; 2015–2019 van hacia delante (las divisiones obligan a repartir) y 2021–2024, hacia atrás (casi siempre es juntar).
+- **Estado de las cifras reproyectadas** (adoptado el 6-nov-2026, a partir de la prueba de un año; decide la sección, no la dirección). Una sección de origen «cae entera» en la de 2021 si su fracción hacia ella es ≥ 0,99:
+  - recuentos y medias ponderadas: `dato` si todos los orígenes que recibe caen enteros (sumar, o promediar con su denominador, es exacto); `estimado` si alguno se reparte;
+  - medianas e índices: `dato` solo con un único origen que cae entero (la misma sección, aunque cambie de código); `estimado` con un único origen repartido (se copia su mediana); `ausente` con varios orígenes, porque las medianas no se combinan, y se remite a la escala superior;
+  - el `estimado` es una excepción declarada a la regla del nivel nativo, limitada a esas secciones y años.
+  - En Madrid, secciones `dato` para recuentos y medias: 3.693 (2015 → 2021), 3.952 (2022 → 2021) y 3.859 (2025 → 2021) de 4.417. Para medianas, `ausente` en 525, 455 y 459: basta con que la sección reciba una pequeña parte de una vecina. Implementado en `geo_estado_paso()` y en `geo_reproyectar_recuento()`, `geo_reproyectar_media()` y `geo_reproyectar_mediana()`.
+- **Prueba de cierre:** la población del padrón por sección reproyectada debe cuadrar con los totales municipales publicados (±0,5 %).
+  - **Resultado en Madrid (6-nov-2026):** ADRH 2015 → 2021 y ADRH 2024 → 2021, desviación máxima 0,001 % en 169 y 179 municipios; ninguna sección sin tabla de paso.
+  - **Es una prueba débil por construcción:** las tablas no cruzan municipios y cada sección reparte el 100 %, así que solo detecta secciones sin tabla y municipios que cambian. Un primer error de casado (tramos sin vía casados entre sí en todo el municipio) la pasaba igual.
+  - **Diagnóstico sección a sección** (`diagnostico_f1`, no es compuerta): la población llevada a 2021 frente a la del ADRH 2020, nativo en 2021. En las secciones sin cambios, el 90 % de las razones queda entre 0,94 y 1,15 (2015) y entre 0,87 y 1,05 (2024). Quedan 63 y 26 secciones con razón fuera de [0,55; 1,8] (59 y 22 de ellas, en secciones afectadas por cambios), la mayoría en barrios en crecimiento (Valdebebas, El Cañaveral, Ensanche de Vallecas, entre otros), donde con cuatro o cinco años de distancia no se separa el error de la tabla del crecimiento real.
+  - **Prueba de un año** (ADRH 2021, en el seccionado de 2022, llevado a 2021 y comparado con el ADRH 2020; un año de crecimiento apenas estorba):
+    - en las 3.954 secciones de 2021 que no reciben población de otro código, el 94,6 % queda dentro de ±5 % (90 % entre 0,96 y 1,04): es el ruido de un año;
+    - en las que reciben entre el 5 % y el 50 % de otro código (172), solo el 45,9 %; en las que reciben más del 50 % (31), el 12,9 %, con errores de hasta el doble;
+    - la tabla es exacta cuando cada sección de origen cae entera en su destino (sumar recuentos no necesita pesos) y se equivoca cuando hay que repartir: el peso por números de portal no ve si un número existe solo sobre el papel, como en los barrios a medio construir.
+  - **De ahí la regla de estado** (ver arriba): en la prueba de un año, las secciones `dato` (3.952, 89,5 %) se comportan como el ruido de un año (94,6 % dentro de ±5 %, 7 errores de más del 20 %); las `estimado` (465), no (66,5 %; 50 errores de más del 20 %).
+  - **Siguiente paso:** la vía (b), viviendas del Catastro, solo hace falta en las secciones `estimado`; la prueba de un año sirve para compararla con la vía (a).
 - **Códigos postales:** no son una unidad del INE. Hay que localizar su geometría (CartoCiudad, a confirmar) y una tabla CP ↔ municipio, solo para los indicadores 11 y 16.
 
 ### 6.4 Modelo de datos
@@ -288,8 +319,8 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
 ### F1 · Geografía constante — L (la más arriesgada)
 
 - **Contenido:**
-  - seccionado 2015 → último;
-  - tablas de paso con las dos vías de ponderación;
+  - seccionados 2015 → último, todos llevados al de 2021;
+  - tablas de paso con las dos vías de ponderación, en las dos direcciones (§6.3);
   - jerarquía SC → distrito → municipio → provincia → comunidad;
   - geometría de CP;
   - PMTiles de referencia.
@@ -461,6 +492,9 @@ Terna inicial: **Años de sueldo** (claridad para periodistas), **Nivel de vida*
 1. **Escalonado.** v0.0 (sobrecarga), v0.1 con 10 indicadores y los 23 para la v1.0 (§2.3): por confirmar.
 2. **Portales.** Capa desmontable, solo informes agregados y repo satélite (§2.2): por confirmar.
 3. **Nombre.** ¿*Casilla de salida* definitivo? Falta comprobar GitHub, dominios y OEPM.
+4. **Seccionado de referencia.** Cerrada el 6-nov-2026: el del Censo 2021 (§1 y §6.3). Se descartó el último porque obligaba a repartir las medianas del SERPAVI: 227 de las 26.137 secciones con dato en 2024 tienen un código que desaparece antes de 2025 (0,6 % de los testigos).
+5. **Estado de las cifras reproyectadas.** Cerrada el 6-nov-2026 (§1 y §6.3). Las medias ponderadas siguen a los recuentos, como manda la regla del nivel nativo; el 1:1 se exige solo a las medianas.
+6. **Medianas `ausente` por aportes pequeños.** Con la regla adoptada, una sección que recibe un 1 % de una vecina pierde su mediana (en Madrid, unas 460–525 secciones según el año, el 10–12 %). Se podría copiar la mediana del origen dominante (p. ej., ≥ 95 % de los portales) como `estimado`. Por decidir antes de reproyectar el indicador 3.
 
 **Por verificar en F0** (no son decisiones, son comprobaciones):
 - cortes de edad de la AEAT y año de inicio del módulo de año completo;
@@ -474,6 +508,7 @@ Terna inicial: **Años de sueldo** (claridad para periodistas), **Nivel de vida*
 - INE, [ADRH 2024, nota de prensa (19-10-2026)](https://www.ine.es/dyngs/Prensa/ADRH2024.htm) · [Metodología ADRH](https://ine.es/metodologia/metodologia_adrh.pdf)
 - INE, [IPVA 2024 (11-05-2026)](https://www.ine.es/dyngs/Prensa/IPVA2024.htm)
 - INE, [Cartografía de secciones censales y callejero del censo electoral](https://www.ine.es/uc/1dIJtjmE)
+- MIVAU, [SERPAVI: base de datos 2011–2024, metodología y capas](https://www.mivau.gob.es/vivienda/alquila-bien-es-tu-derecho/serpavi) · [aviso legal: reutilización](https://www.mivau.gob.es/ministerio/aviso-legal)
 - La Moncloa / MIVAU, [Mapa de precios de referencia del alquiler: cobertura y actualización](https://www.lamoncloa.gob.es/serviciosdeprensa/notasprensa/vivienda-agenda-urbana/Paginas/2024/mapa-precios-referencia-alquiler-vivienda.aspx)
 - datos.gob.es, [Solicitud de acceso reutilizable al SERPAVI (ago-2026)](https://datos.gob.es/es/solicitud-de-datos/ser-de-precios-de-alquiler-eum2-codigo-ine-periodicidad-historico-diccionario)
 - AEAT, [IRPF de los mayores municipios por código postal](https://sede.agenciatributaria.gob.es/Sede/datosabiertos/catalogo/hacienda/Estadistica_del_IRPF_por_codigo_postal.shtml) · [Mercado de trabajo y pensiones 2024](https://sede.agenciatributaria.gob.es/AEAT/Contenidos_Comunes/La_Agencia_Tributaria/Estadisticas/Publicaciones/sites/mercado/2024/mapa.html) · [Viviendas declaradas en el IRPF](https://datos.gob.es/gl/catalogo/ea0028512-estadistica-de-viviendas-declaradas-en-el-irpf)

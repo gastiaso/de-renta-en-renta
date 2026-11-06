@@ -6,8 +6,8 @@ id,codigo,nombre_es,nombre_en,familia,fuentes,nivel_nativo,serie,fase,nucleo_v01
 5,bajo_60_mediana,Población por debajo del 60 % de la mediana de renta por unidad de consumo,Population below 60% of median income per consumption unit,A capacidad de pago,ine_adrh;eustat_nastat,sección censal,2015–2024,F3,FALSE,Sin País Vasco ni Navarra en el ADRH
 6,gini,Índice de Gini,Gini index,A capacidad de pago,ine_adrh,sección censal o municipio (a confirmar),2015–2024,F3,FALSE,
 7,salario_medio,Salario medio anual por asalariado (total y menores de 35),Average annual wage per employee (total and under 35),A capacidad de pago,aeat_mercado_trabajo,provincia,~2004–2024,F3,FALSE,Base de la mochila (plan §3.1)
-8,alquiler_mes,Alquiler medio mensual,Average monthly rent,B coste de la vivienda,mivau_serpavi;gv_emal,sección censal,2015–último,F2,TRUE,"Contratos declarados (parque), no contratos nuevos"
-9,alquiler_m2,Alquiler por metro cuadrado,Rent per square metre,B coste de la vivienda,mivau_serpavi;gv_emal,sección censal,2015–último,F2,TRUE,
+8,alquiler_mes,Alquiler mensual (mediana),Monthly rent (median),B coste de la vivienda,mivau_serpavi;gv_emal,sección censal,2015–último,F2,TRUE,"Contratos declarados (parque), no contratos nuevos. Mediana, con P25 y P75: el SERPAVI no publica la media"
+9,alquiler_m2,Alquiler por metro cuadrado,Rent per square metre,B coste de la vivienda,mivau_serpavi;gv_emal,sección censal,2015–último,F2,TRUE,"Mediana (con P25 y P75), por tipología: vivienda colectiva y unifamiliar"
 10,var_alquiler,Variación anual del alquiler,Annual change in rents,B coste de la vivienda,ine_ipva,municipio y distrito de capitales,2015–2024,F4,FALSE,"Índice, no nivel"
 11,precio_compra_m2,Precio de compraventa por metro cuadrado,Sale price per square metre,B coste de la vivienda,notariado,código postal y municipio,a confirmar,F4,FALSE,Precio escriturado
 12,valor_tasado_m2,Valor tasado por metro cuadrado,Appraised value per square metre,B coste de la vivienda,mivau_valor_tasado,municipios de más de 25.000 habitantes (a confirmar),serie larga,F4,FALSE,

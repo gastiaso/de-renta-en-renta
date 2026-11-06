@@ -10,7 +10,7 @@ Atlas web de vivienda, salarios y otros indicadores sociales para España, por s
 
 ## Estado
 
-Fase F0 (cimientos): inventario inicial, kit de diseño y plan. Sin datos ni web todavía.
+Fase F0 (cimientos): inventario, kit de diseño, plan, pipeline con la sobrecarga de la ECV validada contra Eurostat y una prueba de la geografía constante en Madrid. Sin datos publicados ni web todavía.
 
 - Plan: `docs/plan_integracion_atlas.md`
 - Primeras tareas: `docs/backlog_f0.md`
@@ -33,7 +33,8 @@ Fase F0 (cimientos): inventario inicial, kit de diseño y plan. Sin datos ni web
 ## Ejecución
 
 ```r
-# Desde la carpeta del proyecto (Positron o RStudio)
+# Desde la carpeta del proyecto (Positron o RStudio), con R 4.6
+renv::restore()                          # solo la primera vez: instala las versiones de renv.lock
 targets::tar_make()
 testthat::test_dir("pruebas/testthat")
 ```

@@ -5,13 +5,12 @@ Atlas web de vivienda y salarios por sección censal, con fichas de perfil («pa
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
 2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.3: fuente de verdad de las decisiones).
+3. `docs/plan_integracion_atlas.md` (plan v0.7: fuente de verdad de las decisiones).
 
 ## Estado (6 de noviembre de 2026)
 
-- Fase F0. Esqueleto creado: inventario inicial, kit de diseño y plan. Sin datos, sin funciones de fuente en `R/`, sin web.
-- Git se inicializa en Windows (backlog, tarea 0), no desde una máquina virtual: así `core.filemode` y los finales de línea quedan bien desde el principio.
-- La tarea 1 (SERPAVI por sección censal) puede cambiar el alcance de la v0.1: va antes que cualquier código de alquiler.
+- Fase F0. Sin datos publicados ni web.
+- Hechas las tareas 0 (entorno y git), 1 (SERPAVI por sección censal), 5 (sobrecarga con la ECV, compuerta superada) y 6 (prueba de la geografía constante en Madrid). Detalle en el backlog.
 
 ## Forma de trabajo
 
@@ -27,13 +26,13 @@ F0 → en paralelo **F1b** (sobrecarga y Europa: publicable pronto, no depende d
 ## Reglas que no se rompen
 
 1. **Nivel nativo.** Cada indicador en la escala en que lo publica su fuente. Nunca se desagrega hacia abajo. Hacia arriba, solo si es aritméticamente válido: medias ponderadas sí; medianas e índices no (se toma la cifra publicada).
-2. **Geografía constante.** Las series se reproyectan al seccionado de referencia (el último) con tablas de paso documentadas.
+2. **Geografía constante.** Las series se reproyectan al seccionado de referencia, el del Censo 2021 (1 de enero de 2021), con tablas de paso documentadas. Lo reproyectado lleva estado: `dato` si las secciones de origen caen enteras en la de 2021, `estimado` si alguna se reparte; las medianas, `dato` solo 1:1 y `ausente` con varios orígenes (plan, §6.3).
 3. **Compuerta.** No se publica nada que no reproduzca las cifras de la fuente: `inventario/referencias_validacion.csv`. Las de tipo `bloqueo` paran el pipeline; las de tipo `alerta`, avisan.
 4. **Mismo año** en numerador y denominador. Si no es posible, se dice en la ficha y en la web.
 5. **Cada fuente dice qué mide.** Contratos declarados (SERPAVI), escrituras (Notariado), tasación (MIVAU) y oferta (portales) no se mezclan en un mismo indicador.
 6. **Portales.** La capa es desmontable: `PORTALES` vale `FALSE` por defecto (variable de entorno). Solo informes agregados de las salas de prensa; nunca anuncios. Sus datos brutos no entran en git.
 7. **Decisiones en CSV, no en código:** fuentes, indicadores, rupturas, tablas de paso y referencias de validación viven en `inventario/`.
-8. **Ingresos de las fichas en neto mensual repartido en 12** (plan, §3.1). Las fichas de una persona buscan 50 m²; la llave paga el alquiler medio de su sección.
+8. **Ingresos de las fichas en neto mensual repartido en 12** (plan, §3.1). Las fichas de una persona buscan 50 m²; la llave paga el alquiler mediano de su sección.
 9. **Las maquetas llevan valores inventados.** Nunca se copian como datos. Solo dos cifras de las maquetas son reales: el SMI neto de 2026 y los tres porcentajes del módulo de acceso de la ECV 2025.
 
 ## Convenciones técnicas
