@@ -12,8 +12,8 @@
 | `fuente_eurostat_ilc_lvho07.R` | Eurostat: sobrecarga publicada (`ilc_lvho07a`, `ilc_lvho07c`, `ilc_lvho07_r`) |
 | `fuente_ine_seccionado.R` | Cartografía de secciones del INE: descarga y lectura de una provincia dentro del zip |
 | `fuente_ine_callejero.R` | Callejero del censo electoral: descarga y lectura de los tramos de una provincia (aplicaciones antigua y nueva) |
-| `fuente_ine_adrh.R` | ADRH: descarga de tablas de INEbase y lectura de los indicadores demográficos |
+| `fuente_ine_adrh.R` | ADRH: descarga de tablas de INEbase, lectura de la renta (indicadores 1–3) y de la demografía, pesos (población y hogares), compuerta `adrh_municipio` y armonización al seccionado de 2021 en formato largo |
 | `comun_geo.R` | Tablas de paso por el callejero, estado de lo reproyectado (`dato`, `estimado`, `ausente`), reproyección de recuentos, medias ponderadas y medianas, prueba de cierre, diagnóstico y cambios de límites. Previsto: jerarquía territorial y vía (b), Catastro |
-| `comun_exportar.R` | Tablas de paso a CSV. Previsto: tabla larga en Parquet y ficheros para la web |
+| `comun_exportar.R` | Tablas de paso a CSV; esquema, validación (`validar_tabla_larga()`) y escritura en Parquet de la tabla larga. Previsto: ficheros para la web |
 
 Convenciones: nombres en castellano y en `snake_case`; una función hace una cosa; las descargas guardan en `datos/brutos/` y no repiten si el fichero existe, salvo que se pida; los errores dicen qué falta y dónde conseguirlo. El código reaprovechado de proyectos anteriores lleva en la cabecera la fecha de incorporación.

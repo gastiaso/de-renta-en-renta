@@ -93,4 +93,32 @@ prueba_f1 <- list(
   ))
 )
 
-list(inventario, sobrecarga, prueba_f1)
+# Tarea 7: indicadores 1–3 (renta del ADRH) de punta a punta en la provincia de prueba:
+# descarga → lectura → compuerta → seccionado de 2021 con estado → tabla larga en Parquet.
+# Años con tabla de paso: 2020 (nativo), 2015, 2021 y 2024. Para 2016–2019 y 2022–2023 hacen
+# falta los callejeros de enero de 2017–2020, 2023 y 2024.
+ADRH_RENTA <- c("28" = "31097")
+
+bloque_renta_adrh <- list(
+  tar_target(fichero_adrh_renta, descargar_ine_adrh(ADRH_RENTA[[PROVINCIA_PRUEBA]]), format = "file"),
+  tar_target(renta_adrh, leer_ine_adrh_renta(fichero_adrh_renta)),
+  tar_target(pesos_adrh_prueba, pesos_adrh(fichero_adrh_demografia)),
+  tar_target(comprobaciones_adrh, comprobar_adrh_municipio(renta_adrh, pesos_adrh_prueba)),
+  tar_target(validacion_adrh, validar_referencias(comprobaciones_adrh, referencias)),
+  tar_target(tablas_paso_adrh, list(
+    "2015" = paso_2015_2021,
+    "2020" = geo_tabla_identidad(pesos_adrh_prueba$seccion[pesos_adrh_prueba$anio == 2020]),
+    "2021" = paso_2022_2021,
+    "2024" = paso_2025_2021
+  )),
+  tar_target(tabla_larga_adrh, {
+    validacion_adrh   # la compuerta va antes que la armonización
+    armonizar_ine_adrh(renta_adrh, pesos_adrh_prueba, tablas_paso_adrh,
+                       version = format(file.mtime(fichero_adrh_renta), "%Y-%m-%d")) |>
+      validar_tabla_larga(indicadores, fuentes)
+  }),
+  tar_target(fichero_tabla_larga, exportar_tabla_larga(tabla_larga_adrh, "datos/intermedios/tabla_larga.parquet"),
+             format = "file")
+)
+
+list(inventario, sobrecarga, prueba_f1, bloque_renta_adrh)

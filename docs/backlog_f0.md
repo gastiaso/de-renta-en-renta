@@ -59,7 +59,9 @@ Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decid
 - Medir con la geometría cuántas secciones de 2021 conservan el código pero cambian de límites.
 - **Hecho cuando:** la prueba de cierre poblacional queda dentro de ±0,5 %, o hay un diagnóstico de por qué no y de qué cambia en el plan.
 
-## 7. Esqueleto del pipeline
+## 7. Esqueleto del pipeline · HECHA (6-nov-2026)
+
+**Resultado (Madrid):** los indicadores 1–3 (renta del ADRH) recorren el pipeline de punta a punta: descarga → lectura → compuerta → paso al seccionado de 2021 con estado → tabla larga validada (`validar_tabla_larga()`) → Parquet en `datos/intermedios/tabla_larga.parquet` (58.193 filas). Compuerta en dos niveles: `adrh_municipio` (bloqueo, mediana de la desviación; pasa con ≤ 0,011 %) y `adrh_municipio_detalle` (alerta por municipio: avisa en 12, por encima del 5 % solo en tres municipios de renta muy alta). Años en 2021: 2020 (nativo), 2015, 2021 y 2024; faltan 2016–2019 y 2022–2023, que necesitan los callejeros de enero de 2017–2020, 2023 y 2024.
 
 - `_targets.R`: fuentes → descarga → lectura → armonizado → validación → exportación.
 - `validar_referencias()`: lee `inventario/referencias_validacion.csv`, para en los `bloqueo` y avisa en los `alerta`.

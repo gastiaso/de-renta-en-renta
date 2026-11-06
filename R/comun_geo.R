@@ -116,6 +116,22 @@ geo_estado_paso <- function(tabla, umbral = 0.99, umbral_dominante = 0.95) {
     )
 }
 
+# Tabla de paso de un año que ya está en el seccionado de referencia (cada sección, a sí misma).
+geo_tabla_identidad <- function(secciones) {
+  secciones <- sort(unique(secciones))
+  tibble::tibble(origen = secciones, destino = secciones, portales = NA_integer_,
+                 metodo = "identidad", fraccion = 1)
+}
+
+# Cuántas secciones de origen recibe cada destino y cuántas tienen valor (las demás, secreto).
+geo_cobertura_origenes <- function(valores, tabla) {
+  con_valor <- valores$seccion[!is.na(valores$valor)]
+  tabla |>
+    group_by(seccion = destino) |>
+    summarise(origenes = n_distinct(origen), completos = n_distinct(origen[origen %in% con_valor]),
+              .groups = "drop")
+}
+
 avisar_sin_paso <- function(valores, tabla) {
   sin_paso <- setdiff(valores$seccion, tabla$origen)
   if (length(sin_paso) > 0) {

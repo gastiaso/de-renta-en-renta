@@ -36,9 +36,12 @@ validar_referencias <- function(comprobaciones, referencias) {
   }
 
   fallos <- filter(tabla, !correcto)
-  resumen <- function(f) {
-    paste0("  ", f$id, " ", f$detalle, ": calculado ", format(f$calculado, digits = 4),
-           ", referencia ", f$referencia, collapse = "\n")
+  resumen <- function(f, maximo = 15) {
+    anio <- if ("anio" %in% names(f)) paste0(" ", f$anio) else ""
+    lineas <- paste0("  ", f$id, anio, " ", f$detalle, ": calculado ", format(f$calculado, digits = 4),
+                     ", referencia ", f$referencia)
+    if (length(lineas) > maximo) lineas <- c(utils::head(lineas, maximo), paste0("  … y ", length(lineas) - maximo, " más"))
+    paste(lineas, collapse = "\n")
   }
   alertas <- filter(fallos, tipo == "alerta")
   if (nrow(alertas) > 0) warning("Alertas de validación:\n", resumen(alertas), call. = FALSE)
