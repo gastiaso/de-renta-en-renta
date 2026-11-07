@@ -10,8 +10,9 @@ adrh_municipio_detalle,1;2,Desviación (%) de cada municipio entre las medias de
 serpavi_provincia,8;9,"Recuento de testigos de las secciones sumado a provincia, por año y tipología (las medianas no se agregan)",Hoja Provincias de la base de datos del SERPAVI,exacto,bloqueo,pendiente
 aeat_provincia,7,Salario medio provincial leído,Tabla publicada de la AEAT,exacto,bloqueo,pendiente
 smi_neto,15;21,Ingreso de la tartera,"17.094 € × (1 − 0,065) / 12 ≈ 1.332 €",exacto con los parámetros del año,bloqueo,pendiente
-cierre_poblacional,geo,Padrón por sección reproyectado al seccionado de referencia (2021),Totales municipales publicados,"±0,5 %",bloqueo,"en el pipeline (Madrid); pasa en 2015, 2021 y 2024 → 2021"
-cobertura_destino,geo,Secciones del seccionado de referencia (2021) que no reciben nada de la tabla de paso,Ninguna,exacto,bloqueo,"en el pipeline (Madrid); pasa en 2015, 2021 y 2024 → 2021"
+cierre_poblacional,geo,Padrón por sección reproyectado al seccionado de referencia (2021),Suma de las secciones de origen de cada municipio,"±0,5 %",bloqueo,"en el pipeline (Madrid); pasa en todos los años del ADRH (2015–2024). Hasta el 7-nov-2026 se comparaba con el total municipal publicado, que en 2016, 2017 y 2019 no es la suma de las secciones (ver adrh_suma_secciones)"
+cobertura_destino,geo,Secciones del seccionado de referencia (2021) que no reciben nada de la tabla de paso,Ninguna,exacto,bloqueo,en el pipeline (Madrid); pasa en todos los años del ADRH (2015–2024)
+adrh_suma_secciones,geo,Población por sección del ADRH sumada por municipio,Total municipal publicado en la misma tabla,"±0,5 %",alerta,"en el pipeline (Madrid); cuadra todos los años salvo 2016, 2017 y 2019; avisa en Tres Cantos y Paracuellos de Jarama (2016, −1,2 y −1,0 %) y en Arganda del Rey y Boadilla del Monte (2019, −1,0 y −0,5 %)"
 mochila_ecv,15,Mochila provincial agregada a comunidad,"Intervalo de la mediana neta de la ECV (26–35, año completo)",dentro del intervalo,alerta,pendiente
 adrh_aeat,1;2,Renta del ADRH frente a renta bruta de la AEAT por municipio,"AEAT, IRPF por municipio",tendencia coherente,alerta,pendiente
 serpavi_ipva,8;10,Tendencia del SERPAVI frente al IPVA,"INE, IPVA",tendencia coherente,alerta,pendiente

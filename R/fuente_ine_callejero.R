@@ -22,6 +22,13 @@ FICHEROS_TRAMOS <- c(
   nueva_2025   = "^TRAM\\.P01-52\\.D\\d{6}\\.G\\d{6}$"
 )
 
+# Zip interno que contiene el fichero de tramos: «TRAMOS-NAL.F191231.zip» (2020), pero también
+# «TRAMOS-NAL.zip» (2019). Se busca por el prefijo literal del patrón, hasta el primer punto.
+patron_zip_interno <- function(fichero) {
+  prefijo <- sub("^\\^([^\\\\$]*).*$", "\\1", fichero)
+  paste0("^", gsub("([.\\-])", "\\\\\\1", prefijo), "\\..*zip$")
+}
+
 # Lee los tramos de una provincia. `fichero` es la expresión regular del fichero de tramos
 # (FICHEROS_TRAMOS); puede venir suelto en el zip o dentro de un zip interno.
 # Registro de ancho fijo: sección en 1–10, vía en 21–25, pseudovía en 26–30, código postal
@@ -40,7 +47,7 @@ leer_ine_callejero <- function(zip, fichero, provincia) {
   }
   texto <- extraer(zip, fichero)
   if (is.null(texto)) {
-    interno <- extraer(zip, sub("\\$$", "\\\\.zip$", fichero))
+    interno <- extraer(zip, patron_zip_interno(fichero))
     if (!is.null(interno)) texto <- extraer(interno, fichero)
   }
   if (is.null(texto)) stop("No encuentro el fichero de tramos ", fichero, " en ", zip, call. = FALSE)

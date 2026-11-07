@@ -113,3 +113,36 @@ test_that("la cobertura de destino cuenta las secciones de referencia que no rec
   expect_equal(r$calculado, 1L)
   expect_equal(r$detalle, "D3")
 })
+
+test_that("la fase de códigos señala las secciones fantasma del mapa", {
+  poblacion <- tibble::tibble(anio = 2021L, nivel = "seccion", codigo = c("A", "B"), valor = 1)
+  f <- geo_fase_codigos(poblacion, 2021L, mapa = c("A", "B", "G"), callejero = c("A", "B", "B"))
+  expect_equal(f$mapa, 3L)
+  expect_equal(f$callejero, 2L)
+  expect_equal(f$fantasmas, "G")
+  expect_equal(f$adrh_sin_callejero, 0L)
+  expect_equal(f$callejero_sin_mapa, "")
+})
+
+test_that("el zip interno del callejero se encuentra con y sin fecha en el nombre", {
+  nombres <- c("TRAMOS-NAL.zip", "TRAMOS-NAL.F191231.zip", "TRAM-NAL.F201231.zip",
+               "GJCALLE.TRAM-NAL.F201231.zip", "PSEU-NAL.zip", "UP-NAL.F191231.zip")
+  casa <- function(formato) nombres[grepl(patron_zip_interno(FICHEROS_TRAMOS[[formato]]), nombres)]
+  expect_equal(casa("antigua_2015"), c("TRAMOS-NAL.zip", "TRAMOS-NAL.F191231.zip"))
+  expect_equal(casa("antigua_2021"), "TRAM-NAL.F201231.zip")
+  expect_equal(casa("nueva_2021"), "GJCALLE.TRAM-NAL.F201231.zip")
+})
+
+test_that("el cierre mide la tabla y la suma de secciones mide la fuente", {
+  # El ADRH publica un total municipal (102) que no es la suma de sus secciones (100)
+  poblacion <- tibble::tibble(
+    anio = 2016L, nivel = c("seccion", "seccion", "municipio"),
+    codigo = c("2800101001", "2800101002", "28001"), valor = c(60, 40, 102))
+  tabla <- tibble::tibble(origen = c("2800101001", "2800101001", "2800101002"),
+                          destino = c("2800101001", "2800101003", "2800101002"),
+                          portales = c(1, 1, 1), fraccion = c(0.5, 0.5, 1))
+  expect_equal(comprobar_cierre_poblacional(poblacion, tabla, 2016L)$calculado, 0)
+  s <- comprobar_suma_secciones(poblacion)
+  expect_equal(s$id, "adrh_suma_secciones")
+  expect_equal(round(s$calculado, 3), round(100 * (100 - 102) / 102, 3))
+})

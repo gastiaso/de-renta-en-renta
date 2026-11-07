@@ -100,6 +100,22 @@ comprobar_adrh_municipio <- function(renta, pesos) {
   bind_rows(resumen, detalle)
 }
 
+# Población por sección del ADRH sumada por municipio frente al total municipal que publica
+# la misma tabla (alerta adrh_suma_secciones; desviación en %). En Madrid cuadran todos los
+# años salvo 2016, 2017 y 2019, en unos pocos municipios (hasta −1,2 %, Tres Cantos en 2016).
+comprobar_suma_secciones <- function(poblacion) {
+  secciones <- poblacion |>
+    filter(nivel == "seccion") |>
+    group_by(anio, municipio = substr(codigo, 1, 5)) |>
+    summarise(secciones = sum(valor), .groups = "drop")
+  poblacion |>
+    filter(nivel == "municipio") |>
+    select(anio, municipio = codigo, publicado = valor) |>
+    inner_join(secciones, by = c("anio", "municipio")) |>
+    transmute(id = "adrh_suma_secciones", anio = as.integer(anio), detalle = municipio,
+              calculado = 100 * (secciones - publicado) / publicado, referencia = 0)
+}
+
 # Lleva la renta del ADRH al seccionado de 2021 y la pone en formato largo, con su estado.
 #   renta_persona: media ponderada por la población; renta_hogar, por los hogares;
 #   renta_uc_mediana: mediana (único origen u origen dominante).

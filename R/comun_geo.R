@@ -184,15 +184,35 @@ geo_cierre_poblacional <- function(reproyectado, totales_municipio) {
 }
 
 # Comprobaciones de la compuerta (referencia cierre_poblacional) para un año del ADRH: su
-# población por sección, llevada al seccionado de 2021 con `tabla`, frente al total
-# municipal publicado ese año. Las tablas no cruzan municipios: la prueba detecta sobre
-# todo secciones sin tabla de paso y municipios que cambian.
+# población por sección, llevada al seccionado de 2021 con `tabla`, frente a la suma de las
+# secciones de origen de cada municipio. Mide solo la tabla: el ADRH no siempre suma sus
+# secciones al total municipal que publica (2016, 2017 y 2019 en Madrid), y eso lo vigila
+# comprobar_suma_secciones(). Las tablas no cruzan municipios: la prueba detecta sobre todo
+# secciones sin tabla de paso y municipios que cambian.
 comprobar_cierre_poblacional <- function(poblacion, tabla, anio) {
   secciones <- poblacion |> filter(anio == !!anio, nivel == "seccion") |> select(seccion = codigo, valor)
-  municipios <- poblacion |> filter(anio == !!anio, nivel == "municipio") |> select(codigo, valor)
+  municipios <- secciones |> group_by(codigo = substr(seccion, 1, 5)) |> summarise(valor = sum(valor), .groups = "drop")
   geo_cierre_poblacional(geo_reproyectar_recuento(secciones, tabla), municipios) |>
     transmute(id = "cierre_poblacional", anio = as.integer(!!anio), detalle = municipio,
               calculado = desviacion_pct, referencia = 0)
+}
+
+# Fase de los códigos de un año (diagnóstico, no es compuerta): secciones del ADRH, del mapa
+# del seccionado y del callejero. El mapa no siempre va en fase con los otros dos (secciones
+# «fantasma», que reasignar_fantasmas() corrige en la vía b); el ADRH puede no publicar
+# alguna sección (municipios de una sola sección en 2015).
+geo_fase_codigos <- function(poblacion, anio, mapa, callejero) {
+  a <- unique(poblacion$codigo[poblacion$nivel == "seccion" & poblacion$anio == anio])
+  m <- unique(mapa)
+  k <- unique(callejero)
+  # (los vectores van con nombres cortos: dentro de tibble() una columna tapa a la variable)
+  tibble::tibble(
+    anio = as.integer(anio), adrh = length(a), mapa = length(m), callejero = length(k),
+    adrh_sin_callejero = length(setdiff(a, k)),
+    callejero_sin_adrh = length(setdiff(k, a)),
+    fantasmas = paste(setdiff(m, union(a, k)), collapse = " "),
+    callejero_sin_mapa = paste(setdiff(k, m), collapse = " ")
+  )
 }
 
 # Toda sección del seccionado de referencia debe recibir algo de la tabla de paso. El cierre

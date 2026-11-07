@@ -5,7 +5,7 @@ Atlas web de vivienda y salarios por sección censal, con fichas de perfil («pa
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
 2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.11: fuente de verdad de las decisiones).
+3. `docs/plan_integracion_atlas.md` (plan v0.12: fuente de verdad de las decisiones).
 
 ## Estado (6 de noviembre de 2026)
 
@@ -66,4 +66,4 @@ testthat::test_dir("pruebas/testthat")    # pruebas con datos inventados
 targets::tar_outdated()                   # debe salir vacío
 ```
 
-`tar_make()` se detiene si falla una comprobación de tipo `bloqueo` de `inventario/referencias_validacion.csv`; las de tipo `alerta` salen como avisos al final (hoy: geometrías NUTS de códigos agrupados y municipios de renta muy alta en el ADRH). Para ver una compuerta: `targets::tar_read(validacion_sobrecarga)` (o `validacion_f1`, `validacion_adrh`, `validacion_modulo`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`).
+`tar_make()` se detiene si falla una comprobación de tipo `bloqueo` de `inventario/referencias_validacion.csv`; las de tipo `alerta` salen como avisos al final (hoy: geometrías NUTS de códigos agrupados, municipios de renta muy alta en el ADRH y cuatro municipios donde el ADRH de 2016 o 2019 no suma sus secciones). Para ver una compuerta: `targets::tar_read(validacion_sobrecarga)` (o `validacion_f1`, `validacion_adrh`, `validacion_modulo`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`).

@@ -76,106 +76,90 @@ sobrecarga <- list(
 )
 
 # F1, prueba de la geografía constante en una provincia (backlog, tarea 6).
-# Referencia: seccionado de 2021. El año t del ADRH está en el seccionado de t + 1.
-#   2015 → 2021: aplicación antigua del callejero en los dos extremos (hacia delante: reparte)
-#   2025 → 2021: aplicación nueva en los dos extremos (hacia atrás: agrega)
-#   2022 → 2021: ídem, con un año de distancia; el diagnóstico frente al ADRH 2020 apenas
-#                lleva crecimiento real y mide sobre todo el error de la tabla
+# Referencia: seccionado de 2021. El año t del ADRH está en el seccionado de 1 de enero de t + 1
+# (el ADRH 2020 es nativo; el 2015, primer año, va con el de 2015: plan §6.3). Una tabla de paso
+# por seccionado, sección de ese año → sección de 2021:
+#   hasta 2020, aplicación antigua del callejero en los dos extremos (hacia delante: reparte);
+#   desde 2022, aplicación nueva en los dos extremos (hacia atrás: casi siempre agrega).
+# Vía (b): viviendas de los edificios del Catastro en los municipios con secciones «estimado» por
+# el callejero. Regla adoptada (plan §6.3): callejero donde las secciones caen enteras y Catastro
+# donde hay que repartir (combinar_vias). La tabla 2022 → 2021 hace de prueba de un año: frente
+# al ADRH 2020 apenas hay crecimiento real, así que la razón mide sobre todo el error de la tabla.
 PROVINCIA_PRUEBA <- "28"
 ADRH_DEMOGRAFIA <- c("28" = "31105")   # tabla de indicadores demográficos de cada provincia
 
-prueba_f1 <- list(
-  tar_target(zip_callejero_2015, descargar_ine_callejero("012015"), format = "file"),
-  tar_target(zip_callejero_2021, descargar_ine_callejero("012021"), format = "file"),
-  tar_target(zip_callejero_2022, descargar_ine_callejero("012022"), format = "file"),
-  tar_target(zip_callejero_2025, descargar_ine_callejero("012025"), format = "file"),
-  tar_target(tramos_2015, leer_ine_callejero(zip_callejero_2015, FICHEROS_TRAMOS[["antigua_2015"]], PROVINCIA_PRUEBA)),
-  tar_target(tramos_2021_antigua, leer_ine_callejero(zip_callejero_2021, FICHEROS_TRAMOS[["antigua_2021"]], PROVINCIA_PRUEBA)),
-  tar_target(tramos_2021_nueva, leer_ine_callejero(zip_callejero_2021, FICHEROS_TRAMOS[["nueva_2021"]], PROVINCIA_PRUEBA)),
-  tar_target(tramos_2022, leer_ine_callejero(zip_callejero_2022, FICHEROS_TRAMOS[["nueva_2022"]], PROVINCIA_PRUEBA)),
-  tar_target(tramos_2025, leer_ine_callejero(zip_callejero_2025, FICHEROS_TRAMOS[["nueva_2025"]], PROVINCIA_PRUEBA)),
-  tar_target(topes_portal, geo_topes_portal(tramos_2021_nueva)),
-  tar_target(paso_2015_2021, geo_tabla_paso_callejero(tramos_2015, tramos_2021_antigua, topes_portal)),
-  tar_target(paso_2022_2021, geo_tabla_paso_callejero(tramos_2022, tramos_2021_nueva, topes_portal)),
-  tar_target(paso_2025_2021, geo_tabla_paso_callejero(tramos_2025, tramos_2021_nueva, topes_portal)),
-  tar_target(fichero_paso_2022_2021,
-             exportar_tabla_paso(paso_2022_2021, sprintf("geo/tablas_paso/callejero_2022_2021_%s.csv", PROVINCIA_PRUEBA)),
-             format = "file"),
-  tar_target(fichero_paso_2015_2021,
-             exportar_tabla_paso(paso_2015_2021, sprintf("geo/tablas_paso/callejero_2015_2021_%s.csv", PROVINCIA_PRUEBA)),
-             format = "file"),
-  tar_target(fichero_paso_2025_2021,
-             exportar_tabla_paso(paso_2025_2021, sprintf("geo/tablas_paso/callejero_2025_2021_%s.csv", PROVINCIA_PRUEBA)),
-             format = "file"),
-
-  tar_target(fichero_adrh_demografia, descargar_ine_adrh(ADRH_DEMOGRAFIA[[PROVINCIA_PRUEBA]]), format = "file"),
-  tar_target(poblacion_adrh, leer_ine_adrh_demografia(fichero_adrh_demografia)),
-  # Cierre sobre las tablas que se usan (combinadas con el Catastro)
-  tar_target(comprobaciones_f1, bind_rows(
-    comprobar_cierre_poblacional(poblacion_adrh, paso_final_2015_2021, 2015L),
-    comprobar_cierre_poblacional(poblacion_adrh, paso_final_2022_2021, 2021L),
-    comprobar_cierre_poblacional(poblacion_adrh, paso_final_2025_2021, 2024L),
-    comprobar_cobertura_destino(paso_final_2015_2021, secciones_2021_prueba$seccion, 2015L),
-    comprobar_cobertura_destino(paso_final_2022_2021, secciones_2021_prueba$seccion, 2021L),
-    comprobar_cobertura_destino(paso_final_2025_2021, secciones_2021_prueba$seccion, 2024L)
-  )),
-  tar_target(validacion_f1, validar_referencias(comprobaciones_f1, referencias)),
-  tar_target(diagnostico_f1, bind_rows(
-    geo_diagnostico_paso(poblacion_adrh, paso_2015_2021, 2015L),
-    geo_diagnostico_paso(poblacion_adrh, paso_2022_2021, 2021L),
-    geo_diagnostico_paso(poblacion_adrh, paso_2025_2021, 2024L)
-  )),
-
-  tar_target(zip_seccionado_2015, descargar_ine_seccionado(2015), format = "file"),
-  tar_target(zip_seccionado_2021, descargar_ine_seccionado(2021), format = "file"),
-  tar_target(zip_seccionado_2022, descargar_ine_seccionado(2022), format = "file"),
-  tar_target(zip_seccionado_2025, descargar_ine_seccionado(2025), format = "file"),
-  tar_target(cambios_limites, bind_rows(
-    geo_cambios_limites(leer_ine_seccionado(zip_seccionado_2015, 2015, PROVINCIA_PRUEBA),
-                        leer_ine_seccionado(zip_seccionado_2021, 2021, PROVINCIA_PRUEBA)) |> mutate(tramo = "2015-2021"),
-    geo_cambios_limites(leer_ine_seccionado(zip_seccionado_2021, 2021, PROVINCIA_PRUEBA),
-                        leer_ine_seccionado(zip_seccionado_2025, 2025, PROVINCIA_PRUEBA)) |> mutate(tramo = "2021-2025")
-  ))
+PASOS_2021 <- tibble::tibble(
+  seccionado  = c(2015L, 2017L, 2018L, 2019L, 2020L, 2022L, 2023L, 2024L, 2025L),
+  anio        = c(2015L, 2016L, 2017L, 2018L, 2019L, 2021L, 2022L, 2023L, 2024L),   # año del ADRH
+  callejero   = sprintf("01%d", seccionado),
+  formato     = c(rep("antigua_2015", 5), "nueva_2022", rep("nueva_2025", 3)),
+  tramos_2021 = rlang::syms(c(rep("tramos_2021_antigua", 5), rep("tramos_2021_nueva", 4)))
 )
 
-# Vía (b) de las tablas de paso: viviendas de los edificios del Catastro, en los municipios de la
-# provincia de prueba con secciones «estimado» por el callejero. Regla adoptada (plan §6.3):
-# callejero donde las secciones caen enteras y Catastro donde hay que repartir (combinar_vias).
-# La tabla 2022 → 2021 hace además de prueba de un año de la vía (b): frente al ADRH 2020 apenas
-# hay crecimiento real, así que la razón mide sobre todo el error de la tabla.
-via_catastro <- list(
+pasos_2021 <- tarchetypes::tar_map(
+  values = PASOS_2021, names = "seccionado",
+  tar_target(zip_callejero, descargar_ine_callejero(callejero), format = "file"),
+  tar_target(zip_seccionado, descargar_ine_seccionado(seccionado), format = "file"),
+  tar_target(tramos, leer_ine_callejero(zip_callejero, FICHEROS_TRAMOS[[formato]], PROVINCIA_PRUEBA)),
+  tar_target(secciones, leer_ine_seccionado(zip_seccionado, seccionado, PROVINCIA_PRUEBA)),
+  tar_target(fase, geo_fase_codigos(poblacion_adrh, anio, secciones$seccion, tramos$seccion)),
+  tar_target(paso_callejero, geo_tabla_paso_callejero(tramos, tramos_2021, topes_portal)),
+  tar_target(fichero_paso, exportar_tabla_paso(
+    paso_callejero, sprintf("geo/tablas_paso/callejero_%d_2021_%s.csv", seccionado, PROVINCIA_PRUEBA)), format = "file"),
+  tar_target(paso_catastro, geo_tabla_paso_catastro(edificios_catastro, secciones, secciones_2021, anio_max = seccionado)),
+  tar_target(paso_final, combinar_vias(paso_catastro, paso_callejero)),
+  # Cierre y cobertura sobre las tablas que se usan (combinadas)
+  tar_target(comprobacion_paso, bind_rows(
+    comprobar_cierre_poblacional(poblacion_adrh, paso_final, anio),
+    comprobar_cobertura_destino(paso_final, secciones_2021$seccion, anio))),
+  tar_target(diagnostico_paso, geo_diagnostico_paso(poblacion_adrh, paso_callejero, anio)),
+  tar_target(comparacion_paso, comparar_vias_paso(poblacion_adrh, paso_callejero, paso_catastro, anio, municipios_cubiertos)),
+  tar_target(tabla_adrh, stats::setNames(list(paso_final), anio))
+)
+
+prueba_f1 <- list(
+  tar_target(zip_callejero_2021, descargar_ine_callejero("012021"), format = "file"),
+  tar_target(tramos_2021_antigua, leer_ine_callejero(zip_callejero_2021, FICHEROS_TRAMOS[["antigua_2021"]], PROVINCIA_PRUEBA)),
+  tar_target(tramos_2021_nueva, leer_ine_callejero(zip_callejero_2021, FICHEROS_TRAMOS[["nueva_2021"]], PROVINCIA_PRUEBA)),
+  tar_target(topes_portal, geo_topes_portal(tramos_2021_nueva)),
+  tar_target(zip_seccionado_2021, descargar_ine_seccionado(2021), format = "file"),
+  tar_target(secciones_2021, leer_ine_seccionado(zip_seccionado_2021, 2021, PROVINCIA_PRUEBA)),
+  tar_target(fichero_adrh_demografia, descargar_ine_adrh(ADRH_DEMOGRAFIA[[PROVINCIA_PRUEBA]]), format = "file"),
+  tar_target(poblacion_adrh, leer_ine_adrh_demografia(fichero_adrh_demografia)),
+
+  pasos_2021,
+  tarchetypes::tar_combine(tablas_paso_callejero, pasos_2021$paso_callejero, command = list(!!!.x)),
+  tarchetypes::tar_combine(tablas_paso_finales, pasos_2021$tabla_adrh, command = {
+    l <- list(!!!.x)   # cada elemento: lista de una tabla con el año del ADRH como nombre
+    stats::setNames(lapply(l, `[[`, 1), vapply(l, names, ""))
+  }),
+  tarchetypes::tar_combine(fase_codigos, pasos_2021$fase, command = dplyr::bind_rows(!!!.x)),
+  tarchetypes::tar_combine(comprobaciones_pasos, pasos_2021$comprobacion_paso, command = dplyr::bind_rows(!!!.x)),
+  tar_target(comprobaciones_f1, bind_rows(comprobaciones_pasos, comprobar_suma_secciones(poblacion_adrh))),
+  tar_target(validacion_f1, validar_referencias(comprobaciones_f1, referencias)),
+  tarchetypes::tar_combine(diagnostico_f1, pasos_2021$diagnostico_paso, command = dplyr::bind_rows(!!!.x)),
+  tarchetypes::tar_combine(comparacion_vias, pasos_2021$comparacion_paso, command = dplyr::bind_rows(!!!.x)),
+  tar_target(cambios_limites, bind_rows(
+    geo_cambios_limites(secciones_2015, secciones_2021) |> mutate(tramo = "2015-2021"),
+    geo_cambios_limites(secciones_2021, secciones_2025) |> mutate(tramo = "2021-2025")
+  )),
+
+  # Vía (b): edificios del Catastro de los municipios con secciones «estimado» en alguna tabla.
+  # Se leen municipio a municipio (ramas dinámicas): un municipio nuevo no obliga a releer el resto.
   tar_target(municipios_catastro_prueba, seleccionar_municipios_catastro(
-    list(paso_2015_2021, paso_2022_2021, paso_2025_2021), fichero_adrh_demografia, PROVINCIA_PRUEBA)),
-  tar_target(zips_catastro, vapply(stats::na.omit(municipios_catastro_prueba$url), descargar_catastro_edificios, ""),
+    tablas_paso_callejero, fichero_adrh_demografia, PROVINCIA_PRUEBA)),
+  tar_target(municipios_cubiertos, municipios_catastro_prueba$municipio[!is.na(municipios_catastro_prueba$url)]),
+  tar_target(urls_catastro, municipios_catastro_prueba$url[!is.na(municipios_catastro_prueba$url)]),
+  tar_target(zips_catastro, descargar_catastro_edificios(urls_catastro), pattern = map(urls_catastro),
              format = "file"),
-  tar_target(edificios_catastro, leer_catastro_varios(zips_catastro)),
-  tar_target(secciones_2015_prueba, leer_ine_seccionado(zip_seccionado_2015, 2015, PROVINCIA_PRUEBA)),
-  tar_target(secciones_2021_prueba, leer_ine_seccionado(zip_seccionado_2021, 2021, PROVINCIA_PRUEBA)),
-  tar_target(secciones_2022_prueba, leer_ine_seccionado(zip_seccionado_2022, 2022, PROVINCIA_PRUEBA)),
-  tar_target(secciones_2025_prueba, leer_ine_seccionado(zip_seccionado_2025, 2025, PROVINCIA_PRUEBA)),
-  tar_target(paso_catastro_2015_2021,
-             geo_tabla_paso_catastro(edificios_catastro, secciones_2015_prueba, secciones_2021_prueba, anio_max = 2015L)),
-  tar_target(paso_catastro_2022_2021,
-             geo_tabla_paso_catastro(edificios_catastro, secciones_2022_prueba, secciones_2021_prueba, anio_max = 2022L)),
-  tar_target(paso_catastro_2025_2021,
-             geo_tabla_paso_catastro(edificios_catastro, secciones_2025_prueba, secciones_2021_prueba, anio_max = 2025L)),
-  tar_target(paso_final_2015_2021, combinar_vias(paso_catastro_2015_2021, paso_2015_2021)),
-  tar_target(paso_final_2022_2021, combinar_vias(paso_catastro_2022_2021, paso_2022_2021)),
-  tar_target(paso_final_2025_2021, combinar_vias(paso_catastro_2025_2021, paso_2025_2021)),
-  tar_target(comparacion_vias, {
-    cubiertos <- municipios_catastro_prueba$municipio[!is.na(municipios_catastro_prueba$url)]
-    bind_rows(
-      comparar_vias_paso(poblacion_adrh, paso_2015_2021, paso_catastro_2015_2021, 2015L, cubiertos),
-      comparar_vias_paso(poblacion_adrh, paso_2022_2021, paso_catastro_2022_2021, 2021L, cubiertos),
-      comparar_vias_paso(poblacion_adrh, paso_2025_2021, paso_catastro_2025_2021, 2024L, cubiertos)
-    )
-  })
+  tar_target(edificios_municipio, leer_catastro_edificios(zips_catastro), pattern = map(zips_catastro),
+             iteration = "list"),
+  tar_target(edificios_catastro, do.call(rbind, edificios_municipio))
 )
 
 # Tarea 7: indicadores 1–3 (renta del ADRH) de punta a punta en la provincia de prueba:
 # descarga → lectura → compuerta → seccionado de 2021 con estado → tabla larga en Parquet.
-# Años con tabla de paso: 2020 (nativo), 2015, 2021 y 2024. Para 2016–2019 y 2022–2023 hacen
-# falta los callejeros de enero de 2017–2020, 2023 y 2024.
+# Todos los años del ADRH: 2020 nativo, el resto con su tabla de paso.
 ADRH_RENTA <- c("28" = "31097")
 
 bloque_renta_adrh <- list(
@@ -184,12 +168,11 @@ bloque_renta_adrh <- list(
   tar_target(pesos_adrh_prueba, pesos_adrh(fichero_adrh_demografia)),
   tar_target(comprobaciones_adrh, comprobar_adrh_municipio(renta_adrh, pesos_adrh_prueba)),
   tar_target(validacion_adrh, validar_referencias(comprobaciones_adrh, referencias)),
-  tar_target(tablas_paso_adrh, list(
-    "2015" = paso_final_2015_2021,
-    "2020" = geo_tabla_identidad(pesos_adrh_prueba$seccion[pesos_adrh_prueba$anio == 2020]),
-    "2021" = paso_final_2022_2021,
-    "2024" = paso_final_2025_2021
-  )),
+  tar_target(tablas_paso_adrh, {
+    tablas <- c(tablas_paso_finales,
+                list("2020" = geo_tabla_identidad(pesos_adrh_prueba$seccion[pesos_adrh_prueba$anio == 2020])))
+    tablas[order(as.integer(names(tablas)))]
+  }),
   tar_target(larga_adrh, {
     validacion_adrh   # la compuerta va antes que la armonización
     armonizar_ine_adrh(renta_adrh, pesos_adrh_prueba, tablas_paso_adrh, version = version_de(fichero_adrh_renta))
@@ -221,4 +204,4 @@ bloque_tabla_larga <- list(
              format = "file")
 )
 
-list(inventario, sobrecarga, prueba_f1, via_catastro, bloque_renta_adrh, modulo_acceso, bloque_tabla_larga)
+list(inventario, sobrecarga, prueba_f1, bloque_renta_adrh, modulo_acceso, bloque_tabla_larga)

@@ -87,10 +87,6 @@ seleccionar_municipios_catastro <- function(tablas, ruta_demografia, provincia) 
     left_join(m, by = "clave")
 }
 
-leer_catastro_varios <- function(zips) {
-  do.call(rbind, lapply(zips, leer_catastro_edificios))
-}
-
 # Secciones «fantasma»: códigos del mapa que no están en los datos (callejero y ADRH). El
 # seccionado del INE va a veces por detrás de ellos (dibuja una sección ya fusionada) o por
 # delante (una sección que los datos aún no tienen); en Madrid, dos en el mapa de 2022. Sus
