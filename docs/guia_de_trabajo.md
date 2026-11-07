@@ -5,12 +5,12 @@ Atlas web de vivienda y salarios por sección censal, con fichas de perfil («pa
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
 2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.14: fuente de verdad de las decisiones).
+3. `docs/plan_integracion_atlas.md` (plan v0.16: fuente de verdad de las decisiones).
 
-## Estado (6 de noviembre de 2026)
+## Estado (7 de noviembre de 2026)
 
 - Fase F0. Sin datos publicados ni web.
-- Hechas las tareas 0 (entorno y git), 1 (SERPAVI por sección censal), 3 y 4 (comprobaciones e inventario de fuentes), 5 (sobrecarga con la ECV, compuerta superada) y 6 (prueba de la geografía constante en Madrid). Detalle en el backlog.
+- Hechas las tareas 0 (entorno y git), 1 (SERPAVI por sección censal), 3 y 4 (comprobaciones e inventario de fuentes), 5 (sobrecarga con la ECV, compuerta superada) y 6 (geografía constante: probada en Madrid y extendida a toda España, salvo los catastros forales). Detalle en el backlog.
 
 ## Forma de trabajo
 
@@ -66,4 +66,4 @@ testthat::test_dir("pruebas/testthat")    # pruebas con datos inventados
 targets::tar_outdated()                   # debe salir vacío
 ```
 
-`tar_make()` se detiene si falla una comprobación de tipo `bloqueo` de `inventario/referencias_validacion.csv`; las de tipo `alerta` salen como avisos al final (hoy: geometrías NUTS de códigos agrupados, municipios de renta muy alta en el ADRH y cuatro municipios donde el ADRH de 2016 o 2019 no suma sus secciones). Para ver una compuerta: `targets::tar_read(validacion_sobrecarga)` (o `validacion_f1`, `validacion_adrh`, `validacion_modulo`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`).
+`tar_make()` se detiene si falla una comprobación de tipo `bloqueo` de `inventario/referencias_validacion.csv`; las de tipo `alerta` salen como avisos al final (hoy, con toda España: geometrías NUTS de códigos agrupados; 579 cifras municipales del ADRH a más de ±1 % de sus secciones agregadas; 160 municipios y años donde el ADRH no suma sus secciones; nueve secciones huérfanas del ADRH y seis casos de dos secciones con un defecto conocido de cobertura). Una pasada completa desde cero tarda unas tres horas y cuarto; `PROVINCIA=28` la limita a una provincia. Para ver una compuerta: `targets::tar_read(validacion_sobrecarga)` (o `validacion_f1`, `validacion_adrh`, `validacion_modulo`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`).

@@ -72,7 +72,7 @@
       "unidad": "€ per employee per year (gross)",
       "definicion": "Average gross annual wage of employees with tax residence in the province, overall and aged 26 to 35.",
       "calculo": "Published by the Spanish Tax Agency (AEAT); the Basque Country and Navarre, from their regional tax authorities.",
-      "lectura": "Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the conversion to median and net pay for the «under-35» token is under review (plan, open question 7)."
+      "lectura": "Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «under-35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region (plan §3.1, method B); the conversion to net pay is pending."
     },
     "alquiler_mes": {
       "nombre": "Monthly rent (median)",

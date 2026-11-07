@@ -44,14 +44,73 @@ recortar_tramos <- function(tramos, topes) {
     select(-tope, -tope_propio)
 }
 
+# Fusiones y segregaciones de municipios entre un seccionado y el de referencia (en España,
+# 2016–2025: Cerdedo y Cotobade → Cerdedo-Cotobade en 2017; siete segregaciones andaluzas en
+# 2019; Usansolo, de Galdakao, en 2024). Cada municipio que solo está en uno de los dos
+# seccionados se junta con los del otro que ocupan al menos `umbral` de su superficie; los
+# grupos se cierran por transitividad y toman el menor de sus códigos. Las tablas de paso y la
+# prueba de cierre no cruzan municipios salvo dentro de un grupo.
+geo_grupos_municipio <- function(a, b, umbral = 0.01) {
+  vacio <- tibble::tibble(municipio = character(), grupo = character())
+  solo_a <- setdiff(unique(a$municipio), unique(b$municipio))
+  solo_b <- setdiff(unique(b$municipio), unique(a$municipio))
+  if (length(solo_a) + length(solo_b) == 0) return(vacio)
+  b <- sf::st_transform(b, sf::st_crs(a))
+  socios <- function(x, y, nuevos) bind_rows(lapply(nuevos, function(m) {
+    g <- sf::st_union(sf::st_geometry(x[x$municipio == m, ]))
+    cand <- y[lengths(sf::st_intersects(y, g)) > 0, ]
+    if (nrow(cand) == 0) return(NULL)
+    comun <- vapply(seq_len(nrow(cand)), function(i) {
+      z <- suppressWarnings(sf::st_intersection(sf::st_geometry(cand)[i], g))
+      if (length(z) == 0) 0 else sum(as.numeric(sf::st_area(z)))
+    }, numeric(1))
+    tibble::tibble(nuevo = m, socio = cand$municipio, comun = comun) |>
+      group_by(nuevo, socio) |>
+      summarise(cuota = sum(comun) / as.numeric(sf::st_area(g)), .groups = "drop") |>
+      filter(cuota >= umbral)
+  }))
+  pares <- bind_rows(socios(a, b, solo_a), socios(b, a, solo_b))
+  if (nrow(pares) == 0) return(vacio)
+  # Componentes conexas (grupos pequeños: basta con propagar el mínimo)
+  grupo <- stats::setNames(unique(c(pares$nuevo, pares$socio)), unique(c(pares$nuevo, pares$socio)))
+  repeat {
+    antes <- grupo
+    for (i in seq_len(nrow(pares))) {
+      g <- min(grupo[[pares$nuevo[i]]], grupo[[pares$socio[i]]])
+      grupo[[pares$nuevo[i]]] <- g
+      grupo[[pares$socio[i]]] <- g
+    }
+    if (identical(antes, grupo)) break
+  }
+  tibble::tibble(municipio = names(grupo), grupo = unname(grupo)) |> arrange(grupo, municipio)
+}
+
+# Código de grupo de cada municipio (el propio si no está en ninguno).
+agrupar_municipio <- function(municipio, grupos = NULL) {
+  if (is.null(grupos) || nrow(grupos) == 0) return(municipio)
+  i <- match(municipio, grupos$municipio)
+  ifelse(is.na(i), municipio, grupos$grupo[i])
+}
+
 # Tabla de paso sección de origen → sección de destino con los tramos de las dos fechas.
 # Peso: números de portal compartidos (misma vía o pseudovía y mismo lado, rangos que se
 # solapan); los tramos sin numeración cuentan 1 si coincide la vía. `fraccion` reparte cada
 # sección de origen entre sus destinos (suma 1). Las secciones de origen sin ningún tramo
 # casado pasan a la sección con el mismo código si existe en el destino (`metodo = "codigo"`).
-geo_tabla_paso_callejero <- function(origen, destino, topes = NULL) {
+#
+# `grupos` (geo_grupos_municipio): los tramos de los municipios de un grupo se casan entre sí
+# (tras una segregación, el municipio nuevo conserva los códigos de vía del de origen).
+geo_tabla_paso_callejero <- function(origen, destino, topes = NULL, grupos = NULL) {
   if (is.null(topes)) topes <- tibble::tibble(municipio = character(), clave_via = character(),
                                               paridad = integer(), tope = integer())
+  if (!is.null(grupos) && nrow(grupos) > 0) {
+    origen$municipio <- agrupar_municipio(origen$municipio, grupos)
+    destino$municipio <- agrupar_municipio(destino$municipio, grupos)
+    topes <- topes |>
+      mutate(municipio = agrupar_municipio(municipio, grupos)) |>
+      group_by(municipio, clave_via, paridad) |>
+      summarise(tope = max(tope), .groups = "drop")
+  }
   o <- recortar_tramos(preparar_tramos(origen), topes)
   d <- recortar_tramos(preparar_tramos(destino), topes)
 
@@ -84,6 +143,21 @@ geo_tabla_paso_callejero <- function(origen, destino, topes = NULL) {
     mutate(fraccion = if (all(is.na(portales))) 1 else portales / sum(portales)) |>
     ungroup()
   attr(tabla, "sin_paso") <- setdiff(sin_casar, por_codigo)
+  tabla
+}
+
+# La misma tabla, provincia a provincia: el cruce de tramos es por municipio, así que el
+# resultado no cambia y la memoria no pasa de la provincia mayor.
+geo_tabla_paso_callejero_por_provincia <- function(origen, destino, topes = NULL, grupos = NULL) {
+  provincia <- function(x) substr(x, 1, 2)
+  tablas <- lapply(split(origen, provincia(origen$seccion)), function(o) {
+    p <- provincia(o$seccion[1])
+    t <- if (is.null(topes)) NULL else topes[provincia(topes$municipio) == p, ]
+    g <- if (is.null(grupos)) NULL else grupos[provincia(grupos$municipio) == p, ]
+    geo_tabla_paso_callejero(o, destino[provincia(destino$seccion) == p, ], t, g)
+  })
+  tabla <- bind_rows(tablas)
+  attr(tabla, "sin_paso") <- unlist(lapply(tablas, attr, "sin_paso"), use.names = FALSE)
   tabla
 }
 
@@ -174,9 +248,12 @@ geo_reproyectar_mediana <- function(valores, tabla, umbral = 0.99, umbral_domina
 
 # Prueba de cierre (plan, §6.3): la población reproyectada, sumada por municipio, frente al
 # total municipal publicado. Devuelve la desviación en % para la compuerta.
-geo_cierre_poblacional <- function(reproyectado, totales_municipio) {
+geo_cierre_poblacional <- function(reproyectado, totales_municipio, grupos = NULL) {
+  totales_municipio <- totales_municipio |>
+    group_by(codigo = agrupar_municipio(codigo, grupos)) |>
+    summarise(valor = sum(valor), .groups = "drop")
   reproyectado |>
-    mutate(municipio = substr(seccion, 1, 5)) |>
+    mutate(municipio = agrupar_municipio(substr(seccion, 1, 5), grupos)) |>
     group_by(municipio) |>
     summarise(reproyectado = sum(valor), .groups = "drop") |>
     full_join(totales_municipio |> select(municipio = codigo, publicado = valor), by = "municipio") |>
@@ -188,13 +265,29 @@ geo_cierre_poblacional <- function(reproyectado, totales_municipio) {
 # secciones de origen de cada municipio. Mide solo la tabla: el ADRH no siempre suma sus
 # secciones al total municipal que publica (2016, 2017 y 2019 en Madrid), y eso lo vigila
 # comprobar_suma_secciones(). Las tablas no cruzan municipios: la prueba detecta sobre todo
-# secciones sin tabla de paso y municipios que cambian.
-comprobar_cierre_poblacional <- function(poblacion, tabla, anio) {
-  secciones <- poblacion |> filter(anio == !!anio, nivel == "seccion") |> select(seccion = codigo, valor)
+# secciones sin tabla de paso y municipios que cambian. Con fusiones o segregaciones (`grupos`),
+# el cierre es por grupo. `excluir`: secciones huérfanas (seccion_huerfanas), que se vigilan aparte.
+comprobar_cierre_poblacional <- function(poblacion, tabla, anio, grupos = NULL, excluir = character()) {
+  secciones <- poblacion |> filter(anio == !!anio, nivel == "seccion", !codigo %in% excluir) |> select(seccion = codigo, valor)
   municipios <- secciones |> group_by(codigo = substr(seccion, 1, 5)) |> summarise(valor = sum(valor), .groups = "drop")
-  geo_cierre_poblacional(geo_reproyectar_recuento(secciones, tabla), municipios) |>
+  geo_cierre_poblacional(geo_reproyectar_recuento(secciones, tabla), municipios, grupos) |>
     transmute(id = "cierre_poblacional", anio = as.integer(!!anio), detalle = municipio,
               calculado = desviacion_pct, referencia = 0)
+}
+
+# Secciones del ADRH cuyo código no está en ningún seccionado del pipeline (2016–2025): el ADRH
+# las publica con los códigos de un seccionado anterior (en España, 2015: siete, casi todas una
+# sección que luego se fusiona; 2016 y 2021: una cada año). Sin mapa ni callejero no hay tabla de
+# paso: quedan fuera del cierre y se avisan (alerta adrh_seccion_huerfana, con su población).
+seccion_huerfanas <- function(poblacion, codigos_mapas) {
+  poblacion |>
+    filter(nivel == "seccion", !codigo %in% codigos_mapas) |>
+    select(anio, codigo, valor)
+}
+
+comprobar_huerfanas <- function(huerfanas) {
+  huerfanas |>
+    transmute(id = "adrh_seccion_huerfana", anio = as.integer(anio), detalle = codigo, calculado = valor, referencia = 0)
 }
 
 # Fase de los códigos de un año (diagnóstico, no es compuerta): secciones del ADRH, del mapa
@@ -217,11 +310,25 @@ geo_fase_codigos <- function(poblacion, anio, mapa, callejero) {
 
 # Toda sección del seccionado de referencia debe recibir algo de la tabla de paso. El cierre
 # municipal no lo ve: una sección vacía se compensa con otra del mismo municipio.
-comprobar_cobertura_destino <- function(tabla, secciones_referencia, anio) {
+#
+# `excepciones` (inventario/excepciones_cobertura.csv): secciones y años con un defecto conocido
+# de la fuente; no cuentan para el bloqueo y salen como alerta (cobertura_destino_excepcion).
+comprobar_cobertura_destino <- function(tabla, secciones_referencia, anio, excepciones = NULL) {
   sin_nada <- setdiff(secciones_referencia, tabla$destino)
-  tibble::tibble(id = "cobertura_destino", anio = as.integer(anio),
-                 detalle = if (length(sin_nada)) paste(utils::head(sin_nada, 5), collapse = " ") else "",
-                 calculado = length(sin_nada), referencia = 0)
+  conocidas <- character()
+  if (!is.null(excepciones) && nrow(excepciones) > 0) {
+    del_anio <- excepciones$seccion[vapply(strsplit(as.character(excepciones$anios), ";", fixed = TRUE),
+                                           function(a) as.character(anio) %in% trimws(a), TRUE)]
+    conocidas <- intersect(sin_nada, del_anio)
+    sin_nada <- setdiff(sin_nada, conocidas)
+  }
+  bind_rows(
+    tibble::tibble(id = "cobertura_destino", anio = as.integer(anio),
+                   detalle = if (length(sin_nada)) paste(utils::head(sin_nada, 5), collapse = " ") else "",
+                   calculado = length(sin_nada), referencia = 0),
+    tibble::tibble(id = rep("cobertura_destino_excepcion", length(conocidas)), anio = as.integer(anio),
+                   detalle = conocidas, calculado = 1, referencia = 0)
+  )
 }
 
 # Diagnóstico sección a sección (no es compuerta): población de un año llevada a 2021

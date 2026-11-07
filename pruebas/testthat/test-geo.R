@@ -52,6 +52,17 @@ test_that("la tabla reparte por portales compartidos y no cruza pseudovías dist
   expect_true(all(abs(tapply(t$fraccion, t$origen, sum) - 1) < 1e-12))
 })
 
+test_that("la tabla provincia a provincia da lo mismo que de una vez", {
+  otra <- function(t) mutate(t, seccion = sub("^28", "08", seccion), municipio = substr(seccion, 1, 5))
+  o2 <- bind_rows(origen, otra(origen))
+  d2 <- bind_rows(destino, otra(destino))
+  topes2 <- bind_rows(topes, mutate(topes, municipio = "08001"))
+  a <- geo_tabla_paso_callejero(o2, d2, topes2) |> arrange(origen, destino)
+  b <- geo_tabla_paso_callejero_por_provincia(o2, d2, topes2) |> arrange(origen, destino)
+  expect_equal(as.data.frame(a), as.data.frame(b), ignore_attr = TRUE)
+  expect_equal(nrow(b), 2 * nrow(geo_tabla_paso_callejero(origen, destino, topes)))
+})
+
 test_that("el estado es dato solo si los orígenes caen enteros (medianas: un único origen)", {
   e <- geo_estado_paso(geo_tabla_paso_callejero(origen, destino, topes))
   est <- function(s, col) e[[col]][e$seccion == s]
@@ -145,4 +156,26 @@ test_that("el cierre mide la tabla y la suma de secciones mide la fuente", {
   s <- comprobar_suma_secciones(poblacion)
   expect_equal(s$id, "adrh_suma_secciones")
   expect_equal(round(s$calculado, 3), round(100 * (100 - 102) / 102, 3))
+})
+
+test_that("las segregaciones forman grupos de municipios y el cierre se mide por grupo", {
+  cuadro <- function(x0, y0, x1, y1) sf::st_polygon(list(rbind(c(x0, y0), c(x1, y0), c(x1, y1), c(x0, y1), c(x0, y0))))
+  a <- sf::st_sf(seccion = c("2800101001", "2800201001"), municipio = c("28001", "28002"),
+                 geometry = sf::st_sfc(cuadro(0, 0, 10, 10), cuadro(10, 0, 20, 10), crs = 25830))
+  b <- sf::st_sf(seccion = c("2800101001", "2890101001", "2800201001"), municipio = c("28001", "28901", "28002"),
+                 geometry = sf::st_sfc(cuadro(0, 0, 5, 10), cuadro(5, 0, 10, 10), cuadro(10, 0, 20, 10), crs = 25830))
+  g <- geo_grupos_municipio(a, b)
+  expect_equal(g$municipio, c("28001", "28901"))
+  expect_equal(unique(g$grupo), "28001")
+  expect_equal(nrow(geo_grupos_municipio(a, a)), 0L)
+  expect_equal(agrupar_municipio(c("28901", "28002"), g), c("28001", "28002"))
+  # La sección de 28001 se reparte entre 28001 y 28901: sin grupos no cierra; con grupos, sí
+  tabla <- tibble::tibble(origen = c("2800101001", "2800101001", "2800201001"),
+                          destino = c("2800101001", "2890101001", "2800201001"),
+                          portales = c(1L, 1L, 1L), fraccion = c(0.5, 0.5, 1), metodo = "catastro")
+  pob <- tibble::tibble(anio = 2018L, nivel = "seccion", codigo = c("2800101001", "2800201001"), valor = c(100, 50))
+  sin <- comprobar_cierre_poblacional(pob, tabla, 2018L)
+  con <- comprobar_cierre_poblacional(pob, tabla, 2018L, g)
+  expect_true(any(is.na(sin$calculado) | abs(sin$calculado) > 0.5))
+  expect_true(all(abs(con$calculado) < 1e-9))
 })

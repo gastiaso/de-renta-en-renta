@@ -1,6 +1,7 @@
 # Fuente ine_adrh: Atlas de Distribución de Renta de los Hogares (INE).
-# Tablas por provincia en INEbase; se descargan en CSV (separador «;», coma decimal).
-# 31105: Madrid, indicadores demográficos (población por sección censal, entre otros).
+# Tablas en INEbase; se descargan en CSV (separador «;», coma decimal). Hay una por provincia y
+# dos de toda España, con el mismo formato: 30824 (indicadores de renta media y mediana) y 30832
+# (indicadores demográficos: población por sección censal, entre otros); unos 400 MB cada una.
 
 url_ine_tabla <- function(id) {
   sprintf("https://www.ine.es/jaxiT3/files/t/es/csv_bdsc/%s.csv", id)
@@ -18,15 +19,16 @@ seccionado_adrh <- function(anio_adrh) anio_adrh + 1L
 # Lee los indicadores pedidos de una tabla del ADRH (cualquier tabla provincial: renta,
 # demografía…). Devuelve una fila por territorio, año e indicador: nivel (municipio, distrito
 # o seccion), código y valor. Formato español: «.» de miles, «,» decimal; «.» solo es dato
-# no disponible (secreto estadístico).
-leer_ine_adrh <- function(ruta, indicadores) {
+# no disponible (secreto estadístico). `ambito`: prefijo de los códigos que se quedan ("" = todos;
+# "28" = la provincia de Madrid).
+leer_ine_adrh <- function(ruta, indicadores, ambito = "") {
   datos <- readr::read_delim(
     ruta, delim = ";", col_types = readr::cols(.default = readr::col_character()),
     locale = readr::locale(encoding = "UTF-8"), progress = FALSE
   )
   names(datos) <- c("municipio", "distrito", "seccion", "indicador", "anio", "valor")
   datos |>
-    filter(indicador %in% indicadores) |>
+    filter(indicador %in% indicadores, startsWith(municipio, ambito)) |>
     mutate(
       nivel  = case_when(!is.na(seccion) ~ "seccion", !is.na(distrito) ~ "distrito", TRUE ~ "municipio"),
       codigo = case_when(nivel == "seccion" ~ substr(seccion, 1, 10),
@@ -40,8 +42,16 @@ leer_ine_adrh <- function(ruta, indicadores) {
 }
 
 # Un indicador de la tabla de indicadores demográficos (población por defecto).
-leer_ine_adrh_demografia <- function(ruta, indicador = "Población") {
-  leer_ine_adrh(ruta, indicador) |> select(-indicador)
+leer_ine_adrh_demografia <- function(ruta, indicador = "Población", ambito = "") {
+  leer_ine_adrh(ruta, indicador, ambito) |> select(-indicador)
+}
+
+# Nombres de los municipios («28079 Madrid» → 28079, Madrid), de la primera columna de una tabla.
+nombres_municipios_adrh <- function(ruta, ambito = "") {
+  m <- readr::read_delim(ruta, delim = ";", col_select = 1, col_types = readr::cols(.default = "c"),
+                         locale = readr::locale(encoding = "UTF-8"), progress = FALSE)[[1]]
+  m <- unique(m[startsWith(m, ambito)])
+  tibble::tibble(municipio = substr(m, 1, 5), nombre = substring(m, 7))
 }
 
 # Indicadores de renta del catálogo (inventario/indicadores.csv) y su nombre en el ADRH
@@ -51,16 +61,20 @@ INDICADORES_ADRH_RENTA <- c(
   "Mediana de la renta por unidad de consumo" = "renta_uc_mediana"
 )
 
-leer_ine_adrh_renta <- function(ruta) {
-  leer_ine_adrh(ruta, names(INDICADORES_ADRH_RENTA)) |>
+leer_ine_adrh_renta <- function(ruta, ambito = "") {
+  leer_ine_adrh(ruta, names(INDICADORES_ADRH_RENTA), ambito) |>
     mutate(indicador = unname(INDICADORES_ADRH_RENTA[indicador]))
 }
 
+# Indicadores de la tabla demográfica que usa el pipeline: población y tamaño medio del hogar.
+INDICADORES_ADRH_DEMOGRAFIA <- c("Población", "Tamaño medio del hogar")
+
 # Pesos para agregar las medias de renta: población (renta por persona) y hogares
 # (renta por hogar), estos como población / tamaño medio del hogar (redondeado a un decimal
-# en la fuente, así que los hogares son aproximados).
-pesos_adrh <- function(ruta_demografia) {
-  leer_ine_adrh(ruta_demografia, c("Población", "Tamaño medio del hogar")) |>
+# en la fuente, así que los hogares son aproximados). `demografia`: leer_ine_adrh() con
+# INDICADORES_ADRH_DEMOGRAFIA.
+pesos_adrh <- function(demografia) {
+  demografia |>
     filter(nivel == "seccion") |>
     tidyr::pivot_wider(names_from = indicador, values_from = valor) |>
     transmute(anio, seccion = codigo, poblacion = `Población`,

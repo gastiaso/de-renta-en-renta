@@ -4,6 +4,19 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (7-nov-2026, geografía constante en toda España)
+
+- El pipeline cubre las 52 provincias (plan v0.16, §6.3): tablas nacionales del ADRH (30824 y 30832), callejeros y seccionados enteros, y 1.420 municipios con edificios del Catastro (4,2 GB). La variable de entorno `PROVINCIA` lo limita a una provincia para pruebas. Memoria `transient` en `targets`. Una pasada completa, unas tres horas y cuarto.
+- Tablas de paso del callejero nacionales en `geo/tablas_paso/callejero_<año>_2021.csv` (sustituyen a las de Madrid, `_28`), calculadas provincia a provincia.
+- Catastro: feeds de las gerencias propias (Cartagena, Gijón, Jerez, Vigo, Ceuta y Melilla) y casado de municipios por nombre con variantes, artículos, bilingües, nombres cortados y una tabla manual de fusiones y cambios de nombre (`casar_municipios_catastro`). Los edificios se pasan al sistema del seccionado y se guardan con su sección de 2021.
+- Fusiones y segregaciones de municipios (`geo_grupos_municipio`): las tablas y la prueba de cierre cruzan municipios dentro de un grupo.
+- El Catastro decide también en las secciones con datos que no están en el callejero y donde la tabla combinada dejaría vacía una sección de 2021; las secciones con datos sin ninguna vía pasan por su código si existe en 2021 (`completar_por_codigo`).
+- Alertas nuevas: `adrh_seccion_huerfana` (nueve secciones del ADRH con códigos de un seccionado anterior, fuera de la tabla y del cierre) y `cobertura_destino_excepcion` (dos secciones con un defecto conocido de la fuente, en `inventario/excepciones_cobertura.csv`).
+
+### Cambiado (7-nov-2026, geografía constante en toda España)
+
+- La renta por hogar de Madrid cambia en 33 cifras (menos de un 0,3 %): la tabla nacional del ADRH redondea el tamaño medio del hogar distinto que la provincial.
+
 ### Cambiado (7-nov-2026, método de la mochila)
 
 - Mochila con el método B (plan v0.15, §3.1; pregunta abierta 7, cerrada): salario medio real de 26 a 35 años de la provincia × relación mediana/media del SME de su comunidad, en bruto anual (`mochila`, `datos/intermedios/mochila/mochila_2024.csv`). Las opciones A y C se siguen calculando (`mochila_opciones`) como registro de la decisión. Falta el paso a neto.
