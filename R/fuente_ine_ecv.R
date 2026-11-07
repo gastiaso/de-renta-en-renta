@@ -189,7 +189,7 @@ calcular_sobrecarga_agrupada <- function(olas, umbral = 0.40) {
   ) |>
     rename(region = ambito) |>
     mutate(
-      fiabilidad = case_when(n_personas < 20 ~ "no publicable", n_personas < 50 ~ "baja", TRUE ~ "normal"),
+      fiabilidad = fiabilidad_eusilc(n_personas),
       anio_inicio = anios[1], anio_fin = anios[2], olas = length(olas),
       indicador = "sobrecarga", umbral = umbral, .before = 1
     )
@@ -249,15 +249,34 @@ comprobar_sobrecarga_anio <- function(sobrecarga, eurostat, europa = NULL) {
   bind_rows(nacional, regional, edades) |> mutate(anio = anio_ecv, .after = id)
 }
 
-# Indicador 22 en la tabla larga: total nacional («00») y comunidades (código del INE,
-# desde la región NUTS 2 de la ECV). Los desgloses por tenencia y edad van aparte
-# (exportar_sobrecarga), porque la tabla larga no tiene dimensión de corte.
-armonizar_sobrecarga_ecv <- function(sobrecarga, ccaa, version) {
-  sobrecarga |>
-    filter(corte %in% c("total", "region")) |>
-    left_join(select(ccaa, codigo, nuts2), by = c("grupo" = "nuts2")) |>
-    transmute(geo_id = if_else(corte == "total", "00", codigo),
-              nivel = if_else(corte == "total", "nacional", "ccaa"),
-              anio, indicador = "sobrecarga", valor, estado = "dato", fuente = "ine_ecv",
-              geo_ref = NA_character_, version = version)
+# Convención de EU-SILC: con menos de 20 observaciones no se publica; de 20 a 49, poco fiable.
+fiabilidad_eusilc <- function(n) {
+  dplyr::case_when(n < 20 ~ "no publicable", n < 50 ~ "baja", TRUE ~ "normal")
+}
+
+# Indicador 22 en la tabla larga (comunidades con el código del INE, desde la región NUTS 2):
+# - España («00»), cada año, en total y por tenencia y edad;
+# - comunidades, cada año, en total;
+# - comunidad × tenencia y comunidad × edad con varias olas agrupadas (`agrupada`): `anio` es
+#   la última ola (2023–2025 → 2025), y la ficha lo dice.
+# Lo que EU-SILC no deja publicar queda como «secreto». El número de observaciones y la marca
+# de fiabilidad van en los ficheros de la sobrecarga (exportar_sobrecarga; pregunta abierta 9).
+armonizar_sobrecarga_ecv <- function(sobrecarga, agrupada, ccaa, version) {
+  nuts <- select(ccaa, codigo, nuts2)
+  espana <- sobrecarga |>
+    filter(corte != "region") |>
+    transmute(geo_id = "00", nivel = "nacional", anio, corte,
+              grupo = if_else(corte == "total", "total", grupo), valor, n_personas)
+  comunidades <- sobrecarga |>
+    filter(corte == "region") |>
+    left_join(nuts, by = c("grupo" = "nuts2")) |>
+    transmute(geo_id = codigo, nivel = "ccaa", anio, corte = "total", grupo = "total", valor, n_personas)
+  cruces <- agrupada |>
+    left_join(nuts, by = c("region" = "nuts2")) |>
+    transmute(geo_id = codigo, nivel = "ccaa", anio = anio_fin, corte, grupo, valor, n_personas)
+  bind_rows(espana, comunidades, cruces) |>
+    mutate(estado = if_else(fiabilidad_eusilc(n_personas) == "no publicable", "secreto", "dato"),
+           valor = if_else(estado == "secreto", NA_real_, valor),
+           indicador = "sobrecarga", fuente = "ine_ecv", geo_ref = NA_character_, version = version) |>
+    select(-n_personas)
 }

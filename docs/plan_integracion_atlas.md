@@ -1,6 +1,10 @@
-# Casilla de salida — Plan de integración por fases
+# De renta en renta — Plan de integración por fases
 
-*Borrador v0.12 · 7 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.14 · 7 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.14:** decisiones del autor del 7-nov-2026. Escalonado y portales confirmados (§2.2 y §2.3). Sin dominio propio: la web va en la dirección de GitHub Pages (§10.1). País Vasco y Navarra sin alquiler por sección en los años sin SERPAVI, con las fianzas como capa municipal aparte. La sobrecarga se publica sin intervalos, con el número de observaciones y la marca de fiabilidad. La tabla larga gana las columnas `corte` y `grupo` (§6.4). La diferencia del ADRH entre secciones y municipio sigue como alerta. Preguntas abiertas 1, 2, 8, 9 y 10 cerradas; la 7 (mochila) espera al cálculo de A y B.
+
+**Cambios en la v0.13:** nombre *De renta en renta*, sin traducir, con dicho de portada; se mantiene el tablero cuadrado (§10.1; pregunta abierta 3, cerrada).
 
 **Cambios en la v0.12:** tablas de paso de todos los años del ADRH en Madrid (2015–2024), combinadas con el Catastro; la prueba de cierre pasa a medir solo la tabla, y la diferencia del ADRH entre secciones y municipio se vigila aparte (§6.3).
 
@@ -46,7 +50,7 @@
 | País Vasco y Navarra | Se integran (Eustat, Nastat, Gobierno Vasco, Haciendas Forales). El alquiler por sección solo existe desde que entran en el SERPAVI (Navarra 2021, Gipuzkoa 2022, Álava y Bizkaia 2024): ver pregunta abierta 8 |
 | Formato | Web exploratoria con fichas; las historias, después |
 | Idioma | Castellano e inglés desde el primer día |
-| Identidad | Tablero, *Casilla de salida* (§10.2): propia, retro, que no parezca *barómetros* con otros datos |
+| Identidad | Tablero, *De renta en renta* (§10.1 y §10.2): propia, retro, que no parezca *barómetros* con otros datos |
 | Herramientas | R al máximo (`targets`), JS solo en la web, MapLibre + PMTiles para las SC |
 | Recursos | Una persona, sin fecha: avance por hitos, no por calendario |
 
@@ -66,7 +70,7 @@ Que algo sea visible no significa que se pueda reutilizar.
 - **Condiciones de uso.** Allí donde la base no está protegida, las condiciones contractuales de la web pueden prohibir la extracción (C-30/14, *Ryanair*).
 - **Riesgo práctico.** Una retirada DMCA en GitHub tumba el repositorio entero, web incluida.
 
-Propuesta para usarlos sin poner en riesgo el resto:
+Medidas para usarlos sin poner en riesgo el resto (confirmadas el 7-nov-2026, pregunta abierta 2):
 
 | Medida | Por qué |
 |---|---|
@@ -82,7 +86,7 @@ Además hay un argumento metodológico: es **precio de oferta**, no de cierre. E
 
 Veinte indicadores, a nivel de sección censal, por una sola persona, retrasan mucho la primera publicación. Cada indicador exige ficha, validación, revisión de rupturas y traducción.
 
-**Propuesta:** los 23 son el alcance de la **v1.0**. Antes sale la sección de sobrecarga (v0.0, F1b), que no depende de la geografía constante. La v0.1 sale con un núcleo de 10 (los 9 iniciales y el sueldo necesario) que ya responde a la pregunta rectora. Así llegan comentarios de periodistas y técnicos antes de invertir en el resto.
+**Decidido (7-nov-2026):** los 23 son el alcance de la **v1.0**. Antes sale la sección de sobrecarga (v0.0, F1b), que no depende de la geografía constante. La v0.1 sale con un núcleo de 10 (los 9 iniciales y el sueldo necesario) que ya responde a la pregunta rectora. Así llegan comentarios de periodistas y técnicos antes de invertir en el resto.
 
 ### 2.4 Sección censal desde 2015
 
@@ -271,14 +275,14 @@ pruebas/      testthat + prueba de la web con chromote
   - **Efecto en Madrid** (73 municipios, 385.611 edificios con viviendas): secciones `estimado` de 2021, de 724 a 192 (2015 → 2021) y de 558 a 112 (2025 → 2021); medianas `ausente`, de 91 a 20 y de 233 a 133. En las secciones que el callejero repartía, los errores de más del 20 % frente al ADRH 2020 bajan de 141 a 94 (2015) y de 128 a 26 (2024). La prueba de cierre sigue en 0,0012 % como máximo.
   - **Prueba de un año de la vía (b)** (7-nov-2026; ADRH 2021, en el seccionado de 2022, llevado a 2021 y comparado con el ADRH 2020). En las 465 secciones que el callejero reparte, las que quedan dentro de ±5 % pasan del 66,5 al 92,5 %, el 90 % central de la razón pasa de 0,81–1,28 a 0,96–1,04 y los errores de más del 20 %, de 50 a 7. Es lo mismo que en las secciones que caen enteras (94,8 % dentro de ±5 %; 0,96–1,04; 7 errores de más del 20 %), es decir, el ruido de un año. Con la tabla combinada, las secciones `estimado` de 2021 pasan de 465 a 22 y las medianas `ausente`, de 191 a 18; en la tabla larga, las cifras `estimado` de la renta de 2021 bajan de 1.218 a 63.
   - **Secciones «fantasma».** El mapa del seccionado no siempre va en fase con el callejero y el ADRH del mismo año. En Madrid, el de 2022 dibuja una sección que ya se ha fusionado (2800505019, en Alcalá de Henares) y otra que los datos aún no tienen (2811501034, en Pozuelo de Alarcón). Sin corregirlo, la vía (b) asignaba toda la población de la sección fusionada a una sola de 2021 y dejaba la otra vacía, sin que lo detectara la prueba de cierre municipal. Ahora los edificios de una sección fantasma pasan al origen de los datos que, según el callejero, cubre el mismo destino; si lo cubren varios, esos orígenes siguen por el callejero (`reasignar_fantasmas()`). Nueva compuerta `cobertura_destino` (bloqueo): toda sección de 2021 debe recibir algo de la tabla. Los mapas de 2015 y 2025 no tienen fantasmas; el de 2015 tiene diez códigos que el ADRH no publica por sección (municipios de una sola sección), que sí están en el callejero.
-  - **Todos los años del ADRH** (7-nov-2026): nueve tablas, una por seccionado (2015, 2017–2020 y 2022–2025), con los callejeros de enero del mismo año. Secciones de 2021 `estimado` (callejero → combinada): 724 → 192 (2015), 658 → 185 (2016), 475 → 10 (2017), 444 → 2 (2018), 430 → 2 (2019), 465 → 22 (2021), 517 → 96 (2022), 532 → 98 (2023) y 558 → 112 (2024). Entre 2018 y 2021 apenas hay cambios de límites en Madrid: casi todo lo que el callejero repartía era ruido de los rangos genéricos de la aplicación antigua. Con la aplicación antigua también hay prueba de un año (ADRH 2019, seccionado de 2020): en las 430 secciones que el callejero reparte, dentro de ±5 % pasan del 87,7 al 94,2 %.
+  - **Todos los años del ADRH** (7-nov-2026): nueve tablas, una por seccionado (2016–2020 y 2022–2025; hasta pasar el ADRH 2015 al seccionado de 2016, la primera era la de 2015), con los callejeros de enero del mismo año. Secciones de 2021 `estimado` (callejero → combinada): 724 → 192 (2015), 658 → 185 (2016), 475 → 10 (2017), 444 → 2 (2018), 430 → 2 (2019), 465 → 22 (2021), 517 → 96 (2022), 532 → 98 (2023) y 558 → 112 (2024). Entre 2018 y 2021 apenas hay cambios de límites en Madrid: casi todo lo que el callejero repartía era ruido de los rangos genéricos de la aplicación antigua. Con la aplicación antigua también hay prueba de un año (ADRH 2019, seccionado de 2020): en las 430 secciones que el callejero reparte, dentro de ±5 % pasan del 87,7 al 94,2 %. Con el ADRH 2015 en el seccionado de 2016, sus secciones `estimado` pasan a 694 (callejero) y 191 (combinada), y las que conservan el código y cambian más de un 1 % de superficie hasta 2021, de 140 a 138.
   - **Pendiente:** la licencia del Catastro. Hasta aclararla, las tablas combinadas no se versionan ni se publican (se quedan en el pipeline).
 - **Población por sección para las pruebas:** además del ADRH, el Censo anual de población por secciones (2021–2025, con sexo y edad) y el Padrón continuo por secciones (2004–2022).
 - **Vía (a) en la práctica** (prueba de Madrid):
   - cada tabla compara tramos de la misma aplicación del INE: el callejero de enero de 2021 se publicó con la antigua y con la nueva, así que 2015 → 2021 usa la antigua en los dos extremos y 2025 → 2021, la nueva;
   - los tramos sin vía (código 00000) se identifican por su pseudovía; los rangos genéricos 0001–9999 de la aplicación antigua se recortan al último portal real que da la nueva;
   - el peso es el número de portales, no de viviendas: un bloque de cien viviendas pesa lo mismo que una casa. Es la razón de la vía (b).
-- **Años y direcciones** (ADRH y padrón, que se publican cada año en su seccionado). El año *t* del ADRH está en el seccionado de 1 de enero de *t* + 1 (Madrid: el ADRH 2020 coincide código a código con el seccionado de 2021, y el 2024 con el de 2025; `geo_fase_codigos()` lo confirma para 2016–2023, salvo diez municipios de una sola sección que el ADRH no publica por sección hasta 2020 y las secciones fantasma del mapa de 2022). El ADRH 2015, primer año, va con el seccionado y el callejero de 2015: coincide con ellos código a código y no se ha descargado el de 2016 para distinguirlo. Así, el ADRH 2020 es nativo; 2015–2019 van hacia delante (las divisiones obligan a repartir) y 2021–2024, hacia atrás (casi siempre es juntar).
+- **Años y direcciones** (ADRH y padrón, que se publican cada año en su seccionado). El año *t* del ADRH está en el seccionado de 1 de enero de *t* + 1 (Madrid: el ADRH 2020 coincide código a código con el seccionado de 2021, y el 2024 con el de 2025; `geo_fase_codigos()` lo confirma para 2016–2023, salvo diez municipios de una sola sección que el ADRH no publica por sección hasta 2020 y las secciones fantasma del mapa de 2022). El ADRH 2015, primer año, sigue la misma regla y va con el seccionado y el callejero de 2016 (desde el 7-nov-2026; antes, con los de 2015). En Madrid no se puede distinguir: los dos seccionados tienen los mismos 4.341 códigos y los tramos del callejero no cambian; solo tres secciones de un municipio cambian de límites, por un redibujado que no mueve población. En toda España, entre 2015 y 2016 desaparecen 44 códigos y aparecen 30: la comprobación se repetirá con el ADRH de todas las provincias. Así, el ADRH 2020 es nativo; 2015–2019 van hacia delante (las divisiones obligan a repartir) y 2021–2024, hacia atrás (casi siempre es juntar).
 - **Estado de las cifras reproyectadas** (adoptado el 6-nov-2026, a partir de la prueba de un año; decide la sección, no la dirección). Una sección de origen «cae entera» en la de 2021 si su fracción hacia ella es ≥ 0,99:
   - recuentos y medias ponderadas: `dato` si todos los orígenes que recibe caen enteros (sumar, o promediar con su denominador, es exacto); `estimado` si alguno se reparte;
   - medianas e índices: no se combinan, se copia la de un solo origen. `dato` con un único origen que cae entero (la misma sección, aunque cambie de código); `estimado` con un único origen repartido o con un origen dominante, que aporta al menos el 95 % de los portales de la sección (adoptado el 6-nov-2026, pregunta abierta 6); `ausente` si ninguno domina, y se remite a la escala superior;
@@ -305,8 +309,10 @@ pruebas/      testthat + prueba de la web con chromote
 Una tabla larga en Parquet:
 
 ```
-geo_id | nivel (sc, distrito, municipio, cp, provincia, ccaa) | anio | indicador | valor | estado (dato, secreto, ausente, estimado) | fuente | geo_ref (seccionado de referencia) | version
+geo_id | nivel (sc, distrito, municipio, cp, provincia, ccaa) | anio | indicador | corte | grupo | valor | estado (dato, secreto, ausente, estimado) | fuente | geo_ref (seccionado de referencia) | version
 ```
+
+`corte` y `grupo` (desde el 7-nov-2026, pregunta abierta 10) guardan los desgloses: `corte` es la variable (`tenencia`, `edad`) y `grupo`, su valor (`alquiler_mercado`, `18_64`…). Sin desglose, las dos valen `total`. La clave de una fila es `geo_id`, `nivel`, `anio`, `indicador`, `corte` y `grupo`.
 
 Junto a ella, `metadatos.json` con fichas bilingües, rupturas, supuestos por defecto y fecha de cada fuente.
 
@@ -374,10 +380,10 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
   - varias olas agrupadas cuando la celda comunidad × tenencia no tenga muestra suficiente;
   - primera versión pública de la identidad, el bilingüe y la compuerta.
 - **Hecho cuando:** pasa el doble control de §6.5 (España y cada comunidad frente a Eurostat, ±0,1 puntos).
-- **Condición:** si el cruce comunidad × tenencia no sale con intervalos publicables, la sección pierde su valor añadido frente al visor de Eurostat y se aplaza a F6.
+- **Condición:** si el cruce comunidad × tenencia no supera los umbrales de publicación de EU-SILC, la sección pierde su valor añadido frente al visor de Eurostat y se aplaza a F6. Se publica sin intervalos, con el número de observaciones y la marca de fiabilidad (pregunta abierta 9, cerrada).
 - **Avance (7-nov-2026):**
   - Tres olas de la ECV (2023–2025) en el pipeline; las tres pasan la compuerta: España, inquilinos a precio de mercado, las 19 comunidades y los cuatro grupos de edad (diferencia máxima con Eurostat, 0,05 puntos). La edad es la del final del año de ingresos (RB081): con la de la entrevista, el corte de 2025 se desviaba 0,12 puntos.
-  - Comunidad × tenencia y comunidad × edad con las tres olas agrupadas: todas las celdas superan las 50 observaciones (la menor, 261 personas en alquiler de mercado en Melilla), así que pasan los umbrales de publicación de EU-SILC. Faltan los intervalos de confianza (pregunta abierta 9).
+  - Comunidad × tenencia y comunidad × edad con las tres olas agrupadas: todas las celdas superan las 50 observaciones (la menor, 261 personas en alquiler de mercado en Melilla), así que pasan los umbrales de publicación de EU-SILC. Sin intervalos (pregunta abierta 9, cerrada).
   - Europa: todos los países (tenencia y edad) y las regiones NUTS 2, con su versión de geometría (GISCO 2021 y 2024); solo faltan geometrías para el código agrupado FI19_20 y para Bosnia y Herzegovina en 2022–2023. «La escalera» de 2025: 214 entradas; las comunidades van del puesto 23 (Melilla, 13,8 %) al 185 (Navarra, 3,5 %).
   - Indicador 23 desde las tablas del módulo (comunidades, edad y sexo, tenencia).
   - Ficheros intermedios en `datos/intermedios/sobrecarga/`; total y comunidades de los indicadores 22 y 23, también en la tabla larga.
@@ -508,6 +514,17 @@ Terna inicial: **Años de sueldo** (claridad para periodistas), **Nivel de vida*
 
 Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en dominios.es); TMview no tiene valor legal (confirmar en el localizador de la OEPM, clases 9, 35, 41 y 42).
 
+**Elegido (7-nov-2026): *De renta en renta*.**
+- **Origen:** el dicho del juego de la oca («de oca a oca y tiro porque me toca»), de dominio público. Con «en», como en «de casa en casa», expresa una serie.
+- **Doble sentido:** *renta* es el ingreso y lo que paga el arrendatario (DLE, acepciones 2 y 3): los dos términos de la cuenta del atlas. También cubre la compraventa, que el Banco de España mide en años de renta.
+- **Sin traducir.** El juego de palabras no pasa al inglés. Descartado *Rent to Rent*: en Reino Unido nombra una estrategia de inversión basada en subarrendar.
+- **Dicho de portada:** «De renta en renta, y pago porque me toca» (`web/i18n`, `sitio.dicho`). Solo en la portada: el título, la cita (`CITATION.cff`) y los metadatos quedan neutros.
+- **Repositorio y carpeta:** `de-renta-en-renta` (iguales, para que `git clone` cree la misma carpeta).
+- **Identidad:** se mantiene el tablero cuadrado; la oca queda solo en el nombre.
+- **Riesgos asumidos:** en España «la renta» evoca primero la declaración de Hacienda, y «vivir de las rentas», al rentista; el dicho opina.
+- **Comprobado (7-nov-2026):** sin repositorios en GitHub ni webs con ese nombre. **Pendiente:** marcas (TMview y OEPM), con el método de la terna (backlog, tarea 2).
+- **Sin dominio propio** (7-nov-2026): la web se sirve en la dirección de GitHub Pages del repositorio `de-renta-en-renta`.
+
 ### 10.2 Maquetas de estilo
 
 22 maquetas de estilo: 20 retro, una de cartografía antigua y una de control sobria. Usan el mismo contenido: mapa pixelado ilustrativo y cifras nacionales de referencia del Banco de España (1987, 2007, 2023 y el 72 % de 1990), que hay que verificar en la serie original antes de publicarlas.
@@ -517,7 +534,7 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 - **Recreativa:** el amarillo es a la vez el tramo más alto del mapa y el color de los botones; los tramos bajos solo se distinguen por el tono; tiende a los rankings.
 - **Tablero:** los dos tramos bajos quedan por debajo de 3:1 sobre la crema; es la menos «8 bits».
 
-**Elegido (6-nov-2026): tablero, *Casilla de salida*.**
+**Elegido (6-nov-2026): tablero** (entonces con el nombre de trabajo *Casilla de salida*; nombre definitivo en §10.1).
 - **Portada:** el tablero completo.
 - **Tipografía:** el juego de cartas clásico, con equivalentes libres (OFL; Yellowtail, Apache 2.0):
   - Jost para el tablero, los titulares y las cifras (en lugar de Kabel y Futura);
@@ -545,16 +562,17 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 
 ## 11. Preguntas abiertas
 
-1. **Escalonado.** v0.0 (sobrecarga), v0.1 con 10 indicadores y los 23 para la v1.0 (§2.3): por confirmar.
-2. **Portales.** Capa desmontable, solo informes agregados y repo satélite (§2.2): por confirmar.
-3. **Nombre.** ¿*Casilla de salida* definitivo? Comprobado (§10.1): en castellano está libre en GitHub, dominios y marcas; el riesgo es *Square One*, ocupado en todos los frentes. Decisión del autor (también, si el nombre inglés cambia).
+1. **Escalonado.** Cerrada el 7-nov-2026: v0.0 (sobrecarga), v0.1 con 10 indicadores y los 23 para la v1.0 (§2.3).
+2. **Portales.** Cerrada el 7-nov-2026: capa desmontable, solo informes agregados y repo satélite por valorar (§2.2). El autor aportará los datos completos de Idealista; sus condiciones de uso se revisan al recibirlos.
+3. **Nombre.** Cerrada el 7-nov-2026: *De renta en renta*, sin traducir (§10.1). Sin dominio propio: la web va en la dirección de GitHub Pages. Faltan las marcas (backlog, tarea 2).
 4. **Seccionado de referencia.** Cerrada el 6-nov-2026: el del Censo 2021 (§1 y §6.3). Se descartó el último porque obligaba a repartir las medianas del SERPAVI: 227 de las 26.137 secciones con dato en 2024 tienen un código que desaparece antes de 2025 (0,6 % de los testigos).
 5. **Estado de las cifras reproyectadas.** Cerrada el 6-nov-2026 (§1 y §6.3). Las medias ponderadas siguen a los recuentos, como manda la regla del nivel nativo; el 1:1 se exige solo a las medianas.
 6. **Medianas `ausente` por aportes pequeños.** Cerrada el 6-nov-2026: se copia la mediana del origen dominante (≥ 95 % de los portales) como `estimado` (§6.3). En Madrid, las medianas `ausente` bajan a 91, 191 y 233 según el año.
-7. **Método de la mochila.** La AEAT no publica la mediana por comunidad y edad, y su «año completo» es un salario anualizado, no el de quien trabaja doce meses (§3.1). Opciones A (recomendada), B y C. Por decidir antes de F3; la v0.1 solo necesita el salario provincial medio (indicador 7, versión mínima).
-8. **Alquiler del País Vasco (y Navarra) en los años sin SERPAVI.** La estadística del Gobierno Vasco (fianzas) no baja a sección censal (municipios de más de 5.000 habitantes y barrios de las capitales) y da la media, no la mediana. Navarra no tiene ninguna fuente antes de 2021. Propuesta: sin dato por sección esos años y la estadística de fianzas como capa aparte de contexto municipal, sin mezclarla con el indicador 8 (regla 5: cada fuente dice qué mide). Por decidir antes de F2.
-9. **Intervalos de confianza de la sobrecarga.** Los microdatos públicos de la ECV no traen estratos ni unidades primarias de muestreo, así que no se puede calcular el error de diseño. Opciones: (a) sin intervalos, con el número de observaciones y la marca de fiabilidad de EU-SILC, que ya están; (b) intervalos aproximados con muestreo aleatorio simple corregido por un efecto de diseño calibrado con los coeficientes de variación que publica el INE por comunidad (tablas 79669–79671, para la tasa AROPE). Recomendada: (b), declarando la aproximación.
-10. **Desgloses en la tabla larga.** El esquema (§6.4) no tiene dimensión de corte, así que la sobrecarga por tenencia o edad va en ficheros aparte. Propuesta: añadir dos columnas, `corte` y `grupo` (`total` por defecto), para que todo viva en la misma tabla.
+7. **Método de la mochila.** La AEAT no publica la mediana por comunidad y edad, y su «año completo» es un salario anualizado, no el de quien trabaja doce meses (§3.1). Opciones A (recomendada), B y C. Por decidir antes de F3; la v0.1 solo necesita el salario provincial medio (indicador 7, versión mínima). El autor pide calcular A y B para ver la diferencia antes de decidir.
+8. **Alquiler del País Vasco (y Navarra) en los años sin SERPAVI.** Cerrada el 7-nov-2026. La estadística del Gobierno Vasco (fianzas) no baja a sección censal (municipios de más de 5.000 habitantes y barrios de las capitales) y da la media, no la mediana; Navarra no tiene ninguna fuente antes de 2021. Esas secciones van sin dato esos años, y la estadística de fianzas, como capa aparte de contexto municipal, sin mezclarla con el indicador 8 (regla 5: cada fuente dice qué mide).
+9. **Intervalos de confianza de la sobrecarga.** Cerrada el 7-nov-2026: sin intervalos. Los microdatos públicos de la ECV no traen estratos ni unidades primarias de muestreo, así que no se puede calcular el error de diseño, y la aproximación con los coeficientes de variación de otro indicador (la tasa AROPE) se descarta. Cada cifra lleva el número de observaciones y la marca de fiabilidad de EU-SILC.
+10. **Desgloses en la tabla larga.** Cerrada el 7-nov-2026: dos columnas nuevas, `corte` y `grupo` (`total` en las dos por defecto), para que la sobrecarga por tenencia o edad viva en la misma tabla (§6.4).
+11. **Diferencia del ADRH entre secciones y municipio.** Cerrada el 7-nov-2026: alerta (`adrh_suma_secciones`), no bloqueo. Es un fallo de la fuente que el atlas no puede corregir; se documenta en la ficha.
 
 **Por verificar en F0** (no son decisiones, son comprobaciones), hechas el 6-nov-2026:
 - cortes de edad de la AEAT (<18, 18–25, 26–35, 36–45, 46–55, 56–65, >65) y módulo de año completo (desde 2019; ver §3.1);

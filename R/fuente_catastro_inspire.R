@@ -13,7 +13,7 @@ url_catastro_provincia <- function(provincia) {
 municipios_catastro <- function(provincia) {
   # El feed viene en ISO-8859-1
   xml <- httr2::request(url_catastro_provincia(provincia)) |>
-    httr2::req_user_agent("Mozilla/5.0 (compatible; casilla-de-salida; R httr2)") |>
+    httr2::req_user_agent("Mozilla/5.0 (compatible; de-renta-en-renta; R httr2)") |>
     httr2::req_perform() |> httr2::resp_body_raw() |> rawToChar() |> iconv(from = "latin1", to = "UTF-8")
   urls <- unique(regmatches(xml, gregexpr("https://[^\"<]+\\.zip", xml))[[1]])
   tibble::tibble(

@@ -1,12 +1,19 @@
 # Exportación de resultados que se publican o se versionan.
 
-# Tabla larga única (guía de trabajo, «Modelo de datos»).
-COLUMNAS_TABLA_LARGA <- c("geo_id", "nivel", "anio", "indicador", "valor", "estado", "fuente", "geo_ref", "version")
+# Tabla larga única (guía de trabajo, «Modelo de datos»). `corte` y `grupo` guardan los desgloses
+# (tenencia, edad, sexo); sin desglose, las dos valen «total» (plan §6.4, pregunta abierta 10).
+COLUMNAS_TABLA_LARGA <- c("geo_id", "nivel", "anio", "indicador", "corte", "grupo", "valor", "estado",
+                          "fuente", "geo_ref", "version")
+CLAVE_TABLA_LARGA <- c("geo_id", "nivel", "anio", "indicador", "corte", "grupo", "fuente")
 NIVELES <- c(sc = 10L, distrito = 7L, municipio = 5L, cp = 5L, provincia = 2L, ccaa = 2L, nacional = 2L)   # nacional: «00»
 ESTADOS <- c("dato", "secreto", "ausente", "estimado")
 
+# Filas sin desglose: corte y grupo «total».
+sin_desglose <- function(tabla) mutate(tabla, corte = "total", grupo = "total")
+
 # Comprueba el esquema y la coherencia de la tabla larga; se detiene con el primer problema.
-validar_tabla_larga <- function(tabla, indicadores = NULL, fuentes = NULL) {
+# Con `vocabulario`, cada corte y cada grupo deben tener su texto en inventario/vocabulario.csv.
+validar_tabla_larga <- function(tabla, indicadores = NULL, fuentes = NULL, vocabulario = NULL) {
   falta <- setdiff(COLUMNAS_TABLA_LARGA, names(tabla))
   if (length(falta) > 0) stop("Faltan columnas en la tabla larga: ", paste(falta, collapse = ", "), call. = FALSE)
   problema <- function(cond, texto) if (any(cond)) stop(texto, " (", sum(cond), " filas)", call. = FALSE)
@@ -16,7 +23,15 @@ validar_tabla_larga <- function(tabla, indicadores = NULL, fuentes = NULL) {
   problema(!tabla$estado %in% ESTADOS, "Estado desconocido")
   problema(is.na(tabla$valor) & tabla$estado %in% c("dato", "estimado"), "Valor vacío con estado dato o estimado")
   problema(!is.na(tabla$valor) & tabla$estado %in% c("secreto", "ausente"), "Valor con estado secreto o ausente")
-  problema(duplicated(tabla[c("geo_id", "nivel", "anio", "indicador", "fuente")]), "Filas repetidas")
+  problema(is.na(tabla$corte) | is.na(tabla$grupo), "Corte o grupo vacío")
+  problema((tabla$corte == "total") != (tabla$grupo == "total"), "Corte y grupo «total» descasados")
+  problema(duplicated(tabla[CLAVE_TABLA_LARGA]), "Filas repetidas")
+  if (!is.null(vocabulario)) {
+    problema(!tabla$corte %in% vocabulario$clave[vocabulario$grupo == "corte"], "Corte fuera del vocabulario")
+    con_corte <- tabla$corte != "total"
+    problema(con_corte & !paste(tabla$corte, tabla$grupo) %in% paste(vocabulario$grupo, vocabulario$clave),
+             "Grupo fuera del vocabulario")
+  }
   if (!is.null(indicadores)) problema(!tabla$indicador %in% indicadores$codigo, "Indicador fuera del catálogo")
   if (!is.null(fuentes)) problema(!tabla$fuente %in% fuentes$id, "Fuente fuera del inventario")
   tabla
@@ -61,7 +76,8 @@ comprobar_i18n <- function(rutas) {
 }
 
 # Sobrecarga (F1b): cifras anuales de España por corte, cruces con varias olas y «escalera».
-# Van aparte de la tabla larga, que no tiene dimensión de corte (tenencia, edad).
+# Las cifras también están en la tabla larga; estos ficheros añaden el número de observaciones
+# y la marca de fiabilidad de cada una (pregunta abierta 9) y la «escalera» europea.
 exportar_sobrecarga <- function(anual, agrupada, escalera, dir = file.path("datos", "intermedios", "sobrecarga")) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   rutas <- c(
@@ -80,9 +96,10 @@ exportar_tabla_larga <- function(tabla, ruta) {
   dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
   tabla |>
     transmute(geo_id = as.character(geo_id), nivel = as.character(nivel), anio = as.integer(anio),
-              indicador = as.character(indicador), valor = as.numeric(valor), estado = as.character(estado),
+              indicador = as.character(indicador), corte = as.character(corte), grupo = as.character(grupo),
+              valor = as.numeric(valor), estado = as.character(estado),
               fuente = as.character(fuente), geo_ref = as.character(geo_ref), version = as.character(version)) |>
-    arrange(fuente, indicador, nivel, geo_id, anio) |>
+    arrange(fuente, indicador, nivel, geo_id, anio, corte, grupo) |>
     arrow::write_parquet(ruta)
   ruta
 }

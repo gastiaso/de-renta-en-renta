@@ -156,5 +156,6 @@ armonizar_ine_adrh <- function(renta, pesos, tablas, version) {
   municipios <- renta |> filter(nivel == "municipio") |>
     transmute(geo_id = codigo, nivel = "municipio", anio, indicador, valor, estado = "dato")
   bind_rows(secciones, municipios) |>
+    sin_desglose() |>
     mutate(fuente = "ine_adrh", geo_ref = "2021", version = version)
 }

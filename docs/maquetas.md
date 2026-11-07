@@ -1,6 +1,6 @@
 # Maquetas de diseño
 
-Maquetas de referencia hechas fuera del repositorio (no se incluyen). Pantallas del estilo elegido, tablero (*Casilla de salida*):
+Maquetas de referencia hechas fuera del repositorio (no se incluyen). Pantallas del estilo elegido, tablero, con el nombre de trabajo anterior (*Casilla de salida*):
 
 | Pantalla | Qué enseña |
 |---|---|

@@ -18,3 +18,24 @@ estado,ausente,Sin dato,No data
 fiabilidad,normal,Muestra suficiente,Sufficient sample
 fiabilidad,baja,"Muestra pequeña (20 a 49 observaciones): leer con cautela","Small sample (20 to 49 observations): read with caution"
 fiabilidad,no publicable,Muestra insuficiente (menos de 20 observaciones),Insufficient sample (fewer than 20 observations)
+corte,total,Total,Total
+corte,tenencia,Régimen de tenencia,Tenure status
+corte,edad,Edad,Age
+corte,sexo,Sexo,Sex
+tenencia,OWN,Propiedad,Owner
+tenencia,OWN_NL,Propiedad sin hipoteca ni préstamo,Owner with no outstanding mortgage or housing loan
+tenencia,OWN_L,Propiedad con hipoteca o préstamo,Owner with mortgage or loan
+tenencia,RENT,Alquiler o cesión gratuita,Tenant or rent-free
+tenencia,RENT_MKT,Alquiler a precio de mercado,Tenant at market price
+tenencia,RENT_FR,Alquiler inferior al de mercado o cesión gratuita,Tenant at reduced price or rent-free
+tenencia,RENT_RED,Alquiler inferior al precio de mercado,Tenant at reduced price
+tenencia,FREE,Cesión gratuita,Rent-free
+edad,Y_LT18,Menos de 18 años,Under 18
+edad,Y18-64,De 18 a 64 años,18 to 64
+edad,Y_GE65,65 y más años,65 and over
+edad,Y15-29,De 15 a 29 años,15 to 29
+edad,Y16-29,De 16 a 29 años,16 to 29
+edad,Y30-44,De 30 a 44 años,30 to 44
+edad,Y45-64,De 45 a 64 años,45 to 64
+sexo,M,Hombres,Men
+sexo,F,Mujeres,Women

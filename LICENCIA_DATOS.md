@@ -2,7 +2,7 @@
 
 Los **datos derivados** que produce este proyecto (`datos/publicados/`), los **textos** (fichas, metodología, web) y el **inventario** (`inventario/`) se publican con licencia **Creative Commons Atribución 4.0 Internacional (CC BY 4.0)**: <https://creativecommons.org/licenses/by/4.0/deed.es>.
 
-Atribución sugerida: «Casilla de salida (Guillermo Astiaso Llamazares), a partir de [fuente original]».
+Atribución sugerida: «De renta en renta (Guillermo Astiaso Llamazares), a partir de [fuente original]».
 
 - Los **datos de origen** mantienen las condiciones de cada fuente. Están en `inventario/fuentes.csv` (columna `licencia`). Citar siempre también la fuente original.
 - Las **geometrías NUTS de Eurostat (GISCO)** del mapa europeo no entran en la licencia CC BY 4.0: su uso es no comercial y lleva el aviso «© EuroGeographics para los límites administrativos».

@@ -1,6 +1,8 @@
 {
   "sitio": {
-    "titulo": "Square One",
+    "titulo": "De renta en renta",
+    "subtitulo": "Housing costs and wages, tract by tract",
+    "dicho": "De renta en renta, y pago porque me toca",
     "lema": "Where, since when and for whom the link between the cost of living and what people earn has broken"
   },
   "nav": {
@@ -215,6 +217,21 @@
     "bde_accesibilidad": "Housing affordability indicators (years of income, theoretical burden)"
   },
   "vocabulario": {
+    "corte": {
+      "total": "Total",
+      "tenencia": "Tenure status",
+      "edad": "Age",
+      "sexo": "Sex"
+    },
+    "edad": {
+      "Y_LT18": "Under 18",
+      "Y18-64": "18 to 64",
+      "Y_GE65": "65 and over",
+      "Y15-29": "15 to 29",
+      "Y16-29": "16 to 29",
+      "Y30-44": "30 to 44",
+      "Y45-64": "45 to 64"
+    },
     "estado": {
       "dato": "Published or computed value",
       "estimado": "Estimated: the tract boundaries changed and values had to be split",
@@ -241,6 +258,20 @@
       "provincia": "Province",
       "ccaa": "Autonomous community",
       "nacional": "Spain"
+    },
+    "sexo": {
+      "M": "Men",
+      "F": "Women"
+    },
+    "tenencia": {
+      "OWN": "Owner",
+      "OWN_NL": "Owner with no outstanding mortgage or housing loan",
+      "OWN_L": "Owner with mortgage or loan",
+      "RENT": "Tenant or rent-free",
+      "RENT_MKT": "Tenant at market price",
+      "RENT_FR": "Tenant at reduced price or rent-free",
+      "RENT_RED": "Tenant at reduced price",
+      "FREE": "Rent-free"
     }
   }
 }

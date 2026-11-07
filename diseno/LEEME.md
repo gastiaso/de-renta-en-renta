@@ -1,4 +1,4 @@
-# Diseño · tablero «Casilla de salida»
+# Diseño · tablero «De renta en renta»
 
 | Fichero | Contenido |
 |---|---|

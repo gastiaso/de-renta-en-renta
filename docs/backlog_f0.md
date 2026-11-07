@@ -19,13 +19,16 @@ Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decid
 - Precedente: el SERPAVI en PDF solo se ha podido transcribir **a mano**, y por comunidad. Hay una solicitud de acceso reutilizable en datos.gob.es (agosto de 2026). No consta descarga por sección.
 - **Hecho cuando:** la fila `mivau_serpavi` de `inventario/fuentes.csv` está completa y hay una decisión anotada: (a) descarga directa; (b) solicitud formal al MIVAU, mientras se avanza con otra escala; (c) plan B a escala de municipio o distrito, con su efecto en la v0.1.
 
-## 2. Nombre · COMPROBADO, FALTA DECIDIR (6-nov-2026)
+## 2. Nombre · DECIDIDO, FALTAN LAS MARCAS (7-nov-2026)
 
 **Comprobación hecha** (plan §10.1): «Casilla de salida» está libre en GitHub, dominios y marcas; «Square One» está ocupado en GitHub, dominios y con marcas vigentes en las clases 9, 35, 41 y 42. Antes de registrar nada: confirmar el .es en dominios.es y repetir la búsqueda en el localizador de la OEPM. La decisión es del autor.
 
-- Comprobar «Casilla de salida» y «Square One»: repositorios en GitHub, dominios (.es, .org, .com) y marcas en la OEPM (clases 9, 35, 41 y 42).
+**Decisión (7-nov-2026):** *De renta en renta*, sin traducir (plan, §10.1). Primera búsqueda sin coincidencias: ningún repositorio de GitHub ni web con ese nombre.
+
+- Sin dominio propio (decisión del autor, 7-nov-2026): la web va en la dirección de GitHub Pages del repositorio `de-renta-en-renta`. Ya no hace falta comprobar dominios.
+- Comprobar «De renta en renta» en TMview y en el localizador de la OEPM (clases 9, 35, 41 y 42), con el mismo método que la terna.
 - Evitar coincidencias con otros atlas de vivienda ya publicados.
-- **Hecho cuando:** nombre decidido y anotado en el plan (§10). Hasta entonces, el repositorio de GitHub usa un nombre de trabajo neutro.
+- **Hecho cuando:** las comprobaciones de *De renta en renta* están anotadas en el plan (§10.1). Si alguna choca, se vuelve a la lista de §10.1.
 
 ## 3. Comprobaciones pendientes del plan (§11) · HECHA (6-nov-2026)
 

@@ -1,6 +1,8 @@
 {
   "sitio": {
-    "titulo": "Casilla de salida",
+    "titulo": "De renta en renta",
+    "subtitulo": "Vivienda y sueldos, sección a sección",
+    "dicho": "De renta en renta, y pago porque me toca",
     "lema": "Dónde, desde cuándo y para quién se ha roto la relación entre lo que cuesta vivir y lo que se cobra"
   },
   "nav": {
@@ -215,6 +217,21 @@
     "bde_accesibilidad": "Indicadores de accesibilidad a la vivienda (años de renta, esfuerzo teórico)"
   },
   "vocabulario": {
+    "corte": {
+      "total": "Total",
+      "tenencia": "Régimen de tenencia",
+      "edad": "Edad",
+      "sexo": "Sexo"
+    },
+    "edad": {
+      "Y_LT18": "Menos de 18 años",
+      "Y18-64": "De 18 a 64 años",
+      "Y_GE65": "65 y más años",
+      "Y15-29": "De 15 a 29 años",
+      "Y16-29": "De 16 a 29 años",
+      "Y30-44": "De 30 a 44 años",
+      "Y45-64": "De 45 a 64 años"
+    },
     "estado": {
       "dato": "Dato publicado o calculado sin estimar",
       "estimado": "Estimado: la sección cambió de límites y hubo que repartir",
@@ -241,6 +258,20 @@
       "provincia": "Provincia",
       "ccaa": "Comunidad autónoma",
       "nacional": "España"
+    },
+    "sexo": {
+      "M": "Hombres",
+      "F": "Mujeres"
+    },
+    "tenencia": {
+      "OWN": "Propiedad",
+      "OWN_NL": "Propiedad sin hipoteca ni préstamo",
+      "OWN_L": "Propiedad con hipoteca o préstamo",
+      "RENT": "Alquiler o cesión gratuita",
+      "RENT_MKT": "Alquiler a precio de mercado",
+      "RENT_FR": "Alquiler inferior al de mercado o cesión gratuita",
+      "RENT_RED": "Alquiler inferior al precio de mercado",
+      "FREE": "Cesión gratuita"
     }
   }
 }

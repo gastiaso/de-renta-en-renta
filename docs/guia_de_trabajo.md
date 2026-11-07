@@ -1,11 +1,11 @@
 # Guía de trabajo · reglas del proyecto
 
-Atlas web de vivienda y salarios por sección censal, con fichas de perfil («para quién»), un cálculo con el sueldo de cada usuario y una sección europea de sobrecarga por gastos de vivienda. Proyecto personal. «Casilla de salida» es nombre de trabajo: falta comprobarlo (backlog, tarea 2).
+Atlas web de vivienda y salarios por sección censal, con fichas de perfil («para quién»), un cálculo con el sueldo de cada usuario y una sección europea de sobrecarga por gastos de vivienda. Proyecto personal. Nombre: *De renta en renta*, sin traducir; sin dominio propio (GitHub Pages); faltan las marcas (backlog, tarea 2).
 
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
 2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.12: fuente de verdad de las decisiones).
+3. `docs/plan_integracion_atlas.md` (plan v0.14: fuente de verdad de las decisiones).
 
 ## Estado (6 de noviembre de 2026)
 
@@ -39,7 +39,7 @@ F0 → en paralelo **F1b** (sobrecarga y Europa: publicable pronto, no depende d
 
 - **Pipeline:** R con `targets` (`_targets.R`). Funciones en `R/`, una por fuente y paso: `descargar_<fuente>()`, `leer_<fuente>()`, `armonizar_<fuente>()`. Comunes: `geo_*()`, `validar_*()`, `exportar_*()`. Los identificadores de fuente son los de `inventario/fuentes.csv`.
 - **Descargas** con `httr2` y caché en `datos/brutos/`. Si una descarga falla, se conserva la versión anterior y se avisa. Ficheros manuales: el proceso se detiene e indica la página de descarga y el nombre con el que guardarlo en `datos/brutos/`.
-- **Modelo de datos:** una tabla larga en Parquet (`arrow`): `geo_id | nivel | anio | indicador | valor | estado | fuente | geo_ref | version`. `estado` ∈ {dato, secreto, ausente, estimado}.
+- **Modelo de datos:** una tabla larga en Parquet (`arrow`): `geo_id | nivel | anio | indicador | corte | grupo | valor | estado | fuente | geo_ref | version`. `estado` ∈ {dato, secreto, ausente, estimado}. `corte` y `grupo` guardan los desgloses (tenencia, edad, sexo) con los códigos de `inventario/vocabulario.csv`; sin desglose, las dos valen `total`. Los cruces que agrupan varias olas de una encuesta llevan en `anio` la última.
 - **Códigos territoriales** como texto con ceros a la izquierda. Sección censal: 10 dígitos (provincia 2, municipio 3, distrito 2, sección 3).
 - **Redondeo:** `as.numeric(sprintf("%.1f", x))`, no `round()` (R redondea al par en los empates y descuadra ±0,1 respecto a las cifras publicadas).
 - **Pruebas:** `testthat` en `pruebas/testthat/`. Ejecutar con `testthat::test_dir("pruebas/testthat")`.
@@ -55,7 +55,7 @@ F0 → en paralelo **F1b** (sobrecarga y Europa: publicable pronto, no depende d
 
 ## Identidad
 
-Tablero, *Casilla de salida*: `diseno/tokens.json` (colores con contrastes calculados, tipografías libres, formas), `web/estilo/tokens.css` (generado) y `diseno/fichas/*.svg` (cinco fichas). Nada de elementos propios de Monopoly. Maquetas: `docs/maquetas.md`.
+Tablero (*De renta en renta*): `diseno/tokens.json` (colores con contrastes calculados, tipografías libres, formas), `web/estilo/tokens.css` (generado) y `diseno/fichas/*.svg` (cinco fichas). Nada de elementos propios de Monopoly. Maquetas: `docs/maquetas.md`.
 
 ## Cómo verificar
 

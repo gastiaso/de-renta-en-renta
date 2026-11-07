@@ -10,7 +10,7 @@ descargar_con_cache <- function(url, destino, forzar = FALSE) {
 
   error <- tryCatch({
     httr2::request(url) |>
-      httr2::req_user_agent("Mozilla/5.0 (compatible; casilla-de-salida; R httr2)") |>
+      httr2::req_user_agent("Mozilla/5.0 (compatible; de-renta-en-renta; R httr2)") |>
       httr2::req_retry(max_tries = 3) |>
       httr2::req_timeout(900) |>
       httr2::req_perform(path = parcial)

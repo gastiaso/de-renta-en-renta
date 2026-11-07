@@ -1,7 +1,8 @@
 # Tabla larga y armonización del ADRH (R/comun_exportar.R, R/fuente_ine_adrh.R)
 
 fila <- function(...) {
-  base <- list(geo_id = "2800101001", nivel = "sc", anio = 2020L, indicador = "renta_hogar", valor = 30000,
+  base <- list(geo_id = "2800101001", nivel = "sc", anio = 2020L, indicador = "renta_hogar",
+               corte = "total", grupo = "total", valor = 30000,
                estado = "dato", fuente = "ine_adrh", geo_ref = "2021", version = "2026-11-06")
   tibble::as_tibble(utils::modifyList(base, list(...)))
 }
@@ -15,6 +16,18 @@ test_that("la tabla larga rechaza códigos, estados y combinaciones incoherentes
   expect_error(validar_tabla_larga(bind_rows(fila(), fila())), "repetidas")
   expect_error(validar_tabla_larga(fila(indicador = "otro"), indicadores = tibble::tibble(codigo = "renta_hogar")),
                "catálogo")
+})
+
+test_that("corte y grupo: «total» va en pareja, la clave los incluye y el vocabulario manda", {
+  voc <- tibble::tibble(grupo = c("corte", "corte", "tenencia"), clave = c("total", "tenencia", "RENT_MKT"))
+  desglose <- fila(corte = "tenencia", grupo = "RENT_MKT")
+  expect_silent(validar_tabla_larga(bind_rows(fila(), desglose), vocabulario = voc))
+  expect_error(validar_tabla_larga(fila(grupo = "RENT_MKT")), "descasados")
+  expect_error(validar_tabla_larga(fila(corte = "tenencia")), "descasados")
+  expect_error(validar_tabla_larga(fila(corte = NA_character_)), "vacío")
+  expect_error(validar_tabla_larga(fila(corte = "edad", grupo = "Y16-29"), vocabulario = voc), "Corte fuera")
+  expect_error(validar_tabla_larga(fila(corte = "tenencia", grupo = "OWN"), vocabulario = voc), "Grupo fuera")
+  expect_error(validar_tabla_larga(bind_rows(desglose, desglose)), "repetidas")
 })
 
 ccaa_prueba <- tibble::tibble(codigo = c("13", "04"), nombre_ine = c("Madrid, Comunidad de", "Balears, Illes"),
@@ -33,18 +46,47 @@ test_that("el módulo de acceso se lee en formato español y pasa a comunidades 
   m <- leer_ine_ecv_modulo(ruta)
   expect_equal(m$valor[2], 3182.4)
   expect_equal(comprobar_ine_ecv_modulo(m)$calculado, 0)
+  # Tablas por edad (con sexo) y por tenencia: cortes de España y su total frente al de comunidades
+  ruta_edad <- tempfile(fileext = ".csv")
+  writeLines(c("Sexo;Edad;Razón principal;Total",
+               "Ambos sexos;Total;Ha buscado vivienda activamente pero no se ha cambiado (%);7,6",
+               "Ambos sexos;Total;Ha buscado vivienda activamente pero no se ha cambiado (miles);3.182,4",
+               "Ambos sexos;De 16 a 29 años;Ha buscado vivienda activamente pero no se ha cambiado (%);9,6",
+               "Hombres;Total;Ha buscado vivienda activamente pero no se ha cambiado (%);7,7",
+               "Hombres;De 16 a 29 años;Ha buscado vivienda activamente pero no se ha cambiado (%);8,7"),
+             ruta_edad, useBytes = TRUE)
+  ruta_ten <- tempfile(fileext = ".csv")
+  writeLines(c("Régimen;Razón principal;Total",
+               "Total;Ha buscado vivienda activamente pero no se ha cambiado (miles);3.150,0",
+               "Alquiler a precio de mercado;Ha buscado vivienda activamente pero no se ha cambiado (%);17,8"),
+             ruta_ten, useBytes = TRUE)
+  e <- leer_ine_ecv_modulo(ruta_edad); te <- leer_ine_ecv_modulo(ruta_ten)
+  comp <- comprobar_ine_ecv_modulo(m, e, te)
+  expect_equal(comp$calculado[2], 0)
+  expect_equal(comp$calculado[3], 100 * (3150 - 3182.4) / 3182.4)
+  cortes <- armonizar_ine_ecv_modulo_cortes(e, te, version = "prueba")
+  expect_equal(paste(cortes$corte, cortes$grupo), c("edad Y16-29", "sexo M", "tenencia RENT_MKT"))
+  expect_equal(cortes$valor, c(9.6, 7.7, 17.8))
+  expect_silent(validar_tabla_larga(cortes))
   t <- armonizar_ine_ecv_modulo(m, ccaa_prueba, version = "prueba")
   expect_equal(t$geo_id, c("00", "13", "04"))
   expect_equal(t$nivel, c("nacional", "ccaa", "ccaa"))
   expect_silent(validar_tabla_larga(t))
 })
 
-test_that("la sobrecarga entra en la tabla larga por comunidad (código del INE) y nacional", {
+test_that("la sobrecarga entra en la tabla larga: España con cortes, comunidades y cruces agrupados", {
   s <- tibble::tibble(anio = 2025L, indicador = "sobrecarga", umbral = 0.4,
                       corte = c("total", "region", "region", "tenencia"), grupo = c("TOTAL", "ES30", "ES53", "RENT_MKT"),
-                      valor = c(7.2, 9.9, 6.4, 26.8))
-  t <- armonizar_sobrecarga_ecv(s, ccaa_prueba, version = "prueba")
-  expect_equal(t$geo_id, c("00", "13", "04"))
+                      valor = c(7.2, 9.9, 6.4, 26.8), n_personas = c(60000L, 5000L, 3000L, 8000L))
+  a <- tibble::tibble(anio_inicio = 2023L, anio_fin = 2025L, region = c("ES30", "ES53"), corte = "tenencia",
+                      grupo = "RENT_MKT", valor = c(30.1, 35.2), n_personas = c(900L, 15L))
+  t <- armonizar_sobrecarga_ecv(s, a, ccaa_prueba, version = "prueba")
+  expect_equal(t$geo_id, c("00", "00", "13", "04", "13", "04"))
+  expect_equal(paste(t$corte, t$grupo)[1:3], c("total total", "tenencia RENT_MKT", "total total"))
+  expect_equal(unique(t$anio), 2025L)
+  # Menos de 20 observaciones: no se publica
+  expect_equal(t$estado[6], "secreto")
+  expect_true(is.na(t$valor[6]))
   expect_silent(validar_tabla_larga(t))
 })
 

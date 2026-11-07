@@ -1,12 +1,12 @@
-# Casilla de salida · atlas de vivienda y salarios por sección censal
+# De renta en renta · atlas de vivienda y salarios por sección censal
 
-> **En construcción.** Nombre de trabajo, pendiente de comprobar. Nada de lo que hay aquí es definitivo.
+> **En construcción.** Nada de lo que hay aquí es definitivo.
 
 **Pregunta:** dónde, desde cuándo y para quién se ha roto la relación entre lo que cuesta vivir y la capacidad de pago.
 
 Atlas web de vivienda, salarios y otros indicadores sociales para España, por sección censal y desde 2015. Incluye fichas de perfil (hogar del barrio, joven menor de 35, salario mínimo, pensionista y el sueldo de cada usuario) y una sección europea de sobrecarga por gastos de vivienda con el método de Eurostat.
 
-*English.* Working title: *Square One*. A web atlas of housing costs and wages in Spain at census-tract level, from 2015 onwards, with reference profiles, a pay calculator that runs in the browser, and a European housing cost overburden section (Eurostat method). Under construction.
+*English.* *De renta en renta* is left untranslated: it plays on a rhyme from the Spanish Game of the Goose, and *renta* means both rent and income. A web atlas of housing costs and wages in Spain at census-tract level, from 2015 onwards, with reference profiles, a pay calculator that runs in the browser, and a European housing cost overburden section (Eurostat method). Under construction.
 
 ## Estado
 

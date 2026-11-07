@@ -94,7 +94,7 @@ generar_tokens_css <- function(tokens, ruta = file.path("web", "estilo", "tokens
     paste(regla, "}")
   }, "")
   css <- c(
-    "/* Casilla de salida · tokens del tablero.",
+    "/* De renta en renta · tokens del tablero.",
     "   Generado desde diseno/tokens.json con generar_tokens_css(): no editar a mano. */",
     "", caras, "", ":root {", colores, "", rampa, "", fichas_css, "", tipos, "", formas, "}", "",
     sprintf("/* Rampa secuencial. Los tramos %s no llegan a 3:1 sobre la crema: llevan siempre contorno",

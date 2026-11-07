@@ -1,4 +1,4 @@
-# Casilla de salida · pipeline (targets)
+# De renta en renta · pipeline (targets)
 # F0: inventario, sobrecarga (22) y acceso (23) de la v0.0, prueba de F1 en Madrid y renta (1–3) de punta a punta.
 # Ejecutar: targets::tar_make()      Ver el grafo: targets::tar_visnetwork()
 
@@ -77,7 +77,7 @@ sobrecarga <- list(
 
 # F1, prueba de la geografía constante en una provincia (backlog, tarea 6).
 # Referencia: seccionado de 2021. El año t del ADRH está en el seccionado de 1 de enero de t + 1
-# (el ADRH 2020 es nativo; el 2015, primer año, va con el de 2015: plan §6.3). Una tabla de paso
+# (el ADRH 2020 es nativo; el 2015, primer año, también: va con el de 2016, plan §6.3). Una tabla de paso
 # por seccionado, sección de ese año → sección de 2021:
 #   hasta 2020, aplicación antigua del callejero en los dos extremos (hacia delante: reparte);
 #   desde 2022, aplicación nueva en los dos extremos (hacia atrás: casi siempre agrega).
@@ -89,7 +89,7 @@ PROVINCIA_PRUEBA <- "28"
 ADRH_DEMOGRAFIA <- c("28" = "31105")   # tabla de indicadores demográficos de cada provincia
 
 PASOS_2021 <- tibble::tibble(
-  seccionado  = c(2015L, 2017L, 2018L, 2019L, 2020L, 2022L, 2023L, 2024L, 2025L),
+  seccionado  = c(2016L, 2017L, 2018L, 2019L, 2020L, 2022L, 2023L, 2024L, 2025L),
   anio        = c(2015L, 2016L, 2017L, 2018L, 2019L, 2021L, 2022L, 2023L, 2024L),   # año del ADRH
   callejero   = sprintf("01%d", seccionado),
   formato     = c(rep("antigua_2015", 5), "nueva_2022", rep("nueva_2025", 3)),
@@ -140,7 +140,7 @@ prueba_f1 <- list(
   tarchetypes::tar_combine(diagnostico_f1, pasos_2021$diagnostico_paso, command = dplyr::bind_rows(!!!.x)),
   tarchetypes::tar_combine(comparacion_vias, pasos_2021$comparacion_paso, command = dplyr::bind_rows(!!!.x)),
   tar_target(cambios_limites, bind_rows(
-    geo_cambios_limites(secciones_2015, secciones_2021) |> mutate(tramo = "2015-2021"),
+    geo_cambios_limites(secciones_2016, secciones_2021) |> mutate(tramo = "2016-2021"),
     geo_cambios_limites(secciones_2021, secciones_2025) |> mutate(tramo = "2021-2025")
   )),
 
@@ -185,7 +185,9 @@ modulo_acceso <- list(
   tar_target(fichero_modulo_edad, descargar_ine_ecv_modulo("79629"), format = "file"),
   tar_target(fichero_modulo_tenencia, descargar_ine_ecv_modulo("79635"), format = "file"),
   tar_target(modulo_ccaa, leer_ine_ecv_modulo(fichero_modulo_ccaa)),
-  tar_target(comprobaciones_modulo, comprobar_ine_ecv_modulo(modulo_ccaa)),
+  tar_target(modulo_edad, leer_ine_ecv_modulo(fichero_modulo_edad)),
+  tar_target(modulo_tenencia, leer_ine_ecv_modulo(fichero_modulo_tenencia)),
+  tar_target(comprobaciones_modulo, comprobar_ine_ecv_modulo(modulo_ccaa, modulo_edad, modulo_tenencia)),
   tar_target(validacion_modulo, validar_referencias(comprobaciones_modulo, referencias))
 )
 
@@ -195,10 +197,11 @@ bloque_tabla_larga <- list(
     validacion_sobrecarga; validacion_modulo
     bind_rows(
       larga_adrh,
-      armonizar_sobrecarga_ecv(sobrecarga_ecv, ccaa, version = version_de(csv_ine_ecv_2025)),
-      armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa))
+      armonizar_sobrecarga_ecv(sobrecarga_ecv, sobrecarga_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)),
+      armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa)),
+      armonizar_ine_ecv_modulo_cortes(modulo_edad, modulo_tenencia, version = version_de(fichero_modulo_edad))
     ) |>
-      validar_tabla_larga(indicadores, fuentes)
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
   }),
   tar_target(fichero_tabla_larga, exportar_tabla_larga(tabla_larga, "datos/intermedios/tabla_larga.parquet"),
              format = "file")

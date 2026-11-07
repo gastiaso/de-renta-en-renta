@@ -8,7 +8,7 @@ Decisiones en CSV, no en código. UTF-8, separador coma, listas internas separad
 | `indicadores.csv` | indicador (23) | `id` (número del plan), `codigo`, ficha en castellano e inglés (`nombre`, `unidad`, `definicion`, `calculo`, `lectura`, con sufijo `_es` y `_en`), `familia` (A–E), `fuentes` (ids de `fuentes.csv`), `nivel_nativo`, `serie`, `fase`, `nucleo_v01` |
 | `referencias_validacion.csv` | comprobación de la compuerta | `indicador` (ids, `geo` o `web`), `referencia`, `tolerancia`, `tipo` (`bloqueo` para el pipeline; `alerta` avisa), `estado` |
 | `rupturas.csv` | ruptura de serie | `fuente`, `indicador`, `anio`, `descripcion`, `tratamiento` |
-| `vocabulario.csv` | término de la web | `grupo` (familia, nivel, estado, fiabilidad), `clave`, `es`, `en` |
+| `vocabulario.csv` | término de la web | `grupo` (familia, nivel, estado, fiabilidad, corte y los grupos de cada corte: tenencia, edad, sexo), `clave`, `es`, `en`. Los cortes y grupos de la tabla larga tienen que estar aquí |
 
 `estado` de las fuentes: «por verificar» mientras no se haya comprobado acceso y licencia en la propia fuente; «BLOQUEANTE» si de ella depende el alcance de una versión.
 
