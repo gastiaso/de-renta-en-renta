@@ -35,27 +35,37 @@ descargar_catastro_edificios <- function(url, dir = file.path("datos", "brutos",
   descargar_con_cache(utils::URLencode(enc2utf8(url)), destino, forzar)
 }
 
-# Edificios con viviendas: un punto dentro de cada edificio y su número de viviendas.
+# Edificios con viviendas: un punto dentro de cada edificio, su número de viviendas y su año de
+# construcción (campo «beginning»; vacío en unos pocos).
 leer_catastro_edificios <- function(zip) {
   contenido <- utils::unzip(zip, list = TRUE)$Name
   gml <- contenido[grepl("\\.building\\.gml$", contenido, ignore.case = TRUE)]
   if (length(gml) != 1) stop("No encuentro el GML de edificios en ", zip, call. = FALSE)
   e <- sf::st_read(paste0("/vsizip/", normalizePath(zip, winslash = "/"), "/", gml), quiet = TRUE)
   viviendas <- suppressWarnings(as.numeric(e$numberOfDwellings))
-  e <- e[!is.na(viviendas) & viviendas > 0, ]
-  sf::st_sf(viviendas = viviendas[!is.na(viviendas) & viviendas > 0],
+  con_viviendas <- !is.na(viviendas) & viviendas > 0
+  e <- e[con_viviendas, ]
+  sf::st_sf(viviendas = viviendas[con_viviendas],
+            anio_construccion = suppressWarnings(as.integer(substr(as.character(e$beginning), 1, 4))),
             geometry = sf::st_point_on_surface(sf::st_make_valid(sf::st_geometry(e))))
 }
 
 # Tabla de paso por viviendas: cada edificio cae en una sección de origen y en una de destino;
 # el peso es el número de viviendas compartidas. Misma estructura que la del callejero.
-geo_tabla_paso_catastro <- function(edificios, origen, destino) {
+# `anio_max`: solo cuentan los edificios construidos hasta ese año (los de año desconocido, sí).
+geo_tabla_paso_catastro <- function(edificios, origen, destino, anio_max = NULL) {
+  if (!is.null(anio_max) && "anio_construccion" %in% names(edificios)) {
+    edificios <- edificios[is.na(edificios$anio_construccion) | edificios$anio_construccion <= anio_max, ]
+  }
   edificios <- sf::st_transform(edificios, sf::st_crs(origen))
   destino <- sf::st_transform(destino, sf::st_crs(origen))
   o <- sf::st_join(edificios, origen[, "seccion"], join = sf::st_within)
   d <- sf::st_join(edificios, destino[, "seccion"], join = sf::st_within)
+  # Solo pares del mismo municipio: un edificio junto a un límite municipal puede caer en
+  # municipios distintos en dos seccionados porque los límites se digitalizan de forma distinta;
+  # el callejero tampoco cruza municipios (sin esto, la prueba de cierre falla en 2015).
   tibble::tibble(origen = o$seccion, destino = d$seccion, viviendas = edificios$viviendas) |>
-    filter(!is.na(origen), !is.na(destino)) |>
+    filter(!is.na(origen), !is.na(destino), substr(origen, 1, 5) == substr(destino, 1, 5)) |>
     group_by(origen, destino) |>
     summarise(portales = sum(viviendas), .groups = "drop") |>    # «portales» = viviendas, para reutilizar las funciones
     group_by(origen) |>
@@ -81,9 +91,21 @@ leer_catastro_varios <- function(zips) {
   do.call(rbind, lapply(zips, leer_catastro_edificios))
 }
 
-# Vía (b) donde hay edificios con viviendas; vía (a) para las secciones de origen sin ninguno.
-combinar_vias <- function(tabla_b, tabla_a) {
-  bind_rows(tabla_b, filter(tabla_a, !origen %in% tabla_b$origen))
+# Regla adoptada (7-nov-2026, plan §6.3): callejero (vía a) para las secciones de origen que
+# caen enteras en una de 2021; Catastro (vía b) para las que hay que repartir, si tienen
+# edificios con viviendas. En las que siguen por el callejero, el peso pasa a ser el número de
+# viviendas cuando el Catastro lo da, para que el origen dominante de las medianas compare
+# viviendas con viviendas.
+combinar_vias <- function(tabla_b, tabla_a, umbral = 0.99) {
+  repartidos <- unique(tabla_a$origen[tabla_a$fraccion < umbral])
+  por_catastro <- intersect(repartidos, tabla_b$origen)
+  viviendas <- tabla_b |> group_by(origen) |> summarise(total = sum(portales), .groups = "drop")
+  por_callejero <- tabla_a |>
+    filter(!origen %in% por_catastro) |>
+    left_join(viviendas, by = "origen") |>
+    mutate(portales = if_else(!is.na(total) & fraccion >= umbral, as.numeric(total), as.numeric(portales))) |>
+    select(-total)
+  bind_rows(por_callejero, filter(tabla_b, origen %in% por_catastro) |> mutate(portales = as.numeric(portales)))
 }
 
 # Compara las dos vías en las secciones de destino de los municipios cubiertos: población de un

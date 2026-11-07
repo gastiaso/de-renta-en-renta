@@ -5,7 +5,7 @@ Atlas web de vivienda y salarios por sección censal, con fichas de perfil («pa
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
 2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.9: fuente de verdad de las decisiones).
+3. `docs/plan_integracion_atlas.md` (plan v0.10: fuente de verdad de las decisiones).
 
 ## Estado (6 de noviembre de 2026)
 
@@ -26,7 +26,7 @@ F0 → en paralelo **F1b** (sobrecarga y Europa: publicable pronto, no depende d
 ## Reglas que no se rompen
 
 1. **Nivel nativo.** Cada indicador en la escala en que lo publica su fuente. Nunca se desagrega hacia abajo. Hacia arriba, solo si es aritméticamente válido: medias ponderadas sí; medianas e índices no (se toma la cifra publicada).
-2. **Geografía constante.** Las series se reproyectan al seccionado de referencia, el del Censo 2021 (1 de enero de 2021), con tablas de paso documentadas. Lo reproyectado lleva estado: `dato` si las secciones de origen caen enteras en la de 2021, `estimado` si alguna se reparte; las medianas, `dato` solo 1:1, `estimado` desde un origen dominante (≥ 95 % de los portales) y `ausente` si ninguno domina (plan, §6.3).
+2. **Geografía constante.** Las series se reproyectan al seccionado de referencia, el del Censo 2021 (1 de enero de 2021), con tablas de paso documentadas: callejero donde las secciones caen enteras y viviendas del Catastro donde hay que repartir. Lo reproyectado lleva estado: `dato` si las secciones de origen caen enteras en la de 2021, `estimado` si alguna se reparte; las medianas, `dato` solo 1:1, `estimado` desde un origen dominante (≥ 95 % de los portales) y `ausente` si ninguno domina (plan, §6.3).
 3. **Compuerta.** No se publica nada que no reproduzca las cifras de la fuente: `inventario/referencias_validacion.csv`. Las de tipo `bloqueo` paran el pipeline; las de tipo `alerta`, avisan.
 4. **Mismo año** en numerador y denominador. Si no es posible, se dice en la ficha y en la web.
 5. **Cada fuente dice qué mide.** Contratos declarados (SERPAVI), escrituras (Notariado), tasación (MIVAU) y oferta (portales) no se mezclan en un mismo indicador.

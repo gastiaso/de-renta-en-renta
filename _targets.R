@@ -4,7 +4,7 @@
 
 library(targets)
 
-tar_option_set(packages = c("dplyr", "readr"))
+tar_option_set(packages = c("dplyr", "readr", "sf"))   # sf: para filtrar objetos espaciales guardados
 
 # Capa de precios de oferta de los portales (plan, §2.2). Apagada por defecto.
 PORTALES <- identical(toupper(Sys.getenv("PORTALES", "FALSE")), "TRUE")
@@ -110,10 +110,11 @@ prueba_f1 <- list(
 
   tar_target(fichero_adrh_demografia, descargar_ine_adrh(ADRH_DEMOGRAFIA[[PROVINCIA_PRUEBA]]), format = "file"),
   tar_target(poblacion_adrh, leer_ine_adrh_demografia(fichero_adrh_demografia)),
+  # Cierre sobre las tablas que se usan (combinadas con el Catastro en 2015 y 2025 → 2021)
   tar_target(comprobaciones_f1, bind_rows(
-    comprobar_cierre_poblacional(poblacion_adrh, paso_2015_2021, 2015L),
+    comprobar_cierre_poblacional(poblacion_adrh, paso_final_2015_2021, 2015L),
     comprobar_cierre_poblacional(poblacion_adrh, paso_2022_2021, 2021L),
-    comprobar_cierre_poblacional(poblacion_adrh, paso_2025_2021, 2024L)
+    comprobar_cierre_poblacional(poblacion_adrh, paso_final_2025_2021, 2024L)
   )),
   tar_target(validacion_f1, validar_referencias(comprobaciones_f1, referencias)),
   tar_target(diagnostico_f1, bind_rows(
@@ -133,19 +134,32 @@ prueba_f1 <- list(
   ))
 )
 
-# Vía (b) de las tablas de paso: viviendas de los edificios del Catastro, solo en los municipios
-# de la provincia de prueba con secciones «estimado» por el callejero. Se compara con la vía (a).
+# Vía (b) de las tablas de paso: viviendas de los edificios del Catastro, en los municipios de la
+# provincia de prueba con secciones «estimado» por el callejero. Regla adoptada (plan §6.3):
+# callejero donde las secciones caen enteras y Catastro donde hay que repartir (combinar_vias).
+# Para 2022 → 2021 falta el seccionado de 2022: esa tabla sigue solo con el callejero.
 via_catastro <- list(
   tar_target(municipios_catastro_prueba, seleccionar_municipios_catastro(
-    list(paso_2022_2021, paso_2025_2021), fichero_adrh_demografia, PROVINCIA_PRUEBA)),
+    list(paso_2015_2021, paso_2022_2021, paso_2025_2021), fichero_adrh_demografia, PROVINCIA_PRUEBA)),
   tar_target(zips_catastro, vapply(stats::na.omit(municipios_catastro_prueba$url), descargar_catastro_edificios, ""),
              format = "file"),
   tar_target(edificios_catastro, leer_catastro_varios(zips_catastro)),
+  tar_target(secciones_2015_prueba, leer_ine_seccionado(zip_seccionado_2015, 2015, PROVINCIA_PRUEBA)),
   tar_target(secciones_2021_prueba, leer_ine_seccionado(zip_seccionado_2021, 2021, PROVINCIA_PRUEBA)),
   tar_target(secciones_2025_prueba, leer_ine_seccionado(zip_seccionado_2025, 2025, PROVINCIA_PRUEBA)),
-  tar_target(paso_catastro_2025_2021, geo_tabla_paso_catastro(edificios_catastro, secciones_2025_prueba, secciones_2021_prueba)),
-  tar_target(comparacion_vias, comparar_vias_paso(poblacion_adrh, paso_2025_2021, paso_catastro_2025_2021, 2024L,
-                                                   municipios_catastro_prueba$municipio[!is.na(municipios_catastro_prueba$url)]))
+  tar_target(paso_catastro_2015_2021,
+             geo_tabla_paso_catastro(edificios_catastro, secciones_2015_prueba, secciones_2021_prueba, anio_max = 2015L)),
+  tar_target(paso_catastro_2025_2021,
+             geo_tabla_paso_catastro(edificios_catastro, secciones_2025_prueba, secciones_2021_prueba, anio_max = 2025L)),
+  tar_target(paso_final_2015_2021, combinar_vias(paso_catastro_2015_2021, paso_2015_2021)),
+  tar_target(paso_final_2025_2021, combinar_vias(paso_catastro_2025_2021, paso_2025_2021)),
+  tar_target(comparacion_vias, {
+    cubiertos <- municipios_catastro_prueba$municipio[!is.na(municipios_catastro_prueba$url)]
+    bind_rows(
+      comparar_vias_paso(poblacion_adrh, paso_2015_2021, paso_catastro_2015_2021, 2015L, cubiertos),
+      comparar_vias_paso(poblacion_adrh, paso_2025_2021, paso_catastro_2025_2021, 2024L, cubiertos)
+    )
+  })
 )
 
 # Tarea 7: indicadores 1–3 (renta del ADRH) de punta a punta en la provincia de prueba:
@@ -161,10 +175,10 @@ bloque_renta_adrh <- list(
   tar_target(comprobaciones_adrh, comprobar_adrh_municipio(renta_adrh, pesos_adrh_prueba)),
   tar_target(validacion_adrh, validar_referencias(comprobaciones_adrh, referencias)),
   tar_target(tablas_paso_adrh, list(
-    "2015" = paso_2015_2021,
+    "2015" = paso_final_2015_2021,
     "2020" = geo_tabla_identidad(pesos_adrh_prueba$seccion[pesos_adrh_prueba$anio == 2020]),
     "2021" = paso_2022_2021,
-    "2024" = paso_2025_2021
+    "2024" = paso_final_2025_2021
   )),
   tar_target(larga_adrh, {
     validacion_adrh   # la compuerta va antes que la armonización

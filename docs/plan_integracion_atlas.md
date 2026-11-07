@@ -1,6 +1,8 @@
 # Casilla de salida — Plan de integración por fases
 
-*Borrador v0.9 · 6 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.10 · 7 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.10:** avance de F0 y F1b (tareas 2 y 7 a 10, sobrecarga con tres olas, Europa e indicador 23; preguntas abiertas 9 y 10) y vía (b) del Catastro adoptada para las secciones que hay que repartir, con los edificios filtrados por año de construcción (§1 y §6.3).
 
 **Cambios en la v0.9:** comprobaciones de F0 (backlog, tareas 3 y 4). El método de la mochila no se puede aplicar tal cual (§3.1; pregunta abierta 7). El País Vasco no tiene alquiler por sección antes de entrar en el SERPAVI y Navarra no tiene nada antes de 2021 (pregunta abierta 8). Las viviendas turísticas del INE también usan el seccionado de 2021. La vía (b) del Catastro es viable, pero su licencia es contradictoria (§6.3). Huecos y versiones NUTS del mapa europeo y licencia de las geometrías de GISCO (§6.6).
 
@@ -29,6 +31,7 @@
 | Naturaleza | Escaparate personal y contribución cívica |
 | Escala y periodo | Sección censal (SC), de 2015 al último dato disponible |
 | Seccionado de referencia | El del Censo 2021 (1 de enero de 2021), en el que el SERPAVI publica toda su serie (§6.3) |
+| Tablas de paso | Callejero (vía a) donde las secciones caen enteras; viviendas del Catastro (vía b) donde hay que repartir (§6.3) |
 | Cifras reproyectadas | `dato` si las secciones de origen caen enteras en la de 2021; `estimado` si alguna se reparte; medianas `dato` solo 1:1, `estimado` desde un origen dominante (≥ 95 % de los portales) y `ausente` si ninguno domina (§6.3) |
 | Alcance | 23 indicadores: los 20 iniciales y 3 añadidos el 6-nov (catálogo en §5) |
 | Código previo | Se reutiliza el código propio que sirva (§2.1) |
@@ -260,7 +263,9 @@ pruebas/      testthat + prueba de la web con chromote
 - **Vía (b), viable:** cada edificio del servicio INSPIRE del Catastro trae su número de viviendas (`numberOfDwellings`), con descarga por municipio. Sin País Vasco ni Navarra (servicios forales aparte). Su licencia es contradictoria (CC BY 4.0 en los metadatos de la IDEE; una licencia de 2016 en la web del Catastro): hay que aclararla antes de publicar derivados.
   - **Prueba en Madrid (7-nov-2026):** los 55 municipios con secciones `estimado` por el callejero (335.447 edificios con 2,69 millones de viviendas; 324 MB; 22 minutos de lectura). Cada edificio cae en una sección de 2025 y en una de 2021; el peso es su número de viviendas. Donde una sección de origen no tiene edificios con viviendas, se usa la vía (a).
   - **Resultado (2024 → 2021, frente al ADRH 2020):** en las 558 secciones `estimado` por la vía (a), el 90 % central de la razón pasa de 0,69–1,54 a 0,84–1,06, las que quedan dentro de ±5 % pasan del 33 al 54 % y los errores de más del 20 %, de 128 a 27. En las demás, las dos vías dan lo mismo. Con cuatro años de distancia la prueba mezcla error y crecimiento, pero la mejora es grande y está donde fallaba el callejero.
-  - **Propuesta:** vía (a) donde las secciones caen enteras y vía (b) donde hay que repartir. Pendiente: la prueba de un año (2022 → 2021), que necesita el seccionado de 2022; filtrar los edificios por año de construcción para los años antiguos (hoy cuentan los de 2026); y la licencia.
+  - **Adoptado (7-nov-2026):** vía (a) donde las secciones de origen caen enteras en una de 2021 y vía (b) donde hay que repartir, si la sección tiene edificios con viviendas (`combinar_vias()`). En las que siguen por el callejero, el peso pasa a viviendas cuando el Catastro las da, para que el origen dominante de las medianas compare viviendas con viviendas. Para los años antiguos solo cuentan los edificios ya construidos (año de construcción del Catastro): la tabla 2015 → 2021 usa los de 2015 o antes. Los pares de secciones de municipios distintos se descartan: los límites municipales se digitalizan distinto en cada seccionado y, sin ese filtro, la prueba de cierre de 2015 fallaba en dos municipios (±6–7 %).
+  - **Efecto en Madrid** (73 municipios, 385.611 edificios con viviendas): secciones `estimado` de 2021, de 724 a 192 (2015 → 2021) y de 558 a 112 (2025 → 2021); medianas `ausente`, de 91 a 20 y de 233 a 133. En las secciones que el callejero repartía, los errores de más del 20 % frente al ADRH 2020 bajan de 141 a 94 (2015) y de 128 a 26 (2024). La prueba de cierre sigue en 0,0012 % como máximo.
+  - **Pendiente:** la tabla 2022 → 2021 sigue solo con el callejero (falta el seccionado de 2022, que también permitiría la prueba de un año de la vía b); y la licencia del Catastro: hasta aclararla, las tablas combinadas no se versionan ni se publican (se quedan en el pipeline).
 - **Población por sección para las pruebas:** además del ADRH, el Censo anual de población por secciones (2021–2025, con sexo y edad) y el Padrón continuo por secciones (2004–2022).
 - **Vía (a) en la práctica** (prueba de Madrid):
   - cada tabla compara tramos de la misma aplicación del INE: el callejero de enero de 2021 se publicó con la antigua y con la nueva, así que 2015 → 2021 usa la antigua en los dos extremos y 2025 → 2021, la nueva;
