@@ -4,6 +4,17 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (7-nov-2026, mochila en neto)
+
+- Paso a neto de la mochila (plan v0.17, §3.1, paso 3; regla 8): neto anual = bruto × (1 − cotización del trabajador − retención), ÷ 12 (`calcular_mochila_neta`, `mochila_neta`, `datos/intermedios/mochila/mochila_neta_2024.csv`). Cotización de 2024: 6,47 % (`COTIZACION_TRABAJADOR`). Retención: tipo medio de la AEAT de quien solo cobra salarios, por comunidad y tramo de renta anual, interpolado entre los salarios medios de los tramos (`retenciones_aeat`, `tipo_retencion`). 2024: de 990 € al mes (Huelva) a 1.529 € (Barcelona).
+- Tabla *Grupos de población por la naturaleza de sus retribuciones* de la AEAT (`aeat_retenciones`; 162 páginas, 4,3 MB).
+- `leer_aeat_mercado()` lee las filas agrupadas en bloques (cabecera de fila que abarca varias filas) y guarda el bloque en la columna `bloque`; las tablas sin bloques salen igual que antes.
+- Control con la ECV: `leer_ecv_asalariados()` lee también el salario neto (PY010N) y `resumir_ecv_asalariados()` da su mediana. Alerta `mochila_neto_ecv` (±5 %): el paso a neto aplicado a la mediana del bruto de cada comunidad, frente a la mediana del neto. 2024: entre −2,0 y +3,4 %; España, +0,5 %.
+
+### Cambiado (7-nov-2026, marcas)
+
+- Sin registro de marca para *De renta en renta*: el proyecto es abierto y no comercial (decisión del autor). La búsqueda en TMview y en la OEPM no encontró la frase (plan v0.17, §10.1; backlog, tarea 2, cerrada).
+
 ### Añadido (7-nov-2026, geografía constante en toda España)
 
 - El pipeline cubre las 52 provincias (plan v0.16, §6.3): tablas nacionales del ADRH (30824 y 30832), callejeros y seccionados enteros, y 1.420 municipios con edificios del Catastro (4,2 GB). La variable de entorno `PROVINCIA` lo limita a una provincia para pruebas. Memoria `transient` en `targets`. Una pasada completa, unas tres horas y cuarto.

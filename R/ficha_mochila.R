@@ -1,5 +1,5 @@
 # Ficha «mochila» (joven de 26 a 35 años): mediana estimada del salario con la AEAT (plan §3.1).
-# Todo en bruto anual; el paso a neto mensual está pendiente (paso 3 del método).
+# Pasos 1, 2 y 4 en bruto anual; el paso 3 (calcular_mochila_neta) lo lleva a neto mensual en 12.
 #
 # Opciones calculadas (pregunta abierta 7):
 # - A: mediana del salario medio estimado (SME, «año completo») de 26 a 35 años de la comunidad,
@@ -24,7 +24,8 @@ TABLAS_AEAT_MOCHILA <- list(
   deciles   = list("Distribución de asalariados por decilas, tramos de edad, CCAA y género", list(`Género` = "Total")),
   sme_edad  = list("Distribución de asalariados y Salario Medio Estimado Anual por tramos de edad, género y CCAA", list()),
   recorrido = list("Recorrido del Salario Medio Estimado en cada decila de población", list()),
-  centiles  = list("Distribución de asalariados y Salario Medio Estimado Anual por centilas, género y CCAA", list())
+  centiles  = list("Distribución de asalariados y Salario Medio Estimado Anual por centilas, género y CCAA", list()),
+  retenciones = list("GRUPOS DE POBLACIÓN POR LA NATURALEZA DE SUS RETRIBUCIONES", list())
 )
 
 descargar_aeat_mochila <- function(tabla, anio) {
@@ -131,6 +132,60 @@ calcular_mochila <- function(opciones) {
     transmute(provincia, comunidad, asalariados, salario_medio = real_prov, forma, bruto_anual = B)
 }
 
+# Paso 3: de bruto anual a neto mensual repartido en 12 (regla 8) ---------------------------------
+
+# Cotización del trabajador a la Seguridad Social por año de ingresos (régimen general, contrato
+# indefinido): contingencias comunes 4,70 %, desempleo 1,55 %, formación profesional 0,10 % y
+# mecanismo de equidad intergeneracional 0,12 % (2024). Con contrato temporal, el desempleo es
+# del 1,60 % (6,52 % en total).
+COTIZACION_TRABAJADOR <- c(`2024` = 0.0647)
+
+# Retención del IRPF sobre el salario por territorio y tramo de renta anual (AEAT, «Grupos de
+# población por la naturaleza de sus retribuciones», bloque de salarios). Se toman las personas
+# que solo cobran salarios (columna «Asalariados»): su tramo de renta es el de su salario anual.
+# Retribuciones y retenciones vienen en miles de euros. Una fila por territorio y tramo, ordenada
+# por salario medio del tramo (euros), con el tipo de retención (proporción del salario).
+retenciones_aeat <- function(grupos, columna = "Asalariados") {
+  grupos |>
+    filter(bloque == "SALARIOS", columna == !!columna, tramos_de_renta_anual != "Total",
+           fila %in% c("Personas", "Retribuciones", "Retenciones")) |>
+    select(geo = distribucion_geografica, tramo = tramos_de_renta_anual, fila, valor) |>
+    tidyr::pivot_wider(names_from = fila, values_from = valor) |>
+    filter(Personas > 0, Retribuciones > 0) |>
+    transmute(geo, tramo, personas = Personas, salario_medio = 1000 * Retribuciones / Personas,
+              retencion = Retenciones / Retribuciones) |>
+    arrange(geo, salario_medio)
+}
+
+# Tipo de retención de un salario anual: interpolación lineal entre los salarios medios de los
+# tramos de una curva (filas de retenciones_aeat() de un territorio); fuera de ellos, el tipo del
+# tramo extremo.
+tipo_retencion <- function(salario, curva) {
+  stats::approx(curva$salario_medio, curva$retencion, xout = salario, rule = 2, ties = "ordered")$y
+}
+
+# Tipo de retención de cada salario con la curva de su territorio (clave_nombre(); «total» para
+# España).
+tipos_retencion <- function(salario, territorio, retenciones) {
+  curvas <- split(retenciones, clave_nombre(retenciones$geo))
+  k <- clave_nombre(territorio)
+  faltan <- setdiff(unique(k), names(curvas))
+  if (length(faltan) > 0) stop("Sin retenciones de la AEAT para: ", paste(faltan, collapse = ", "), call. = FALSE)
+  unname(mapply(function(x, kk) tipo_retencion(x, curvas[[kk]]), salario, k))
+}
+
+# Neto anual = bruto × (1 − cotización − retención), con la retención que corresponde al bruto
+# en la curva de su comunidad (en `retencion_espana`, la de la curva de España, como registro).
+# Es la retención practicada en nómina, no la cuota final del IRPF. Neto mensual = neto anual / 12.
+calcular_mochila_neta <- function(mochila, retenciones, cotizacion) {
+  mochila |>
+    mutate(cotizacion = cotizacion,
+           retencion = tipos_retencion(bruto_anual, comunidad, retenciones),
+           retencion_espana = tipos_retencion(bruto_anual, rep("Total", n()), retenciones),
+           neto_anual = bruto_anual * (1 - cotizacion - retencion),
+           neto_mensual = neto_anual / 12)
+}
+
 # Mediana con pesos: primer valor en que el peso acumulado llega a la mitad.
 mediana_ponderada <- function(x, w) {
   o <- order(x)
@@ -140,12 +195,13 @@ mediana_ponderada <- function(x, w) {
 }
 
 # Control con la ECV (paso 5 del método): asalariados de 26 a 35 años con salario en el año de
-# ingresos (PY010G > 0), con su comunidad (DB040), su factor (PB040) y los meses trabajados por
-# cuenta ajena (PL073 a tiempo completo, PL074 a tiempo parcial). La edad es la del final del año
-# de ingresos (año de ingresos − año de nacimiento, PB140), como los tramos de la AEAT.
+# ingresos (PY010G > 0), con su comunidad (DB040), su factor (PB040), el salario neto de
+# retenciones y cotizaciones (PY010N) y los meses trabajados por cuenta ajena (PL073 a tiempo
+# completo, PL074 a tiempo parcial). La edad es la del final del año de ingresos (año de
+# ingresos − año de nacimiento, PB140), como los tramos de la AEAT.
 leer_ecv_asalariados <- function(rutas, anio_ingresos, edades = c(26L, 35L)) {
   ruta <- function(letra) rutas[grepl(sprintf("esudb\\d{2}%s\\.csv$", letra), rutas, ignore.case = TRUE)]
-  p <- readr::read_csv(ruta("p"), col_select = c("PB030", "PB040", "PB140", "PY010G", "PL073", "PL074"),
+  p <- readr::read_csv(ruta("p"), col_select = c("PB030", "PB040", "PB140", "PY010G", "PY010N", "PL073", "PL074"),
                        col_types = readr::cols(.default = readr::col_double()), progress = FALSE)
   d <- readr::read_csv(ruta("d"), col_select = c("DB030", "DB040"),
                        col_types = readr::cols(DB030 = readr::col_double(), DB040 = readr::col_character()),
@@ -154,17 +210,18 @@ leer_ecv_asalariados <- function(rutas, anio_ingresos, edades = c(26L, 35L)) {
     mutate(DB030 = PB030 %/% 100, edad = anio_ingresos - PB140) |>
     inner_join(d, by = "DB030") |>
     filter(edad >= edades[1], edad <= edades[2], !is.na(PY010G), PY010G > 0) |>
-    transmute(nuts2 = DB040, peso = PB040, bruto = PY010G,
+    transmute(nuts2 = DB040, peso = PB040, bruto = PY010G, neto = PY010N,
               meses = dplyr::coalesce(PL073, 0) + dplyr::coalesce(PL074, 0))
 }
 
-# Mediana del bruto por comunidad y para España, con el número de observaciones y la parte (con
-# pesos) que trabajó los doce meses.
+# Medianas del bruto y del neto por comunidad y para España, con el número de observaciones y la
+# parte (con pesos) que trabajó los doce meses.
 resumir_ecv_asalariados <- function(asalariados) {
   bind_rows(mutate(asalariados, nuts2 = "ES"), asalariados) |>
     group_by(nuts2) |>
     summarise(n = n(), mediana_bruto = mediana_ponderada(bruto, peso),
-              pct_anio_completo = 100 * sum(peso[meses >= 12]) / sum(peso), .groups = "drop")
+              pct_anio_completo = 100 * sum(peso[meses >= 12]) / sum(peso),
+              mediana_neto = mediana_ponderada(neto, peso), .groups = "drop")
 }
 
 # Mochila de cada comunidad (salario medio real de la comunidad × su relación mediana/media)
@@ -179,4 +236,20 @@ comprobar_mochila_ecv <- function(opciones, ecv, ccaa) {
     inner_join(ecv, by = "nuts2") |>
     transmute(id = "mochila_ecv", anio = NA_integer_, detalle = paste0(comunidad, " (n = ", n, ")"),
               calculado = 100 * (mochila / mediana_bruto - 1), referencia = 0)
+}
+
+# Control del paso 3 con la ECV: para cada comunidad (y España, con la curva del total), el neto
+# calculado sobre la mediana del bruto de la ECV frente a la mediana del neto de la ECV (PY010N:
+# salario menos retenciones y cotizaciones del trabajador). Separa el paso a neto de la diferencia
+# en el bruto, que ya mide mochila_ecv. Desviación en %; alerta mochila_neto_ecv.
+comprobar_neto_ecv <- function(retenciones, ecv, ccaa, cotizacion) {
+  territorios <- ccaa |>
+    transmute(nuts2, territorio = nombre_ine) |>
+    bind_rows(tibble::tibble(nuts2 = "ES", territorio = "Total")) |>
+    filter(clave_nombre(territorio) %in% clave_nombre(retenciones$geo))
+  ecv |>
+    inner_join(territorios, by = "nuts2") |>
+    mutate(neto = mediana_bruto * (1 - cotizacion - tipos_retencion(mediana_bruto, territorio, retenciones))) |>
+    transmute(id = "mochila_neto_ecv", anio = NA_integer_, detalle = paste0(territorio, " (n = ", n, ")"),
+              calculado = 100 * (neto / mediana_neto - 1), referencia = 0)
 }

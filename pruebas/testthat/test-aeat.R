@@ -36,6 +36,28 @@ test_that("las páginas de la AEAT se leen con sus filtros, sangrías y cabecera
   expect_equal(d$nivel_fila, c(0L, 0L, 2L, 2L))
   expect_equal(unique(d$distribucion_geografica), "Aragón")
   expect_equal(unique(d$genero), "Total")
+  expect_false("bloque" %in% names(d))   # sin filas agrupadas, sin columna de bloque
+})
+
+test_that("las filas agrupadas en bloques (grupos de población) se leen con su bloque", {
+  ruta <- tempfile(fileext = ".html")
+  writeLines(paste0(
+    "<html><head><title>Mercado de trabajo y pensiones: 2024:\nTabla de grupos\n",
+    "Distribución geográfica: Balears, Illes\n,\nTramos de renta anual: Hasta 3000</title></head><body><table>",
+    '<thead><tr><th id="t_c1">Asalariados</th><th id="t_c2">Total</th></tr></thead>',
+    '<tr><th id="t_f1" rowspan="2">SALARIOS</th><th id="t_f2">Personas</th>',
+    '<td headers="t_c1 t_f1 t_f2 ">10</td><td headers="t_c2 t_f1 t_f2 ">12</td></tr>',
+    '<tr><th id="t_f3">Retenciones</th><td headers="t_c1 t_f1 t_f3 ">1,5</td><td headers="t_c2 t_f1 t_f3 ">2</td></tr>',
+    '<tr><th id="t_f4" rowspan="1">PENSIONES</th><th id="t_f5">Personas</th>',
+    '<td headers="t_c1 t_f4 t_f5 ">0</td><td headers="t_c2 t_f4 t_f5 ">7</td></tr>',
+    "</table></body></html>"), ruta, useBytes = TRUE)
+  d <- leer_aeat_mercado(ruta)
+  expect_equal(d$bloque, rep(c("SALARIOS", "PENSIONES"), c(4, 2)))
+  expect_equal(d$fila, c("Personas", "Personas", "Retenciones", "Retenciones", "Personas", "Personas"))
+  expect_equal(d$columna, rep(c("Asalariados", "Total"), 3))
+  expect_equal(d$valor, c(10, 12, 1.5, 2, 0, 7))
+  expect_equal(unique(d$distribucion_geografica), "Balears, Illes")
+  expect_equal(unique(d$tramos_de_renta_anual), "Hasta 3000")
 })
 
 test_that("números en formato español", {
@@ -85,4 +107,56 @@ test_that("la mediana con pesos y el control de la mochila con la ECV", {
   expect_equal(nrow(c), 1)
   expect_equal(c$calculado, 0)
   expect_equal(c$detalle, "Rioja, La (n = 100)")
+})
+
+# Grupos de población inventados: tres tramos con salario medio de 5.000, 15.000 y 25.000 € y la
+# retención (en tanto por uno) que se pida; retribuciones y retenciones en miles de euros.
+grupos_aeat <- function(geo, tipos, columna = "Asalariados", bloque = "SALARIOS") {
+  tramo <- c("Hasta 10000", "De 10001 a 20000", "Más de 20000")
+  retribuciones <- 100 * c(5, 15, 25)   # 100 personas por tramo
+  tibble::tibble(bloque = bloque, fila = rep(c("Personas", "Retribuciones", "Retenciones"), each = 3),
+                 columna = columna, valor = c(rep(100, 3), retribuciones, retribuciones * tipos),
+                 distribucion_geografica = geo, tramos_de_renta_anual = rep(tramo, 3))
+}
+
+test_that("retenciones por tramo: salario medio y tipo de quien solo cobra salarios, interpolados", {
+  g <- bind_rows(
+    grupos_aeat("Total", c(0.01, 0.03, 0.10)),
+    grupos_aeat("Total", c(0.5, 0.5, 0.5), columna = "Total"),        # otra columna: fuera
+    grupos_aeat("Total", c(0.5, 0.5, 0.5), bloque = "PENSIONES"),     # otro bloque: fuera
+    mutate(grupos_aeat("Total", c(0.5, 0.5, 0.5)), tramos_de_renta_anual = "Total")   # tramo total: fuera
+  )
+  r <- retenciones_aeat(g)
+  expect_equal(r$salario_medio, c(5000, 15000, 25000))
+  expect_equal(r$retencion, c(0.01, 0.03, 0.10))
+  # Lineal entre los salarios medios; constante fuera de ellos
+  expect_equal(tipo_retencion(c(1000, 10000, 20000, 30000), r), c(0.01, 0.02, 0.065, 0.10))
+})
+
+test_that("de bruto anual a neto mensual: cotización y retención de la curva de su comunidad", {
+  ret <- retenciones_aeat(bind_rows(grupos_aeat("Total", c(0.01, 0.03, 0.10)),
+                                    grupos_aeat("Balears, Illes", c(0.02, 0.04, 0.12))))
+  mochila <- tibble::tibble(provincia = "Balears,Illes", comunidad = "Balears,Illes", bruto_anual = 10000)
+  m <- calcular_mochila_neta(mochila, ret, cotizacion = 0.065)
+  expect_equal(m$retencion, 0.03)          # entre 0,02 (5.000 €) y 0,04 (15.000 €)
+  expect_equal(m$retencion_espana, 0.02)
+  expect_equal(m$neto_anual, 10000 * (1 - 0.065 - 0.03))
+  expect_equal(m$neto_mensual, 9050 / 12)
+  expect_error(calcular_mochila_neta(mutate(mochila, comunidad = "Rioja, La"), ret, 0.065), "Sin retenciones")
+})
+
+test_that("control del paso a neto con la ECV: neto calculado sobre la mediana del bruto", {
+  a <- tibble::tibble(nuts2 = c("ES53", "ES53", "ES30"), peso = 1, bruto = c(10, 20, 30), neto = c(9, 18, 27), meses = 12)
+  e <- resumir_ecv_asalariados(a)
+  expect_equal(e$mediana_neto[e$nuts2 == "ES"], 18)
+  ret <- retenciones_aeat(bind_rows(grupos_aeat("Total", c(0.01, 0.03, 0.10)),
+                                    grupos_aeat("Balears, Illes", c(0.02, 0.04, 0.12))))
+  ecv <- tibble::tibble(nuts2 = c("ES", "ES53", "ES30"), n = c(500L, 100L, 80L), mediana_bruto = c(15000, 10000, 12000),
+                        mediana_neto = c(15000 * (1 - 0.065 - 0.03), 10000 * (1 - 0.065 - 0.03) / 1.1, 1))
+  ccaa <- tibble::tibble(codigo = c("04", "13"), nombre_ine = c("Balears, Illes", "Madrid, Comunidad de"),
+                         nuts2 = c("ES53", "ES30"))
+  c <- comprobar_neto_ecv(ret, ecv, ccaa, cotizacion = 0.065)
+  expect_equal(c$detalle, c("Total (n = 500)", "Balears, Illes (n = 100)"))   # Madrid, sin curva: fuera
+  expect_equal(c$calculado, c(0, 10))
+  expect_equal(unique(c$id), "mochila_neto_ecv")
 })

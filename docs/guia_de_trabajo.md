@@ -1,11 +1,11 @@
 # Guía de trabajo · reglas del proyecto
 
-Atlas web de vivienda y salarios por sección censal, con fichas de perfil («para quién»), un cálculo con el sueldo de cada usuario y una sección europea de sobrecarga por gastos de vivienda. Proyecto personal. Nombre: *De renta en renta*, sin traducir; sin dominio propio (GitHub Pages); faltan las marcas (backlog, tarea 2).
+Atlas web de vivienda y salarios por sección censal, con fichas de perfil («para quién»), un cálculo con el sueldo de cada usuario y una sección europea de sobrecarga por gastos de vivienda. Proyecto personal. Nombre: *De renta en renta*, sin traducir; sin dominio propio (GitHub Pages) y sin registro de marca (proyecto abierto y no comercial).
 
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
 2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.16: fuente de verdad de las decisiones).
+3. `docs/plan_integracion_atlas.md` (plan v0.17: fuente de verdad de las decisiones).
 
 ## Estado (7 de noviembre de 2026)
 

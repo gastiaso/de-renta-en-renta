@@ -225,7 +225,7 @@ modulo_acceso <- list(
 ANIO_AEAT <- 2024L
 bloque_mochila <- list(
   tarchetypes::tar_map(
-    values = list(tabla = c("provincia", "deciles", "sme_edad", "recorrido", "centiles")), names = "tabla",
+    values = list(tabla = c("provincia", "deciles", "sme_edad", "recorrido", "centiles", "retenciones")), names = "tabla",
     tar_target(paginas_aeat, descargar_aeat_mochila(tabla, ANIO_AEAT), format = "file"),
     tar_target(aeat, leer_aeat_mercado(paginas_aeat))
   ),
@@ -255,6 +255,23 @@ bloque_mochila <- list(
       ruta <- sprintf("datos/intermedios/mochila/mochila_%d.csv", ANIO_AEAT)
       dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
       readr::write_csv(mutate(mochila, across(where(is.double), ~ round(.x, 3))), ruta)
+      ruta
+    }, format = "file"),
+    # Paso 3: de bruto anual a neto mensual en 12 (regla 8), con la cotización del trabajador y la
+    # retención de la AEAT por tramo de renta anual de su comunidad; control con el neto de la ECV
+    tar_target(cotizacion_mochila, COTIZACION_TRABAJADOR[[as.character(ANIO_AEAT)]]),
+    tar_target(retenciones_mochila, retenciones_aeat(aeat_retenciones)),
+    tar_target(validacion_mochila_neto_ecv,
+               validar_referencias(comprobar_neto_ecv(retenciones_mochila, ecv_mochila, ccaa, cotizacion_mochila),
+                                   referencias)),
+    tar_target(mochila_neta, {
+      validacion_mochila_neto_ecv
+      calcular_mochila_neta(mochila, retenciones_mochila, cotizacion_mochila)
+    }),
+    tar_target(fichero_mochila_neta, {
+      ruta <- sprintf("datos/intermedios/mochila/mochila_neta_%d.csv", ANIO_AEAT)
+      dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
+      readr::write_csv(mutate(mochila_neta, across(where(is.double), ~ round(.x, 3))), ruta)
       ruta
     }, format = "file")
   )

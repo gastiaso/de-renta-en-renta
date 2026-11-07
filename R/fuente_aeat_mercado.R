@@ -94,7 +94,8 @@ descargar_aeat_mercado <- function(anio, titulo, fijos = list(), dir = DIR_AEAT_
 # (una columna por filtro, con nombre_columna()),
 # la etiqueta de la fila (y su nivel de sangría: 0 = comunidad, 1 = provincia) y la columna
 # (cabeceras de varios niveles unidas con « · »). Cada celda lleva en `headers` los
-# identificadores de sus cabeceras.
+# identificadores de sus cabeceras; si la fila pertenece a un bloque (p. ej. «SALARIOS» en los
+# grupos de población), el bloque es el primer identificador de fila y va en la columna `bloque`.
 leer_aeat_mercado <- function(rutas) {
   dplyr::bind_rows(lapply(rutas, function(ruta) {
     html <- xml2::read_html(ruta)
@@ -111,7 +112,8 @@ leer_aeat_mercado <- function(rutas) {
       names(textos))
     celdas <- xml2::xml_find_all(tabla, ".//td[@headers]")
     ids <- strsplit(trimws(xml2::xml_attr(celdas, "headers")), "\\s+")
-    fila_id <- vapply(ids, function(x) x[grepl("_f\\d+$", x)][1], "")
+    fila_ids <- lapply(ids, function(x) x[grepl("_f\\d+$", x)])
+    fila_id <- vapply(fila_ids, function(x) x[length(x)], "")
     col_ids <- lapply(ids, function(x) x[grepl("_c\\d+$", x)])
     d <- tibble::tibble(
       tabla = meta$tabla,
@@ -120,6 +122,11 @@ leer_aeat_mercado <- function(rutas) {
       columna = vapply(col_ids, function(x) paste(textos[x], collapse = " · "), ""),
       valor = numero_es(xml2::xml_text(celdas))
     )
+    # Filas agrupadas en bloques (cabecera de fila que abarca varias filas): el bloque va aparte
+    if (any(lengths(fila_ids) > 1)) {
+      bloque <- vapply(fila_ids, function(x) if (length(x) > 1) x[1] else NA_character_, "")
+      d <- tibble::add_column(d, bloque = unname(textos[bloque]), .before = "fila")
+    }
     for (f in names(meta$filtros)) d[[nombre_columna(f)]] <- meta$filtros[[f]]
     d
   }))
