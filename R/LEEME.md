@@ -17,7 +17,7 @@
 | `fuente_ine_adrh.R` | ADRH: descarga de tablas de INEbase, lectura de la renta (indicadores 1–3) y de la demografía, pesos (población y hogares), compuerta `adrh_municipio` y armonización al seccionado de 2021 en formato largo |
 | `fuente_catastro_inspire.R` | Catastro INSPIRE: feed ATOM de una provincia, municipios casados por nombre con el INE, lectura de los edificios con viviendas, tabla de paso por viviendas (vía b) y comparación con la vía (a) |
 | `fuente_aeat_mercado.R` | AEAT, *Mercado de trabajo y pensiones*: busca una tabla en el mapa de la edición, recorre sus menús de filtros (una página HTML por combinación) y la lee en formato largo |
-| `ficha_mochila.R` | Ficha «mochila» (26–35 años): mediana del SME por comunidad interpolada desde los deciles nacionales, opciones A, B y C por provincia y comprobación de la interpolación |
+| `ficha_mochila.R` | Ficha «mochila» (26–35 años): mediana del SME por comunidad interpolada desde los deciles nacionales, opciones A, B y C por provincia, método adoptado (B), comprobación de la interpolación y control con los microdatos de personas de la ECV |
 | `comun_geo.R` | Tablas de paso por el callejero, estado de lo reproyectado (`dato`, `estimado`, `ausente`), reproyección de recuentos, medias ponderadas y medianas, prueba de cierre, diagnóstico y cambios de límites. Previsto: jerarquía territorial |
 | `comun_exportar.R` | Tablas de paso a CSV; esquema, validación (`validar_tabla_larga()`) y escritura en Parquet de la tabla larga; diccionarios ES/EN (`exportar_i18n()`). Previsto: ficheros para la web |
 | `web_estilo.R` | Kit de diseño: `tokens.css` desde `diseno/tokens.json`, contrastes WCAG y tipografías autoalojadas |

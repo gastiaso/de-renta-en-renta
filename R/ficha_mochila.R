@@ -1,9 +1,12 @@
-# Ficha «mochila» (joven de 26 a 35 años): opciones de método con la AEAT (plan §3.1, pregunta
-# abierta 7). Todo en bruto anual; el paso a neto mensual viene después, con el método elegido.
+# Ficha «mochila» (joven de 26 a 35 años): mediana estimada del salario con la AEAT (plan §3.1).
+# Todo en bruto anual; el paso a neto mensual está pendiente (paso 3 del método).
 #
+# Opciones calculadas (pregunta abierta 7):
 # - A: mediana del salario medio estimado (SME, «año completo») de 26 a 35 años de la comunidad,
 #      llevada a cada provincia con la posición de su salario medio real frente al de su comunidad.
 # - B: salario medio real de la provincia × relación mediana/media del SME de su comunidad.
+#      Adoptada el 7-nov-2026: coincide con la mediana de la ECV; A queda alta (el SME anualiza
+#      por días cotizados y deja fuera lo que no llega al SMI).
 # - C: mediana del SME de la comunidad, sin escala provincial.
 #
 # La AEAT no publica la mediana del SME por comunidad y edad: solo cuántos asalariados de cada
@@ -119,4 +122,61 @@ comprobar_interpolacion_deciles <- function(deciles, centiles, recorrido) {
   inner_join(desde_deciles, desde_centiles, by = "geo") |>
     transmute(id = "aeat_mediana_deciles", anio = NA_integer_, detalle = geo,
               calculado = 100 * (con_deciles / con_centiles - 1), referencia = 0)
+}
+
+# Método adoptado (B): bruto anual de 26 a 35 años por provincia. Es lo cobrado en el año, así
+# que incluye a quien trabajó pocos meses.
+calcular_mochila <- function(opciones) {
+  opciones |>
+    transmute(provincia, comunidad, asalariados, salario_medio = real_prov, forma, bruto_anual = B)
+}
+
+# Mediana con pesos: primer valor en que el peso acumulado llega a la mitad.
+mediana_ponderada <- function(x, w) {
+  o <- order(x)
+  x <- x[o]
+  w <- w[o]
+  x[which(cumsum(w) / sum(w) >= 0.5)[1]]
+}
+
+# Control con la ECV (paso 5 del método): asalariados de 26 a 35 años con salario en el año de
+# ingresos (PY010G > 0), con su comunidad (DB040), su factor (PB040) y los meses trabajados por
+# cuenta ajena (PL073 a tiempo completo, PL074 a tiempo parcial). La edad es la del final del año
+# de ingresos (año de ingresos − año de nacimiento, PB140), como los tramos de la AEAT.
+leer_ecv_asalariados <- function(rutas, anio_ingresos, edades = c(26L, 35L)) {
+  ruta <- function(letra) rutas[grepl(sprintf("esudb\\d{2}%s\\.csv$", letra), rutas, ignore.case = TRUE)]
+  p <- readr::read_csv(ruta("p"), col_select = c("PB030", "PB040", "PB140", "PY010G", "PL073", "PL074"),
+                       col_types = readr::cols(.default = readr::col_double()), progress = FALSE)
+  d <- readr::read_csv(ruta("d"), col_select = c("DB030", "DB040"),
+                       col_types = readr::cols(DB030 = readr::col_double(), DB040 = readr::col_character()),
+                       progress = FALSE)
+  p |>
+    mutate(DB030 = PB030 %/% 100, edad = anio_ingresos - PB140) |>
+    inner_join(d, by = "DB030") |>
+    filter(edad >= edades[1], edad <= edades[2], !is.na(PY010G), PY010G > 0) |>
+    transmute(nuts2 = DB040, peso = PB040, bruto = PY010G,
+              meses = dplyr::coalesce(PL073, 0) + dplyr::coalesce(PL074, 0))
+}
+
+# Mediana del bruto por comunidad y para España, con el número de observaciones y la parte (con
+# pesos) que trabajó los doce meses.
+resumir_ecv_asalariados <- function(asalariados) {
+  bind_rows(mutate(asalariados, nuts2 = "ES"), asalariados) |>
+    group_by(nuts2) |>
+    summarise(n = n(), mediana_bruto = mediana_ponderada(bruto, peso),
+              pct_anio_completo = 100 * sum(peso[meses >= 12]) / sum(peso), .groups = "drop")
+}
+
+# Mochila de cada comunidad (salario medio real de la comunidad × su relación mediana/media)
+# frente a la mediana de la ECV. Desviación en %; alerta mochila_ecv.
+comprobar_mochila_ecv <- function(opciones, ecv, ccaa) {
+  comunidades <- opciones |>
+    distinct(comunidad, real_ccaa, forma) |>
+    mutate(mochila = real_ccaa * forma, k = clave_nombre(comunidad))
+  ccaa |>
+    transmute(nuts2, k = clave_nombre(nombre_ine)) |>
+    inner_join(comunidades, by = "k") |>
+    inner_join(ecv, by = "nuts2") |>
+    transmute(id = "mochila_ecv", anio = NA_integer_, detalle = paste0(comunidad, " (n = ", n, ")"),
+              calculado = 100 * (mochila / mediana_bruto - 1), referencia = 0)
 }

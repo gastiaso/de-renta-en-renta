@@ -4,6 +4,12 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Cambiado (7-nov-2026, método de la mochila)
+
+- Mochila con el método B (plan v0.15, §3.1; pregunta abierta 7, cerrada): salario medio real de 26 a 35 años de la provincia × relación mediana/media del SME de su comunidad, en bruto anual (`mochila`, `datos/intermedios/mochila/mochila_2024.csv`). Las opciones A y C se siguen calculando (`mochila_opciones`) como registro de la decisión. Falta el paso a neto.
+- Control con la ECV dentro del pipeline (`leer_ecv_asalariados`, `resumir_ecv_asalariados`, `comprobar_mochila_ecv`): mediana del bruto del año de los asalariados de 26 a 35 años por comunidad, con la ola de 2025 (ingresos de 2024). Alerta `mochila_ecv` (±15 %), que sustituye a la fila provisional de las referencias. 2024: entre −10,6 % y +7,2 % por comunidad.
+- El CSV de personas de la ECV 2025 (`esudb25p.csv`) se toma de una copia local del zip original del INE, como los de hogares y registro; si falta, `obtener_csv_ine_ecv()` descarga el zip.
+
 ### Añadido (7-nov-2026, medición para toda España)
 
 - Medición de las descargas para llevar la geografía constante a toda España (plan v0.14, §6.3): 1.489 municipios con secciones repartidas por el callejero en algún año; 3,57 GB de edificios del Catastro por bajar (1.256 zips) y unos 0,9 GB de las dos tablas nacionales del ADRH. Nada descargado todavía.

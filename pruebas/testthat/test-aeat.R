@@ -74,3 +74,15 @@ test_that("opciones A, B y C: A y B difieren en la relación media SME / media r
   expect_equal(o$B, c(1100, 1300) * 1500 / 2000)
   expect_equal(o$A_sobre_B, rep(2000 / 1200, 2))
 })
+
+test_that("la mediana con pesos y el control de la mochila con la ECV", {
+  expect_equal(mediana_ponderada(c(10, 20, 30), c(1, 1, 1)), 20)
+  expect_equal(mediana_ponderada(c(30, 10, 20), c(5, 1, 1)), 30)
+  op <- tibble::tibble(comunidad = c("Rioja, La", "Rioja, La"), real_ccaa = 20000, forma = 0.9)
+  ecv <- tibble::tibble(nuts2 = c("ES", "ES23"), n = c(500L, 100L), mediana_bruto = c(17000, 18000))
+  ccaa <- tibble::tibble(codigo = "17", nombre_ine = "Rioja, La", nuts2 = "ES23")
+  c <- comprobar_mochila_ecv(op, ecv, ccaa)
+  expect_equal(nrow(c), 1)
+  expect_equal(c$calculado, 0)
+  expect_equal(c$detalle, "Rioja, La (n = 100)")
+})

@@ -191,7 +191,8 @@ modulo_acceso <- list(
   tar_target(validacion_modulo, validar_referencias(comprobaciones_modulo, referencias))
 )
 
-# Ficha «mochila» (pregunta abierta 7): opciones A, B y C con la AEAT, sin decidir todavía.
+# Ficha «mochila»: opciones A, B y C con la AEAT; adoptada la B (7-nov-2026, plan §3.1), con el
+# control de la ECV del año siguiente (ingresos del mismo año que la AEAT).
 # Cada tabla de la AEAT es un conjunto de páginas HTML (una por combinación de filtros); sus
 # títulos y filtros están en TABLAS_AEAT_MOCHILA (R/ficha_mochila.R).
 ANIO_AEAT <- 2024L
@@ -212,6 +213,21 @@ bloque_mochila <- list(
       ruta <- sprintf("datos/intermedios/mochila/opciones_%d.csv", ANIO_AEAT)
       dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
       readr::write_csv(mutate(mochila_opciones, across(where(is.double), ~ round(.x, 3))), ruta)
+      ruta
+    }, format = "file"),
+    # Control con la ECV: ficheros de hogares (d) y personas (p) de la ola con ingresos de ANIO_AEAT
+    tar_target(csv_ecv_mochila, obtener_csv_ine_ecv(ANIO_AEAT + 1L, c("d", "p")), format = "file"),
+    tar_target(ecv_mochila, resumir_ecv_asalariados(leer_ecv_asalariados(csv_ecv_mochila, ANIO_AEAT))),
+    tar_target(validacion_mochila_ecv, validar_referencias(comprobar_mochila_ecv(mochila_opciones, ecv_mochila, ccaa),
+                                                           referencias)),
+    tar_target(mochila, {
+      validacion_mochila_ecv
+      calcular_mochila(mochila_opciones)
+    }),
+    tar_target(fichero_mochila, {
+      ruta <- sprintf("datos/intermedios/mochila/mochila_%d.csv", ANIO_AEAT)
+      dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
+      readr::write_csv(mutate(mochila, across(where(is.double), ~ round(.x, 3))), ruta)
       ruta
     }, format = "file")
   )
