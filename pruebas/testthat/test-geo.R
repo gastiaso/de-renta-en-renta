@@ -105,3 +105,11 @@ test_that("los recuentos se conservan al reproyectar", {
   cierre <- geo_cierre_poblacional(r, tibble::tibble(codigo = "28001", valor = 357))
   expect_equal(cierre$desviacion_pct, 0)
 })
+
+test_that("la cobertura de destino cuenta las secciones de referencia que no reciben nada", {
+  tabla <- tibble::tibble(origen = c("O1", "O2"), destino = c("D1", "D2"), portales = 1, fraccion = 1)
+  expect_equal(comprobar_cobertura_destino(tabla, c("D1", "D2"), 2021L)$calculado, 0L)
+  r <- comprobar_cobertura_destino(tabla, c("D1", "D2", "D3"), 2021L)
+  expect_equal(r$calculado, 1L)
+  expect_equal(r$detalle, "D3")
+})

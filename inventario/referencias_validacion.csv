@@ -10,7 +10,8 @@ adrh_municipio_detalle,1;2,Desviación (%) de cada municipio entre las medias de
 serpavi_provincia,8;9,"Recuento de testigos de las secciones sumado a provincia, por año y tipología (las medianas no se agregan)",Hoja Provincias de la base de datos del SERPAVI,exacto,bloqueo,pendiente
 aeat_provincia,7,Salario medio provincial leído,Tabla publicada de la AEAT,exacto,bloqueo,pendiente
 smi_neto,15;21,Ingreso de la tartera,"17.094 € × (1 − 0,065) / 12 ≈ 1.332 €",exacto con los parámetros del año,bloqueo,pendiente
-cierre_poblacional,geo,Padrón por sección reproyectado al seccionado de referencia (2021),Totales municipales publicados,"±0,5 %",bloqueo,en el pipeline (Madrid); pasa en 2015 y 2024 → 2021
+cierre_poblacional,geo,Padrón por sección reproyectado al seccionado de referencia (2021),Totales municipales publicados,"±0,5 %",bloqueo,"en el pipeline (Madrid); pasa en 2015, 2021 y 2024 → 2021"
+cobertura_destino,geo,Secciones del seccionado de referencia (2021) que no reciben nada de la tabla de paso,Ninguna,exacto,bloqueo,"en el pipeline (Madrid); pasa en 2015, 2021 y 2024 → 2021"
 mochila_ecv,15,Mochila provincial agregada a comunidad,"Intervalo de la mediana neta de la ECV (26–35, año completo)",dentro del intervalo,alerta,pendiente
 adrh_aeat,1;2,Renta del ADRH frente a renta bruta de la AEAT por municipio,"AEAT, IRPF por municipio",tendencia coherente,alerta,pendiente
 serpavi_ipva,8;10,Tendencia del SERPAVI frente al IPVA,"INE, IPVA",tendencia coherente,alerta,pendiente

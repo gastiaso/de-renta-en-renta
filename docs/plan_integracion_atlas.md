@@ -1,6 +1,8 @@
 # Casilla de salida — Plan de integración por fases
 
-*Borrador v0.10 · 7 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.11 · 7 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.11:** tabla 2022 → 2021 con la vía (b) y prueba de un año de esa vía: en las secciones que el callejero reparte, el error baja al ruido de un año. Secciones «fantasma» del seccionado (códigos del mapa que no están en los datos del mismo año) y nueva compuerta `cobertura_destino` (§6.3).
 
 **Cambios en la v0.10:** avance de F0 y F1b (tareas 2 y 7 a 10, sobrecarga con tres olas, Europa e indicador 23; preguntas abiertas 9 y 10) y vía (b) del Catastro adoptada para las secciones que hay que repartir, con los edificios filtrados por año de construcción (§1 y §6.3).
 
@@ -265,7 +267,9 @@ pruebas/      testthat + prueba de la web con chromote
   - **Resultado (2024 → 2021, frente al ADRH 2020):** en las 558 secciones `estimado` por la vía (a), el 90 % central de la razón pasa de 0,69–1,54 a 0,84–1,06, las que quedan dentro de ±5 % pasan del 33 al 54 % y los errores de más del 20 %, de 128 a 27. En las demás, las dos vías dan lo mismo. Con cuatro años de distancia la prueba mezcla error y crecimiento, pero la mejora es grande y está donde fallaba el callejero.
   - **Adoptado (7-nov-2026):** vía (a) donde las secciones de origen caen enteras en una de 2021 y vía (b) donde hay que repartir, si la sección tiene edificios con viviendas (`combinar_vias()`). En las que siguen por el callejero, el peso pasa a viviendas cuando el Catastro las da, para que el origen dominante de las medianas compare viviendas con viviendas. Para los años antiguos solo cuentan los edificios ya construidos (año de construcción del Catastro): la tabla 2015 → 2021 usa los de 2015 o antes. Los pares de secciones de municipios distintos se descartan: los límites municipales se digitalizan distinto en cada seccionado y, sin ese filtro, la prueba de cierre de 2015 fallaba en dos municipios (±6–7 %).
   - **Efecto en Madrid** (73 municipios, 385.611 edificios con viviendas): secciones `estimado` de 2021, de 724 a 192 (2015 → 2021) y de 558 a 112 (2025 → 2021); medianas `ausente`, de 91 a 20 y de 233 a 133. En las secciones que el callejero repartía, los errores de más del 20 % frente al ADRH 2020 bajan de 141 a 94 (2015) y de 128 a 26 (2024). La prueba de cierre sigue en 0,0012 % como máximo.
-  - **Pendiente:** la tabla 2022 → 2021 sigue solo con el callejero (falta el seccionado de 2022, que también permitiría la prueba de un año de la vía b); y la licencia del Catastro: hasta aclararla, las tablas combinadas no se versionan ni se publican (se quedan en el pipeline).
+  - **Prueba de un año de la vía (b)** (7-nov-2026; ADRH 2021, en el seccionado de 2022, llevado a 2021 y comparado con el ADRH 2020). En las 465 secciones que el callejero reparte, las que quedan dentro de ±5 % pasan del 66,5 al 92,5 %, el 90 % central de la razón pasa de 0,81–1,28 a 0,96–1,04 y los errores de más del 20 %, de 50 a 7. Es lo mismo que en las secciones que caen enteras (94,8 % dentro de ±5 %; 0,96–1,04; 7 errores de más del 20 %), es decir, el ruido de un año. Con la tabla combinada, las secciones `estimado` de 2021 pasan de 465 a 22 y las medianas `ausente`, de 191 a 18; en la tabla larga, las cifras `estimado` de la renta de 2021 bajan de 1.218 a 63.
+  - **Secciones «fantasma».** El mapa del seccionado no siempre va en fase con el callejero y el ADRH del mismo año. En Madrid, el de 2022 dibuja una sección que ya se ha fusionado (2800505019, en Alcalá de Henares) y otra que los datos aún no tienen (2811501034, en Pozuelo de Alarcón). Sin corregirlo, la vía (b) asignaba toda la población de la sección fusionada a una sola de 2021 y dejaba la otra vacía, sin que lo detectara la prueba de cierre municipal. Ahora los edificios de una sección fantasma pasan al origen de los datos que, según el callejero, cubre el mismo destino; si lo cubren varios, esos orígenes siguen por el callejero (`reasignar_fantasmas()`). Nueva compuerta `cobertura_destino` (bloqueo): toda sección de 2021 debe recibir algo de la tabla. Los mapas de 2015 y 2025 no tienen fantasmas; el de 2015 tiene diez códigos que el ADRH no publica por sección (municipios de una sola sección), que sí están en el callejero.
+  - **Pendiente:** la licencia del Catastro. Hasta aclararla, las tablas combinadas no se versionan ni se publican (se quedan en el pipeline).
 - **Población por sección para las pruebas:** además del ADRH, el Censo anual de población por secciones (2021–2025, con sexo y edad) y el Padrón continuo por secciones (2004–2022).
 - **Vía (a) en la práctica** (prueba de Madrid):
   - cada tabla compara tramos de la misma aplicación del INE: el callejero de enero de 2021 se publicó con la antigua y con la nueva, así que 2015 → 2021 usa la antigua en los dos extremos y 2025 → 2021, la nueva;
@@ -280,7 +284,8 @@ pruebas/      testthat + prueba de la web con chromote
   - **Contraste del origen dominante** (prueba de un año, con dos indicadores del ADRH que no se suman: edad media y tamaño medio del hogar, copiados de 2021 y comparados con 2020). Con un origen que aporta ≥ 95 % (264 secciones), el error es el de las secciones 1:1: en la edad media, mediana de 0,4 años y percentil 90 de 0,87 (0,90 en las 1:1); en el tamaño del hogar, igual. Entre el 80 y el 95 % (100 secciones) la cola empeora (percentil 99 de 2,7 años frente a 1,4), y por debajo del 80 %, más. Las 24 secciones con un único origen repartido tienen la peor cola (percentil 99 de 17 años): son divisiones donde la parte nueva no se parece a la madre.
   - Implementado en `geo_estado_paso()` y en `geo_reproyectar_recuento()`, `geo_reproyectar_media()` y `geo_reproyectar_mediana()`.
 - **Prueba de cierre:** la población del padrón por sección reproyectada debe cuadrar con los totales municipales publicados (±0,5 %).
-  - **Resultado en Madrid (6-nov-2026):** ADRH 2015 → 2021 y ADRH 2024 → 2021, desviación máxima 0,001 % en 169 y 179 municipios; ninguna sección sin tabla de paso.
+  - **Resultado en Madrid (6-nov-2026):** ADRH 2015 → 2021 y ADRH 2024 → 2021, desviación máxima 0,001 % en 169 y 179 municipios; ninguna sección sin tabla de paso. Con las tablas combinadas (7-nov-2026), igual, y también con el ADRH 2021 (0,0012 % como máximo en los tres años).
+  - **Cobertura de destino** (`cobertura_destino`, desde el 7-nov-2026): ninguna sección de 2021 se queda sin recibir nada; pasa en los tres años.
   - **Es una prueba débil por construcción:** las tablas no cruzan municipios y cada sección reparte el 100 %, así que solo detecta secciones sin tabla y municipios que cambian. Un primer error de casado (tramos sin vía casados entre sí en todo el municipio) la pasaba igual.
   - **Diagnóstico sección a sección** (`diagnostico_f1`, no es compuerta): la población llevada a 2021 frente a la del ADRH 2020, nativo en 2021. En las secciones sin cambios, el 90 % de las razones queda entre 0,94 y 1,15 (2015) y entre 0,87 y 1,05 (2024). Quedan 63 y 26 secciones con razón fuera de [0,55; 1,8] (59 y 22 de ellas, en secciones afectadas por cambios), la mayoría en barrios en crecimiento (Valdebebas, El Cañaveral, Ensanche de Vallecas, entre otros), donde con cuatro o cinco años de distancia no se separa el error de la tabla del crecimiento real.
   - **Prueba de un año** (ADRH 2021, en el seccionado de 2022, llevado a 2021 y comparado con el ADRH 2020; un año de crecimiento apenas estorba):
@@ -288,7 +293,7 @@ pruebas/      testthat + prueba de la web con chromote
     - en las que reciben entre el 5 % y el 50 % de otro código (172), solo el 45,9 %; en las que reciben más del 50 % (31), el 12,9 %, con errores de hasta el doble;
     - la tabla es exacta cuando cada sección de origen cae entera en su destino (sumar recuentos no necesita pesos) y se equivoca cuando hay que repartir: el peso por números de portal no ve si un número existe solo sobre el papel, como en los barrios a medio construir.
   - **De ahí la regla de estado** (ver arriba): en la prueba de un año, las secciones `dato` (3.952, 89,5 %) se comportan como el ruido de un año (94,6 % dentro de ±5 %, 7 errores de más del 20 %); las `estimado` (465), no (66,5 %; 50 errores de más del 20 %).
-  - **Siguiente paso:** la vía (b), viviendas del Catastro, solo hace falta en las secciones `estimado`; la prueba de un año sirve para compararla con la vía (a).
+  - **Siguiente paso** (hecho el 7-nov-2026): la vía (b), viviendas del Catastro, en las secciones `estimado`; su prueba de un año, más arriba.
 - **Códigos postales:** no son una unidad del INE. Hay que localizar su geometría (CartoCiudad, a confirmar) y una tabla CP ↔ municipio, solo para los indicadores 11 y 16.
 
 ### 6.4 Modelo de datos
@@ -441,7 +446,7 @@ Consecuencia: el atlas siempre irá **uno o dos años por detrás** en renta y s
 
 | Riesgo | Prob. | Impacto | Mitigación |
 |---|---|---|---|
-| Tablas de paso entre seccionados poco robustas | Alta | Alto | F1 antes que nada; dos vías de ponderación; prueba de cierre |
+| Tablas de paso entre seccionados poco robustas | Alta | Alto | F1 antes que nada; dos vías de ponderación; prueba de cierre y de cobertura; prueba de un año |
 | Requerimiento de un portal | Media | Alto | Capa desmontable, repo satélite, solo informes agregados |
 | Alcance (23 indicadores, una persona) | Alta | Medio | v0.0 con 2 (F1b), v0.1 con 10; el resto por fases |
 | F1b le quita tiempo a F1, la fase crítica | Media | Medio | Condición de salida de F1b; si no aporta comunidad × tenencia, se aplaza |

@@ -62,3 +62,26 @@ test_that("con año máximo solo cuentan los edificios ya construidos", {
   expect_equal(t$destino, "2800101002")
   expect_equal(t$fraccion, 1)
 })
+
+test_that("los edificios de una sección fantasma del mapa pasan al origen de los datos que la cubre", {
+  # Los datos han fusionado la 019 en la 027; el mapa aún dibuja la 019
+  a <- tibble::tibble(origen = "2800505027", destino = c("2800505019", "2800505027"),
+                      portales = c(10L, 12L), metodo = "callejero", fraccion = c(10, 12) / 22)
+  b <- tibble::tibble(origen = c("2800505027", "2800505019"), destino = c("2800505027", "2800505019"),
+                      portales = c(300, 100), fraccion = 1, metodo = "catastro")
+  comb <- combinar_vias(b, a)
+  expect_setequal(comb$destino, c("2800505019", "2800505027"))
+  expect_equal(unique(comb$origen), "2800505027")
+  expect_equal(comb$fraccion[comb$destino == "2800505019"], 0.25)
+  expect_equal(unique(comb$metodo), "catastro")
+})
+
+test_that("si varios orígenes cubren el destino de un fantasma, siguen por el callejero", {
+  a <- tibble::tibble(origen = c("A", "A", "B"), destino = c("D1", "D2", "D1"),
+                      portales = c(5L, 5L, 8L), metodo = "callejero", fraccion = c(0.5, 0.5, 1))
+  b <- tibble::tibble(origen = c("A", "A", "G"), destino = c("D1", "D2", "D1"),
+                      portales = c(40, 60, 30), fraccion = c(0.4, 0.6, 1), metodo = "catastro")
+  comb <- combinar_vias(b, a)
+  expect_equal(unique(comb$metodo), "callejero")
+  expect_false("G" %in% comb$origen)
+})

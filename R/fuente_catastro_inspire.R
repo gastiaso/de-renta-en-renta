@@ -91,14 +91,42 @@ leer_catastro_varios <- function(zips) {
   do.call(rbind, lapply(zips, leer_catastro_edificios))
 }
 
+# Secciones «fantasma»: códigos del mapa que no están en los datos (callejero y ADRH). El
+# seccionado del INE va a veces por detrás de ellos (dibuja una sección ya fusionada) o por
+# delante (una sección que los datos aún no tienen); en Madrid, dos en el mapa de 2022. Sus
+# edificios pasan al origen de los datos que, según el callejero, cubre el mismo destino de
+# 2021. Si lo cubren varios, no se sabe a cuál van: esos orígenes siguen por el callejero
+# (`excluidos`).
+reasignar_fantasmas <- function(tabla_b, tabla_a) {
+  fantasmas <- setdiff(tabla_b$origen, tabla_a$origen)
+  if (length(fantasmas) == 0) return(list(tabla = tabla_b, excluidos = character(0)))
+  f <- filter(tabla_b, origen %in% fantasmas)
+  cubre <- tabla_a |>
+    filter(destino %in% f$destino) |>
+    distinct(destino, origen_datos = origen) |>
+    group_by(destino) |> mutate(n = n()) |> ungroup()
+  f <- left_join(f, filter(cubre, n == 1) |> select(destino, origen_datos), by = "destino")
+  excluidos <- unique(cubre$origen_datos[cubre$destino %in% f$destino[is.na(f$origen_datos)]])
+  tabla <- bind_rows(filter(tabla_b, !origen %in% fantasmas),
+                     filter(f, !is.na(origen_datos)) |> mutate(origen = origen_datos) |> select(-origen_datos)) |>
+    group_by(origen, destino) |>
+    summarise(portales = sum(portales), .groups = "drop") |>
+    group_by(origen) |>
+    mutate(fraccion = portales / sum(portales), metodo = "catastro") |>
+    ungroup()
+  list(tabla = tabla, excluidos = excluidos)
+}
+
 # Regla adoptada (7-nov-2026, plan §6.3): callejero (vía a) para las secciones de origen que
 # caen enteras en una de 2021; Catastro (vía b) para las que hay que repartir, si tienen
 # edificios con viviendas. En las que siguen por el callejero, el peso pasa a ser el número de
 # viviendas cuando el Catastro lo da, para que el origen dominante de las medianas compare
 # viviendas con viviendas.
 combinar_vias <- function(tabla_b, tabla_a, umbral = 0.99) {
+  r <- reasignar_fantasmas(tabla_b, tabla_a)
+  tabla_b <- r$tabla
   repartidos <- unique(tabla_a$origen[tabla_a$fraccion < umbral])
-  por_catastro <- intersect(repartidos, tabla_b$origen)
+  por_catastro <- setdiff(intersect(repartidos, tabla_b$origen), r$excluidos)
   viviendas <- tabla_b |> group_by(origen) |> summarise(total = sum(portales), .groups = "drop")
   por_callejero <- tabla_a |>
     filter(!origen %in% por_catastro) |>

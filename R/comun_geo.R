@@ -195,6 +195,15 @@ comprobar_cierre_poblacional <- function(poblacion, tabla, anio) {
               calculado = desviacion_pct, referencia = 0)
 }
 
+# Toda sección del seccionado de referencia debe recibir algo de la tabla de paso. El cierre
+# municipal no lo ve: una sección vacía se compensa con otra del mismo municipio.
+comprobar_cobertura_destino <- function(tabla, secciones_referencia, anio) {
+  sin_nada <- setdiff(secciones_referencia, tabla$destino)
+  tibble::tibble(id = "cobertura_destino", anio = as.integer(anio),
+                 detalle = if (length(sin_nada)) paste(utils::head(sin_nada, 5), collapse = " ") else "",
+                 calculado = length(sin_nada), referencia = 0)
+}
+
 # Diagnóstico sección a sección (no es compuerta): población de un año llevada a 2021
 # frente a la publicada en el seccionado de 2021 (ADRH 2020). La razón mezcla el error de
 # la tabla con el crecimiento real entre los dos años; `afectada` marca las secciones de

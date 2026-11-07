@@ -8,6 +8,12 @@ leer_inventario <- function(nombre) {
 
 separar <- function(x) unique(trimws(unlist(strsplit(stats::na.omit(x), ";"))))
 
+test_that("los CSV del inventario se leen sin filas descuadradas", {
+  for (f in list.files(file.path("..", "..", "inventario"), pattern = "[.]csv$")) {
+    expect_equal(nrow(readr::problems(leer_inventario(f))), 0L, info = f)
+  }
+})
+
 test_that("los identificadores de fuentes e indicadores son únicos", {
   fuentes <- leer_inventario("fuentes.csv")
   indicadores <- leer_inventario("indicadores.csv")
