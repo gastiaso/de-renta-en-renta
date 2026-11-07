@@ -191,6 +191,32 @@ modulo_acceso <- list(
   tar_target(validacion_modulo, validar_referencias(comprobaciones_modulo, referencias))
 )
 
+# Ficha «mochila» (pregunta abierta 7): opciones A, B y C con la AEAT, sin decidir todavía.
+# Cada tabla de la AEAT es un conjunto de páginas HTML (una por combinación de filtros); sus
+# títulos y filtros están en TABLAS_AEAT_MOCHILA (R/ficha_mochila.R).
+ANIO_AEAT <- 2024L
+bloque_mochila <- list(
+  tarchetypes::tar_map(
+    values = list(tabla = c("provincia", "deciles", "sme_edad", "recorrido", "centiles")), names = "tabla",
+    tar_target(paginas_aeat, descargar_aeat_mochila(tabla, ANIO_AEAT), format = "file"),
+    tar_target(aeat, leer_aeat_mercado(paginas_aeat))
+  ),
+  list(
+    tar_target(comprobaciones_mochila, comprobar_interpolacion_deciles(aeat_deciles, aeat_centiles, aeat_recorrido)),
+    tar_target(validacion_mochila, validar_referencias(comprobaciones_mochila, referencias)),
+    tar_target(mochila_opciones, {
+      validacion_mochila
+      calcular_mochila_opciones(aeat_provincia, aeat_deciles, aeat_sme_edad, aeat_recorrido)
+    }),
+    tar_target(fichero_mochila_opciones, {
+      ruta <- sprintf("datos/intermedios/mochila/opciones_%d.csv", ANIO_AEAT)
+      dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
+      readr::write_csv(mutate(mochila_opciones, across(where(is.double), ~ round(.x, 3))), ruta)
+      ruta
+    }, format = "file")
+  )
+)
+
 # Tabla larga única: cada bloque entra después de pasar su compuerta
 bloque_tabla_larga <- list(
   tar_target(tabla_larga, {
@@ -207,4 +233,4 @@ bloque_tabla_larga <- list(
              format = "file")
 )
 
-list(inventario, sobrecarga, prueba_f1, bloque_renta_adrh, modulo_acceso, bloque_tabla_larga)
+list(inventario, sobrecarga, prueba_f1, bloque_renta_adrh, modulo_acceso, bloque_mochila, bloque_tabla_larga)
