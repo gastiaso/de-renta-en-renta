@@ -33,10 +33,27 @@
 # reales: solo sirven para este mapa, que no lleva teselas de fondo.
 
 DIR_SOBRECARGA_WEB <- "sobrecarga"                   # bajo <dir_web>/datos/
-ANIO_INICIO_SERIE_SOBRECARGA <- 2008L                # plan §5, indicador 22: países desde 2008 (a confirmar)
-# Cortes de los seis tramos del mapa, fijos todos los años. El alquiler a precio de mercado va con
-# los suyos: con los generales, casi toda Europa caería en el último tramo.
-CORTES_SOBRECARGA_WEB <- list(general = c(4, 6, 8, 10, 15), RENT_MKT = c(15, 20, 25, 30, 40))
+# Cortes de los tramos del mapa: columna cortes_web del indicador 22 en inventario/indicadores.csv
+# (regla 7; pregunta abierta 28), fijos todos los años. Formato: los cortes generales y, tras «|»,
+# los de un grupo con los suyos, como «GRUPO=c1;c2;…»: «4;6;8;10;15|RENT_MKT=15;20;25;30;40». El
+# alquiler a precio de mercado lleva los suyos porque con los generales casi toda Europa caería en el
+# último tramo. Cada lista, como cortes_web() (R/web_exportar.R): de 1 a 5 valores crecientes.
+cortes_sobrecarga_web <- function(texto) {
+  partes <- trimws(strsplit(as.character(texto), "|", fixed = TRUE)[[1]])
+  if (!length(partes) || is.na(partes[1]) || !nzchar(partes[1])) {
+    stop("cortes_web de la sobrecarga vac\u00edo", call. = FALSE)
+  }
+  grupos <- partes[-1]
+  if (length(grupos) && !all(grepl("^[A-Z0-9_-]+=", grupos))) {
+    stop("cortes_web de la sobrecarga: cada grupo va como GRUPO=c1;c2: ", texto, call. = FALSE)
+  }
+  c(list(general = cortes_web(partes[1])),
+    stats::setNames(lapply(sub("^[^=]+=", "", grupos), cortes_web), sub("=.*$", "", grupos)))
+}
+
+cortes_de_indicadores <- function(indicadores, codigo = "sobrecarga") {
+  cortes_sobrecarga_web(indicadores$cortes_web[match(codigo, indicadores$codigo)])
+}
 # Grupos que puede pintar el mapa: los que Eurostat publica por país y la ECV por comunidad
 # (el de 15 a 29 años no está agrupado por comunidad; propiedad y alquiler juntos, no en Eurostat).
 GRUPOS_MAPA_SOBRECARGA <- list(tenencia = c("RENT_MKT", "RENT_FR", "OWN_L", "OWN_NL"),
@@ -134,18 +151,26 @@ vistas_sobrecarga <- function(europa, anual, agrupada) {
   lapply(vistas, function(v) c(v, list(nuts = unname(version_nuts(v$anio)))))
 }
 
-# Serie de España y de la UE-27 desde ANIO_INICIO_SERIE_SOBRECARGA (Eurostat): toda la población
-# (ilc_lvho07a) e inquilinos a precio de mercado (ilc_lvho07c).
-serie_espana_sobrecarga <- function(europa, desde = ANIO_INICIO_SERIE_SOBRECARGA) {
-  anios <- seq(desde, max(europa$anio))
-  serie <- function(geo, tabla, tenencia = "TOTAL") {
-    d <- europa[europa$conjunto == tabla & europa$geo == geo & europa$tenencia == tenencia & europa$edad == "TOTAL", ]
-    d$valor[match(anios, d$anio)]
-  }
+# Serie de España y de la UE-27 (Eurostat) desde el primer año publicado de cualquiera de las
+# cuatro (pregunta abierta 30: España, el total desde 2004 y el alquiler a precio de mercado desde
+# 2007; la UE-27, desde 2010): toda la población (ilc_lvho07a) e inquilinos a precio de mercado
+# (ilc_lvho07c), con la marca de Eurostat de cada año (b: ruptura de serie; e: estimado…).
+SERIES_ESPANA_SOBRECARGA <- list(
+  ES_TOTAL = c(tabla = "ilc_lvho07a", geo = "ES", tenencia = "TOTAL"),
+  ES_RENT_MKT = c(tabla = "ilc_lvho07c", geo = "ES", tenencia = "RENT_MKT"),
+  EU27_TOTAL = c(tabla = "ilc_lvho07a", geo = "EU27_2020", tenencia = "TOTAL"),
+  EU27_RENT_MKT = c(tabla = "ilc_lvho07c", geo = "EU27_2020", tenencia = "RENT_MKT")
+)
+
+serie_espana_sobrecarga <- function(europa) {
+  filas <- lapply(SERIES_ESPANA_SOBRECARGA, function(s) {
+    europa[europa$conjunto == s[["tabla"]] & europa$geo == s[["geo"]] & europa$tenencia == s[["tenencia"]] &
+             europa$edad == "TOTAL", ]
+  })
+  anios <- seq(min(unlist(lapply(filas, `[[`, "anio"))), max(europa$anio))
   list(anios = anios,
-       valores = list(ES_TOTAL = serie("ES", "ilc_lvho07a"), ES_RENT_MKT = serie("ES", "ilc_lvho07c", "RENT_MKT"),
-                      EU27_TOTAL = serie("EU27_2020", "ilc_lvho07a"),
-                      EU27_RENT_MKT = serie("EU27_2020", "ilc_lvho07c", "RENT_MKT")))
+       valores = lapply(filas, function(d) d$valor[match(anios, d$anio)]),
+       marcas = lapply(filas, function(d) d$bandera[match(anios, d$anio)]))
 }
 
 # Módulo de acceso (indicador 23): búsqueda sin éxito por comunidad (con su código NUTS 2), edad,
@@ -155,7 +180,7 @@ modulo_sobrecarga_web <- function(modulo_ccaa, modulo_edad, modulo_tenencia, cca
   com <- modulo_ccaa |> rename(nombre = 1) |> filter(medida == pct)
   total <- com$valor[com$nombre == "Total"]
   com <- com |> filter(nombre != "Total") |> left_join(select(ccaa, nombre = nombre_ine, nuts2), by = "nombre")
-  if (anyNA(com$nuts2)) stop("Comunidades del módulo sin código: ", paste(com$nombre[is.na(com$nuts2)], collapse = ", "),
+  if (anyNA(com$nuts2)) stop("Comunidades del m\u00f3dulo sin c\u00f3digo: ", paste(com$nombre[is.na(com$nuts2)], collapse = ", "),
                              call. = FALSE)
   e <- modulo_edad |> rename(sexo = 1, edad = 2) |> filter(medida == pct)
   t <- modulo_tenencia |> rename(tenencia = 1) |> filter(medida == pct, tenencia != "Total")
@@ -173,8 +198,8 @@ modulo_sobrecarga_web <- function(modulo_ccaa, modulo_edad, modulo_tenencia, cca
 }
 
 # Razones de quien buscó vivienda sin éxito (porcentaje de esas personas), en las tablas del módulo.
-RAZONES_MODULO <- c("Precio excesivo" = "precio", "La vivienda no reunía los requisitos que busco" = "vivienda",
-                    "Yo no reunía las condiciones necesarias para el alquiler/compra" = "condiciones",
+RAZONES_MODULO <- c("Precio excesivo" = "precio", "La vivienda no reun\u00eda los requisitos que busco" = "vivienda",
+                    "Yo no reun\u00eda las condiciones necesarias para el alquiler/compra" = "condiciones",
                     "Otras razones" = "otras")
 
 # --- Geometrías ---------------------------------------------------------------------------------
@@ -217,14 +242,22 @@ a_coordenadas_mapa <- function(geometria) {
 }
 
 # Países (NUTS 0), regiones (NUTS 2) y las NUTS 1 de `codigos_nuts1`, recortados al marco, con las
-# islas de los recuadros desplazadas y en coordenadas del mapa. Columnas: id, nivel, pais y tipo
-# («region» o «recuadro», el marco de cada recuadro como línea).
-geometrias_sobrecarga_web <- function(ruta, codigos_nuts1 = character()) {
-  n <- sf::st_read(ruta, quiet = TRUE)
-  n <- n[n$LEVL_CODE %in% c(0, 2) | n$NUTS_ID %in% codigos_nuts1, ]
-  x <- sf::st_sf(id = n$NUTS_ID, nivel = as.integer(n$LEVL_CODE), pais = n$CNTR_CODE,
-                 geometry = sf::st_make_valid(sf::st_geometry(n)))
-  x <- suppressWarnings(sf::st_collection_extract(sf::st_transform(x, 3035), "POLYGON"))
+# islas de los recuadros desplazadas y en coordenadas del mapa. `respaldo`: códigos que esta versión
+# no trae y se toman de otra (vector con nombre: código = ruta del fichero NUTS de donde sale; pregunta
+# abierta 29). Columnas: id, nivel, pais y tipo («region» o «recuadro», el marco de cada recuadro
+# como línea).
+geometrias_sobrecarga_web <- function(ruta, codigos_nuts1 = character(), respaldo = character()) {
+  leer <- function(r, quedarse) {
+    n <- sf::st_read(r, quiet = TRUE)
+    n <- n[quedarse(n), ]
+    sf::st_sf(id = n$NUTS_ID, nivel = as.integer(n$LEVL_CODE), pais = n$CNTR_CODE,
+              geometry = sf::st_transform(sf::st_make_valid(sf::st_geometry(n)), 3035))
+  }
+  x <- leer(ruta, function(n) n$LEVL_CODE %in% c(0, 2) | n$NUTS_ID %in% codigos_nuts1)
+  for (r in unique(respaldo)) {
+    x <- rbind(x, leer(r, function(n) n$NUTS_ID %in% setdiff(names(respaldo)[respaldo == r], x$id)))
+  }
+  x <- suppressWarnings(sf::st_collection_extract(x, "POLYGON"))
   rec <- recuadros_sobrecarga(x[x$nivel == 2, ])
   partes <- suppressWarnings(sf::st_cast(sf::st_cast(x, "MULTIPOLYGON"), "POLYGON"))
   centro <- sf::st_coordinates(suppressWarnings(sf::st_point_on_surface(sf::st_geometry(partes))))
@@ -281,26 +314,48 @@ filas_json_sobrecarga <- function(filas) {
   })
 }
 
+# Códigos que pinta cada versión NUTS y, de los que no trae, de qué versión posterior salen
+# (version_geometria(), R/fuente_gisco_nuts.R). También los países de una versión posterior que
+# faltan en esta, para que el fondo no tenga huecos. Devuelve, por versión, el vector de respaldo.
+respaldos_geometria <- function(vistas, rutas_nuts) {
+  atributos <- lapply(rutas_nuts, function(r) sf::st_drop_geometry(sf::st_read(r, quiet = TRUE))[c("NUTS_ID", "LEVL_CODE")])
+  codigos <- lapply(atributos, `[[`, "NUTS_ID")
+  versiones <- sort(unique(vapply(vistas, `[[`, "", "nuts")))
+  stats::setNames(lapply(versiones, function(v) {
+    pintados <- unique(unlist(lapply(vistas, function(x) if (x$nuts == v) x$filas$geo[x$filas$bloque != "referencia"])))
+    faltan <- setdiff(pintados, codigos[[v]])
+    posteriores <- names(codigos)[names(codigos) > v]
+    paises <- setdiff(unlist(lapply(posteriores, function(p) atributos[[p]]$NUTS_ID[atributos[[p]]$LEVL_CODE == 0])),
+                      codigos[[v]])
+    todos <- unique(c(faltan, paises))
+    origen <- version_geometria(todos, rep(v, length(todos)), codigos)
+    stats::setNames(unname(rutas_nuts[origen[!is.na(origen)]]), todos[!is.na(origen)])
+  }), versiones)
+}
+
 # Exportación completa a <dir_web>/datos/sobrecarga/. `modulos`: list(ccaa, edad, tenencia) del
-# módulo de acceso; `rutas_nuts`: c("2021" = fichero_nuts_2021, "2024" = fichero_nuts_2024).
-# Borra antes lo exportado la vez anterior.
-exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, rutas_nuts, dir_web = "web",
-                                    fecha = format(Sys.Date())) {
+# módulo de acceso; `rutas_nuts`: c("2021" = fichero_nuts_2021, "2024" = fichero_nuts_2024);
+# `indicadores`: inventario/indicadores.csv (cortes del mapa); `quintil`: sobrecarga de España por
+# quintil de renta (calcular_sobrecarga_quintil()). Borra antes lo exportado la vez anterior.
+exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, rutas_nuts, indicadores, quintil = NULL,
+                                    dir_web = "web", fecha = format(Sys.Date())) {
   dir <- file.path(dir_web, "datos", DIR_SOBRECARGA_WEB)
+  cortes <- cortes_de_indicadores(indicadores)
   unlink(dir, recursive = TRUE)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   vistas <- vistas_sobrecarga(europa, anual, agrupada)
 
   # Geometrías por versión NUTS, solo las versiones que usa alguna vista
-  versiones <- sort(unique(vapply(vistas, `[[`, "", "nuts")))
+  respaldos <- respaldos_geometria(vistas, rutas_nuts)
   rutas_geo <- character()
-  for (v in versiones) {
+  for (v in names(respaldos)) {
     nuts1 <- unique(unlist(lapply(vistas, function(x) if (x$nuts == v) x$filas$geo[x$filas$nivel %in% 1L])))
     ruta <- file.path(dir, sprintf("nuts_%s.geojson", v))
-    sf::st_write(geometrias_sobrecarga_web(rutas_nuts[[v]], nuts1), ruta, driver = "GeoJSON", delete_dsn = TRUE,
-                 quiet = TRUE, layer_options = c("COORDINATE_PRECISION=3", "WRITE_BBOX=NO"))
+    sf::st_write(geometrias_sobrecarga_web(rutas_nuts[[v]], nuts1, respaldos[[v]]), ruta, driver = "GeoJSON",
+                 delete_dsn = TRUE, quiet = TRUE, layer_options = c("COORDINATE_PRECISION=3", "WRITE_BBOX=NO"))
     rutas_geo[v] <- ruta
   }
+  versiones <- names(rutas_geo)
   nombres <- unlist(lapply(rev(versiones), function(v) nombres_nuts(rutas_nuts[[v]])))
   nombres <- nombres[!duplicated(names(nombres))]
   usados <- unique(unlist(lapply(vistas, function(x) x$filas$geo)))
@@ -309,7 +364,8 @@ exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, ruta
   serie <- serie_espana_sobrecarga(europa)
   modulo <- modulo_sobrecarga_web(modulos$ccaa, modulos$edad, modulos$tenencia, ccaa)
   con_v <- function(d, clave = "grupo") lapply(seq_len(nrow(d)), function(i) stats::setNames(list(d[[clave]][i], valor_web(d$valor[i])), c(clave, "v")))
-  espana <- anual |> filter(corte != "region")
+  espana <- bind_rows(anual |> filter(corte != "region"),
+                      if (!is.null(quintil)) select(quintil, anio, corte, grupo, valor, n_personas, n_hogares))
   datos <- list(
     version = fecha,
     escala = 10L,
@@ -317,7 +373,7 @@ exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, ruta
     anios = I(sort(unique(vapply(vistas[vapply(vistas, function(x) x$corte == "total", TRUE)], `[[`, 0L, "anio")))),
     anio_desgloses = max(vapply(vistas, `[[`, 0L, "anio")),
     olas = list(anuales = I(sort(unique(anual$anio))), agrupadas = I(c(unique(agrupada$anio_inicio), unique(agrupada$anio_fin)))),
-    cortes = lapply(CORTES_SOBRECARGA_WEB, I),
+    cortes = lapply(cortes, I),
     grupos_mapa = lapply(GRUPOS_MAPA_SOBRECARGA, I),
     geometrias = stats::setNames(as.list(file.path("datos", DIR_SOBRECARGA_WEB, basename(rutas_geo))), names(rutas_geo)),
     limites = I(limites_sobrecarga()),
@@ -326,11 +382,14 @@ exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, ruta
                                              filas = filas_json_sobrecarga(x$filas))),
     espana = list(
       serie = list(anios = I(serie$anios), fuente = "eurostat_ilc_lvho07",
-                   valores = lapply(serie$valores, function(v) I(valor_web(v)))),
+                   valores = lapply(serie$valores, function(v) I(valor_web(v))),
+                   marcas = lapply(serie$marcas, I)),
       anual = lapply(seq_len(nrow(espana)), function(i) {
         f <- espana[i, ]
-        list(anio = f$anio, corte = f$corte, grupo = if (f$corte == "total") "total" else f$grupo, v = valor_web(f$valor),
-             n = f$n_personas, hogares = f$n_hogares, fiabilidad = fiabilidad_eusilc(f$n_personas))
+        fiabilidad <- fiabilidad_eusilc(f$n_personas)
+        list(anio = f$anio, corte = f$corte, grupo = if (f$corte == "total") "total" else f$grupo,
+             v = valor_web(if (fiabilidad == "no publicable") NA_real_ else f$valor),
+             n = f$n_personas, hogares = f$n_hogares, fiabilidad = fiabilidad)
       })
     ),
     comunidades = stats::setNames(lapply(seq_len(nrow(ccaa)), function(i) list(codigo = ccaa$codigo[i], nombre = ccaa$nombre_ine[i])),
@@ -352,15 +411,19 @@ exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, ruta
 #     fuente no reproducen los objetivos (con el redondeo de la guía), y territorios de más o de menos;
 #   web_sobrecarga_muestra (bloqueo): cifras del INE sin número de observaciones, con una marca de
 #     fiabilidad que no es la de EU-SILC para su muestra o publicadas con menos de 20 observaciones;
+#     cifras de Eurostat sin su tabla o con una marca distinta de la de la fuente;
 #   web_sobrecarga_geometria (alerta): territorios de una vista que el mapa no puede pintar (sin
-#     geometría en su versión NUTS) y vistas cuya geometría no se lee.
-comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, modulos, dir_web = "web") {
+#     geometría en su versión NUTS ni de respaldo) y vistas cuya geometría no se lee.
+# `indicadores` (cortes del mapa) y `quintil` (España por quintil de renta), como en la exportación.
+comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, modulos, indicadores, quintil = NULL,
+                                     dir_web = "web") {
   dir <- file.path(dir_web, "datos", DIR_SOBRECARGA_WEB)
   x <- jsonlite::fromJSON(file.path(dir, "sobrecarga.json"), simplifyVector = FALSE)
   escala <- x$escala
   num <- function(v) if (is.null(v)) NA_real_ else as.numeric(v) / escala
   campo <- function(l, n, tipo = NA) vapply(l, function(f) if (is.null(f[[n]])) tipo else as(f[[n]], class(tipo)), tipo)
   distinto <- function(a, b) xor(is.na(a), is.na(b)) | (!is.na(a) & !is.na(b) & abs(a - b) > 1e-9)
+  marca_distinta <- function(a, b) xor(is.na(a), is.na(b)) | (!is.na(a) & !is.na(b) & a != b)
   filas <- list()
   # Un fallo por cada TRUE; lo que no se puede comparar (NA) cuenta también como fallo
   anota <- function(id, detalle, mal) {
@@ -369,10 +432,16 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
   # Sin valor publicable con menos de 20 observaciones (EU-SILC)
   publicable <- function(valor, n) ifelse(!is.na(n) & fiabilidad_eusilc(n) == "no publicable", NA_real_, valor)
   geometrias <- list()
-  ue <- function(tabla, geo, anio, tenencia = "TOTAL", edad = "TOTAL") {
+  ue <- function(tabla, geo, anio, tenencia = "TOTAL", edad = "TOTAL", campo = "valor") {
     clave <- paste(europa$conjunto, europa$geo, europa$anio, europa$tenencia, europa$edad)
-    europa$valor[match(paste(tabla, geo, anio, tenencia, edad), clave)]
+    europa[[campo]][match(paste(tabla, geo, anio, tenencia, edad), clave)]
   }
+
+  # Cortes del mapa: los de inventario/indicadores.csv
+  esperados <- cortes_de_indicadores(indicadores)
+  anota("web_sobrecarga_valores", "cortes del mapa",
+        !setequal(names(x$cortes), names(esperados)) ||
+          any(vapply(names(esperados), function(k) !identical(as.numeric(unlist(x$cortes[[k]])), esperados[[k]]), TRUE)))
   del_ine <- function(geo, anio, corte, grupo, agrupado) {
     if (agrupado) {
       d <- agrupada[agrupada$corte == corte & agrupada$grupo == grupo, ]
@@ -445,7 +514,13 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
                             if (vista$corte == "total") "TOTAL" else vista$grupo, FALSE)$hogares)
     mal_muestra <- ine_f & (is.na(n_leido) | is.na(h_leido) | n_leido != esp_n | h_leido != esp_h | is.na(fia) |
                               fia != fiabilidad_eusilc(n_leido) | (fia == "no publicable" & !is.na(v)))
-    mal_muestra <- (ine_f & mal_muestra) | (!ine_f & (!is.na(n_leido) | !is.na(fia) | is.na(tabla)))
+    # Cifras de Eurostat: con su tabla, sin muestra y con la marca de la fuente
+    ten_v <- if (vista$corte == "tenencia") vista$grupo else "TOTAL"
+    ed_v <- if (vista$corte == "edad") vista$grupo else "TOTAL"
+    bandera <- campo(f, "bandera", NA_character_)
+    marca_fuente <- ifelse(is.na(tabla), NA_character_, ue(tabla, geo, vista$anio, ten_v, ed_v, "bandera"))
+    mal_muestra <- (ine_f & mal_muestra) |
+      (!ine_f & (!is.na(n_leido) | !is.na(fia) | is.na(tabla) | marca_distinta(bandera, marca_fuente)))
     anota("web_sobrecarga_muestra", vista$clave, mal_muestra)
 
     # Geometría de la vista: territorios que el mapa no puede pintar
@@ -459,28 +534,36 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
   # Serie de España y de la UE-27 (Eurostat)
   s <- x$espana$serie
   anios <- as.integer(unlist(s$anios))
-  series <- list(ES_TOTAL = c("ilc_lvho07a", "ES", "TOTAL"), ES_RENT_MKT = c("ilc_lvho07c", "ES", "RENT_MKT"),
-                 EU27_TOTAL = c("ilc_lvho07a", "EU27_2020", "TOTAL"), EU27_RENT_MKT = c("ilc_lvho07c", "EU27_2020", "RENT_MKT"))
-  mal <- c(!identical(anios, seq(ANIO_INICIO_SERIE_SOBRECARGA, max(europa$anio))), !setequal(names(s$valores), names(series)))
+  series <- SERIES_ESPANA_SOBRECARGA
+  primero <- min(unlist(lapply(series, function(k) {
+    europa$anio[europa$conjunto == k[["tabla"]] & europa$geo == k[["geo"]] & europa$tenencia == k[["tenencia"]] &
+                  europa$edad == "TOTAL"]
+  })))
+  mal <- c(!identical(anios, seq(primero, max(europa$anio))), !setequal(names(s$valores), names(series)),
+           !setequal(names(s$marcas), names(series)))
   for (k in names(series)) {
     leido <- vapply(s$valores[[k]], num, 0)
-    esperado <- ue(series[[k]][1], series[[k]][2], anios, series[[k]][3])
-    mal <- c(mal, if (length(leido) != length(anios)) TRUE else distinto(leido, redondeo_guia(esperado)))
+    marcas <- vapply(s$marcas[[k]], function(b) if (is.null(b)) NA_character_ else as.character(b), "")
+    esperado <- ue(series[[k]][["tabla"]], series[[k]][["geo"]], anios, series[[k]][["tenencia"]])
+    marca_esperada <- ue(series[[k]][["tabla"]], series[[k]][["geo"]], anios, series[[k]][["tenencia"]], campo = "bandera")
+    mal <- c(mal, if (length(leido) != length(anios) || length(marcas) != length(anios)) TRUE else
+      distinto(leido, redondeo_guia(esperado)) | marca_distinta(marcas, marca_esperada))
   }
-  anota("web_sobrecarga_valores", "serie de España", mal)
+  anota("web_sobrecarga_valores", "serie de Espa\u00f1a", mal)
 
   # Desgloses anuales de España (INE), con su muestra
   a <- x$espana$anual
-  esp <- anual[anual$corte != "region", ]
+  esp <- bind_rows(anual[anual$corte != "region", ],
+                   if (!is.null(quintil)) select(quintil, anio, corte, grupo, valor, n_personas, n_hogares))
   clave_l <- paste(campo(a, "anio", 0L), campo(a, "corte", ""), campo(a, "grupo", ""))
   clave_e <- paste(esp$anio, esp$corte, ifelse(esp$corte == "total", "total", esp$grupo))
   m <- match(clave_e, clave_l)
   v_l <- vapply(a, function(r) num(r$v), 0)[m]
   mal <- is.na(m) | distinto(v_l, redondeo_guia(publicable(esp$valor, esp$n_personas)))
-  anota("web_sobrecarga_valores", "desgloses anuales de España", c(mal, rep(TRUE, abs(length(a) - nrow(esp)))))
+  anota("web_sobrecarga_valores", "desgloses anuales de Espa\u00f1a", c(mal, rep(TRUE, abs(length(a) - nrow(esp)))))
   n_l <- campo(a, "n", NA_integer_)[m]; h_l <- campo(a, "hogares", NA_integer_)[m]
   f_l <- campo(a, "fiabilidad", NA_character_)[m]
-  anota("web_sobrecarga_muestra", "desgloses anuales de España",
+  anota("web_sobrecarga_muestra", "desgloses anuales de Espa\u00f1a",
         n_l != esp$n_personas | h_l != esp$n_hogares | f_l != fiabilidad_eusilc(esp$n_personas))
 
   # Módulo de acceso (indicador 23), frente a las tablas
@@ -492,7 +575,7 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
     i <- match(d[[clave]], k)
     c(is.na(i) | distinto(vl[i], redondeo_guia(d$valor)), rep(TRUE, abs(length(lista) - nrow(d))))
   }
-  anota("web_sobrecarga_valores", "módulo de acceso",
+  anota("web_sobrecarga_valores", "m\u00f3dulo de acceso",
         c(distinto(num(leido$total), redondeo_guia(mod$total)), compara(leido$ccaa, mod$ccaa, "geo"),
           compara(leido$edad, mod$edad), compara(leido$sexo, mod$sexo), compara(leido$tenencia, mod$tenencia),
           compara(leido$razones, mod$razones)))

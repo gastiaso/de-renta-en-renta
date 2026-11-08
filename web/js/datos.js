@@ -61,7 +61,9 @@ const esAnio = (periodo) => /^\d{4}$/.test(String(periodo));
 const claveDe = (periodo) => (esAnio(periodo) ? `${periodo}-99` : String(periodo));
 
 // Periodo de una serie que corresponde a un año o a un periodo de otra serie («2024-08»): el
-// mismo, o el último anterior, o el último. Sin año, el último.
+// mismo o el último anterior. Sin año, el último. Con un año anterior a toda la serie (2020 en
+// las viviendas turísticas, que empiezan en 2024), null: la web pinta «sin dato» y dice desde
+// cuándo hay serie (inicioSerie), en vez de enseñar otro año (pregunta abierta 32).
 export function periodoPara(def, anio) {
   const periodos = periodosDe(def);
   if (!periodos.length) return null;
@@ -71,7 +73,16 @@ export function periodoPara(def, anio) {
   const previos = periodos.every(esAnio)
     ? periodos.filter((p) => anioDe(p) <= anioDe(anio))
     : periodos.filter((p) => claveDe(p) <= claveDe(anio));
-  return (previos.length ? previos : periodos).at(-1);
+  return previos.length ? previos.at(-1) : null;
+}
+
+// Primer periodo de una serie (desde cuándo hay datos), o null.
+export const inicioSerie = (def) => periodosDe(def)[0] ?? null;
+
+// Año pedido anterior a toda la serie: { anio, desde }; si no, null.
+export function fueraDeSerie(def, anio) {
+  if (anio === undefined || anio === null || anio === '' || !periodosDe(def).length) return null;
+  return periodoPara(def, anio) === null ? { anio, desde: inicioSerie(def) } : null;
 }
 
 // Tipología de la vivienda (plan, decisión 12): la serie de la vivienda colectiva (VC) es la de

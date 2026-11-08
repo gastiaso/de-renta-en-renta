@@ -203,10 +203,12 @@ descuadres_serpavi <- function(serpavi, holgura = 1e-3) {
 #   serpavi_escalas (bloqueo, ±1 %): porcentaje de municipios y distritos que no cuadran con sus secciones;
 #   serpavi_escalas_detalle (alerta): cada uno de ellos (van como «ausente» en la tabla larga);
 #   serpavi_forales (alerta): primer año con testigos de cada provincia foral frente a la ruptura;
-#   con `secciones` (las del seccionado de 2021): serpavi_seccionado (bloqueo), secciones de la
-#     base fuera del seccionado, y serpavi_sin_fila (alerta), secciones del seccionado que la base
-#     no trae (van como «ausente»: completar_secciones_serpavi()). Con PROVINCIA, solo las
-#     provincias del seccionado leído.
+#   con `secciones` (las del seccionado de 2021), una fila por nivel (sección, distrito y municipio):
+#     serpavi_seccionado (bloqueo), territorios de la base fuera del seccionado (las secciones,
+#     todas; los distritos y municipios, los que tienen testigos o mediana algún año: las hojas
+#     traen 68 distritos y 4 municipios de fuera, vacíos, que quedan fuera de la tabla larga), y
+#     serpavi_sin_fila (alerta), territorios del seccionado que la base no trae (van como
+#     «ausente»: completar_secciones_serpavi()). Con PROVINCIA, solo las provincias del seccionado leído.
 comprobar_mivau_serpavi <- function(serpavi, entrada_forales = ENTRADA_SERPAVI_FORALES,
                                     comunidad_foral = COMUNIDAD_FORAL_SERPAVI, secciones = NULL) {
   sc <- filter(serpavi, nivel == "sc")
@@ -264,13 +266,22 @@ comprobar_mivau_serpavi <- function(serpavi, entrada_forales = ENTRADA_SERPAVI_F
     transmute(id = "serpavi_forales", anio = NA_integer_, detalle = provincia, calculado, referencia)
 
   seccionado <- if (!is.null(secciones)) {
-    base <- unique(sc$codigo)
-    base <- base[substr(base, 1, 2) %in% substr(secciones, 1, 2)]
-    tibble::tibble(id = c("serpavi_seccionado", "serpavi_sin_fila"), anio = NA_integer_,
-                   detalle = c("secciones de la base fuera del seccionado de 2021",
-                               "secciones del seccionado de 2021 sin fila en la base (van como ausente)"),
-                   calculado = c(sum(!base %in% secciones), sum(!unique(secciones) %in% base)),
-                   referencia = 0)
+    secciones <- unique(secciones)
+    niveles <- c(sc = "secciones", distrito = "distritos", municipio = "municipios")
+    ambito <- filter(serpavi, nivel %in% names(niveles), substr(codigo, 1, 2) %in% substr(secciones, 1, 2))
+    fuera <- vapply(names(niveles), function(niv) {
+      x <- filter(ambito, nivel == niv)
+      if (niv != "sc") x <- filter(x, coalesce(testigos, 0) > 0 | !is.na(alquiler_mes_p50))
+      sum(!unique(x$codigo) %in% substr(secciones, 1, NIVELES[[niv]]))
+    }, numeric(1))
+    con_fila <- filter(serpavi, nivel == "sc" | paste(nivel, codigo) %in% do.call(paste, unidades_con_secciones(serpavi)))
+    faltan <- faltan_seccionado_serpavi(con_fila, secciones)
+    sin_fila <- vapply(names(niveles), function(niv) sum(faltan$nivel == niv), numeric(1))
+    tibble::tibble(id = rep(c("serpavi_seccionado", "serpavi_sin_fila"), each = length(niveles)), anio = NA_integer_,
+                   detalle = c(paste(niveles, "de la base fuera del seccionado de 2021",
+                                     c("", "(con testigos o mediana)", "(con testigos o mediana)")) |> trimws(),
+                               paste(niveles, "del seccionado de 2021 sin fila en la base (van como ausente)")),
+                   calculado = c(fuera, sin_fila), referencia = 0)
   }
 
   dplyr::bind_rows(provincia, espana, secreto, cuartiles, escalas, escalas_detalle, forales, seccionado) |>
@@ -300,20 +311,30 @@ estado_serpavi <- function(serpavi, entrada_forales = ENTRADA_SERPAVI_FORALES) {
     select(-antes_de_entrar, -descuadre)
 }
 
-# Secciones del seccionado de 2021 que la base no trae (edición 2011–2024: 40). 36 son municipios
-# de una sola sección (34 de Navarra, uno de Álava y uno de Bizkaia), que tampoco están en las
-# hojas de municipios y distritos; las otras 4 (Madrid, Las Palmas de Gran Canaria y Zaragoza)
-# no tienen testigos: su distrito suma lo mismo que sus secciones publicadas. Van como «ausente»
-# en todos los años y tipologías, igual que una sección sin testigos, para que los indicadores 8
-# y 9, y sus derivados, tengan fila en todas las secciones del mapa. Sin `secciones`, no cambia nada.
+# Territorios del seccionado de 2021 (las secciones y los distritos y municipios que forman) sin
+# fila en `filas` (columnas nivel y codigo).
+faltan_seccionado_serpavi <- function(filas, secciones) {
+  dplyr::bind_rows(lapply(c("sc", "distrito", "municipio"), function(niv) {
+    tibble::tibble(nivel = niv, codigo = setdiff(unique(substr(secciones, 1, NIVELES[[niv]])),
+                                                 filas$codigo[filas$nivel == niv]))
+  }))
+}
+
+# Secciones del seccionado de 2021 que la base no trae (edición 2011–2024: 40), y distritos y
+# municipios que les faltan (36 y 36). 36 secciones son municipios de una sola sección (34 de
+# Navarra, uno de Álava y uno de Bizkaia), que tampoco están en las hojas de municipios y
+# distritos; las otras 4 (Madrid, Las Palmas de Gran Canaria y Zaragoza) no tienen testigos: su
+# distrito suma lo mismo que sus secciones publicadas. Van como «ausente» en todos los años y
+# tipologías, igual que un territorio sin testigos, para que los indicadores 8 y 9, y sus
+# derivados, tengan fila en todas las secciones, distritos y municipios del mapa. Sin `secciones`,
+# no cambia nada.
 completar_secciones_serpavi <- function(filas, secciones = NULL) {
   if (is.null(secciones)) return(filas)
+  faltan <- faltan_seccionado_serpavi(filas, secciones)
+  if (!nrow(faltan)) return(filas)
   sc <- filter(filas, nivel == "sc")
-  faltan <- setdiff(unique(secciones), sc$codigo)
-  if (!length(faltan)) return(filas)
-  nuevas <- tidyr::expand_grid(codigo = faltan, anio = sort(unique(sc$anio)),
-                               tipologia = sort(unique(sc$tipologia))) |>
-    mutate(nivel = "sc", estado = "ausente")
+  nuevas <- tidyr::expand_grid(faltan, anio = sort(unique(sc$anio)), tipologia = sort(unique(sc$tipologia))) |>
+    mutate(estado = "ausente")
   dplyr::bind_rows(filas, nuevas)
 }
 
@@ -321,7 +342,8 @@ completar_secciones_serpavi <- function(filas, secciones = NULL) {
 # tipología como corte. La mediana va en el corte «tipologia» (grupo VC o VU) con su estado; los
 # cuartiles, en «tipologia_p25» y «tipologia_p75», solo donde hay dato. El SERPAVI no publica
 # una mediana conjunta de las dos tipologías, así que no hay filas «total». Con `secciones`, las
-# del seccionado de 2021 que la base no trae van como «ausente» (completar_secciones_serpavi()).
+# secciones, distritos y municipios del seccionado de 2021 que la base no trae van como «ausente»
+# (completar_secciones_serpavi()).
 armonizar_mivau_serpavi <- function(serpavi, version, entrada_forales = ENTRADA_SERPAVI_FORALES,
                                     secciones = NULL) {
   filas <- completar_secciones_serpavi(estado_serpavi(serpavi, entrada_forales), secciones)

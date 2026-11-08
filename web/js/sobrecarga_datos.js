@@ -68,8 +68,28 @@ export const pintables = (vista) => vista.filas.filter((f) => f.bloque !== 'refe
 export const conTramaGruesa = (vista) =>
   vista.corte === 'total' ? pintables(vista).filter((f) => f.nivel < 2).map((f) => f.geo) : [];
 
-// Territorios con muestra pequeña (marca «baja» de EU-SILC): van con la trama de muestra pequeña.
-export const conMuestraPequena = (vista) => pintables(vista).filter((f) => f.fiabilidad === 'baja').map((f) => f.geo);
+// Marcas de Eurostat de una cifra, una letra cada una («bu» → ['b', 'u']); sin marca, [].
+export const marcasDe = (bandera) => (typeof bandera === 'string' ? [...bandera.replace(/[^a-z]/g, '')] : []);
+
+// Territorios con muestra pequeña o poco fiables (marca «baja» de EU-SILC en las cifras del INE;
+// marca «u» de Eurostat en las suyas): van con la trama de muestra pequeña.
+export const pocoFiable = (fila) => fila.fiabilidad === 'baja' || marcasDe(fila.bandera).includes('u');
+export const conMuestraPequena = (vista) => pintables(vista).filter(pocoFiable).map((f) => f.geo);
+
+// Años de una serie con marca de ruptura («b»): la línea se corta antes de ellos.
+export const rupturasDe = (anios, marcas = []) => anios.filter((_, i) => marcasDe(marcas[i]).includes('b'));
+
+// Tramos seguidos de años con una marca dada, para describirlos: [[2010, 2018], [2021, 2021]].
+export function tramosConMarca(anios, marcas = [], letra = 'e') {
+  const tramos = [];
+  anios.forEach((a, i) => {
+    if (!marcasDe(marcas[i]).includes(letra)) return;
+    const ultimo = tramos.at(-1);
+    if (ultimo && ultimo[1] === anios[i - 1]) ultimo[1] = a;
+    else tramos.push([a, a]);
+  });
+  return tramos;
+}
 
 export const referencia = (vista, geo) => vista.filas.find((f) => f.geo === geo) ?? null;
 
@@ -147,8 +167,9 @@ export const porcentaje = (valor, t, decimales = 1) =>
 
 export const escalaLineal = (d0, d1, r0, r1) => (x) => r0 + ((x - d0) / (d1 - d0)) * (r1 - r0);
 
-// Trazado SVG de una serie con huecos: cada tramo seguido de años con valor es un «M … L …».
-export function trazado(anios, valores, x, y) {
+// Trazado SVG de una serie con huecos: cada tramo seguido de años con valor es un «M … L …». En los
+// años de `rupturas` la línea vuelve a empezar: no se une con el año anterior.
+export function trazado(anios, valores, x, y, rupturas = []) {
   let d = '';
   let dentro = false;
   anios.forEach((a, i) => {
@@ -157,6 +178,7 @@ export function trazado(anios, valores, x, y) {
       dentro = false;
       return;
     }
+    if (rupturas.includes(a)) dentro = false;
     d += `${dentro ? 'L' : 'M'}${x(a).toFixed(1)},${y(v).toFixed(1)}`;
     dentro = true;
   });

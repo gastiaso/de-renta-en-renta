@@ -1,6 +1,6 @@
 # Methodology note
 
-*De renta en renta · v0.1, draft · 8 November 2026 · in line with plan v0.25.*
+*De renta en renta · v0.1, draft · 8 November 2026 · in line with plan v0.26.*
 
 This note describes how the atlas figures are produced: sources, constant geography, territorial hierarchy and base map, validation gate, v0.1 indicators and token incomes. It is a faithful translation of the Spanish note, `docs/metodologia.md`.
 
@@ -12,7 +12,7 @@ This note describes how the atlas figures are produced: sources, constant geogra
   - a file in `inventario/`;
   - a section of the plan (`docs/plan_integracion_atlas.md`, «plan §»).
 - **Repeated targets.** Targets ending in `_<tracts>` are repeated once per source tract map, as set by `PASOS_2021` in `_targets.R`. For example, `paso_final_2016` carries ADRH 2015.
-- **Reference store.** Unless stated otherwise, figures come from the `targets` store of 8 Nov 2026, covering all of Spain. The `tabla_larga` target dates from 14:55, already with the derived indicators and with Spain in indicators 18 and 19; the gates, from the full run of 16:00.
+- **Reference store.** Unless stated otherwise, figures come from the `targets` store of 8 Nov 2026, covering all of Spain, after the full run that ended at 21:18: `tabla_larga` dates from 21:13, already with the regions and provinces of indicators 18 and 19, and the website data from 21:15; the website overburden section and its gates, from 21:04.
 - **Decisions.** Open questions already closed in the plan are cited as «plan §11, question *n*».
 - **Pending.** Marks what the pipeline does not compute yet.
 - **Format.** Figures use a comma for thousands and a point for decimals. Rounding to one decimal uses `redondear_1()`, which calls `sprintf("%.1f")`: `round()` rounds half to even.
@@ -80,7 +80,7 @@ The full inventory, with address, access, frequency and notes, is in `inventario
 | `boe_smi` | BOE | «Minimum wage» token | Reusable |
 | `ine_ecv` | INE | Check of the Under-35 token; indicator 22 | CC BY 4.0 |
 | `ine_ecv_modulo` | INE | Indicator 23 | CC BY 4.0 |
-| `eurostat_ilc_lvho07`, `eurostat_ilc_lvho07_r` | Eurostat | Gate of indicator 22 | CC BY 4.0 |
+| `eurostat_ilc_lvho07`, `eurostat_ilc_lvho07_r` | Eurostat | Gate of indicator 22, also by income quintile (`ilc_lvho07b`); European series and map of the website | CC BY 4.0 |
 | `eurostat_nuts` | Eurostat (GISCO) | Geometries of the European map | Non-commercial use with the notice «© EuroGeographics for the administrative boundaries». Not CC BY |
 | `ine_seccionado` | INE | Tract maps from 2016 to 2025; territorial hierarchy and base map | CC BY 4.0 |
 | `ine_callejero` | INE | Conversion tables, route (a) | CC BY 4.0 |
@@ -373,7 +373,7 @@ Origin: `comparar_vias_paso()`; in `comparacion_vias`, rows with `estimada_a` tr
 - `tabla_larga`, also on `validacion_sobrecarga` and `validacion_modulo`;
 - the hierarchy and base map files, on `validacion_jerarquia`. `validacion_mapa_base` reads the PMTiles file once generated: it checks the file before publication;
 - the website data (`ficheros_web`), on `validacion_jerarquia`, `validacion_mapa_base` and `validacion_derivados`. `validacion_web` checks the files once written;
-- the website overburden section (`ficheros_web_sobrecarga`), on `validacion_sobrecarga`, `validacion_modulo` and `validacion_nuts`: it does not depend on the long table. `validacion_web_sobrecarga` checks the files once written.
+- the website overburden section (`ficheros_web_sobrecarga`), on `validacion_sobrecarga`, `validacion_modulo`, `validacion_nuts` and `validacion_quintil` (the income quintile, `sobrecarga_quintil`, against Eurostat, `eurostat_quintil`): it does not depend on the long table. `validacion_web_sobrecarga` checks the files once written.
 
 Each block of the long table also goes through `validar_tabla_larga()`: columns, levels and code lengths, states, empty values only in `secreto` and `ausente`, repeated rows, and cuts, groups, indicators and sources that exist in `inventario/`.
 
@@ -389,9 +389,9 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `serpavi_secreto` | Tracts, provinces and regions with a median and fewer than 10 observations, or without a median and with 10 or more | Exact | Blocking | 0 cases in the 60 figures of year, level and building type | `validacion_serpavi` |
 | `serpavi_cuartiles` | Median without quartiles, monthly rent without rent per m² (or the reverse) or unordered quartiles | Exact | Blocking | 0 cases in the 60 figures | `validacion_serpavi` |
 | `serpavi_escalas` | Share of municipalities and districts that do not match their tracts, by year and level | ±1% | Blocking | Maximum, 0.56% (municipalities in 2022) | `validacion_serpavi` |
-| `serpavi_seccionado` | Tracts of the tracts sheet outside the 2021 tract map | Exact | Blocking | 0 | `validacion_serpavi` |
-| `censo2021_alquiler` | Renting households (%) in Spain and each province from the tracts, against table 59523. Tracts under confidentiality enter as an interval: their households may be between 0 and 100% renting | ±0.1 points | Blocking | Passes in all 53 territories; Spain, 16.10% in both; maximum difference, 0.055 points (Huelva) | `validacion_censo2021` |
-| `censo2021_principales` | Households of the tracts against those published, in Spain and in the 19 provinces with no tract under confidentiality | ±0.5% | Blocking | Spain, −0.20% (the households of tracts under confidentiality); provinces, from 0 to +0.17% | `validacion_censo2021` |
+| `serpavi_seccionado` | Tracts of the database outside the 2021 tract map, and districts and municipalities outside it with observations or a median | Exact | Blocking | 0 at all three levels | `validacion_serpavi` |
+| `censo2021_alquiler` | Renting households (%) in Spain, each region and each province from the tracts, against table 59523. Tracts under confidentiality enter as an interval: their households may be between 0 and 100% renting | ±0.1 points | Blocking | Passes in all 72 territories; the published figure falls within the interval in 52; Spain, 16.10% in both; maximum difference, 0.055 points (Huelva) | `validacion_censo2021` |
+| `censo2021_principales` | Households of the tracts against those published, in Spain and in the 7 regions and 19 provinces with no tract under confidentiality | ±0.5% | Blocking | Spain, −0.20% (the households of tracts under confidentiality); regions and provinces, from 0 to +0.17% (Melilla) | `validacion_censo2021` |
 | `censo2021_seccionado` | Tracts of the CSV outside the 2021 tract map and tracts of the tract map without a row in the CSV | Exact | Blocking | 0 and 0 | `validacion_censo2021` |
 | `censo2021_nacional` | Renting households (%) published for Spain against the weighted mean of the provinces and, separately, of the regions of table 59523 | Exact | Blocking | Passes: 16.10% in all three | `validacion_censo2021` |
 | `vut_viviendas_provincia` | Tourist dwellings of the tracts added up by province and Spain, in the 13 periods, against table 39364 | Exact | Blocking | All 689 figures match: 13 periods and 53 territories | `validacion_vut` |
@@ -400,6 +400,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `vut_denominador` | 2024 tracts that fall whole and alone into the 2021 tract with the same code: median of the difference between the INE percentage and 100 × tourist dwellings / 2021 Census dwellings | ±0.01 points | Blocking | 0 in the six periods | `validacion_vut` |
 | `vut_nacional_viviendas` | Tourist dwellings of the 52 provinces added up against those of Spain, in the 13 periods, in table 39364 | Exact | Blocking | All 13 periods match | `validacion_vut` |
 | `vut_nacional_porcentaje` | Since February 2024: percentage for Spain in table 39365 against the mean of the provincial ones weighted by 2021 Census dwellings | ±0.02 points | Blocking | From −0.001 to +0.009 points | `validacion_vut` |
+| `vut_territorios` | Since February 2024: percentage of each region and province in table 39365 against the ratio of the sums of its tracts (tourist dwellings / 2021 Census dwellings); with Census tracts under confidentiality, upper bound only | ±0.01 points | Blocking | All 426 figures pass; maximum difference, 0.0075 points (Almería, May 2025) | `validacion_vut` |
 | `jerarquia_unica` | Repeated tracts, units with more than one parent and codes that do not fit together | Exact | Blocking | 0 in the 5 figures | `validacion_jerarquia` |
 | `jerarquia_sumas` | Units that do not add up their parts; tracts in excess or missing against the 2021 tract map | Exact | Blocking | 0 in the 6 figures | `validacion_jerarquia` |
 | `jerarquia_nombres` | Regions, provinces and municipalities without a name | Exact | Blocking | 0 in the 3 figures | `validacion_jerarquia` |
@@ -409,11 +410,13 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `derivados_estado` | Derived figures whose status is not the worst of their terms, or with a value and status `secreto` or `ausente` (or the reverse) | Exact | Blocking | 0 in the 22 figures | `validacion_derivados` |
 | `derivados_rango` | Derived figures outside the possible range: burden, from 0.1 to 100%; barrier, from 0.1 to 300%; pay needed, from 100 to 10,000 net € a month | Exact | Blocking | 0 in the 22 figures | `validacion_derivados` |
 | `perfiles_mochila` | Provinces of the Under-35 token without an INE code in `inventario/provincias_aeat.csv`, repeated codes and names without the token | Exact | Blocking | 0 in the 3 figures | `validacion_derivados` |
-| `web_valores` | Value files in `web/datos/` whose values or states are not those of the long table (with the rounding of the guide) or whose length is not that of the index; series without a file | Exact | Blocking | 0 in the 346 figures | `validacion_web` |
-| `web_fichas` | By municipality: cells of the series of its sheet that do not reproduce the long table, and tracts in excess or missing | Exact | Blocking | 0 in the 8,131 municipalities | `validacion_web` |
-| `web_sobrecarga_valores` | Website overburden section: by view, value, rank, block and source of each figure against the pipeline targets (with the rounding of the guide), and units in excess or missing; Spain series, annual breakdowns and access module | Exact | Blocking | 0 in the 16 figures | `validacion_web_sobrecarga` |
-| `web_sobrecarga_muestra` | INE figures without a sample size, with a sample different from that of the computation, with a flag other than the EU-SILC one or with a value and fewer than 20 observations; Eurostat figures without their table or with a sample size | Exact | Blocking | 0 in the 13 figures | `validacion_web_sobrecarga` |
+| `web_valores` | Value files in `web/datos/` whose values or states are not those of the long table (with the rounding of the guide to the precision of each series: one decimal; two for indicator 19) or whose length is not that of the index; series without a file | Exact | Blocking | 0 in the 360 figures | `validacion_web` |
+| `web_fichas` | By municipality: cells of the series of its sheet that do not reproduce the long table with the precision of each series, and tracts in excess or missing | Exact | Blocking | 0 in the 8,131 municipalities | `validacion_web` |
+| `web_sobrecarga_valores` | Website overburden section: by view, value, rank, block, source and flag of each figure against the pipeline targets (with the rounding of the guide), and units in excess or missing; Spain series, annual breakdowns with the quintile, access module and map cut-offs against `cortes_web` of indicator 22 | Exact | Blocking | 0 in the 17 figures | `validacion_web_sobrecarga` |
+| `web_sobrecarga_muestra` | INE figures without a sample size, with a sample different from that of the computation, with a flag other than the EU-SILC one or with a value and fewer than 20 observations; Eurostat figures without their table, with a sample size or with a flag other than that of the source | Exact | Blocking | 0 in the 13 figures | `validacion_web_sobrecarga` |
 | `sobrecarga_es_total`, `sobrecarga_es_mercado`, `sobrecarga_ccaa` | Overburden from ECV microdata against Eurostat | ±0.1 points | Blocking | Pass in 2023–2025 (§7.5) | `validacion_sobrecarga` |
+| `sobrecarga_quintil_total` | By wave: mean of the overburden rates of the five income quintiles, weighted by their people, against the overall rate | ±0.01 points | Blocking | Difference 0 in all three waves | `validacion_quintil` |
+| `sobrecarga_quintil_eurostat` | Overburden in Spain by income quintile, from ECV microdata and unrounded, against Eurostat (`ilc_lvho07b`) for the same year | ±0.1 points | Blocking | All 15 figures of 2023–2025 pass; maximum difference, 0.051 points (first quintile of 2025; §7.5) | `validacion_quintil` |
 | `modulo_acceso_lectura` | Sum of the regions against the national total of the ECV 2025 module | ±0.1% | Blocking | Passes | `validacion_modulo` |
 | `i18n_completo`, `contraste_texto`, `rampa_contorno`, `rampa_daltonismo` | ES/EN dictionaries, website contrasts and a six-step ramp distinguishable under simulated colour blindness | Exact | Blocking | Pass | `validacion_i18n`, `validacion_diseno` |
 | `adrh_municipio_detalle` | Deviation of each municipality between aggregated tract means and the municipal figure | ±1% | Warning | Warns in 579 of 146,306 figures of municipality, year and indicator; 135 exceed 5% | `comprobaciones_adrh` |
@@ -422,16 +425,17 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `cobertura_destino_excepcion` | 2021 tracts left empty by a known defect of the source | Exact | Warning | 2 tracts, 6 tract-years (§3.8) | `comprobaciones_f1` |
 | `serpavi_escalas_detalle` | Each municipality or district, year and building type that does not match its tracts | Exact | Warning | Warns in 164 rows, which go as `ausente` (§7.1) | `validacion_serpavi` |
 | `serpavi_forales` | First year with observations of each foral province against that of the break `serpavi_forales` | Exact | Warning | All four match | `validacion_serpavi` |
-| `serpavi_sin_fila` | Tracts of the 2021 tract map that the database does not have (they go as `ausente`) | Exact | Warning | Warns with 40 (§7.1) | `validacion_serpavi` |
+| `serpavi_sin_fila` | Tracts, districts and municipalities of the 2021 tract map that the database does not have (they go as `ausente`) | Exact | Warning | Warns with 40 tracts, 36 districts and 36 municipalities (§7.1) | `validacion_serpavi` |
 | `vut_denominador_detalle` | The tracts of `vut_denominador`, one by one (only those more than 0.001 points apart) | ±0.1 points | Warning | Passes: 839 tract-periods, all since November 2024; maximum difference, 0.091 points | `validacion_vut` |
 | `derivados_rango_detalle` | Each derived figure outside the usual range: burden, below 3% or above 60%; barrier, 3% or 150%; pay needed, €200 or €4,000 | Exact | Warning | Warns in 23 figures: three burdens above 60% (2019 and 2022), 18 pay-needed figures below €200 in 2015–2018 and two above €4,000 (two tracts in Madrid, 2024) | `validacion_derivados` |
 | `web_fuera_indice` | Long-table rows going to the website with no slot in the index of their level | Exact | Warning | Warns in 16 municipality rows; at the other levels, 0 | `validacion_web` |
-| `web_sobrecarga_geometria` | Units of a view of the overburden map with no geometry in their NUTS version | Exact | Warning | Warns in 2 of the 12 views: Bosnia and Herzegovina, 2022 and 2023 (§7.5) | `validacion_web_sobrecarga` |
+| `web_sobrecarga_geometria` | Units of a view of the overburden map with no geometry in their NUTS version or in the fallback one | Exact | Warning | Passes: 0 in the 12 views (§7.5) | `validacion_web_sobrecarga` |
 | `aeat_mediana_deciles` | Median of the SME by region interpolated from deciles against centiles | ±0.5% | Warning | Between −0.11 and +0.20% | `validacion_mochila` |
 | `mochila_ecv` | Under-35 token of each region against the median gross pay in the ECV | ±15% | Warning | Between −10.6 and +7.2% | `validacion_mochila_ecv` |
 | `mochila_neto_ecv` | Gross-to-net step applied to the ECV median gross pay against the median net pay | ±5% | Warning | Between −2.0 and +3.4%; Spain, +0.5% | `validacion_mochila_neto_ecv` |
 | `sobrecarga_es_edad` | Overburden in Spain by age group | ±0.1 points | Warning | Passes in 2023–2025; maximum difference, 0.05 points (plan §7, F1b) | `validacion_sobrecarga` |
-| `nuts_geometria` | Regions with data and no geometry in their NUTS version | Exact | Warning | Warns: the grouped code FI19_20 in 2021–2025, and Bosnia and Herzegovina in 2022–2023 | `validacion_nuts` |
+| `sobrecarga_quintil_reparto` | Population with income (weight RB050) in each quintile, by wave | ±1 point around 20% | Warning | Passes: from 19.98 to 20.01% | `validacion_quintil` |
+| `nuts_geometria` | Regions with data and no geometry in their NUTS version or, as a fallback, in a later one | Exact | Warning | Warns: the grouped code FI19_20 in 2021–2025 | `validacion_nuts` |
 | `contraste_declarado` | Contrast declared in `tokens.json` against the recomputed one | ±0.05 | Warning | Passes; maximum difference, 0.003 | `validacion_diseno` |
 
 **Reading the results of `adrh_municipio`.** The median is 0.0% because most municipalities have a single tract. The warning `adrh_municipio_detalle` collects the cases in which the source does not match across scales with all tracts having data. In Madrid, for example, Alcobendas and Pozuelo de Alarcón stay above 5% every year (`inventario/referencias_validacion.csv`).
@@ -549,7 +553,7 @@ The two mean indicators have the same counts by status.
 | Under-35 (mochila; aged 26 to 35) | Estimated median of pay received in the year, net, ÷ 12 | AEAT; check with the ECV | Province | 50 m² | Computed for 2024 (`mochila_neta`, `perfiles`) |
 | Minimum wage (tartera) | Net annual minimum wage (SMI) ÷ 12 | RD 126/2026 (and RD 145/2024) | National | 50 m² | Computed with the 2024 and the 2026 minimum wage (`perfiles`) |
 | Pensioner (transistor) | Average retirement pension, net of income tax, ÷ 12 | INSS | Province | 50 m² | Phase F3: pending |
-| Your token | Net monthly pay entered by the user: 12 or 14 instalments, optional second wage | — | — | 50 m² with one wage, 70 m² with two; can be changed to 50, 70 or 90 | Computed in the browser and not stored: pending (website) |
+| Your token | Net monthly pay entered by the user: 12 or 14 instalments, optional second wage | — | — | 50 m² with one wage, 70 m² with two; can be changed to 50, 70 or 90 | Computed in the browser and not stored (`js/sueldo.js`) |
 
 ### 6.2 Under-35 token: method B and gross-to-net step
 
@@ -620,7 +624,7 @@ The author's decision dates from 7 Nov 2026 (plan §3.1; open question 7, closed
 
 **Reading** (`leer_mivau_serpavi()`; target `serpavi`, 1,099,500 rows). One row per unit, year (since 2015) and building type: apartments (`VC`) and single-family or rural houses (`VU`). Each row carries the count of observations (testigos) and the median, first and third quartile of monthly rent and of rent per m². Spain comes from the row without a code in the regions sheet and carries only the count.
 
-**Long table** (`armonizar_mivau_serpavi()`; target `larga_serpavi`, 3,929,460 rows; plan §6.4):
+**Long table** (`armonizar_mivau_serpavi()`; target `larga_serpavi`, 3,932,340 rows; plan §6.4):
 - indicators `alquiler_mes` (8) and `alquiler_m2` (9);
 - the median, in the cut `tipologia`, with groups `VC` and `VU`; the quartiles, in the cuts `tipologia_p25` and `tipologia_p75`, only where there are data;
 - no `total` rows: SERPAVI does not publish a joint median of the two building types (§1);
@@ -635,8 +639,8 @@ The author's decision dates from 7 Nov 2026 (plan §3.1; open question 7, closed
 
 **Territorial coverage** (`larga_serpavi`, `jerarquia_2021`):
 - The database has 36,293 of the 36,333 tracts of 2021. The other 40 go as `ausente` in every year and building type (`completar_secciones_serpavi()`; warning `serpavi_sin_fila`). 36 are single-tract municipalities (34 in Navarre, one in Álava and one in Bizkaia), which are not in the municipality and district sheets either. The other 4, in Madrid, Las Palmas de Gran Canaria (2) and Zaragoza, have no observations: their district adds up to the same as its published tracts. Thus indicators 8, 9, 15 and 21 have a row in all 36,333 tracts, like indicators 14, 18 and 19.
-- 4 municipalities and 68 districts of the sheets that do not exist in the 2021 tract map are left out (`estado_serpavi()`).
-- The long table has 8,095 of the 8,131 municipalities and 10,443 of the 10,479 districts of the hierarchy, 52 provinces and 19 regions. The 36 single-tract municipalities and their districts are missing.
+- 4 municipalities and 68 districts of the sheets that do not exist in the 2021 tract map are left out (`estado_serpavi()`). They are empty from 2015 to 2024; the municipalities are 15026, 15063, 36011 and 36012, merged into 15902 and 36902 (blocking check `serpavi_seccionado`).
+- The 36 single-tract municipalities and their districts also go as `ausente`, as a municipality and as a district (warning `serpavi_sin_fila`; plan §11, question 26). The long table has all 8,131 municipalities and 10,479 districts of the hierarchy, 52 provinces and 19 regions.
 
 **Errors in the municipality and district sheets** (warning `serpavi_escalas_detalle`, `descuadres_serpavi()`; plan §11, question 13). There are 164 figures of unit, year and building type that do not match their tracts. They go as `ausente`, and the tracts keep their data:
 - in Navarre: 82 municipalities in 2022 with the apartment median and P25 swapped; 18 districts in 2022 with counts shifted by one row (31 rows); 40 municipality rows in 2023 and 2024 without the count that their tracts do have;
@@ -709,13 +713,13 @@ Confidentiality is concentrated in rural provinces: Guadalajara, 173 of 394 trac
 
 **Gate** (`comprobar_ine_censo2021()`; §4.1). It is compared with table 59523 of the 2021 Census. Spain: 16.10% of households renting in the tracts and in the table. The table only counts conventional dwellings; that is why, in some provinces, the tracts add up to more households (`inventario/referencias_validacion.csv`).
 
-**Spain** (`nacional_ine_censo2021()`). The figure for Spain comes from the national total of table 59523: 100 × 2,983,619 renting households / 18,536,616 households = 16.10%. The CSV of indicators only has tracts, and their sum does not give Spain: the 1,363 tracts under confidentiality are missing. Gate `censo2021_nacional`: the 52 provinces and the 19 regions of the table add up exactly to the households and renting households of Spain. The national row carries no tract map (`geo_ref` empty).
+**Spain, regions and provinces** (`territorios_ine_censo2021()`; plan §11, question 25). These are the figures published in table 59523: Spain, 100 × 2,983,619 renting households / 18,536,616 households = 16.10%; the 19 regions and 52 provinces likewise (provinces, from 5.7% in Jaén to 31.6% in Melilla; regions, from 9.1% in Extremadura to 31.6% in Melilla). The CSV of indicators only has tracts, and their sum does not give these figures: the 1,363 tracts under confidentiality are missing. Ceuta and Melilla appear as a region (18 and 19) and as a province (51 and 52), with the same figure; province codes 18 and 19 are Granada and Guadalajara, and the level tells them apart. Gates: `censo2021_nacional` (the 52 provinces and the 19 regions add up exactly to the households and renting households of Spain) and `censo2021_alquiler` (each territory against its tracts, with the tracts under confidentiality as an interval; §4.1). These 72 rows are `dato` and carry no tract map (`geo_ref` empty).
 
 **2011 Census** (plan §11, question 14). It is on the 2011 tract map and there is no conversion table from 2011 to 2021: v0.1 carries only the 2021 snapshot. The 2011 → 2021 conversion table (street register and 2011 tract map, plus route b) is built in F6, with the historical series.
 
 ### 7.3 Tourist dwellings (indicator 19)
 
-**Source.** INE's experimental statistics on tourist dwellings, built from platform listings (`ine_vut`). Table 5 (districts and tracts) is one xlsx per period, with 13 half-yearly periods from August 2020 to May 2026 (`PERIODOS_VUT`). Tables 39364 (dwellings) and 39365 (percentage) give the provinces. The `version` column carries the date of the last file, 8 Nov 2026.
+**Source.** INE's experimental statistics on tourist dwellings, built from platform listings (`ine_vut`). Table 5 (districts and tracts) is one xlsx per period, with 13 half-yearly periods from August 2020 to May 2026 (`PERIODOS_VUT`). Tables 39364 (dwellings) and 39365 (percentage) give Spain, the regions and the provinces. The `version` column carries the date of the last file, 8 Nov 2026.
 
 **Tract map of each period** (checked code by code on 8 Nov 2026; break `vut_seccionado_2024` in `inventario/rupturas.csv`):
 
@@ -741,7 +745,7 @@ Confidentiality is concentrated in rural provinces: Guadalajara, 173 of 394 trac
 
 **Confidentiality.** INE always publishes the number of tourist dwellings and protects the percentage in some tracts. On the 2021 tract map, 1,371 tracts are `secreto` in February and August 2024 and 172 since November 2024; all are 1:1 tracts (`vut_2021`).
 
-**Long table** (`armonizar_ine_vut()`; target `larga_vut`, 218,004 rows: 6 periods by 36,333 tracts, plus Spain in each period; plan §6.4):
+**Long table** (`armonizar_ine_vut()`; target `larga_vut`, 218,430 rows: 6 periods by 36,333 tracts, plus Spain, the 19 regions and the 52 provinces in each period; plan §6.4):
 - `anio`: the year of the reference month;
 - `corte = mes` and `grupo` `M02`, `M05`, `M08` or `M11`;
 - no `total` rows: the website takes the last month;
@@ -766,9 +770,12 @@ Confidentiality is concentrated in rural provinces: Guadalajara, 173 of 394 trac
 
 **Gate** (`comprobar_ine_vut()`; §4.1). The tracts add up exactly to the published provincial totals in the 13 periods, also after the conversion table. In 1:1 tracts, the INE percentage is 100 × tourist dwellings / `t18_1`; since November 2024, between 194 and 225 tracts per period differ by up to 0.09 points (`inventario/referencias_validacion.csv`).
 
-**Spain** (`nacional_ine_vut()`). The percentage published in table 39365, in the six periods of the tracts: 1.33% in February 2024, 1.52% in August 2024, 1.41% in November 2024, 1.43% in May 2025, 1.24% in November 2025 and 1.28% in May 2026. The seven earlier periods are left out, as for the tracts; up to February 2023, moreover, the INE denominator is the 2011 Census dwellings. Gate (`nacional_vut()`):
+**Spain, regions and provinces** (`territorios_ine_vut()`; plan §11, question 25). The percentage published in table 39365, with two decimals, for Spain, the 19 regions and the 52 provinces, in the six periods of the tracts; all rows are `dato`. Spain: 1.33% in February 2024, 1.52% in August 2024, 1.41% in November 2024, 1.43% in May 2025, 1.24% in November 2025 and 1.28% in May 2026. Provinces, from 0.10% (Melilla, November 2025) to 4.96% (Las Palmas, November 2025); regions, from 0.10% (Melilla) to 4.71% (Canary Islands, November 2024). Ceuta and Melilla, as in indicator 18 (§7.2). The seven earlier periods are left out, as for the tracts; up to February 2023, moreover, the INE denominator is the 2011 Census dwellings. Gates (`nacional_vut()`, `territorios_vut()`):
 - `vut_nacional_viviendas`: the 52 provinces add up exactly to the tourist dwellings of Spain in the 13 periods;
-- `vut_nacional_porcentaje`: the mean of the provincial percentages, weighted by the 2021 Census dwellings of each province, differs from the percentage for Spain by −0.001 to +0.009 points (tolerance ±0.02: percentages have two decimals and Census tracts under confidentiality carry no weight).
+- `vut_nacional_porcentaje`: the mean of the provincial percentages, weighted by the 2021 Census dwellings of each province, differs from the percentage for Spain by −0.001 to +0.009 points (tolerance ±0.02: percentages have two decimals and Census tracts under confidentiality carry no weight);
+- `vut_territorios`: the percentage of each region and province against the ratio of the sums of its tracts (100 × tourist dwellings / 2021 Census dwellings). In February and August 2024 it matches, up to rounding, in all 71 territories: INE divided by the dwellings of the published tracts. Since November 2024 INE also counts the dwellings of the Census tracts under confidentiality, which are not published, and where there are any the published figure falls below the ratio, by up to 0.11 points (Soria, May 2025: 0.65% published against 0.76%). That is why, in those territories (33 provinces and 12 regions), it is only bounded from above; in the rest the ratio is required. Tolerance ±0.01 points, one unit of the last published decimal; maximum difference, 0.0075 points (Almería, May 2025).
+
+The change of denominator in November 2024 is not recorded as a break in `inventario/rupturas.csv` (plan §11, question 35).
 
 ### 7.4 Derived indicators (14, 15 and 21)
 
@@ -798,7 +805,7 @@ Confidentiality is concentrated in rural provinces: Guadalajara, 173 of 394 trac
 - The map of indicator 21 is drawn in six bands, with national cut-offs that are the same every year: €700, 900, 1,100, 1,500 and 2,000 (plan §11, question 20). The colour ramp has six steps that can also be told apart with colour blindness (`rampa_daltonismo`).
 - Indicators 15 and 21 change with the threshold, the floor area and the pay of «Your token»: the website recomputes them in the browser (plan §6.6).
 
-**Computation** (`armonizar_derivados()`; target `larga_derivados`, 1,103,781 rows, source `calculo_propio`):
+**Computation** (`armonizar_derivados()`; target `larga_derivados`, 1,104,793 rows, source `calculo_propio`):
 - **14** (`calcular_esfuerzo_residentes()`): in tracts and municipalities, the levels at which SERPAVI and ADRH publish both terms (`NIVELES_ESFUERZO`), and in the years with both, 2015–2024. No breakdown.
 - **21** (`calcular_sueldo_necesario()`): at all SERPAVI levels, 2015–2024, with 50 m² and the 30% threshold. No breakdown.
 - **15** (`calcular_barrera_acceso()`): cut `ficha`, with groups `mochila` and `tartera`, only in 2024. The Under-35 token, in the provinces and their tracts, districts and municipalities; the Minimum wage token, also in the regions. It is a check: the website computes the barrier with the chosen token.
@@ -820,7 +827,7 @@ Confidentiality is concentrated in rural provinces: Guadalajara, 173 of 394 trac
 | 2023 | 24,275 | 592 | 4,872 | 6,594 | 12.6 | 17.6 | 24.2 |
 | 2024 | 25,271 | 854 | 4,861 | 5,347 | 12.6 | 17.6 | 24.0 |
 
-- The three derived indicators have a row in all 36,333 tracts. The 40 that are not in the SERPAVI database are `ausente` (§7.1).
+- The three derived indicators have a row in all 36,333 tracts and 8,131 municipalities; indicators 15 and 21, also in all 10,479 districts. Territories missing from the SERPAVI database are `ausente` (§7.1).
 - `estimado` comes from reprojected income (§5.4): rent is not reprojected.
 - Pay needed (21) has the same states as apartment rent (§7.1).
 
@@ -859,16 +866,34 @@ The 19 regions and the four age groups are within ±0.05 points (plan §7, F1b).
 
 **Intervals.** It is published without intervals, with the number of observations and the EU-SILC reliability flag (`fiabilidad_eusilc()`). Public microdata carry neither strata nor primary sampling units (plan §11, question 9).
 
+**Income quintile** (`calcular_sobrecarga_quintil()`, `quintil_renta()`; target `sobrecarga_quintil`; plan §11, question 31). Spain by quintile of equivalised disposable income, each wave from 2023 to 2025: household income (HY020) divided by its consumption units (HX240, modified OECD scale). INE files include neither HX090 nor the HY025 factor, which equals 1. The 20, 40, 60 and 80% cut-offs are computed over the whole population with income, using each person's weight (RB050). An income equal to a cut-off goes to the lower quintile: in each wave there are 2 to 7 people per cut-off in that case (plan §11, question 36). Each figure carries its number of observations and the EU-SILC flag; all 15 are «normal». It goes to the website only: it does not enter the long table, because `inventario/vocabulario.csv` has no such cut. Europe, no quintile in v0.0.
+
+Overburden rate (%) and, in brackets, people in the sample (`sobrecarga_quintil`):
+
+| Wave | QU1 | QU2 | QU3 | QU4 | QU5 |
+|---|---|---|---|---|---|
+| 2023 | 32.0 (12,214) | 6.4 (12,935) | 2.2 (13,238) | 0.6 (14,275) | 0.1 (14,408) |
+| 2024 | 29.6 (12,430) | 6.0 (14,009) | 2.1 (14,461) | 1.0 (15,559) | 0.3 (16,016) |
+| 2025 | 27.8 (12,006) | 5.2 (13,299) | 1.9 (14,665) | 0.9 (15,345) | 0.2 (15,846) |
+
+**Quintile gate** (`comprobar_sobrecarga_quintil()`, `validacion_quintil`; §4.1):
+- `sobrecarga_quintil_total`: the mean of the five rates, weighted by their people, reproduces the overall rate of each wave (8.24, 7.77 and 7.17%) with no difference;
+- `sobrecarga_quintil_reparto` (warning): each quintile holds from 19.98 to 20.01% of the population with income;
+- `sobrecarga_quintil_eurostat`: each rate, unrounded, against the one Eurostat publishes for Spain in `ilc_lvho07b` for the same year (`descargar_eurostat_quintil()`, target `eurostat_quintil`), within ±0.1 points, like the other overburden figures. The pipeline stops if Eurostat has not published a wave. All 15 figures of 2023 to 2025 match. The largest difference, 0.051 points, is in the first quintile of 2025 (27.75 against 27.7), the only figure that changes on rounding: 27.8 in the atlas. It comes from the household whose income equals the 20% cut-off, which goes to the lower quintile; there is also an underlying difference, because Eurostat uses HX090 (plan §11, question 36).
+
 **Indicator 23.** It comes from the tables of the housing access module of the 2025 ECV: by region, by age and sex, and by tenure (`armonizar_ine_ecv_modulo()`, `armonizar_ine_ecv_modulo_cortes()`).
+
+**Eurostat flags** (`descargar_eurostat_europa()`, column `bandera`; plan §11, question 27). The query of `ilc_lvho07a`, `ilc_lvho07c` and `ilc_lvho07_r` brings the flag of each figure: b, break in series; u, low reliability; e, estimate; p, provisional. Of the 9,690 figures, 381 carry «b», 4 «bu», 493 «e», 28 «p» and 34 «u»; none changed from the query without flags. Spain has a single break, that of the total in 2008. The EU-27 carries estimates («e») in the total from 2014 to 2018 and in market-price renting from 2010 to 2018. From 2021 to 2025, only five Polish regions carry «u», in 2025. The fall in market-price renting in Spain from 2022 to 2023 (from 39.4 to 30.6%) carries no flag. Nor does 2013, when INE starts obtaining incomes by combining the interview with administrative registers (`ecv_ingresos_2013` in `inventario/rupturas.csv`, to be reviewed; plan §11, question 34): the website does not break the series there, because it only breaks where the source flags it.
 
 **Website** (`exportar_web_sobrecarga()`, `ficheros_web_sobrecarga`). The overburden section reads `web/datos/sobrecarga/` (1.1 MB): a JSON file with twelve map views and two NUTS boundary files (GISCO 2021 and 2024; © EuroGeographics for the administrative boundaries, non-commercial use, outside the data licence; §2.3).
 - Whole population, each year from 2021 to 2025: the map draws the ladder list (`armar_escalera()`), each country at the finest level published in `ilc_lvho07_r` and without grouped codes. That is NUTS 2, except Austria, Albania and Türkiye (and France since 2022), which publish only the country figure, and the Netherlands, at NUTS 1: they are hatched. The Spanish regions and Spain carry the microdata figure from 2023 to 2025, which, once rounded, matches Eurostat's in all 57 region-years.
+- Bosnia and Herzegovina, which publishes at NUTS 1 in 2022 and 2023, takes the NUTS 2024 boundaries, because NUTS 2021 does not have them (`version_geometria()`; plan §11, question 29); from 2021 to 2023, the countries that NUTS 2021 does not have go into the map background. FI19_20, a grouped code, stays off the map and the ladder.
 - By tenure (four groups) or age (three), 2025 only: Eurostat countries and Spanish regions with the three pooled waves.
-- Six bands, fixed every year (`CORTES_SOBRECARGA_WEB`): cut-offs at 4, 6, 8, 10 and 15%; for market-price renting, at 15, 20, 25, 30 and 40%.
-- Figures are stored × 10 as integers. INE figures carry their number of people and households and the EU-SILC reliability flag, and have no value with fewer than 20 observations.
-- The page adds the series for Spain and the EU-27 since 2008 (Eurostat), the annual breakdowns for Spain and the access module (indicator 23).
+- Six bands, fixed every year, from `cortes_web` of indicator 22 in `inventario/indicadores.csv` (`cortes_sobrecarga_web()`; plan §11, question 28): cut-offs at 4, 6, 8, 10 and 15%; for market-price renting, at 15, 20, 25, 30 and 40%.
+- Figures are stored × 10 as integers. INE figures carry their number of people and households and the EU-SILC reliability flag, and have no value with fewer than 20 observations. Eurostat figures carry their flag, and those flagged «u» get the hatching of small-sample INE figures.
+- The page adds the series for Spain and the EU-27 (Eurostat) from the first published year: Spain, 2004 (market-price renting, 2007); EU-27, 2010 (plan §11, question 30). The line breaks at flagged breaks («b»), with a hollow point and a note below the chart. It also adds the annual breakdowns for Spain, with the income quintile, and the access module (indicator 23).
 
-The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) reads the files back and compares them figure by figure with the pipeline targets: `web_sobrecarga_valores` and `web_sobrecarga_muestra` (blocking), and `web_sobrecarga_geometria` (warning: Bosnia and Herzegovina, 2022 and 2023, with no NUTS 2021 boundaries).
+The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) reads the files back and compares them figure by figure with the pipeline targets: `web_sobrecarga_valores` and `web_sobrecarga_muestra` (blocking), also with the flags, cut-offs and quintile, and `web_sobrecarga_geometria` (warning: 0 in the 12 views).
 
 ---
 
@@ -895,7 +920,7 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 - **Confidentiality and coverage.** In 2024, 4,849 tracts have the apartment median under confidentiality. Coverage ranges from 19.4% of tracts in Soria to 95.4% in Gipuzkoa: rural areas have fewer data (§7.1).
 - **Two building types with no joint median.** The default map shows apartments; single-family houses go separately (§1).
 - **Foral territories.** Short series: Navarre since 2021, Gipuzkoa since 2022, Álava and Bizkaia since 2024 (§7.1).
-- **Tracts missing from the source.** 40 tracts of 2021 are not in the SERPAVI database: they go as `ausente` (§7.1).
+- **Territories missing from the source.** 40 tracts of 2021, 36 districts and 36 municipalities are not in the SERPAVI database: they go as `ausente` (§7.1).
 - **Errors of the source.** 164 figures of municipalities and districts go as `ausente` (§7.1).
 
 **Renting households:**
@@ -908,6 +933,7 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 - **Short series.** It starts in February 2024; from 2020 to 2023, in F6 (§7.3).
 - **Different months.** Reference months changed in 2024 (§7.3).
 - **Splitting.** 877 tracts are `estimado` in each period (§7.3).
+- **Denominator of regions and provinces.** Since November 2024 INE counts the dwellings of the Census tracts under confidentiality, which are not published: in 33 provinces and 12 regions the gate only bounds the figure from above, and the change of criterion moves that of Soria by up to 0.11 points (§7.3).
 
 **Derived indicators:**
 - **Inherited gaps.** A derived indicator has no value where any of its terms is missing: in 2024, 10,208 of the 36,333 tracts have no burden (§7.4).
@@ -927,7 +953,7 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 
 **Licences.** The State Cadastre and the foral cadastres of Bizkaia and Gipuzkoa have contradictory licences and are treated as open data by decision of the author (§2.2).
 
-**Overburden.** It is published without confidence intervals (§7.5).
+**Overburden.** It is published without confidence intervals. The income quintile uses HY020 ÷ HX240, not Eurostat's HX090, which INE does not publish, and puts an income equal to a cut-off in the lower quintile: the first quintile of 2025 gives 27.8% in the atlas and 27.7% at Eurostat. The series is not broken in 2013, the year in which the way incomes are obtained changes, because Eurostat does not flag it (§7.5).
 
 **Lag.** Income and wages run one or two years behind the current year (§1).
 
@@ -939,33 +965,34 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 
 **Schema** (plan §6.4): `geo_id`, `nivel`, `anio`, `indicador`, `corte`, `grupo`, `valor`, `estado`, `fuente`, `geo_ref` and `version`. The key of a row is `geo_id`, `nivel`, `anio`, `indicador`, `corte` and `grupo`.
 
-**Content** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 6,591,356 rows.
+**Content** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 6,595,745 rows.
 
 | Source (`fuente`) | Rows | Levels | Version |
 |---|---|---|---|
 | `ine_adrh` | 1,303,484 | Tract (1,089,972) and municipality (213,512) | 7 Nov 2026 |
-| `mivau_serpavi` | 3,929,460 | Tract (2,692,792), district (715,704), municipality (512,812), province (5,992) and region (2,160) | 6 Nov 2026 |
-| `ine_censo2021` | 36,334 | Tract (36,333) and Spain (1) | 8 Nov 2026 |
-| `ine_vut` | 218,004 | Tract (217,998) and Spain (6) | 8 Nov 2026 |
+| `mivau_serpavi` | 3,932,340 | Tract (2,692,792), district (717,144), municipality (514,252), province (5,992) and region (2,160) | 6 Nov 2026 |
+| `ine_censo2021` | 36,405 | Tract (36,333), region (19), province (52) and Spain (1) | 8 Nov 2026 |
+| `ine_vut` | 218,430 | Tract (217,998), region (114), province (312) and Spain (6) | 8 Nov 2026 |
 | `ine_ecv` | 261 | Region (228) and Spain (33) | 6 Nov 2026 |
 | `ine_ecv_modulo` | 32 | Region (19) and Spain (13) | 6 Nov 2026 |
-| `calculo_propio` | 1,103,781 | Tract (799,326), district (125,316), municipality (178,306), province (624) and region (209) | 7 Nov 2026 |
+| `calculo_propio` | 1,104,793 | Tract (799,326), district (125,748), municipality (178,886), province (624) and region (209) | 7 Nov 2026 |
 
-**By status:** `dato`, 4,689,450 rows; `ausente`, 1,028,826; `secreto`, 842,257; `estimado`, 30,823.
+**By status:** `dato`, 4,689,947 rows; `ausente`, 1,032,718; `secreto`, 842,257; `estimado`, 30,823.
 
 **Unpublished.** No data are published yet: the `datos/publicados/` folder does not exist.
 
 ### 9.2 Website data
 
 The export follows the author's decisions of 8 Nov 2026 (plan §6.6; plan §11, questions 16 and 17). `exportar_web()` (target `ficheros_web`) writes into `web/datos/`, from the validated long table, the v0.1 core indicators, from tract to Spain:
-- **Values.** One JSON file per series, level and period, with values × 10 as integers (rounding of the guide; one exact decimal) and a string with the status of each unit, in the order of the index of its level. Compressed, it weighs the same as a binary (plan §11, question 17): each tract file takes 117 to 291 KB, and 19 to 98 KB with gzip.
-- **Spain.** Only indicators 18 and 19 have a national figure (§7.2 and §7.3), in seven files. Income (1–3) and rent (8 and 9) do not: ADRH does not publish Spain and SERPAVI publishes only its count of observations. Nor do derived indicators 14 and 21, which lack those terms.
+- **Values.** One JSON file per series, level and period, with values × 10 as integers (× 100 for tourist dwellings, with two decimals, as INE publishes them: column `escala_web` of `inventario/indicadores.csv`, empty for the rest; plan §11, question 24), with the rounding of the guide to those decimals, and a string with the status of each unit, in the order of the index of its level. Compressed, it weighs the same as a binary (plan §11, question 17): each tract file takes 139 to 291 KB, and 19 to 98 KB with gzip.
+- **Spain, regions and provinces.** Indicators 18 and 19 carry the published figures for Spain, the 19 regions and the 52 provinces (§7.2 and §7.3); those for Spain, in seven files. Rent (8 and 9) and pay needed (21) have regions and provinces but not Spain: SERPAVI publishes only its count of observations. Income (1–3) and rent burden (14) go up to the municipality (§5.3 and §7.4).
 - **Sheet series.** One file per municipality (`fichas/<municipality>.json`) with the series of its tracts and of the municipality itself.
 - **What is not exported.** The SERPAVI quartiles and the barrier (15), which the website computes with the chosen token. Pay needed (21) is recomputed in the browser from rent per m² when the floor area or the threshold change (`FORMULAS_WEB`).
 - **Website against R.** The website test (`pruebas/web/datos.test.mjs`, in node) recomputes with the page's own module, `web/js/formulas.js`, the pay needed from rent per m² in all tracts, districts, municipalities, provinces and regions from 2015 to 2024, and compares it with the one exported by R: 550,140 unit-years, 294,082 with a value, with no difference in value, nulls or status (plan §6.5).
-- **Downloads.** The website downloads the map series as CSV, at the level in view (value to one decimal, status and source; for indicator 21, floor area and threshold), and the map as PNG with its legend and source. With «Your token», neither carries the pay entered: the CSV gives the rent, not the ratio.
+- **Downloads.** The website downloads the map series as CSV, at the level in view (value with the precision of the series, status and source; for indicator 21, floor area and threshold), and the map as PNG with its legend and source. With «Your token», neither carries the pay entered: the CSV gives the rent, not the ratio. The colours of the «Can you make rent?» PNG do let it be roughly inferred, so with «Your token» it is downloaded after a warning that can be cancelled (plan §11, question 23).
+- **Year outside the series** (plan §11, question 32). With a year earlier than every period of a series (2020 for tourist dwellings), the map, the legend, the sheet, the comparison panel and both downloads show «no data» and say when the series starts; the CSV, with one row without a value per unit and the start of the series in the status column. With a later year, the last period is taken, and the legend says so.
 - **Other files.** Unit names, municipality bounding boxes for the search box (`cajas_municipios`) and token incomes (`perfiles`). The base map is copied to `web/teselas/`; on publication, it comes from a *release* (§3.10).
-- **Volume** (`ficheros_web`, 14:57): 8,486 files and 109.8 MB, including the PMTiles file (35.2 MB).
+- **Volume** (`ficheros_web`, 21:15): 8,500 files and 110.1 MB, including the PMTiles file (35.2 MB). On disk, `web/datos/` holds 8,734 files and 76.2 MB: the 8,499 of `ficheros_web` (75.0 MB), the 3 of the overburden section (`ficheros_web_sobrecarga`, 1.1 MB) and the versioned sample in `web/datos/ejemplo/` (232 files, 0.2 MB).
 - **Gate** (`comprobar_web()`, `validacion_web`): `web_valores` and `web_fichas` (blocking) and `web_fuera_indice` (warning) (§4.1).
 
 ---
@@ -996,5 +1023,6 @@ The base map takes about 4.5 minutes (plan §7, F1). With `PROVINCIA=28` (enviro
 - **Renting households and tourist dwellings:** `censo2021`, `larga_censo2021`, `vut`, `vut_2021`, `larga_vut`.
 - **Under-35 token:** `mochila_opciones`, `mochila`, `mochila_neta`, `retenciones_mochila`, `ecv_mochila`.
 - **Tokens and derived indicators:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`.
+- **Overburden:** `sobrecarga_agrupada`, `comprobaciones_sobrecarga`, `sobrecarga_quintil`, `eurostat_quintil`.
 - **Website:** `ficheros_web`, `cajas_municipios`, `ficheros_web_sobrecarga`.
-- **Gates:** `validacion_f1`, `validacion_adrh`, `validacion_serpavi`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_modulo`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.
+- **Gates:** `validacion_f1`, `validacion_adrh`, `validacion_serpavi`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.

@@ -17,8 +17,19 @@ europa_sc <- function() {
     fila("ilc_lvho07c", c("AA", "BB", "CC", "ES", "EU27_2020", "EA20"), 2025, c(30.16, 22, 18, 26.8, 21.4, 22), tenencia = "RENT_MKT"),
     fila("ilc_lvho07c", c("ES", "EU27_2020"), 2024, c(28.1, 22), tenencia = "RENT_MKT"),
     fila("ilc_lvho07a", c("AA", "BB", "ES", "EU27_2020"), 2025, c(12, 9, 8.6, 9.1), edad = "Y_LT18")
-  )
+  ) |>
+    # Marcas de Eurostat: ruptura en España 2025 (total) y poca fiabilidad en AA12 (2025)
+    mutate(bandera = case_when(conjunto == "ilc_lvho07a" & geo == "ES" & anio == 2025 & edad == "TOTAL" ~ "b",
+                               conjunto == "ilc_lvho07_r" & geo == "AA12" & anio == 2025 ~ "u",
+                               TRUE ~ NA_character_))
 }
+
+# Cortes del mapa como en inventario/indicadores.csv y sobrecarga por quintil de renta
+ind_sc <- tibble::tibble(codigo = c("renta_hogar", "sobrecarga"), cortes_web = c("1;2", "4;6;8;10;15|RENT_MKT=15;20;25;30;40"))
+quintil_sc <- tibble::tibble(anio = 2025L, indicador = "sobrecarga", umbral = 0.4, corte = "quintil",
+                             grupo = c("QU1", "QU2", "QU3", "QU4", "QU5"), valor = c(27.8, 5.2, 1.89, 0.89, 0.21),
+                             n_personas = c(12006L, 13299L, 14665L, 15345L, 15846L), n_hogares = c(5120L, 5477L, 5844L, 6130L, 6692L),
+                             peso = 1, poblacion = 20, fiabilidad = "normal")
 
 anual_sc <- tibble::tibble(
   anio = 2025L, indicador = "sobrecarga", umbral = 0.4,
@@ -133,11 +144,12 @@ test_that("la exportación escribe sobrecarga.json y su geometría y pasa la com
   on.exit(unlink(c(dir, ruta), recursive = TRUE))
   sf::st_write(nuts_sc(), ruta, quiet = TRUE)
   europa <- filter(europa_sc(), anio >= 2024)
-  rutas <- exportar_web_sobrecarga(anual_sc, agrupada_sc, europa, ccaa_sc, modulos_sc(), c("2024" = ruta), dir_web = dir,
-                                   fecha = "2026-11-08")
+  rutas <- exportar_web_sobrecarga(anual_sc, agrupada_sc, europa, ccaa_sc, modulos_sc(), c("2024" = ruta), ind_sc,
+                                   quintil = quintil_sc, dir_web = dir, fecha = "2026-11-08")
   expect_equal(basename(rutas), c("sobrecarga.json", "nuts_2024.geojson"))
   x <- jsonlite::fromJSON(rutas[1], simplifyVector = FALSE)
   expect_equal(unlist(x$anios), c(2024L, 2025L))
+  expect_equal(lapply(x$cortes, unlist), list(general = c(4L, 6L, 8L, 10L, 15L), RENT_MKT = c(15L, 20L, 25L, 30L, 40L)))
   expect_equal(x$geometrias[["2024"]], "datos/sobrecarga/nuts_2024.geojson")
   expect_equal(vapply(x$vistas, `[[`, "", "clave")[1:3], c("total-2024", "total-2025", "tenencia-RENT_MKT-2025"))
   t25 <- x$vistas[[2]]$filas
@@ -148,10 +160,16 @@ test_that("la exportación escribe sobrecarga.json y su geometría y pasa la com
   expect_null(es70$v)                                                    # no publicable: null
   mkt <- x$vistas[[3]]$filas
   expect_equal(mkt[[which(vapply(mkt, `[[`, "", "geo") == "AA")]]$v, 302L) # 30,16 → 30,2 (× 10 en entero)
-  expect_length(x$espana$serie$anios, 18L)                               # 2008–2025; sin dato, null
+  # La serie empieza en el primer año publicado y lleva las marcas de Eurostat
+  expect_equal(unlist(x$espana$serie$anios), c(2024L, 2025L))
   expect_equal(unlist(x$espana$serie$valores$ES_TOTAL), c(78L, 72L))
+  expect_equal(x$espana$serie$marcas$ES_TOTAL, list(NULL, "b"))
+  aa12 <- t25[[which(vapply(t25, `[[`, "", "geo") == "AA12")]]
+  expect_equal(aa12$bandera, "u")
   expect_equal(x$espana$anual[[1]][c("anio", "corte", "grupo", "v", "n")],
                list(anio = 2025L, corte = "total", grupo = "total", v = 72L, n = 71161L))
+  q1 <- Filter(function(f) f$corte == "quintil" && f$grupo == "QU1", x$espana$anual)[[1]]
+  expect_equal(q1[c("v", "n", "hogares", "fiabilidad")], list(v = 278L, n = 12006L, hogares = 5120L, fiabilidad = "normal"))
   expect_equal(x$modulo$total, 76L)
   expect_equal(x$modulo$ccaa[[1]], list(geo = "ES30", v = 102L))
   expect_equal(x$modulo$razones[[1]], list(grupo = "precio", v = 672L))
@@ -159,30 +177,75 @@ test_that("la exportación escribe sobrecarga.json y su geometría y pasa la com
   expect_equal(x$comunidades$ES30$codigo, "13")
 
   escalera <- armar_escalera(europa)
-  c1 <- comprobar_web_sobrecarga(anual_sc, agrupada_sc, europa, escalera, ccaa_sc, modulos_sc(), dir_web = dir)
+  comprobar <- function() comprobar_web_sobrecarga(anual_sc, agrupada_sc, europa, escalera, ccaa_sc, modulos_sc(), ind_sc,
+                                                   quintil = quintil_sc, dir_web = dir)
+  c1 <- comprobar()
   expect_setequal(unique(c1$id), c("web_sobrecarga_valores", "web_sobrecarga_muestra", "web_sobrecarga_geometria"))
   expect_equal(sum(c1$calculado), 0)
 
-  # Una cifra cambiada, una muestra cambiada y una región sin geometría: la compuerta lo ve
+  # Una cifra cambiada, una muestra cambiada, una marca quitada y una región sin geometría: la compuerta lo ve
   texto <- readLines(rutas[1], warn = FALSE, encoding = "UTF-8")
   texto <- sub('"geo":"AA11","nivel":2,"bloque":"europa","v":201', '"geo":"AA11","nivel":2,"bloque":"europa","v":202', texto, fixed = TRUE)
   texto <- sub('"n":7089', '"n":7090', texto, fixed = TRUE)
   writeLines(texto, rutas[1], useBytes = TRUE)
-  c2 <- comprobar_web_sobrecarga(anual_sc, agrupada_sc, europa, escalera, ccaa_sc, modulos_sc(), dir_web = dir)
+  c2 <- comprobar()
   mal <- c2[c2$calculado > 0, ]
   expect_equal(mal$id, c("web_sobrecarga_valores", "web_sobrecarga_muestra"))
   expect_equal(mal$detalle, c("total-2025", "total-2025"))
 
+  texto <- sub(',"bandera":"u"', "", readLines(rutas[1], warn = FALSE, encoding = "UTF-8"), fixed = TRUE)
+  texto <- sub('"n":7090', '"n":7089', sub('"v":202', '"v":201', texto, fixed = TRUE), fixed = TRUE)
+  texto <- sub('"cortes":{"general":[4,6,8,10,15]', '"cortes":{"general":[4,6,8,10,16]', texto, fixed = TRUE)
+  writeLines(texto, rutas[1], useBytes = TRUE)
+  c3 <- comprobar()
+  expect_equal(c3$detalle[c3$calculado > 0], c("cortes del mapa", "total-2025"))
+  expect_equal(c3$id[c3$calculado > 0], c("web_sobrecarga_valores", "web_sobrecarga_muestra"))
+
   g <- sf::st_read(rutas[2], quiet = TRUE)
   sf::st_write(g[g$id != "BB", ], rutas[2], driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
-  c3 <- comprobar_web_sobrecarga(anual_sc, agrupada_sc, europa, escalera, ccaa_sc, modulos_sc(), dir_web = dir)
-  expect_equal(c3$calculado[c3$id == "web_sobrecarga_geometria" & c3$detalle == "total-2025"], 1)
+  c4 <- comprobar()
+  expect_equal(c4$calculado[c4$id == "web_sobrecarga_geometria" & c4$detalle == "total-2025"], 1)
+})
+
+test_that("cortes del mapa: los generales y, tras «|», los de un grupo; como cortes_web()", {
+  expect_equal(cortes_sobrecarga_web("4;6;8;10;15|RENT_MKT=15;20;25;30;40"),
+               list(general = c(4, 6, 8, 10, 15), RENT_MKT = c(15, 20, 25, 30, 40)))
+  expect_equal(cortes_sobrecarga_web("4;6"), list(general = c(4, 6)))
+  expect_error(cortes_sobrecarga_web("4;6|15;20"), "GRUPO=")
+  expect_error(cortes_sobrecarga_web("4;6|RENT_MKT=20;15"), "crecientes")
+  expect_error(cortes_sobrecarga_web(NA), "vac")
+  # La fila 22 del inventario se lee así
+  ind <- readr::read_csv(file.path("..", "..", "inventario", "indicadores.csv"), show_col_types = FALSE)
+  expect_named(cortes_de_indicadores(ind), c("general", "RENT_MKT"))
+})
+
+test_that("geometría de respaldo: lo que una versión NUTS no trae sale de una posterior", {
+  codigos <- list("2021" = c("AA", "AA11"), "2024" = c("AA", "AA11", "BA", "BA0"))
+  expect_equal(version_geometria(c("AA11", "BA0", "FI19_20", "AA"), c("2021", "2021", "2021", "2024"), codigos),
+               c("2021", "2024", NA, "2024"))
+  r21 <- tempfile(fileext = ".gpkg")
+  r24 <- tempfile(fileext = ".gpkg")
+  on.exit(unlink(c(r21, r24)))
+  n <- nuts_sc()
+  sf::st_write(n[n$NUTS_ID != "BB", ], r21, quiet = TRUE)
+  sf::st_write(n, r24, quiet = TRUE)
+  g <- geometrias_sobrecarga_web(r21, respaldo = c(BB = r24))
+  expect_true("BB" %in% g$id)
+  expect_equal(sum(g$id == "BB"), 1L)
+  # La comprobación nuts_geometria acepta el respaldo y sigue marcando lo que no está en ninguna
+  europa <- tibble::tibble(conjunto = "ilc_lvho07_r", geo = c("BB", "AA11", "FI19_20"), tenencia = "TOTAL", edad = "TOTAL",
+                           anio = 2022L, valor = 5, bandera = NA_character_)
+  ch <- comprobar_geometrias_nuts(europa, c("2021" = r21, "2024" = r24))
+  expect_equal(c(ch$calculado, ch$detalle), c("1", "FI19_20"))
 })
 
 test_that("las comprobaciones nuevas tienen su fila en referencias_validacion.csv", {
   ref <- readr::read_csv(file.path("..", "..", "inventario", "referencias_validacion.csv"), show_col_types = FALSE)
-  filas <- ref[ref$id %in% c("web_sobrecarga_valores", "web_sobrecarga_muestra", "web_sobrecarga_geometria"), ]
-  expect_equal(nrow(filas), 3L)
-  expect_equal(filas$tipo[match(c("web_sobrecarga_valores", "web_sobrecarga_muestra", "web_sobrecarga_geometria"), filas$id)],
-               c("bloqueo", "bloqueo", "alerta"))
+  ids <- c("web_sobrecarga_valores", "web_sobrecarga_muestra", "web_sobrecarga_geometria", "sobrecarga_quintil_total",
+           "sobrecarga_quintil_reparto", "sobrecarga_quintil_eurostat")
+  filas <- ref[ref$id %in% ids, ]
+  expect_equal(nrow(filas), 6L)
+  expect_equal(filas$tipo[match(ids, filas$id)], c("bloqueo", "bloqueo", "alerta", "bloqueo", "alerta", "bloqueo"))
+  expect_equal(leer_tolerancia(filas$tolerancia[filas$id == "sobrecarga_quintil_eurostat"]), 0.1)
+  expect_false(anyNA(leer_tolerancia(filas$tolerancia)))
 })

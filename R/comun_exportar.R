@@ -54,7 +54,10 @@ exportar_i18n <- function(indicadores, fuentes, vocabulario, dir = file.path("we
     dic$fuentes <- stats::setNames(as.list(if (idioma == "es") fuentes$nombre else fuentes$nombre_en), fuentes$id)
     dic$vocabulario <- lapply(split(vocabulario, vocabulario$grupo),
                               function(v) stats::setNames(as.list(v[[idioma]]), v$clave))
-    jsonlite::write_json(dic, rutas[i], auto_unbox = TRUE, pretty = TRUE)
+    # Modo binario: write_json() escribe CRLF en Windows y git guarda los JSON en LF
+    con <- file(rutas[i], open = "wb")
+    writeLines(jsonlite::toJSON(dic, auto_unbox = TRUE, pretty = TRUE), con, useBytes = TRUE)
+    close(con)
   }
   rutas
 }

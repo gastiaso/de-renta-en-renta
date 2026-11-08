@@ -47,7 +47,10 @@
       "tipologia": "Vivienda",
       "vc": "Colectiva",
       "vu": "Unifamiliar",
-      "llega_opcion": "¿Te llega? · {ficha}"
+      "llega_opcion": "¿Te llega? · {ficha}",
+      "anio_fuera": "{anio} (sin datos)",
+      "fuera": "Sin datos de {anio}: la serie empieza en {desde}.",
+      "desde": "serie desde {desde}"
     },
     "leyenda": {
       "sin_dato": "Sin dato",
@@ -117,6 +120,11 @@
       "umbral": "umbral del {umbral}",
       "fuente": "Fuente: {fuente}.",
       "pie": "Mapa base: {atribucion}. De renta en renta, datos del {fecha}.",
+      "cancelado": "Descarga cancelada.",
+      "aviso_titulo": "Descargar la imagen",
+      "aviso_tu_ficha": "La imagen no lleva la cifra del sueldo, pero sus colores dejan deducirla de forma aproximada: marcan dónde el alquiler pasa del 30 y del 40 % de {sueldo} € netos al mes.",
+      "aviso_si": "Descargar la imagen",
+      "aviso_no": "Cancelar",
       "columnas": {
         "codigo": "codigo",
         "nombre": "nombre",
@@ -135,7 +143,8 @@
         "dato": "dato",
         "estimado": "estimado",
         "secreto": "secreto estadístico",
-        "ausente": "sin dato"
+        "ausente": "sin dato",
+        "fuera": "sin dato: la serie empieza en {desde}"
       }
     },
     "ficha": {
@@ -235,7 +244,7 @@
       "o_mas": "{x} % o más",
       "sin_dato": "Sin dato",
       "grueso": "Dato del país o de NUTS 1",
-      "muestra": "Muestra pequeña (20 a 49 observaciones)"
+      "muestra": "Muestra pequeña o poco fiable (EU-SILC: de 20 a 49 observaciones; marca «u» de Eurostat)"
     },
     "detalle": {
       "region": "Territorio elegido",
@@ -278,19 +287,30 @@
       "espana": "España",
       "ue27": "UE-27",
       "anio": "Encuesta",
-      "fuente": "Eurostat (ilc_lvho07a, ilc_lvho07c). De 2023 a 2025, el cálculo con los microdatos de la ECV reproduce estas cifras (±0,1 puntos).",
+      "fuente": "Eurostat (ilc_lvho07a, ilc_lvho07c), desde el primer año publicado: en España, el total desde 2004 y el alquiler a precio de mercado desde 2007; la UE-27, desde 2010. De 2023 a 2025, el cálculo con los microdatos de la ECV reproduce estas cifras (±0,1 puntos).",
+      "rupturas": "Ruptura de serie (marca «b» de Eurostat; punto hueco y línea cortada): {lista}. Las cifras de antes y de después no son del todo comparables.",
+      "estimados": "Estimaciones de Eurostat (marca «e»): {lista}.",
       "tabla": "Ver las cifras",
       "grafico": "Tasa de sobrecarga en España y en la UE-27, toda la población y alquiler a precio de mercado, {desde}–{hasta}"
     },
     "desgloses": {
-      "titulo": "España por tenencia y edad",
+      "titulo": "España por tenencia, edad y renta",
       "subtitulo": "Microdatos de la ECV, cálculo propio · cada cifra con su muestra",
       "anio": "Encuesta",
       "tenencia": "Por régimen de tenencia",
       "edad": "Por edad",
+      "quintil": "Por quintil de renta",
       "total": "Toda la población",
       "muestra_corta": "{n} pers.",
-      "nota": "Los grupos de menores de 18 y de 15 a 29 años se solapan. «Propiedad» y «Alquiler o cesión gratuita» reúnen las categorías de Eurostat."
+      "nota": "Los grupos de menores de 18 y de 15 a 29 años se solapan. «Propiedad» y «Alquiler o cesión gratuita» reúnen las categorías de Eurostat.",
+      "nota_quintil": "Quintiles de renta disponible equivalente (la del hogar entre sus unidades de consumo, escala de la OCDE modificada) de toda la población, ponderada por persona. Solo España: sin quintil por país ni por comunidad.",
+      "quintiles": {
+        "QU1": "Primer quintil (20 % con menos renta)",
+        "QU2": "Segundo quintil",
+        "QU3": "Tercer quintil",
+        "QU4": "Cuarto quintil",
+        "QU5": "Quinto quintil (20 % con más renta)"
+      }
     },
     "comunidades": {
       "titulo": "Comunidades del mapa: cifra y muestra",
@@ -308,7 +328,8 @@
       "hipoteca": "De la hipoteca entran los intereses, no la devolución del capital.",
       "renta": "La renta es la del año anterior a la encuesta: la ECV de 2025 recoge las rentas de 2024.",
       "muestra": "Sin intervalos de confianza: los microdatos públicos no traen el diseño de la muestra. Cada cifra del INE lleva su número de observaciones y la marca de fiabilidad de EU-SILC: sin publicar con menos de 20; con trama, de 20 a 49.",
-      "compuerta": "El cálculo reproduce las cifras de Eurostat de España, de cada comunidad, de los inquilinos a precio de mercado y de cada grupo de edad (±0,1 puntos)."
+      "compuerta": "El cálculo reproduce las cifras de Eurostat de España, de cada comunidad, de los inquilinos a precio de mercado y de cada grupo de edad (±0,1 puntos).",
+      "marcas": "Las cifras de Eurostat llevan sus marcas junto al valor: b, ruptura de serie; u, poca fiabilidad (con trama en el mapa); e, estimación; p, provisional."
     },
     "acceso": {
       "titulo": "Quien no consigue entrar",
@@ -328,6 +349,13 @@
         "condiciones": "No se reunían las condiciones para alquilar o comprar",
         "otras": "Otras razones"
       }
+    },
+    "marcas": {
+      "b": "ruptura de serie",
+      "u": "poca fiabilidad",
+      "e": "estimación",
+      "p": "provisional",
+      "d": "definición distinta"
     },
     "otras_cifras": {
       "titulo": "Por qué no coincide con otras cifras",
@@ -566,7 +594,7 @@
     "ine_padron_sc": "Población por sección censal (Censo anual de población; Padrón continuo)",
     "ine_ecv": "Encuesta de Condiciones de Vida (microdatos)",
     "ine_ecv_modulo": "Encuesta de Condiciones de Vida 2025: módulo sobre dificultades de acceso a la vivienda (tablas)",
-    "eurostat_ilc_lvho07": "Tasa de sobrecarga por gastos de vivienda (ilc_lvho07a, ilc_lvho07c)",
+    "eurostat_ilc_lvho07": "Tasa de sobrecarga por gastos de vivienda (ilc_lvho07a, ilc_lvho07b, ilc_lvho07c)",
     "eurostat_ilc_lvho07_r": "Tasa de sobrecarga por regiones NUTS 2 (ilc_lvho07_r)",
     "eurostat_nuts": "Geometrías NUTS 2021 y 2024 (Nuts2json / GISCO)",
     "eustat_nastat": "Indicadores de renta del País Vasco (Eustat) y Navarra (Nastat)",

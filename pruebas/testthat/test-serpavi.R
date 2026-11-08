@@ -191,35 +191,55 @@ test_that("el resumen cuenta secciones por estado y la cobertura por provincia",
   expect_equal(filter(r$provincias, provincia == "28", anio == 2021L)$cobertura, 100 * 2 / 3)
 })
 
-test_that("las secciones del seccionado que la base no trae van como ausente y la compuerta las cuenta", {
+test_that("los territorios del seccionado que la base no trae van como ausente y la compuerta los cuenta", {
   s <- serpavi_inventado()
+  # una sección más en un distrito con datos (28002) y un municipio de una sola sección que las
+  # hojas no traen (31002), con su distrito
   faltan <- c("2800201002", "3100201001")
+  nuevos <- c(faltan, "3100201", "31002")
   secciones <- c("2800101001", "2800101002", "2800201001", "3100101001", faltan)
   l <- armonizar_mivau_serpavi(s, version = "2026-11-08", entrada_forales = c("31" = 2021L), secciones = secciones)
-  nuevas <- filter(l, geo_id %in% faltan)
-  expect_equal(nrow(nuevas), 2 * 2 * 2 * 2)   # secciones × indicadores × tipologías × años
-  expect_true(all(nuevas$estado == "ausente" & is.na(nuevas$valor) & nuevas$nivel == "sc" & nuevas$corte == "tipologia"))
+  nuevas <- filter(l, geo_id %in% nuevos)
+  expect_equal(nrow(nuevas), 4 * 2 * 2 * 2)   # territorios × indicadores × tipologías × años
+  expect_true(all(nuevas$estado == "ausente" & is.na(nuevas$valor) & nuevas$corte == "tipologia"))
+  expect_equal(count(distinct(nuevas, nivel, geo_id), nivel)$n, c(1L, 1L, 2L))   # distrito, municipio, sc
   expect_setequal(unique(nuevas$grupo), c("VC", "VU"))
-  # cada sección del seccionado, una fila por año, indicador y tipología
-  med <- filter(l, nivel == "sc", corte == "tipologia")
-  expect_setequal(unique(med$geo_id), secciones)
-  expect_equal(nrow(med), length(secciones) * 2 * 2 * 2)
-  expect_equal(nrow(distinct(med, geo_id, anio, indicador, grupo)), nrow(med))
-  # el resto queda igual, sin distritos ni municipios nuevos
+  # cada sección, distrito y municipio del seccionado, una fila por año, indicador y tipología
+  for (niv in c("sc", "distrito", "municipio")) {
+    med <- filter(l, nivel == niv, corte == "tipologia")
+    territorios <- unique(substr(secciones, 1, NIVELES[[niv]]))
+    expect_setequal(unique(med$geo_id), territorios)
+    expect_equal(nrow(med), length(territorios) * 2 * 2 * 2)
+    expect_equal(nrow(distinct(med, geo_id, anio, indicador, grupo)), nrow(med))
+  }
+  # el resto queda igual
   sin <- armonizar_mivau_serpavi(s, version = "2026-11-08", entrada_forales = c("31" = 2021L))
-  expect_equal(filter(l, !geo_id %in% faltan), sin)
+  expect_equal(filter(l, !geo_id %in% nuevos), sin)
   # la cobertura de la provincia se mide sobre el seccionado
   r <- resumen_serpavi(l)
   expect_equal(filter(r$provincias, provincia == "28", anio == 2021L)$cobertura, 100 * 2 / 4)
   expect_equal(filter(r$estados, anio == 2021L, grupo == "VC")$ausente, 2L)
 
+  seccionado <- function(comp, ident) filter(comp, id == ident)$calculado
   comp <- comprobar_mivau_serpavi(s, entrada_forales = c("31" = 2021L), secciones = secciones)
-  expect_equal(filter(comp, id %in% c("serpavi_seccionado", "serpavi_sin_fila"))$calculado, c(0, 2))
+  expect_equal(seccionado(comp, "serpavi_seccionado"), c(0, 0, 0))   # sc, distrito, municipio
+  expect_equal(seccionado(comp, "serpavi_sin_fila"), c(2, 1, 1))
+  expect_true(all(grepl("^(secciones|distritos|municipios) ", filter(comp, id == "serpavi_sin_fila")$detalle)))
   fuera <- comprobar_mivau_serpavi(s, entrada_forales = c("31" = 2021L), secciones = setdiff(secciones, "2800101002"))
-  expect_equal(filter(fuera, id == "serpavi_seccionado")$calculado, 1)
+  expect_equal(seccionado(fuera, "serpavi_seccionado"), c(1, 0, 0))
+  # un municipio y un distrito de la base fuera del seccionado cuentan solo si tienen testigos o mediana
+  sin_datos <- serpavi_inventado() |> filter(nivel %in% c("distrito", "municipio"), codigo %in% c("2800201", "28002")) |>
+    mutate(codigo = if_else(nivel == "distrito", "2800901", "28009"), testigos = NA_real_,
+           across(starts_with("alquiler"), ~ NA_real_))
+  expect_equal(seccionado(comprobar_mivau_serpavi(bind_rows(s, sin_datos), entrada_forales = c("31" = 2021L),
+                                                  secciones = secciones), "serpavi_seccionado"), c(0, 0, 0))
+  con_datos <- mutate(sin_datos, testigos = 3)
+  expect_equal(seccionado(comprobar_mivau_serpavi(bind_rows(s, con_datos), entrada_forales = c("31" = 2021L),
+                                                  secciones = secciones), "serpavi_seccionado"), c(0, 1, 1))
   # con PROVINCIA, solo cuentan las provincias del seccionado leído
   madrid <- comprobar_mivau_serpavi(s, entrada_forales = c("31" = 2021L), secciones = secciones[startsWith(secciones, "28")])
-  expect_equal(filter(madrid, id %in% c("serpavi_seccionado", "serpavi_sin_fila"))$calculado, c(0, 1))
+  expect_equal(seccionado(madrid, "serpavi_seccionado"), c(0, 0, 0))
+  expect_equal(seccionado(madrid, "serpavi_sin_fila"), c(1, 0, 0))
   # sin el seccionado, ni filas ni comprobaciones nuevas
   expect_false(any(c("serpavi_seccionado", "serpavi_sin_fila") %in%
                      comprobar_mivau_serpavi(s, entrada_forales = c("31" = 2021L))$id))

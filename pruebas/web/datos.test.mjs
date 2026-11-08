@@ -15,11 +15,12 @@ const raiz = process.cwd();
 const modulo = (ruta) => import(pathToFileURL(join(raiz, ruta)).href);
 const {
   decodificar, periodoPara, rutaValores, codificacionDe, serieDeTipologia, tieneTipologia, tipologiaDe,
+  fueraDeSerie, inicioSerie,
 } = await modulo('web/js/datos.js');
 const exportar = await modulo('web/js/exportar.js');
 const { FORMULAS, formulaDe } = await modulo('web/js/formulas.js');
 const sueldo = await modulo('web/js/sueldo.js');
-const { codigoComparado } = await modulo('web/js/comparador.js');
+const { codigoComparado, filasComparador } = await modulo('web/js/comparador.js');
 const { buscar, formasDeNombre } = await modulo('web/js/buscador.js');
 const { ordenNatural } = await modulo('web/js/nombres.js');
 const { consulta, leerEstado } = await modulo('web/js/estado.js');
@@ -46,11 +47,20 @@ test('decodificar: rechaza longitudes que no casan con el índice y estados desc
   assert.throws(() => decodificar(null, 1, CODIFICACION), /se esperaban 1/);
 });
 
-test('periodos y rutas: el año pedido, o el último anterior, o el último', () => {
+test('periodos y rutas: el año pedido o el último anterior; antes de la serie, ninguno', () => {
   assert.equal(periodoPara({ anios: [2020, 2021, 2024] }, 2022), 2021);
   assert.equal(periodoPara({ anios: [2021] }, 2024), 2021);
-  assert.equal(periodoPara({ anios: [2023, 2024] }, 2019), 2024);
   assert.equal(periodoPara({ periodos: ['2024-02', '2024-11', '2025-05'] }, 2024), '2024-11');
+  // Año anterior a toda la serie (pregunta abierta 32): sin periodo, y desde cuándo hay serie
+  assert.equal(periodoPara({ anios: [2023, 2024] }, 2019), null);
+  assert.equal(periodoPara({ periodos: ['2024-02', '2024-11'] }, 2023), null);
+  assert.equal(periodoPara({ periodos: ['2024-02', '2024-11'] }, '2024-01'), null);
+  assert.equal(periodoPara({ anios: [2023, 2024] }, '2023-03'), 2023);   // serie anual: cuenta el año
+  assert.deepEqual(fueraDeSerie({ periodos: ['2024-02', '2024-11'] }, 2020), { anio: 2020, desde: '2024-02' });
+  assert.equal(fueraDeSerie({ periodos: ['2024-02', '2024-11'] }, 2024), null);
+  assert.equal(fueraDeSerie({ anios: [2021] }, 2024), null);           // después de la serie: su último año
+  assert.equal(fueraDeSerie({ anios: [2021] }, undefined), null);
+  assert.equal(inicioSerie({ anios: [2015, 2024] }), 2015);
   // Periodos con mes elegidos en la barra: el mismo, o el último anterior; en series anuales, su año
   assert.equal(periodoPara({ periodos: ['2024-02', '2024-11', '2025-05'] }, '2024-11'), '2024-11');
   assert.equal(periodoPara({ periodos: ['2024-02', '2024-11', '2025-05'] }, '2025-01'), '2024-11');
@@ -232,6 +242,15 @@ test('colores: pasos de la rampa, contraste WCAG y contorno de las secciones', (
   assert.equal(contorno.fuera, tinta);
 });
 
+test('leyenda: los cortes, con los decimales que necesitan (dos decimales en el 19, pregunta 24)', () => {
+  assert.equal(colores.decimalesDeCortes([0.5, 1, 2.5, 5], 2), 1);           // «0,5 · 1,0 · 2,5 · 5,0»
+  assert.equal(colores.decimalesDeCortes([0.25, 1], 2), 2);
+  assert.equal(colores.decimalesDeCortes([4, 5.5, 7, 9], 1), 1);             // como hasta ahora
+  assert.equal(colores.decimalesDeCortes([20, 30, 40, 50], 1), 1);
+  assert.equal(colores.decimalesDeCortes([700, 900, 1100, 1500, 2000], 0), 0);
+  assert.equal(colores.decimalesDeCortes([0.5], 0), 0);                      // nunca más que el mapa
+});
+
 // --- Comparador, buscador y URL ----------------------------------------------------------------
 
 test('comparador: territorio con el que se compara una sección', () => {
@@ -242,6 +261,22 @@ test('comparador: territorio con el que se compara una sección', () => {
   assert.deepEqual(codigoComparado('2807901001', 'nacional', territorios), { nivel: 'nacional', codigo: '00' });
   assert.deepEqual(codigoComparado('2807901001', '0801901001', territorios), { nivel: 'sc', codigo: '0801901001' });
   assert.equal(codigoComparado('0801901001', 'ccaa', territorios), null);
+});
+
+test('comparador: con un año anterior a la serie, sin dato y desde cuándo (pregunta 32)', async () => {
+  const m = {
+    codificacion: CODIFICACION,
+    indicadores: {
+      viviendas_turisticas: { niveles: ['sc', 'nacional'], periodos: ['2024-02', '2026-05'], ruta: 'datos/{nivel}/v/{periodo}.json', escala: 100, decimales: 2 },
+    },
+  };
+  // Sin pedir ficheros: la serie no llega al año
+  const filas = await filasComparador({ m, seccion: '2807901001', comparado: { nivel: 'nacional', codigo: '00' }, anio: 2020, supuestos: {} });
+  assert.equal(filas.length, 1);
+  assert.equal(filas[0].periodo, null);
+  assert.equal(filas[0].desde, '2024-02');
+  assert.equal(filas[0].decimales, 2);
+  assert.deepEqual([filas[0].a, filas[0].b], [{ valor: null, estado: 3 }, { valor: null, estado: 3 }]);
 });
 
 test('nombres del INE en orden natural', () => {
@@ -329,6 +364,22 @@ test('descargas: CSV con BOM, comillas cuando hacen falta, estados y supuestos',
   assert.ok(lineas[2].includes(',,€ netos por mes,secreto,'));   // sin valor: campo vacío
 });
 
+test('descargas: dos decimales con escala 100 y año anterior a la serie (preguntas 24 y 32)', () => {
+  const t = (clave, datos) => (datos?.desde ? `sin dato: la serie empieza en ${datos.desde}` : clave.split('.').at(-1));
+  const comun = {
+    t, codigos: ['2807901001', '2807901002'], valores: [1.234, 0.5], estados: Uint8Array.from([0, 0]),
+    nombresEstado: CODIFICACION.estados, nivel: 'sc', nombreDe: (c) => c, indicador: 'Viviendas turísticas',
+    unidad: '% de las viviendas', tipologia: '', fuente: 'INE', decimales: exportar.decimalesDeEscala(100),
+  };
+  const { filas } = exportar.tablaCsv({ ...comun, periodo: '2026-05' });
+  assert.deepEqual(filas.map((f) => f[6]), [1.23, 0.5]);
+  const fuera = exportar.tablaCsv({ ...comun, periodo: 2020, desde: '2024-02' }).filas;
+  assert.deepEqual(fuera.map((f) => [f[5], f[6], f[8]]), [
+    [2020, null, 'sin dato: la serie empieza en 2024-02'],
+    [2020, null, 'sin dato: la serie empieza en 2024-02'],
+  ]);
+});
+
 // --- Muestra y exportación del pipeline -------------------------------------------------------
 
 function comprobarManifiesto(dir, { completo }) {
@@ -342,6 +393,10 @@ function comprobarManifiesto(dir, { completo }) {
   for (const [serie, def] of Object.entries(m.indicadores)) {
     const ps = periodos(def);
     assert.ok(ps?.length, `${serie}: sin periodos`);
+    // Escala propia (pregunta 24): potencia de diez, y nunca más decimales a la vista que guardados
+    const escala = codificacionDe(m, serie).escala;
+    assert.ok([10, 100, 1000].includes(escala), `${serie}: escala ${escala}`);
+    assert.ok((def.decimales ?? 0) <= Math.log10(escala), `${serie}: decimales ${def.decimales} con escala ${escala}`);
     // En la muestra, todos los ficheros; en la exportación, el último periodo de cada nivel.
     for (const nivel of def.niveles) {
       for (const p of completo ? ps : [ps.at(-1)]) {
@@ -425,6 +480,12 @@ const exportada = existsSync(join(raiz, 'web', 'datos', 'manifiesto.json'));
 test('exportación del pipeline: el contrato de web/datos/ se cumple', { skip: !exportada && 'sin web/datos/manifiesto.json' }, () => {
   const { m, indices } = comprobarManifiesto(join('web', 'datos'), { completo: false });
   assert.equal(m.ejemplo, false);
+  // Las viviendas turísticas (19), con dos decimales, como las publica el INE (pregunta 24)
+  if (m.indicadores.viviendas_turisticas) {
+    assert.equal(m.indicadores.viviendas_turisticas.escala, 100);
+    assert.equal(m.indicadores.viviendas_turisticas.decimales, 2);
+    assert.equal(m.mapas.viviendas_turisticas?.decimales ?? 2, 2);
+  }
   // Una ficha de municipio: sus secciones y periodos cuadran con el índice y el manifiesto.
   const municipio = indices.sc[0].slice(0, 5);
   const fichero = leer('web', m.fichas.replace('{municipio}', municipio));

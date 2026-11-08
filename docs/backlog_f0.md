@@ -124,8 +124,15 @@ Decidido (8-nov-2026, plan v0.23): la serie del SMI de 2015 a 2023 para la tarte
 11. **Sección «Sobrecarga» (v0.0) · HECHA.** `web/sobrecarga.html` con datos reales: mapa de Europa, escalera, serie de España y de la UE-27, desgloses con su muestra y módulo de acceso, con su compuerta de ida y vuelta.
 12. **Publicación · PREPARADA.** Flujo de Pages, paquete del *release* (`empaquetar_publicacion()`), página «Método» y guía (`docs/publicacion.md`). Falta crear el repositorio (con GitHub Free, público) y el primer *release*.
 
+Decidido (8-nov-2026, plan v0.26): las preguntas 22–33, todas con la propuesta. Cuatro tareas en paralelo:
+
+13. **Web: aviso, decimales y años fuera de la serie · HECHA.** Aviso antes del PNG con «Tu ficha» (23); viviendas turísticas con dos decimales (`escala_web`, 24); «sin dato» y desde cuándo hay serie con un año anterior a ella (32).
+14. **Comunidades y provincias del 18 y el 19 · HECHA.** 497 filas con la cifra publicada por el INE y compuerta frente a las secciones (`vut_territorios`, nueva; `censo2021_alquiler`, ampliada) (25).
+15. **SERPAVI: municipios y distritos de una sección · HECHA.** Los 36 municipios y sus distritos, como `ausente`: +2.880 filas del alquiler y +1.012 de los derivados (26).
+16. **Sobrecarga: marcas, serie, cortes, geometría y quintil · HECHA.** Eurostat con marcas (27); cortes en `inventario/indicadores.csv` (28); Bosnia y Herzegovina con la geometría de NUTS 2024 (29); serie desde el primer año publicado, cortada en las rupturas (30); España por quintil de renta, contrastado con Eurostat (31).
+
 **Siguiente:**
-- decisiones del autor: remoto y visibilidad; preguntas abiertas 22–33 (plan §11); descargas por preguntar (SMI de 2015 a 2023, marcas de Eurostat, `chromote`);
+- decisiones del autor: remoto y visibilidad; preguntas abiertas 34–36 (plan §11); descargas por preguntar (SMI de 2015 a 2023, `chromote`, tabla del Censo 2021 de viviendas por provincia);
 - página «Datos» (la tabla larga en Parquet ya va en el *release*);
 - prueba con `chromote` (la página recalcula una muestra en el navegador y coincide con R).
 

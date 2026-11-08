@@ -62,6 +62,11 @@ const esc = (fila) => S.valorDe(fila, datos.escala);
 const pct = (v) => S.porcentaje(v, t);
 const nombre = (geo, opciones) => S.nombreDe(geo, datos, t, ordenNatural, opciones);
 const olas = () => ({ desde: datos.olas.agrupadas[0], hasta: datos.olas.agrupadas[1] });
+// Marcas de Eurostat con su significado: «b (ruptura de serie), u (poca fiabilidad)»
+const textoMarcas = (bandera) => S.marcasDe(bandera)
+  .map((l) => (t.existe(`sobrecarga.marcas.${l}`) ? `${l} (${t(`sobrecarga.marcas.${l}`)})` : l)).join(', ');
+const marca = (bandera) => (S.marcasDe(bandera).length
+  ? el('sup', { class: 'sc-marca', title: textoMarcas(bandera) }, S.marcasDe(bandera).join('')) : null);
 
 // --- Arranque -----------------------------------------------------------------------------------
 
@@ -429,7 +434,7 @@ function pintarDetalle() {
     if (fila.n) lineas.push(`${t('sobrecarga.detalle.muestra', { n: t.numero(fila.n), h: t.numero(fila.hogares) })} · ${t(`vocabulario.fiabilidad.${fila.fiabilidad}`)}`);
   } else {
     lineas.push(`${t('sobrecarga.detalle.fuente_eurostat', { tabla: fila.tabla })} · ${t('sobrecarga.detalle.anio', { anio: v.anio })}`);
-    if (fila.bandera) lineas.push(t('sobrecarga.detalle.bandera', { b: fila.bandera }));
+    if (fila.bandera) lineas.push(t('sobrecarga.detalle.bandera', { b: textoMarcas(fila.bandera) }));
   }
   if (v.corte === 'total' && fila.nivel === 0) lineas.push(t('sobrecarga.detalle.nivel_pais'));
   if (v.corte === 'total' && fila.nivel === 1) lineas.push(t('sobrecarga.detalle.nivel_nuts1'));
@@ -483,7 +488,7 @@ function pintarEscalera() {
           el('span', { class: 'sc-barra', 'aria-hidden': 'true' },
             valor === null ? null : el('span', { style: `width:${((100 * valor) / maximo).toFixed(1)}%;background:${colores[tramo]}` }))),
         el('span', { class: `sc-etiqueta sc-etiqueta-${tipo}` }, t(`sobrecarga.escalera.etiquetas.${tipo}`)),
-        el('span', { class: 'sc-valor' }, pct(valor))));
+        el('span', { class: 'sc-valor' }, pct(valor), marca(fila.bandera))));
   };
   const cuerpo = $('sc-escalera-cuerpo');
   if (escaleraCompleta) {
@@ -516,6 +521,8 @@ function pintarSerie() {
   ].map((x) => ({
     ...x,
     valores: s.valores[x.clave].map((v) => (v === null ? null : v / datos.escala)),
+    marcas: s.marcas?.[x.clave] ?? [],
+    rupturas: S.rupturasDe(anios, s.marcas?.[x.clave]),
     nombre: `${t(`sobrecarga.serie.${x.zona}`)} · ${t(`sobrecarga.serie.${x.grupo}`)}`,
   }));
   // Ancho del dibujo = ancho del contenedor, para que el texto salga a su tamaño en el móvil
@@ -540,8 +547,19 @@ function pintarSerie() {
       grafico.append(svg('text', { class: 'texto-eje', x: x(a), y: alto - m.aba + 18, 'text-anchor': 'middle' }, String(a)));
     }
   });
+  // Cada serie se corta en sus rupturas (marca «b» de Eurostat): el primer año de la serie nueva
+  // lleva un punto hueco y la línea no lo une con el anterior
   for (const serie of series) {
-    grafico.append(svg('path', { class: `linea ${serie.clase}${serie.ue ? ' linea-ue' : ''}`, d: S.trazado(anios, serie.valores, x, y) }));
+    grafico.append(svg('path', {
+      class: `linea ${serie.clase}${serie.ue ? ' linea-ue' : ''}`, d: S.trazado(anios, serie.valores, x, y, serie.rupturas),
+    }));
+    for (const a of serie.rupturas) {
+      const v = serie.valores[anios.indexOf(a)];
+      if (v === null) continue;
+      const punto = svg('circle', { class: `ruptura ${serie.clase}`, cx: x(a), cy: y(v), r: 4.5 });
+      punto.append(svg('title', {}, `${serie.nombre}, ${a}: ${textoMarcas('b')}`));
+      grafico.append(punto);
+    }
   }
   // Etiquetas directas al final de cada línea, separadas para que no se pisen
   const finales = series.map((serie) => {
@@ -568,7 +586,7 @@ function pintarSerie() {
     guia.setAttribute('visibility', 'visible');
     globo.replaceChildren(el('p', { class: 'sc-globo-titulo' }, String(anios[i])), el('ul', {}, series.map((serie) => el('li', {},
       el('span', { class: `sc-trazo ${serie.grupo === 'mercado' ? 'sc-trazo-mercado' : ''} ${serie.ue ? 'sc-trazo-ue' : ''}`, 'aria-hidden': 'true' }),
-      el('b', {}, pct(serie.valores[i])), serie.nombre))));
+      el('b', {}, pct(serie.valores[i]), marca(serie.marcas[i])), serie.nombre))));
     globo.hidden = false;
     const izquierda = ((x(anios[i]) / ancho) * r.width) + 12;
     globo.style.left = `${Math.min(izquierda, r.width - globo.offsetWidth - 4)}px`;
@@ -583,11 +601,19 @@ function pintarSerie() {
     serie.nombre)));
   caja.replaceChildren(grafico, globo, leyenda);
 
+  // Notas: rupturas de serie y estimaciones de Eurostat, por serie
+  const lista = (clave, partes) => (partes.length ? t(clave, { lista: partes.join('; ') }) : null);
+  const rupturas = series.filter((serie) => serie.rupturas.length).map((serie) => `${serie.nombre}, ${serie.rupturas.join(', ')}`);
+  const estimados = series.map((serie) => [serie, S.tramosConMarca(anios, serie.marcas, 'e')]).filter(([, tr]) => tr.length)
+    .map(([serie, tr]) => `${serie.nombre}, ${tr.map(([a, b]) => (a === b ? a : `${a}–${b}`)).join(', ')}`);
+  $('sc-serie-notas').textContent = [lista('sobrecarga.serie.rupturas', rupturas), lista('sobrecarga.serie.estimados', estimados)]
+    .filter(Boolean).join(' ');
+
   // Tabla con todas las cifras
   $('sc-serie-tabla').querySelector('.sc-tabla-marco').replaceChildren(el('table', { class: 'sc-tabla' },
     el('thead', {}, el('tr', {}, el('th', { scope: 'col' }, t('sobrecarga.serie.anio')), series.map((serie) => el('th', { scope: 'col' }, serie.nombre)))),
     el('tbody', {}, anios.map((a, i) => el('tr', {}, el('th', { scope: 'row' }, String(a)),
-      series.map((serie) => el('td', {}, pct(serie.valores[i]))))))));
+      series.map((serie) => el('td', {}, pct(serie.valores[i]), marca(serie.marcas[i]))))))));
 }
 
 // --- Desgloses de España ------------------------------------------------------------------------
@@ -595,7 +621,10 @@ function pintarSerie() {
 const ORDEN_DESGLOSES = {
   tenencia: ['OWN_NL', 'OWN_L', 'OWN', 'RENT_MKT', 'RENT_FR', 'RENT'],
   edad: ['Y_LT18', 'Y18-64', 'Y_GE65', 'Y15-29'],
+  quintil: ['QU1', 'QU2', 'QU3', 'QU4', 'QU5'],
 };
+const etiquetaDesglose = (corte, grupo) =>
+  (corte === 'quintil' ? t(`sobrecarga.desgloses.quintiles.${grupo}`) : t(`vocabulario.${corte}.${grupo}`));
 
 // Lista de barras: cada elemento { texto, valor, nota, titulo, clase }; escala común `maximo`.
 function barras(items, maximo) {
@@ -623,12 +652,13 @@ function pintarDesgloses() {
     const grupos = ORDEN_DESGLOSES[corte]
       .map((g) => filas.find((f) => f.corte === corte && f.grupo === g))
       .filter(Boolean)
-      .map((f) => item(f, t(`vocabulario.${corte}.${f.grupo}`), f.grupo === 'RENT_MKT' ? 'sc-barras-mercado' : null));
+      .map((f) => item(f, etiquetaDesglose(corte, f.grupo), f.grupo === 'RENT_MKT' ? 'sc-barras-mercado' : null));
+    if (!grupos.length) return null;
     return el('div', { class: 'sc-desglose' },
       el('h3', {}, t(`sobrecarga.desgloses.${corte}`)),
       barras([...(total ? [item(total, t('sobrecarga.desgloses.total'), 'sc-barras-total')] : []), ...grupos], maximo));
   };
-  $('sc-desgloses').replaceChildren(bloque('tenencia'), bloque('edad'));
+  $('sc-desgloses').replaceChildren(...['tenencia', 'edad', 'quintil'].map(bloque).filter(Boolean));
 }
 
 // --- Módulo de acceso (indicador 23) ------------------------------------------------------------

@@ -78,6 +78,7 @@
           <p id="aviso-ejemplo" class="etiqueta-ejemplo aviso-mapa" hidden
              data-i18n="avisos.ejemplo" data-i18n-title="interfaz.ejemplo_nota">Datos de ejemplo</p>
           <p id="aviso-escala" class="aviso-escala" role="status" hidden data-i18n="interfaz.mapa.sin_dato_escala">Este mapa no tiene datos a esta escala: acerca el mapa.</p>
+          <p id="aviso-periodo" class="aviso-escala" role="status" hidden></p>
           <div id="leyenda" class="leyenda" hidden></div>
         </section>
       </div>
@@ -145,6 +146,15 @@
       <button id="compartir-cerrar" type="button" class="boton" data-i18n="interfaz.compartir.cerrar">Cerrar</button>
     </div>
     <p id="compartir-hecho" class="nota" aria-live="polite"></p>
+  </dialog>
+
+  <dialog id="aviso-imagen" class="dialogo" aria-labelledby="aviso-imagen-titulo" aria-describedby="aviso-imagen-texto">
+    <h2 id="aviso-imagen-titulo" class="tarjeta-titulo" data-i18n="interfaz.exportar.aviso_titulo">Descargar la imagen</h2>
+    <p id="aviso-imagen-texto"></p>
+    <div class="acciones">
+      <button id="aviso-imagen-no" type="button" class="boton boton-principal" data-i18n="interfaz.exportar.aviso_no">Cancelar</button>
+      <button id="aviso-imagen-si" type="button" class="boton" data-i18n="interfaz.exportar.aviso_si">Descargar la imagen</button>
+    </div>
   </dialog>
 
   <noscript>

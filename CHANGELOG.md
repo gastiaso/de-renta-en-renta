@@ -4,6 +4,31 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Decidido (8-nov-2026, preguntas abiertas 22–33; plan v0.26)
+
+- Sin modo daltónico en la v0.1: la rampa de seis pasos pasa `rampa_daltonismo`.
+- Web: aviso previo antes de descargar el PNG de «¿te llega?» con «Tu ficha»; viviendas turísticas (19) con dos decimales; «sin dato» y desde cuándo hay serie si el año es anterior a todos sus periodos.
+- Tabla larga: provincias y comunidades del 18 y el 19 con la cifra publicada por el INE; municipios y distritos de una sola sección sin SERPAVI, como `ausente`.
+- Sobrecarga: cifras de Eurostat con sus marcas (descarga autorizada por el autor, unos 0,4 MB); serie desde el primer año publicado, con las rupturas marcadas; cortes en `inventario/indicadores.csv`; Bosnia y Herzegovina con la geometría de NUTS 2024 y FI19_20 fuera; España por quintil de renta.
+- El CSV de secciones mantiene el nombre completo de la fuente.
+
+### Añadido (8-nov-2026, preguntas 22–33; plan v0.26)
+
+- **Comunidades y provincias del 18 y el 19** en la tabla larga, con la cifra publicada por el INE (tablas 59523 y 39365; el 19, en los seis periodos de las secciones) y los códigos de `geo/`: 71 filas del 18 y 426 del 19, todas `dato`. Ceuta y Melilla, como comunidad y como provincia. Funciones `territorios_ine_censo2021()`, `territorios_ine_vut()`, `territorios_vut()` y `sumar_territorios_ine()`; `nacional_ine_censo2021()` y `nacional_ine_vut()` quedan como envoltorios de España. Compuerta nueva `vut_territorios` (bloqueo, ±0,01 puntos; diferencia máxima, 0,0075); `censo2021_alquiler` y `censo2021_principales` se amplían a las comunidades.
+- **Quintil de renta en la sobrecarga** (España, olas 2023–2025): `calcular_sobrecarga_quintil()` con la renta disponible equivalente (HY020 ÷ HX240) y cortes ponderados por persona; objetivos `sobrecarga_quintil` y `validacion_quintil`; compuertas `sobrecarga_quintil_total` (bloqueo, ±0,01 puntos), `sobrecarga_quintil_reparto` (alerta, ±1 punto) y `sobrecarga_quintil_eurostat` (bloqueo, ±0,1 puntos: las 15 cifras de 2023–2025 frente a Eurostat, con 0,051 puntos como mucho). Consulta nueva de Eurostat, autorizada por el autor: `ilc_lvho07b` de España con sus marcas (4 KB), por la API JSON-stat con `httr2` (`descargar_eurostat_quintil()`), porque el paquete `eurostat` pierde las marcas al filtrar. En la web, tercer bloque de desgloses con la muestra de cada cifra.
+- **Marcas de Eurostat** en la consulta europea (`keepFlags`; descarga autorizada por el autor): ninguna de las 9.690 cifras cambia. La web las muestra junto a cada cifra, pinta con trama las «u» y corta la serie en las rupturas («b»: España, toda la población, 2008).
+- Web: aviso previo antes de descargar el PNG de «¿te llega?» con «Tu ficha» (`js/aviso_imagen.js`).
+
+### Cambiado (8-nov-2026, preguntas 22–33)
+
+- Web: viviendas turísticas (19) con dos decimales, decididos en la columna nueva `escala_web` de `inventario/indicadores.csv` (vacía, una décima). `exportar_web()` escribe cada serie con su escala y `comprobar_web()` la compara con su precisión (`web_valores`, `web_fichas`). España da 1,33 % en febrero de 2024 y 1,28 % en mayo de 2026, como el INE. La leyenda escribe los cortes con los decimales que necesitan.
+- Web: con un año anterior a toda la serie, `periodoPara()` ya no toma el último periodo: el mapa, la barra, la leyenda, la ficha, el comparador y las descargas dicen «sin dato» y desde cuándo hay serie.
+- SERPAVI: los 36 municipios de una sola sección que la base no trae, y sus 36 distritos, van como `ausente` (`completar_secciones_serpavi()`, ahora en los tres niveles del seccionado). +2.880 filas del SERPAVI y +1.012 de los derivados (21: 720; 15: 144; 14 en municipios: 148), todas `ausente`; ningún valor cambia y la web queda idéntica. `serpavi_seccionado` (bloqueo) y `serpavi_sin_fila` (alerta) dan una fila por nivel: 0, 0 y 0; 40, 36 y 36.
+- `exportar_i18n()` escribe los diccionarios en LF también en Windows.
+- Sobrecarga: la serie de España y de la UE-27 empieza en el primer año publicado (España, 2004; alquiler a precio de mercado, 2007; UE-27, 2010), sin constante en el código. Los cortes del mapa pasan a `cortes_web` del indicador 22 (`4;6;8;10;15|RENT_MKT=15;20;25;30;40`; fuera `CORTES_SOBRECARGA_WEB`). Bosnia y Herzegovina toma en 2022 y 2023 la geometría de NUTS 2024 (`version_geometria()`), y los países que NUTS 2021 no trae pasan al fondo del mapa de esos años: `web_sobrecarga_geometria`, a cero.
+- Tabla larga: 6.595.745 filas (+497 `dato` de comunidades y provincias y +3.892 `ausente` del SERPAVI y sus derivados). Datos de la web: 8.500 ficheros y 110,1 MB con el PMTiles; `web_valores` compara 360 ficheros.
+- Nota metodológica (castellano e inglés) al día con las preguntas 22–33: comunidades y provincias del 18 y el 19 (§7.2 y §7.3), municipios y distritos sin SERPAVI como `ausente` (§7.1), quintil de renta, marcas de Eurostat y serie desde 2004 en la sobrecarga (§7.5), viviendas turísticas con dos decimales, aviso antes del PNG y año fuera de la serie (§9.2), cuatro compuertas nuevas (§4.1) y tabla larga (§9.1). Las preguntas 34–36 se describen como funciona hoy el pipeline.
+
 ### Añadido (8-nov-2026, barra de la vista, España, sobrecarga y publicación; plan v0.25)
 
 - **Barra de la vista** encima del mapa: el mapa (los de `mapas` del manifiesto), el año o periodo de la serie que da color y la tipología de vivienda (colectiva por defecto; unifamiliar solo donde la serie tiene variante, sin mezclar), con el teclado y en la URL (`anio` admite `AAAA-MM`; `tipologia=VU`). En «¿te llega?», la tipología cambia el alquiler de todas las fichas. Aviso cuando la serie no llega al nivel que se ve (`js/barra_vista.js`).

@@ -12,7 +12,8 @@ ind_web <- tibble::tibble(
   unidad_es = c("€ por persona y año", "€ por m² y mes", "% del ingreso", "% de las viviendas",
                 "€ netos por mes", "%"),
   nucleo_v01 = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE),
-  cortes_web = c("10;20;30;40", "4;5.5;7;9", NA, "0.5;1;2.5;5", "700;900;1100;1500;2000", NA)
+  cortes_web = c("10;20;30;40", "4;5.5;7;9", NA, "0.5;1;2.5;5", "700;900;1100;1500;2000", NA),
+  escala_web = c(NA, NA, NA, 100, NA, NA)                         # el 19, con dos decimales
 )
 fila_web <- function(geo_id, nivel, anio, indicador, valor, estado = "dato", corte = "total", grupo = "total",
                      fuente = "prueba") {
@@ -28,8 +29,8 @@ larga_web <- bind_rows(
   fila_web("2800101001", "sc", 2024, "alquiler_m2", 12, corte = "tipologia", grupo = "VU"),
   fila_web("2800101001", "sc", 2024, "alquiler_m2", 7, corte = "tipologia_p25", grupo = "VC"),
   fila_web("2800101001", "sc", 2024, "barrera_acceso", 40, corte = "ficha", grupo = "tartera"),
-  fila_web(c("2800101001", "2800101002"), "sc", 2024, "viviendas_turisticas", c(1, 2), corte = "mes", grupo = "M02"),
-  fila_web(c("2800101001", "2800101002"), "sc", 2024, "viviendas_turisticas", c(3, 4), corte = "mes", grupo = "M11"),
+  fila_web(c("2800101001", "2800101002"), "sc", 2024, "viviendas_turisticas", c(1.234, 2), corte = "mes", grupo = "M02"),
+  fila_web(c("2800101001", "2800101002"), "sc", 2024, "viviendas_turisticas", c(3, 4.5678), corte = "mes", grupo = "M11"),
   fila_web("13", "ccaa", 2024, "sobrecarga", 7.2)
 )
 perfiles_prueba <- tibble::tibble(
@@ -47,6 +48,17 @@ test_that("valores × 10 con el redondeo de la guía y estados en cifras", {
   expect_equal(json_valores(matrix(c(1L, NA, 3L, 4L), 2), matrix(c("0", "3", "1", "0"), 2)),
                c('{"v":[1,3],"e":"01"}', '{"v":[null,4],"e":"30"}'))
   expect_equal(decimales_web(c("€ por mes", "€ por m² y mes", "% de los hogares")), c(0L, 1L, 1L))
+})
+
+test_that("escala propia (escala_web): dos decimales con escala 100 y el redondeo de la guía", {
+  expect_equal(escala_web(ind_web, c("viviendas_turisticas", "alquiler_m2", "no_existe")), c(100L, 10L, 10L))
+  expect_equal(escala_web(ind_web[, setdiff(names(ind_web), "escala_web")], "viviendas_turisticas"), 10L)
+  expect_error(escala_web(dplyr::mutate(ind_web, escala_web = c(NA, 50, NA, 100, NA, NA)), "alquiler_m2"), "50")
+  expect_error(escala_web(dplyr::mutate(ind_web, escala_web = c(NA, "cien", NA, 100, NA, NA)), "alquiler_m2"), "cien")
+  expect_equal(valor_web(c(1.234, 4.5678, NA, 0.15), 100), c(123L, 457L, NA, 15L))
+  expect_equal(valor_web(c(1.234, 1.234), c(10, 100)), c(12L, 123L))
+  expect_equal(redondeo_guia(c(1.234, 1.234), c(1, 2)), c(1.2, 1.23))
+  expect_equal(decimales_web(c("% de las viviendas", "€ por mes"), c(100, 10)), c(2L, 0L))
 })
 
 test_that("series: grupo por defecto con el código, variantes con «.grupo», meses como periodos y otros cortes fuera", {
@@ -81,10 +93,15 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_equal(unlist(r$anios), c(2020L, 2021L))
   expect_equal(unlist(r$niveles), c("sc", "municipio"))
   expect_equal(r$decimales, 0L)
+  expect_null(r$escala)                                                   # la general, la de codificacion
+  expect_equal(m$codificacion$escala, 10L)
   v <- m$indicadores$viviendas_turisticas
   expect_equal(unlist(v$periodos), c("2024-02", "2024-11"))
   expect_equal(v$ruta, "datos/{nivel}/viviendas_turisticas/{periodo}.json")
   expect_null(v$anios)
+  expect_equal(c(v$escala, v$decimales), c(100L, 2L))
+  expect_equal(m$mapas$viviendas_turisticas$decimales, 2L)
+  expect_equal(m$mapas$alquiler_m2$decimales, 1L)
   expect_equal(names(m$mapas)[1], "sueldo_necesario")
   expect_equal(m$mapas$sueldo_necesario[c("base", "formula")], list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo"))
   expect_equal(unlist(m$mapas$alquiler_m2$cortes), c(4, 5.5, 7, 9))
@@ -96,11 +113,12 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_equal(leer("sc/renta_persona/2020.json"), '{"v":[1,null,123],"e":"021"}')
   expect_equal(leer("sc/renta_persona/2021.json"), '{"v":[100,110,null],"e":"003"}')
   expect_equal(leer("municipio/renta_persona/2021.json"), '{"v":[null,null],"e":"33"}')
-  expect_equal(leer("sc/viviendas_turisticas/2024-11.json"), '{"v":[30,40,null],"e":"003"}')
+  expect_equal(leer("sc/viviendas_turisticas/2024-11.json"), '{"v":[300,457,null],"e":"003"}')   # × 100
   f <- jsonlite::fromJSON(file.path(dir, "datos/fichas/28001.json"), simplifyVector = FALSE)
   expect_equal(names(f$series), c("2800101001", "2800101002"))
   expect_equal(f$series$`2800101001`$renta_persona, list(v = list(1L, 100L), e = "00"))
   expect_equal(unlist(f$anios$viviendas_turisticas), c("2024-02", "2024-11"))
+  expect_equal(f$series$`2800101001`$viviendas_turisticas, list(v = list(123L, 300L), e = "00"))
   expect_equal(f$series_municipio$series$renta_persona, list(v = list(100L, NULL), e = "03"))
   expect_true("alquiler_m2" %in% names(f$anios))
   expect_false("alquiler_m2_vu" %in% names(f$anios))                     # las variantes no van en la ficha
@@ -117,12 +135,15 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_setequal(unique(c1$id), c("web_valores", "web_fichas", "web_fuera_indice"))
   expect_true(all(c1$calculado == 0))
 
-  # Un valor tocado y una sección borrada de su ficha: la compuerta los ve
+  # Un valor tocado, una serie de dos decimales escrita con una (× 10) y una sección borrada de su
+  # ficha: la compuerta los ve
   writeLines('{"v":[2,null,123],"e":"021"}', file.path(dir, "datos/sc/renta_persona/2020.json"))
+  writeLines('{"v":[30,46,null],"e":"003"}', file.path(dir, "datos/sc/viviendas_turisticas/2024-11.json"))
   f$series$`2800101002` <- NULL
   jsonlite::write_json(f, file.path(dir, "datos/fichas/28001.json"), auto_unbox = TRUE, null = "null")
   c2 <- comprobar_web(larga_web, ind_web, jer_web, ter_web, dir_web = dir)
   expect_equal(c2$calculado[c2$detalle == "datos/sc/renta_persona/2020.json"], 1)
+  expect_equal(c2$calculado[c2$detalle == "datos/sc/viviendas_turisticas/2024-11.json"], 2)
   expect_gt(c2$calculado[c2$id == "web_fichas" & c2$detalle == "28001"], 0)
   expect_equal(c2$calculado[c2$id == "web_fichas" & c2$detalle == "28002"], 0)
 })

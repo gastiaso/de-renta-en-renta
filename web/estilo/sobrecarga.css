@@ -178,6 +178,12 @@ html, body { height: auto; min-height: 100%; }
 .sc-serie .punto.serie-mercado { fill: var(--color-rojo); }
 .sc-serie .etiqueta-linea { fill: var(--color-tinta); font: 600 12px var(--fuente-tablero); }
 .sc-serie .guia { stroke: var(--color-tinta); stroke-width: 1; stroke-dasharray: 2 2; }
+/* Primer año tras una ruptura de serie (marca «b»): punto hueco del color de la línea */
+.sc-serie .ruptura { fill: var(--color-placa); stroke-width: 2; }
+.sc-serie .ruptura.serie-total { stroke: var(--color-tinta); }
+.sc-serie .ruptura.serie-mercado { stroke: var(--color-rojo); }
+/* Marcas de Eurostat junto a la cifra (b, u, e…) */
+.sc-marca { margin-left: 2px; color: var(--color-tenue); font: 600 0.7em var(--fuente-tablero); cursor: help; }
 .sc-serie .zona { fill: transparent; cursor: crosshair; }
 .sc-serie-leyenda { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 0; padding: 0; list-style: none; font-size: 0.85rem; }
 .sc-serie-leyenda li { display: inline-flex; align-items: center; gap: 6px; }
@@ -202,7 +208,7 @@ html, body { height: auto; min-height: 100%; }
 .sc-globo b { font-family: var(--fuente-tablero); font-variant-numeric: tabular-nums; }
 
 .sc-selector { margin-top: 8px; }
-.sc-desgloses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; margin-top: 10px; }
+.sc-desgloses { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 18px; margin-top: 10px; }
 .sc-desglose h3 { margin: 0 0 4px; font: 400 0.9rem var(--fuente-escritura); letter-spacing: 0.06em; }
 .sc-barras { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .sc-barras li { display: grid; grid-template-columns: minmax(0, 1fr) 3.6em; gap: 2px 8px; align-items: center; font-size: 0.85rem; }

@@ -6,7 +6,7 @@ import { leerEstado, guardarEstado, vistaATexto, textoAVista, leerSueldoComparti
 import { cargarIdioma, traducirPagina } from './i18n.js';
 import {
   cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarCajas,
-  cargarIndice, cargarValores, cargarSeries, valorDe, periodoPara, periodosDe,
+  cargarIndice, cargarValores, cargarSeries, valorDe, periodoPara, periodosDe, fueraDeSerie,
   serieDeTipologia, tipologiaDe,
 } from './datos.js';
 import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
@@ -25,7 +25,8 @@ import { ordenNatural } from './nombres.js';
 import { crearBarraVista } from './barra_vista.js';
 import { tablaCsv, textoCsv, nombreFichero, descargar, nivelParaExportar, decimalesDeEscala } from './exportar.js';
 import { imagenMapa } from './imagen.js';
-import { pasosDeRampa } from './colores.js';
+import { pasosDeRampa, decimalesDeCortes } from './colores.js';
+import { crearAvisoImagen } from './aviso_imagen.js';
 
 const estado = { idioma: 'es', ...leerEstado() };
 let sueldo = leerSueldoCompartido();   // solo en memoria; en el enlace, solo con «Compartir»
@@ -37,6 +38,7 @@ const el = {
   ficha: document.getElementById('ficha'),
   ejemplo: document.getElementById('aviso-ejemplo'),
   escala: document.getElementById('aviso-escala'),
+  periodo: document.getElementById('aviso-periodo'),
   idiomas: [...document.querySelectorAll('[data-idioma]')],
 };
 
@@ -52,6 +54,7 @@ let contornos;     // colores del contorno de cada tramo
 let panel;         // tarjeta «Tu sueldo»
 let barra;         // barra de la vista
 let compartir;     // diálogo «Compartir»
+let avisoImagen;   // aviso antes de la imagen de «¿te llega?» con «Tu ficha»
 const columnas = {};            // serie → { valores, estados, periodo, clave } del periodo activo
 let eligiendoComparada = false; // el siguiente clic en el mapa elige la sección con que comparar
 let turno = 0;                  // descarta cálculos superados por otro más reciente
@@ -68,7 +71,9 @@ const serieTipo = (serie) => serieDeTipologia(m, serie, estado.tipologia);
 const nivelesDe = (serie) => m.indicadores[serie]?.niveles ?? ['sc'];
 
 // Lo que se pinta, a partir del estado: modo, superficie, umbral, cálculo, mapa con la serie de
-// la tipología, series necesarias, periodo activo y tipología.
+// la tipología, series necesarias, periodo activo y tipología. Si el año elegido es anterior a
+// toda la serie que da color, `periodo` es null y `fuera` dice desde cuándo hay serie (pregunta
+// abierta 32); `referencia` es el periodo con que se buscan las demás series (comparador, llave).
 function vista() {
   const modo = modoDe(estado, sueldo, perfiles);
   const superficie = superficieDe(estado, sueldo, perfiles);
@@ -80,21 +85,31 @@ function vista() {
   const seriesColor = calculo ? calculo.series : [mapaTipo.base];
   // El periodo lo marca la serie que da color (la primera; en «¿te llega?», el alquiler).
   const periodo = periodoPara(m.indicadores[seriesColor[0]], estado.anio);
+  const fuera = fueraDeSerie(m.indicadores[seriesColor[0]], estado.anio);
   // En el sueldo necesario, las fichas de una persona y la llave van en la regla de la leyenda.
   const enSueldo = !calculo && def.formula === 'alquiler_m2_a_sueldo';
   const series = [...seriesColor];
   const renta = perfiles.llave?.ingreso.serie;
   if (enSueldo && renta && m.indicadores[renta]) series.push(renta);   // banda de la llave en la regla
   return {
-    modo, superficie, umbral, supuestos, calculo, mapa: mapaTipo, seriesColor, periodo, enSueldo,
-    tipologia: tipologiaDe(m, seriesColor[0]), series: [...new Set(series)],
+    modo, superficie, umbral, supuestos, calculo, mapa: mapaTipo, seriesColor, periodo, fuera,
+    referencia: periodo ?? estado.anio, enSueldo, tipologia: tipologiaDe(m, seriesColor[0]), series: [...new Set(series)],
   };
 }
 
+// «Sin datos de 2020: la serie empieza en febrero de 2024.»
+const textoFuera = (fuera) => t('interfaz.vista.fuera', { anio: t.periodo(fuera.anio), desde: t.periodo(fuera.desde) });
+
+// Columna vacía (todo sin dato) de una serie en un nivel que tiene, para un año anterior a la serie.
+const vacia = (serie, nivel, n) => (nivelesDe(serie).includes(nivel)
+  ? { valores: new Array(n).fill(null), estados: new Uint8Array(n).fill(indiceEstado('ausente')) }
+  : null);
+
 // Carga las series del periodo activo que falten, en cada nivel que pinta el mapa (secciones y,
-// con poco zoom, municipios y provincias), y las guarda en sus elementos.
+// con poco zoom, municipios y provincias), y las guarda en sus elementos. Una serie que no llega
+// al año pedido (empieza después) se pinta sin dato.
 const otrosNiveles = {};   // nivel → serie → clave cargada
-async function cargarColumnas(series, periodoActivo) {
+async function cargarColumnas(series, referencia) {
   await Promise.all(mapa.rellenos.map(async ({ capa, nivel }) => {
     const codigos = nivel === 'sc' ? secciones : await cargarIndice(m, nivel);
     if (!codigos) return;
@@ -102,11 +117,11 @@ async function cargarColumnas(series, periodoActivo) {
     await Promise.all(series.map(async (serie) => {
       const def = m.indicadores[serie];
       if (!def) return;
-      const periodo = periodoPara(def, periodoActivo);
+      const periodo = periodoPara(def, referencia);
       const clave = `${serie}@${periodo}`;
       const cargada = nivel === 'sc' ? columnas[serie]?.clave : otrosNiveles[nivel]?.[serie];
       if (cargada === clave) return;
-      const datos = await cargarValores(m, serie, nivel, periodo);
+      const datos = periodo === null ? vacia(serie, nivel, codigos.length) : await cargarValores(m, serie, nivel, periodo);
       if (!datos) return;
       if (nivel === 'sc') columnas[serie] = { ...datos, periodo, clave };
       else (otrosNiveles[nivel] ??= {})[serie] = clave;
@@ -155,32 +170,36 @@ function avisoAnios(v) {
 }
 
 // Barra de la vista: mapas del manifiesto (y, en «¿te llega?», esa opción delante), periodos de
-// la serie que da color y tipología.
+// la serie que da color (y, delante, el año elegido si es anterior a la serie) y tipología.
 function pintarBarra(v) {
   const llega = v.modo === 'llega';
   const mapas = Object.keys(m.mapas).map((id) => ({ valor: id, texto: t(`indicadores.${id}.nombre`) }));
   if (llega) mapas.unshift({ valor: '', texto: t('interfaz.vista.llega_opcion', { ficha: t(`fichas.${estado.ficha}`) }) });
+  const periodos = periodosDe(m.indicadores[v.seriesColor[0]]).map((p) => ({ valor: String(p), texto: t.periodo(p) }));
+  if (v.fuera) periodos.unshift({ valor: String(v.fuera.anio), texto: t('interfaz.vista.anio_fuera', { anio: t.periodo(v.fuera.anio) }) });
   barra.pintar({
     mapas,
     mapa: llega ? '' : estado.mapa,
-    periodos: periodosDe(m.indicadores[v.seriesColor[0]]).map((p) => ({ valor: String(p), texto: t.periodo(p) })),
-    periodo: String(v.periodo),
+    periodos,
+    periodo: String(v.periodo ?? v.fuera?.anio ?? ''),
     tipologia: v.tipologia,
   });
 }
 
-// Aviso cuando la serie del mapa no llega al nivel que se ve (por ejemplo, una serie solo por
-// sección con el mapa de toda España).
-function avisarEscala(v = vista()) {
+// Avisos sobre el mapa: el año es anterior a la serie (desde cuándo hay datos) o la serie no
+// llega al nivel que se ve (por ejemplo, una serie solo por sección con el mapa de toda España).
+function avisarMapa(v = vista()) {
   const nivel = mapa.nivelVisible();
-  el.escala.hidden = v.seriesColor.every((s) => nivelesDe(s).includes(nivel));
+  el.periodo.hidden = !v.fuera;
+  el.periodo.textContent = v.fuera ? textoFuera(v.fuera) : '';
+  el.escala.hidden = Boolean(v.fuera) || v.seriesColor.every((s) => nivelesDe(s).includes(nivel));
 }
 
 async function actualizar() {
   const yo = ++turno;
   const v = vista();
   pintarBarra(v);
-  await cargarColumnas(v.series, v.periodo);
+  await cargarColumnas(v.series, v.referencia);
   if (yo !== turno) return;
 
   for (const { capa, id } of mapa.rellenos) {
@@ -189,11 +208,12 @@ async function actualizar() {
       : colorLlega(v.calculo, id, paleta));
     mapa.colorear(capa, pintura(colores), pintura(contornos), capa === 'secciones' ? secretos(v.seriesColor) : null);
   }
-  avisarEscala(v);
+  avisarMapa(v);
 
   const leyenda = {
     modo: v.modo, mapaId: estado.mapa, mapaDef: v.mapa, superficie: v.supuestos.superficie_m2, umbral: v.umbral,
-    periodo: columnas[v.seriesColor[0]]?.periodo ?? v.periodo, tipologia: v.tipologia, conSupuestos: usaSupuestos(v.mapa),
+    periodo: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo, tipologia: v.tipologia,
+    conSupuestos: usaSupuestos(v.mapa), fuera: v.fuera ? textoFuera(v.fuera) : null,
   };
   let resumen = null;
   let detalle = null;
@@ -253,9 +273,9 @@ function pintarFicha(v = vista()) {
   }
   const { huecoSerie, huecoComparador } = fichaSeccion(el.ficha, {
     t, codigo, territorios, modo: v.modo, mapaId: estado.mapa, mapaDef: v.mapa, ficha: estado.ficha,
-    supuestos: v.supuestos, anio: columnas[v.seriesColor[0]]?.periodo ?? v.periodo, tipologia: v.tipologia,
-    valor, estado: peorEstado(v.seriesColor, i), estados: m.codificacion.estados, ejemplo: m.ejemplo,
-    aviso: avisoAnios(v), alCerrar: () => elegirSeccion(null),
+    supuestos: v.supuestos, anio: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo,
+    tipologia: v.tipologia, valor, estado: peorEstado(v.seriesColor, i), estados: m.codificacion.estados, ejemplo: m.ejemplo,
+    aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirSeccion(null),
   });
   const series = seriesDeSeccion(codigo, v).catch((error) => { console.error(error); return null; });
   series.then((s) => { if (yo === turnoFicha && s) pintarEvolucion(huecoSerie, s, v, codigo); });
@@ -309,7 +329,7 @@ async function pintarComparadorFicha(hueco, seriesA, v, codigo, yo) {
   const eleccion = eligiendoComparada || esSeccion(estado.comparar) ? 'seccion' : estado.comparar ?? '';
   const comparado = estado.comparar && !eligiendoComparada ? codigoComparado(codigo, estado.comparar, territorios) : null;
   const filas = comparado
-    ? await filasComparador({ m, seccion: codigo, comparado, anio: v.periodo, supuestos: v.supuestos, seriesA, serieDe: serieTipo })
+    ? await filasComparador({ m, seccion: codigo, comparado, anio: v.referencia, supuestos: v.supuestos, seriesA, serieDe: serieTipo })
     : null;
   if (yo !== turnoFicha) return;
   pintarComparador(hueco, {
@@ -358,15 +378,17 @@ function fuentesDe(series, calculado) {
 }
 
 // CSV de la serie del mapa en el nivel que se ve. En «¿te llega?», el alquiler que usa el mapa
-// (sin el ingreso: con «Tu ficha», es el sueldo escrito por el usuario).
+// (sin el ingreso: con «Tu ficha», es el sueldo escrito por el usuario). Con un año anterior a la
+// serie, las filas van sin valor y el estado dice desde cuándo hay serie.
 async function exportarCsv(v) {
   const serie = v.seriesColor[0];
   const def = m.indicadores[serie];
   const derivado = v.modo === 'necesario' && usaSupuestos(v.mapa);
   const id = v.modo === 'necesario' ? estado.mapa : def.indicador ?? def.por_defecto ?? serie;
   const nivel = nivelParaExportar(mapa.nivelVisible(), nivelesDe(serie));
-  const periodo = periodoPara(def, v.periodo);
-  const [codigos, datos] = await Promise.all([cargarIndice(m, nivel), cargarValores(m, serie, nivel, periodo)]);
+  const periodo = v.fuera ? v.fuera.anio : v.periodo;
+  const codigos = await cargarIndice(m, nivel);
+  const datos = v.fuera ? vacia(serie, nivel, codigos?.length ?? 0) : await cargarValores(m, serie, nivel, periodo);
   if (!codigos || !datos) throw new Error(`Sin datos de ${serie} en ${nivel} (${periodo})`);
   const formula = derivado ? formulaDe(v.mapa) : null;
   const { cabecera, filas } = tablaCsv({
@@ -378,6 +400,7 @@ async function exportarCsv(v) {
     transformar: formula ? (x) => formula.calcular(x, v.supuestos) : null,
     decimales: decimalesDeEscala(m.indicadores[serie]?.escala ?? m.codificacion.escala),
     supuestos: derivado ? v.supuestos : null,
+    desde: v.fuera ? v.fuera.desde : null,
   });
   const nombre = nombreFichero({ mapa: id, periodo, tipologia: v.tipologia, nivel, extension: 'csv' });
   descargar(new Blob([textoCsv(cabecera, filas)], { type: 'text/csv;charset=utf-8' }), nombre);
@@ -385,10 +408,11 @@ async function exportarCsv(v) {
 }
 
 // PNG del mapa tal como se ve, con su leyenda y la fuente. Con «Tu ficha», el ingreso se nombra
-// sin la cifra.
+// sin la cifra. Con un año anterior a la serie, el mapa sale sin dato y el subtítulo dice desde
+// cuándo hay serie.
 async function exportarPng(v) {
   const llega = v.modo === 'llega';
-  const periodo = columnas[v.seriesColor[0]]?.periodo ?? v.periodo;
+  const periodo = v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo;
   const titulo = llega ? `${t('interfaz.leyenda.llega_titulo')} · ${t(`fichas.${estado.ficha}`)}` : t(`indicadores.${estado.mapa}.nombre`);
   const partes = [];
   if (llega) {
@@ -396,6 +420,7 @@ async function exportarPng(v) {
     partes.push(t('interfaz.leyenda.llega_sub', { vivienda, ingreso }));
   } else partes.push(t(`indicadores.${estado.mapa}.unidad`));
   partes.push(t.periodo(periodo));
+  if (v.fuera) partes.push(t('interfaz.exportar.estados.fuera', { desde: t.periodo(v.fuera.desde) }));
   if (v.tipologia) partes.push(t(`vocabulario.tipologia.${v.tipologia}`));
   if (!llega && usaSupuestos(v.mapa)) partes.push(t('interfaz.leyenda.supuestos', { superficie: t.numero(v.supuestos.superficie_m2), umbral: t.porcentaje(v.umbral) }));
   if (llega) partes.push(t('interfaz.exportar.umbral', { umbral: t.porcentaje(v.umbral) }));
@@ -405,7 +430,7 @@ async function exportarPng(v) {
     : {
       tipo: 'tramos',
       colores: pasosDeRampa(v.mapa.cortes.length + 1, colores.rampa.length).map((i) => colores.rampa[i]),
-      etiquetas: v.mapa.cortes.map((corte) => t.numero(corte, v.mapa.decimales ?? 0)),
+      etiquetas: v.mapa.cortes.map((corte) => t.numero(corte, decimalesDeCortes(v.mapa.cortes, v.mapa.decimales ?? 0))),
     };
   const calculado = llega || usaSupuestos(v.mapa);
   const blob = await imagenMapa({
@@ -427,6 +452,14 @@ async function exportarPng(v) {
 
 async function exportar(formato) {
   if (!mapa) return;
+  // Pregunta abierta 23: con «Tu ficha», los colores de la imagen dejan deducir el sueldo de forma
+  // aproximada; antes de descargarla, el mismo aviso que con «Compartir». El CSV no lo necesita.
+  if (formato === 'png' && vista().modo === 'llega' && estado.ficha === 'peon') {
+    if (!(await avisoImagen.pedir({ t, sueldo: ingresoPeon(sueldo) }))) {
+      barra.avisar(t('interfaz.exportar.cancelado'));
+      return;
+    }
+  }
   const v = vista();
   barra.ocupado(formato, true);
   barra.avisar(t('interfaz.exportar.preparando'));
@@ -547,6 +580,7 @@ async function iniciar() {
   panel.ponerSueldo(sueldo);
   barra = crearBarraVista({ alCambiar: alCambiarVista, alExportar: exportar });
   compartir = crearCompartir();
+  avisoImagen = crearAvisoImagen();
 
   try {
     m = await cargarManifiesto();
@@ -568,7 +602,7 @@ async function iniciar() {
         alMover: (mp) => {
           estado.vista = vistaATexto(mp);
           guardarEstado(estado);
-          if (mapa) avisarEscala();
+          if (mapa) avisarMapa();
         },
       }),
     ]);

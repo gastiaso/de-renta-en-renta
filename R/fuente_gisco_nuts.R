@@ -16,16 +16,27 @@ descargar_gisco_nuts <- function(version, dir = file.path("datos", "brutos", "gi
 # Versión NUTS de cada año de ilc_lvho07_r: NUTS 2021 hasta 2023 y NUTS 2024 desde 2024.
 version_nuts <- function(anio) ifelse(anio >= 2024, "2024", "2021")
 
-# Comprobación nuts_geometria: cada región con dato tiene geometría en la versión de su año.
-# Devuelve una fila por año con el número de códigos sin geometría.
+# Versión de la que sale la geometría de cada código: la de su año y, si no lo trae, la primera
+# versión posterior que lo tenga (respaldo; pregunta abierta 29: Bosnia y Herzegovina, que NUTS 2021
+# no incluye, toma la de NUTS 2024). NA si ninguna lo tiene. `codigos`: lista con nombre de versión.
+version_geometria <- function(geo, version, codigos) {
+  versiones <- sort(names(codigos))
+  vapply(seq_along(geo), function(i) {
+    candidatas <- versiones[versiones >= version[i]]
+    con <- candidatas[vapply(candidatas, function(v) geo[i] %in% codigos[[v]], TRUE)]
+    if (length(con)) con[1] else NA_character_
+  }, "")
+}
+
+# Comprobación nuts_geometria: cada región con dato tiene geometría en la versión de su año o,
+# como respaldo, en una posterior (version_geometria()). Devuelve una fila por año con el número
+# de códigos sin geometría (los agrupados, como FI19_20, no la tienen en ninguna).
 comprobar_geometrias_nuts <- function(europa, rutas_nuts) {
   codigos <- lapply(rutas_nuts, function(r) sf::st_drop_geometry(sf::st_read(r, quiet = TRUE))$NUTS_ID)
   reg <- filter(europa, conjunto == "ilc_lvho07_r") |> distinct(anio, geo)
   reg |>
-    mutate(version = version_nuts(anio)) |>
-    rowwise() |>
-    mutate(sin_geometria = !geo %in% codigos[[version]]) |>
-    ungroup() |>
+    mutate(version = version_nuts(anio),
+           sin_geometria = is.na(version_geometria(geo, version, codigos))) |>
     group_by(anio) |>
     summarise(calculado = sum(sin_geometria), faltan = paste(geo[sin_geometria], collapse = " "), .groups = "drop") |>
     transmute(id = "nuts_geometria", anio, detalle = if_else(faltan == "", "todas", faltan),

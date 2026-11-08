@@ -47,7 +47,10 @@
       "tipologia": "Housing",
       "vc": "Flats",
       "vu": "Houses",
-      "llega_opcion": "Can you make rent? · {ficha}"
+      "llega_opcion": "Can you make rent? · {ficha}",
+      "anio_fuera": "{anio} (no data)",
+      "fuera": "No data for {anio}: the series starts in {desde}.",
+      "desde": "series from {desde}"
     },
     "leyenda": {
       "sin_dato": "No data",
@@ -117,6 +120,11 @@
       "umbral": "{umbral} threshold",
       "fuente": "Source: {fuente}.",
       "pie": "Base map: {atribucion}. De renta en renta, data as of {fecha}.",
+      "cancelado": "Download cancelled.",
+      "aviso_titulo": "Download the image",
+      "aviso_tu_ficha": "The image does not carry the pay figure, but its colours let it be worked out roughly: they mark where rent goes over 30% and 40% of €{sueldo} net a month.",
+      "aviso_si": "Download the image",
+      "aviso_no": "Cancel",
       "columnas": {
         "codigo": "code",
         "nombre": "name",
@@ -135,7 +143,8 @@
         "dato": "data",
         "estimado": "estimated",
         "secreto": "statistical confidentiality",
-        "ausente": "no data"
+        "ausente": "no data",
+        "fuera": "no data: the series starts in {desde}"
       }
     },
     "ficha": {
@@ -235,7 +244,7 @@
       "o_mas": "{x}% or more",
       "sin_dato": "No data",
       "grueso": "Country or NUTS 1 figure",
-      "muestra": "Small sample (20 to 49 observations)"
+      "muestra": "Small sample or low reliability (EU-SILC: 20 to 49 observations; Eurostat flag «u»)"
     },
     "detalle": {
       "region": "Selected area",
@@ -278,19 +287,30 @@
       "espana": "Spain",
       "ue27": "EU-27",
       "anio": "Survey",
-      "fuente": "Eurostat (ilc_lvho07a, ilc_lvho07c). From 2023 to 2025, the calculation from EU-SILC microdata reproduces these figures (±0.1 points).",
+      "fuente": "Eurostat (ilc_lvho07a, ilc_lvho07c), from the first year published: for Spain, the whole population since 2004 and market-rate renting since 2007; the EU-27, since 2010. From 2023 to 2025, the calculation from EU-SILC microdata reproduces these figures (±0.1 points).",
+      "rupturas": "Break in series (Eurostat flag «b»; hollow point and broken line): {lista}. Figures before and after are not fully comparable.",
+      "estimados": "Eurostat estimates (flag «e»): {lista}.",
       "tabla": "Show the figures",
       "grafico": "Overburden rate in Spain and the EU-27, whole population and market-rate renting, {desde}–{hasta}"
     },
     "desgloses": {
-      "titulo": "Spain by tenure and age",
+      "titulo": "Spain by tenure, age and income",
       "subtitulo": "EU-SILC microdata, own calculation · each figure with its sample",
       "anio": "Survey",
       "tenencia": "By tenure status",
       "edad": "By age",
+      "quintil": "By income quintile",
       "total": "Whole population",
       "muestra_corta": "{n} people",
-      "nota": "The under-18 and 15-to-29 groups overlap. «Owner» and «Tenant or rent-free» combine Eurostat’s categories."
+      "nota": "The under-18 and 15-to-29 groups overlap. «Owner» and «Tenant or rent-free» combine Eurostat’s categories.",
+      "nota_quintil": "Quintiles of equivalised disposable income (household income divided by its consumption units, modified OECD scale) of the whole population, weighted by person. Spain only: no quintile by country or by autonomous community.",
+      "quintiles": {
+        "QU1": "First quintile (lowest-income 20%)",
+        "QU2": "Second quintile",
+        "QU3": "Third quintile",
+        "QU4": "Fourth quintile",
+        "QU5": "Fifth quintile (highest-income 20%)"
+      }
     },
     "comunidades": {
       "titulo": "Communities on the map: figure and sample",
@@ -308,7 +328,8 @@
       "hipoteca": "Only mortgage interest counts, not capital repayments.",
       "renta": "Income refers to the year before the survey: the 2025 survey records 2024 incomes.",
       "muestra": "No confidence intervals: the public microdata do not include the sample design. Each INE figure carries its number of observations and the EU-SILC reliability flag: not published below 20; hatched from 20 to 49.",
-      "compuerta": "The calculation reproduces Eurostat’s figures for Spain, each autonomous community, market-rate tenants and each age group (±0.1 points)."
+      "compuerta": "The calculation reproduces Eurostat’s figures for Spain, each autonomous community, market-rate tenants and each age group (±0.1 points).",
+      "marcas": "Eurostat figures carry their flags next to the value: b, break in series; u, low reliability (hatched on the map); e, estimate; p, provisional."
     },
     "acceso": {
       "titulo": "Those who cannot get in",
@@ -328,6 +349,13 @@
         "condiciones": "The conditions to rent or buy were not met",
         "otras": "Other reasons"
       }
+    },
+    "marcas": {
+      "b": "break in series",
+      "u": "low reliability",
+      "e": "estimate",
+      "p": "provisional",
+      "d": "different definition"
     },
     "otras_cifras": {
       "titulo": "Why it differs from other figures",
@@ -566,7 +594,7 @@
     "ine_padron_sc": "Population by census tract (annual population census; municipal register)",
     "ine_ecv": "Living Conditions Survey, EU-SILC (microdata)",
     "ine_ecv_modulo": "Living Conditions Survey 2025: housing access difficulties module (tables)",
-    "eurostat_ilc_lvho07": "Housing cost overburden rate (ilc_lvho07a, ilc_lvho07c)",
+    "eurostat_ilc_lvho07": "Housing cost overburden rate (ilc_lvho07a, ilc_lvho07b, ilc_lvho07c)",
     "eurostat_ilc_lvho07_r": "Housing cost overburden rate by NUTS 2 region (ilc_lvho07_r)",
     "eurostat_nuts": "NUTS 2021 and 2024 boundaries (Nuts2json / GISCO)",
     "eustat_nastat": "Income indicators for the Basque Country (Eustat) and Navarre (Nastat)",

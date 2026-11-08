@@ -114,11 +114,27 @@ test('nombres: comunidades en orden natural, países y UE-27 del diccionario, re
   assert.equal(S.porcentaje(null, t), '—');
 });
 
+test('marcas de Eurostat: letras, poca fiabilidad, rupturas y tramos de estimaciones', () => {
+  assert.deepEqual(S.marcasDe('bu'), ['b', 'u']);
+  assert.deepEqual(S.marcasDe(null), []);
+  assert.ok(S.pocoFiable({ bandera: 'u' }) && S.pocoFiable({ fiabilidad: 'baja' }));
+  assert.ok(!S.pocoFiable({ bandera: 'b', fiabilidad: 'normal' }));
+  const anios = [2008, 2009, 2010, 2011, 2012, 2013];
+  const marcas = ['b', null, 'e', 'e', null, 'be'];
+  assert.deepEqual(S.rupturasDe(anios, marcas), [2008, 2013]);
+  assert.deepEqual(S.rupturasDe(anios), []);
+  assert.deepEqual(S.tramosConMarca(anios, marcas, 'e'), [[2010, 2011], [2013, 2013]]);
+  const v = { corte: 'total', filas: [{ geo: 'PL41', bloque: 'europa', nivel: 2, bandera: 'u' }, { geo: 'ES30', bloque: 'comunidad', fiabilidad: 'normal' }] };
+  assert.deepEqual(S.conMuestraPequena(v), ['PL41']);
+});
+
 test('serie: trazado con huecos, techo del eje y etiquetas que no se pisan', () => {
   const x = S.escalaLineal(2020, 2022, 0, 100);
   const y = S.escalaLineal(0, 10, 100, 0);
   assert.equal(S.trazado([2020, 2021, 2022], [5, null, 10], x, y), 'M0.0,50.0M100.0,0.0');
   assert.equal(S.trazado([2020, 2021], [5, 6], x, y), 'M0.0,50.0L50.0,40.0');
+  // Una ruptura corta la línea: el año de la ruptura empieza un tramo nuevo
+  assert.equal(S.trazado([2020, 2021, 2022], [5, 6, 7], x, y, [2021]), 'M0.0,50.0M50.0,40.0L100.0,30.0');
   assert.equal(S.techoEje([[7.2, 26.8], [null, 47.5]]), 50);
   assert.equal(S.techoEje([[null]]), 10);
   const ys = S.separarEtiquetas([100, 104, 30, 102], 14, 0, 110);
@@ -164,6 +180,21 @@ test('exportación del pipeline: vistas, escalera, muestra y geometrías', { ski
       for (let i = 0; i < c.length; i += 2) assert.ok(c[i] >= o - 0.01 && c[i] <= e + 0.01 && c[i + 1] >= s - 0.01 && c[i + 1] <= n + 0.01);
     }
   }
-  assert.equal(d.espana.serie.anios.length, Object.values(d.espana.serie.valores)[0].length);
+  // Serie desde el primer año publicado, con una marca (o null) por año en cada serie
+  const s = d.espana.serie;
+  for (const clave of Object.keys(s.valores)) {
+    assert.equal(s.valores[clave].length, s.anios.length, clave);
+    assert.equal(s.marcas[clave].length, s.anios.length, `${clave}: marcas`);
+  }
+  const primero = Math.min(...Object.values(s.valores).map((v) => s.anios[v.findIndex((x) => x !== null)]));
+  assert.equal(s.anios[0], primero);
+  // Cortes del mapa: de 1 a 5 crecientes por grupo
+  for (const [grupo, c] of Object.entries(d.cortes)) {
+    assert.ok(c.length >= 1 && c.length <= 5 && c.every((x, i) => i === 0 || x > c[i - 1]), grupo);
+  }
+  // Quintiles de España: cinco por ola, con su muestra
+  const quintiles = d.espana.anual.filter((f) => f.corte === 'quintil');
+  assert.equal(quintiles.length, 5 * d.olas.anuales.length);
+  assert.ok(quintiles.every((f) => Number.isInteger(f.n) && f.fiabilidad));
   assert.ok(d.modulo.ccaa.length === 19 && d.modulo.razones.some((r) => r.grupo === 'precio'));
 });

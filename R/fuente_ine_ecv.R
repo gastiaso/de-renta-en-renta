@@ -62,7 +62,8 @@ obtener_csv_ine_ecv <- function(anio, ficheros = c("d", "r", "h"),
 # Lee las variables necesarias para la sobrecarga.
 # Hogar (Td + Th): DB040 región NUTS 2, DB090 factor del hogar, HH021 tenencia,
 #   HH070 gasto total mensual en vivienda (de la hipoteca, solo intereses),
-#   HY020 renta disponible del año anterior, HY070G ayudas a la vivienda.
+#   HY020 renta disponible del año anterior, HY070G ayudas a la vivienda, HX240 unidades de
+#   consumo (escala de la OCDE modificada; solo para los quintiles de renta).
 # Persona (Tr): RB030 identificador (hogar + dos dígitos de orden), RB050 factor de la persona.
 leer_ine_ecv <- function(rutas) {
   ruta <- function(letra) {
@@ -76,7 +77,7 @@ leer_ine_ecv <- function(rutas) {
                     progress = FALSE)
   }
   d <- leer(ruta("d"), c("DB010", "DB030", "DB040", "DB090"))
-  h <- leer(ruta("h"), c("HB030", "HH021", "HH070", "HY020", "HY070G"))
+  h <- leer(ruta("h"), c("HB030", "HH021", "HH070", "HY020", "HY070G", "HX240"))
   r <- leer(ruta("r"), c("RB030", "RB050", "RB081"))
 
   hogares <- d |>
@@ -89,7 +90,8 @@ leer_ine_ecv <- function(rutas) {
       tenencia           = as.integer(HH021),
       gasto_vivienda_mes = as.numeric(HH070),
       renta_disponible   = as.numeric(HY020),
-      ayuda_vivienda     = as.numeric(HY070G)
+      ayuda_vivienda     = as.numeric(HY070G),
+      unidades_consumo   = as.numeric(HX240)   # escala de la OCDE modificada (quintiles de renta)
     )
   if (nrow(hogares) != nrow(d)) stop("Td y Th no casan hogar a hogar", call. = FALSE)
 
@@ -173,6 +175,85 @@ calcular_sobrecarga_ecv <- function(ecv, umbral = 0.40) {
     mutate(anio = unique(ecv$hogares$anio), indicador = "sobrecarga", umbral = umbral, .before = 1)
 }
 
+# Quintiles de renta (pregunta abierta 31). Renta disponible equivalente de cada persona: HY020
+# entre las unidades de consumo de su hogar (HX240). Los ficheros del INE no traen HX090 ni el factor
+# HY025 (sin él, 1), así que es la definición de Eurostat. Puntos de corte del 20, 40, 60 y 80 %
+# con el factor de cada persona (RB050), sobre toda la población con renta, no solo la que tiene
+# cociente de sobrecarga. Una renta igual a un corte va al quintil de abajo. Códigos de Eurostat.
+QUINTILES_RENTA <- c("QU1", "QU2", "QU3", "QU4", "QU5")
+
+# Cuantiles ponderados: el menor valor cuyo peso acumulado llega a cada proporción de `p`.
+cuantil_ponderado <- function(x, peso, p) {
+  o <- order(x)
+  x <- x[o]
+  acumulado <- cumsum(peso[o]) / sum(peso)
+  vapply(p, function(q) x[which(acumulado >= q - 1e-12)[1]], numeric(1))
+}
+
+# Quintil de cada persona (id_persona, quintil, peso_persona).
+quintil_renta <- function(ecv) {
+  p <- ecv$personas |>
+    inner_join(select(ecv$hogares, id_hogar, renta_disponible, unidades_consumo), by = "id_hogar") |>
+    mutate(renta_equivalente = renta_disponible / unidades_consumo) |>
+    filter(!is.na(renta_equivalente), is.finite(renta_equivalente), !is.na(peso_persona))
+  cortes <- cuantil_ponderado(p$renta_equivalente, p$peso_persona, c(0.2, 0.4, 0.6, 0.8))
+  p |>
+    transmute(id_persona, peso_persona,
+              quintil = QUINTILES_RENTA[findInterval(renta_equivalente, cortes, left.open = TRUE) + 1L])
+}
+
+# Tasa de sobrecarga de España por quintil de renta, una ola: con la muestra y la marca de
+# EU-SILC, `poblacion` (% de toda la población con renta en el quintil: en torno al 20 %) y `peso`
+# (suma de factores de las personas con cociente, para rehacer la tasa total en la compuerta).
+calcular_sobrecarga_quintil <- function(ecv, umbral = 0.40) {
+  q <- quintil_renta(ecv)
+  reparto <- q |>
+    group_by(grupo = quintil) |>
+    summarise(poblacion = 100 * sum(peso_persona) / sum(q$peso_persona), .groups = "drop")
+  p <- personas_sobrecarga(ecv, umbral) |> inner_join(select(q, id_persona, quintil), by = "id_persona")
+  pesos <- p |> group_by(grupo = quintil) |> summarise(peso = sum(peso_persona), .groups = "drop")
+  tasa_sobrecarga(p, "quintil", p$quintil) |>
+    select(-ambito) |>
+    left_join(pesos, by = "grupo") |>
+    left_join(reparto, by = "grupo") |>
+    mutate(fiabilidad = fiabilidad_eusilc(n_personas), anio = unique(ecv$hogares$anio), indicador = "sobrecarga",
+           umbral = umbral, .before = 1) |>
+    arrange(anio, grupo)
+}
+
+# Compuerta del quintil (referencias sobrecarga_quintil_total y sobrecarga_quintil_reparto):
+#   la media de las tasas de los cinco quintiles, ponderada por sus personas con cociente,
+#   reproduce la tasa total de la ola (ninguna persona se pierde ni se cuenta dos veces); con
+#   menos de cinco quintiles, sin cifra (falla);
+#   cada quintil reúne en torno al 20 % de la población con renta;
+#   con `eurostat` (leer_eurostat_quintil()), la tasa de cada quintil y ola frente a la de
+#   Eurostat del mismo año (sobrecarga_quintil_eurostat). Sin cifra de Eurostat para una ola, para.
+comprobar_sobrecarga_quintil <- function(quintil, sobrecarga, eurostat = NULL) {
+  total <- sobrecarga |> filter(corte == "total") |> select(anio, referencia = valor)
+  media <- quintil |>
+    group_by(anio) |>
+    summarise(calculado = if (n() == 5L) sum(valor * peso) / sum(peso) else NA_real_, n = n(), .groups = "drop") |>
+    left_join(total, by = "anio")
+  publicado <- NULL
+  if (!is.null(eurostat)) {
+    ref <- eurostat |> filter(geo == "ES") |> select(anio, grupo = quintil, referencia = valor)
+    publicado <- quintil |> select(anio, grupo, calculado = valor) |> left_join(ref, by = c("anio", "grupo"))
+    sin_ref <- unique(publicado$anio[is.na(publicado$referencia)])
+    if (length(sin_ref) > 0) {
+      stop("Eurostat no publica todav\u00eda la sobrecarga de Espa\u00f1a por quintil de renta (ilc_lvho07b) de ",
+           paste(sin_ref, collapse = ", "), ": no hay referencia para la compuerta", call. = FALSE)
+    }
+    publicado <- transmute(publicado, id = "sobrecarga_quintil_eurostat", anio, detalle = paste("ES,", grupo),
+                           calculado, referencia)
+  }
+  bind_rows(
+    media |> transmute(id = "sobrecarga_quintil_total", anio, detalle = paste("media ponderada de", n, "quintiles"),
+                       calculado, referencia),
+    quintil |> transmute(id = "sobrecarga_quintil_reparto", anio, detalle = grupo, calculado = poblacion, referencia = 20),
+    publicado
+  )
+}
+
 # Varias olas agrupadas para los cruces que una sola ola no sostiene (comunidad × tenencia,
 # comunidad × edad; plan §7, F1b). Cada ola pesa lo mismo: su factor se divide por el número
 # de olas. Fiabilidad según la convención de EU-SILC: con menos de 20 observaciones no se
@@ -219,7 +300,7 @@ comprobar_sobrecarga_anio <- function(sobrecarga, eurostat, europa = NULL) {
     referencia = c(referencia("ilc_lvho07a", "ES"), referencia("ilc_lvho07c", "ES", "RENT_MKT"))
   )
   if (anyNA(nacional$referencia)) {
-    stop("Eurostat no publica todavía la sobrecarga de España de ", anio_ecv,
+    stop("Eurostat no publica todav\u00eda la sobrecarga de Espa\u00f1a de ", anio_ecv,
          ": no hay referencia para la compuerta", call. = FALSE)
   }
   regiones <- filter(sobrecarga, corte == "region")
@@ -230,8 +311,8 @@ comprobar_sobrecarga_anio <- function(sobrecarga, eurostat, europa = NULL) {
     referencia = vapply(regiones$grupo, function(g) referencia("ilc_lvho07_r", g), numeric(1))
   )
   if (all(is.na(regional$referencia))) {
-    message("Eurostat no publica todavía ilc_lvho07_r de ", anio_ecv,
-            ": la comprobación por comunidades queda pendiente")
+    message("Eurostat no publica todav\u00eda ilc_lvho07_r de ", anio_ecv,
+            ": la comprobaci\u00f3n por comunidades queda pendiente")
     regional <- regional[0, ]
   }
   sin_ref <- regional$detalle[is.na(regional$referencia)]

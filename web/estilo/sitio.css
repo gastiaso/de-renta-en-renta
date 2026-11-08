@@ -393,6 +393,8 @@ body {
 .leyenda-muestra { display: inline-block; flex: none; width: 14px; height: 14px; }
 .leyenda-sin-dato { background: var(--color-fuera); border: 1px solid var(--color-tenue); }
 .leyenda-supuestos { margin: 6px 0 0; color: var(--color-tenue); }
+/* Año anterior a toda la serie: sin dato y desde cuándo hay serie (pregunta abierta 32) */
+.leyenda-fuera { margin: 0 0 6px; font-weight: 600; }
 
 /* Ficha de sección: escritura */
 .ficha-cabecera {

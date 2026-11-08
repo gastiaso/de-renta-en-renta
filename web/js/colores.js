@@ -18,6 +18,14 @@ export function pasosDeRampa(tramos, pasos) {
 // Clases .tramo-N de tokens.css de cada tramo de un mapa (N desde 1, como los pasos de la rampa).
 export const clasesTramos = (tramos, pasos) => pasosDeRampa(tramos, pasos).map((i) => `tramo-${i + 1}`);
 
+// Decimales de las etiquetas de los cortes (leyenda e imagen): los que necesiten los cortes, sin
+// pasar de los del mapa y, si el mapa lleva decimales, al menos uno. Con dos decimales (las
+// viviendas turísticas, pregunta abierta 24), «0,5 · 1,0 · 2,5 · 5,0», no «0,50 · 1,00…».
+export function decimalesDeCortes(cortes, decimales = 0) {
+  const necesarios = Math.max(0, ...cortes.map((c) => (String(c).split('.')[1] ?? '').length));
+  return Math.min(decimales, Math.max(Math.min(decimales, 1), necesarios));
+}
+
 // Contraste WCAG 2 entre dos colores «#rrggbb» (como contraste_wcag() en R/web_estilo.R).
 function luminancia(hex) {
   const n = parseInt(hex.trim().slice(1), 16);

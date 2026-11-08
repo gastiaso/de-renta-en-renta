@@ -42,17 +42,20 @@ const COLUMNAS = ['codigo', 'nombre', 'nivel', 'indicador', 'tipologia', 'period
 //   codigos, valores, estados: los del nivel (datos.js, cargarValores);
 //   nombresEstado: codificacion.estados del manifiesto;
 //   transformar(x): la fórmula del mapa (sueldo necesario) o nada;
-//   supuestos: { superficie_m2, umbral } si la fórmula los usa (dos columnas más).
+//   supuestos: { superficie_m2, umbral } si la fórmula los usa (dos columnas más);
+//   desde: con un año anterior a toda la serie (`periodo`), su primer periodo; las filas van sin
+//   valor y el estado dice desde cuándo hay serie (pregunta abierta 32).
 // Los textos (cabecera, nivel, indicador…) llegan ya traducidos, salvo los que pide `t`.
-export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, nombreDe, indicador, unidad, tipologia, periodo, fuente, transformar, decimales, supuestos }) {
+export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, nombreDe, indicador, unidad, tipologia, periodo, fuente, transformar, decimales, supuestos, desde = null }) {
   const columnas = supuestos ? [...COLUMNAS, 'superficie_m2', 'umbral'] : COLUMNAS;
   const cabecera = columnas.map((c) => t(`interfaz.exportar.columnas.${c}`));
   const textoNivel = t(`vocabulario.nivel.${nivel}`);
+  const fuera = desde === null ? null : t('interfaz.exportar.estados.fuera', { desde });
   const filas = codigos.map((codigo, i) => {
-    const x = valores[i];
+    const x = fuera ? null : valores[i];
     const valor = x === null || x === undefined ? null : redondear(transformar ? transformar(x) : x, decimales);
     const fila = [codigo, nombreDe(codigo), textoNivel, indicador, tipologia ?? '', periodo, valor, unidad,
-      t(`interfaz.exportar.estados.${nombresEstado[estados[i]]}`), fuente];
+      fuera ?? t(`interfaz.exportar.estados.${nombresEstado[estados[i]]}`), fuente];
     if (supuestos) fila.push(supuestos.superficie_m2, supuestos.umbral);
     return fila;
   });

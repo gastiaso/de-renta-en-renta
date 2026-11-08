@@ -5,7 +5,7 @@
 #     indicadores, mapas y fichas);
 #   - indices/<nivel>.json: códigos del nivel en el orden de los valores (sc, distrito, municipio,
 #     provincia, ccaa y nacional, «00»), de la jerarquía de geo/;
-#   - <nivel>/<serie>/<periodo>.json: {"v": [valor × 10 en enteros o null],
+#   - <nivel>/<serie>/<periodo>.json: {"v": [valor × escala en enteros o null],
 #     "e": "0123…"}, un elemento y un carácter de estado por territorio del índice (0 dato,
 #     1 estimado, 2 secreto, 3 ausente); un territorio sin fila en la tabla larga va como null y
 #     ausente. Todos los niveles de una serie tienen todos sus periodos (si un nivel no tiene un
@@ -26,8 +26,13 @@
 #   - los demás cortes (cuartiles del SERPAVI, ficha del indicador 15) no se exportan: el 15 lo
 #     calcula la web con la ficha elegida.
 # Valores con el redondeo de la guía: as.numeric(sprintf("%.1f", x)), y después × 10 en enteros.
+# La escala es 10 (una décima) salvo en los indicadores con escala_web en inventario/indicadores.csv
+# (100, dos decimales: las viviendas turísticas, pregunta 24), que la llevan en su entrada del
+# manifiesto (`escala`), con el redondeo de la guía a esos decimales (sprintf("%.2f", x)).
 
 ESTADOS_WEB <- c("dato", "estimado", "secreto", "ausente")      # cifra del estado = posición - 1
+ESCALA_WEB <- 10L                                                # una décima; la de codificacion
+ESCALAS_WEB <- c(10L, 100L, 1000L)                               # de una a tres cifras decimales
 NIVELES_WEB <- c("sc", "distrito", "municipio", "provincia", "ccaa", "nacional")
 GRUPO_POR_DEFECTO_WEB <- c(tipologia = "VC")                     # pregunta abierta 12
 CORTES_WEB <- c("total", "mes", names(GRUPO_POR_DEFECTO_WEB))
@@ -38,20 +43,39 @@ MAPA_POR_DEFECTO_WEB <- "sueldo_necesario"                        # plan §6.6, 
 SUPUESTOS_WEB <- list(superficie_m2 = 50, umbral = 0.3)           # plan §3.1 y §6.6
 LIMITES_INICIALES_WEB <- c(-9.4, 35.9, 4.4, 43.9)                # península y Baleares (oeste, sur, este, norte)
 
-# Valor × 10 en enteros, con el redondeo de la guía (no sprintf("%.0f", x * 10): con 0,15 da 2,
-# y la guía, 0,1).
-valor_web <- function(x) {
+# Valor × escala en enteros, con el redondeo de la guía a los decimales de la escala (no
+# sprintf("%.0f", x * 10): con 0,15 da 2, y la guía, 0,1). `escala`: una o una por valor.
+valor_web <- function(x, escala = ESCALA_WEB) {
+  escala <- rep_len(escala, length(x))
   v <- rep(NA_integer_, length(x))
   ok <- !is.na(x)
-  v[ok] <- as.integer(round(as.numeric(sprintf("%.1f", x[ok])) * 10))
+  v[ok] <- as.integer(round(redondeo_guia(x[ok], decimales_escala(escala[ok])) * escala[ok]))
   v
 }
 
-redondeo_guia <- function(x) {
+# Redondeo de la guía (sprintf, no round()) a `decimales` (uno, o uno por valor).
+redondeo_guia <- function(x, decimales = 1L) {
+  decimales <- rep_len(decimales, length(x))
   r <- rep(NA_real_, length(x))
   ok <- !is.na(x)
-  r[ok] <- as.numeric(sprintf("%.1f", x[ok]))
+  r[ok] <- as.numeric(sprintf(paste0("%.", decimales[ok], "f"), x[ok]))
   r
+}
+
+decimales_escala <- function(escala) as.integer(round(log10(escala)))
+
+# Escala de cada indicador (columna escala_web de inventario/indicadores.csv; regla 7): vacía,
+# ESCALA_WEB; si no, una de ESCALAS_WEB.
+escala_web <- function(indicadores, codigo) {
+  valor <- if ("escala_web" %in% names(indicadores)) indicadores$escala_web[match(codigo, indicadores$codigo)] else
+    rep(NA, length(codigo))
+  vacia <- is.na(valor) | !nzchar(trimws(as.character(valor)))
+  x <- ifelse(vacia, ESCALA_WEB, suppressWarnings(as.numeric(valor)))
+  if (!all(x %in% ESCALAS_WEB)) {
+    stop("escala_web debe quedar vac\u00eda o valer ", paste(ESCALAS_WEB, collapse = ", "), ": ",
+         paste(unique(valor[!vacia & !x %in% ESCALAS_WEB]), collapse = ", "), call. = FALSE)
+  }
+  as.integer(x)
 }
 
 # Cifra de cada estado ("0" dato … "3" ausente).
@@ -95,8 +119,11 @@ indices_web <- function(jerarquia, territorios) {
 }
 
 # Decimales con que la web muestra una serie: uno en los porcentajes y en los euros por m²; en
-# el resto de euros, ninguno.
-decimales_web <- function(unidad) ifelse(grepl("^%", unidad) | grepl("m²", unidad), 1L, 0L)
+# el resto de euros, ninguno. Con una escala propia, los suyos (100: dos).
+decimales_web <- function(unidad, escala = ESCALA_WEB) {
+  escala <- rep_len(escala, length(unidad))
+  ifelse(escala > ESCALA_WEB, decimales_escala(escala), ifelse(grepl("^%", unidad) | grepl("m\u00b2", unidad), 1L, 0L))
+}
 
 # Filas de la tabla larga que van a la web, con su clave, su grupo en la web y su periodo.
 series_web <- function(larga, indicadores) {
@@ -110,7 +137,8 @@ series_web <- function(larga, indicadores) {
     mutate(
       periodo = ifelse(corte == "mes", sprintf("%d-%s", anio, substr(grupo, 2, 3)), as.character(anio)),
       grupo_web = ifelse(sin_grupo, "total", grupo),
-      clave = ifelse(sin_grupo | grupo == por_defecto, indicador, paste0(indicador, "_", tolower(grupo)))
+      clave = ifelse(sin_grupo | grupo == por_defecto, indicador, paste0(indicador, "_", tolower(grupo))),
+      escala = escala_web(indicadores, indicador)
     )
 }
 
@@ -125,10 +153,10 @@ ruta_valores <- function(ruta, nivel, periodo) {
        fixed = TRUE)
 }
 
-# Una fila por serie: indicador, corte, grupo, niveles, periodos, ruta, fuente y versión.
+# Una fila por serie: indicador, corte, grupo, escala, niveles, periodos, ruta, fuente y versión.
 catalogo_web <- function(series) {
   series |>
-    group_by(clave, indicador, corte, grupo_web) |>
+    group_by(clave, indicador, corte, grupo_web, escala) |>
     summarise(niveles = list(NIVELES_WEB[NIVELES_WEB %in% nivel]), periodos = list(sort(unique(periodo))),
               fuente = paste(sort(unique(fuente)), collapse = ";"), version = max(version), .groups = "drop") |>
     mutate(ruta = ruta_web(clave, corte)) |>
@@ -149,7 +177,7 @@ escribir_valores_web <- function(series, catalogo, indices, dir_web = "web") {
         m <- match(indice, d$geo_id)
         ruta <- file.path(dir_web, ruta_valores(fila$ruta, nivel, p))
         dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
-        writeLines(json_valores(valor_web(d$valor[m]), estado_web(ifelse(is.na(m), "ausente", d$estado[m]))),
+        writeLines(json_valores(valor_web(d$valor[m], fila$escala), estado_web(ifelse(is.na(m), "ausente", d$estado[m]))),
                    ruta, useBytes = TRUE)
         rutas <- c(rutas, ruta)
       }
@@ -159,13 +187,13 @@ escribir_valores_web <- function(series, catalogo, indices, dir_web = "web") {
 }
 
 # Matriz territorio × periodo (enteros y cifras de estado) de una serie en un nivel.
-matriz_web <- function(datos, codigos, periodos) {
+matriz_web <- function(datos, codigos, periodos, escala = ESCALA_WEB) {
   fila <- match(datos$geo_id, codigos)
   col <- match(datos$periodo, periodos)
   ok <- !is.na(fila) & !is.na(col)
   v <- matrix(NA_integer_, length(codigos), length(periodos))
   e <- matrix("3", length(codigos), length(periodos))
-  v[cbind(fila[ok], col[ok])] <- valor_web(datos$valor[ok])
+  v[cbind(fila[ok], col[ok])] <- valor_web(datos$valor[ok], escala)
   e[cbind(fila[ok], col[ok])] <- estado_web(datos$estado[ok])
   list(v = v, e = e)
 }
@@ -188,7 +216,7 @@ escribir_fichas_web <- function(series, catalogo, jerarquia, dir_web = "web", pr
     if (!nrow(cat_n)) return(list(periodos = character(), series = matrix(character(), length(codigos), 0)))
     s <- vapply(seq_len(nrow(cat_n)), function(k) {
       d <- series[series$clave == cat_n$clave[k] & series$nivel == nivel, ]
-      m <- matriz_web(d, codigos, cat_n$periodos[[k]])
+      m <- matriz_web(d, codigos, cat_n$periodos[[k]], cat_n$escala[k])
       paste0('"', cat_n$clave[k], '":', json_valores(m$v, m$e))
     }, character(length(codigos)))
     dim(s) <- c(length(codigos), nrow(cat_n))
@@ -279,13 +307,14 @@ mapas_web <- function(catalogo, indicadores) {
     } else NULL
     if (is.null(def)) next
     mapas[[codigo]] <- c(def, list(cortes = I(cortes_web(filas$cortes_web[k])),
-                                   decimales = decimales_web(filas$unidad_es[k])))
+                                   decimales = decimales_web(filas$unidad_es[k], escala_web(indicadores, codigo))))
   }
   mapas
 }
 
-# Entradas del manifiesto por serie: niveles, años (o periodos «AAAA-MM»), decimales y ruta, que es
-# lo que lee web/js/datos.js; con desglose, además, el indicador, el corte y el grupo. Por
+# Entradas del manifiesto por serie: niveles, años (o periodos «AAAA-MM»), escala (si no es la de
+# codificacion), decimales y ruta, que es lo que lee web/js/datos.js; con desglose, además, el
+# indicador, el corte y el grupo. Por
 # conveniencia, el número del indicador, la fuente, la versión y las variantes de la serie por
 # defecto (`variantes`: {"VU": "alquiler_m2_vu"}) o la serie por defecto de una variante.
 indicadores_manifiesto_web <- function(catalogo, indicadores) {
@@ -298,8 +327,9 @@ indicadores_manifiesto_web <- function(catalogo, indicadores) {
     if (!c_k$corte %in% c("total", "mes")) e <- c(e, list(indicador = ind, corte = c_k$corte, grupo = c_k$grupo_web))
     e$niveles <- I(c_k$niveles[[1]])
     if (c_k$corte == "mes") e$periodos <- I(p) else e$anios <- I(as.integer(p))
-    e <- c(e, list(decimales = decimales_web(indicadores$unidad_es[fila]), ruta = c_k$ruta, fuente = c_k$fuente,
-                   version = c_k$version))
+    if (c_k$escala != ESCALA_WEB) e$escala <- c_k$escala
+    e <- c(e, list(decimales = decimales_web(indicadores$unidad_es[fila], c_k$escala), ruta = c_k$ruta,
+                   fuente = c_k$fuente, version = c_k$version))
     if (c_k$clave == ind) {
       otras <- catalogo[catalogo$indicador == ind & catalogo$clave != ind, ]
       if (nrow(otras)) e$variantes <- stats::setNames(as.list(otras$clave), otras$grupo_web)
@@ -361,7 +391,7 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
     cajas = if (!is.null(cajas)) "datos/cajas.json",
     fichas = "datos/fichas/{municipio}.json",
     perfiles = if (!is.null(perfiles)) "datos/perfiles.json",
-    codificacion = list(escala = 10L, estados = I(ESTADOS_WEB)),
+    codificacion = list(escala = ESCALA_WEB, estados = I(ESTADOS_WEB)),
     supuestos = SUPUESTOS_WEB,
     indicadores = indicadores_manifiesto_web(catalogo, indicadores),
     mapas = mapas_web(catalogo, indicadores),
@@ -376,8 +406,9 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
 }
 
 # Compuerta de la web: lo escrito reproduce la tabla larga (ida y vuelta), leyendo los ficheros.
-#   web_valores: por fichero de valores, territorios cuyo valor (÷ 10) o estado no es el de la
-#     tabla larga con el redondeo de la guía (longitud distinta de la del índice: todos); además,
+#   web_valores: por fichero de valores, territorios cuyo valor (÷ la escala de la serie en el
+#     manifiesto) o estado no es el de la tabla larga con el redondeo de la guía a los decimales
+#     de la escala del inventario (longitud distinta de la del índice: todos); además,
 #     series de la tabla larga sin fichero y diferencias de perfiles.json con la tabla perfiles;
 #   web_fichas: por municipio, celdas de sus series (secciones y municipio) que no cuadran, y
 #     secciones o series de más o de menos;
@@ -386,7 +417,9 @@ comprobar_web <- function(larga, indicadores, jerarquia, territorios, dir_web = 
   manifiesto <- jsonlite::fromJSON(file.path(dir_web, "datos", "manifiesto.json"), simplifyVector = FALSE)
   indices <- indices_web(jerarquia, territorios)
   series <- series_web(larga, indicadores)
-  series$redondeado <- redondeo_guia(series$valor)
+  series$redondeado <- redondeo_guia(series$valor, decimales_escala(series$escala))
+  # Escala con que la web lee cada serie: la suya en el manifiesto o la general
+  escalas <- vapply(manifiesto$indicadores, function(d) as.numeric(d$escala %||% manifiesto$codificacion$escala), 1)
   filas <- list()
 
   # Ficheros de valores: todos los del manifiesto
@@ -398,7 +431,7 @@ comprobar_web <- function(larga, indicadores, jerarquia, territorios, dir_web = 
       n_ind <- length(indices[[nivel]])
       for (p in as.character(unlist(c(def$anios, def$periodos)))) {
         ruta <- ruta_valores(def$ruta, nivel, p)
-        leido <- leer_valores_web(file.path(dir_web, ruta), manifiesto$codificacion$escala)
+        leido <- leer_valores_web(file.path(dir_web, ruta), escalas[[clave]])
         d <- d_n[d_n$periodo == p, ]
         m <- match(indices[[nivel]], d$geo_id)
         esp_v <- d$redondeado[m]
@@ -431,8 +464,8 @@ comprobar_web <- function(larga, indicadores, jerarquia, territorios, dir_web = 
     f <- jsonlite::fromJSON(file.path(dir_web, sub("{municipio}", mun, manifiesto$fichas, fixed = TRUE)),
                             simplifyVector = TRUE)
     propio <- if (length(f$series_municipio$series)) stats::setNames(list(f$series_municipio$series), mun)
-    bind_rows(mutate(aplanar_ficha(f$series, f$anios), nivel = "sc"),
-              mutate(aplanar_ficha(propio, f$series_municipio$anios), nivel = "municipio"))
+    bind_rows(mutate(aplanar_ficha(f$series, f$anios, escalas), nivel = "sc"),
+              mutate(aplanar_ficha(propio, f$series_municipio$anios, escalas), nivel = "municipio"))
   }))
   esperadas <- bind_rows(lapply(c("sc", "municipio"), function(n) {
     cat_n <- catalogo[vapply(catalogo$niveles, function(x) n %in% x, TRUE), ]
@@ -460,7 +493,8 @@ comprobar_web <- function(larga, indicadores, jerarquia, territorios, dir_web = 
 
 # Series de una ficha (territorio → serie → {v, e}) en filas: territorio, serie, periodo, valor y
 # estado. Una serie que falta o con otra longitud sale como NA (y la compuerta la cuenta).
-aplanar_ficha <- function(series, periodos) {
+# `escalas`: escala de cada serie, con su nombre (sin ella, ESCALA_WEB).
+aplanar_ficha <- function(series, periodos, escalas = NULL) {
   vacio <- tibble::tibble(geo_id = character(), clave = character(), periodo = character(), valor = numeric(),
                           estado_leido = character())
   if (!length(series) || !length(periodos)) return(vacio)
@@ -475,7 +509,10 @@ aplanar_ficha <- function(series, periodos) {
   }
   v <- as.numeric(unlist(lapply(series, trozo, "v", NA_real_), use.names = FALSE))
   e <- unlist(lapply(series, trozo, "e", "?"), use.names = FALSE)
-  tibble::tibble(geo_id = rep(names(series), each = sum(n)), clave = rep(rep(claves, n), length(series)),
-                 periodo = rep(as.character(unlist(periodos, use.names = FALSE)), length(series)), valor = v / 10,
+  clave <- rep(rep(claves, n), length(series))
+  escala <- if (is.null(escalas)) rep(ESCALA_WEB, length(clave)) else unname(escalas[clave])
+  escala[is.na(escala)] <- ESCALA_WEB
+  tibble::tibble(geo_id = rep(names(series), each = sum(n)), clave = clave,
+                 periodo = rep(as.character(unlist(periodos, use.names = FALSE)), length(series)), valor = v / escala,
                  estado_leido = ESTADOS_WEB[match(e, as.character(seq_along(ESTADOS_WEB) - 1L))])
 }

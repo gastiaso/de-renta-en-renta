@@ -7,7 +7,7 @@
 // Los colores de cada tramo salen de los mismos pasos de la rampa que el mapa (colores.js).
 
 import { posicionEnRegla } from './sueldo.js';
-import { clasesTramos, rampaDeCss, TRAMOS_LLEGA } from './colores.js';
+import { clasesTramos, rampaDeCss, TRAMOS_LLEGA, decimalesDeCortes } from './colores.js';
 
 const crear = (etiqueta, clase, texto) => {
   const el = document.createElement(etiqueta);
@@ -30,7 +30,7 @@ function claves(t) {
 
 function reglaNecesario(t, { mapaDef, marcas = [], llave = null }) {
   const cortes = mapaDef.cortes;
-  const dec = mapaDef.decimales ?? 0;
+  const dec = decimalesDeCortes(cortes, mapaDef.decimales ?? 0);
   const pos = (v) => `${(100 * posicionEnRegla(v, cortes)).toFixed(2)}%`;
 
   const regla = crear('div', 'leyenda-regla');
@@ -83,8 +83,9 @@ function tramosLlega(t) {
 }
 
 // `datos`: { modo, mapaId, mapaDef, superficie, umbral, marcas, llave, ficha, vivienda, periodo,
-// tipologia, conSupuestos }. `conSupuestos`: el mapa usa la superficie y el umbral (el sueldo
-// necesario); `tipologia`: 'VC' | 'VU' si la serie la distingue.
+// tipologia, conSupuestos, fuera }. `conSupuestos`: el mapa usa la superficie y el umbral (el
+// sueldo necesario); `tipologia`: 'VC' | 'VU' si la serie la distingue; `fuera`: con un año
+// anterior a toda la serie, el texto que dice desde cuándo hay datos.
 export function pintarLeyenda(contenedor, t, datos) {
   const pliegue = crear('details', 'leyenda-pliegue');
   pliegue.open = abierta;
@@ -97,7 +98,9 @@ export function pintarLeyenda(contenedor, t, datos) {
   const detalle = [necesario ? t(`indicadores.${datos.mapaId}.unidad`) : datos.vivienda];
   if (datos.periodo !== undefined && datos.periodo !== null) detalle.push(t.periodo(datos.periodo));
   if (datos.tipologia) detalle.push(t(`vocabulario.tipologia.${datos.tipologia}`));
-  const cuerpo = [crear('p', 'leyenda-unidad', detalle.join(' · ')), ...(necesario ? reglaNecesario(t, datos) : tramosLlega(t))];
+  const cuerpo = [crear('p', 'leyenda-unidad', detalle.join(' · '))];
+  if (datos.fuera) cuerpo.push(crear('p', 'leyenda-fuera', datos.fuera));
+  cuerpo.push(...(necesario ? reglaNecesario(t, datos) : tramosLlega(t)));
   let supuestos = t('interfaz.leyenda.llega_nota');
   if (necesario) {
     supuestos = datos.conSupuestos
