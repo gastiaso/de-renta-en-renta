@@ -408,7 +408,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `web_fichas` | Por municipio: celdas de las series de su ficha que no reproducen la tabla larga, y secciones de más o de menos | Exacto | Bloqueo | 0 en los 8.131 municipios | `validacion_web` |
 | `sobrecarga_es_total`, `sobrecarga_es_mercado`, `sobrecarga_ccaa` | Sobrecarga con los microdatos de la ECV frente a Eurostat | ±0,1 puntos | Bloqueo | Pasan en 2023–2025 (§7.5) | `validacion_sobrecarga` |
 | `modulo_acceso_lectura` | Suma de las comunidades frente al total nacional del módulo de la ECV 2025 | ±0,1 % | Bloqueo | Pasa | `validacion_modulo` |
-| `i18n_completo`, `contraste_texto`, `rampa_contorno` | Diccionarios ES/EN y contrastes de la web | Exacto | Bloqueo | Pasan | `validacion_i18n`, `validacion_diseno` |
+| `i18n_completo`, `contraste_texto`, `rampa_contorno`, `rampa_daltonismo` | Diccionarios ES/EN, contrastes de la web y rampa de seis pasos distinguible con daltonismo simulado | Exacto | Bloqueo | Pasan | `validacion_i18n`, `validacion_diseno` |
 | `adrh_municipio_detalle` | Desviación de cada municipio entre las medias de sección agregadas y la cifra municipal | ±1 % | Alerta | Avisa en 579 de 146.306 cifras de municipio, año e indicador; 135 pasan del 5 % | `comprobaciones_adrh` |
 | `adrh_suma_secciones` | Población por sección del ADRH sumada por municipio frente al total municipal de la misma tabla | ±0,5 % | Alerta | Avisa en 160 municipios y años, todos de 2015–2019 (38, 34, 30, 29 y 29) | `comprobaciones_f1` |
 | `adrh_seccion_huerfana` | Secciones del ADRH sin código en ningún seccionado de 2016–2025 | Exacto | Alerta | 9 (§3.8) | `huerfanas_adrh` |
@@ -780,6 +780,7 @@ El secreto se concentra en provincias rurales: Guadalajara, 173 de 394 secciones
 **Cómo se leen:**
 - El indicador 15 se lee por tramos: hasta el 30 %, del 30 al 40 % y más del 40 %.
 - El indicador 21 es el alquiler expresado en otra unidad. El umbral del 30 % se inspira en el criterio de zona tensionada de la Ley 12/2023 (art. 18), que usa la renta del hogar y los suministros; no es ese criterio.
+- El mapa del 21 se pinta en seis tramos, con cortes nacionales iguales todos los años: 700, 900, 1.100, 1.500 y 2.000 € (plan §11, pregunta 20). La rampa de colores tiene seis pasos que se distinguen también con daltonismo (`rampa_daltonismo`).
 - El 15 y el 21 cambian con el umbral, la superficie y el sueldo de «Tu ficha»: la web los recalcula en el navegador (plan §6.6).
 
 **Cálculo** (`armonizar_derivados()`; objetivo `larga_derivados`, 1.103.301 filas, fuente `calculo_propio`):

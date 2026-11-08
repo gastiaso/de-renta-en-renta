@@ -3,7 +3,7 @@
 //
 // Dos modos:
 //   - «necesario» (por defecto): sueldo neto necesario para que el alquiler de la superficie
-//     elegida no pase del umbral (indicador 21), en cinco tramos con los cortes del manifiesto;
+//     elegida no pase del umbral (indicador 21), en seis tramos con los cortes del manifiesto;
 //   - «llega» («¿te llega?», al escribir un sueldo o elegir una ficha): alquiler / ingreso, en
 //     tres tramos (hasta el 30 %, del 30 al 40 % y más del 40 %), con la proporción de secciones
 //     donde el alquiler cabe por debajo del umbral.
@@ -11,6 +11,7 @@
 // del mapa, sin volver a descargar teselas) y la función en JS (ficha, resumen, leyenda).
 
 import { formulaDe } from './formulas.js';
+import { pasosDeRampa } from './colores.js';
 
 export const FICHAS_PERFIL = ['llave', 'mochila', 'tartera', 'transistor'];
 export const SUPERFICIES = [50, 70, 90];
@@ -129,11 +130,13 @@ export function colorLlega(calculo, idSeccion, colores) {
     colores.llega[2]];
 }
 
-// Sueldo necesario por tramos (cinco colores, cuatro cortes).
+// Sueldo necesario por tramos: un tramo más que cortes (seis con los del indicador 21), cada uno
+// con su paso de la rampa (colores.js).
 export function colorNecesario(mapaDef, supuestos, colores) {
   const valor = formulaDe(mapaDef).expresion(numero(mapaDef.base), supuestos);
-  const pasos = ['step', valor, colores.rampa[0]];
-  mapaDef.cortes.forEach((corte, i) => pasos.push(corte, colores.rampa[i + 1]));
+  const color = pasosDeRampa(mapaDef.cortes.length + 1, colores.rampa.length).map((i) => colores.rampa[i]);
+  const pasos = ['step', valor, color[0]];
+  mapaDef.cortes.forEach((corte, i) => pasos.push(corte, color[i + 1]));
   return ['case', falta(mapaDef.base), colores.fuera, pasos];
 }
 

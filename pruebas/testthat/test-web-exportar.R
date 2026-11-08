@@ -12,7 +12,7 @@ ind_web <- tibble::tibble(
   unidad_es = c("€ por persona y año", "€ por m² y mes", "% del ingreso", "% de las viviendas",
                 "€ netos por mes", "%"),
   nucleo_v01 = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE),
-  cortes_web = c("10;20;30;40", "4;5.5;7;9", NA, "0.5;1;2.5;5", "700;900;1100;1500", NA)
+  cortes_web = c("10;20;30;40", "4;5.5;7;9", NA, "0.5;1;2.5;5", "700;900;1100;1500;2000", NA)
 )
 fila_web <- function(geo_id, nivel, anio, indicador, valor, estado = "dato", corte = "total", grupo = "total",
                      fuente = "prueba") {
@@ -88,6 +88,7 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_equal(names(m$mapas)[1], "sueldo_necesario")
   expect_equal(m$mapas$sueldo_necesario[c("base", "formula")], list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo"))
   expect_equal(unlist(m$mapas$alquiler_m2$cortes), c(4, 5.5, 7, 9))
+  expect_equal(unlist(m$mapas$sueldo_necesario$cortes), c(700, 900, 1100, 1500, 2000))   # seis tramos
   expect_equal(m$mapas$renta_persona$formula, "directo")
 
   # Valores en el orden del índice; la sección sin fila, null y ausente; el municipio sin 2021, entero ausente
@@ -124,4 +125,12 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_equal(c2$calculado[c2$detalle == "datos/sc/renta_persona/2020.json"], 1)
   expect_gt(c2$calculado[c2$id == "web_fichas" & c2$detalle == "28001"], 0)
   expect_equal(c2$calculado[c2$id == "web_fichas" & c2$detalle == "28002"], 0)
+})
+
+test_that("cortes de los mapas: de uno a cinco valores crecientes (seis tramos como mucho)", {
+  expect_equal(cortes_web("700;900;1100;1500;2000"), c(700, 900, 1100, 1500, 2000))
+  expect_equal(cortes_web("1;2.5"), c(1, 2.5))
+  expect_error(cortes_web("1;2;3;4;5;6"), "de 1 a 5")
+  expect_error(cortes_web("1;3;2"), "crecientes")
+  expect_error(suppressWarnings(cortes_web("1;x")), "crecientes")
 })

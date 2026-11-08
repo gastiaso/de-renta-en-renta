@@ -6,6 +6,7 @@
 // comparador.
 
 import { ordenNatural } from './nombres.js';
+import { clasesTramos, rampaDeCss, TRAMOS_LLEGA } from './colores.js';
 
 const crear = (etiqueta, clase, texto) => {
   const el = document.createElement(etiqueta);
@@ -39,7 +40,7 @@ export function fichaError(contenedor, { t, error }) {
   contenedor.replaceChildren(cabecera(t), aviso);
 }
 
-const TRAMOS_LLEGA = ['interfaz.leyenda.llega_1', 'interfaz.leyenda.llega_2', 'interfaz.leyenda.llega_3'];
+const TEXTOS_LLEGA = ['interfaz.leyenda.llega_1', 'interfaz.leyenda.llega_2', 'interfaz.leyenda.llega_3'];
 
 // `valor`: en el modo «necesario», el sueldo necesario (o null); en «llega», { alquiler,
 // ingreso, ratio, tramo } (o null). `estado`: índice en codificacion.estados.
@@ -70,7 +71,8 @@ export function fichaSeccion(contenedor, { t, codigo, territorios, modo, mapaId,
     bloque.append(cifra);
     if (valor !== null) {
       const tramo = crear('p', 'ficha-tramo');
-      tramo.append(crear('span', `leyenda-muestra tramo-${[1, 3, 5][valor.tramo]}`), crear('span', null, t(TRAMOS_LLEGA[valor.tramo])));
+      const clase = clasesTramos(TRAMOS_LLEGA, rampaDeCss().length)[valor.tramo];
+      tramo.append(crear('span', `leyenda-muestra ${clase}`), crear('span', null, t(TEXTOS_LLEGA[valor.tramo])));
       bloque.append(
         crear('p', 'ficha-estado', t('interfaz.ficha.alquiler_ingreso', { alquiler: t.numero(valor.alquiler), ingreso: t.numero(valor.ingreso) })),
         tramo,

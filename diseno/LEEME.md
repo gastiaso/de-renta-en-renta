@@ -8,6 +8,7 @@
 Reglas:
 
 - Texto normal con 4,5:1 como mínimo. Los dos primeros pasos de la rampa no llegan a 3:1 sobre la crema: en los mapas, siempre con contorno o sobre el mar.
+- La rampa tiene seis pasos, uno por tramo del mapa más detallado (el del sueldo necesario). Sus pasos contiguos se separan al menos 0,08 en OKLab en visión normal y con protanopía, deuteranopía y tritanopía simuladas (Machado et al., 2009). Un mapa con menos tramos toma pasos repartidos de punta a punta.
 - El color propio de cada ficha es decorativo; para texto, la variante «texto» de `tokens.json`.
 - Sobre fondo oscuro, la ficha va sobre una placa crema.
 - Tipografías libres: Jost, Marcellus SC y Archivo Narrow (OFL) y Yellowtail (Apache 2.0, no OFL), autoalojadas en `web/estilo/fuentes/` con su licencia. Yellowtail solo en titulares de 22 px o más.
@@ -15,4 +16,4 @@ Reglas:
 
 Las maquetas (`docs/maquetas.md`) son referencia visual; las cifras que llevan son de ejemplo.
 
-`web/estilo/tokens.css` se genera desde `tokens.json` (`generar_tokens_css()`); las compuertas `contraste_texto`, `contraste_declarado` y `rampa_contorno` recalculan los contrastes WCAG en cada ejecución.
+`web/estilo/tokens.css` se genera desde `tokens.json` (`generar_tokens_css()`); las compuertas `contraste_texto`, `contraste_declarado` y `rampa_contorno` recalculan los contrastes WCAG en cada ejecución, y `rampa_daltonismo`, la separación de los pasos de la rampa con daltonismo simulado.

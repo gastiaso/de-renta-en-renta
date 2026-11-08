@@ -248,12 +248,16 @@ perfiles_web <- function(perfiles) {
   web[!vapply(web, is.null, TRUE)]
 }
 
-# Cortes de los tramos del mapa (columna cortes_web de inventario/indicadores.csv): cuatro valores
-# crecientes separados por «;», con punto decimal.
+# Cortes de los tramos del mapa (columna cortes_web de inventario/indicadores.csv): de uno a
+# MAX_CORTES_WEB valores crecientes separados por «;», con punto decimal. La rampa de
+# diseno/tokens.json tiene un paso por tramo del mapa más detallado (seis: pregunta abierta 20);
+# con menos tramos, la web toma pasos repartidos (web/js/colores.js).
+MAX_CORTES_WEB <- 5L
+
 cortes_web <- function(texto) {
   x <- as.numeric(strsplit(as.character(texto), ";", fixed = TRUE)[[1]])
-  if (length(x) != 4L || anyNA(x) || is.unsorted(x, strictly = TRUE)) {
-    stop("cortes_web debe tener cuatro valores crecientes: ", texto, call. = FALSE)
+  if (!length(x) || length(x) > MAX_CORTES_WEB || anyNA(x) || is.unsorted(x, strictly = TRUE)) {
+    stop("cortes_web debe tener de 1 a ", MAX_CORTES_WEB, " valores crecientes: ", texto, call. = FALSE)
   }
   x
 }

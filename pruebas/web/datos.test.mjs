@@ -19,6 +19,7 @@ const { codigoComparado } = await modulo('web/js/comparador.js');
 const { buscar, formasDeNombre } = await modulo('web/js/buscador.js');
 const { ordenNatural } = await modulo('web/js/nombres.js');
 const { consulta } = await modulo('web/js/estado.js');
+const colores = await modulo('web/js/colores.js');
 
 const CODIFICACION = { escala: 10, estados: ['dato', 'estimado', 'secreto', 'ausente'] };
 const leer = (...ruta) => JSON.parse(readFileSync(join(raiz, ...ruta), 'utf8'));
@@ -145,14 +146,40 @@ test('tramos, resumen y regla de la leyenda', () => {
   assert.equal(sueldo.marcasRegla({ perfiles: PERFILES, seccion: null }).marcas[0].mediana, true);
 });
 
-test('colores: cinco tramos en el sueldo necesario; tres en «¿te llega?», sin dato aparte', () => {
-  const paleta = { rampa: ['r1', 'r2', 'r3', 'r4', 'r5'], llega: ['l1', 'l2', 'l3'], fuera: 'f' };
-  const necesario = sueldo.colorNecesario({ base: 'alquiler_m2', formula: 'alquiler_m2_a_sueldo', cortes: [1, 2, 3, 4] },
-    { superficie_m2: 50, umbral: 0.3 }, paleta);
+test('colores: seis tramos en el sueldo necesario; tres en «¿te llega?», sin dato aparte', () => {
+  const paleta = colores.paletaDe(['r1', 'r2', 'r3', 'r4', 'r5', 'r6'], 'f');
+  assert.deepEqual(paleta.llega, ['r1', 'r4', 'r6']);
+  const def = { base: 'alquiler_m2', formula: 'alquiler_m2_a_sueldo', cortes: [1, 2, 3, 4, 5] };
+  const necesario = sueldo.colorNecesario(def, { superficie_m2: 50, umbral: 0.3 }, paleta);
   assert.equal(necesario[0], 'case');
-  assert.deepEqual(necesario[3].slice(2), ['r1', 1, 'r2', 2, 'r3', 3, 'r4', 4, 'r5']);
+  assert.deepEqual(necesario[3].slice(2), ['r1', 1, 'r2', 2, 'r3', 3, 'r4', 4, 'r5', 5, 'r6']);
+  // Un mapa de cinco tramos toma pasos repartidos de punta a punta
+  const cinco = sueldo.colorNecesario({ ...def, cortes: [1, 2, 3, 4] }, { superficie_m2: 50, umbral: 0.3 }, paleta);
+  assert.deepEqual(cinco[3].slice(2), ['r1', 1, 'r2', 2, 'r4', 3, 'r5', 4, 'r6']);
+  assert.throws(() => sueldo.colorNecesario({ ...def, cortes: [1, 2, 3, 4, 5, 6] }, {}, paleta), /seis|6 pasos/);
   const llega = sueldo.colorLlega(sueldo.calculoLlega({ ficha: 'tartera', perfiles: PERFILES, superficie: 50 }), 'seccion', paleta);
-  assert.deepEqual(llega.filter((x) => typeof x === 'string' && x !== 'case'), ['f', 'l1', 'l2', 'l3']);
+  assert.deepEqual(llega.filter((x) => typeof x === 'string' && x !== 'case'), ['f', 'r1', 'r4', 'r6']);
+});
+
+test('colores: pasos de la rampa, contraste WCAG y contorno de las secciones', () => {
+  assert.deepEqual(colores.pasosDeRampa(6, 6), [0, 1, 2, 3, 4, 5]);
+  assert.deepEqual(colores.pasosDeRampa(5, 6), [0, 1, 3, 4, 5]);
+  assert.deepEqual(colores.pasosDeRampa(3, 5), [0, 2, 4]);   // la rampa de cinco: pasos 1, 3 y 5, como antes
+  assert.deepEqual(colores.clasesTramos(3, 6), ['tramo-1', 'tramo-4', 'tramo-6']);
+  assert.throws(() => colores.pasosDeRampa(7, 6), /6 pasos/);
+  assert.equal(colores.contraste('#000000', '#ffffff'), 21);
+  assert.equal(colores.contraste('#777777', '#777777'), 1);
+  // La rampa de tokens.json: tinta sobre los tres pasos claros (contraste ≥ 3:1), placa sobre los oscuros
+  const tokens = leer('diseno', 'tokens.json');
+  const rampa = tokens.rampa_secuencial.pasos.map((p) => p.hex);
+  assert.equal(rampa.length, 6);
+  rampa.forEach((hex, i) => assert.ok(Math.abs(colores.contraste(hex, tokens.colores.crema.hex) - tokens.rampa_secuencial.pasos[i].contraste_crema) <= 0.05, hex));
+  const tinta = tokens.colores.tinta.hex;
+  const placa = tokens.colores.placa.hex;
+  const contorno = colores.paletaContorno(colores.paletaDe(rampa, '#cccccc'), tinta, placa);
+  assert.deepEqual(contorno.rampa, [tinta, tinta, tinta, placa, placa, placa]);
+  assert.deepEqual(contorno.llega, [tinta, placa, placa]);
+  assert.equal(contorno.fuera, tinta);
 });
 
 // --- Comparador, buscador y URL ----------------------------------------------------------------
@@ -224,7 +251,8 @@ function comprobarManifiesto(dir, { completo }) {
   }
   for (const def of Object.values(m.mapas)) {
     assert.ok(m.indicadores[def.base], `mapa sin serie base: ${def.base}`);
-    assert.equal(def.cortes.length, 4, 'cinco tramos: cuatro cortes');
+    assert.ok(def.cortes.length >= 1 && def.cortes.length <= 5, 'de dos a seis tramos: de uno a cinco cortes');
+    assert.ok(def.cortes.every((c, i) => i === 0 || c > def.cortes[i - 1]), 'cortes crecientes');
     formulaDe(def);
   }
   const perfiles = leer('web', m.perfiles);

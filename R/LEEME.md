@@ -27,6 +27,6 @@
 | `geo_mapa_base.R` | Jerarquía territorial del seccionado de 2021 (`geo_jerarquia`, `geo_territorios`, compuerta `comprobar_jerarquia`), capas del mapa base por disolución, PMTiles con GDAL (`generar_pmtiles`), lectura del PMTiles para medirlo por zoom (`pmtiles_resumen`) y compuerta `comprobar_mapa_base` |
 | `comun_exportar.R` | Tablas de paso a CSV; esquema, validación (`validar_tabla_larga()`) y escritura en Parquet de la tabla larga; diccionarios ES/EN (`exportar_i18n()`). Previsto: ficheros para la web |
 | `web_exportar.R` | Datos de la web (`exportar_web`): índices por nivel, valores por serie, nivel y periodo (JSON de enteros con estados), fichas por municipio, nombres, cajas y perfiles; compuerta de ida y vuelta (`comprobar_web`) |
-| `web_estilo.R` | Kit de diseño: `tokens.css` desde `diseno/tokens.json`, contrastes WCAG y tipografías autoalojadas |
+| `web_estilo.R` | Kit de diseño: `tokens.css` desde `diseno/tokens.json`, contrastes WCAG, separación de la rampa con daltonismo simulado (OKLab) y tipografías autoalojadas |
 
 Convenciones: nombres en castellano y en `snake_case`; una función hace una cosa; las descargas guardan en `datos/brutos/` y no repiten si el fichero existe, salvo que se pida; los errores dicen qué falta y dónde conseguirlo. El código reaprovechado de proyectos anteriores lleva en la cabecera la fecha de incorporación.

@@ -117,10 +117,9 @@ Cinco tareas en paralelo, integradas el 8-nov-2026 (plan v0.20):
 7. **Datos de la web · HECHA.** `exportar_web()` lleva a `web/datos/` las 11 series de la v0.1 de toda España, con fichas, perfiles, cajas y compuerta de ida y vuelta; fuera de git (pregunta 21).
 8. **Web: «Tu sueldo», comparador y textos · HECHA.** «¿Te llega?» con sueldo propio o ficha, superficie, umbral y «Compartir» con aviso; comparador, buscador y leyenda plegable, en castellano e inglés, con la muestra y con los datos reales. Con 1.500 € netos, el alquiler de 50 m² cabe en el 68,6 % de las secciones con dato en 2024.
 
-Decidido (8-nov-2026, plan v0.23): la serie del SMI de 2015 a 2023 para la tartera, en F3 (pregunta 18); los derivados se calculan desde sus términos redondeados a un decimal, como los recibe la web (19); `web/datos/` fuera de git y publicado desde un *release* (21).
+Decidido (8-nov-2026, plan v0.23): la serie del SMI de 2015 a 2023 para la tartera, en F3 (pregunta 18); los derivados se calculan desde sus términos redondeados a un decimal, como los recibe la web (19); `web/datos/` fuera de git y publicado desde un *release* (21). Plan v0.24: el mapa del sueldo necesario, en seis tramos con un corte nuevo en 2.000 €, y la rampa, en seis pasos comprobados con daltonismo simulado (20).
 
 **Siguiente:**
-- pregunta abierta 20 (tramos del mapa del sueldo necesario): un sexto tramo exige un sexto color en la rampa de cinco pasos;
 - selector de año, de mapa y de tipología; nivel nacional en la exportación; filas `ausente` para las 40 secciones de 2021 que la base del SERPAVI no trae;
 - modo daltónico, CSV y PNG, y la prueba con `chromote` (la página recalcula una muestra y coincide con R);
 - publicación en Pages (sin remoto todavía).

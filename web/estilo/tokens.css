@@ -18,10 +18,11 @@
   --color-aviso: #e9c46a;
 
   --rampa-1: #d9b25e;
-  --rampa-2: #d08a3c;
-  --rampa-3: #b9572b;
-  --rampa-4: #8e2f21;
-  --rampa-5: #4f1814;
+  --rampa-2: #d0893c;
+  --rampa-3: #bd5f2e;
+  --rampa-4: #a04025;
+  --rampa-5: #7d291e;
+  --rampa-6: #4f1814;
 
   --ficha-llave: #2a9d8f;
   --ficha-llave-texto: #1d6f66;
@@ -55,6 +56,7 @@
 .tramo-3 { background: var(--rampa-3); }
 .tramo-4 { background: var(--rampa-4); }
 .tramo-5 { background: var(--rampa-5); }
+.tramo-6 { background: var(--rampa-6); }
 
 /* Huecos: secreto estadístico y muestra pequeña */
 .secreto { background: repeating-linear-gradient(45deg, var(--color-tenue) 0 2px, transparent 2px 6px); border: 1px solid var(--color-tenue); }

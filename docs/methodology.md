@@ -408,7 +408,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `web_fichas` | By municipality: cells of the series of its sheet that do not reproduce the long table, and tracts in excess or missing | Exact | Blocking | 0 in the 8,131 municipalities | `validacion_web` |
 | `sobrecarga_es_total`, `sobrecarga_es_mercado`, `sobrecarga_ccaa` | Overburden from ECV microdata against Eurostat | ±0.1 points | Blocking | Pass in 2023–2025 (§7.5) | `validacion_sobrecarga` |
 | `modulo_acceso_lectura` | Sum of the regions against the national total of the ECV 2025 module | ±0.1% | Blocking | Passes | `validacion_modulo` |
-| `i18n_completo`, `contraste_texto`, `rampa_contorno` | ES/EN dictionaries and website contrasts | Exact | Blocking | Pass | `validacion_i18n`, `validacion_diseno` |
+| `i18n_completo`, `contraste_texto`, `rampa_contorno`, `rampa_daltonismo` | ES/EN dictionaries, website contrasts and a six-step ramp distinguishable under simulated colour blindness | Exact | Blocking | Pass | `validacion_i18n`, `validacion_diseno` |
 | `adrh_municipio_detalle` | Deviation of each municipality between aggregated tract means and the municipal figure | ±1% | Warning | Warns in 579 of 146,306 figures of municipality, year and indicator; 135 exceed 5% | `comprobaciones_adrh` |
 | `adrh_suma_secciones` | ADRH population by tract added up by municipality against the municipal total of the same table | ±0.5% | Warning | Warns in 160 municipality-years, all in 2015–2019 (38, 34, 30, 29 and 29) | `comprobaciones_f1` |
 | `adrh_seccion_huerfana` | ADRH tracts with no code in any tract map of 2016–2025 | Exact | Warning | 9 (§3.8) | `huerfanas_adrh` |
@@ -780,6 +780,7 @@ Confidentiality is concentrated in rural provinces: Guadalajara, 173 of 394 trac
 **How to read them:**
 - Indicator 15 is read in bands: up to 30%, 30 to 40% and over 40%.
 - Indicator 21 is rent expressed in another unit. The 30% threshold draws on the stressed-zone criterion of Law 12/2023 (art. 18), which uses household income and utilities; it is not that criterion.
+- The map of indicator 21 is drawn in six bands, with national cut-offs that are the same every year: €700, 900, 1,100, 1,500 and 2,000 (plan §11, question 20). The colour ramp has six steps that can also be told apart with colour blindness (`rampa_daltonismo`).
 - Indicators 15 and 21 change with the threshold, the floor area and the pay of «Your token»: the website recomputes them in the browser (plan §6.6).
 
 **Computation** (`armonizar_derivados()`; target `larga_derivados`, 1,103,301 rows, source `calculo_propio`):

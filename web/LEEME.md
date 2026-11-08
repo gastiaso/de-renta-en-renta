@@ -22,7 +22,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 
 ## Qué hace
 
-- **Mapa por defecto: sueldo neto necesario** (indicador 21) para que el alquiler de 50 m² no pase del 30 % del sueldo. Hay cinco tramos con los cortes del manifiesto. Se pinta con el alquiler por m² (indicador 9) y la fórmula de `js/formulas.js`. Superficie de 50, 70 o 90 m² y umbral del 30 o del 40 %.
+- **Mapa por defecto: sueldo neto necesario** (indicador 21) para que el alquiler de 50 m² no pase del 30 % del sueldo. Hay seis tramos con los cortes del manifiesto (700 · 900 · 1.100 · 1.500 · 2.000 €), uno por paso de la rampa. Se pinta con el alquiler por m² (indicador 9) y la fórmula de `js/formulas.js`. Superficie de 50, 70 o 90 m² y umbral del 30 o del 40 %.
   - En la regla de la leyenda, las fichas de una persona aparecen como marcas en su ingreso: la mochila, con la provincia de la sección elegida o la mediana de las provincias, y la tartera. La llave aparece como un tramo, del cuartil 1 al 3 de la renta de los hogares ÷ 12.
 - **«¿Te llega?»** al escribir un sueldo (neto al mes, 12 o 14 pagas, segundo sueldo opcional) o al elegir una ficha. Muestra el alquiler sobre el ingreso en tres tramos (hasta el 30 %, del 30 al 40 % y más del 40 %) y la frase «te cabe en el X % de las secciones con dato».
   - Cada ficha tiene su vivienda (plan, §3.1):
@@ -51,6 +51,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 | `js/datos.js` | Manifiesto, índices, valores por serie, nivel y periodo, series de la ficha, nombres, cajas y perfiles |
 | `js/sueldo.js` | Lógica de «Tu sueldo», sin DOM: modos, superficies, cálculos y expresiones de color, resumen y marcas de la regla |
 | `js/formulas.js` | Transformaciones del manifiesto (`directo`, `alquiler_m2_a_sueldo`) |
+| `js/colores.js` | Pasos de la rampa de cada tramo (los mapas con menos tramos toman pasos repartidos; «¿te llega?», el 1, el 4 y el 6), contraste WCAG y color del contorno de las secciones |
 | `js/mapa.js` | MapLibre: mapa base (PMTiles o GeoJSON), capas coloreadas, selección, comparación y encuadre |
 | `js/leyenda.js`, `js/ficha.js` | Leyenda y ficha de sección |
 | `js/panel_sueldo.js`, `js/compartir.js` | Tarjeta «Tu sueldo» y diálogo «Compartir» |
@@ -121,9 +122,9 @@ Los textos de la web son impersonales, salvo los del plan para «Tu sueldo» («
 
 ## Estilo
 
-`estilo/tokens.css` lo genera el pipeline desde `diseno/tokens.json`. Incluye las variables de color, la rampa con contorno en los tramos claros, las fichas, las tipografías y las formas, y las clases `.tramo-N`, `.secreto`, `.muestra-pequena` y `.cabecera-carta` (la de «Tu sueldo»).
+`estilo/tokens.css` lo genera el pipeline desde `diseno/tokens.json`. Incluye las variables de color, la rampa de seis pasos con contorno en los tramos claros, las fichas, las tipografías y las formas, y las clases `.tramo-N`, `.secreto`, `.muestra-pequena` y `.cabecera-carta` (la de «Tu sueldo»).
 
-En el mapa, el contorno de cada sección es de tinta sobre los tramos claros (los dos primeros no llegan a 3:1 sobre la crema) y de placa sobre los oscuros. La selección lleva un halo de placa. «¿Te llega?» usa los pasos 1, 3 y 5 de la rampa, que se distinguen también por la claridad. Nada de elementos propios de Monopoly (plan, §10.2).
+En el mapa, todas las secciones llevan contorno, porque los dos primeros tramos no llegan a 3:1 sobre la crema. Es de tinta sobre los tres tramos más claros, donde contrasta con ella al menos 3:1, y de placa sobre los oscuros. La selección lleva un halo de placa. La rampa tiene seis pasos (pregunta abierta 20), con la claridad repartida para que los contiguos se distingan también con daltonismo (compuerta `rampa_daltonismo`). «¿Te llega?» usa los pasos 1, 4 y 6, que se distinguen también por la claridad. Nada de elementos propios de Monopoly (plan, §10.2).
 
 ## Librerías (`vendor/`)
 

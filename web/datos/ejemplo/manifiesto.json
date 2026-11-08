@@ -90,7 +90,7 @@
     "sueldo_necesario": {
       "base": "alquiler_m2",
       "formula": "alquiler_m2_a_sueldo",
-      "cortes": [2600, 3200, 3800, 4400],
+      "cortes": [2600, 3200, 3800, 4400, 5000],
       "decimales": 0
     }
   },

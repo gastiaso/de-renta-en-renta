@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.23 · 8 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.24 · 8 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.24:** decisión del autor sobre la pregunta abierta 20: el mapa del sueldo necesario pasa a seis tramos, con un corte nuevo en 2.000 €, y la rampa del kit de diseño, a seis pasos, comprobados con daltonismo simulado (compuerta `rampa_daltonismo`; §10.2, §11).
 
 **Cambios en la v0.23:** decisiones del autor sobre las preguntas abiertas 18, 19 y 21, con la propuesta: SMI de 2015 a 2023 para la tartera en F3; los derivados (14, 15 y 21), desde sus términos redondeados a un decimal, para que la página y R coincidan; datos de la web fuera de git y publicados desde un *release* (§7, §11). La 20 (sexto tramo en el mapa del sueldo necesario) sigue abierta: un sexto tramo exige un sexto color, y la rampa del kit de diseño tiene cinco pasos (§10.2, criterio 2).
 
@@ -675,7 +677,7 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 
 **Criterios para elegir:**
 1. Legibilidad de datos a 12–14 px.
-2. Paleta secuencial de 4–5 pasos distinguible por personas daltónicas.
+2. Paleta secuencial de 4 a 6 pasos distinguible por personas daltónicas (seis desde el 8-nov-2026, pregunta 20; compuerta `rampa_daltonismo`).
 3. Que funcione en móvil.
 4. Que no reste credibilidad ante el público principal.
 5. Que sea propia: ni *barómetros* ni una marca comercial reconocible.
@@ -705,11 +707,11 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 
 18. **Serie de la tartera.** Cerrada (8-nov-2026), con la propuesta: el SMI de 2015 a 2023 se completa en F3 con las cuantías de los reales decretos de cada año (`SMI_FICHAS`), y cada descarga se pregunta antes. Hasta entonces, la barrera de la tartera con el alquiler del mismo año solo existe para 2024 (control en R), y la web usa el SMI vigente (2026) con el aviso de años distintos (regla 4).
 19. **Sueldo necesario y redondeo.** Cerrada (8-nov-2026), con la propuesta, extendida al control del 15: el 14, el 15 y el 21 se calculan en R desde sus términos redondeados a un decimal con `sprintf("%.1f")` (alquiler, renta por hogar e ingreso de la ficha; `termino_publicado()`). Son los mismos que recibe la web, así que la página y R coinciden exactamente (prueba de §6.5). La tabla larga del SERPAVI y del ADRH conserva la precisión de la fuente. Efecto en el 21: cambian 287.641 de sus 294.082 cifras, 4,18 € de media y 8,33 € como máximo (5 céntimos por m² × 50 / 0,30); la mediana de las secciones en 2024 pasa de 1.220 a 1.217 €. En el 14, la diferencia máxima es de 0,005 puntos, y 1.043 cifras cambian en su primer decimal.
-20. **Tramos del mapa del sueldo necesario.** Con los cortes nacionales (700 · 900 · 1.100 · 1.500 €, quintiles de todas las secciones y años), el centro de las grandes ciudades cae entero en el último tramo: en 2024 llegan a 1.500 € el 97 % de las secciones de Madrid, el 99 % de las de Barcelona y el 32 % de las de España. Propuesta, adoptada el 8-nov-2026: un sexto tramo con un corte en 2.000 €. **En suspenso al aplicarla:** un sexto tramo exige un sexto color, y la rampa del kit de diseño tiene cinco pasos (§10.2, criterio 2: de 4 a 5 pasos distinguibles con daltonismo). Su paso más oscuro (#4f1814) ya da 12,45:1 sobre la crema: uno más oscuro apenas se distinguiría de él ni de la tinta. Opciones:
-    - (a) seis tramos con una rampa nueva de seis pasos: cambian los cinco colores actuales y hay que volver a comprobar contrastes y daltonismo;
-    - (b) cinco tramos con los cortes 800 · 1.100 · 1.500 · 2.000 €. En 2024, las secciones quedan repartidas en 15,1 · 24,3 · 28,2 · 19,3 · 13,0 % (con los cortes de hoy, 9,1 · 12,9 · 17,5 · 28,2 · 32,3 %); en 2015, en 41,6 · 29,1 · 18,7 · 8,6 · 2,0 %. Se pierde el corte de 700 € en los primeros años.
-
-    Con 2.000 € como último corte, en las dos opciones, el último tramo reúne el 64 % de las secciones de Madrid y el 84 % de las de Barcelona en 2024. Propuesta nueva: (b), que no toca el kit de diseño y reparte mejor el último año, el que la web muestra por defecto.
+20. **Tramos del mapa del sueldo necesario.** Cerrada (8-nov-2026): seis tramos, con una rampa nueva de seis pasos (opción a). Con los cortes nacionales de antes (700 · 900 · 1.100 · 1.500 €, quintiles de todas las secciones y años), el centro de las grandes ciudades caía entero en el último tramo: en 2024 llegan a 1.500 € el 97 % de las secciones de Madrid, el 99 % de las de Barcelona y el 32 % de las de España.
+    - **Cortes:** 700 · 900 · 1.100 · 1.500 · 2.000 €, nacionales e iguales todos los años (`cortes_web` del indicador 21). En 2024, las secciones quedan repartidas en 9,1 · 12,9 · 17,5 · 28,2 · 19,3 · 13,0 %; en 2015, en 28,6 · 25,1 · 17,0 · 18,7 · 8,6 · 2,0 %. El último tramo reúne todavía el 64 % de las secciones de Madrid y el 84 % de las de Barcelona en 2024.
+    - **Rampa** (`diseno/tokens.json`): #d9b25e · #d0893c · #bd5f2e · #a04025 · #7d291e · #4f1814. Conserva los extremos de la de cinco y toma cuatro puntos de su mismo recorrido en OKLab, con la claridad repartida para separar al máximo los pasos contiguos en visión normal y con protanopía, deuteranopía y tritanopía simuladas (Machado et al., 2009). La distancia mínima entre pasos contiguos es de 0,089 en OKLab (protanopía, pasos 4 y 5), la misma que daba la rampa de cinco; la compuerta `rampa_daltonismo` exige 0,08. Contraste sobre la crema: 1,75 · 2,50 · 3,79 · 5,64 · 8,31 · 12,45; los dos primeros siguen con contorno.
+    - **Otros mapas:** un mapa con menos tramos toma pasos repartidos de punta a punta (con cinco, el 1, 2, 4, 5 y 6) y «¿te llega?», el 1, el 4 y el 6. El contorno de las secciones es de tinta mientras el paso contrasta con ella al menos 3:1 (los tres primeros) y de placa en los demás.
+    - Descartada la opción b (cinco tramos con los cortes 800 · 1.100 · 1.500 · 2.000 €): no tocaba el kit, pero perdía el corte de 700 € en los primeros años.
 21. **Datos de la web en git.** Cerrada (8-nov-2026), con la propuesta: son 8.478 ficheros y 75 MB (15 MB comprimido), y cada actualización los reescribe casi todos, así que `web/datos/` queda fuera de git (`.gitignore`), salvo la muestra de `web/datos/ejemplo/`. Se publican con el PMTiles desde un *release* del repositorio, que el flujo de Pages copia junto a la web; el sitio publicado ocupa unos 110 MB, por debajo del límite de 1 GB de Pages.
 
 **Por verificar en F0** (no son decisiones, son comprobaciones), hechas el 6-nov-2026:

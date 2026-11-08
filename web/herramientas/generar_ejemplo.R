@@ -197,7 +197,7 @@ manifiesto <- list(
   mapas = list(
     # formula: nombre de una transformación conocida por la web (js/formulas.js), no código.
     sueldo_necesario = list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo",
-                            cortes = c(2600L, 3200L, 3800L, 4400L), decimales = 0L)
+                            cortes = c(2600L, 3200L, 3800L, 4400L, 5000L), decimales = 0L)
   ),
   vista_inicial = list(limites = round(as.numeric(st_bbox(secciones)), 5))
 )

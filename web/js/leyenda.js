@@ -1,10 +1,13 @@
 // Leyenda del mapa, plegable (cerrada de entrada en el móvil):
-//   - sueldo necesario: regla de cinco tramos con los cortes del manifiesto, las fichas de una
-//     persona como marcas en su ingreso y la llave como un tramo (su renta cambia por sección);
+//   - sueldo necesario: regla con un tramo más que cortes del manifiesto (seis en el indicador 21),
+//     las fichas de una persona como marcas en su ingreso y la llave como un tramo (su renta
+//     cambia por sección);
 //   - «¿te llega?»: tres tramos (hasta el 30 %, del 30 al 40 % y más del 40 %).
 // Debajo, las claves de los huecos (sin dato, secreto estadístico) y los supuestos.
+// Los colores de cada tramo salen de los mismos pasos de la rampa que el mapa (colores.js).
 
 import { posicionEnRegla } from './sueldo.js';
+import { clasesTramos, rampaDeCss, TRAMOS_LLEGA } from './colores.js';
 
 const crear = (etiqueta, clase, texto) => {
   const el = document.createElement(etiqueta);
@@ -31,7 +34,7 @@ function reglaNecesario(t, { mapaDef, marcas, llave }) {
   const pos = (v) => `${(100 * posicionEnRegla(v, cortes)).toFixed(2)}%`;
 
   const regla = crear('div', 'leyenda-regla');
-  for (let i = 1; i <= cortes.length + 1; i++) regla.append(crear('span', `leyenda-tramo tramo-${i}`));
+  for (const clase of clasesTramos(cortes.length + 1, rampaDeCss().length)) regla.append(crear('span', `leyenda-tramo ${clase}`));
   if (llave) {
     const banda = crear('span', 'leyenda-banda-llave');
     banda.style.left = pos(llave.desde);
@@ -70,9 +73,10 @@ function reglaNecesario(t, { mapaDef, marcas, llave }) {
 
 function tramosLlega(t) {
   const lista = crear('ul', 'leyenda-llega');
+  const clases = clasesTramos(TRAMOS_LLEGA, rampaDeCss().length);
   ['interfaz.leyenda.llega_1', 'interfaz.leyenda.llega_2', 'interfaz.leyenda.llega_3'].forEach((clave, i) => {
     const item = crear('li');
-    item.append(crear('span', `leyenda-muestra tramo-${[1, 3, 5][i]}`), crear('span', null, t(clave)));
+    item.append(crear('span', `leyenda-muestra ${clases[i]}`), crear('span', null, t(clave)));
     lista.append(item);
   });
   return [lista];

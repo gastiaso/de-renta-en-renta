@@ -13,24 +13,22 @@
 // descarga nada.
 
 import * as maplibregl from 'maplibre-gl';
+import { paletaDe, paletaContorno, rampaDeCss } from './colores.js';
 
 const css = (nombre) => getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
 const absoluta = (ruta) => new URL(ruta, document.baseURI).href;
 let pmtilesRegistrado = false;
 
-// Colores del mapa, de tokens.css: rampa de cinco pasos para el sueldo necesario; pasos 1, 3 y 5
-// para los tres tramos de «¿te llega?» (de claro a oscuro: se distinguen también sin color).
+// Colores del mapa, de tokens.css: la rampa entera (seis pasos) para los tramos del mapa y tres
+// pasos repartidos para «¿te llega?» (de claro a oscuro: se distinguen también sin color).
 export function coloresMapa() {
-  const rampa = [1, 2, 3, 4, 5].map((i) => css(`--rampa-${i}`));
-  return { rampa, llega: [rampa[0], rampa[2], rampa[4]], fuera: css('--color-fuera') };
+  return paletaDe(rampaDeCss(), css('--color-fuera'));
 }
 
 // Colores del contorno de cada tramo: tinta sobre los tramos claros (los dos primeros no llegan
-// a 3:1 sobre la crema) y placa sobre los oscuros, donde la tinta no se ve.
+// a 3:1 sobre la crema) y placa sobre los oscuros, donde la tinta no se ve (colores.js).
 export function coloresContorno() {
-  const tinta = css('--color-tinta');
-  const placa = css('--color-placa');
-  return { rampa: [tinta, tinta, tinta, placa, placa], llega: [tinta, placa, placa], fuera: tinta };
+  return paletaContorno(coloresMapa(), css('--color-tinta'), css('--color-placa'));
 }
 
 // Trama del secreto estadístico (como la clase .secreto de tokens.css).

@@ -4,6 +4,18 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Decidido (8-nov-2026, pregunta abierta 20; plan v0.24)
+
+- Mapa del sueldo necesario en seis tramos, con un corte nuevo en 2.000 € (700 · 900 · 1.100 · 1.500 · 2.000 €), y rampa de seis pasos. En 2024, el último tramo pasa del 32 % al 13 % de las secciones.
+
+### Cambiado (8-nov-2026, rampa de seis pasos)
+
+- `diseno/tokens.json`: rampa #d9b25e · #d0893c · #bd5f2e · #a04025 · #7d291e · #4f1814, con los extremos de la de cinco y la claridad repartida en OKLab para separar los pasos contiguos con daltonismo simulado. Distancia mínima de 0,089, como la rampa de cinco. `tokens.css` regenerado, con `.tramo-6`.
+- Compuerta nueva `rampa_daltonismo` (bloqueo; `R/web_estilo.R`): pasos contiguos a 0,08 en OKLab como mínimo, en visión normal y con protanopía, deuteranopía y tritanopía simuladas (Machado et al., 2009). `contraste_declarado` comprueba también la rampa.
+- `cortes_web` admite de uno a cinco cortes (`MAX_CORTES_WEB`); el indicador 21 lleva cinco.
+- Web: `js/colores.js` reparte los pasos de la rampa entre los tramos de cada mapa (con seis tramos, todos; «¿te llega?», el 1, el 4 y el 6) y decide el contorno de las secciones (tinta mientras contrasta 3:1). Leyenda, ficha y regla con cualquier número de tramos. Muestra con cinco cortes.
+- Pruebas: 17 en la web y 555 en R, con las nuevas de la rampa y los cortes.
+
 ### Decidido (8-nov-2026, preguntas abiertas 18, 19 y 21; plan v0.23)
 
 - Tartera: el SMI de 2015 a 2023 se completa en F3, con las cuantías de los reales decretos; cada descarga se pregunta antes.
