@@ -191,6 +191,13 @@ body {
 .ficha-numero { font: 700 2rem var(--fuente-tablero); font-variant-numeric: tabular-nums; }
 .ficha-unidad { color: var(--color-tenue); }
 .ficha-estado { margin: 4px 0 8px; color: var(--color-tenue); }
+.ficha-serie { margin: 0 16px 16px; padding-top: 10px; border-top: 1px solid var(--color-tinta); }
+.ficha-tabla { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.ficha-tabla th, .ficha-tabla td { padding: 2px 12px 2px 0; text-align: left; font-weight: 400; }
+.ficha-tabla th { font-family: var(--fuente-tablero); }
+.ficha-tabla-cifra { text-align: right; font-family: var(--fuente-tablero); }
+.ficha-tabla-estado { color: var(--color-tenue); }
+.ficha-tabla-activa th, .ficha-tabla-activa td { font-weight: 700; }
 
 /* Controles de MapLibre con las formas del tablero */
 .maplibregl-ctrl-group { border: var(--borde); border-radius: var(--radio-control); box-shadow: none; }

@@ -4,6 +4,12 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Cambiado (8-nov-2026, web)
+
+- Datos de la web en JSON de enteros (pregunta abierta 17): un fichero por indicador, nivel y año con `v` (valor × 10, `null` sin valor) y `e` (un carácter de estado por territorio: 0 dato, 1 estimado, 2 secreto, 3 ausente), en el orden del índice. Sustituye al binario.
+- Ficha de sección con la evolución por años, desde un fichero de series por municipio (`fichas/<municipio>.json`).
+- `web/js/datos.js`, `ficha.js`, `mapa.js` y `principal.js`; muestra regenerada (`web/herramientas/generar_ejemplo.R`, cinco años de ejemplo); `web/LEEME.md`; pruebas de la web: 5, con `node --test pruebas/web/datos.test.mjs`.
+
 ### Decidido (8-nov-2026, preguntas abiertas 12–17; plan v0.21)
 
 - Alquiler (8, 9) y sus derivados (14, 15, 21): vivienda colectiva por defecto, con la unifamiliar como opción y sin mezclarlas.

@@ -34,7 +34,7 @@ export function fichaError(contenedor, { t, error }) {
   contenedor.replaceChildren(cabecera(t), aviso);
 }
 
-// `valor`: ya calculado con la fórmula del mapa (o null); `estado`: índice en binario.estados.
+// `valor`: ya calculado con la fórmula del mapa (o null); `estado`: índice en codificacion.estados.
 export function fichaSeccion(contenedor, { t, codigo, territorios, mapaId, mapaDef, anio, valor, estado, estados, ejemplo, alCerrar }) {
   const municipio = codigo.slice(0, 5);
   const provincia = codigo.slice(0, 2);
@@ -62,4 +62,28 @@ export function fichaSeccion(contenedor, { t, codigo, territorios, mapaId, mapaD
     datos,
     bloque,
   );
+}
+
+// Evolución del mapa activo en la sección: una fila por año, con el valor calculado con la
+// fórmula del mapa y, si no es «dato», su estado. Se añade al final de la ficha.
+export function fichaSeries(contenedor, { t, serie, mapaDef, calcular, estados, anio }) {
+  const cuerpo = crear('tbody');
+  serie.anios.forEach((a, i) => {
+    const fila = crear('tr', a === anio ? 'ficha-tabla-activa' : undefined);
+    const ano = crear('th', null, String(a));
+    ano.scope = 'row';
+    const valor = serie.valores[i];
+    const nombre = estados[serie.estados[i]];
+    fila.append(
+      ano,
+      crear('td', 'ficha-tabla-cifra', valor === null ? '—' : t.numero(calcular(valor), mapaDef.decimales ?? 0)),
+      crear('td', 'ficha-tabla-estado', nombre === 'dato' ? '' : t(`interfaz.estado_corto.${nombre}`)),
+    );
+    cuerpo.append(fila);
+  });
+  const tabla = crear('table', 'ficha-tabla');
+  tabla.append(cuerpo);
+  const bloque = crear('section', 'ficha-serie');
+  bloque.append(crear('h3', 'ficha-indicador', t('interfaz.ficha.evolucion')), tabla);
+  contenedor.append(bloque);
 }

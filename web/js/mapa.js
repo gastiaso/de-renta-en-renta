@@ -7,7 +7,7 @@
 //   - geojson: un fichero por capa (la muestra de web/datos/ejemplo/).
 // Sin teselas de terceros: el fondo es el color del mar y la tierra sale de las propias capas.
 //
-// Los valores no van en las teselas: se cargan aparte (binarios por indicador y año) y se
+// Los valores no van en las teselas: se cargan aparte (un JSON por indicador y año) y se
 // guardan como estado de cada sección (feature-state `b`, el valor base). El color se calcula
 // con una expresión de estilo, así que cambiar de umbral o de superficie no descarga nada.
 

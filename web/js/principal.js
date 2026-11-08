@@ -3,10 +3,10 @@
 
 import { leerEstado, guardarEstado, vistaATexto, textoAVista } from './estado.js';
 import { cargarIdioma, traducirPagina } from './i18n.js';
-import { cargarManifiesto, cargarSecciones, cargarTerritorios, cargarIndicador } from './datos.js';
+import { cargarManifiesto, cargarSecciones, cargarTerritorios, cargarIndicador, cargarSeries } from './datos.js';
 import { crearMapa } from './mapa.js';
 import { pintarLeyenda } from './leyenda.js';
-import { fichaVacia, fichaSeccion, fichaError } from './ficha.js';
+import { fichaVacia, fichaSeccion, fichaSeries, fichaError } from './ficha.js';
 import { formulaDe } from './formulas.js';
 
 const estado = { idioma: 'es', ...leerEstado() };
@@ -20,11 +20,13 @@ const el = {
 
 let t;            // traductor del idioma activo
 let manifiesto;   // qué datos hay y dónde
-let secciones;    // códigos en el orden de los binarios
+let secciones;    // códigos en el orden de los valores
 let indice;       // código → posición
 let territorios;  // nombres por nivel
 let datos;        // valores y estados del indicador base del mapa activo
 let mapa;         // funciones del mapa (mapa.js)
+
+let turnoFicha = 0; // descarta series que llegan cuando la ficha ya es otra
 
 const mapaDef = () => manifiesto.mapas[estado.mapa];
 
@@ -33,23 +35,34 @@ function marcarIdioma() {
 }
 
 function pintarFicha() {
+  const turno = ++turnoFicha;
   if (!estado.seccion) return fichaVacia(el.ficha, { t });
   const def = mapaDef();
-  const i = indice.get(estado.seccion);
+  const calcular = (x) => formulaDe(def).calcular(x, manifiesto.supuestos);
+  const { estados } = manifiesto.codificacion;
+  const seccion = estado.seccion;
+  const i = indice.get(seccion);
   const base = i === undefined ? null : datos.valores[i];
   fichaSeccion(el.ficha, {
     t,
-    codigo: estado.seccion,
+    codigo: seccion,
     territorios,
     mapaId: estado.mapa,
     mapaDef: def,
     anio: estado.anio,
-    valor: base === null ? null : formulaDe(def).calcular(base, manifiesto.supuestos),
-    estado: i === undefined ? manifiesto.binario.estados.indexOf('ausente') : datos.estados[i],
-    estados: manifiesto.binario.estados,
+    valor: base === null ? null : calcular(base),
+    estado: i === undefined ? estados.indexOf('ausente') : datos.estados[i],
+    estados,
     ejemplo: manifiesto.ejemplo,
     alCerrar: () => elegirSeccion(null),
   });
+  // Evolución en la sección: fichas/<municipio>.json, que se pide solo al abrir la ficha.
+  cargarSeries(manifiesto, seccion)
+    .then((series) => {
+      const serie = series?.[def.base];
+      if (serie && turno === turnoFicha) fichaSeries(el.ficha, { t, serie, mapaDef: def, calcular, estados, anio: estado.anio });
+    })
+    .catch((error) => console.error(error));
 }
 
 function pintarLeyendaActiva() {

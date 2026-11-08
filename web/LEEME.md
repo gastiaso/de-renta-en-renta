@@ -18,7 +18,7 @@ y abrir <http://localhost:8000/>. Para parar: Ctrl+C. Si el puerto está ocupado
 - Hace falta porque el PMTiles se lee por trozos (rangos HTTP) y `python -m http.server` no los atiende.
 - Abrir `index.html` con doble clic no funciona: el navegador no deja cargar módulos ni datos desde `file://`.
 
-Mientras el pipeline no exporte los datos, la web carga la **muestra** de `datos/ejemplo/`: las 111 secciones de 2021 del distrito Centro de Madrid, con valores **inventados** y la etiqueta «Datos de ejemplo» siempre visible (guía, regla 9).
+Mientras el pipeline no exporte los datos, la web carga la **muestra** de `datos/ejemplo/`: las 111 secciones de 2021 del distrito Centro de Madrid, con valores **inventados** de alquiler por m² de 2020 a 2024 (y sus series en `fichas/28079.json`) y la etiqueta «Datos de ejemplo» siempre visible (guía, regla 9).
 
 ## Estructura
 
@@ -28,17 +28,17 @@ Mientras el pipeline no exporte los datos, la web carga la **muestra** de `datos
 | `js/principal.js` | Arranque: idioma, manifiesto, mapa, leyenda y ficha |
 | `js/estado.js` | Estado de la vista en la URL (`idioma`, `mapa`, `anio`, `seccion`, `vista`) |
 | `js/i18n.js` | Textos desde `i18n/<idioma>.json`; cifras con el formato de cada idioma |
-| `js/datos.js` | Manifiesto, índice de secciones y binarios de los indicadores |
+| `js/datos.js` | Manifiesto, índice de secciones, valores de los indicadores y series de la ficha |
 | `js/mapa.js` | MapLibre: mapa base (PMTiles o GeoJSON), color por tramos, selección |
 | `js/formulas.js` | Transformaciones que la web calcula (sueldo necesario desde el alquiler por m²) |
-| `js/leyenda.js`, `js/ficha.js` | Leyenda (regla de tramos) y ficha de sección |
+| `js/leyenda.js`, `js/ficha.js` | Leyenda (regla de tramos) y ficha de sección, con su evolución por años |
 | `estilo/tokens.css` | Generado por el pipeline desde `diseno/tokens.json`: no se edita a mano |
 | `estilo/sitio.css` | Maquetación; solo usa las variables de `tokens.css` |
 | `estilo/fuentes/` | Tipografías autoalojadas, con su licencia |
 | `i18n/es.json`, `i18n/en.json` | Diccionarios (ver abajo) |
 | `i18n/pendiente_interfaz.json` | Textos de la interfaz que aún no están en los diccionarios (sección `interfaz`) |
 | `vendor/` | Librerías de terceros, con su licencia |
-| `datos/` | Datos para la web: `manifiesto.json` y binarios (exportación del pipeline) |
+| `datos/` | Datos para la web: `manifiesto.json`, valores por indicador y año, series por municipio (exportación del pipeline) |
 | `datos/ejemplo/` | Muestra con valores inventados (`herramientas/generar_ejemplo.R`) |
 | `teselas/` | Mapa base en PMTiles (fuera de git, como todo `*.pmtiles`) |
 
@@ -49,14 +49,41 @@ Mientras el pipeline no exporte los datos, la web carga la **muestra** de `datos
 El manifiesto dice:
 
 - `mapa_base`: de qué tipo es (`pmtiles`, un fichero con varias capas, o `geojson`, un fichero por capa), dónde está y cómo se llama la propiedad que identifica cada elemento. Las capas son las del mapa base del seccionado de 2021: `comunidades` (`ccaa`), `provincias` (`provincia`), `municipios` (`municipio`) y `secciones` (`seccion`, código de 10 dígitos como texto).
-- `secciones`: el índice, es decir, los códigos en el orden de los binarios.
+- `secciones`: el índice, es decir, los códigos en el orden de los valores.
 - `territorios`: los nombres por nivel.
-- `indicadores`: los años de cada indicador y la ruta de sus binarios.
+- `codificacion`: la escala de los enteros (`10`) y los nombres de los estados en el orden de sus cifras (`dato`, `estimado`, `secreto`, `ausente`).
+- `indicadores`: los años de cada indicador y la ruta de sus valores (`{anio}` se sustituye por el año).
+- `fichas`: la ruta de las series por municipio (`{municipio}`, los cinco primeros dígitos del código de sección).
 - `mapas`: lo que se pinta. Cada mapa da su indicador base, la fórmula que aplica la web (`js/formulas.js`) y los cuatro cortes de los cinco tramos.
 - `supuestos`: superficie y umbral por defecto.
 - `ejemplo`: `true` en la muestra.
 
-**Binario de un indicador y año:** *n* enteros de 32 bits con signo (little-endian) con el valor × 10, de modo que el decimal es exacto (`sprintf("%.1f")`); el nulo es `-2147483648`, el `NA_integer_` de R. Detrás van *n* bytes de estado: 0 dato, 1 estimado, 2 secreto, 3 ausente. Desde R basta con `writeBin(as.integer(...), con, size = 4, endian = "little")` y `writeBin(estado, con, size = 1)`.
+**Valores de un indicador, nivel y año** (`datos/<nivel>/<indicador>/<anio>.json`; plan, §6.6, pregunta abierta 17): un JSON de enteros con el valor × 10, de modo que el decimal es exacto (`sprintf("%.1f")`), `null` si no hay valor, y una cadena con un carácter de estado por territorio: `0` dato, `1` estimado, `2` secreto, `3` ausente. Los dos van en el orden del índice:
+
+```json
+{"v": [247, 251, null, 131], "e": "0020"}
+```
+
+Ocupa lo mismo comprimido que un binario (57–121 KB por indicador y año en las 36.333 secciones), y GitHub Pages lo sirve comprimido. Desde R:
+
+```r
+v <- rep(NA_integer_, length(x))
+v[!is.na(x)] <- as.integer(sprintf("%.0f", x[!is.na(x)] * 10))
+jsonlite::write_json(list(v = I(v), e = paste(estado, collapse = "")), ruta,
+                     auto_unbox = TRUE, na = "null", digits = NA)
+```
+
+`I()` evita que un vector de longitud 1 salga como escalar, y `na = "null"` escribe los `NA` como `null`.
+
+**Series de la ficha** (`datos/fichas/<municipio>.json`): todos los años de las secciones de un municipio, para no bajar un fichero por año al abrir una ficha. Cada serie usa el mismo par `v` y `e`, en el orden de los años de `anios`:
+
+```json
+{"municipio": "28079",
+ "anios": {"alquiler_m2": [2020, 2021, 2022, 2023, 2024]},
+ "series": {"2807901001": {"alquiler_m2": {"v": [221, 227, 234, 240, 247], "e": "00000"}}}}
+```
+
+La web lo pide solo al abrir la ficha de una sección de ese municipio. Madrid, el mayor, ronda 350 KB comprimido con los indicadores de la v0.1.
 
 Los valores no van dentro de las teselas. Se guardan como estado de cada sección en MapLibre (*feature-state*), y el color sale de una expresión de estilo. Así, cambiar el umbral, la superficie o el sueldo no obliga a descargar nada.
 
@@ -85,7 +112,7 @@ Se bajaron de jsDelivr (paquetes de npm, carpeta `dist/`). Para actualizarlas, s
 node --test pruebas/web/datos.test.mjs
 ```
 
-Comprueban, con datos inventados, el formato binario y las fórmulas, y que la muestra que escribe R se lee entera desde JavaScript. Queda para F2 la prueba en navegador con `chromote`: la página recalcula una muestra de cifras y deben coincidir con R (plan, §6.5).
+Comprueban, con datos inventados, el formato de los valores y las fórmulas. También comprueban que la muestra que escribe R se lee entera desde JavaScript y que las series de la ficha cuadran, año a año, con los valores del mapa. Queda para F2 la prueba en navegador con `chromote`: la página recalcula una muestra de cifras y deben coincidir con R (plan, §6.5).
 
 ## Publicación
 

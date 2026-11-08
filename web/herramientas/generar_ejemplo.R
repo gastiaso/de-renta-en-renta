@@ -5,9 +5,10 @@
 #   - secciones.geojson   secciones del distrito Centro de Madrid (seccionado de 2021, INE),
 #                         con los nombres de capa y de propiedad del mapa base (`seccion`)
 #   - provincias.geojson  contorno de la provincia de Madrid (fondo provisional)
-#   - secciones.json      índice: códigos de sección en el orden de los binarios
+#   - secciones.json      índice: códigos de sección en el orden de los valores
 #   - territorios.json    nombres de municipio, provincia y comunidad
-#   - sc/alquiler_m2/2024.bin   valores INVENTADOS, con el formato propuesto para la web
+#   - sc/alquiler_m2/<año>.json   valores INVENTADOS de 2020 a 2024, uno por año
+#   - fichas/28079.json   series de cada sección para la ficha (todas son de Madrid)
 #   - manifiesto.json     qué hay y dónde (mismo esquema que el manifiesto real)
 #
 # Los valores son de ejemplo (guía, regla 9): aleatorios, sin relación con la sección.
@@ -24,6 +25,7 @@ dsn <- paste0("/vsizip/", zip_2021, "/Seccionado_2021/", capa, ".shp")
 salida <- file.path("web", "datos", "ejemplo")
 unlink(salida, recursive = TRUE)
 dir.create(file.path(salida, "sc", "alquiler_m2"), recursive = TRUE, showWarnings = FALSE)
+dir.create(file.path(salida, "fichas"), showWarnings = FALSE)
 
 leer <- function(where) {
   st_read(dsn, quiet = TRUE,
@@ -48,7 +50,7 @@ escribir_geojson <- function(x, ruta) {
 escribir_geojson(secciones, file.path(salida, "secciones.geojson"))
 escribir_geojson(provincias, file.path(salida, "provincias.geojson"))
 
-# Índice de secciones (el orden de los binarios) y nombres de los territorios.
+# Índice de secciones (el orden de los valores) y nombres de los territorios.
 jsonlite::write_json(secciones$seccion, file.path(salida, "secciones.json"))
 territorios <- list(
   municipio = stats::setNames(as.list(unique(centro$NMUN)), unique(centro$CUMUN)),
@@ -57,23 +59,43 @@ territorios <- list(
 )
 jsonlite::write_json(territorios, file.path(salida, "territorios.json"), auto_unbox = TRUE, pretty = TRUE)
 
-# Valores INVENTADOS de alquiler por m² (€/m²/mes): aleatorios entre 12 y 30.
-# Binario: n enteros de 32 bits con signo, little-endian, valor × 10 (un decimal exacto;
-# NA_integer_ = -2147483648 es el nulo), seguidos de n bytes de estado
-# (0 dato, 1 estimado, 2 secreto, 3 ausente).
+# Valores INVENTADOS de alquiler por m² (€/m²/mes), 2020-2024: un punto de partida aleatorio
+# entre 11 y 26 y una subida anual aleatoria del 0 al 6 %. Estados (0 dato, 1 estimado,
+# 2 secreto, 3 ausente): cuatro secciones en secreto todos los años y algún hueco suelto.
 set.seed(20261108)
 n <- nrow(secciones)
-valor <- as.numeric(sprintf("%.1f", runif(n, 12, 30)))
-estado <- sample(0:1, n, replace = TRUE, prob = c(0.85, 0.15))
-estado[sample(n, 4)] <- 2L
-estado[sample(which(estado != 2L), 2)] <- 3L
+anios <- 2020:2024
+inicio <- runif(n, 11, 26)
+subida <- runif(n, 0, 0.06)
+valor <- sapply(seq_along(anios), function(k) as.numeric(sprintf("%.1f", inicio * (1 + subida)^(k - 1))))
+estado <- matrix(sample(0:1, n * length(anios), replace = TRUE, prob = c(0.85, 0.15)), n)
+estado[sample(n, 4), ] <- 2L
+huecos <- cbind(sample(which(estado[, 1] != 2L), 6), sample(seq_along(anios), 6, replace = TRUE))
+estado[huecos] <- 3L
 valor[estado >= 2L] <- NA
-por_diez <- rep(NA_integer_, n)
-por_diez[!is.na(valor)] <- as.integer(sprintf("%.0f", valor[!is.na(valor)] * 10))
-con <- file(file.path(salida, "sc", "alquiler_m2", "2024.bin"), "wb")
-writeBin(por_diez, con, size = 4, endian = "little")
-writeBin(as.integer(estado), con, size = 1)
-close(con)
+
+# Formato de la web (plan, §6.6): {"v": [valor × 10 en enteros, null sin valor], "e": "0012…"},
+# en el orden del índice; un carácter de estado por territorio. I() impide que jsonlite
+# convierta en escalar un vector de longitud 1.
+por_diez <- function(x) {
+  y <- rep(NA_integer_, length(x))
+  y[!is.na(x)] <- as.integer(sprintf("%.0f", x[!is.na(x)] * 10))
+  y
+}
+codificar <- function(x, e) list(v = I(por_diez(x)), e = paste(e, collapse = ""))
+escribir_json <- function(x, ruta) jsonlite::write_json(x, ruta, auto_unbox = TRUE, na = "null", digits = NA)
+
+for (k in seq_along(anios)) {
+  escribir_json(codificar(valor[, k], estado[, k]),
+                file.path(salida, "sc", "alquiler_m2", sprintf("%d.json", anios[k])))
+}
+
+# Series de la ficha, un fichero por municipio: {"municipio", "anios": {indicador: [años]},
+# "series": {sección: {indicador: {"v", "e"}}}}, con los años en el orden de "anios".
+series <- stats::setNames(lapply(seq_len(n), function(i) list(alquiler_m2 = codificar(valor[i, ], estado[i, ]))),
+                          secciones$seccion)
+escribir_json(list(municipio = "28079", anios = list(alquiler_m2 = I(anios)), series = series),
+              file.path(salida, "fichas", "28079.json"))
 
 caja <- as.numeric(st_bbox(secciones))
 manifiesto <- list(
@@ -91,11 +113,11 @@ manifiesto <- list(
   ),
   secciones = "datos/ejemplo/secciones.json",
   territorios = "datos/ejemplo/territorios.json",
-  binario = list(valor = "int32le_x10", estado = "uint8", nulo = -2147483648,
-                 estados = c("dato", "estimado", "secreto", "ausente")),
+  fichas = "datos/ejemplo/fichas/{municipio}.json",
+  codificacion = list(escala = 10L, estados = c("dato", "estimado", "secreto", "ausente")),
   supuestos = list(superficie_m2 = 50L, umbral = 0.30),
   indicadores = list(
-    alquiler_m2 = list(nivel = "sc", anios = list(2024L), ruta = "datos/ejemplo/sc/alquiler_m2/{anio}.bin")
+    alquiler_m2 = list(nivel = "sc", anios = I(anios), ruta = "datos/ejemplo/sc/alquiler_m2/{anio}.json")
   ),
   mapas = list(
     # formula: nombre de una transformación conocida por la web (js/formulas.js), no código.
@@ -107,4 +129,4 @@ manifiesto <- list(
 jsonlite::write_json(manifiesto, file.path(salida, "manifiesto.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA)
 
 tam <- file.size(list.files(salida, recursive = TRUE, full.names = TRUE))
-message(sprintf("Muestra en %s: %d secciones, %s KB.", salida, n, sprintf("%.1f", sum(tam) / 1024)))
+message(sprintf("Muestra en %s: %d secciones, %d años, %s KB.", salida, n, length(anios), sprintf("%.1f", sum(tam) / 1024)))

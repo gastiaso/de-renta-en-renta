@@ -19,10 +19,9 @@
   },
   "secciones": "datos/ejemplo/secciones.json",
   "territorios": "datos/ejemplo/territorios.json",
-  "binario": {
-    "valor": "int32le_x10",
-    "estado": "uint8",
-    "nulo": -2147483648,
+  "fichas": "datos/ejemplo/fichas/{municipio}.json",
+  "codificacion": {
+    "escala": 10,
     "estados": ["dato", "estimado", "secreto", "ausente"]
   },
   "supuestos": {
@@ -32,10 +31,8 @@
   "indicadores": {
     "alquiler_m2": {
       "nivel": "sc",
-      "anios": [
-        2024
-      ],
-      "ruta": "datos/ejemplo/sc/alquiler_m2/{anio}.bin"
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/sc/alquiler_m2/{anio}.json"
     }
   },
   "mapas": {

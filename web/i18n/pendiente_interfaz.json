@@ -21,7 +21,13 @@
         "vacia": "Elige una sección en el mapa para ver su ficha.",
         "seccion": "Sección {codigo}",
         "anio": "Año {anio}",
-        "cerrar": "Cerrar la ficha"
+        "cerrar": "Cerrar la ficha",
+        "evolucion": "Evolución"
+      },
+      "estado_corto": {
+        "estimado": "estimado",
+        "secreto": "secreto",
+        "ausente": "sin dato"
       }
     }
   },
@@ -47,7 +53,13 @@
         "vacia": "Choose a tract on the map to see its profile.",
         "seccion": "Tract {codigo}",
         "anio": "Year {anio}",
-        "cerrar": "Close the profile"
+        "cerrar": "Close the profile",
+        "evolucion": "Over time"
+      },
+      "estado_corto": {
+        "estimado": "estimated",
+        "secreto": "confidential",
+        "ausente": "no data"
       }
     }
   }
