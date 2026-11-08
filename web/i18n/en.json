@@ -72,7 +72,7 @@
       "unidad": "€ per employee per year (gross)",
       "definicion": "Average gross annual wage of employees with tax residence in the province, overall and aged 26 to 35.",
       "calculo": "Published by the Spanish Tax Agency (AEAT); the Basque Country and Navarre, from their regional tax authorities.",
-      "lectura": "Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «under-35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region (plan §3.1, method B); the conversion to net pay is pending."
+      "lectura": "Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «under-35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region, and then to monthly net pay spread over 12, with the employee's social security contribution and the average AEAT withholding by region and income band (plan §3.1, method B)."
     },
     "alquiler_mes": {
       "nombre": "Monthly rent (median)",
@@ -205,6 +205,7 @@
     "ine_seccionado": "Census tract boundaries (annual)",
     "ine_callejero": "Electoral census street directory (street segments by tract)",
     "catastro_inspire": "Cadastre buildings (INSPIRE)",
+    "catastro_foral": "Foral cadastre buildings (INSPIRE)",
     "ine_padron_sc": "Population by census tract (annual population census; municipal register)",
     "ine_ecv": "Living Conditions Survey, EU-SILC (microdata)",
     "ine_ecv_modulo": "Living Conditions Survey 2025: housing access difficulties module (tables)",

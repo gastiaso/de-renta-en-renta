@@ -72,7 +72,7 @@
       "unidad": "€ por asalariado y año (bruto)",
       "definicion": "Salario medio anual bruto de los asalariados con domicilio fiscal en la provincia, en total y de 26 a 35 años.",
       "calculo": "Cifra publicada por la AEAT (Mercado de trabajo y pensiones en las fuentes tributarias); el País Vasco y Navarra, con las haciendas forales.",
-      "lectura": "Es salario real del año: incluye a quien trabajó pocos meses. Es una media, no una mediana; la ficha «joven» la pasa a mediana con la relación mediana/media del salario medio estimado de su comunidad (plan §3.1, método B); el paso a neto está pendiente."
+      "lectura": "Es salario real del año: incluye a quien trabajó pocos meses. Es una media, no una mediana; la ficha «joven» la pasa a mediana con la relación mediana/media del salario medio estimado de su comunidad y después a neto mensual repartido en 12, con la cotización del trabajador y la retención media de la AEAT por comunidad y tramo de renta (plan §3.1, método B)."
     },
     "alquiler_mes": {
       "nombre": "Alquiler mensual (mediana)",
@@ -205,6 +205,7 @@
     "ine_seccionado": "Cartografía de secciones censales (anual)",
     "ine_callejero": "Callejero del censo electoral (tramos de vía por sección)",
     "catastro_inspire": "Edificios del Catastro (INSPIRE)",
+    "catastro_foral": "Edificios de los catastros forales (INSPIRE)",
     "ine_padron_sc": "Población por sección censal (Censo anual de población; Padrón continuo)",
     "ine_ecv": "Encuesta de Condiciones de Vida (microdatos)",
     "ine_ecv_modulo": "Encuesta de Condiciones de Vida 2025: módulo sobre dificultades de acceso a la vivienda (tablas)",

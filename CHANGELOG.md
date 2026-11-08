@@ -4,6 +4,24 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (8-nov-2026, catastros forales)
+
+- Catastros forales de Álava, Bizkaia, Gipuzkoa y Navarra en la vía (b) de las tablas de paso (plan v0.18, §6.3). Fuente `catastro_foral` y fichero `R/fuente_catastro_foral.R`:
+  - zips del territorio entero (Álava y Gipuzkoa) y por municipio (Bizkaia y Navarra, sacados de sus feeds ATOM): `zips_catastro_forales`, `seleccionar_zips_forales`, `descargar_catastro_foral`;
+  - lector propio (`leer_catastro_foral`), que lee todos los GML de un zip y toma el año de construcción de la parte de la fecha que use cada territorio (`anio_construccion_foral`). No toca el lector del Catastro estatal, para no releer sus zips.
+- Objetivos `municipios_forales`, `zips_forales_feeds`, `urls_forales`, `zips_forales`, `edificios_foral` y `edificios_forales`. Este último guarda solo los edificios de los municipios seleccionados. `edificios_paso` junta los estatales y los forales.
+  - El bloque foral solo entra si el ámbito incluye alguna provincia foral: con `PROVINCIA=28` no hay nada que leer, y targets no admite ramas sobre una lista vacía.
+  - `municipios_cubiertos` incluye ya los forales.
+- Descarga y resultado:
+  - 58 zips, 68,9 MB (con permiso del autor); 131.335 edificios con viviendas, 1.035.411 viviendas.
+  - Censo 2021 en 11 municipios: −0,1 % en total.
+  - Secciones de 2021 `estimado` en País Vasco y Navarra: de 300 a 2 en 2021 y de 360 a 62 en 2024.
+- Pruebas con datos inventados de los enlaces, la selección de zips y el año de construcción (`test-catastro-foral.R`).
+
+### Cambiado (8-nov-2026)
+
+- Indicador 7: la lectura recoge el paso a neto de la mochila (ES y EN; diccionarios de la web regenerados).
+
 ### Añadido (7-nov-2026, mochila en neto)
 
 - Paso a neto de la mochila (plan v0.17, §3.1, paso 3; regla 8): neto anual = bruto × (1 − cotización del trabajador − retención), ÷ 12 (`calcular_mochila_neta`, `mochila_neta`, `datos/intermedios/mochila/mochila_neta_2024.csv`). Cotización de 2024: 6,47 % (`COTIZACION_TRABAJADOR`). Retención: tipo medio de la AEAT de quien solo cobra salarios, por comunidad y tramo de renta anual, interpolado entre los salarios medios de los tramos (`retenciones_aeat`, `tipo_retencion`). 2024: de 990 € al mes (Huelva) a 1.529 € (Barcelona).

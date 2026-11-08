@@ -121,7 +121,7 @@ pasos_2021 <- tarchetypes::tar_map(
   tar_target(fichero_paso, exportar_tabla_paso(
     paso_callejero, sprintf("geo/tablas_paso/callejero_%d_2021%s.csv", seccionado, SUFIJO_AMBITO)), format = "file"),
   # Edificios con la sección de 2021 ya puesta (combinar_edificios): aquí solo falta la de origen
-  tar_target(paso_catastro, geo_tabla_paso_catastro(edificios_catastro, secciones, NULL, anio_max = seccionado,
+  tar_target(paso_catastro, geo_tabla_paso_catastro(edificios_paso, secciones, NULL, anio_max = seccionado,
                                                     grupos = grupos)),
   tar_target(codigos_mapa, unique(secciones$seccion)),
   tar_target(paso_final, {
@@ -171,19 +171,33 @@ prueba_f1 <- list(
     geo_cambios_limites(secciones_2021, secciones_2025) |> mutate(tramo = "2021-2025")
   )),
 
-  # Vía (b): edificios del Catastro de los municipios con secciones «estimado» en alguna tabla
-  # (sin País Vasco ni Navarra: catastros forales). Se leen municipio a municipio (ramas
-  # dinámicas): un municipio nuevo no obliga a releer el resto.
+  # Vía (b): edificios del Catastro de los municipios con secciones «estimado» en alguna tabla.
+  # Se leen municipio a municipio (ramas dinámicas): un municipio nuevo no obliga a releer el resto.
   tar_target(municipios_catastro_feeds, municipios_catastro_provincias(PROVINCIAS)),
   tar_target(municipios_catastro_sel, seleccionar_municipios_catastro(
     tablas_paso_callejero, nombres_municipios, municipios_catastro_feeds, extra = grupos_municipio$municipio)),
-  tar_target(municipios_cubiertos, unique(municipios_catastro_sel$municipio[!is.na(municipios_catastro_sel$url)])),
+  tar_target(municipios_forales, municipios_catastro_sel$municipio[municipios_catastro_sel$foral]),
+  tar_target(municipios_cubiertos, unique(c(municipios_catastro_sel$municipio[!is.na(municipios_catastro_sel$url)],
+                                            municipios_forales))),
   tar_target(urls_catastro, unique(municipios_catastro_sel$url[!is.na(municipios_catastro_sel$url)])),
   tar_target(zips_catastro, descargar_catastro_edificios(urls_catastro), pattern = map(urls_catastro),
              format = "file"),
   tar_target(edificios_municipio, leer_catastro_edificios(zips_catastro), pattern = map(zips_catastro),
              iteration = "list"),
-  tar_target(edificios_catastro, combinar_edificios(edificios_municipio, secciones_2021))
+  tar_target(edificios_catastro, combinar_edificios(edificios_municipio, secciones_2021)),
+  # País Vasco y Navarra: catastros forales (8-nov-2026), para los mismos municipios. Álava y
+  # Gipuzkoa dan un zip del territorio entero: de ellos solo cuentan los edificios de los municipios
+  # seleccionados (por la sección de 2021 en la que caen). Fuera del ámbito (PROVINCIA sin
+  # forales), el bloque no entra: targets no admite ramas sobre una lista vacía.
+  if (length(intersect(PROVINCIAS, PROVINCIAS_FORALES))) list(
+    tar_target(zips_forales_feeds, zips_catastro_forales(PROVINCIAS)),
+    tar_target(urls_forales, seleccionar_zips_forales(zips_forales_feeds, municipios_forales)),
+    tar_target(zips_forales, descargar_catastro_foral(urls_forales), pattern = map(urls_forales), format = "file"),
+    tar_target(edificios_foral, leer_catastro_foral(zips_forales), pattern = map(zips_forales), iteration = "list"),
+    tar_target(edificios_forales, combinar_edificios(edificios_foral, secciones_2021) |>
+                 filter(substr(destino, 1, 5) %in% municipios_forales))
+  ) else tar_target(edificios_forales, NULL),
+  tar_target(edificios_paso, bind_rows(edificios_catastro, edificios_forales))
 )
 
 # Tarea 7: indicadores 1–3 (renta del ADRH) de punta a punta:

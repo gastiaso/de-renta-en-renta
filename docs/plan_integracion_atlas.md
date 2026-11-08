@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.17 · 7 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.18 · 8 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.18:** catastros forales en la vía (b) de las tablas de paso. Entran los 81 municipios de País Vasco y Navarra que la necesitan, con contraste con el Censo 2021 y prueba de un año (§6.3).
 
 **Cambios en la v0.17:** paso a neto de la mochila: cotización del trabajador y retención de la AEAT por comunidad y tramo de renta anual, interpolada entre tramos, con control con el neto de la ECV (§3.1). Marcas: no se registran; el proyecto es abierto y no comercial (§10.1; backlog, tarea 2, cerrada).
 
@@ -293,7 +295,7 @@ pruebas/      testthat + prueba de la web con chromote
   - (a) tramos del callejero (portales asignados a cada sección);
   - (b) edificios residenciales del Catastro (INSPIRE) ponderados por número de viviendas.
 - Se documenta cuál se usa y se contrastan ambas.
-- **Vía (b), viable:** cada edificio del servicio INSPIRE del Catastro trae su número de viviendas (`numberOfDwellings`), con descarga por municipio. Sin País Vasco ni Navarra (servicios forales aparte). Su licencia es contradictoria (CC BY 4.0 en los metadatos de la IDEE; una licencia de 2016 en la web del Catastro): hay que aclararla antes de publicar derivados.
+- **Vía (b), viable:** cada edificio del servicio INSPIRE del Catastro trae su número de viviendas (`numberOfDwellings`), con descarga por municipio. País Vasco y Navarra, con los servicios de sus catastros forales (desde el 8-nov-2026). Su licencia es contradictoria (CC BY 4.0 en los metadatos de la IDEE; una licencia de 2016 en la web del Catastro): hay que aclararla antes de publicar derivados.
   - **Prueba en Madrid (7-nov-2026):** los 55 municipios con secciones `estimado` por el callejero (335.447 edificios con 2,69 millones de viviendas; 324 MB; 22 minutos de lectura). Cada edificio cae en una sección de 2025 y en una de 2021; el peso es su número de viviendas. Donde una sección de origen no tiene edificios con viviendas, se usa la vía (a).
   - **Resultado (2024 → 2021, frente al ADRH 2020):** en las 558 secciones `estimado` por la vía (a), el 90 % central de la razón pasa de 0,69–1,54 a 0,84–1,06, las que quedan dentro de ±5 % pasan del 33 al 54 % y los errores de más del 20 %, de 128 a 27. En las demás, las dos vías dan lo mismo. Con cuatro años de distancia la prueba mezcla error y crecimiento, pero la mejora es grande y está donde fallaba el callejero.
   - **Adoptado (7-nov-2026):** vía (a) donde las secciones de origen caen enteras en una de 2021 y vía (b) donde hay que repartir, si la sección tiene edificios con viviendas (`combinar_vias()`). En las que siguen por el callejero, el peso pasa a viviendas cuando el Catastro las da, para que el origen dominante de las medianas compare viviendas con viviendas. Para los años antiguos solo cuentan los edificios ya construidos (año de construcción del Catastro): la tabla 2015 → 2021 usa los de 2015 o antes. Los pares de secciones de municipios distintos se descartan: los límites municipales se digitalizan distinto en cada seccionado y, sin ese filtro, la prueba de cierre de 2015 fallaba en dos municipios (±6–7 %).
@@ -306,7 +308,7 @@ pruebas/      testthat + prueba de la web con chromote
   - **Toda España (7-nov-2026; descargas aprobadas por el autor).** El pipeline cubre las 52 provincias; con la variable de entorno `PROVINCIA` (p. ej. `PROVINCIA=28`) se limita a una para pruebas rápidas, y sus tablas llevan el código en el nombre y no se versionan. Una pasada completa tarda unas tres horas y cuarto, casi todo en leer los edificios del Catastro (2 h 16 min) y en comparar límites (21 min).
     - **Fuentes:** las dos tablas del ADRH de toda España (renta, 30824; demografía, 30832; 838 MB) y 1.420 zips de edificios del Catastro (4,2 GB, de ellos 3,57 GB nuevos y 91 bajados por el propio pipeline). Las tablas de paso del callejero se calculan provincia a provincia (`geo_tabla_paso_callejero_por_provincia()`): el cruce es por municipio, así que el resultado no cambia y la memoria no pasa de la provincia mayor.
     - **Prueba de regresión en Madrid:** con el pipeline nuevo y `PROVINCIA=28`, las nueve tablas del callejero salen idénticas y la tabla larga tiene las mismas filas y estados. Solo cambian 33 cifras de renta por hogar, en menos de un 0,3 %: la tabla nacional del ADRH redondea el tamaño medio del hogar una décima distinto que la provincial en unas 200 secciones de Madrid por año (la renta y la población coinciden), y eso mueve el peso de los hogares.
-    - **Catastro: municipios.** 1.501 municipios necesitan la vía (b) (con secciones `estimado` en alguna tabla o en un grupo de fusión o segregación). 81 son de País Vasco y Navarra y siguen por el callejero; los 1.420 restantes casan con su zip. El feed de cada provincia no basta: seis gerencias del Catastro tienen feed propio fuera de la numeración provincial (51 Cartagena, 52 Gijón, 53 Jerez, 54 Vigo, 55 Ceuta y 56 Melilla; el 51 del Catastro no es Ceuta), con municipios de sus provincias. Casado por nombre (`casar_municipios_catastro()`): 1.351 por el nombre normalizado; 49 por variantes (cada parte de los bilingües, artículos castellanos, catalanes y gallegos que el INE pospone y el Catastro antepone, y la «ç», que el Catastro pierde); 9 con las dos partes de un bilingüe juntas; 4 con nombres cortados a 30 caracteres; 3 por la primera o la última palabra («CANGAS DE MORRAZO», «MONTCADA MONCADA»), y 4 por una tabla manual (`CATASTRO_MANUAL`): Oza-Cesuras y Cerdedo-Cotobade, fusiones que el Catastro mantiene en dos zips; La Ràpita, y Llançà.
+    - **Catastro: municipios.** 1.501 municipios necesitan la vía (b) (con secciones `estimado` en alguna tabla o en un grupo de fusión o segregación). 81 son de País Vasco y Navarra (por el callejero hasta el 8-nov-2026; después, con sus catastros forales: abajo); los 1.420 restantes casan con su zip. El feed de cada provincia no basta: seis gerencias del Catastro tienen feed propio fuera de la numeración provincial (51 Cartagena, 52 Gijón, 53 Jerez, 54 Vigo, 55 Ceuta y 56 Melilla; el 51 del Catastro no es Ceuta), con municipios de sus provincias. Casado por nombre (`casar_municipios_catastro()`): 1.351 por el nombre normalizado; 49 por variantes (cada parte de los bilingües, artículos castellanos, catalanes y gallegos que el INE pospone y el Catastro antepone, y la «ç», que el Catastro pierde); 9 con las dos partes de un bilingüe juntas; 4 con nombres cortados a 30 caracteres; 3 por la primera o la última palabra («CANGAS DE MORRAZO», «MONTCADA MONCADA»), y 4 por una tabla manual (`CATASTRO_MANUAL`): Oza-Cesuras y Cerdedo-Cotobade, fusiones que el Catastro mantiene en dos zips; La Ràpita, y Llançà.
     - **Catastro: lectura.** 5.718.204 edificios con viviendas (19.565.802 viviendas). Los zips vienen en el huso UTM de cada provincia: se pasan al sistema del seccionado (ETRS89 UTM 30N) y se guardan como coordenadas con la sección de 2021 ya puesta (`combinar_edificios()`), que es la misma en las nueve tablas.
     - **Fusiones y segregaciones** (`geo_grupos_municipio()`). Entre 2016 y 2025: Cerdedo y Cotobade forman Cerdedo-Cotobade (2017); siete segregaciones andaluzas en el seccionado de 2019 (San Martín del Tesorillo, Fuente Carreteros, La Guijarrosa, Valderrubio, Torrenueva Costa, La Zarza-Perrunal y El Palmar de Troya), y Usansolo, de Galdakao (2024). Cada municipio que solo está en uno de los dos seccionados forma grupo con los del otro que ocupan al menos el 1 % de su superficie. Dentro de un grupo, las tablas y la prueba de cierre cruzan municipios. El callejero casa los tramos del grupo entre sí, pero los municipios nuevos conservan muy desigualmente los códigos de vía (Fuente Carreteros, 38 de 38; El Palmar de Troya, 19 de 71), así que el Catastro decide en los orígenes que lleva a otro municipio.
     - **El Catastro decide también donde el callejero no llega** (`combinar_vias()`): orígenes con datos del ADRH que están en el mapa pero no en el callejero, y orígenes que el Catastro lleva en parte a una sección de 2021 que la tabla combinada deja sin nada (el callejero los da por enteros en otra; se repite hasta que no quedan). Las secciones fantasma son ahora las del mapa que no están ni en el callejero ni en el ADRH. Las secciones con datos que ninguna vía lleva a 2021 pero cuyo código existe en el seccionado de referencia pasan a esa sección (`completar_por_codigo()`).
@@ -315,7 +317,44 @@ pruebas/      testthat + prueba de la web con chromote
     - **Fase de los códigos:** la regla t + 1 se cumple en toda España salvo en las huérfanas. Del ADRH 2015 al 2019 faltan entre 1.300 y 1.600 secciones del mapa, sobre todo de País Vasco y Navarra, que el ADRH no publica por sección esos años.
     - **Resultado** (secciones de 2021; recuentos y medias): secciones `estimado` (callejero → combinada) 8.235 → 1.926 (2015), 7.808 → 1.740 (2016), 7.211 → 1.180 (2017), 6.534 → 635 (2018), 6.284 → 512 (2019), 6.180 → 493 (2021), 6.358 → 903 (2022), 6.693 → 1.173 (2023), 7.057 → 1.492 (2024); medianas `ausente`, 3.348 → 668, 3.224 → 575, 3.080 → 427, 2.820 → 187, 2.731 → 113, 2.717 → 225, 2.754 → 464, 2.882 → 605, 3.101 → 823. Compuertas: cierre y cobertura pasan en los nueve años; alertas: adrh_municipio_detalle (579), adrh_seccion_huerfana (9), adrh_suma_secciones (160), cobertura_destino_excepcion (6).
     - **Cambios de límites** (secciones que conservan el código): de 2016 a 2021 cambian más de un 1 % de superficie 3.265 de 35.917 (más de un 5 %, 1.938); de 2021 a 2025, 1.444 de 35.995 (1.304).
-    - **Pendiente:** catastros forales (informe del 7-nov-2026: los cuatro dan viviendas, año de construcción y geometría por ATOM o WFS, unos 69 MB; licencias claras en Navarra y Álava, contradictoria en Bizkaia y por consultar en Gipuzkoa); la licencia del Catastro estatal (borrador de consulta hecho, sin enviar).
+    - **Catastros forales (8-nov-2026; descarga aprobada por el autor).** Los 81 municipios de País Vasco y Navarra que necesitan la vía (b) la tienen ya, con los servicios INSPIRE de las diputaciones forales y del Gobierno de Navarra (`fuente_catastro_foral.R`; fuente `catastro_foral`) y la misma regla que el Catastro estatal.
+      - **Ficheros:** 58 zips, 68,9 MB.
+        - Álava y Gipuzkoa dan un zip del territorio entero, del que solo cuentan los edificios de los municipios seleccionados (por la sección de 2021 en la que caen).
+        - Bizkaia y Navarra dan uno por municipio, con el código del INE en el enlace. Usansolo no tiene zip propio: va en el de Galdakao.
+      - **Lectura:** unos 17 minutos. Las ramas forales tienen lector propio para no releer los zips estatales.
+      - **Año de construcción:** cada territorio lo pone en una parte distinta de la fecha: Navarra, `beginning`; Bizkaia y Gipuzkoa, `end`; Álava, `anyPoint`. En Navarra, `end` es a veces posterior a `beginning` (reforma o ampliación); se toma `beginning`, como en el Catastro estatal.
+      - **Edificios:** 131.335 edificios con viviendas y 1.035.411 viviendas (Álava, 133.083; Gipuzkoa, 244.267; Navarra, 197.329; Bizkaia, 460.732).
+      - **Contraste con el Censo 2021.**
+        - Por municipio, en los 11 con cifra del Censo, la diferencia va de −5,0 % (Iruña Oka) a +3,0 % (Erandio): Vitoria-Gasteiz, +0,8 %; Bilbao, +0,8 %; Donostia, −4,3 %. En total, −0,1 %. `numberOfDwellings` cuenta viviendas totales, como el Censo.
+        - Por sección de 2021 se comparan las viviendas construidas hasta 2020 con los hogares del ADRH 2020 (población ÷ tamaño medio del hogar). Mediana de 1,10 viviendas por hogar (5–95 %: 1,01–1,39), frente a 1,20 (0,99–1,96) en los municipios del Catastro estatal y de 1,06 (Barcelona) a 1,26 (Valencia) en las seis mayores ciudades. Solo 9 de 1.612 secciones bajan de 0,8.
+      - **Prueba de un año** en los municipios forales.
+        - Con el ADRH 2021 (seccionado de 2022) llevado a 2021 y comparado con el ADRH 2020, en las 300 secciones que el callejero reparte:
+          - dentro de ±5 %: del 76,7 al 95,0 %;
+          - 90 % central de la razón: de 0,88–1,15 a 0,96–1,04;
+          - errores de más del 20 %: de 12 a 0.
+        - Es el ruido de un año de las secciones que caen enteras (95,9 % dentro de ±5 %).
+        - Con la aplicación antigua del callejero (ADRH 2019, seccionado de 2020), en 257 secciones: dentro de ±5 %, del 76,3 al 91,4 %; errores de más del 20 %, de 28 a 9.
+      - **Resultado** (secciones de 2021, callejero → combinada):
+
+        | ADRH | País Vasco y Navarra: `estimado` | País Vasco y Navarra: medianas `ausente` | Toda España (combinada): `estimado` | Toda España (combinada): medianas `ausente` |
+        |---|---|---|---|---|
+        | 2015 | 337 → 76 | 109 → 55 | 1.665 | 614 |
+        | 2016 | 322 → 67 | 100 → 46 | 1.485 | 521 |
+        | 2017 | 304 → 58 | 93 → 43 | 934 | 377 |
+        | 2018 | 272 → 32 | 55 → 5 | 395 | 137 |
+        | 2019 | 257 → 26 | 53 → 6 | 281 | 66 |
+        | 2021 | 300 → 2 | 99 → 1 | 195 | 127 |
+        | 2022 | 312 → 13 | 84 → 13 | 604 | 393 |
+        | 2023 | 339 → 44 | 91 → 22 | 878 | 536 |
+        | 2024 | 360 → 62 | 94 → 24 | 1.194 | 753 |
+
+        Compuertas y alertas, sin cambios.
+      - **Licencias:**
+        - Navarra y Álava: CC BY 4.0, sin contradicciones.
+        - Bizkaia: CC BY 3.0 ES, con cláusulas de la Ley 37/2007; las entradas del feed dicen «all rights reserved».
+        - Gipuzkoa: solo atribución en el WFS, CC BY-SA 4.0 en los metadatos y en el feed.
+        - Las tablas combinadas siguen fuera de git hasta aclarar la del Catastro estatal. Al publicar, primero los derivados de Navarra y Álava; los de Bizkaia y Gipuzkoa, cuando se aclaren con las diputaciones.
+    - **Pendiente:** la licencia del Catastro estatal (borrador de consulta hecho, sin enviar) y las de Bizkaia y Gipuzkoa.
 - **Población por sección para las pruebas:** además del ADRH, el Censo anual de población por secciones (2021–2025, con sexo y edad) y el Padrón continuo por secciones (2004–2022).
 - **Vía (a) en la práctica** (prueba de Madrid):
   - cada tabla compara tramos de la misma aplicación del INE: el callejero de enero de 2021 se publicó con la antigua y con la nueva, así que 2015 → 2021 usa la antigua en los dos extremos y 2025 → 2021, la nueva;

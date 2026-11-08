@@ -5,12 +5,12 @@ Atlas web de vivienda y salarios por sección censal, con fichas de perfil («pa
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
 2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.17: fuente de verdad de las decisiones).
+3. `docs/plan_integracion_atlas.md` (plan v0.18: fuente de verdad de las decisiones).
 
-## Estado (7 de noviembre de 2026)
+## Estado (8 de noviembre de 2026)
 
 - Fase F0. Sin datos publicados ni web.
-- Hechas las tareas 0 (entorno y git), 1 (SERPAVI por sección censal), 3 y 4 (comprobaciones e inventario de fuentes), 5 (sobrecarga con la ECV, compuerta superada) y 6 (geografía constante: probada en Madrid y extendida a toda España, salvo los catastros forales). Detalle en el backlog.
+- Hechas las tareas 0 (entorno y git), 1 (SERPAVI por sección censal), 3 y 4 (comprobaciones e inventario de fuentes), 5 (sobrecarga con la ECV, compuerta superada) y 6 (geografía constante: probada en Madrid y extendida a toda España, con los catastros forales de País Vasco y Navarra). Detalle en el backlog.
 
 ## Forma de trabajo
 

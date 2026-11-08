@@ -1,9 +1,9 @@
 # Fuente catastro_inspire: edificios del Catastro (INSPIRE, servicio ATOM), uno por municipio.
 # Vía (b) de las tablas de paso (plan §6.3): cada edificio con su número de viviendas.
-# Sin País Vasco ni Navarra (catastros forales). Licencia por aclarar antes de publicar
-# derivados (inventario/fuentes.csv). El código de municipio del Catastro no siempre es el
-# del INE (Madrid: 28900), así que los municipios se casan por nombre y los edificios se
-# asignan a las secciones por su posición.
+# País Vasco y Navarra van por sus catastros forales (fuente_catastro_foral.R). Licencia por
+# aclarar antes de publicar derivados (inventario/fuentes.csv). El código de municipio del
+# Catastro no siempre es el del INE (Madrid: 28900), así que los municipios se casan por nombre
+# y los edificios se asignan a las secciones por su posición.
 
 url_catastro_provincia <- function(provincia) {
   sprintf("https://www.catastro.hacienda.gob.es/INSPIRE/buildings/%s/ES.SDGC.bu.atom_%s.xml", provincia, provincia)
