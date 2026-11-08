@@ -6,8 +6,9 @@
 #   - secciones.geojson, provincias.geojson   mapa base: las secciones del distrito Centro de
 #       Madrid (seccionado de 2021, INE) y el contorno de la provincia
 #   - indices/<nivel>.json     códigos de cada nivel en el orden de los valores
-#   - <nivel>/<serie>/<periodo>.json   valores INVENTADOS de los indicadores de la v0.1
-#   - fichas/28079.json        series de cada sección para la ficha
+#   - <nivel>/<serie>/<periodo>.json   valores INVENTADOS de los indicadores de la v0.1, con la
+#       variante de vivienda unifamiliar de los alquileres (alquiler_m2_vu, alquiler_mes_vu)
+#   - fichas/28079.json        series de cada sección para la ficha (sin las variantes)
 #   - territorios.json, cajas.json, perfiles.json, manifiesto.json
 #
 # Los valores son de ejemplo (guía, regla 9): aleatorios, sin relación con la sección ni con
@@ -118,6 +119,12 @@ series <- list(
   viviendas_turisticas = list(v = vut, e = estados_al_azar(3, huecos = 2), periodos = periodos_vut, decimales = 1L)
 )
 
+# Variantes por tipología (como en la exportación del pipeline): la serie de la vivienda
+# colectiva lleva «variantes» y la de la unifamiliar, «por_defecto». Las variantes no van en
+# las series de la ficha.
+variantes <- c(alquiler_m2 = "alquiler_m2_vu", alquiler_mes = "alquiler_mes_vu")
+en_ficha <- setdiff(names(series), variantes)
+
 # Formato de la web (plan, §6.6): {"v": [valor × 10 en enteros, null sin valor], "e": "0012…"}.
 # Primero se redondea a una décima como manda la guía (sprintf("%.1f")) y después se multiplica:
 # sprintf("%.0f", x * 10) no da lo mismo en algunos casos (0,15 → 0,1 con la guía, pero 2 décimas así).
@@ -130,23 +137,36 @@ codificar <- function(x, e) {
 }
 
 niveles <- names(codigos)
-for (s in names(series)) {
-  d <- series[[s]]
-  for (j in seq_along(d$periodos)) {
-    escribir_json(codificar(d$v[, j], d$e[, j]), "sc", s, paste0(d$periodos[j], ".json"))
-    # Territorios superiores: una cifra inventada, alrededor de la media de las secciones.
-    media <- mean(d$v[, j])
-    otros <- c(municipio = media * runif(1, 0.9, 1.1), provincia = media * runif(1, 0.75, 0.95))
-    otros <- c(otros, ccaa = otros[["provincia"]], nacional = otros[["provincia"]] * runif(1, 0.6, 0.85))
-    for (nivel in names(otros)) escribir_json(codificar(otros[[nivel]], 0L), nivel, s, paste0(d$periodos[j], ".json"))
+escribir_series <- function(nombres) {
+  for (s in nombres) {
+    d <- series[[s]]
+    for (j in seq_along(d$periodos)) {
+      escribir_json(codificar(d$v[, j], d$e[, j]), "sc", s, paste0(d$periodos[j], ".json"))
+      # Territorios superiores: una cifra inventada, alrededor de la media de las secciones.
+      media <- mean(d$v[, j], na.rm = TRUE)
+      otros <- c(municipio = media * runif(1, 0.9, 1.1), provincia = media * runif(1, 0.75, 0.95))
+      otros <- c(otros, ccaa = otros[["provincia"]], nacional = otros[["provincia"]] * runif(1, 0.6, 0.85))
+      for (nivel in names(otros)) escribir_json(codificar(otros[[nivel]], 0L), nivel, s, paste0(d$periodos[j], ".json"))
+    }
   }
 }
+escribir_series(names(series))
+
+# Vivienda unifamiliar (variante «VU» de los alquileres; decisión 12): pocas secciones con dato
+# en el centro de una ciudad, como en los datos reales. Se sortea después del resto para no
+# cambiar los valores anteriores de la muestra.
+alquiler_m2_vu <- crecer(9, 22, 0.05)
+e_vu <- estados_al_azar(k, secretos = 10, huecos = 6)
+e_vu[sample(n, round(n * 0.6)), ] <- 3L
+series$alquiler_m2_vu <- list(v = alquiler_m2_vu, e = e_vu, periodos = anios, decimales = 1L)
+series$alquiler_mes_vu <- list(v = alquiler_m2_vu * runif(n, 70, 140), e = e_vu, periodos = anios, decimales = 0L)
+escribir_series(variantes)
 
 # Series de la ficha, un fichero por municipio (todas las secciones de la muestra son de Madrid).
 escribir_json(list(
   municipio = "28079",
-  anios = lapply(series, function(d) I(d$periodos)),
-  series = stats::setNames(lapply(seq_len(n), function(i) lapply(series, function(d) codificar(d$v[i, ], d$e[i, ]))),
+  anios = lapply(series[en_ficha], function(d) I(d$periodos)),
+  series = stats::setNames(lapply(seq_len(n), function(i) lapply(series[en_ficha], function(d) codificar(d$v[i, ], d$e[i, ]))),
                            codigos$sc)
 ), "fichas", "28079.json")
 
@@ -162,6 +182,8 @@ escribir_json(list(
 indicadores <- lapply(names(series), function(s) {
   d <- series[[s]]
   def <- list(niveles = I(niveles), decimales = d$decimales)
+  if (s %in% names(variantes)) def$variantes <- list(VU = variantes[[s]])
+  if (s %in% variantes) def$por_defecto <- names(variantes)[variantes == s]
   if (is.numeric(d$periodos)) {
     def$anios <- I(d$periodos)
     def$ruta <- sprintf("%s/{nivel}/%s/{anio}.json", ruta_web, s)
@@ -197,7 +219,12 @@ manifiesto <- list(
   mapas = list(
     # formula: nombre de una transformación conocida por la web (js/formulas.js), no código.
     sueldo_necesario = list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo",
-                            cortes = c(2600L, 3200L, 3800L, 4400L, 5000L), decimales = 0L)
+                            cortes = c(2600L, 3200L, 3800L, 4400L, 5000L), decimales = 0L),
+    renta_hogar = list(base = "renta_hogar", formula = "directo",
+                       cortes = c(35000L, 45000L, 55000L, 65000L), decimales = 0L),
+    alquiler_m2 = list(base = "alquiler_m2", formula = "directo", cortes = c(14, 17, 20, 23), decimales = 1L),
+    viviendas_turisticas = list(base = "viviendas_turisticas", formula = "directo",
+                                cortes = c(4, 8, 12, 16), decimales = 1L)
   ),
   vista_inicial = list(limites = round(as.numeric(st_bbox(secciones)), 5))
 )

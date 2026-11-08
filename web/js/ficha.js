@@ -45,7 +45,8 @@ const TEXTOS_LLEGA = ['interfaz.leyenda.llega_1', 'interfaz.leyenda.llega_2', 'i
 // `valor`: en el modo «necesario», el sueldo necesario (o null); en «llega», { alquiler,
 // ingreso, ratio, tramo } (o null). `estado`: índice en codificacion.estados.
 // Devuelve los huecos de la evolución y del comparador.
-export function fichaSeccion(contenedor, { t, codigo, territorios, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, alCerrar }) {
+// `tipologia`: 'VC' | 'VU' si la serie del mapa la distingue; null si no.
+export function fichaSeccion(contenedor, { t, codigo, territorios, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, alCerrar, tipologia = null }) {
   const municipio = codigo.slice(0, 5);
   const provincia = codigo.slice(0, 2);
   const lineas = [
@@ -62,8 +63,12 @@ export function fichaSeccion(contenedor, { t, codigo, territorios, modo, mapaId,
     bloque.append(crear('h3', 'ficha-indicador', t(`indicadores.${mapaId}.nombre`)));
     cifra.append(crear('span', 'ficha-numero', valor === null ? '—' : t.numero(valor, mapaDef.decimales ?? 0)));
     cifra.append(crear('span', 'ficha-unidad', t(`indicadores.${mapaId}.unidad`)));
-    bloque.append(cifra, crear('p', 'ficha-estado',
-      t('interfaz.leyenda.supuestos', { superficie: t.numero(supuestos.superficie_m2), umbral: t.porcentaje(supuestos.umbral) })));
+    bloque.append(cifra);
+    // La superficie y el umbral, solo en los mapas que los usan (el sueldo necesario).
+    if ((mapaDef.formula ?? 'directo') !== 'directo') {
+      bloque.append(crear('p', 'ficha-estado',
+        t('interfaz.leyenda.supuestos', { superficie: t.numero(supuestos.superficie_m2), umbral: t.porcentaje(supuestos.umbral) })));
+    }
   } else {
     bloque.append(crear('h3', 'ficha-indicador', `${t('interfaz.leyenda.llega_titulo')} · ${t(`fichas.${ficha}`)}`));
     cifra.append(crear('span', 'ficha-numero', valor === null ? '—' : t.porcentaje(valor.ratio)));
@@ -79,7 +84,10 @@ export function fichaSeccion(contenedor, { t, codigo, territorios, modo, mapaId,
       );
     }
   }
-  bloque.append(crear('p', 'ficha-estado', `${t('interfaz.ficha.anio', { anio: t.periodo(anio) })} · ${t(`vocabulario.estado.${estados[estado]}`)}`));
+  const partes = [t('interfaz.ficha.anio', { anio: t.periodo(anio) })];
+  if (tipologia) partes.push(t(`vocabulario.tipologia.${tipologia}`));
+  partes.push(t(`vocabulario.estado.${estados[estado]}`));
+  bloque.append(crear('p', 'ficha-estado', partes.join(' · ')));
   if (aviso) bloque.append(crear('p', 'nota', aviso));
   if (ejemplo) bloque.append(crear('p', 'etiqueta-ejemplo', t('avisos.ejemplo')));
 

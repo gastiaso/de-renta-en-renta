@@ -1,8 +1,9 @@
 // Estado de la vista en la URL, para que cada vista se pueda enlazar:
-//   ?idioma=es&mapa=sueldo_necesario&anio=2024&ficha=mochila&superficie=70&umbral=40
+//   ?idioma=es&mapa=sueldo_necesario&anio=2024&tipologia=VU&ficha=mochila&superficie=70&umbral=40
 //    &seccion=2807901001&comparar=municipio&vista=14.50/40.41680/-3.70380
-// (vista = zoom/latitud/longitud; comparar = nivel o código de otra sección). Solo entran estas
-// claves, validadas al leer y al escribir.
+// (anio = año o periodo de la serie del mapa, «2025-05»; sin él, el último; tipologia = VU para la
+// vivienda unifamiliar, sin ella la colectiva; vista = zoom/latitud/longitud; comparar = nivel o
+// código de otra sección). Solo entran estas claves, validadas al leer y al escribir.
 //
 // El sueldo de «Tu sueldo» NO entra en la consulta: viaja en el enlace solo si la persona pulsa
 // «Compartir», con aviso previo (plan, §6.6), y entonces va tras «#», que el navegador no envía
@@ -14,7 +15,8 @@ const NIVELES_COMPARAR = ['distrito', 'municipio', 'provincia', 'ccaa', 'naciona
 const VALIDAS = {
   idioma: (v) => v === 'es' || v === 'en',
   mapa: (v) => /^[a-z0-9_]{1,40}$/.test(v),
-  anio: (v) => /^(19|20)\d{2}$/.test(v),
+  anio: (v) => /^(19|20)\d{2}(-(0[1-9]|1[0-2]))?$/.test(v),
+  tipologia: (v) => v === 'VC' || v === 'VU',
   ficha: (v) => FICHAS.includes(v),
   superficie: (v) => ['50', '70', '90'].includes(v),
   umbral: (v) => v === '30' || v === '40',
@@ -24,13 +26,15 @@ const VALIDAS = {
 };
 const CLAVES = Object.keys(VALIDAS);
 const NUMERICAS = ['anio', 'superficie', 'umbral'];
+// Número si lo es («2024» → 2024); los periodos con mes («2025-05») quedan como texto.
+const leerValor = (clave, valor) => (NUMERICAS.includes(clave) && /^\d+$/.test(valor) ? Number(valor) : valor);
 
-export function leerEstado() {
-  const parametros = new URLSearchParams(location.search);
+export function leerEstado(busqueda = location.search) {
+  const parametros = new URLSearchParams(busqueda);
   const estado = {};
   for (const clave of CLAVES) {
     const valor = parametros.get(clave);
-    if (valor !== null && VALIDAS[clave](valor)) estado[clave] = NUMERICAS.includes(clave) ? Number(valor) : valor;
+    if (valor !== null && VALIDAS[clave](valor)) estado[clave] = leerValor(clave, valor);
   }
   return estado;
 }

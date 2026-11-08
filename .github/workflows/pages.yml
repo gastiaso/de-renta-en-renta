@@ -1,0 +1,163 @@
+# Publicación de la web en GitHub Pages (docs/publicacion.md; plan §6.6 y §11, preguntas 16 y 21).
+#
+# Monta el sitio con web/ tal como está en git y le añade, del último release del repositorio, lo
+# que no entra en git:
+#   - datos_web.tar.gz   → datos/      (exportación del pipeline, sin la muestra de datos/ejemplo/)
+#   - <mapa base>.pmtiles → teselas/   (la ruta la dice el manifiesto: mapa_base.url)
+#   - tabla_larga.parquet → descargas/ (descarga de la página «Datos»)
+#   - version.json        → descargas/ (fecha, commit y versiones de las fuentes)
+# Los ficheros del release los prepara empaquetar_publicacion() (R/publicar.R), con SHA256SUMS.
+#
+# Sin secretos: usa el token que GitHub da a cada ejecución, con permisos mínimos por trabajo.
+# Sin nombre de repositorio fijo: lo toma de la ejecución (GITHUB_REPOSITORY).
+# Acciones oficiales de GitHub fijadas por commit, con su versión en el comentario.
+
+name: Publicar en Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+# Una publicación cada vez; la que está en marcha no se cancela.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  montar:
+    name: Montar el sitio
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Copiar el repositorio
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Bajar los ficheros del último release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rel="$RUNNER_TEMP/release"
+          mkdir -p "$rel"
+          if ! gh release view --repo "$GITHUB_REPOSITORY" --json tagName > /dev/null; then
+            echo "::error::No hay ningún release publicado: hay que crearlo antes (docs/publicacion.md)."
+            exit 1
+          fi
+          gh release download --repo "$GITHUB_REPOSITORY" --dir "$rel" \
+            --pattern SHA256SUMS --pattern version.json --pattern datos_web.tar.gz \
+            --pattern tabla_larga.parquet --pattern '*.pmtiles'
+          gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName > "$RUNNER_TEMP/etiqueta"
+          ls -l "$rel"
+
+      - name: Comprobar las sumas SHA-256
+        working-directory: ${{ runner.temp }}/release
+        run: |
+          for f in SHA256SUMS version.json datos_web.tar.gz tabla_larga.parquet; do
+            [ -f "$f" ] || { echo "::error::Falta $f en el release."; exit 1; }
+          done
+          for f in version.json datos_web.tar.gz tabla_larga.parquet *.pmtiles; do
+            grep -q "  $f\$" SHA256SUMS || { echo "::error::SHA256SUMS no trae la suma de $f."; exit 1; }
+          done
+          sha256sum --check --strict SHA256SUMS
+
+      - name: Montar el sitio
+        run: |
+          rel="$RUNNER_TEMP/release"
+          sitio="$RUNNER_TEMP/sitio"
+          cp -R web "$sitio"
+          # Herramientas de desarrollo: no se publican
+          rm -rf "$sitio/LEEME.md" "$sitio/servir.mjs" "$sitio/herramientas"
+
+          # Datos de la web: solo rutas bajo datos/, sin la muestra (va en git) y sin subir de carpeta
+          tar -tzf "$rel/datos_web.tar.gz" > "$RUNNER_TEMP/lista_datos.txt"
+          if grep -v -E '^datos/' "$RUNNER_TEMP/lista_datos.txt" | grep -q . \
+             || grep -E '^datos/ejemplo/|(^|/)\.\.(/|$)' "$RUNNER_TEMP/lista_datos.txt" | grep -q .; then
+            echo "::error::datos_web.tar.gz lleva rutas fuera de datos/ o la muestra de datos/ejemplo/."
+            exit 1
+          fi
+          tar -xzf "$rel/datos_web.tar.gz" -C "$sitio" --no-same-owner --no-same-permissions
+
+          # El manifiesto de la exportación dice dónde va el mapa base
+          manifiesto="$sitio/datos/manifiesto.json"
+          jq -e '.ejemplo == false and .mapa_base.tipo == "pmtiles"' "$manifiesto" > /dev/null \
+            || { echo "::error::El manifiesto no es el de una exportación real con mapa base PMTiles."; exit 1; }
+          url=$(jq -r .mapa_base.url "$manifiesto")
+          case "$url" in
+            teselas/*.pmtiles) ;;
+            *) echo "::error::Ruta del mapa base inesperada en el manifiesto: $url"; exit 1 ;;
+          esac
+          [ -f "$rel/$(basename "$url")" ] || { echo "::error::El release no trae $(basename "$url")."; exit 1; }
+          mkdir -p "$sitio/teselas" "$sitio/descargas"
+          cp "$rel/$(basename "$url")" "$sitio/$url"
+          cp "$rel/tabla_larga.parquet" "$rel/version.json" "$sitio/descargas/"
+
+      # Página «Método»: la nota metodológica (docs/), en HTML, con la cabecera de la web. Los
+      # textos compartidos (título, subtítulo, menú) salen de los diccionarios de web/i18n/.
+      - name: Página «Método»
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends pandoc > /dev/null
+          pandoc --version | head -n 1
+          sitio="$RUNNER_TEMP/sitio"
+          for par in "es metodologia.md metodo.html" "en methodology.md method.html"; do
+            set -- $par
+            dic="web/i18n/$1.json"
+            pandoc "docs/$2" --from gfm --to html5 --standalone --toc --toc-depth 2 --wrap none \
+              --template web/herramientas/plantilla_documento.html \
+              --metadata-file "web/herramientas/documento_$1.yaml" \
+              --metadata titulo="$(jq -r .sitio.titulo "$dic")" \
+              --metadata subtitulo="$(jq -r .sitio.subtitulo "$dic")" \
+              --metadata texto_mapa="$(jq -r .nav.mapa "$dic")" \
+              --metadata texto_sobrecarga="$(jq -r .nav.sobrecarga "$dic")" \
+              --metadata texto_metodo="$(jq -r .nav.metodo "$dic")" \
+              --metadata texto_navegacion="$(jq -r .interfaz.navegacion "$dic")" \
+              --metadata texto_idioma="$(jq -r .interfaz.idioma "$dic")" \
+              --output "$sitio/$3"
+          done
+
+      - name: Comprobar los límites de Pages
+        run: |
+          sitio="$RUNNER_TEMP/sitio"
+          total=$(find "$sitio" -type f -printf '%s\n' | awk '{s += $1} END {print s + 0}')
+          ficheros=$(find "$sitio" -type f | wc -l)
+          echo "Sitio: $ficheros ficheros, $total bytes"
+          [ "$total" -lt 1000000000 ] || { echo "::error::El sitio pasa de 1 GB (límite de Pages)."; exit 1; }
+          grandes=$(find "$sitio" -type f -size +104857600c)
+          [ -z "$grandes" ] || { echo "::error::Ficheros de más de 100 MiB: $grandes"; exit 1; }
+          enlaces=$(find "$sitio" -type l)
+          [ -z "$enlaces" ] || { echo "::error::Pages no admite enlaces simbólicos: $enlaces"; exit 1; }
+          {
+            echo "### Sitio montado"
+            echo
+            echo "- Release: \`$(cat "$RUNNER_TEMP/etiqueta")\`"
+            echo "- Datos generados el $(jq -r .fecha "$sitio/descargas/version.json"), commit \`$(jq -r .commit.id "$sitio/descargas/version.json")\`"
+            echo "- Web del commit \`$GITHUB_SHA\`"
+            echo "- $ficheros ficheros, $(( total / 1000000 )) MB"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Subir el sitio
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: ${{ runner.temp }}/sitio
+
+  desplegar:
+    name: Publicar en Pages
+    needs: montar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - name: Publicar
+        id: despliegue
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

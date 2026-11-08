@@ -4,6 +4,24 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (8-nov-2026, barra de la vista, España, sobrecarga y publicación; plan v0.25)
+
+- **Barra de la vista** encima del mapa: el mapa (los de `mapas` del manifiesto), el año o periodo de la serie que da color y la tipología de vivienda (colectiva por defecto; unifamiliar solo donde la serie tiene variante, sin mezclar), con el teclado y en la URL (`anio` admite `AAAA-MM`; `tipologia=VU`). En «¿te llega?», la tipología cambia el alquiler de todas las fichas. Aviso cuando la serie no llega al nivel que se ve (`js/barra_vista.js`).
+- **Descargas** de la vista, sin dependencias nuevas: CSV de la serie del mapa en el nivel que se ve (UTF-8 con BOM; valor a una décima, estado y fuente; en el 21, superficie y umbral) y PNG del mapa con título, leyenda, claves y fuente. Ninguna lleva el sueldo escrito (`js/exportar.js`, `js/imagen.js`).
+- **Prueba de §6.5 en node:** el sueldo necesario que recalcula la página coincide con el de R en 550.140 territorios y años (294.082 con valor), sin diferencias.
+- **España en la tabla larga** para el 18 (16,10 %, tabla 59523) y el 19 (seis periodos de febrero de 2024 a mayo de 2026, tabla 39365), con la cifra publicada por el INE (`nacional_ine_censo2021()`, `nacional_ine_vut()`); `exportar_web()` las lleva al nivel `nacional` sin cambios. Compuertas `censo2021_nacional`, `vut_nacional_viviendas` y `vut_nacional_porcentaje` (bloqueo). Sin España, por la regla 1: renta (1–3), alquiler (8 y 9) y sus derivados (14 y 21).
+- **Sección «Sobrecarga» (v0.0):** `web/sobrecarga.html`, `js/sobrecarga.js`, `js/sobrecarga_datos.js` y `estilo/sobrecarga.css`, con textos en castellano e inglés (`sobrecarga` en `web/i18n/`): mapa de Europa (regiones NUTS 2 para toda la población; países y comunidades con tenencia o edad), «la escalera», serie de España y de la UE-27, desgloses de España con su muestra, módulo de acceso y caja de método. Exportación en `R/web_sobrecarga.R` (`exportar_web_sobrecarga()`, `comprobar_web_sobrecarga()`; objetivos `ficheros_web_sobrecarga` y `validacion_web_sobrecarga`); compuertas `web_sobrecarga_valores` y `web_sobrecarga_muestra` (bloqueo) y `web_sobrecarga_geometria` (alerta).
+- **Publicación en GitHub Pages, preparada sin remoto:** `.github/workflows/pages.yml` monta `web/` con los datos, el mapa base, la tabla larga y `version.json` del último *release*, comprobados con `SHA256SUMS`, genera la página «Método» (`metodo.html`, `method.html`) con pandoc y publica, sin secretos, con permisos mínimos y acciones oficiales fijadas por commit. `R/publicar.R`: `empaquetar_publicacion()` prepara el *release* en `publicacion/` (fuera de git) con los límites de GitHub y de Pages comprobados (74 MB el 8-nov-2026). Guía en `docs/publicacion.md`.
+- **Menú:** Sobrecarga y Método enlazados desde el mapa y entre sí, con el idioma activo (`data-href-es` y `data-href-en`).
+- Pruebas: `test-publicar.R`, `test-web-sobrecarga.R`, `pruebas/web/sobrecarga.test.mjs` y seis nuevas en `pruebas/web/datos.test.mjs`.
+
+### Cambiado (8-nov-2026)
+
+- SERPAVI: las 40 secciones del seccionado de 2021 que la base no trae van como `ausente` en los indicadores 8 y 9, en todos los años y tipologías (`completar_secciones_serpavi()`); el 21 y el 15 heredan esas filas. +2.080 filas en la tabla larga, todas `ausente`; ningún valor cambia. La cobertura por provincia se mide sobre el seccionado de 2021 (Navarra, 64,6 % en 2024). Compuertas `serpavi_seccionado` (bloqueo) y `serpavi_sin_fila` (alerta, 40).
+- Web: `periodoPara()` admite periodos con mes y, sin año elegido, toma el último de cada serie; leyenda y ficha dicen el periodo y la tipología, y los supuestos solo en el sueldo necesario. Muestra con las variantes `alquiler_m2_vu` y `alquiler_mes_vu` y tres mapas `directo`; los valores anteriores no cambian.
+- Tabla larga: 6.591.356 filas.
+- Nota metodológica (castellano e inglés) al día: compuertas nuevas en §4.1, España en §7.2 y §7.3, las 40 secciones del SERPAVI en §7.1 y §7.4, la web de la sobrecarga en §7.5, tabla larga de 6.591.356 filas (§9.1) y datos de la web (§9.2: 8.486 ficheros y 109,8 MB con el PMTiles).
+
 ### Decidido (8-nov-2026, pregunta abierta 20; plan v0.24)
 
 - Mapa del sueldo necesario en seis tramos, con un corte nuevo en 2.000 € (700 · 900 · 1.100 · 1.500 · 2.000 €), y rampa de seis pasos. En 2024, el último tramo pasa del 32 % al 13 % de las secciones.

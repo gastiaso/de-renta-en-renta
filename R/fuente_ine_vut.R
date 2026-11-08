@@ -21,7 +21,8 @@
 # por la tabla de paso combinada 2024 -> 2021 y se dividen por las viviendas del Censo 2021 de la
 # sección de destino, el mismo denominador que usa el INE; donde la sección de 2021 recibe una
 # sola sección de 2024 entera, se copia el porcentaje publicado.
-# Compuerta: tabla 39364 de jaxiT3 (viviendas turísticas por provincia).
+# Compuerta: tabla 39364 de jaxiT3 (viviendas turísticas por provincia). La cifra de España de la
+# tabla larga es el porcentaje publicado en la tabla 39365 (nacional_ine_vut).
 
 PERIODOS_VUT <- c("AGO2020", "FEB2021", "AGO2021", "FEB2022", "AGO2022", "FEB2023", "AGO2023",
                   "FEB2024", "AGO2024", "NOV2024", "MAY2025", "NOV2025", "MAY2026")
@@ -176,6 +177,22 @@ armonizar_ine_vut <- function(vut_2021, version) {
     select(all_of(COLUMNAS_TABLA_LARGA))
 }
 
+# Indicador 19 de España: el porcentaje publicado en la tabla 39365 (total nacional), en los
+# mismos periodos que las secciones (`periodos`), con el mes en `corte` y `grupo`. Los periodos
+# anteriores a febrero de 2024 no entran, como en las secciones; hasta febrero de 2023, además, el
+# denominador del INE eran las viviendas del Censo 2011 (rupturas.csv, vut_seccionado_2024). Sin
+# seccionado de referencia (geo_ref NA).
+# `provincias`: leer_ine_vut_provincias().
+nacional_ine_vut <- function(provincias, version, periodos = PERIODOS_VUT_2024) {
+  periodo_vut(periodos) |>
+    left_join(filter(provincias, nivel == "nacional"), by = c("anio", "mes")) |>
+    transmute(geo_id = "00", nivel = "nacional", anio, indicador = "viviendas_turisticas",
+              corte = "mes", grupo = mes, valor = porcentaje,
+              estado = if_else(is.na(porcentaje), "ausente", "dato"),
+              fuente = "ine_vut", geo_ref = NA_character_, version = version) |>
+    select(all_of(COLUMNAS_TABLA_LARGA))
+}
+
 # Compuerta (inventario/referencias_validacion.csv):
 #   vut_viviendas_provincia: viviendas turísticas de las secciones sumadas por provincia y
 #     España frente a la tabla 39364, todos los periodos (desviación en %).
@@ -187,7 +204,14 @@ armonizar_ine_vut <- function(vut_2021, version) {
 #     publicadas, mediana de |porcentaje del INE - 100 * viviendas turísticas / t18_1| (puntos).
 #   vut_denominador_detalle (alerta): las mismas secciones, una a una (solo salen las que se
 #     apartan más de 0,001 puntos).
-comprobar_ine_vut <- function(vut, vut_2021, provincias, censo, secciones_2024, paso) {
+#   vut_nacional_viviendas: viviendas turísticas de las provincias de la tabla 39364 sumadas
+#     frente a las de España de la misma tabla, todos los periodos (desviación en %).
+#   vut_nacional_porcentaje: en cada periodo de `periodos`, media ponderada de los porcentajes
+#     provinciales de la tabla 39365 con las viviendas del Censo 2021 de cada provincia (t18_1
+#     sumado de sus secciones con dato) frente al porcentaje de España de esa tabla, el que va a
+#     la tabla larga (puntos). Solo con todas las provincias en `censo`. Las secciones en secreto
+#     del Censo no entran en el peso y los porcentajes van con dos decimales: no es exacto.
+comprobar_ine_vut <- function(vut, vut_2021, provincias, censo, secciones_2024, paso, periodos = PERIODOS_VUT_2024) {
   sumar <- function(d) {
     s <- d |> group_by(anio, mes, codigo = substr(seccion, 1, 2)) |>
       summarise(suma = sum(viviendas, na.rm = TRUE), .groups = "drop")
@@ -202,7 +226,7 @@ comprobar_ine_vut <- function(vut, vut_2021, provincias, censo, secciones_2024, 
     sumar(d) |> transmute(id = id, anio, detalle = paste(mes, territorio),
                           calculado = 100 * (suma - viviendas) / viviendas, referencia = 0)
   }
-  usados <- filter(vut, periodo %in% PERIODOS_VUT_2024)
+  usados <- filter(vut, periodo %in% periodos)
   seccionado <- usados |>
     group_by(anio, mes) |>
     summarise(calculado = sum(!secciones_2024 %in% seccion) +
@@ -223,6 +247,33 @@ comprobar_ine_vut <- function(vut, vut_2021, provincias, censo, secciones_2024, 
       transmute(id = "vut_denominador", anio, detalle = mes, calculado, referencia = 0),
     denominador |> filter(diferencia > 0.001) |>
       transmute(id = "vut_denominador_detalle", anio, detalle = paste(mes, seccion), calculado = diferencia,
-                referencia = 0)
+                referencia = 0),
+    nacional_vut(provincias, censo, periodos)
   )
+}
+
+# Las dos comprobaciones de España de comprobar_ine_vut() (vut_nacional_viviendas y
+# vut_nacional_porcentaje). Un periodo sin cifra de España sale con NA y no pasa.
+nacional_vut <- function(provincias, censo, periodos = PERIODOS_VUT_2024) {
+  espana <- filter(provincias, nivel == "nacional")
+  prov <- filter(provincias, nivel == "provincia")
+  viviendas <- prov |>
+    group_by(anio, mes) |>
+    summarise(suma = sum(viviendas), .groups = "drop") |>
+    left_join(select(espana, anio, mes, publicado = viviendas), by = c("anio", "mes")) |>
+    transmute(id = "vut_nacional_viviendas", anio, detalle = mes,
+              calculado = 100 * (suma - publicado) / publicado, referencia = 0)
+  pesos <- censo |>
+    group_by(codigo = substr(seccion, 1, 2)) |>
+    summarise(viviendas_censo = sum(viviendas, na.rm = TRUE), .groups = "drop")
+  if (!all(unique(prov$codigo) %in% pesos$codigo)) return(viviendas)
+  media <- prov |>
+    inner_join(pesos, by = "codigo") |>
+    group_by(anio, mes) |>
+    summarise(calculado = sum(porcentaje * viviendas_censo) / sum(viviendas_censo), .groups = "drop")
+  porcentaje <- periodo_vut(periodos) |>
+    left_join(media, by = c("anio", "mes")) |>
+    left_join(select(espana, anio, mes, referencia = porcentaje), by = c("anio", "mes")) |>
+    transmute(id = "vut_nacional_porcentaje", anio, detalle = mes, calculado, referencia)
+  bind_rows(viviendas, porcentaje)
 }

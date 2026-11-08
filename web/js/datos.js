@@ -56,13 +56,44 @@ export const cargarPerfiles = (m) => opcional(m.perfiles, {});
 // Periodos de una serie: años (enteros) o, si no son años, etiquetas («2024-08»).
 export const periodosDe = (def) => def?.periodos ?? def?.anios ?? [];
 const anioDe = (periodo) => Number(String(periodo).slice(0, 4));
+const esAnio = (periodo) => /^\d{4}$/.test(String(periodo));
+// Para comparar un año con meses: el año 2024 va detrás de todos sus meses («2024-99»).
+const claveDe = (periodo) => (esAnio(periodo) ? `${periodo}-99` : String(periodo));
 
-// Periodo de una serie que corresponde a un año: el mismo, o el último anterior, o el último.
+// Periodo de una serie que corresponde a un año o a un periodo de otra serie («2024-08»): el
+// mismo, o el último anterior, o el último. Sin año, el último.
 export function periodoPara(def, anio) {
   const periodos = periodosDe(def);
   if (!periodos.length) return null;
-  const previos = periodos.filter((p) => anioDe(p) <= anio);
+  if (anio === undefined || anio === null || anio === '') return periodos.at(-1);
+  const mismo = periodos.find((p) => String(p) === String(anio));
+  if (mismo !== undefined) return mismo;
+  const previos = periodos.every(esAnio)
+    ? periodos.filter((p) => anioDe(p) <= anioDe(anio))
+    : periodos.filter((p) => claveDe(p) <= claveDe(anio));
   return (previos.length ? previos : periodos).at(-1);
+}
+
+// Tipología de la vivienda (plan, decisión 12): la serie de la vivienda colectiva (VC) es la de
+// por defecto; la de la unifamiliar (VU), su variante en el manifiesto («variantes»: {"VU":
+// "alquiler_m2_vu"}, y en la variante, «por_defecto»). Nunca se mezclan: cada mapa usa una.
+export const TIPOLOGIAS = ['VC', 'VU'];
+const serieDeDefecto = (m, serie) => m.indicadores?.[serie]?.por_defecto ?? serie;
+
+// Serie que corresponde a una tipología; si la serie no tiene esa variante, la de por defecto.
+export function serieDeTipologia(m, serie, tipologia) {
+  const base = serieDeDefecto(m, serie);
+  return (tipologia === 'VU' && m.indicadores?.[base]?.variantes?.VU) || base;
+}
+
+// ¿Tiene la serie (o su serie de por defecto) variante por tipología?
+export const tieneTipologia = (m, serie) => Boolean(m.indicadores?.[serieDeDefecto(m, serie)]?.variantes?.VU);
+
+// Tipología de una serie: «VU» en la variante unifamiliar; «VC» en el resto de series con
+// variante; null en las series sin tipología.
+export function tipologiaDe(m, serie) {
+  if (!tieneTipologia(m, serie)) return null;
+  return m.indicadores[serie]?.por_defecto ? 'VU' : 'VC';
 }
 
 export function rutaValores(def, nivel, periodo) {

@@ -58,12 +58,18 @@
     "alquiler_mes": {
       "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
       "decimales": 0,
+      "variantes": {
+        "VU": "alquiler_mes_vu"
+      },
       "anios": [2020, 2021, 2022, 2023, 2024],
       "ruta": "datos/ejemplo/{nivel}/alquiler_mes/{anio}.json"
     },
     "alquiler_m2": {
       "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
       "decimales": 1,
+      "variantes": {
+        "VU": "alquiler_m2_vu"
+      },
       "anios": [2020, 2021, 2022, 2023, 2024],
       "ruta": "datos/ejemplo/{nivel}/alquiler_m2/{anio}.json"
     },
@@ -84,6 +90,20 @@
       "decimales": 1,
       "periodos": ["2024-08", "2025-02", "2025-08"],
       "ruta": "datos/ejemplo/{nivel}/viviendas_turisticas/{periodo}.json"
+    },
+    "alquiler_m2_vu": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 1,
+      "por_defecto": "alquiler_m2",
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/alquiler_m2_vu/{anio}.json"
+    },
+    "alquiler_mes_vu": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 0,
+      "por_defecto": "alquiler_mes",
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/alquiler_mes_vu/{anio}.json"
     }
   },
   "mapas": {
@@ -92,6 +112,24 @@
       "formula": "alquiler_m2_a_sueldo",
       "cortes": [2600, 3200, 3800, 4400, 5000],
       "decimales": 0
+    },
+    "renta_hogar": {
+      "base": "renta_hogar",
+      "formula": "directo",
+      "cortes": [35000, 45000, 55000, 65000],
+      "decimales": 0
+    },
+    "alquiler_m2": {
+      "base": "alquiler_m2",
+      "formula": "directo",
+      "cortes": [14, 17, 20, 23],
+      "decimales": 1
+    },
+    "viviendas_turisticas": {
+      "base": "viviendas_turisticas",
+      "formula": "directo",
+      "cortes": [4, 8, 12, 16],
+      "decimales": 1
     }
   },
   "vista_inicial": {

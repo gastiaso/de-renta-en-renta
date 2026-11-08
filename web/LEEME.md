@@ -18,10 +18,21 @@ y abrir <http://localhost:8000/>. Para parar: Ctrl+C. Si el puerto está ocupado
 - Hace falta porque el PMTiles se lee por trozos (rangos HTTP) y `python -m http.server` no los atiende.
 - Abrir `index.html` con doble clic no funciona: el navegador no deja cargar módulos ni datos desde `file://`.
 
-Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_2021.pmtiles`), la web muestra toda España. Sin ella, carga la **muestra** de `datos/ejemplo/`: las 111 secciones de 2021 del distrito Centro de Madrid, con valores **inventados** y la etiqueta «Datos de ejemplo» siempre visible (guía, regla 9).
+Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_2021.pmtiles`), la web muestra toda España. Sin ella, carga la **muestra** de `datos/ejemplo/`: las 111 secciones de 2021 del distrito Centro de Madrid, con valores **inventados** y la etiqueta «Datos de ejemplo» siempre visible (guía, regla 9). La muestra tiene cuatro mapas (uno con periodos por meses) y la variante de vivienda unifamiliar de los alquileres, para probar los selectores.
 
 ## Qué hace
 
+- **Barra de la vista**, encima del mapa:
+  - **mapa**: los de `mapas` del manifiesto; por defecto, el sueldo necesario, y los demás con la fórmula `directo`. En «¿te llega?», la primera opción es «¿Te llega? · ficha»; elegir otro mapa sale de ese modo;
+  - **año**: los periodos de la serie que da color (los meses, escritos: «mayo de 2026»). Sin año elegido, el último de cada serie; con uno elegido, cada serie usa ese o el último anterior;
+  - **vivienda**: colectiva o unifamiliar, solo si la serie del mapa tiene variante (`variantes` en el manifiesto). Colectiva por defecto y nunca mezcladas (decisión 12). Cambia el mapa, la leyenda, la ficha, su evolución y el comparador; en «¿te llega?», el alquiler que se usa;
+  - **descargar**: los datos del mapa en CSV y su imagen en PNG (ver abajo).
+  - Todo se maneja con el teclado (los dos primeros son `<select>` nativos, que en el móvil abren el selector del sistema) y queda en la URL.
+  - Si la serie no llega al nivel que se ve (una serie solo por sección con el mapa de España), un aviso pide acercar el mapa.
+- **Descargas**, sin dependencias y sin el sueldo escrito (como «Compartir»):
+  - **CSV** de la serie del mapa en el nivel que se ve (provincia, municipio o sección; si la serie no llega a ese nivel, el más fino que tenga), con una fila por territorio y las columnas código, nombre, nivel, indicador, tipología, periodo, valor (a una décima), unidad, estado y fuente; en el sueldo necesario, también la superficie y el umbral. UTF-8 con BOM, coma entre campos y punto decimal. En «¿te llega?» lleva el alquiler que usa el mapa y no la proporción, de la que se despejaría el sueldo;
+  - **PNG** del mapa tal como se ve, con título, periodo, tipología, leyenda, claves de los huecos, fuente y fecha de los datos. Con «Tu ficha», el ingreso se nombra («el sueldo escrito») sin la cifra.
+  - El nombre del fichero lleva el mapa, la tipología si es la unifamiliar, el periodo y, en el CSV, el nivel: `de-renta-en-renta_sueldo_necesario_2024_municipio.csv`.
 - **Mapa por defecto: sueldo neto necesario** (indicador 21) para que el alquiler de 50 m² no pase del 30 % del sueldo. Hay seis tramos con los cortes del manifiesto (700 · 900 · 1.100 · 1.500 · 2.000 €), uno por paso de la rampa. Se pinta con el alquiler por m² (indicador 9) y la fórmula de `js/formulas.js`. Superficie de 50, 70 o 90 m² y umbral del 30 o del 40 %.
   - En la regla de la leyenda, las fichas de una persona aparecen como marcas en su ingreso: la mochila, con la provincia de la sección elegida o la mediana de las provincias, y la tartera. La llave aparece como un tramo, del cuartil 1 al 3 de la renta de los hogares ÷ 12.
 - **«¿Te llega?»** al escribir un sueldo (neto al mes, 12 o 14 pagas, segundo sueldo opcional) o al elegir una ficha. Muestra el alquiler sobre el ingreso en tres tramos (hasta el 30 %, del 30 al 40 % y más del 40 %) y la frase «te cabe en el X % de las secciones con dato».
@@ -35,7 +46,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 - **El sueldo no sale del dispositivo.** No entra en la URL ni se guarda. Solo va en un enlace si se pulsa «Compartir» y se elige «Copiar con mi sueldo», con aviso previo, y entonces va tras «#», que el navegador no envía al servidor. Al abrir ese enlace, el sueldo se lee y se quita de la barra de direcciones.
 - **Ficha de sección:**
   - el valor del mapa activo;
-  - la evolución por años, desde `datos/fichas/<municipio>.json`;
+  - la evolución por años, desde `datos/fichas/<municipio>.json` (las variantes de vivienda unifamiliar no van en esos ficheros: se sacan de los de cada periodo);
   - el **comparador** con su distrito, su municipio, su provincia, su comunidad, España u otra sección elegida en el mapa, con los indicadores de la v0.1 y el mismo periodo en las dos columnas.
 - **Buscador** de municipio (por nombre, sin tildes y con el artículo delante o detrás: «Las Palmas» o «Palmas de Gran Canaria, Las») o de sección (por código).
 - **Leyenda plegable**, cerrada de entrada en el móvil.
@@ -44,9 +55,13 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 
 | Ruta | Contenido |
 |---|---|
-| `index.html` | Página: cabecera con buscador e idioma, mapa, leyenda, «Tu sueldo», ficha y diálogo «Compartir» |
+| `index.html` | Página: cabecera con buscador e idioma, barra de la vista, mapa, leyenda, «Tu sueldo», ficha y diálogo «Compartir» |
+| `sobrecarga.html` | Sección «Sobrecarga» (v0.0): mapa de Europa, escalera, serie de España y de la UE-27, desgloses y módulo de acceso |
 | `js/principal.js` | Arranque y coordinación de todo lo demás |
-| `js/estado.js` | Estado de la vista en la URL (`idioma`, `mapa`, `anio`, `ficha`, `superficie`, `umbral`, `seccion`, `comparar`, `vista`) y enlace para compartir |
+| `js/estado.js` | Estado de la vista en la URL (`idioma`, `mapa`, `anio`, que puede ser un periodo como `2025-05`, `tipologia`, `ficha`, `superficie`, `umbral`, `seccion`, `comparar`, `vista`) y enlace para compartir |
+| `js/barra_vista.js` | Barra de la vista: selectores de mapa, año y tipología, y botones de descarga |
+| `js/exportar.js` | CSV de la serie del mapa y nombre de los ficheros, sin DOM salvo la descarga |
+| `js/imagen.js` | PNG del mapa con título, leyenda y fuente, compuesto en un lienzo |
 | `js/i18n.js` | Textos desde `i18n/<idioma>.json`; cifras con el formato de cada idioma |
 | `js/datos.js` | Manifiesto, índices, valores por serie, nivel y periodo, series de la ficha, nombres, cajas y perfiles |
 | `js/sueldo.js` | Lógica de «Tu sueldo», sin DOM: modos, superficies, cálculos y expresiones de color, resumen y marcas de la regla |
@@ -54,6 +69,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 | `js/colores.js` | Pasos de la rampa de cada tramo (los mapas con menos tramos toman pasos repartidos; «¿te llega?», el 1, el 4 y el 6), contraste WCAG y color del contorno de las secciones |
 | `js/mapa.js` | MapLibre: mapa base (PMTiles o GeoJSON), capas coloreadas, selección, comparación y encuadre |
 | `js/leyenda.js`, `js/ficha.js` | Leyenda y ficha de sección |
+| `js/sobrecarga.js`, `js/sobrecarga_datos.js`, `estilo/sobrecarga.css` | Sección «Sobrecarga»: página (DOM y MapLibre) y su lógica sin DOM; datos en `datos/sobrecarga/` (`exportar_web_sobrecarga()`) |
 | `js/panel_sueldo.js`, `js/compartir.js` | Tarjeta «Tu sueldo» y diálogo «Compartir» |
 | `js/comparador.js`, `js/buscador.js` | Comparador entre territorios y buscador |
 | `estilo/tokens.css` | Generado por el pipeline desde `diseno/tokens.json`: no se edita a mano |
@@ -83,7 +99,8 @@ El manifiesto dice:
 - `codificacion`: la escala de los enteros (`10`) y los nombres de los estados en el orden de sus cifras. Una serie puede llevar su propia `escala` (100 para dos decimales).
 - `indicadores`: las series, con `niveles`, `decimales`, `anios` (o `periodos`, como `"2024-08"`, si no son años) y `ruta` (`{nivel}`, `{anio}` o `{periodo}`).
   - La serie por defecto lleva el código del indicador. Las variantes llevan `indicador`, `corte` y `grupo` (por ejemplo, la vivienda unifamiliar).
-- `mapas`: lo que se pinta. Cada mapa lleva su serie base, la fórmula de la web y los cuatro cortes de los cinco tramos.
+  - Tipología: la serie de la vivienda colectiva lleva `variantes` (`{"VU": "alquiler_m2_vu"}`) y la variante, `por_defecto` (`"alquiler_m2"`), con los mismos niveles y periodos. Las variantes no van en las series de la ficha.
+- `mapas`: lo que se pinta. Cada mapa lleva su serie base (la de por defecto, nunca una variante), la fórmula de la web y de uno a cinco cortes (de dos a seis tramos). La clave del mapa es la de sus textos en `indicadores` de los diccionarios.
 - `supuestos`: superficie y umbral por defecto.
 - `ejemplo`: `true` en la muestra.
 
@@ -139,19 +156,22 @@ Se bajaron de jsDelivr (paquetes de npm, carpeta `dist/`). Para actualizarlas, s
 
 ```bash
 node --test pruebas/web/datos.test.mjs
+node --test pruebas/web/sobrecarga.test.mjs
 ```
 
 Comprueban, con datos inventados:
 
-- el formato de los valores, los periodos y las fórmulas;
+- el formato de los valores, los periodos (también con meses) y las fórmulas;
 - la lógica de «Tu sueldo»: ingresos, superficies, cálculos, tramos, resumen y regla;
-- el comparador, el buscador y que el sueldo nunca entra en la URL;
+- la tipología: la serie de cada una y el alquiler de «¿te llega?»;
+- el comparador, el buscador, la URL (mapa, periodo y tipología) y que el sueldo nunca entra en ella;
+- el CSV (BOM, comillas, estados, supuestos), el redondeo, el nivel y el nombre de los ficheros;
 - que la muestra que escribe R se lee entera y que sus series cuadran con el mapa.
 
-Si existe `datos/manifiesto.json`, comprueban también la exportación del pipeline.
+Si existe `datos/manifiesto.json`, comprueban también la exportación del pipeline y que **la página recalcula y coincide con R** (plan, §6.5): el sueldo necesario calculado con `js/formulas.js` desde el alquiler por m², en todas las secciones y niveles y en todos los años, redondeado a una décima como en la web, da los mismos enteros, nulos y estados que la serie `sueldo_necesario` que exporta R. Con la exportación del 8-nov-2026: 550.140 territorios y años, 294.082 con valor, ninguna diferencia.
 
-Queda para más adelante la prueba en navegador con `chromote`: la página recalcula una muestra de cifras, que deben coincidir con R (plan, §6.5).
+Queda aparte la misma prueba en el navegador con `chromote`, que no está en `renv.lock`.
 
 ## Publicación
 
-GitHub Pages sirve esta carpeta tal cual, con los rangos HTTP que pide el PMTiles. Ni el PMTiles ni los datos exportados (`datos/`, salvo la muestra de `datos/ejemplo/`) entran en la historia de git: se publican desde un *release* y el flujo de Pages los copia junto a la web (preguntas abiertas 16 y 21). El sitio publicado ocupa unos 110 MB. El flujo de publicación está pendiente.
+GitHub Pages sirve esta carpeta tal cual, con los rangos HTTP que pide el PMTiles. Ni el PMTiles ni los datos exportados (`datos/`, salvo la muestra de `datos/ejemplo/`) entran en la historia de git: se publican desde un *release* y el flujo de Pages los copia junto a la web (preguntas abiertas 16 y 21), con la tabla larga en `descargas/` para la página «Datos». El sitio publicado ocupa unos 139 MB. Flujo: `.github/workflows/pages.yml`; paquete del release: `empaquetar_publicacion()`; pasos: `docs/publicacion.md`. `LEEME.md`, `servir.mjs` y `herramientas/` no se publican.

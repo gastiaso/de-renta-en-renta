@@ -119,9 +119,14 @@ Cinco tareas en paralelo, integradas el 8-nov-2026 (plan v0.20):
 
 Decidido (8-nov-2026, plan v0.23): la serie del SMI de 2015 a 2023 para la tartera, en F3 (pregunta 18); los derivados se calculan desde sus términos redondeados a un decimal, como los recibe la web (19); `web/datos/` fuera de git y publicado desde un *release* (21). Plan v0.24: el mapa del sueldo necesario, en seis tramos con un corte nuevo en 2.000 €, y la rampa, en seis pasos comprobados con daltonismo simulado (20).
 
+9. **Web: barra de la vista y descargas · HECHA.** Selectores de mapa, año y tipología, en la URL; descargas en CSV y PNG sin el sueldo escrito; la página y R coinciden en el sueldo necesario de 550.140 territorios y años (prueba de node).
+10. **Tabla larga: España y huecos del SERPAVI · HECHA.** España donde la fuente la publica (18: 16,10 %; 19: seis periodos), con compuerta; sin España, la renta, el alquiler y sus derivados (regla 1). Las 40 secciones que el SERPAVI no trae, como `ausente`.
+11. **Sección «Sobrecarga» (v0.0) · HECHA.** `web/sobrecarga.html` con datos reales: mapa de Europa, escalera, serie de España y de la UE-27, desgloses con su muestra y módulo de acceso, con su compuerta de ida y vuelta.
+12. **Publicación · PREPARADA.** Flujo de Pages, paquete del *release* (`empaquetar_publicacion()`), página «Método» y guía (`docs/publicacion.md`). Falta crear el repositorio (con GitHub Free, público) y el primer *release*.
+
 **Siguiente:**
-- selector de año, de mapa y de tipología; nivel nacional en la exportación; filas `ausente` para las 40 secciones de 2021 que la base del SERPAVI no trae;
-- modo daltónico, CSV y PNG, y la prueba con `chromote` (la página recalcula una muestra y coincide con R);
-- publicación en Pages (sin remoto todavía).
+- decisiones del autor: remoto y visibilidad; preguntas abiertas 22–33 (plan §11); descargas por preguntar (SMI de 2015 a 2023, marcas de Eurostat, `chromote`);
+- página «Datos» (la tabla larga en Parquet ya va en el *release*);
+- prueba con `chromote` (la página recalcula una muestra en el navegador y coincide con R).
 
 **Hecho cuando** (v0.1, plan §7): la validación pasa, la web se publica en Pages y hay una nota metodológica.

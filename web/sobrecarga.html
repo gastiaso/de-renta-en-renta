@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sobrecarga por gastos de vivienda · De renta en renta</title>
+  <meta name="description" content="Tasa de sobrecarga por gastos de vivienda en España y Europa, con el método de Eurostat">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css">
+  <link rel="stylesheet" href="estilo/tokens.css">
+  <link rel="stylesheet" href="estilo/sitio.css">
+  <link rel="stylesheet" href="estilo/sobrecarga.css">
+  <!-- Nombres de las librerías: el código importa «maplibre-gl», como lo haría con un empaquetador. -->
+  <script type="importmap">
+    { "imports": { "maplibre-gl": "./vendor/maplibre-gl/maplibre-gl.mjs" } }
+  </script>
+  <script type="module" src="js/sobrecarga.js"></script>
+</head>
+<body>
+  <div class="tablero tablero-largo">
+    <header class="cabecera">
+      <div class="marca">
+        <p class="marca-titulo" data-i18n="sitio.titulo">De renta en renta</p>
+        <p class="marca-subtitulo" data-i18n="sitio.subtitulo">Vivienda y sueldos, sección a sección</p>
+      </div>
+      <nav class="navegacion" data-i18n-aria="interfaz.navegacion">
+        <a href="./" data-enlace="" data-i18n="nav.mapa">Mapa</a>
+        <a href="./#tu-sueldo" data-enlace="#tu-sueldo" data-i18n="nav.tu_sueldo">Tu sueldo</a>
+        <a href="sobrecarga.html" aria-current="page" data-i18n="nav.sobrecarga">Sobrecarga</a>
+        <span aria-disabled="true" data-i18n="nav.datos" data-i18n-title="interfaz.proximamente">Datos</span>
+        <a href="metodo.html" data-href-es="metodo.html" data-href-en="method.html" data-i18n="nav.metodo">Método</a>
+      </nav>
+      <div class="idioma" role="group" data-i18n-aria="interfaz.idioma">
+        <button type="button" data-idioma="es" aria-pressed="true" lang="es">ES</button>
+        <button type="button" data-idioma="en" aria-pressed="false" lang="en">EN</button>
+      </div>
+    </header>
+
+    <main class="sobrecarga">
+      <section class="sc-intro">
+        <div class="sc-intro-texto">
+          <p class="sc-antetitulo" data-i18n="sobrecarga.antetitulo">España y Europa</p>
+          <h1 class="sc-titulo" data-i18n="sobrecarga.titulo">Sobrecarga por gastos de vivienda</h1>
+          <p class="sc-entradilla" data-i18n="sobrecarga.entradilla"></p>
+        </div>
+        <p class="sc-distintivo" data-i18n="sobrecarga.distintivo"></p>
+      </section>
+
+      <p id="sc-estado" class="sc-estado" role="status" data-i18n="sobrecarga.carga">Cargando los datos…</p>
+
+      <div id="sc-contenido" class="sc-contenido" hidden>
+        <section class="sc-controles" data-i18n-aria="sobrecarga.controles.region">
+          <fieldset class="sc-grupo">
+            <legend data-i18n="sobrecarga.controles.tenencia">Régimen de tenencia</legend>
+            <div id="sc-tenencia" class="sc-botones"></div>
+          </fieldset>
+          <fieldset class="sc-grupo">
+            <legend data-i18n="sobrecarga.controles.edad">Edad</legend>
+            <div id="sc-edad" class="sc-botones"></div>
+          </fieldset>
+          <fieldset class="sc-grupo">
+            <legend data-i18n="sobrecarga.controles.anio">Encuesta</legend>
+            <div id="sc-anio" class="sc-botones"></div>
+          </fieldset>
+          <dl id="sc-cifras" class="sc-cifras" aria-live="polite" data-i18n-aria="sobrecarga.cifras.region"></dl>
+        </section>
+        <p id="sc-nota-controles" class="nota sc-nota-controles"></p>
+
+        <div class="sc-cuerpo">
+          <section class="tarjeta sc-mapa-tarjeta" aria-labelledby="sc-mapa-titulo">
+            <header class="sc-mapa-cabecera">
+              <h2 id="sc-mapa-titulo" class="sc-h2"></h2>
+              <p id="sc-mapa-fuente" class="nota"></p>
+            </header>
+            <div class="sc-mapa-marco">
+              <div id="sc-mapa" class="sc-mapa" role="region" data-i18n-aria="sobrecarga.mapa.region"></div>
+            </div>
+            <div id="sc-leyenda" class="sc-leyenda"></div>
+            <div id="sc-detalle" class="sc-detalle" aria-live="polite" data-i18n-aria="sobrecarga.detalle.region"></div>
+            <p id="sc-nota-mapa" class="nota"></p>
+            <p class="nota">
+              <span data-i18n="sobrecarga.mapa.recuadros"></span>
+              <span class="sc-licencia" data-i18n="sobrecarga.mapa.licencia"></span>
+            </p>
+            <details id="sc-comunidades" class="sc-plegable">
+              <summary data-i18n="sobrecarga.comunidades.titulo"></summary>
+              <div class="sc-tabla-marco"></div>
+            </details>
+          </section>
+
+          <aside class="tarjeta sc-escalera" aria-labelledby="sc-escalera-titulo">
+            <header class="sc-escalera-cabecera">
+              <h2 id="sc-escalera-titulo" class="sc-cabecera-carta" data-i18n="sobrecarga.escalera.titulo">La escalera</h2>
+              <p id="sc-escalera-sub"></p>
+            </header>
+            <div id="sc-escalera-cuerpo" class="sc-escalera-cuerpo"></div>
+            <div class="sc-escalera-pie">
+              <button id="sc-escalera-modo" type="button" class="boton-texto"></button>
+            </div>
+          </aside>
+        </div>
+
+        <div class="sc-fila">
+          <section class="tarjeta sc-bloque" aria-labelledby="sc-serie-titulo">
+            <h2 id="sc-serie-titulo" class="sc-h2" data-i18n="sobrecarga.serie.titulo"></h2>
+            <p class="nota" data-i18n="sobrecarga.serie.subtitulo"></p>
+            <div id="sc-serie" class="sc-serie"></div>
+            <p class="nota" data-i18n="sobrecarga.serie.fuente"></p>
+            <details id="sc-serie-tabla" class="sc-plegable">
+              <summary data-i18n="sobrecarga.serie.tabla"></summary>
+              <div class="sc-tabla-marco"></div>
+            </details>
+          </section>
+
+          <section class="tarjeta sc-bloque" aria-labelledby="sc-desgloses-titulo">
+            <h2 id="sc-desgloses-titulo" class="sc-h2" data-i18n="sobrecarga.desgloses.titulo"></h2>
+            <p class="nota" data-i18n="sobrecarga.desgloses.subtitulo"></p>
+            <div class="selector sc-selector" role="group" aria-labelledby="sc-desgloses-anio-titulo">
+              <span id="sc-desgloses-anio-titulo" class="selector-titulo" data-i18n="sobrecarga.desgloses.anio"></span>
+              <div id="sc-desgloses-anio" class="sc-botones"></div>
+            </div>
+            <div id="sc-desgloses" class="sc-desgloses"></div>
+            <p class="nota" data-i18n="sobrecarga.desgloses.nota"></p>
+          </section>
+        </div>
+
+        <div class="sc-cajas">
+          <section class="tarjeta sc-caja" aria-labelledby="sc-metodo-titulo">
+            <h2 id="sc-metodo-titulo" class="sc-caja-banda sc-caja-banda-roja" data-i18n="sobrecarga.metodo.titulo"></h2>
+            <div class="sc-caja-cuerpo">
+              <p class="sc-formula" data-i18n="sobrecarga.metodo.formula"></p>
+              <ul class="sc-lista">
+                <li data-i18n="sobrecarga.metodo.personas"></li>
+                <li data-i18n="sobrecarga.metodo.hipoteca"></li>
+                <li data-i18n="sobrecarga.metodo.renta"></li>
+                <li data-i18n="sobrecarga.metodo.muestra"></li>
+                <li data-i18n="sobrecarga.metodo.compuerta"></li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="tarjeta sc-caja" aria-labelledby="sc-acceso-titulo">
+            <header class="sc-caja-banda sc-caja-banda-verde">
+              <h2 id="sc-acceso-titulo" class="sc-cabecera-carta" data-i18n="sobrecarga.acceso.titulo"></h2>
+              <p id="sc-acceso-sub"></p>
+            </header>
+            <div id="sc-acceso" class="sc-caja-cuerpo sc-acceso"></div>
+          </section>
+
+          <section class="tarjeta sc-caja" aria-labelledby="sc-otras-titulo">
+            <h2 id="sc-otras-titulo" class="sc-caja-titulo" data-i18n="sobrecarga.otras_cifras.titulo"></h2>
+            <div class="sc-caja-cuerpo">
+              <p data-i18n="sobrecarga.otras_cifras.metodo"></p>
+              <p data-i18n="sobrecarga.otras_cifras.total"></p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="sc-pie">
+      <p data-i18n="sobrecarga.pie.fuentes"></p>
+      <p data-i18n="sobrecarga.pie.licencia"></p>
+    </footer>
+  </div>
+
+  <noscript>
+    <p class="sin-js">Esta página necesita JavaScript para dibujar el mapa y las cifras. · This page needs JavaScript to draw the map and the figures.</p>
+  </noscript>
+</body>
+</html>

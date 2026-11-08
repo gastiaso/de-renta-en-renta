@@ -1,0 +1,79 @@
+// Exportación de la vista, sin dependencias: CSV de la serie del mapa en el nivel que se ve y
+// nombre de los ficheros (la imagen PNG, en imagen.js). Sin DOM, salvo `descargar()`, para que
+// las pruebas usen las mismas cuentas.
+//
+// El sueldo escrito por el usuario no sale en ninguno de los dos ficheros, como con «Compartir»
+// (plan, §6.6): en «¿te llega?», el CSV lleva el alquiler que usa el mapa y no la proporción
+// (de la que se despejaría el sueldo), y la imagen nombra el ingreso sin la cifra.
+
+// Redondeo a `decimales`, como el de la guía: toFixed da el decimal más cercano al número binario,
+// igual que sprintf("%.1f") en R salvo en los empates exactos.
+export const redondear = (x, decimales) => Number(x.toFixed(decimales));
+
+// Decimales con que se guardan los valores (escala 10: una décima).
+export const decimalesDeEscala = (escala) => Math.max(0, Math.round(Math.log10(escala ?? 10)));
+
+// Niveles que pinta el mapa, de menos a más zoom (mapa.js, RELLENOS).
+const NIVELES_MAPA = ['provincia', 'municipio', 'sc'];
+
+// Nivel del CSV: el que pinta el mapa a su escala o, si la serie no llega a él, el más fino que
+// tenga (una serie solo por sección, con el mapa de toda España, sale por sección).
+export function nivelParaExportar(visible, niveles) {
+  const tiene = (n) => niveles.includes(n);
+  const desde = Math.max(0, NIVELES_MAPA.indexOf(visible));
+  return NIVELES_MAPA.slice(desde).find(tiene) ?? [...NIVELES_MAPA].reverse().find(tiene) ?? 'sc';
+}
+
+// Campo de CSV (RFC 4180): entre comillas si lleva coma, comillas o salto de línea.
+function campo(x) {
+  const texto = x === null || x === undefined ? '' : String(x);
+  return /[",\r\n]/.test(texto) ? `"${texto.replaceAll('"', '""')}"` : texto;
+}
+
+// Texto del CSV: UTF-8 con BOM (para que las hojas de cálculo lean bien las tildes), coma entre
+// campos, punto decimal y CRLF entre filas.
+export function textoCsv(cabecera, filas) {
+  return `﻿${[cabecera, ...filas].map((fila) => fila.map(campo).join(',')).join('\r\n')}\r\n`;
+}
+
+const COLUMNAS = ['codigo', 'nombre', 'nivel', 'indicador', 'tipologia', 'periodo', 'valor', 'unidad', 'estado', 'fuente'];
+
+// Tabla de una serie en un nivel: una fila por territorio, en el orden del índice.
+//   codigos, valores, estados: los del nivel (datos.js, cargarValores);
+//   nombresEstado: codificacion.estados del manifiesto;
+//   transformar(x): la fórmula del mapa (sueldo necesario) o nada;
+//   supuestos: { superficie_m2, umbral } si la fórmula los usa (dos columnas más).
+// Los textos (cabecera, nivel, indicador…) llegan ya traducidos, salvo los que pide `t`.
+export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, nombreDe, indicador, unidad, tipologia, periodo, fuente, transformar, decimales, supuestos }) {
+  const columnas = supuestos ? [...COLUMNAS, 'superficie_m2', 'umbral'] : COLUMNAS;
+  const cabecera = columnas.map((c) => t(`interfaz.exportar.columnas.${c}`));
+  const textoNivel = t(`vocabulario.nivel.${nivel}`);
+  const filas = codigos.map((codigo, i) => {
+    const x = valores[i];
+    const valor = x === null || x === undefined ? null : redondear(transformar ? transformar(x) : x, decimales);
+    const fila = [codigo, nombreDe(codigo), textoNivel, indicador, tipologia ?? '', periodo, valor, unidad,
+      t(`interfaz.exportar.estados.${nombresEstado[estados[i]]}`), fuente];
+    if (supuestos) fila.push(supuestos.superficie_m2, supuestos.umbral);
+    return fila;
+  });
+  return { cabecera, filas };
+}
+
+// Nombre del fichero: el mapa, «vu» si es la vivienda unifamiliar, el periodo y, en el CSV, el
+// nivel («de-renta-en-renta_sueldo_necesario_2024_municipio.csv»).
+export function nombreFichero({ mapa, periodo, tipologia, nivel, extension }) {
+  const partes = ['de-renta-en-renta', mapa, tipologia === 'VU' ? 'vu' : null, periodo, nivel];
+  return `${partes.filter((p) => p !== null && p !== undefined && p !== '').join('_').replace(/[^\w-]/g, '-')}.${extension}`;
+}
+
+// Descarga un Blob con un nombre de fichero (enlace temporal con «download»).
+export function descargar(blob, nombre) {
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombre;
+  document.body.append(enlace);
+  enlace.click();
+  enlace.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}

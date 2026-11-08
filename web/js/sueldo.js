@@ -71,12 +71,15 @@ const numero = (serie) => ['to-number', estadoMapa(serie)];
 const falta = (serie) => ['==', estadoMapa(serie), null];
 
 // Cálculo de «¿te llega?» para una ficha. `x(serie)` da el valor de una serie en la sección.
-//   series: las que hay que cargar en el mapa;
+// `serie(nombre)` da la serie que se usa en lugar de cada una: la del alquiler de la tipología
+// elegida (vivienda colectiva o unifamiliar; datos.js, serieDeTipologia); por defecto, la misma.
+//   series: las que hay que cargar en el mapa (la primera, la del alquiler);
 //   calcular(seccion, x) → { alquiler, ingreso, ratio } o null;
 //   expresion(idSeccion) → { valido, ratio }, expresiones de MapLibre.
-export function calculoLlega({ ficha, perfiles, sueldo, superficie }) {
+export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) => s }) {
   if (ficha === 'llave') {
-    const { ingreso, vivienda } = perfiles.llave;
+    const { ingreso } = perfiles.llave;
+    const vivienda = { serie: serie(perfiles.llave.vivienda.serie) };
     const divisor = ingreso.divisor ?? 12;
     return {
       ficha,
@@ -99,11 +102,12 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie }) {
   const perfil = ficha === 'peon' ? null : perfiles[ficha];
   const fijo = ficha === 'peon' ? ingresoPeon(sueldo) : null;
   const ingresoDe = (seccion) => (perfil ? ingresoPerfil(perfil, seccion) : fijo);
+  const m2Serie = serie('alquiler_m2');
   return {
     ficha,
-    series: ['alquiler_m2'],
+    series: [m2Serie],
     calcular(seccion, x) {
-      const m2 = x('alquiler_m2');
+      const m2 = x(m2Serie);
       const ingreso = ingresoDe(seccion);
       if (m2 === null || !ingreso) return null;
       const alquiler = m2 * superficie;
@@ -112,8 +116,8 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie }) {
     expresion(idSeccion) {
       const ingreso = perfil ? expresionIngresoPerfil(perfil, idSeccion) : fijo;
       return {
-        valido: ['all', ['!', falta('alquiler_m2')], ['>', ingreso, 0]],
-        ratio: ['/', ['*', numero('alquiler_m2'), superficie], ingreso],
+        valido: ['all', ['!', falta(m2Serie)], ['>', ingreso, 0]],
+        ratio: ['/', ['*', numero(m2Serie), superficie], ingreso],
       };
     },
   };

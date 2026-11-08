@@ -33,11 +33,21 @@
     "mapa": {
       "region": "Census tract map",
       "acercar": "Zoom in",
-      "alejar": "Zoom out"
+      "alejar": "Zoom out",
+      "sin_dato_escala": "This map has no data at this scale: zoom in."
     },
     "buscador": {
       "etiqueta": "Search municipality or tract",
       "marcador": "Search municipality or tract"
+    },
+    "vista": {
+      "region": "What the map shows",
+      "mapa": "Map",
+      "anio": "Year",
+      "tipologia": "Housing",
+      "vc": "Flats",
+      "vu": "Houses",
+      "llega_opcion": "Can you make rent? · {ficha}"
     },
     "leyenda": {
       "sin_dato": "No data",
@@ -63,6 +73,7 @@
       "umbral": "Threshold",
       "superficie_fija": "Single-person tokens use {superficie} m².",
       "superficie_llave": "The key pays the median rent of its tract.",
+      "supuestos_mapa": "Home size and threshold change the pay needed and “Can you make rent?”, not the map on screen.",
       "peon_sin_sueldo": "Type a pay figure to use your token.",
       "resumen_peon": "It fits your pay in {pct} of tracts with data ({caben} of {total}).",
       "resumen_ficha": "It fits “{ficha}” in {pct} of tracts with data ({caben} of {total}).",
@@ -91,11 +102,47 @@
       "copiado_con": "Link copied, with pay.",
       "copia_a_mano": "Could not copy: the link is selected so it can be copied by hand (Ctrl+C)."
     },
+    "exportar": {
+      "titulo": "Download",
+      "csv": "Data (CSV)",
+      "png": "Image (PNG)",
+      "csv_largo": "Download the map data as CSV, at the level on screen",
+      "png_largo": "Download the map as a PNG image, with legend and source",
+      "preparando": "Preparing the download…",
+      "hecho": "Downloaded: {fichero}",
+      "error": "The download could not be prepared.",
+      "nombre_seccion": "{municipio}, district {distrito}, tract {seccion}",
+      "nombre_distrito": "{municipio}, district {distrito}",
+      "ingreso_peon": "the pay typed in",
+      "umbral": "{umbral} threshold",
+      "fuente": "Source: {fuente}.",
+      "pie": "Base map: {atribucion}. De renta en renta, data as of {fecha}.",
+      "columnas": {
+        "codigo": "code",
+        "nombre": "name",
+        "nivel": "level",
+        "indicador": "indicator",
+        "tipologia": "housing_type",
+        "periodo": "period",
+        "valor": "value",
+        "unidad": "unit",
+        "estado": "status",
+        "fuente": "source",
+        "superficie_m2": "floor_area_m2",
+        "umbral": "threshold"
+      },
+      "estados": {
+        "dato": "data",
+        "estimado": "estimated",
+        "secreto": "statistical confidentiality",
+        "ausente": "no data"
+      }
+    },
     "ficha": {
       "titulo": "Tract profile",
       "vacia": "Choose a tract on the map to see its profile.",
       "seccion": "Tract {codigo}",
-      "anio": "Year {anio}",
+      "anio": "Data for {anio}",
       "cerrar": "Close the profile",
       "evolucion": "Over time",
       "evolucion_llega": "Rent as a share of income over time",
@@ -122,6 +169,216 @@
       "estimado": "estimated",
       "secreto": "confidential",
       "ausente": "no data"
+    }
+  },
+  "sobrecarga": {
+    "titulo_pagina": "Housing cost overburden · De renta en renta",
+    "descripcion": "Housing cost overburden rate in Spain and Europe, with Eurostat’s method",
+    "antetitulo": "Spain and Europe",
+    "titulo": "Housing cost overburden",
+    "entradilla": "People living in households that spend more than 40% of their disposable income on housing, with Eurostat’s method.",
+    "distintivo": "Another board: a survey, not a register · regions and countries, not tracts",
+    "carga": "Loading data…",
+    "error_carga": "The overburden data could not be loaded (datos/sobrecarga/). They are generated with targets::tar_make(names = ficheros_web_sobrecarga).",
+    "formato": {
+      "porcentaje": "{x}%",
+      "puesto": "{p}."
+    },
+    "controles": {
+      "region": "What the map shows",
+      "tenencia": "Tenure status",
+      "edad": "Age",
+      "anio": "Survey",
+      "toda_poblacion": "Whole population",
+      "todas_edades": "All ages",
+      "nota_rentas": "{anio} survey, with {anterior} incomes.",
+      "nota_desglose": "By tenure or age, only the {anio} survey: Eurostat does not publish those breakdowns by region.",
+      "grupos": {
+        "RENT_MKT": "Market-rate renting",
+        "RENT_FR": "Reduced rent or rent-free",
+        "OWN_L": "Owner with mortgage",
+        "OWN_NL": "Owner without mortgage",
+        "Y_LT18": "Under 18",
+        "Y18-64": "18 to 64",
+        "Y_GE65": "65 and over"
+      }
+    },
+    "cifras": {
+      "region": "Reference figures",
+      "espana": "Spain",
+      "ue27": "EU-27",
+      "muestra": "{n} people in the sample",
+      "eurostat": "Eurostat"
+    },
+    "mapa": {
+      "region": "Map of Europe of the overburden rate",
+      "titulo_regiones": "Europe by region",
+      "titulo_paises": "Europe by country; Spain by autonomous community",
+      "fuente_regiones": "Eurostat (ilc_lvho07_r), {anio}; autonomous communities and Spain, INE (EU-SILC microdata)",
+      "fuente_regiones_eurostat": "Eurostat (ilc_lvho07_r), {anio}",
+      "fuente_paises": "Eurostat ({tabla}), {anio}; autonomous communities, INE (EU-SILC microdata, {desde}–{hasta})",
+      "nota_regiones": "Eurostat publishes the rate by NUTS 2 region only for the whole population. Where it does not, the country or NUTS 1 figure is shown, hatched. Some countries have no regional figure in some years (Denmark, until 2024), and Eurostat sometimes publishes two regions together (FI19_20): they are left blank.",
+      "nota_paises": "By tenure or age, Eurostat publishes countries. Spain is shown by autonomous community from INE microdata with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample: countries and communities do not cover the same period.",
+      "sin_mapa": "In the ladder, with no boundaries on the map: {lista}.",
+      "recuadros": "Canary Islands, Madeira and the Azores, in insets.",
+      "licencia": "© EuroGeographics for the administrative boundaries",
+      "acercar": "Zoom in",
+      "alejar": "Zoom out",
+      "gesto_windows": "Ctrl + scroll to zoom the map",
+      "gesto_mac": "⌘ + scroll to zoom the map",
+      "gesto_movil": "Two fingers to move the map"
+    },
+    "leyenda": {
+      "titulo": "% of people",
+      "menos_de": "under {x}%",
+      "entre": "{a}–{b}%",
+      "o_mas": "{x}% or more",
+      "sin_dato": "No data",
+      "grueso": "Country or NUTS 1 figure",
+      "muestra": "Small sample (20 to 49 observations)"
+    },
+    "detalle": {
+      "region": "Selected area",
+      "vacio": "Selecting an area on the map or in the ladder shows its figure, rank and sample here.",
+      "puesto": "Rank {p} of {n}",
+      "sin_valor": "No publishable figure: fewer than 20 observations.",
+      "fuente_ine": "INE, EU-SILC microdata (own calculation with Eurostat’s method)",
+      "fuente_eurostat": "Eurostat ({tabla})",
+      "muestra": "Sample: {n} people in {h} households",
+      "olas": "Three pooled waves, {desde}–{hasta}",
+      "anio": "{anio} survey",
+      "bandera": "Eurostat flag: {b}",
+      "nivel_pais": "Country figure: Eurostat does not publish its NUTS 2 regions.",
+      "nivel_nuts1": "NUTS 1 figure: Eurostat does not publish its NUTS 2 regions.",
+      "cerrar": "Clear the selection"
+    },
+    "escalera": {
+      "titulo": "The ladder",
+      "subtitulo": "Rank among {n} areas and references, highest first · {periodo}",
+      "periodo_paises": "countries, {anio}; communities, {desde}–{hasta}",
+      "europa_regiones": "Highest in Europe",
+      "europa_paises": "Highest: countries",
+      "referencias": "References",
+      "comunidades": "Autonomous communities, at their rank",
+      "completa": "Full list",
+      "ver_completa": "Show the full list",
+      "ver_bloques": "Show by block",
+      "etiquetas": {
+        "region": "Region",
+        "pais": "Country",
+        "comunidad": "Community",
+        "referencia": "Reference"
+      }
+    },
+    "serie": {
+      "titulo": "Spain, year by year",
+      "subtitulo": "Whole population and market-rate tenants, compared with the EU-27",
+      "total": "Whole population",
+      "mercado": "Market-rate renting",
+      "espana": "Spain",
+      "ue27": "EU-27",
+      "anio": "Survey",
+      "fuente": "Eurostat (ilc_lvho07a, ilc_lvho07c). From 2023 to 2025, the calculation from EU-SILC microdata reproduces these figures (±0.1 points).",
+      "tabla": "Show the figures",
+      "grafico": "Overburden rate in Spain and the EU-27, whole population and market-rate renting, {desde}–{hasta}"
+    },
+    "desgloses": {
+      "titulo": "Spain by tenure and age",
+      "subtitulo": "EU-SILC microdata, own calculation · each figure with its sample",
+      "anio": "Survey",
+      "tenencia": "By tenure status",
+      "edad": "By age",
+      "total": "Whole population",
+      "muestra_corta": "{n} people",
+      "nota": "The under-18 and 15-to-29 groups overlap. «Owner» and «Tenant or rent-free» combine Eurostat’s categories."
+    },
+    "comunidades": {
+      "titulo": "Communities on the map: figure and sample",
+      "comunidad": "Community",
+      "valor": "%",
+      "puesto": "Rank",
+      "personas": "People",
+      "hogares": "Households",
+      "fiabilidad": "Reliability"
+    },
+    "metodo": {
+      "titulo": "How it is calculated",
+      "formula": "(housing costs − allowances) ÷ (disposable income − allowances) > 40%",
+      "personas": "It counts people, not households.",
+      "hipoteca": "Only mortgage interest counts, not capital repayments.",
+      "renta": "Income refers to the year before the survey: the 2025 survey records 2024 incomes.",
+      "muestra": "No confidence intervals: the public microdata do not include the sample design. Each INE figure carries its number of observations and the EU-SILC reliability flag: not published below 20; hatched from 20 to 49.",
+      "compuerta": "The calculation reproduces Eurostat’s figures for Spain, each autonomous community, market-rate tenants and each age group (±0.1 points)."
+    },
+    "acceso": {
+      "titulo": "Those who cannot get in",
+      "subtitulo": "Unsuccessful housing search · EU-SILC {anio}",
+      "definicion": "People aged 16 or over who actively looked for housing in the last 12 months without moving. Overburden misses them: it measures those already housed.",
+      "espana": "Spain",
+      "razon": "Main reason: excessive price, for {x}% of those who searched without success.",
+      "comunidades": "By autonomous community",
+      "mas": "Show all {n} communities",
+      "edad": "By age",
+      "tenencia": "By tenure status",
+      "sexo": "By sex",
+      "fuente": "INE, EU-SILC {anio}, module on difficulties in accessing housing (published tables).",
+      "razones": {
+        "precio": "Excessive price",
+        "vivienda": "The dwelling did not meet the requirements",
+        "condiciones": "The conditions to rent or buy were not met",
+        "otras": "Other reasons"
+      }
+    },
+    "otras_cifras": {
+      "titulo": "Why it differs from other figures",
+      "metodo": "Other calculations add the whole mortgage payment or count households instead of people: they answer a different question.",
+      "total": "Outright owners dominate the total; the burden is concentrated among market-rate tenants."
+    },
+    "pie": {
+      "fuentes": "Sources: INE, Living Conditions Survey (EU-SILC microdata and housing access module); Eurostat (ilc_lvho07a, ilc_lvho07c and ilc_lvho07_r).",
+      "licencia": "Data and texts: CC BY-SA 4.0. Map boundaries: © EuroGeographics for the administrative boundaries (GISCO, non-commercial use)."
+    },
+    "paises": {
+      "AL": "Albania",
+      "AT": "Austria",
+      "BA": "Bosnia and Herzegovina",
+      "BE": "Belgium",
+      "BG": "Bulgaria",
+      "CH": "Switzerland",
+      "CY": "Cyprus",
+      "CZ": "Czechia",
+      "DE": "Germany",
+      "DK": "Denmark",
+      "EE": "Estonia",
+      "EL": "Greece",
+      "ES": "Spain",
+      "FI": "Finland",
+      "FR": "France",
+      "HR": "Croatia",
+      "HU": "Hungary",
+      "IE": "Ireland",
+      "IS": "Iceland",
+      "IT": "Italy",
+      "LI": "Liechtenstein",
+      "LT": "Lithuania",
+      "LU": "Luxembourg",
+      "LV": "Latvia",
+      "ME": "Montenegro",
+      "MK": "North Macedonia",
+      "MT": "Malta",
+      "NL": "Netherlands",
+      "NO": "Norway",
+      "PL": "Poland",
+      "PT": "Portugal",
+      "RO": "Romania",
+      "RS": "Serbia",
+      "SE": "Sweden",
+      "SI": "Slovenia",
+      "SK": "Slovakia",
+      "TR": "Türkiye",
+      "UA": "Ukraine",
+      "XK": "Kosovo",
+      "EU27_2020": "EU-27"
     }
   },
   "indicadores": {

@@ -1,0 +1,100 @@
+/* De renta en renta · páginas de texto (hoy, «Método»). Se carga después de tokens.css y sitio.css,
+   con la misma cabecera que el mapa; solo usa las variables de tokens.css. */
+
+/* El tablero del mapa ocupa la ventana y no se desplaza; el de un texto crece con él. */
+.tablero.documento { height: auto; min-height: 100%; overflow: visible; }
+
+.marca-titulo a { color: inherit; text-decoration: none; }
+
+/* Idioma: enlaces a la otra versión, con el aspecto de los botones del mapa */
+.idioma a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--objetivo-tactil);
+  min-height: 40px;
+  background: var(--color-placa);
+  color: var(--color-tinta);
+  font: 600 0.95rem var(--fuente-tablero);
+  letter-spacing: 0.05em;
+  text-decoration: none;
+}
+.idioma a + a { border-left: var(--borde); }
+.idioma a[aria-current="page"] { background: var(--color-rojo); color: #fff; }
+
+.documento-cuerpo {
+  width: 100%;
+  max-width: 76ch;
+  margin: 0 auto;
+  padding: 16px 16px 48px;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.documento-indice {
+  margin: 8px 0 24px;
+  padding: 8px 14px;
+  background: var(--color-placa);
+  border: var(--borde);
+  border-radius: var(--radio-control);
+}
+.documento-indice summary {
+  min-height: var(--objetivo-tactil);
+  display: flex;
+  align-items: center;
+  font: 600 1rem var(--fuente-tablero);
+  cursor: pointer;
+}
+.documento-indice ul { margin: 4px 0; padding-left: 1.2em; }
+.documento-indice li { margin: 2px 0; }
+
+.documento-texto h1, .documento-texto h2, .documento-texto h3, .documento-texto h4 {
+  font-family: var(--fuente-tablero);
+  line-height: 1.2;
+  margin: 1.6em 0 0.5em;
+}
+.documento-texto h1 { margin-top: 0.4em; font-size: 1.9rem; color: var(--color-rojo); }
+.documento-texto h2 { font-size: 1.45rem; padding-top: 0.4em; border-top: var(--borde); }
+.documento-texto h3 { font-size: 1.15rem; }
+.documento-texto h4 { font-size: 1rem; }
+.documento-texto a { color: var(--color-rojo); }
+.documento-texto hr { border: 0; border-top: 1px solid var(--color-tenue); margin: 2em 0; }
+
+.documento-texto code {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.88em;
+  padding: 0 0.2em;
+  background: var(--color-placa);
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+.documento-texto pre {
+  padding: 10px 12px;
+  overflow-x: auto;
+  background: var(--color-placa);
+  border: 1px solid var(--color-tenue);
+  border-radius: var(--radio-control);
+}
+.documento-texto pre code { padding: 0; background: none; overflow-wrap: normal; }
+
+/* Tablas anchas: se desplazan solas, sin ensanchar la página */
+.documento-texto table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.93rem;
+}
+.documento-texto th, .documento-texto td {
+  padding: 4px 8px;
+  border: 1px solid var(--color-tenue);
+  vertical-align: top;
+  text-align: left;
+}
+.documento-texto thead th { background: var(--color-placa); font-family: var(--fuente-tablero); }
+
+@media (max-width: 760px) {
+  .tablero.documento { border-width: 0; border-radius: 0; }
+  .documento-cuerpo { padding: 12px 12px 40px; font-size: 1rem; }
+}

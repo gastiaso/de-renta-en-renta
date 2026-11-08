@@ -1,7 +1,7 @@
 // Leyenda del mapa, plegable (cerrada de entrada en el móvil):
-//   - sueldo necesario: regla con un tramo más que cortes del manifiesto (seis en el indicador 21),
-//     las fichas de una persona como marcas en su ingreso y la llave como un tramo (su renta
-//     cambia por sección);
+//   - mapas del manifiesto: regla con un tramo más que cortes (seis en el indicador 21); en el
+//     sueldo necesario, además, las fichas de una persona como marcas en su ingreso y la llave
+//     como un tramo (su renta cambia por sección);
 //   - «¿te llega?»: tres tramos (hasta el 30 %, del 30 al 40 % y más del 40 %).
 // Debajo, las claves de los huecos (sin dato, secreto estadístico) y los supuestos.
 // Los colores de cada tramo salen de los mismos pasos de la rampa que el mapa (colores.js).
@@ -28,7 +28,7 @@ function claves(t) {
   return lista;
 }
 
-function reglaNecesario(t, { mapaDef, marcas, llave }) {
+function reglaNecesario(t, { mapaDef, marcas = [], llave = null }) {
   const cortes = mapaDef.cortes;
   const dec = mapaDef.decimales ?? 0;
   const pos = (v) => `${(100 * posicionEnRegla(v, cortes)).toFixed(2)}%`;
@@ -82,7 +82,9 @@ function tramosLlega(t) {
   return [lista];
 }
 
-// `datos`: { modo, mapaId, mapaDef, superficie, umbral, marcas, llave, ficha, vivienda }.
+// `datos`: { modo, mapaId, mapaDef, superficie, umbral, marcas, llave, ficha, vivienda, periodo,
+// tipologia, conSupuestos }. `conSupuestos`: el mapa usa la superficie y el umbral (el sueldo
+// necesario); `tipologia`: 'VC' | 'VU' si la serie la distingue.
 export function pintarLeyenda(contenedor, t, datos) {
   const pliegue = crear('details', 'leyenda-pliegue');
   pliegue.open = abierta;
@@ -91,13 +93,19 @@ export function pintarLeyenda(contenedor, t, datos) {
   const titulo = necesario ? t(`indicadores.${datos.mapaId}.nombre`) : t('interfaz.leyenda.llega_titulo');
   pliegue.append(crear('summary', 'leyenda-titulo', titulo));
 
-  const cuerpo = necesario
-    ? [crear('p', 'leyenda-unidad', t(`indicadores.${datos.mapaId}.unidad`)), ...reglaNecesario(t, datos)]
-    : [crear('p', 'leyenda-unidad', datos.vivienda), ...tramosLlega(t)];
-  const supuestos = necesario
-    ? t('interfaz.leyenda.supuestos', { superficie: t.numero(datos.superficie), umbral: t.porcentaje(datos.umbral) })
-    : t('interfaz.leyenda.llega_nota');
-  pliegue.append(...cuerpo, claves(t), crear('p', 'leyenda-supuestos', supuestos));
+  // Bajo el título: unidad (o vivienda e ingreso de «¿te llega?»), periodo y tipología.
+  const detalle = [necesario ? t(`indicadores.${datos.mapaId}.unidad`) : datos.vivienda];
+  if (datos.periodo !== undefined && datos.periodo !== null) detalle.push(t.periodo(datos.periodo));
+  if (datos.tipologia) detalle.push(t(`vocabulario.tipologia.${datos.tipologia}`));
+  const cuerpo = [crear('p', 'leyenda-unidad', detalle.join(' · ')), ...(necesario ? reglaNecesario(t, datos) : tramosLlega(t))];
+  let supuestos = t('interfaz.leyenda.llega_nota');
+  if (necesario) {
+    supuestos = datos.conSupuestos
+      ? t('interfaz.leyenda.supuestos', { superficie: t.numero(datos.superficie), umbral: t.porcentaje(datos.umbral) })
+      : null;
+  }
+  pliegue.append(...cuerpo, claves(t));
+  if (supuestos) pliegue.append(crear('p', 'leyenda-supuestos', supuestos));
 
   contenedor.replaceChildren(pliegue);
   contenedor.hidden = false;

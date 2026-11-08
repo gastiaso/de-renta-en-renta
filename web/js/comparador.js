@@ -3,7 +3,7 @@
 // la serie que corresponde al año del mapa (el mismo o el último anterior), igual en las dos
 // columnas (regla 4).
 
-import { periodoPara, valorDe, cargarSeries } from './datos.js';
+import { periodoPara, valorDe, cargarSeries, tipologiaDe } from './datos.js';
 import { formulaDe } from './formulas.js';
 import { ordenNatural } from './nombres.js';
 
@@ -53,8 +53,10 @@ async function valorSeccion(m, series, serie, codigo, periodo) {
   return valorDe(m, serie, 'sc', codigo, periodo);
 }
 
-// Filas de la tabla: [{ indicador, periodo, decimales, a: {valor, estado} | null, b: ... }].
-export async function filasComparador({ m, seccion, comparado, anio, supuestos, seriesA }) {
+// Filas de la tabla: [{ indicador, periodo, decimales, tipologia, a: {valor, estado} | null, b: ... }].
+// `serieDe(serie)`: la serie de la tipología elegida (los alquileres y el 21 de la vivienda
+// colectiva o de la unifamiliar, sin mezclarlas); por defecto, la misma.
+export async function filasComparador({ m, seccion, comparado, anio, supuestos, seriesA, serieDe = (s) => s }) {
   const seriesB = comparado.nivel === 'sc' ? await cargarSeries(m, comparado.codigo).catch(() => null) : null;
   const valor = (serie, periodo, lado) => lado === 'a'
     ? valorSeccion(m, seriesA, serie, seccion, periodo)
@@ -65,7 +67,7 @@ export async function filasComparador({ m, seccion, comparado, anio, supuestos, 
   const filas = [];
   for (const indicador of INDICADORES_V01) {
     const derivado = indicador === 'sueldo_necesario' ? m.mapas?.sueldo_necesario : null;
-    const serie = derivado ? derivado.base : indicador;
+    const serie = serieDe(derivado ? derivado.base : indicador);
     const def = m.indicadores?.[serie];
     if (!def || (indicador === 'sueldo_necesario' && !derivado)) continue;
     const periodo = periodoPara(def, anio);
@@ -75,7 +77,7 @@ export async function filasComparador({ m, seccion, comparado, anio, supuestos, 
       return { ...x, valor: formulaDe(derivado).calcular(x.valor, supuestos) };
     };
     filas.push({
-      indicador, periodo, derivado: Boolean(derivado),
+      indicador, periodo, derivado: Boolean(derivado), tipologia: tipologiaDe(m, serie),
       decimales: derivado ? derivado.decimales ?? 0 : def.decimales ?? 1,
       a: transformar(a), b: transformar(b),
     });
@@ -139,7 +141,8 @@ export function pintarComparador(contenedor, { t, eleccion, opciones, filas, nom
       const unidad = fila.derivado
         ? `${t(`indicadores.${fila.indicador}.unidad`)} · ${t('interfaz.leyenda.supuestos', { superficie: t.numero(supuestos.superficie_m2), umbral: t.porcentaje(supuestos.umbral) })}`
         : t(`indicadores.${fila.indicador}.unidad`);
-      th.append(crear('span', 'comparador-unidad', `${unidad} · ${t.periodo(fila.periodo)}`));
+      const tipologia = fila.tipologia ? ` · ${t(`vocabulario.tipologia.${fila.tipologia}`)}` : '';
+      th.append(crear('span', 'comparador-unidad', `${unidad}${tipologia} · ${t.periodo(fila.periodo)}`));
       tr.append(th, celda(fila.a, fila.decimales), celda(fila.b, fila.decimales));
       tabla.tBodies[0].append(tr);
     }

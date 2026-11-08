@@ -20,6 +20,11 @@ datos/portales/
 # con el mapa base desde un release. La muestra con valores inventados sí va en git.
 web/datos/*
 !web/datos/ejemplo/
+# Ficheros del release (empaquetar_publicacion(), docs/publicacion.md) y página «Método», que
+# genera el flujo de Pages desde docs/
+publicacion/
+web/metodo.html
+web/method.html
 geo/brutos/
 *.zip
 

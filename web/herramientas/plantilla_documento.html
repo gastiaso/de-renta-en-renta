@@ -1,0 +1,49 @@
+$-- Plantilla de pandoc para las páginas de texto del sitio (hoy, «Método»: la nota metodológica).
+$-- La usa el flujo de Pages (.github/workflows/pages.yml); los textos de cada idioma salen de
+$-- web/herramientas/documento_<idioma>.yaml y de web/i18n/<idioma>.json. Estas líneas no salen.
+<!doctype html>
+<html lang="$lang$">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>$pagetitle$</title>
+  <meta name="description" content="$descripcion$">
+  <link rel="icon" href="data:,">
+  <link rel="alternate" hreflang="$otro_idioma$" href="$otra_pagina$">
+  <link rel="stylesheet" href="estilo/tokens.css">
+  <link rel="stylesheet" href="estilo/sitio.css">
+  <link rel="stylesheet" href="estilo/documento.css">
+</head>
+<body>
+  <div class="tablero documento">
+    <header class="cabecera">
+      <div class="marca">
+        <p class="marca-titulo"><a href="$mapa$">$titulo$</a></p>
+        <p class="marca-subtitulo">$subtitulo$</p>
+      </div>
+      <nav class="navegacion" aria-label="$texto_navegacion$">
+        <a href="$mapa$">$texto_mapa$</a>
+        <a href="$sobrecarga$">$texto_sobrecarga$</a>
+        <a href="$pagina$" aria-current="page">$texto_metodo$</a>
+      </nav>
+      <div class="idioma" role="group" aria-label="$texto_idioma$">
+        <a href="metodo.html" lang="es" hreflang="es"$if(es)$ aria-current="page"$endif$>ES</a>
+        <a href="method.html" lang="en" hreflang="en"$if(en)$ aria-current="page"$endif$>EN</a>
+      </div>
+    </header>
+    <main class="documento-cuerpo">
+$if(toc)$
+      <details class="documento-indice">
+        <summary>$texto_indice$</summary>
+        <nav aria-label="$texto_indice$">
+$table-of-contents$
+        </nav>
+      </details>
+$endif$
+      <article class="documento-texto">
+$body$
+      </article>
+    </main>
+  </div>
+</body>
+</html>

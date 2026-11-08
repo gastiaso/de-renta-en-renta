@@ -1,6 +1,6 @@
 # Nota metodológica
 
-*De renta en renta · v0.1, borrador · 8 de noviembre de 2026 · conforme al plan v0.21.*
+*De renta en renta · v0.1, borrador · 8 de noviembre de 2026 · conforme al plan v0.25.*
 
 Esta nota describe cómo se obtienen las cifras del atlas: fuentes, geografía constante, jerarquía territorial y mapa base, compuerta de validación, indicadores de la v0.1 e ingresos de las fichas. La versión inglesa, `docs/methodology.md`, es una traducción fiel de esta.
 
@@ -12,7 +12,7 @@ Esta nota describe cómo se obtienen las cifras del atlas: fuentes, geografía c
   - un fichero de `inventario/`;
   - una sección del plan (`docs/plan_integracion_atlas.md`, «plan §»).
 - **Objetivos repetidos.** Los que terminan en `_<seccionado>` se repiten una vez por seccionado de origen, según `PASOS_2021` en `_targets.R`. Por ejemplo, `paso_final_2016` lleva el ADRH 2015.
-- **Almacén de referencia.** Las cifras sin otra indicación salen del almacén de `targets` del 8-nov-2026, con toda España. El objetivo `tabla_larga` es de las 11:43, ya con los derivados; `validacion_derivados`, de las 11:50.
+- **Almacén de referencia.** Las cifras sin otra indicación salen del almacén de `targets` del 8-nov-2026, con toda España. El objetivo `tabla_larga` es de las 14:55, ya con los derivados y con España en los indicadores 18 y 19; las compuertas, de la pasada completa de las 16:00.
 - **Decisiones.** Las preguntas abiertas que el plan ya ha cerrado se citan como «plan §11, pregunta *n*».
 - **Pendiente.** Así se marca lo que el pipeline no calcula todavía.
 - **Formato.** Las cifras usan punto de miles y coma decimal. El redondeo a un decimal se hace con `redondear_1()`, que usa `sprintf("%.1f")`: `round()` redondea al par en los empates.
@@ -372,7 +372,8 @@ Origen: `comparar_vias_paso()`; en `comparacion_vias`, filas con `estimada_a` ve
 - `larga_derivados`, de `validacion_derivados`;
 - `tabla_larga`, además, de `validacion_sobrecarga` y `validacion_modulo`;
 - los ficheros de la jerarquía y el mapa base, de `validacion_jerarquia`. `validacion_mapa_base` lee el PMTiles ya generado: comprueba el fichero antes de publicarlo;
-- los datos de la web (`ficheros_web`), de `validacion_jerarquia`, `validacion_mapa_base` y `validacion_derivados`. `validacion_web` comprueba los ficheros ya escritos.
+- los datos de la web (`ficheros_web`), de `validacion_jerarquia`, `validacion_mapa_base` y `validacion_derivados`. `validacion_web` comprueba los ficheros ya escritos;
+- la sección de sobrecarga de la web (`ficheros_web_sobrecarga`), de `validacion_sobrecarga`, `validacion_modulo` y `validacion_nuts`: no depende de la tabla larga. `validacion_web_sobrecarga` comprueba los ficheros ya escritos.
 
 Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas, niveles y longitud de los códigos, estados, valores vacíos solo en `secreto` y `ausente`, filas repetidas, y cortes, grupos, indicadores y fuentes que existen en `inventario/`.
 
@@ -388,13 +389,17 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `serpavi_secreto` | Secciones, provincias y comunidades con mediana y menos de 10 testigos, o sin mediana y con 10 o más | Exacto | Bloqueo | 0 casos en las 60 cifras de año, nivel y tipología | `validacion_serpavi` |
 | `serpavi_cuartiles` | Mediana sin cuartiles, alquiler mensual sin alquiler por m² (o al revés) o cuartiles desordenados | Exacto | Bloqueo | 0 casos en las 60 cifras | `validacion_serpavi` |
 | `serpavi_escalas` | Porcentaje de municipios y distritos que no cuadran con sus secciones, por año y nivel | ±1 % | Bloqueo | Máximo, 0,56 % (municipios de 2022) | `validacion_serpavi` |
+| `serpavi_seccionado` | Secciones de la hoja de secciones fuera del seccionado de 2021 | Exacto | Bloqueo | 0 | `validacion_serpavi` |
 | `censo2021_alquiler` | Hogares en alquiler (%) de España y de cada provincia con las secciones, frente a la tabla 59523. Las secciones en secreto entran como un intervalo: sus hogares pueden estar entre el 0 y el 100 % en alquiler | ±0,1 puntos | Bloqueo | Pasa en los 53 territorios; España, 16,10 % en las dos; diferencia máxima, 0,055 puntos (Huelva) | `validacion_censo2021` |
 | `censo2021_principales` | Hogares de las secciones frente a los publicados, en España y en las 19 provincias sin secciones en secreto | ±0,5 % | Bloqueo | España, −0,20 % (los hogares de las secciones en secreto); provincias, de 0 a +0,17 % | `validacion_censo2021` |
 | `censo2021_seccionado` | Secciones del CSV fuera del seccionado de 2021 y secciones del seccionado sin fila en el CSV | Exacto | Bloqueo | 0 y 0 | `validacion_censo2021` |
+| `censo2021_nacional` | Hogares en alquiler (%) de España publicado frente a la media ponderada de las provincias y, aparte, de las comunidades de la tabla 59523 | Exacto | Bloqueo | Pasa: 16,10 % en los tres | `validacion_censo2021` |
 | `vut_viviendas_provincia` | Viviendas turísticas de las secciones sumadas por provincia y España, en los 13 periodos, frente a la tabla 39364 | Exacto | Bloqueo | Cuadran las 689 cifras: 13 periodos y 53 territorios | `validacion_vut` |
 | `vut_seccionado` | Desde febrero de 2024: secciones del seccionado de 2024 que faltan en la tabla 5, más secciones con viviendas turísticas fuera de él | Exacto | Bloqueo | 0 en los seis periodos | `validacion_vut` |
 | `vut_paso_2021` | Viviendas turísticas llevadas a 2021 con la tabla 2024 → 2021, sumadas por provincia y España, frente a la tabla 39364 | ±0,01 % | Bloqueo | Desviación 0 en las 318 cifras | `validacion_vut` |
 | `vut_denominador` | Secciones de 2024 que caen enteras y solas en la de 2021 del mismo código: mediana de la diferencia entre el porcentaje del INE y 100 × viviendas turísticas / viviendas del Censo 2021 | ±0,01 puntos | Bloqueo | 0 en los seis periodos | `validacion_vut` |
+| `vut_nacional_viviendas` | Viviendas turísticas de las 52 provincias sumadas frente a las de España, en los 13 periodos, en la tabla 39364 | Exacto | Bloqueo | Cuadran los 13 periodos | `validacion_vut` |
+| `vut_nacional_porcentaje` | Desde febrero de 2024: porcentaje de España de la tabla 39365 frente a la media de los provinciales ponderada con las viviendas del Censo 2021 | ±0,02 puntos | Bloqueo | De −0,001 a +0,009 puntos | `validacion_vut` |
 | `jerarquia_unica` | Secciones repetidas, territorios con más de un superior y códigos que no encajan | Exacto | Bloqueo | 0 en las 5 cifras | `validacion_jerarquia` |
 | `jerarquia_sumas` | Territorios que no suman sus partes; secciones de más o de menos frente al seccionado de 2021 | Exacto | Bloqueo | 0 en las 6 cifras | `validacion_jerarquia` |
 | `jerarquia_nombres` | Comunidades, provincias y municipios sin nombre | Exacto | Bloqueo | 0 en las 3 cifras | `validacion_jerarquia` |
@@ -404,8 +409,10 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `derivados_estado` | Cifras derivadas cuyo estado no es el peor de sus términos, o con valor y estado `secreto` o `ausente` (o al revés) | Exacto | Bloqueo | 0 en las 22 cifras | `validacion_derivados` |
 | `derivados_rango` | Cifras derivadas fuera del rango posible: esfuerzo, del 0,1 al 100 %; barrera, del 0,1 al 300 %; sueldo necesario, de 100 a 10.000 € netos al mes | Exacto | Bloqueo | 0 en las 22 cifras | `validacion_derivados` |
 | `perfiles_mochila` | Provincias de la mochila sin código del INE en `inventario/provincias_aeat.csv`, códigos repetidos y nombres sin mochila | Exacto | Bloqueo | 0 en las 3 cifras | `validacion_derivados` |
-| `web_valores` | Ficheros de valores de `web/datos/` cuyos valores o estados no son los de la tabla larga (con el redondeo de la guía) o cuya longitud no es la del índice; series sin fichero | Exacto | Bloqueo | 0 en las 339 cifras | `validacion_web` |
+| `web_valores` | Ficheros de valores de `web/datos/` cuyos valores o estados no son los de la tabla larga (con el redondeo de la guía) o cuya longitud no es la del índice; series sin fichero | Exacto | Bloqueo | 0 en las 346 cifras | `validacion_web` |
 | `web_fichas` | Por municipio: celdas de las series de su ficha que no reproducen la tabla larga, y secciones de más o de menos | Exacto | Bloqueo | 0 en los 8.131 municipios | `validacion_web` |
+| `web_sobrecarga_valores` | Sección de sobrecarga de la web: por vista, valor, puesto, bloque y fuente de cada cifra frente a los objetivos del pipeline (con el redondeo de la guía), y territorios de más o de menos; serie de España, desgloses anuales y módulo de acceso | Exacto | Bloqueo | 0 en las 16 cifras | `validacion_web_sobrecarga` |
+| `web_sobrecarga_muestra` | Cifras del INE sin muestra, con una muestra distinta de la del cálculo, con una marca que no es la de EU-SILC o con valor y menos de 20 observaciones; cifras de Eurostat sin su tabla o con muestra | Exacto | Bloqueo | 0 en las 13 cifras | `validacion_web_sobrecarga` |
 | `sobrecarga_es_total`, `sobrecarga_es_mercado`, `sobrecarga_ccaa` | Sobrecarga con los microdatos de la ECV frente a Eurostat | ±0,1 puntos | Bloqueo | Pasan en 2023–2025 (§7.5) | `validacion_sobrecarga` |
 | `modulo_acceso_lectura` | Suma de las comunidades frente al total nacional del módulo de la ECV 2025 | ±0,1 % | Bloqueo | Pasa | `validacion_modulo` |
 | `i18n_completo`, `contraste_texto`, `rampa_contorno`, `rampa_daltonismo` | Diccionarios ES/EN, contrastes de la web y rampa de seis pasos distinguible con daltonismo simulado | Exacto | Bloqueo | Pasan | `validacion_i18n`, `validacion_diseno` |
@@ -415,9 +422,11 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `cobertura_destino_excepcion` | Secciones de 2021 vacías por un defecto conocido de la fuente | Exacto | Alerta | 2 secciones, 6 años-sección (§3.8) | `comprobaciones_f1` |
 | `serpavi_escalas_detalle` | Cada municipio o distrito, año y tipología que no cuadra con sus secciones | Exacto | Alerta | Avisa en 164 filas, que van como `ausente` (§7.1) | `validacion_serpavi` |
 | `serpavi_forales` | Primer año con testigos de cada provincia foral frente al de la ruptura `serpavi_forales` | Exacto | Alerta | Coinciden los cuatro | `validacion_serpavi` |
+| `serpavi_sin_fila` | Secciones del seccionado de 2021 que la base no trae (van como `ausente`) | Exacto | Alerta | Avisa con 40 (§7.1) | `validacion_serpavi` |
 | `vut_denominador_detalle` | Las secciones de `vut_denominador`, una a una (solo las que se apartan más de 0,001 puntos) | ±0,1 puntos | Alerta | Pasa: 839 secciones y periodos, todos desde noviembre de 2024; diferencia máxima, 0,091 puntos | `validacion_vut` |
 | `derivados_rango_detalle` | Cada cifra derivada fuera del rango habitual: esfuerzo, por debajo del 3 % o por encima del 60 %; barrera, del 3 % o del 150 %; sueldo necesario, de 200 € o de 4.000 € | Exacto | Alerta | Avisa en 23 cifras: tres esfuerzos de más del 60 % (2019 y 2022), 18 sueldos necesarios por debajo de 200 € en 2015–2018 y dos por encima de 4.000 € (dos secciones de Madrid, 2024) | `validacion_derivados` |
 | `web_fuera_indice` | Filas de la tabla larga que van a la web sin hueco en el índice de su nivel | Exacto | Alerta | Avisa en 16 filas de municipio; en los demás niveles, 0 | `validacion_web` |
+| `web_sobrecarga_geometria` | Territorios de una vista del mapa de la sobrecarga sin geometría en su versión NUTS | Exacto | Alerta | Avisa en 2 de las 12 vistas: Bosnia y Herzegovina, 2022 y 2023 (§7.5) | `validacion_web_sobrecarga` |
 | `aeat_mediana_deciles` | Mediana del SME por comunidad interpolada desde deciles frente a centiles | ±0,5 % | Alerta | Entre −0,11 y +0,20 % | `validacion_mochila` |
 | `mochila_ecv` | Mochila de cada comunidad frente a la mediana del bruto de la ECV | ±15 % | Alerta | Entre −10,6 y +7,2 % | `validacion_mochila_ecv` |
 | `mochila_neto_ecv` | Paso a neto aplicado a la mediana del bruto de la ECV frente a la mediana del neto | ±5 % | Alerta | Entre −2,0 y +3,4 %; España, +0,5 % | `validacion_mochila_neto_ecv` |
@@ -611,7 +620,7 @@ La decisión del autor es del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrad
 
 **Lectura** (`leer_mivau_serpavi()`; objetivo `serpavi`, 1.099.500 filas). Una fila por territorio, año (desde 2015) y tipología: vivienda colectiva (`VC`) y unifamiliar o rural (`VU`). Cada fila trae el recuento de testigos y la mediana, el primer y el tercer cuartil del alquiler mensual y del alquiler por m². España sale de la fila sin código de la hoja de comunidades y solo trae el recuento.
 
-**Tabla larga** (`armonizar_mivau_serpavi()`; objetivo `larga_serpavi`, 3.927.860 filas; plan §6.4):
+**Tabla larga** (`armonizar_mivau_serpavi()`; objetivo `larga_serpavi`, 3.929.460 filas; plan §6.4):
 - indicadores `alquiler_mes` (8) y `alquiler_m2` (9);
 - la mediana, en el corte `tipologia`, con los grupos `VC` y `VU`; los cuartiles, en los cortes `tipologia_p25` y `tipologia_p75`, solo donde hay dato;
 - sin filas `total`: el SERPAVI no publica una mediana conjunta de las dos tipologías (§1);
@@ -625,9 +634,9 @@ La decisión del autor es del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrad
 - `ausente`: sin testigos; provincias forales antes de su entrada (`ENTRADA_SERPAVI_FORALES`: Navarra 2021, Gipuzkoa 2022, Álava y Bizkaia 2024; ruptura `serpavi_forales`); municipios y distritos que no cuadran con sus secciones (plan §11, pregunta 13).
 
 **Cobertura territorial** (`larga_serpavi`, `jerarquia_2021`):
-- La base tiene 36.293 de las 36.333 secciones de 2021. Las 40 restantes no tienen ninguna fila en la tabla larga: 36 son municipios de una sola sección (34 de Navarra, uno de Álava y uno de Bizkaia) y 4 son secciones de Madrid, Las Palmas de Gran Canaria (2) y Zaragoza.
+- La base tiene 36.293 de las 36.333 secciones de 2021. Las 40 restantes van como `ausente` en todos los años y tipologías (`completar_secciones_serpavi()`; alerta `serpavi_sin_fila`). 36 son municipios de una sola sección (34 de Navarra, uno de Álava y uno de Bizkaia), que tampoco están en las hojas de municipios y distritos. Las otras 4, de Madrid, Las Palmas de Gran Canaria (2) y Zaragoza, no tienen testigos: su distrito suma lo mismo que sus secciones publicadas. Así, el 8, el 9, el 15 y el 21 tienen fila en las 36.333 secciones, como el 14, el 18 y el 19.
 - Quedan fuera 4 municipios y 68 distritos de las hojas que no existen en el seccionado de 2021 (`estado_serpavi()`).
-- En la tabla larga hay 8.095 municipios, 10.443 distritos, 52 provincias y 19 comunidades.
+- En la tabla larga hay 8.095 de los 8.131 municipios y 10.443 de los 10.479 distritos de la jerarquía, 52 provincias y 19 comunidades. Faltan los 36 municipios de una sola sección y sus distritos.
 
 **Errores de las hojas de municipios y distritos** (alerta `serpavi_escalas_detalle`, `descuadres_serpavi()`; plan §11, pregunta 13). Son 164 cifras de territorio, año y tipología que no cuadran con sus secciones. Van como `ausente`, y las secciones conservan su dato:
 - en Navarra: 82 municipios de 2022 con la mediana y el P25 de vivienda colectiva cruzados; 18 distritos de 2022 con los recuentos desplazados una fila (31 filas); 40 filas de municipio de 2023 y 2024 sin el recuento que sí tienen sus secciones;
@@ -639,16 +648,16 @@ La decisión del autor es del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrad
 
 | Año | `VC`: `dato` | `VC`: `secreto` | `VC`: `ausente` | `VU`: `dato` | `VU`: `secreto` | `VU`: `ausente` | Con alguna mediana | Solo secreto |
 |---|---|---|---|---|---|---|---|---|
-| 2015 | 21.627 | 5.995 | 8.671 | 5.543 | 15.250 | 15.500 | 23.497 | 7.885 |
-| 2016 | 22.051 | 5.749 | 8.493 | 6.065 | 15.073 | 15.155 | 24.086 | 7.474 |
-| 2017 | 22.447 | 5.511 | 8.335 | 6.537 | 14.907 | 14.849 | 24.575 | 7.059 |
-| 2018 | 22.820 | 5.289 | 8.184 | 6.972 | 14.709 | 14.612 | 25.024 | 6.719 |
-| 2019 | 23.136 | 5.123 | 8.034 | 7.430 | 14.443 | 14.420 | 25.444 | 6.391 |
-| 2020 | 23.415 | 5.063 | 7.815 | 7.823 | 14.335 | 14.135 | 25.844 | 6.142 |
-| 2021 | 23.988 | 5.023 | 7.282 | 8.180 | 14.409 | 13.704 | 26.440 | 6.160 |
-| 2022 | 24.671 | 4.954 | 6.668 | 8.386 | 14.528 | 13.379 | 27.192 | 5.995 |
-| 2023 | 24.878 | 4.861 | 6.554 | 8.697 | 14.412 | 13.184 | 27.420 | 5.862 |
-| 2024 | 26.137 | 4.849 | 5.307 | 9.065 | 14.482 | 12.746 | 28.735 | 5.791 |
+| 2015 | 21.627 | 5.995 | 8.711 | 5.543 | 15.250 | 15.540 | 23.497 | 7.885 |
+| 2016 | 22.051 | 5.749 | 8.533 | 6.065 | 15.073 | 15.195 | 24.086 | 7.474 |
+| 2017 | 22.447 | 5.511 | 8.375 | 6.537 | 14.907 | 14.889 | 24.575 | 7.059 |
+| 2018 | 22.820 | 5.289 | 8.224 | 6.972 | 14.709 | 14.652 | 25.024 | 6.719 |
+| 2019 | 23.136 | 5.123 | 8.074 | 7.430 | 14.443 | 14.460 | 25.444 | 6.391 |
+| 2020 | 23.415 | 5.063 | 7.855 | 7.823 | 14.335 | 14.175 | 25.844 | 6.142 |
+| 2021 | 23.988 | 5.023 | 7.322 | 8.180 | 14.409 | 13.744 | 26.440 | 6.160 |
+| 2022 | 24.671 | 4.954 | 6.708 | 8.386 | 14.528 | 13.419 | 27.192 | 5.995 |
+| 2023 | 24.878 | 4.861 | 6.594 | 8.697 | 14.412 | 13.224 | 27.420 | 5.862 |
+| 2024 | 26.137 | 4.849 | 5.347 | 9.065 | 14.482 | 12.786 | 28.735 | 5.791 |
 
 - «Con alguna mediana»: `dato` en al menos una tipología.
 - «Solo secreto»: la sección tiene testigos, pero ninguna tipología llega a 10.
@@ -664,20 +673,20 @@ La decisión del autor es del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrad
 | Zamora | 21,6 | 23,8 | 24,1 |
 | Ávila | 21,5 | 25,3 | 27,6 |
 | Illes Balears | 86,7 | 88,8 | 91,1 |
-| Bizkaia | — | — | 92,2 |
+| Bizkaia | — | — | 92,1 |
 | Barcelona | 90,7 | 92,2 | 92,6 |
-| Madrid | 92,3 | 94,4 | 95,1 |
+| Madrid | 92,3 | 94,3 | 95,1 |
 | Gipuzkoa | — | — | 95,4 |
-| Navarra | — | — | 68,6 |
-| Álava | — | — | 80,8 |
+| Navarra | — | — | 64,6 |
+| Álava | — | — | 80,4 |
 
-«—»: antes de la entrada de la provincia en el SERPAVI.
+«—»: antes de la entrada de la provincia en el SERPAVI. El denominador son las secciones de la provincia en el seccionado de 2021, también las que la base no trae.
 
 **Valores de 2024, vivienda colectiva** (`larga_serpavi`):
 - En las 26.137 secciones con dato, la mediana de cada sección va de 150 a 3.504 €/mes. Percentil 10, 370 €; mediana, 570 €; percentil 90, 893 €. En alquiler por m²: 4,2, 7,3 y 12,7 €/m².
 - Provincias: Madrid, 800 € y 12,1 €/m²; Barcelona, 753 € y 11,0 €/m²; Bizkaia, 734 € y 10,2 €/m²; Navarra, 598 € y 6,9 €/m².
 
-**Compuerta** (`comprobar_mivau_serpavi()`; §4.1): `serpavi_provincia`, `serpavi_espana`, `serpavi_secreto`, `serpavi_cuartiles` y `serpavi_escalas` (bloqueo), y `serpavi_escalas_detalle` y `serpavi_forales` (alerta). Las medianas no se agregan: la compuerta suma testigos y comprueba las reglas de la fuente.
+**Compuerta** (`comprobar_mivau_serpavi()`; §4.1): `serpavi_provincia`, `serpavi_espana`, `serpavi_secreto`, `serpavi_cuartiles`, `serpavi_escalas` y `serpavi_seccionado` (bloqueo), y `serpavi_escalas_detalle`, `serpavi_forales` y `serpavi_sin_fila` (alerta). Las medianas no se agregan: la compuerta suma testigos y comprueba las reglas de la fuente.
 
 **Territorios forales** (ruptura `serpavi_forales` en `inventario/rupturas.csv`). Antes de su entrada, esas secciones van sin dato. La estadística de fianzas del Gobierno Vasco (`gv_emal`) no baja a sección y da la media, no la mediana: se muestra como capa municipal aparte (plan §11, pregunta 8).
 
@@ -699,6 +708,8 @@ El secreto se concentra en provincias rurales: Guadalajara, 173 de 394 secciones
 **Rareza de la fuente.** En 78 secciones, propiedad, alquiler y otro régimen (`t20_1` + `t20_2` + `t20_3`) no suman las viviendas principales (`censo2021`). El porcentaje usa igualmente `t20_2` / `t19_1`.
 
 **Compuerta** (`comprobar_ine_censo2021()`; §4.1). Se compara con la tabla 59523 del Censo 2021. España: 16,10 % de hogares en alquiler en las secciones y en la tabla. La tabla solo cuenta viviendas convencionales; por eso, en algunas provincias las secciones suman más hogares (`inventario/referencias_validacion.csv`).
+
+**España** (`nacional_ine_censo2021()`). La cifra de España sale del total nacional de la tabla 59523: 100 × 2.983.619 hogares en alquiler / 18.536.616 hogares = 16,10 %. El CSV de indicadores solo trae secciones, y su suma no da España: faltan las 1.363 en secreto. Compuerta `censo2021_nacional`: las 52 provincias y las 19 comunidades de la tabla suman exactamente los hogares y los hogares en alquiler de España. La fila nacional no lleva seccionado (`geo_ref` vacío).
 
 **Censo 2011** (plan §11, pregunta 14). Está en el seccionado de 2011 y no hay tabla de paso de 2011 a 2021: la v0.1 lleva solo el corte de 2021. La tabla de paso 2011 → 2021 (callejero y seccionado de 2011, más la vía b) se construye en F6, con el histórico.
 
@@ -730,7 +741,7 @@ El secreto se concentra en provincias rurales: Guadalajara, 173 de 394 secciones
 
 **Secreto.** El INE publica siempre el número de viviendas turísticas y protege el porcentaje en algunas secciones. En el seccionado de 2021 quedan en `secreto` 1.371 secciones en febrero y agosto de 2024 y 172 desde noviembre de 2024; todas son secciones 1:1 (`vut_2021`).
 
-**Tabla larga** (`armonizar_ine_vut()`; objetivo `larga_vut`, 217.998 filas: 6 periodos por 36.333 secciones; plan §6.4):
+**Tabla larga** (`armonizar_ine_vut()`; objetivo `larga_vut`, 218.004 filas: 6 periodos por 36.333 secciones, más España en cada periodo; plan §6.4):
 - `anio`: el año del mes de referencia;
 - `corte = mes` y `grupo` `M02`, `M05`, `M08` o `M11`;
 - sin filas `total`: la web toma el último mes;
@@ -754,6 +765,10 @@ El secreto se concentra en provincias rurales: Guadalajara, 173 de 394 secciones
 **Mismo año** (guía, regla 4). Numerador y denominador no son del mismo año: las viviendas son las del Censo 2021, como en el INE. La ficha lo dice (`inventario/indicadores.csv`).
 
 **Compuerta** (`comprobar_ine_vut()`; §4.1). Las secciones suman exactamente los totales provinciales publicados en los 13 periodos, también después de la tabla de paso. En las secciones 1:1, el porcentaje del INE es 100 × viviendas turísticas / `t18_1`; desde noviembre de 2024, entre 194 y 225 secciones por periodo se apartan hasta 0,09 puntos (`inventario/referencias_validacion.csv`).
+
+**España** (`nacional_ine_vut()`). El porcentaje publicado en la tabla 39365, en los seis periodos de las secciones: 1,33 % en febrero de 2024, 1,52 % en agosto de 2024, 1,41 % en noviembre de 2024, 1,43 % en mayo de 2025, 1,24 % en noviembre de 2025 y 1,28 % en mayo de 2026. Los siete periodos anteriores no entran, como en las secciones; hasta febrero de 2023, además, el denominador del INE son las viviendas del Censo 2011. Compuerta (`nacional_vut()`):
+- `vut_nacional_viviendas`: las 52 provincias suman exactamente las viviendas turísticas de España en los 13 periodos;
+- `vut_nacional_porcentaje`: la media de los porcentajes provinciales, ponderada con las viviendas del Censo 2021 de cada provincia, se aparta del porcentaje de España entre −0,001 y +0,009 puntos (tolerancia ±0,02: los porcentajes van con dos decimales y las secciones del Censo en secreto no pesan).
 
 ### 7.4 Derivados (indicadores 14, 15 y 21)
 
@@ -783,7 +798,7 @@ El secreto se concentra en provincias rurales: Guadalajara, 173 de 394 secciones
 - El mapa del 21 se pinta en seis tramos, con cortes nacionales iguales todos los años: 700, 900, 1.100, 1.500 y 2.000 € (plan §11, pregunta 20). La rampa de colores tiene seis pasos que se distinguen también con daltonismo (`rampa_daltonismo`).
 - El 15 y el 21 cambian con el umbral, la superficie y el sueldo de «Tu ficha»: la web los recalcula en el navegador (plan §6.6).
 
-**Cálculo** (`armonizar_derivados()`; objetivo `larga_derivados`, 1.103.301 filas, fuente `calculo_propio`):
+**Cálculo** (`armonizar_derivados()`; objetivo `larga_derivados`, 1.103.781 filas, fuente `calculo_propio`):
 - **14** (`calcular_esfuerzo_residentes()`): en las secciones y los municipios, los niveles en que el SERPAVI y el ADRH publican los dos términos (`NIVELES_ESFUERZO`), y en los años con los dos, 2015–2024. Sin desglose.
 - **21** (`calcular_sueldo_necesario()`): en todos los niveles del SERPAVI, 2015–2024, con 50 m² y el umbral del 30 %. Sin desglose.
 - **15** (`calcular_barrera_acceso()`): corte `ficha`, con los grupos `mochila` y `tartera`, solo en 2024. La mochila, en las provincias y sus secciones, distritos y municipios; la tartera, también en las comunidades. Es un control: la web calcula la barrera con la ficha elegida.
@@ -805,7 +820,7 @@ El secreto se concentra en provincias rurales: Guadalajara, 173 de 394 secciones
 | 2023 | 24.275 | 592 | 4.872 | 6.594 | 12,6 | 17,6 | 24,2 |
 | 2024 | 25.271 | 854 | 4.861 | 5.347 | 12,6 | 17,6 | 24,0 |
 
-- El esfuerzo tiene fila en las 36.333 secciones: también en las 40 que no están en el SERPAVI, que quedan `ausente`.
+- Los tres derivados tienen fila en las 36.333 secciones. Las 40 que no están en la base del SERPAVI quedan `ausente` (§7.1).
 - El `estimado` viene de la renta reproyectada (§5.4): el alquiler no se reproyecta.
 - El sueldo necesario (21) tiene los mismos estados que el alquiler de vivienda colectiva (§7.1).
 
@@ -818,7 +833,7 @@ El secreto se concentra en provincias rurales: Guadalajara, 173 de 394 secciones
 | Barrera con la mochila (%) | 24.117 | 7,2 | 16,8 | 27,5 | 43,7 | 87,9 |
 | Barrera con la tartera, SMI de 2024 (%) | 26.137 | 7,3 | 17,0 | 29,5 | 51,3 | 103,8 |
 
-Con la mochila, 7.576 secciones quedan `ausente` en 2024: todas las de País Vasco, Navarra, Ceuta y Melilla, donde la ficha no tiene ingreso, y las que no tienen alquiler.
+Con la mochila, 7.616 secciones quedan `ausente` en 2024: todas las de País Vasco, Navarra, Ceuta y Melilla, donde la ficha no tiene ingreso, y las que no tienen alquiler.
 
 **Compuerta** (`comprobar_derivados()`, `validacion_derivados`; §4.1): `derivados_terminos`, `derivados_estado`, `derivados_rango`, `perfiles_mochila` y `smi_neto` (bloqueo), y `derivados_rango_detalle` (alerta).
 
@@ -846,6 +861,15 @@ Las 19 comunidades y los cuatro grupos de edad quedan dentro de ±0,05 puntos (p
 
 **Indicador 23.** Sale de las tablas del módulo de acceso a la vivienda de la ECV 2025: por comunidad, por edad y sexo, y por tenencia (`armonizar_ine_ecv_modulo()`, `armonizar_ine_ecv_modulo_cortes()`).
 
+**Web** (`exportar_web_sobrecarga()`, `ficheros_web_sobrecarga`). La sección de sobrecarga lee `web/datos/sobrecarga/` (1,1 MB): un JSON con doce vistas del mapa y dos ficheros de geometría NUTS (GISCO 2021 y 2024; © EuroGeographics para los límites administrativos, uso no comercial, fuera de la licencia de los datos; §2.3).
+- Toda la población, cada año de 2021 a 2025: el mapa pinta la lista de la escalera (`armar_escalera()`), cada país en su nivel más fino publicado en `ilc_lvho07_r` y sin códigos agrupados. Es NUTS 2, salvo Austria, Albania y Turquía (y Francia desde 2022), que solo publican el país, y Países Bajos, en NUTS 1: van con trama. Las comunidades y España llevan la cifra de los microdatos de 2023 a 2025, que redondeada coincide con la de Eurostat en las 57 comunidades y años.
+- Con tenencia (cuatro grupos) o edad (tres), solo 2025: países de Eurostat y comunidades con las tres olas agrupadas.
+- Seis tramos, fijos todos los años (`CORTES_SOBRECARGA_WEB`): cortes en 4, 6, 8, 10 y 15 %; en el alquiler a precio de mercado, en 15, 20, 25, 30 y 40 %.
+- Las cifras van × 10 en enteros. Las del INE llevan su número de personas y hogares y la marca de fiabilidad de EU-SILC, y van sin valor con menos de 20 observaciones.
+- La página añade la serie de España y de la UE-27 desde 2008 (Eurostat), los desgloses anuales de España y el módulo de acceso (indicador 23).
+
+La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) vuelve a leer lo escrito y lo compara cifra a cifra con los objetivos del pipeline: `web_sobrecarga_valores` y `web_sobrecarga_muestra` (bloqueo), y `web_sobrecarga_geometria` (alerta: Bosnia y Herzegovina, 2022 y 2023, sin geometría en NUTS 2021).
+
 ---
 
 ## 8. Limitaciones conocidas
@@ -871,7 +895,7 @@ Las 19 comunidades y los cuatro grupos de edad quedan dentro de ±0,05 puntos (p
 - **Secreto y cobertura.** En 2024, 4.849 secciones tienen la mediana de vivienda colectiva en secreto. La cobertura va del 19,4 % de las secciones en Soria al 95,4 % en Gipuzkoa: las zonas rurales tienen menos dato (§7.1).
 - **Dos tipologías sin mediana conjunta.** El mapa por defecto muestra la vivienda colectiva; la unifamiliar va aparte (§1).
 - **Territorios forales.** Series cortas: Navarra desde 2021, Gipuzkoa desde 2022, Álava y Bizkaia desde 2024 (§7.1).
-- **Secciones sin fila.** 40 secciones de 2021 no están en la base del SERPAVI (§7.1).
+- **Secciones sin fila en la fuente.** 40 secciones de 2021 no están en la base del SERPAVI: van como `ausente` (§7.1).
 - **Errores de la fuente.** 164 cifras de municipios y distritos van como `ausente` (§7.1).
 
 **Hogares en alquiler:**
@@ -915,30 +939,33 @@ Las 19 comunidades y los cuatro grupos de edad quedan dentro de ±0,05 puntos (p
 
 **Esquema** (plan §6.4): `geo_id`, `nivel`, `anio`, `indicador`, `corte`, `grupo`, `valor`, `estado`, `fuente`, `geo_ref` y `version`. La clave de una fila es `geo_id`, `nivel`, `anio`, `indicador`, `corte` y `grupo`.
 
-**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 6.589.269 filas.
+**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 6.591.356 filas.
 
 | Fuente (`fuente`) | Filas | Niveles | Versión |
 |---|---|---|---|
 | `ine_adrh` | 1.303.484 | Sección (1.089.972) y municipio (213.512) | 7-nov-2026 |
-| `mivau_serpavi` | 3.927.860 | Sección (2.691.192), distrito (715.704), municipio (512.812), provincia (5.992) y comunidad (2.160) | 6-nov-2026 |
-| `ine_censo2021` | 36.333 | Sección | 8-nov-2026 |
-| `ine_vut` | 217.998 | Sección | 8-nov-2026 |
+| `mivau_serpavi` | 3.929.460 | Sección (2.692.792), distrito (715.704), municipio (512.812), provincia (5.992) y comunidad (2.160) | 6-nov-2026 |
+| `ine_censo2021` | 36.334 | Sección (36.333) y España (1) | 8-nov-2026 |
+| `ine_vut` | 218.004 | Sección (217.998) y España (6) | 8-nov-2026 |
 | `ine_ecv` | 261 | Comunidad (228) y España (33) | 6-nov-2026 |
 | `ine_ecv_modulo` | 32 | Comunidad (19) y España (13) | 6-nov-2026 |
-| `calculo_propio` | 1.103.301 | Sección (798.846), distrito (125.316), municipio (178.306), provincia (624) y comunidad (209) | 7-nov-2026 |
+| `calculo_propio` | 1.103.781 | Sección (799.326), distrito (125.316), municipio (178.306), provincia (624) y comunidad (209) | 7-nov-2026 |
 
-**Por estado:** `dato`, 4.689.443 filas; `ausente`, 1.026.746; `secreto`, 842.257; `estimado`, 30.823.
+**Por estado:** `dato`, 4.689.450 filas; `ausente`, 1.028.826; `secreto`, 842.257; `estimado`, 30.823.
 
 **Sin publicar.** No hay todavía datos publicados: la carpeta `datos/publicados/` no existe.
 
 ### 9.2 Datos de la web
 
 La exportación sigue las decisiones del autor del 8-nov-2026 (plan §6.6; plan §11, preguntas 16 y 17). `exportar_web()` (objetivo `ficheros_web`) escribe en `web/datos/`, desde la tabla larga ya validada, los indicadores del núcleo de la v0.1, de la sección a España:
-- **Valores.** Un fichero JSON por serie, nivel y periodo, con los valores × 10 en enteros (redondeo de la guía; un decimal exacto) y una cadena con el estado de cada territorio, en el orden del índice de su nivel. Comprimido pesa lo mismo que un binario: de 57 a 121 KB por indicador y año en las secciones.
+- **Valores.** Un fichero JSON por serie, nivel y periodo, con los valores × 10 en enteros (redondeo de la guía; un decimal exacto) y una cadena con el estado de cada territorio, en el orden del índice de su nivel. Comprimido pesa lo mismo que un binario (plan §11, pregunta 17): cada fichero de secciones ocupa de 117 a 291 KB, y de 19 a 98 KB con gzip.
+- **España.** Solo los indicadores 18 y 19 tienen cifra nacional (§7.2 y §7.3), en siete ficheros. La renta (1–3) y el alquiler (8 y 9) no la tienen: el ADRH no publica España y el SERPAVI solo publica su recuento de testigos. Los derivados 14 y 21 tampoco, porque les faltan esos términos.
 - **Series de la ficha.** Un fichero por municipio (`fichas/<municipio>.json`) con las series de sus secciones y del propio municipio.
 - **Qué no se exporta.** Los cuartiles del SERPAVI y la barrera (15), que la web calcula con la ficha elegida. El sueldo necesario (21) se recalcula en el navegador desde el alquiler por m² cuando cambian la superficie o el umbral (`FORMULAS_WEB`).
+- **La web frente a R.** La prueba de la web (`pruebas/web/datos.test.mjs`, en node) recalcula con el módulo de la página, `web/js/formulas.js`, el sueldo necesario desde el alquiler por m² en todas las secciones, distritos, municipios, provincias y comunidades de 2015 a 2024, y lo compara con el que exporta R: 550.140 territorios y años, 294.082 con valor, sin diferencias en el valor, los nulos ni el estado (plan §6.5).
+- **Descargas.** La web descarga la serie del mapa en CSV, en el nivel que se ve (valor a una décima, estado y fuente; en el 21, superficie y umbral), y el mapa en PNG con su leyenda y su fuente. Con «Tu ficha», ninguna de las dos lleva el sueldo escrito: el CSV da el alquiler, no la proporción.
 - **Otros ficheros.** Los nombres de los territorios, los rectángulos de los municipios para el buscador (`cajas_municipios`) y los ingresos de las fichas (`perfiles`). El mapa base se copia a `web/teselas/`; al publicar, sale de un *release* (§3.10).
-- **Volumen** (`ficheros_web`, 11:59): 8.479 ficheros y 120,1 MB, con el PMTiles.
+- **Volumen** (`ficheros_web`, 14:57): 8.486 ficheros y 109,8 MB, con el PMTiles (35,2 MB).
 - **Compuerta** (`comprobar_web()`, `validacion_web`): `web_valores` y `web_fichas` (bloqueo) y `web_fuera_indice` (alerta) (§4.1).
 
 ---
@@ -969,5 +996,5 @@ El mapa base tarda unos 4,5 minutos (plan §7, F1). Con `PROVINCIA=28` (variable
 - **Hogares en alquiler y viviendas turísticas:** `censo2021`, `larga_censo2021`, `vut`, `vut_2021`, `larga_vut`.
 - **Mochila:** `mochila_opciones`, `mochila`, `mochila_neta`, `retenciones_mochila`, `ecv_mochila`.
 - **Fichas y derivados:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`.
-- **Web:** `ficheros_web`, `cajas_municipios`.
-- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_serpavi`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_sobrecarga`, `validacion_modulo`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.
+- **Web:** `ficheros_web`, `cajas_municipios`, `ficheros_web_sobrecarga`.
+- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_serpavi`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_modulo`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.

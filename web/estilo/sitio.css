@@ -127,6 +127,42 @@ body {
   padding: 16px;
 }
 
+/* Columna del mapa: barra de la vista y mapa */
+.mapa-columna { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; }
+.mapa-columna > .mapa-marco { flex: 1; }
+
+.barra-vista { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 14px; }
+.barra-campo { display: flex; flex-direction: column; gap: 3px; min-width: 0; color: var(--color-tenue); font-size: 0.85rem; }
+.barra-campo[hidden] { display: none; }
+.barra-campo-mapa { flex: 1 1 240px; max-width: 380px; }
+.barra-campo select {
+  min-height: 40px;
+  max-width: 100%;
+  padding: 0 8px;
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  background: var(--color-placa);
+  color: var(--color-tinta);
+  font: 1rem var(--fuente-carta);
+}
+.barra-campo select:disabled { opacity: 1; border-style: dashed; }
+.barra-botones { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.barra-botones button {
+  min-width: var(--objetivo-tactil);
+  min-height: 40px;
+  padding: 0 10px;
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  background: var(--color-placa);
+  color: var(--color-tinta);
+  font: 600 0.95rem var(--fuente-tablero);
+  cursor: pointer;
+}
+.barra-botones button[aria-pressed="true"] { background: var(--color-tinta); color: var(--color-crema); }
+.barra-botones button:disabled { border-style: dashed; color: var(--color-tenue); cursor: progress; }
+.barra-descargas { margin-left: auto; }
+.barra-estado { flex: 0 0 100%; margin: 0; color: var(--color-rojo); font-size: 0.85rem; }
+
 .mapa-marco {
   position: relative;
   min-height: 320px;
@@ -170,6 +206,24 @@ body {
 }
 .etiqueta-ejemplo[hidden] { display: none; }
 .aviso-mapa { position: absolute; top: 10px; left: 10px; z-index: 2; box-shadow: var(--sombra-ficha); }
+/* Aviso de escala: la serie del mapa no llega al nivel que se ve. */
+.aviso-escala {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  z-index: 2;
+  width: max-content;
+  max-width: calc(100% - 120px);
+  margin: 0;
+  padding: 4px 10px;
+  transform: translateX(-50%);
+  background: var(--color-placa);
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  font-size: 0.85rem;
+  text-align: center;
+}
+.aviso-escala[hidden] { display: none; }
 
 /* Botones y selectores comunes */
 .boton {
@@ -439,7 +493,11 @@ body {
   .navegacion { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; }
   .buscador { order: 4; flex-basis: 100%; max-width: none; margin-left: 0; }
   .explorador { grid-template-columns: 1fr; padding: 12px; gap: 12px; }
-  .mapa-marco { height: 62vh; }
+  .barra-campo-mapa { flex-basis: 100%; max-width: none; }
+  .barra-campo select { font-size: 16px; }   /* sin el zoom automático de iOS al enfocar */
+  .barra-descargas { margin-left: 0; }
+  .mapa-columna > .mapa-marco { flex: none; height: 62vh; }
+  .aviso-escala { max-width: calc(100% - 100px); }
   .lateral { overflow: visible; }
   .leyenda { width: min(260px, calc(100% - 90px)); padding: 4px 8px 6px; font-size: 0.75rem; }
   .leyenda-titulo { font-size: 0.8rem; }

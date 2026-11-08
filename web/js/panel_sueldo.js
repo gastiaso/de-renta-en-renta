@@ -63,7 +63,7 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
   el.volver.addEventListener('click', () => {
     el.neto.value = '';
     el.segundo.value = '';
-    alCambiar({ ficha: null, sueldo: null });
+    alCambiar({ ficha: null, sueldo: null, volver: true });
   });
   el.compartir.addEventListener('click', alCompartir);
 
@@ -80,8 +80,9 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
       pagas = sueldo.pagas === 14 ? 14 : 12;
       marcarGrupo(el.pagas, 'pagas', pagas);
     },
-    // `vista`: { t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle }.
-    pintar({ t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle }) {
+    // `vista`: { t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle,
+    // sinEfecto } (sinEfecto: el mapa activo no usa la superficie ni el umbral).
+    pintar({ t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle, sinEfecto = false }) {
       // Fichas: las que tienen ingreso en perfiles.json, y «Tu ficha» si hay sueldo escrito.
       const disponibles = [...FICHAS_PERFIL.filter((f) => perfiles?.[f]), 'peon'];
       el.fichas.querySelector('.fichas-botones').replaceChildren(...disponibles.map((ficha) => {
@@ -104,10 +105,14 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
         b.disabled = fija;
         b.setAttribute('aria-pressed', String(Number(b.dataset.superficie) === superficie));
       }
-      el.superficieNota.textContent = !fija ? '' : estado.ficha === 'llave'
-        ? t('interfaz.sueldo.superficie_llave')
-        : t('interfaz.sueldo.superficie_fija', { superficie: t.numero(superficie ?? 50) });
-      el.superficieNota.hidden = !fija;
+      let nota = '';
+      if (fija) {
+        nota = estado.ficha === 'llave'
+          ? t('interfaz.sueldo.superficie_llave')
+          : t('interfaz.sueldo.superficie_fija', { superficie: t.numero(superficie ?? 50) });
+      } else if (sinEfecto) nota = t('interfaz.sueldo.supuestos_mapa');
+      el.superficieNota.textContent = nota;
+      el.superficieNota.hidden = !nota;
       marcarGrupo(el.umbral, 'umbral', Math.round(umbral * 100));
 
       el.intro.textContent = modo === 'necesario' ? t('interfaz.sueldo.intro_necesario') : t('interfaz.sueldo.intro_llega');

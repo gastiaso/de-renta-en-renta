@@ -5,7 +5,8 @@
 # principales, t20_1 en propiedad, t20_2 en alquiler y t20_3 en otro régimen; t21_1, hogares.
 # Indicador 18 (hogares en alquiler, %) = t20_2 / t19_1 (un hogar por vivienda principal).
 # Compuerta: la tabla 59523 del Censo 2021 (viviendas familiares principales convencionales por
-# régimen de tenencia, España, comunidades y provincias).
+# régimen de tenencia, España, comunidades y provincias). La cifra de España de la tabla larga es
+# la publicada en esa tabla (nacional_ine_censo2021).
 
 URL_CENSO2021_INDICADORES <- "https://www.ine.es/censos2021/C2021_Indicadores.csv"
 URL_CENSO2021_DICCIONARIO <- "https://www.ine.es/censos2021/indicadores_seccen_c2021.xlsx"
@@ -69,6 +70,21 @@ armonizar_ine_censo2021 <- function(censo, version) {
     select(all_of(COLUMNAS_TABLA_LARGA))
 }
 
+# Indicador 18 de España: la cifra publicada, el total nacional de la tabla 59523 (hogares en
+# alquiler / viviendas principales), en formato largo. El CSV de indicadores solo trae secciones,
+# y sumarlas no da España: faltan las 1.363 en secreto. Sin seccionado de referencia (geo_ref NA,
+# como las cifras nacionales de la ECV).
+nacional_ine_censo2021 <- function(tenencia, version) {
+  tenencia |>
+    filter(nivel == "nacional") |>
+    transmute(geo_id = codigo, nivel, anio = 2021L, indicador = "hogares_alquiler",
+              estado = if_else(is.na(principales) | is.na(alquiler) | principales == 0, "ausente", "dato"),
+              valor = if_else(estado == "dato", 100 * alquiler / principales, NA_real_)) |>
+    sin_desglose() |>
+    mutate(fuente = "ine_censo2021", geo_ref = NA_character_, version = version) |>
+    select(all_of(COLUMNAS_TABLA_LARGA))
+}
+
 # Etiquetas territoriales de las tablas del INE en orden de publicación («Total Nacional»,
 # «01 Andalucía», «04 Almería»…): comunidades y provincias comparten códigos de dos dígitos.
 # Cada comunidad lleva el siguiente número de la serie 01–19 y sus provincias van detrás; una
@@ -125,6 +141,9 @@ leer_ine_censo2021_tenencia <- function(ruta) {
 #     sin secciones en secreto (desviación en %).
 #   censo2021_seccionado (con `secciones_2021`): secciones del CSV que no están en el seccionado
 #     de 2021 y secciones del seccionado sin fila en el CSV (recuentos).
+#   censo2021_nacional: % de España publicado (el que va a la tabla larga) frente a la media
+#     ponderada de las provincias y de las comunidades de la misma tabla (hogares en alquiler
+#     sumados / hogares sumados; puntos). No depende del ámbito: la tabla es de toda España.
 comprobar_ine_censo2021 <- function(censo, tenencia, secciones_2021 = NULL) {
   seccionado <- if (is.null(secciones_2021)) NULL else tibble::tibble(
     id = "censo2021_seccionado", anio = 2021L,
@@ -151,12 +170,23 @@ comprobar_ine_censo2021 <- function(censo, tenencia, secciones_2021 = NULL) {
            minimo = 100 * alquiler / (principales + faltan),
            maximo = 100 * (alquiler + faltan) / (principales + faltan),
            publicado = 100 * alquiler_ref / principales_ref)
+  espana <- filter(tenencia, nivel == "nacional")
+  nacional <- tenencia |>
+    filter(nivel %in% c("provincia", "ccaa")) |>
+    group_by(nivel) |>
+    summarise(calculado = 100 * sum(alquiler) / sum(principales), .groups = "drop") |>
+    transmute(id = "censo2021_nacional", anio = 2021L,
+              detalle = if_else(nivel == "ccaa", "media ponderada de las comunidades",
+                                "media ponderada de las provincias"),
+              calculado,
+              referencia = if (nrow(espana) == 1) 100 * espana$alquiler / espana$principales else NA_real_)
   bind_rows(
     t |> transmute(id = "censo2021_alquiler", anio = 2021L, detalle = territorio,
                    calculado = pmin(pmax(publicado, minimo), maximo), referencia = publicado),
     t |> filter(secretas == 0 | codigo == "00") |>
       transmute(id = "censo2021_principales", anio = 2021L, detalle = territorio,
                 calculado = 100 * (principales - principales_ref) / principales_ref, referencia = 0),
-    seccionado
+    seccionado,
+    nacional
   )
 }

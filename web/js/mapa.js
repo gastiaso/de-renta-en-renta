@@ -217,6 +217,11 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alMover 
     },
     // Capas coloreadas por valores: [{ capa, nivel, id }].
     rellenos: RELLENOS.map((r) => ({ ...r, id: capas[r.capa].id })),
+    // Nivel que se ve a la escala actual (provincia, municipio o sección).
+    nivelVisible() {
+      const zoom = mapa.getZoom();
+      return (RELLENOS.find((r) => zoom < r.hasta) ?? RELLENOS.at(-1)).nivel;
+    },
     // Guarda en cada elemento de una capa los valores de varias series a la vez: { serie: [valor | null] },
     // en el orden de `codigos`.
     ponerSeries(capa, codigos, columnas) {

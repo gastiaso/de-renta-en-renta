@@ -234,3 +234,84 @@ test_that("la compuerta de VUT suma secciones, mira el seccionado y el denominad
   expect_equal(d$calculado[d$id == "vut_denominador_detalle"], 0.1)
   expect_equal(d$detalle[d$id == "vut_denominador_detalle"], "M11 0401301001")
 })
+
+# --- España (nivel nacional) ---------------------------------------------------------------
+
+referencias_nacional <- tibble::tibble(
+  id = c("censo2021_nacional", "vut_nacional_viviendas", "vut_nacional_porcentaje"),
+  tolerancia = c("exacto", "exacto", "±0,02 puntos"), tipo = "bloqueo"
+)
+
+test_that("España del indicador 18 es la cifra publicada de la tabla 59523", {
+  t <- leer_ine_censo2021_tenencia(tenencia_csv())
+  n <- nacional_ine_censo2021(t, version = "2023-06-30")
+  expect_equal(nrow(n), 1L)
+  expect_equal(c(n$geo_id, n$nivel, n$estado, n$corte), c("00", "nacional", "dato", "total"))
+  expect_equal(n$valor, 100 * 260 / 1050)
+  expect_true(is.na(n$geo_ref))
+  larga <- bind_rows(armonizar_ine_censo2021(leer_ine_censo2021(censo_csv()), version = "2023-06-30"), n)
+  expect_silent(validar_tabla_larga(larga, vocabulario = vocabulario_prueba))
+  expect_equal(nrow(nacional_ine_censo2021(filter(t, nivel != "nacional"), "x")), 0L)
+})
+
+test_that("la compuerta de España del Censo pondera provincias y comunidades de la misma tabla", {
+  t <- leer_ine_censo2021_tenencia(tenencia_csv())
+  censo <- leer_ine_censo2021(censo_csv())
+  c <- filter(comprobar_ine_censo2021(censo, t), id == "censo2021_nacional")
+  expect_equal(c$detalle, c("media ponderada de las comunidades", "media ponderada de las provincias"))
+  # Provincias y comunidades suman 1.050 hogares y 260 en alquiler, como España
+  expect_equal(c$calculado, rep(100 * 260 / 1050, 2))
+  expect_equal(c$referencia, rep(100 * 260 / 1050, 2))
+  expect_silent(validar_referencias(c, referencias_nacional))
+  # España que no cuadra con sus provincias: la compuerta para
+  t2 <- mutate(t, alquiler = if_else(nivel == "nacional", 270, alquiler))
+  c2 <- filter(comprobar_ine_censo2021(censo, t2), id == "censo2021_nacional")
+  expect_error(validar_referencias(c2, referencias_nacional), "compuerta")
+  # Sin fila de España, referencia NA: tampoco pasa
+  c3 <- filter(comprobar_ine_censo2021(censo, filter(t, nivel != "nacional")), id == "censo2021_nacional")
+  expect_true(all(is.na(c3$referencia)))
+  expect_error(validar_referencias(c3, referencias_nacional), "compuerta")
+})
+
+test_that("España del indicador 19 es el porcentaje publicado de la tabla 39365, en los periodos de las secciones", {
+  r <- vut_provincias_csv()
+  p <- leer_ine_vut_provincias(r[1], r[2])
+  n <- nacional_ine_vut(p, version = "2026-06-24", periodos = c("NOV2024", "MAY2025"))
+  expect_equal(n$geo_id, c("00", "00"))
+  expect_equal(n$anio, c(2024L, 2025L))
+  expect_equal(n$grupo, c("M11", "M05"))
+  expect_equal(n$valor, c(6.07, NA))                   # mayo de 2025 no está en la tabla
+  expect_equal(n$estado, c("dato", "ausente"))
+  expect_true(all(n$corte == "mes" & n$nivel == "nacional" & is.na(n$geo_ref)))
+  expect_silent(validar_tabla_larga(n, vocabulario = vocabulario_prueba))
+})
+
+test_that("la compuerta de España de VUT suma las provincias y pondera sus porcentajes con el Censo", {
+  r <- vut_provincias_csv()
+  p <- leer_ine_vut_provincias(r[1], r[2])
+  # Porcentajes provinciales coherentes con el Censo inventado: Almería 22 / 800 (la sección en
+  # secreto no pesa) y Baleares 60 / 550
+  p <- mutate(p, porcentaje = if_else(codigo == "07", 100 * 60 / 550, porcentaje))
+  c <- nacional_vut(p, censo_vut, periodos = "NOV2024")
+  expect_equal(c$id, c("vut_nacional_viviendas", "vut_nacional_porcentaje"))
+  expect_equal(c$calculado[1], 0)                                  # 22 + 60 = 82
+  expect_equal(c$calculado[2], (2.75 * 800 + 100 * 60 / 550 * 550) / 1350)
+  expect_equal(c$referencia[2], 6.07)
+  expect_silent(validar_referencias(c, referencias_nacional))
+  # Un porcentaje provincial que no cuadra con España se ve
+  mal <- nacional_vut(mutate(p, porcentaje = if_else(codigo == "07", 12, porcentaje)), censo_vut, periodos = "NOV2024")
+  expect_equal(mal$calculado[2], (2.75 * 800 + 12 * 550) / 1350)
+  expect_error(validar_referencias(mal, referencias_nacional), "compuerta")
+  # Un periodo sin cifra de España sale con NA y no pasa
+  c2 <- nacional_vut(p, censo_vut, periodos = c("NOV2024", "MAY2025"))
+  expect_true(is.na(c2$calculado[c2$detalle == "M05"]))
+  expect_error(validar_referencias(c2, referencias_nacional), "compuerta")
+  # Sin todas las provincias en el Censo (PROVINCIA), solo la suma de viviendas
+  c3 <- nacional_vut(p, filter(censo_vut, startsWith(seccion, "04")), periodos = "NOV2024")
+  expect_equal(c3$id, "vut_nacional_viviendas")
+  # comprobar_ine_vut() las incluye
+  v <- vut_2024()
+  todo <- comprobar_ine_vut(v, reproyectar_ine_vut(v, paso_vut, censo_vut, periodos = "NOV2024"), p, censo_vut,
+                            unique(paso_vut$origen), paso_vut, periodos = "NOV2024")
+  expect_true(all(c("vut_nacional_viviendas", "vut_nacional_porcentaje") %in% todo$id))
+})

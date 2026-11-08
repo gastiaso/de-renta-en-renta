@@ -33,11 +33,21 @@
     "mapa": {
       "region": "Mapa de secciones censales",
       "acercar": "Acercar",
-      "alejar": "Alejar"
+      "alejar": "Alejar",
+      "sin_dato_escala": "Este mapa no tiene datos a esta escala: acerca el mapa."
     },
     "buscador": {
       "etiqueta": "Buscar municipio o sección",
       "marcador": "Buscar municipio o sección"
+    },
+    "vista": {
+      "region": "Qué muestra el mapa",
+      "mapa": "Mapa",
+      "anio": "Año",
+      "tipologia": "Vivienda",
+      "vc": "Colectiva",
+      "vu": "Unifamiliar",
+      "llega_opcion": "¿Te llega? · {ficha}"
     },
     "leyenda": {
       "sin_dato": "Sin dato",
@@ -63,6 +73,7 @@
       "umbral": "Umbral",
       "superficie_fija": "Las fichas de una persona usan {superficie} m².",
       "superficie_llave": "La llave paga el alquiler mediano de su sección.",
+      "supuestos_mapa": "La vivienda y el umbral cambian el sueldo necesario y «¿te llega?», no el mapa que se ve.",
       "peon_sin_sueldo": "Escribe un sueldo para usar tu ficha.",
       "resumen_peon": "Te cabe en el {pct} de las secciones con dato ({caben} de {total}).",
       "resumen_ficha": "A «{ficha}» le cabe en el {pct} de las secciones con dato ({caben} de {total}).",
@@ -91,11 +102,47 @@
       "copiado_con": "Enlace copiado, con el sueldo.",
       "copia_a_mano": "No se ha podido copiar: el enlace está seleccionado para copiarlo a mano (Ctrl+C)."
     },
+    "exportar": {
+      "titulo": "Descargar",
+      "csv": "Datos (CSV)",
+      "png": "Imagen (PNG)",
+      "csv_largo": "Descargar los datos del mapa en CSV, en el nivel que se ve",
+      "png_largo": "Descargar la imagen del mapa en PNG, con la leyenda y la fuente",
+      "preparando": "Preparando la descarga…",
+      "hecho": "Descargado: {fichero}",
+      "error": "No se ha podido preparar la descarga.",
+      "nombre_seccion": "{municipio}, distrito {distrito}, sección {seccion}",
+      "nombre_distrito": "{municipio}, distrito {distrito}",
+      "ingreso_peon": "el sueldo escrito",
+      "umbral": "umbral del {umbral}",
+      "fuente": "Fuente: {fuente}.",
+      "pie": "Mapa base: {atribucion}. De renta en renta, datos del {fecha}.",
+      "columnas": {
+        "codigo": "codigo",
+        "nombre": "nombre",
+        "nivel": "nivel",
+        "indicador": "indicador",
+        "tipologia": "tipologia",
+        "periodo": "periodo",
+        "valor": "valor",
+        "unidad": "unidad",
+        "estado": "estado",
+        "fuente": "fuente",
+        "superficie_m2": "superficie_m2",
+        "umbral": "umbral"
+      },
+      "estados": {
+        "dato": "dato",
+        "estimado": "estimado",
+        "secreto": "secreto estadístico",
+        "ausente": "sin dato"
+      }
+    },
     "ficha": {
       "titulo": "Ficha de sección",
       "vacia": "Elige una sección en el mapa para ver su ficha.",
       "seccion": "Sección {codigo}",
-      "anio": "Año {anio}",
+      "anio": "Datos de {anio}",
       "cerrar": "Cerrar la ficha",
       "evolucion": "Evolución",
       "evolucion_llega": "Evolución del alquiler sobre el ingreso",
@@ -122,6 +169,216 @@
       "estimado": "estimado",
       "secreto": "secreto",
       "ausente": "sin dato"
+    }
+  },
+  "sobrecarga": {
+    "titulo_pagina": "Sobrecarga por gastos de vivienda · De renta en renta",
+    "descripcion": "Tasa de sobrecarga por gastos de vivienda en España y Europa, con el método de Eurostat",
+    "antetitulo": "España y Europa",
+    "titulo": "Sobrecarga por gastos de vivienda",
+    "entradilla": "Personas que viven en hogares que dedican más del 40 % de su renta disponible a la vivienda, con el método de Eurostat.",
+    "distintivo": "Otro tablero: encuesta, no registro · regiones y países, no secciones",
+    "carga": "Cargando los datos…",
+    "error_carga": "No se han podido cargar los datos de la sobrecarga (datos/sobrecarga/). Se generan con targets::tar_make(names = ficheros_web_sobrecarga).",
+    "formato": {
+      "porcentaje": "{x} %",
+      "puesto": "{p}.º"
+    },
+    "controles": {
+      "region": "Qué muestra el mapa",
+      "tenencia": "Régimen de tenencia",
+      "edad": "Edad",
+      "anio": "Encuesta",
+      "toda_poblacion": "Toda la población",
+      "todas_edades": "Todas las edades",
+      "nota_rentas": "Encuesta de {anio}, con las rentas de {anterior}.",
+      "nota_desglose": "Con tenencia o edad, solo la encuesta de {anio}: Eurostat no publica esos desgloses por regiones.",
+      "grupos": {
+        "RENT_MKT": "Alquiler de mercado",
+        "RENT_FR": "Alquiler reducido o cesión",
+        "OWN_L": "Propiedad con hipoteca",
+        "OWN_NL": "Propiedad sin hipoteca",
+        "Y_LT18": "Menos de 18 años",
+        "Y18-64": "18 a 64 años",
+        "Y_GE65": "65 y más años"
+      }
+    },
+    "cifras": {
+      "region": "Cifras de referencia",
+      "espana": "España",
+      "ue27": "UE-27",
+      "muestra": "{n} personas en la muestra",
+      "eurostat": "Eurostat"
+    },
+    "mapa": {
+      "region": "Mapa de Europa de la tasa de sobrecarga",
+      "titulo_regiones": "Europa por regiones",
+      "titulo_paises": "Europa por países; España por comunidades",
+      "fuente_regiones": "Eurostat (ilc_lvho07_r), {anio}; comunidades y España, INE (microdatos de la ECV)",
+      "fuente_regiones_eurostat": "Eurostat (ilc_lvho07_r), {anio}",
+      "fuente_paises": "Eurostat ({tabla}), {anio}; comunidades, INE (microdatos de la ECV, {desde}–{hasta})",
+      "nota_regiones": "Eurostat publica la tasa por regiones NUTS 2 solo para toda la población. Donde no las publica se pinta el dato del país o de NUTS 1, con trama. Algunos países no tienen dato regional algunos años (Dinamarca, hasta 2024) y Eurostat publica a veces dos regiones juntas (FI19_20): quedan sin pintar.",
+      "nota_paises": "Con tenencia o edad, Eurostat publica países. España va por comunidades con los microdatos del INE y tres olas agrupadas ({desde}–{hasta}), porque una sola ola no da muestra suficiente: países y comunidades no son del mismo periodo.",
+      "sin_mapa": "En la escalera, sin geometría en el mapa: {lista}.",
+      "recuadros": "Canarias, Madeira y Azores, en recuadro.",
+      "licencia": "© EuroGeographics para los límites administrativos",
+      "acercar": "Acercar",
+      "alejar": "Alejar",
+      "gesto_windows": "Ctrl + rueda para ampliar el mapa",
+      "gesto_mac": "⌘ + rueda para ampliar el mapa",
+      "gesto_movil": "Dos dedos para mover el mapa"
+    },
+    "leyenda": {
+      "titulo": "% de las personas",
+      "menos_de": "menos de {x} %",
+      "entre": "{a}–{b} %",
+      "o_mas": "{x} % o más",
+      "sin_dato": "Sin dato",
+      "grueso": "Dato del país o de NUTS 1",
+      "muestra": "Muestra pequeña (20 a 49 observaciones)"
+    },
+    "detalle": {
+      "region": "Territorio elegido",
+      "vacio": "Al elegir un territorio en el mapa o en la escalera, aquí aparecen su cifra, su puesto y su muestra.",
+      "puesto": "Puesto {p} de {n}",
+      "sin_valor": "Sin dato publicable: menos de 20 observaciones.",
+      "fuente_ine": "INE, microdatos de la ECV (cálculo propio con el método de Eurostat)",
+      "fuente_eurostat": "Eurostat ({tabla})",
+      "muestra": "Muestra: {n} personas en {h} hogares",
+      "olas": "Tres olas agrupadas, {desde}–{hasta}",
+      "anio": "Encuesta de {anio}",
+      "bandera": "Marca de Eurostat: {b}",
+      "nivel_pais": "Dato del país: Eurostat no publica sus regiones NUTS 2.",
+      "nivel_nuts1": "Dato de NUTS 1: Eurostat no publica sus regiones NUTS 2.",
+      "cerrar": "Quitar la selección"
+    },
+    "escalera": {
+      "titulo": "La escalera",
+      "subtitulo": "Puesto entre {n} territorios y referencias, de más a menos · {periodo}",
+      "periodo_paises": "países, {anio}; comunidades, {desde}–{hasta}",
+      "europa_regiones": "Lo más alto de Europa",
+      "europa_paises": "Lo más alto: países",
+      "referencias": "Referencias",
+      "comunidades": "Comunidades autónomas, en su puesto",
+      "completa": "Lista completa",
+      "ver_completa": "Ver la lista completa",
+      "ver_bloques": "Ver por bloques",
+      "etiquetas": {
+        "region": "Región",
+        "pais": "País",
+        "comunidad": "Comunidad",
+        "referencia": "Referencia"
+      }
+    },
+    "serie": {
+      "titulo": "España, año a año",
+      "subtitulo": "Toda la población e inquilinos a precio de mercado, frente a la UE-27",
+      "total": "Toda la población",
+      "mercado": "Alquiler a precio de mercado",
+      "espana": "España",
+      "ue27": "UE-27",
+      "anio": "Encuesta",
+      "fuente": "Eurostat (ilc_lvho07a, ilc_lvho07c). De 2023 a 2025, el cálculo con los microdatos de la ECV reproduce estas cifras (±0,1 puntos).",
+      "tabla": "Ver las cifras",
+      "grafico": "Tasa de sobrecarga en España y en la UE-27, toda la población y alquiler a precio de mercado, {desde}–{hasta}"
+    },
+    "desgloses": {
+      "titulo": "España por tenencia y edad",
+      "subtitulo": "Microdatos de la ECV, cálculo propio · cada cifra con su muestra",
+      "anio": "Encuesta",
+      "tenencia": "Por régimen de tenencia",
+      "edad": "Por edad",
+      "total": "Toda la población",
+      "muestra_corta": "{n} pers.",
+      "nota": "Los grupos de menores de 18 y de 15 a 29 años se solapan. «Propiedad» y «Alquiler o cesión gratuita» reúnen las categorías de Eurostat."
+    },
+    "comunidades": {
+      "titulo": "Comunidades del mapa: cifra y muestra",
+      "comunidad": "Comunidad",
+      "valor": "%",
+      "puesto": "Puesto",
+      "personas": "Personas",
+      "hogares": "Hogares",
+      "fiabilidad": "Fiabilidad"
+    },
+    "metodo": {
+      "titulo": "Cómo se calcula",
+      "formula": "(gastos de vivienda − ayudas) ÷ (renta disponible − ayudas) > 40 %",
+      "personas": "Cuenta personas, no hogares.",
+      "hipoteca": "De la hipoteca entran los intereses, no la devolución del capital.",
+      "renta": "La renta es la del año anterior a la encuesta: la ECV de 2025 recoge las rentas de 2024.",
+      "muestra": "Sin intervalos de confianza: los microdatos públicos no traen el diseño de la muestra. Cada cifra del INE lleva su número de observaciones y la marca de fiabilidad de EU-SILC: sin publicar con menos de 20; con trama, de 20 a 49.",
+      "compuerta": "El cálculo reproduce las cifras de Eurostat de España, de cada comunidad, de los inquilinos a precio de mercado y de cada grupo de edad (±0,1 puntos)."
+    },
+    "acceso": {
+      "titulo": "Quien no consigue entrar",
+      "subtitulo": "Búsqueda de vivienda sin éxito · ECV {anio}",
+      "definicion": "Personas de 16 o más años que han buscado vivienda activamente en los últimos 12 meses sin llegar a cambiarse. La sobrecarga no las ve: mide a quien ya tiene casa.",
+      "espana": "España",
+      "razon": "Razón principal: el precio excesivo, para el {x} % de quienes buscaron sin éxito.",
+      "comunidades": "Por comunidad",
+      "mas": "Ver las {n} comunidades",
+      "edad": "Por edad",
+      "tenencia": "Por régimen de tenencia",
+      "sexo": "Por sexo",
+      "fuente": "INE, ECV {anio}, módulo sobre dificultades de acceso a la vivienda (tablas publicadas).",
+      "razones": {
+        "precio": "Precio excesivo",
+        "vivienda": "La vivienda no reunía lo que se buscaba",
+        "condiciones": "No se reunían las condiciones para alquilar o comprar",
+        "otras": "Otras razones"
+      }
+    },
+    "otras_cifras": {
+      "titulo": "Por qué no coincide con otras cifras",
+      "metodo": "Otros cálculos suman la cuota hipotecaria entera o cuentan hogares en lugar de personas: responden a otra pregunta.",
+      "total": "El total lo dominan los propietarios sin hipoteca; la carga se concentra en el alquiler a precio de mercado."
+    },
+    "pie": {
+      "fuentes": "Fuentes: INE, Encuesta de Condiciones de Vida (microdatos y módulo de acceso a la vivienda); Eurostat (ilc_lvho07a, ilc_lvho07c e ilc_lvho07_r).",
+      "licencia": "Datos y textos: CC BY-SA 4.0. Límites del mapa: © EuroGeographics para los límites administrativos (GISCO, uso no comercial)."
+    },
+    "paises": {
+      "AL": "Albania",
+      "AT": "Austria",
+      "BA": "Bosnia y Herzegovina",
+      "BE": "Bélgica",
+      "BG": "Bulgaria",
+      "CH": "Suiza",
+      "CY": "Chipre",
+      "CZ": "Chequia",
+      "DE": "Alemania",
+      "DK": "Dinamarca",
+      "EE": "Estonia",
+      "EL": "Grecia",
+      "ES": "España",
+      "FI": "Finlandia",
+      "FR": "Francia",
+      "HR": "Croacia",
+      "HU": "Hungría",
+      "IE": "Irlanda",
+      "IS": "Islandia",
+      "IT": "Italia",
+      "LI": "Liechtenstein",
+      "LT": "Lituania",
+      "LU": "Luxemburgo",
+      "LV": "Letonia",
+      "ME": "Montenegro",
+      "MK": "Macedonia del Norte",
+      "MT": "Malta",
+      "NL": "Países Bajos",
+      "NO": "Noruega",
+      "PL": "Polonia",
+      "PT": "Portugal",
+      "RO": "Rumanía",
+      "RS": "Serbia",
+      "SE": "Suecia",
+      "SI": "Eslovenia",
+      "SK": "Eslovaquia",
+      "TR": "Turquía",
+      "UA": "Ucrania",
+      "XK": "Kosovo",
+      "EU27_2020": "UE-27"
     }
   },
   "indicadores": {

@@ -26,9 +26,9 @@
       <nav class="navegacion" data-i18n-aria="interfaz.navegacion">
         <a href="./" aria-current="page" data-i18n="nav.mapa">Mapa</a>
         <a href="#tu-sueldo" data-i18n="nav.tu_sueldo">Tu sueldo</a>
-        <span aria-disabled="true" data-i18n="nav.sobrecarga" data-i18n-title="interfaz.proximamente">Sobrecarga</span>
+        <a href="sobrecarga.html" data-href-es="sobrecarga.html" data-href-en="sobrecarga.html?idioma=en" data-i18n="nav.sobrecarga">Sobrecarga</a>
         <span aria-disabled="true" data-i18n="nav.datos" data-i18n-title="interfaz.proximamente">Datos</span>
-        <span aria-disabled="true" data-i18n="nav.metodo" data-i18n-title="interfaz.proximamente">Método</span>
+        <a href="metodo.html" data-href-es="metodo.html" data-href-en="method.html" data-i18n="nav.metodo">Método</a>
       </nav>
       <div class="buscador" role="search">
         <label class="oculto" for="buscador-entrada" data-i18n="interfaz.buscador.etiqueta">Buscar municipio o sección</label>
@@ -44,12 +44,43 @@
     </header>
 
     <main class="explorador">
-      <section class="mapa-marco" data-i18n-aria="interfaz.mapa.region">
-        <div id="mapa" class="mapa"></div>
-        <p id="aviso-ejemplo" class="etiqueta-ejemplo aviso-mapa" hidden
-           data-i18n="avisos.ejemplo" data-i18n-title="interfaz.ejemplo_nota">Datos de ejemplo</p>
-        <div id="leyenda" class="leyenda" hidden></div>
-      </section>
+      <div class="mapa-columna">
+        <div class="barra-vista" role="group" data-i18n-aria="interfaz.vista.region">
+          <label class="barra-campo barra-campo-mapa">
+            <span id="vista-mapa-titulo" data-i18n="interfaz.vista.mapa">Mapa</span>
+            <select id="vista-mapa" aria-labelledby="vista-mapa-titulo"></select>
+          </label>
+          <label class="barra-campo">
+            <span id="vista-anio-titulo" data-i18n="interfaz.vista.anio">Año</span>
+            <select id="vista-anio" aria-labelledby="vista-anio-titulo"></select>
+          </label>
+          <div id="vista-tipologia" class="barra-campo" role="group" aria-labelledby="vista-tipologia-titulo" hidden>
+            <span id="vista-tipologia-titulo" data-i18n="interfaz.vista.tipologia">Vivienda</span>
+            <span class="barra-botones">
+              <button type="button" data-tipologia="VC" aria-pressed="true" data-i18n="interfaz.vista.vc" data-i18n-title="vocabulario.tipologia.VC">Colectiva</button>
+              <button type="button" data-tipologia="VU" aria-pressed="false" data-i18n="interfaz.vista.vu" data-i18n-title="vocabulario.tipologia.VU">Unifamiliar</button>
+            </span>
+          </div>
+          <div class="barra-campo barra-descargas" role="group" aria-labelledby="exportar-titulo">
+            <span id="exportar-titulo" data-i18n="interfaz.exportar.titulo">Descargar</span>
+            <span class="barra-botones">
+              <button id="exportar-csv" type="button" data-i18n="interfaz.exportar.csv"
+                      data-i18n-aria="interfaz.exportar.csv_largo" data-i18n-title="interfaz.exportar.csv_largo">Datos (CSV)</button>
+              <button id="exportar-png" type="button" data-i18n="interfaz.exportar.png"
+                      data-i18n-aria="interfaz.exportar.png_largo" data-i18n-title="interfaz.exportar.png_largo">Imagen (PNG)</button>
+            </span>
+          </div>
+          <p id="exportar-estado" class="barra-estado oculto" aria-live="polite"></p>
+        </div>
+
+        <section class="mapa-marco" data-i18n-aria="interfaz.mapa.region">
+          <div id="mapa" class="mapa"></div>
+          <p id="aviso-ejemplo" class="etiqueta-ejemplo aviso-mapa" hidden
+             data-i18n="avisos.ejemplo" data-i18n-title="interfaz.ejemplo_nota">Datos de ejemplo</p>
+          <p id="aviso-escala" class="aviso-escala" role="status" hidden data-i18n="interfaz.mapa.sin_dato_escala">Este mapa no tiene datos a esta escala: acerca el mapa.</p>
+          <div id="leyenda" class="leyenda" hidden></div>
+        </section>
+      </div>
 
       <div class="lateral">
         <section id="tu-sueldo" class="tarjeta sueldo" aria-labelledby="sueldo-titulo">
