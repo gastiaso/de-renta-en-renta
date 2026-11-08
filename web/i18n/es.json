@@ -155,8 +155,8 @@
       "nombre": "Viviendas de uso turístico sobre el total de viviendas",
       "unidad": "% de las viviendas",
       "definicion": "Viviendas de uso turístico sobre el total de viviendas de la sección.",
-      "calculo": "Cifra de la estadística experimental del INE a partir de anuncios de plataformas, en el seccionado de 2021; semestral.",
-      "lectura": "Mide la presión del uso turístico. Los meses de referencia cambiaron en 2024 (de febrero y agosto a mayo y noviembre)."
+      "calculo": "Viviendas turísticas de la estadística experimental del INE (anuncios de plataformas) sobre el total de viviendas del Censo 2021, el denominador que usa el INE desde agosto de 2023. Desde febrero de 2024, en el seccionado de 2024, llevado al de 2021 con la tabla de paso; semestral.",
+      "lectura": "Mide la presión del uso turístico. Numerador y denominador no son del mismo año: las viviendas son las del Censo 2021. Los meses de referencia cambiaron en 2024 (de febrero y agosto a mayo y noviembre)."
     },
     "zona_tensionada": {
       "nombre": "Zona de mercado residencial tensionado declarada",
@@ -222,7 +222,11 @@
       "total": "Total",
       "tenencia": "Régimen de tenencia",
       "edad": "Edad",
-      "sexo": "Sexo"
+      "sexo": "Sexo",
+      "tipologia": "Tipología de la vivienda (mediana)",
+      "tipologia_p25": "Tipología de la vivienda, primer cuartil",
+      "tipologia_p75": "Tipología de la vivienda, tercer cuartil",
+      "mes": "Mes de referencia"
     },
     "edad": {
       "Y_LT18": "Menos de 18 años",
@@ -251,6 +255,12 @@
       "baja": "Muestra pequeña (20 a 49 observaciones): leer con cautela",
       "no publicable": "Muestra insuficiente (menos de 20 observaciones)"
     },
+    "mes": {
+      "M02": "Febrero",
+      "M05": "Mayo",
+      "M08": "Agosto",
+      "M11": "Noviembre"
+    },
     "nivel": {
       "sc": "Sección censal",
       "distrito": "Distrito",
@@ -273,6 +283,18 @@
       "RENT_FR": "Alquiler inferior al de mercado o cesión gratuita",
       "RENT_RED": "Alquiler inferior al precio de mercado",
       "FREE": "Cesión gratuita"
+    },
+    "tipologia": {
+      "VC": "Vivienda colectiva",
+      "VU": "Vivienda unifamiliar o rural"
+    },
+    "tipologia_p25": {
+      "VC": "Vivienda colectiva, primer cuartil",
+      "VU": "Vivienda unifamiliar o rural, primer cuartil"
+    },
+    "tipologia_p75": {
+      "VC": "Vivienda colectiva, tercer cuartil",
+      "VU": "Vivienda unifamiliar o rural, tercer cuartil"
     }
   }
 }

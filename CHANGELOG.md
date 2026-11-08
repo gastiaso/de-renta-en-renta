@@ -4,6 +4,36 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (8-nov-2026, F2: SERPAVI, Censo, viviendas turísticas, mapa base, web y nota metodológica)
+
+- **Indicadores 8 y 9** (alquiler mensual, mediana; alquiler por m²) con la base de datos del SERPAVI, 2015–2024, en el seccionado de 2021 sin tabla de paso (`R/fuente_mivau_serpavi.R`; bloque `bloque_serpavi`):
+  - `descargar_mivau_serpavi()`: fichero manual (la web del MIVAU bloquea las descargas automáticas);
+  - `leer_mivau_serpavi()`: las cinco hojas, de la sección a la comunidad con España;
+  - `comprobar_mivau_serpavi()`: compuerta `serpavi_provincia`, `serpavi_espana`, `serpavi_secreto`, `serpavi_cuartiles` y `serpavi_escalas` (bloqueo), y `serpavi_escalas_detalle` y `serpavi_forales` (alerta). Pasa; avisa en 164 cifras de municipios y distritos que no cuadran con sus secciones, casi todas de Navarra en 2022–2024;
+  - `armonizar_mivau_serpavi()`: tipología como corte (`tipologia`, `tipologia_p25`, `tipologia_p75`; grupos `VC` y `VU`) y estado `dato`, `secreto` (de 1 a 9 testigos) o `ausente`; País Vasco y Navarra desde su entrada;
+  - secciones con mediana de vivienda colectiva: de 21.627 (2015) a 26.137 (2024).
+- **Indicador 18** (hogares en alquiler) del Censo 2021 (`R/fuente_ine_censo2021.R`; bloque `bloque_censo2021`): t20_2 / t19_1, 34.970 secciones con dato y 1.363 en secreto; compuerta `censo2021_alquiler`, `censo2021_principales` y `censo2021_seccionado` (España, 16,10 % en el pipeline y en la tabla 59523).
+- **Indicador 19** (viviendas turísticas sobre el total de viviendas) (`R/fuente_ine_vut.R`; bloque `bloque_vut`): seis periodos, de febrero de 2024 a mayo de 2026, en el seccionado de 2024, llevados al de 2021 con la tabla combinada; en las secciones 1:1 se copia el % del INE, en las demás se rehace con las viviendas del Censo 2021. Compuerta `vut_viviendas_provincia`, `vut_seccionado`, `vut_paso_2021` y `vut_denominador` (bloqueo), y `vut_denominador_detalle` (alerta). Ruptura `vut_seccionado_2024`.
+- Vocabulario: cortes `tipologia`, `tipologia_p25`, `tipologia_p75` (grupos `VC`, `VU`) y `mes` (grupos `M02`, `M05`, `M08`, `M11`).
+- `tabla_larga` incluye `larga_serpavi`, `larga_censo2021` y `larga_vut`.
+- **Jerarquía territorial** del seccionado de 2021 (`R/geo_mapa_base.R`): `geo/jerarquia_2021.csv` (sección → distrito → municipio → provincia → comunidad) y `geo/territorios_2021.csv` (nombres, superior y número de secciones), con las compuertas `jerarquia_unica`, `jerarquia_sumas` y `jerarquia_nombres`.
+- **Mapa base en PMTiles** (`geo/referencia/mapa_base_2021.pmtiles`, 35,2 MB, fuera de git), con GDAL desde R, sin tippecanoe: comunidades, provincias, municipios y secciones; simplificación de medio píxel por debajo del zoom 12. Objetivos `fichero_mapa_base`, `resumen_mapa_base` y `validacion_mapa_base` (compuerta `mapa_base_secciones`). Visor de comprobación en `geo/visor/` (`node geo/visor/servir.mjs`).
+- **Web de la v0.1, esqueleto** (pila elegida por el autor: HTML y módulos JavaScript sin compilar): `web/index.html`, `web/js/`, `web/estilo/sitio.css`; cabecera, ES/EN, mapa MapLibre por tramos con la trama del secreto, leyenda, ficha de sección y estado de la vista en la URL (el sueldo nunca va en ella). MapLibre GL JS 6.15.0 y PMTiles 4.5.0 autoalojados en `web/vendor/` (BSD-3, con permiso del autor). Manifiesto de datos como punto de enganche y muestra con valores inventados en `web/datos/ejemplo/` (`web/herramientas/generar_ejemplo.R`). Servidor local `node web/servir.mjs`. Pruebas con `node --test pruebas/web/datos.test.mjs`.
+- **Nota metodológica**, primera versión en castellano (`docs/metodologia.md`), con cifras trazables a su objetivo, función o CSV; `test-metodologia.R` comprueba que lo citado existe.
+- Prueba de un año de la tabla combinada en toda España (`comparacion_vias`): en las 6.180 secciones de 2021 que el callejero reparte, dentro de ±5 %, del 61,2 al 94,1 %.
+- Pruebas con datos inventados: `test-serpavi.R`, `test-censo2021-vut.R`, `test-mapa-base.R`.
+
+### Cambiado (8-nov-2026, F2)
+
+- `larga_adrh` depende también de `validacion_f1`: la compuerta de las tablas de paso va antes que la reproyección de la renta.
+- Filas del inventario: `mivau_serpavi` (descarga manual; errores de las hojas de municipios y distritos), `ine_censo2021`, `ine_vut` e indicadores 18 y 19 (serie y lectura: numerador y denominador de años distintos).
+- `.gitattributes`: `*.bin` como binario.
+
+### Corregido (8-nov-2026)
+
+- Las viviendas turísticas del INE no están en el seccionado de 2021 en todos sus periodos, como decían el plan (v0.9) y `inventario/fuentes.csv`: hasta febrero de 2023 usan las secciones del Censo 2011 y desde febrero de 2024, el seccionado de 2024.
+- Plan §6.3: de 2021 a 2025 conservan el código 35.995 de 36.333 secciones y aparecen 559 (antes, 35.955 de 36.293 y 599).
+
 ### Cambiado (8-nov-2026, licencia)
 
 - Datos derivados, textos e inventario pasan de CC BY 4.0 a CC BY-SA 4.0 (`LICENCIA_DATOS.md`, `README.md`; plan v0.19, §6.1). Las fuentes se tratan como datos abiertos (decisión del autor), incluidos el Catastro estatal y los forales de Bizkaia y Gipuzkoa, de licencia contradictoria (`inventario/fuentes.csv`).

@@ -22,6 +22,10 @@ corte,total,Total,Total
 corte,tenencia,Régimen de tenencia,Tenure status
 corte,edad,Edad,Age
 corte,sexo,Sexo,Sex
+corte,tipologia,Tipología de la vivienda (mediana),Dwelling type (median)
+corte,tipologia_p25,"Tipología de la vivienda, primer cuartil","Dwelling type, first quartile"
+corte,tipologia_p75,"Tipología de la vivienda, tercer cuartil","Dwelling type, third quartile"
+corte,mes,Mes de referencia,Reference month
 tenencia,OWN,Propiedad,Owner
 tenencia,OWN_NL,Propiedad sin hipoteca ni préstamo,Owner with no outstanding mortgage or housing loan
 tenencia,OWN_L,Propiedad con hipoteca o préstamo,Owner with mortgage or loan
@@ -39,3 +43,13 @@ edad,Y30-44,De 30 a 44 años,30 to 44
 edad,Y45-64,De 45 a 64 años,45 to 64
 sexo,M,Hombres,Men
 sexo,F,Mujeres,Women
+tipologia,VC,Vivienda colectiva,Flat in a multi-dwelling building
+tipologia,VU,Vivienda unifamiliar o rural,Single-family or rural dwelling
+tipologia_p25,VC,"Vivienda colectiva, primer cuartil","Flat in a multi-dwelling building, first quartile"
+tipologia_p25,VU,"Vivienda unifamiliar o rural, primer cuartil","Single-family or rural dwelling, first quartile"
+tipologia_p75,VC,"Vivienda colectiva, tercer cuartil","Flat in a multi-dwelling building, third quartile"
+tipologia_p75,VU,"Vivienda unifamiliar o rural, tercer cuartil","Single-family or rural dwelling, third quartile"
+mes,M02,Febrero,February
+mes,M05,Mayo,May
+mes,M08,Agosto,August
+mes,M11,Noviembre,November

@@ -155,8 +155,8 @@
       "nombre": "Tourist dwellings as a share of all dwellings",
       "unidad": "% of dwellings",
       "definicion": "Tourist dwellings as a share of all dwellings in the tract.",
-      "calculo": "From INE’s experimental statistics based on platform listings, on the 2021 tracts; twice a year.",
-      "lectura": "Measures pressure from tourist use. Reference months changed in 2024 (from February and August to May and November)."
+      "calculo": "Tourist dwellings from INE’s experimental statistics (platform listings) over all dwellings in the 2021 Census, the denominator INE has used since August 2023. From February 2024, on the 2024 tracts, carried to the 2021 tracts with the conversion table; twice a year.",
+      "lectura": "Measures pressure from tourist use. Numerator and denominator are not from the same year: dwellings are those of the 2021 Census. Reference months changed in 2024 (from February and August to May and November)."
     },
     "zona_tensionada": {
       "nombre": "Declared stressed housing market area",
@@ -222,7 +222,11 @@
       "total": "Total",
       "tenencia": "Tenure status",
       "edad": "Age",
-      "sexo": "Sex"
+      "sexo": "Sex",
+      "tipologia": "Dwelling type (median)",
+      "tipologia_p25": "Dwelling type, first quartile",
+      "tipologia_p75": "Dwelling type, third quartile",
+      "mes": "Reference month"
     },
     "edad": {
       "Y_LT18": "Under 18",
@@ -251,6 +255,12 @@
       "baja": "Small sample (20 to 49 observations): read with caution",
       "no publicable": "Insufficient sample (fewer than 20 observations)"
     },
+    "mes": {
+      "M02": "February",
+      "M05": "May",
+      "M08": "August",
+      "M11": "November"
+    },
     "nivel": {
       "sc": "Census tract",
       "distrito": "District",
@@ -273,6 +283,18 @@
       "RENT_FR": "Tenant at reduced price or rent-free",
       "RENT_RED": "Tenant at reduced price",
       "FREE": "Rent-free"
+    },
+    "tipologia": {
+      "VC": "Flat in a multi-dwelling building",
+      "VU": "Single-family or rural dwelling"
+    },
+    "tipologia_p25": {
+      "VC": "Flat in a multi-dwelling building, first quartile",
+      "VU": "Single-family or rural dwelling, first quartile"
+    },
+    "tipologia_p75": {
+      "VC": "Flat in a multi-dwelling building, third quartile",
+      "VU": "Single-family or rural dwelling, third quartile"
     }
   }
 }

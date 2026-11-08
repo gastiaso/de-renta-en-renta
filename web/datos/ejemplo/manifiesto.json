@@ -1,0 +1,52 @@
+{
+  "version": "ejemplo",
+  "ejemplo": true,
+  "generado": "2026-11-08",
+  "seccionado": 2021,
+  "mapa_base": {
+    "tipo": "geojson",
+    "atribucion": "INE",
+    "capas": {
+      "provincias": {
+        "url": "datos/ejemplo/provincias.geojson",
+        "id": "provincia"
+      },
+      "secciones": {
+        "url": "datos/ejemplo/secciones.geojson",
+        "id": "seccion"
+      }
+    }
+  },
+  "secciones": "datos/ejemplo/secciones.json",
+  "territorios": "datos/ejemplo/territorios.json",
+  "binario": {
+    "valor": "int32le_x10",
+    "estado": "uint8",
+    "nulo": -2147483648,
+    "estados": ["dato", "estimado", "secreto", "ausente"]
+  },
+  "supuestos": {
+    "superficie_m2": 50,
+    "umbral": 0.3
+  },
+  "indicadores": {
+    "alquiler_m2": {
+      "nivel": "sc",
+      "anios": [
+        2024
+      ],
+      "ruta": "datos/ejemplo/sc/alquiler_m2/{anio}.bin"
+    }
+  },
+  "mapas": {
+    "sueldo_necesario": {
+      "base": "alquiler_m2",
+      "formula": "alquiler_m2_a_sueldo",
+      "cortes": [2600, 3200, 3800, 4400],
+      "decimales": 0
+    }
+  },
+  "vista_inicial": {
+    "limites": [-3.72297, 40.40503, -3.69038, 40.43062]
+  }
+}

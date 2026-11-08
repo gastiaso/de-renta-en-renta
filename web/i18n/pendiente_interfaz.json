@@ -1,0 +1,54 @@
+{
+  "es": {
+    "interfaz": {
+      "idioma": "Idioma",
+      "navegacion": "Secciones de la web",
+      "proximamente": "Próximamente",
+      "ejemplo_nota": "Valores inventados para probar la web: no son datos.",
+      "error_carga": "No se han podido cargar los datos del mapa.",
+      "mapa": {
+        "region": "Mapa de secciones censales",
+        "acercar": "Acercar",
+        "alejar": "Alejar"
+      },
+      "leyenda": {
+        "sin_dato": "Sin dato",
+        "secreto": "Secreto estadístico",
+        "supuestos": "{superficie} m² · umbral del {umbral}"
+      },
+      "ficha": {
+        "titulo": "Ficha de sección",
+        "vacia": "Elige una sección en el mapa para ver su ficha.",
+        "seccion": "Sección {codigo}",
+        "anio": "Año {anio}",
+        "cerrar": "Cerrar la ficha"
+      }
+    }
+  },
+  "en": {
+    "interfaz": {
+      "idioma": "Language",
+      "navegacion": "Site sections",
+      "proximamente": "Coming soon",
+      "ejemplo_nota": "Made-up values to test the site: not data.",
+      "error_carga": "The map data could not be loaded.",
+      "mapa": {
+        "region": "Census tract map",
+        "acercar": "Zoom in",
+        "alejar": "Zoom out"
+      },
+      "leyenda": {
+        "sin_dato": "No data",
+        "secreto": "Statistical confidentiality",
+        "supuestos": "{superficie} m² · {umbral} threshold"
+      },
+      "ficha": {
+        "titulo": "Tract profile",
+        "vacia": "Choose a tract on the map to see its profile.",
+        "seccion": "Tract {codigo}",
+        "anio": "Year {anio}",
+        "cerrar": "Close the profile"
+      }
+    }
+  }
+}

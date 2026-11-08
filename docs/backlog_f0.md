@@ -103,3 +103,20 @@ Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decid
 ## Cierre de F0 (del plan)
 
 Cada fuente tiene una función de R de descarga reproducible y cada indicador, su ficha completa en castellano e inglés.
+
+## F2 · hacia la v0.1 (8-nov-2026)
+
+Cinco tareas en paralelo, integradas el 8-nov-2026 (plan v0.20):
+
+1. **SERPAVI (8 y 9) · HECHA.** De punta a punta, 2015–2024, de la sección a la comunidad. Compuerta: los testigos de las secciones suman exactamente los de las provincias y los de España. Secciones con mediana de vivienda colectiva: de 21.627 a 26.137; 4.849 con secreto en 2024. Pendiente: tipología del mapa (pregunta abierta 12) y errores de las hojas de municipios y distritos (13).
+2. **Censo 2021 (18) y viviendas turísticas (19) · HECHA.** 18: 34.970 secciones con dato y 1.363 en secreto; España, 16,10 %. 19: seis periodos, de febrero de 2024 a mayo de 2026; los anteriores usan las secciones del Censo 2011 (pregunta abierta 14).
+3. **Jerarquía y mapa base (cierra F1) · HECHA.** Jerarquía en `geo/` con su compuerta y PMTiles del seccionado de 2021 (35,2 MB) con GDAL desde R, visible en local con `geo/visor/`. CP: no hay polígonos oficiales reutilizables; la tabla sección ↔ CP sale del callejero (pregunta abierta 16).
+4. **Web: pila y esqueleto · HECHA.** HTML y módulos JS sin compilar; funciona en local con `node web/servir.mjs` y una muestra de valores inventados. Pendiente: formato de datos (pregunta abierta 17).
+5. **Nota metodológica · PRIMERA VERSIÓN.** `docs/metodologia.md`, con cifras trazables. Pendiente: SERPAVI, Censo, viviendas turísticas y derivados en la nota; tartera en el pipeline; versión inglesa.
+
+**Siguiente:**
+- derivados 14 (esfuerzo), 15 (barrera) y 21 (sueldo necesario), con la regla de estado (pregunta abierta 15);
+- `exportar_web()`: manifiesto, índices, nombres, un fichero por indicador, nivel y año, y perfiles;
+- «Tu sueldo», comparador y publicación en Pages.
+
+**Hecho cuando** (v0.1, plan §7): la validación pasa, la web se publica en Pages y hay una nota metodológica.

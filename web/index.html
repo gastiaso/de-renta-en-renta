@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>De renta en renta</title>
+  <meta name="description" content="Vivienda y sueldos, sección a sección">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css">
+  <link rel="stylesheet" href="estilo/tokens.css">
+  <link rel="stylesheet" href="estilo/sitio.css">
+  <!-- Nombres de las librerías: el código importa «maplibre-gl», como lo haría con un empaquetador. -->
+  <script type="importmap">
+    { "imports": { "maplibre-gl": "./vendor/maplibre-gl/maplibre-gl.mjs" } }
+  </script>
+  <script src="vendor/pmtiles/pmtiles.js" defer></script>
+  <script type="module" src="js/principal.js"></script>
+</head>
+<body>
+  <div class="tablero">
+    <header class="cabecera">
+      <div class="marca">
+        <h1 class="marca-titulo" data-i18n="sitio.titulo">De renta en renta</h1>
+        <p class="marca-subtitulo" data-i18n="sitio.subtitulo">Vivienda y sueldos, sección a sección</p>
+      </div>
+      <nav class="navegacion" data-i18n-aria="interfaz.navegacion">
+        <a href="./" aria-current="page" data-i18n="nav.mapa">Mapa</a>
+        <span aria-disabled="true" data-i18n="nav.tu_sueldo" data-i18n-title="interfaz.proximamente">Tu sueldo</span>
+        <span aria-disabled="true" data-i18n="nav.sobrecarga" data-i18n-title="interfaz.proximamente">Sobrecarga</span>
+        <span aria-disabled="true" data-i18n="nav.datos" data-i18n-title="interfaz.proximamente">Datos</span>
+        <span aria-disabled="true" data-i18n="nav.metodo" data-i18n-title="interfaz.proximamente">Método</span>
+      </nav>
+      <div class="idioma" role="group" data-i18n-aria="interfaz.idioma">
+        <button type="button" data-idioma="es" aria-pressed="true" lang="es">ES</button>
+        <button type="button" data-idioma="en" aria-pressed="false" lang="en">EN</button>
+      </div>
+    </header>
+
+    <main class="explorador">
+      <section class="mapa-marco" data-i18n-aria="interfaz.mapa.region">
+        <div id="mapa" class="mapa"></div>
+        <p id="aviso-ejemplo" class="etiqueta-ejemplo aviso-mapa" hidden
+           data-i18n="avisos.ejemplo" data-i18n-title="interfaz.ejemplo_nota">Datos de ejemplo</p>
+        <div id="leyenda" class="leyenda" hidden></div>
+      </section>
+      <aside id="ficha" class="ficha" aria-live="polite"></aside>
+    </main>
+  </div>
+  <noscript>
+    <p class="sin-js">Esta web necesita JavaScript para dibujar el mapa. · This site needs JavaScript to draw the map.</p>
+  </noscript>
+</body>
+</html>

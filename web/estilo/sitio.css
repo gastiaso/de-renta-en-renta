@@ -1,0 +1,213 @@
+/* De renta en renta · maquetación de la web. Los colores, las tipografías y las formas salen de
+   tokens.css (generado desde diseno/tokens.json): aquí solo se usan sus variables. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; }
+
+body {
+  padding: 12px;
+  background: var(--color-mesa);            /* tapete exterior */
+  color: var(--color-tinta);
+  font-family: var(--fuente-carta);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+:focus-visible { outline: 3px solid var(--color-rojo); outline-offset: 2px; }
+
+/* Tablero: la página entera, con su marco. */
+.tablero {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-crema);
+  border: var(--marco-pagina);
+  border-radius: var(--radio-tarjeta);
+  overflow: hidden;
+}
+
+/* Cabecera */
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  padding: 10px 16px;
+  border-bottom: var(--borde);
+}
+.marca-titulo {
+  margin: 0;
+  font-family: var(--fuente-tablero);
+  font-weight: 800;
+  font-size: 1.6rem;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-rojo);
+}
+.marca-subtitulo { margin: 0; color: var(--color-tenue); font-size: 0.95rem; }
+
+.navegacion { display: flex; flex-wrap: wrap; gap: 4px; font-family: var(--fuente-tablero); font-weight: 500; }
+.navegacion a, .navegacion span {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--objetivo-tactil);
+  padding: 0 12px;
+  border-radius: var(--radio-control);
+  color: var(--color-tinta);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.navegacion a:hover { background: var(--color-placa); }
+.navegacion [aria-current="page"] { background: var(--color-tinta); color: var(--color-crema); }
+.navegacion [aria-disabled="true"] { color: var(--color-tenue); cursor: not-allowed; }
+
+.idioma {
+  display: inline-flex;
+  margin-left: auto;
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  overflow: hidden;
+}
+.idioma button {
+  min-width: var(--objetivo-tactil);
+  min-height: 40px;
+  border: 0;
+  background: var(--color-placa);
+  color: var(--color-tinta);
+  font: 600 0.95rem var(--fuente-tablero);
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+.idioma button + button { border-left: var(--borde); }
+.idioma button[aria-pressed="true"] { background: var(--color-rojo); color: #fff; }   /* 5,95:1 */
+
+/* Explorador: mapa y ficha */
+.explorador {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 16px;
+  padding: 16px;
+}
+
+.mapa-marco {
+  position: relative;
+  min-height: 320px;
+  border: var(--borde);
+  border-radius: var(--radio-mapa);
+  overflow: hidden;
+  background: var(--color-mar);
+}
+.mapa { position: absolute; inset: 0; }
+
+/* Etiqueta «Datos de ejemplo» (regla 9 de la guía): siempre visible con valores inventados. */
+.etiqueta-ejemplo {
+  display: inline-block;
+  margin: 0;
+  padding: 3px 10px;
+  background: var(--color-aviso);
+  color: var(--color-tinta);
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  font: 600 0.85rem var(--fuente-tablero);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.etiqueta-ejemplo[hidden] { display: none; }
+.aviso-mapa { position: absolute; top: 10px; left: 10px; z-index: 2; box-shadow: var(--sombra-ficha); }
+
+/* Leyenda: regla de tramos */
+.leyenda {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  width: min(300px, calc(100% - 20px));
+  padding: 8px 12px 10px;
+  background: var(--color-placa);
+  border: var(--borde);
+  border-radius: var(--radio-tarjeta);
+  font-size: 0.85rem;
+}
+.leyenda-titulo { margin: 0; font: 600 0.95rem/1.2 var(--fuente-tablero); }
+.leyenda-unidad { margin: 0 0 6px; color: var(--color-tenue); }
+.leyenda-regla { display: grid; grid-template-columns: repeat(5, 1fr); height: 14px; border: 1px solid var(--color-tinta); }
+.leyenda-tramo { display: block; }
+.leyenda-tramo.tramo-1, .leyenda-tramo.tramo-2 { outline: 0; }   /* el borde de la regla hace de contorno */
+.leyenda-cortes { position: relative; height: 1.3em; font-family: var(--fuente-tablero); font-variant-numeric: tabular-nums; }
+.leyenda-corte { position: absolute; top: 2px; transform: translateX(-50%); white-space: nowrap; }
+.leyenda-claves { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 0; padding: 0; list-style: none; }
+.leyenda-claves li { display: inline-flex; align-items: center; gap: 6px; }
+.leyenda-muestra { display: inline-block; width: 14px; height: 14px; }
+.leyenda-sin-dato { background: var(--color-fuera); border: 1px solid var(--color-tenue); }
+.leyenda-supuestos { margin: 6px 0 0; color: var(--color-tenue); }
+
+/* Ficha de sección: escritura */
+.ficha {
+  overflow: auto;
+  background: var(--color-placa);
+  border: var(--borde);
+  border-radius: var(--radio-tarjeta);
+}
+.ficha-cabecera {
+  position: relative;
+  padding: 14px 48px 10px;
+  border-bottom: 4px double var(--color-tinta);
+  text-align: center;
+}
+.ficha-titulo { margin: 0; font: 400 1.25rem var(--fuente-escritura); letter-spacing: 0.06em; }
+.ficha-cerrar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: var(--objetivo-tactil);
+  height: var(--objetivo-tactil);
+  border: 0;
+  background: none;
+  color: var(--color-tinta);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.ficha-vacia, .ficha-error { margin: 0; padding: 16px; color: var(--color-tenue); }
+.ficha-error { color: var(--color-rojo); }
+.ficha-codigo {
+  margin: 0;
+  padding: 10px 16px 0;
+  font: 500 1.05rem var(--fuente-tablero);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+.ficha-territorios { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 10px 16px; }
+.ficha-territorios dt { color: var(--color-tenue); }
+.ficha-territorios dd { margin: 0; }
+.ficha-valor { margin: 0 16px 16px; padding-top: 10px; border-top: 1px solid var(--color-tinta); }
+.ficha-indicador { margin: 0 0 4px; font: 600 1rem/1.25 var(--fuente-tablero); }
+.ficha-cifra { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; margin: 0; }
+.ficha-numero { font: 700 2rem var(--fuente-tablero); font-variant-numeric: tabular-nums; }
+.ficha-unidad { color: var(--color-tenue); }
+.ficha-estado { margin: 4px 0 8px; color: var(--color-tenue); }
+
+/* Controles de MapLibre con las formas del tablero */
+.maplibregl-ctrl-group { border: var(--borde); border-radius: var(--radio-control); box-shadow: none; }
+.maplibregl-ctrl-attrib, .maplibregl-ctrl-scale { font-family: var(--fuente-carta); }
+
+.sin-js { margin: 16px; padding: 12px; background: var(--color-placa); border: var(--borde); }
+
+/* Móvil: mapa arriba, ficha debajo */
+@media (max-width: 760px) {
+  body { padding: 0; }
+  .tablero { height: auto; min-height: 100%; border-width: 0; border-radius: 0; }
+  .cabecera { padding: 8px 12px; }
+  .marca-titulo { font-size: 1.3rem; }
+  .navegacion { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; }
+  .explorador { grid-template-columns: 1fr; padding: 12px; gap: 12px; }
+  .mapa-marco { height: 62vh; }
+  .leyenda { width: min(240px, calc(100% - 90px)); padding: 6px 8px 8px; font-size: 0.75rem; }
+  .leyenda-titulo { font-size: 0.8rem; }
+  .leyenda-unidad { margin-bottom: 4px; }
+}

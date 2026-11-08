@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.19 · 8 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.20 · 8 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.20:** arranca F2. Entran en el pipeline los indicadores 8 y 9 (SERPAVI, 2015–2024), 18 (Censo 2021) y 19 (viviendas turísticas, desde febrero de 2024), todos en la tabla larga (§2.4, §5, §6.4, §6.5). Las viviendas turísticas no están en el seccionado de 2021 en todos sus periodos, como se anotó en la v0.9 (§6.3). Jerarquía territorial y mapa base en PMTiles, con GDAL desde R, sin tippecanoe (§6.2, §6.6, §7). Web: pila elegida (HTML y módulos JS sin compilar) y esqueleto en `web/` (§6.1, §6.6). Primera versión de la nota metodológica (`docs/metodologia.md`) y prueba de un año en toda España (§6.3). Códigos postales: sin polígonos oficiales reutilizables (§6.3). Preguntas abiertas 12–17 (§11).
 
 **Cambios en la v0.19:** licencia. Las fuentes se tratan como datos abiertos y los datos derivados, los textos y el inventario pasan de CC BY 4.0 a CC BY-SA 4.0 (decisión del autor, 8-nov-2026; §6.1). Las tablas de paso combinadas con el Catastro entran en git (§6.3).
 
@@ -103,7 +105,7 @@ Veinte indicadores, a nivel de sección censal, por una sola persona, retrasan m
 Aceptado, pero con su coste explícito:
 
 - **El seccionado cambia cada año** (altas, bajas y correcciones de límites, consolidadas a 1 de enero). Comparar en el tiempo obliga a construir una **geografía constante** con tablas de paso (§6.3). Es la pieza más arriesgada del proyecto y va en la Fase 1, antes que cualquier indicador.
-- **Cobertura y secreto estadístico.** El SERPAVI publica en 2024 la mediana del alquiler de vivienda colectiva en 26.137 de 36.293 secciones (28.735 si se cuenta también la unifamiliar); por debajo de 10 testigos solo da el recuento. El ADRH no publica las que no superan los umbrales de población. El mapa tendrá huecos, y hay que diseñarlos como información («sin dato por secreto estadístico»), no como error.
+- **Cobertura y secreto estadístico.** El SERPAVI publica en 2024 la mediana del alquiler de vivienda colectiva en 26.137 de las 36.293 secciones de su base (el seccionado de 2021 tiene 36.333) y 28.735 si se cuenta también la unifamiliar; en 2015, 21.627 y 23.497. Por secreto quedan sin dato 5.995 secciones en 2015 y 4.849 en 2024 en vivienda colectiva, y unas 14.500 al año en unifamiliar; en 2024, la cobertura de la colectiva va del 19 % de las secciones (Soria) al 95 % (Madrid y Gipuzkoa); por debajo de 10 testigos solo da el recuento. El ADRH no publica las que no superan los umbrales de población. El mapa tendrá huecos, y hay que diseñarlos como información («sin dato por secreto estadístico»), no como error.
 - **Mezcla de escalas.** Varios indicadores no existen a nivel de sección (salarios por provincia, compraventa por código postal). Principio: **cada indicador se muestra en su nivel nativo; nunca se desagrega hacia abajo** (§4).
 
 ### 2.5 La nostalgia de la identidad tiene trampa
@@ -246,7 +248,7 @@ Las marcas ★ son el núcleo de la v0.1. «A confirmar» indica que hay que ver
 | # | Indicador | Fuente | Nivel nativo | Serie | Notas |
 |---|---|---|---|---|---|
 | 18 ★ | Hogares en alquiler (%) | INE, Censo 2021 (y 2011) | SC | Dos cortes | Fotografía, no serie |
-| 19 ★ | Viviendas de uso turístico (% sobre viviendas) | INE, estadística experimental | SC | 2020–, semestral | Presión del uso turístico |
+| 19 ★ | Viviendas de uso turístico (% sobre viviendas) | INE, estadística experimental | SC (seccionado de 2024 desde febrero de 2024) | 2024–, semestral | Presión del uso turístico. Denominador: viviendas del Censo 2021. 2020–2023, sin tabla de paso desde el seccionado de 2011 (pregunta abierta 14) |
 | 20 | Zona tensionada declarada | BOE / MIVAU | Municipio (o el ámbito que fije la declaración) | 2024– | Capa de política pública |
 
 ### E. Sobrecarga y acceso (encuesta, otra escala)
@@ -272,7 +274,7 @@ inventario/   fuentes.csv, indicadores.csv (fichas), rupturas.csv, referencias_v
 geo/          seccionado anual, tablas de paso, geometría de referencia
 R/            funciones por fuente (descargar_*, leer_*, armonizar_*) y comunes (geo, validar, exportar)
 _targets.R    pipeline completo
-web/          HTML + JS (d3, MapLibre, PMTiles; dependencias autoalojadas), i18n/
+web/          HTML + módulos JS sin compilar (MapLibre y PMTiles en vendor/), i18n/, datos/ (manifiesto y valores), teselas/ (PMTiles, fuera de git)
 pruebas/      testthat + prueba de la web con chromote
 ```
 
@@ -284,15 +286,15 @@ pruebas/      testthat + prueba de la web con chromote
 | Descargas | `httr2`, `ineapir` (paquete oficial del INE, a confirmar), `readxl` | Una función por fuente |
 | Geografía | `sf`, `mapSpain`, `rmapshaper` | Simplificación por nivel de zoom |
 | Datos | `arrow` (Parquet), opcional `duckdb` | Tabla larga única |
-| Teselas | `tippecanoe` (línea de comandos) en GitHub Actions | Única pieza que no es R; no la tocas a mano |
+| Teselas | GDAL (controladores PMTiles y MVT, el que trae `sf`) dentro de `targets` | Sin instalar nada (8-nov-2026); simplificación por zoom en unidades de la tesela. tippecanoe (WSL o Actions) queda como alternativa si hicieran falta teselas de zoom bajo más ligeras |
 | Pruebas de la web y vista previa | `chromote` / `webshot2` | Sustituye a Playwright (Python) de *barómetros* |
 
 ### 6.3 Geografía constante (la pieza crítica)
 
 - **Insumos:** el seccionado anual del INE (shapefile a 1 de enero, 2015 → último) y el callejero del censo electoral, cuyas variaciones entre fechas publica el INE desde 2011.
 - **Referencia: el seccionado del Censo 2021** (decidido el 6-nov-2026). El mapa se dibuja con sus límites.
-- **Por qué 2021 y no el último:** el SERPAVI publica toda su serie 2011–2024 en ese seccionado (según sus metadatos, agrega los inmuebles que constan a la vez en la fuente tributaria y en el Catastro), y el Censo 2021 (indicador 18) y las viviendas turísticas del INE (indicador 19, todos sus periodos) también. Así, el alquiler, el Censo y las viviendas turísticas no necesitan tabla de paso, y el núcleo de la v0.1 cumple la regla del nivel nativo sin excepciones. Con el último habría que repartir las medianas del SERPAVI en las secciones divididas después de 2021.
-- **Coste:** las secciones que han cambiado desde 2021 se ven con sus límites antiguos. Por códigos, de 2021 a 2025 conservan el suyo 35.955 de 36.293 (99,1 %); desaparecen 338 y aparecen 599, con Madrid a la cabeza. Con la geometría, en la provincia de Madrid (prueba de F1, 6-nov-2026): de 2021 a 2025 desaparecen 48 códigos y otras 204 secciones conservan el código pero cambian más de un 1 % de su superficie (162, más de un 25 %), es decir, 252 de 4.417 secciones (5,7 %). Entre 2015 y 2021 son 140 las que conservan el código y cambian de límites. El coste real es mayor que el estimado por códigos (1–3 %) y se concentra en los barrios en crecimiento.
+- **Por qué 2021 y no el último:** el SERPAVI publica toda su serie 2011–2024 en ese seccionado (según sus metadatos, agrega los inmuebles que constan a la vez en la fuente tributaria y en el Catastro), y el Censo 2021 (indicador 18) también: ninguno de los dos necesita tabla de paso. Las viviendas turísticas del INE (indicador 19), sí: hasta febrero de 2023 usan las secciones del Censo 2011, en agosto de 2023 una mezcla y desde febrero de 2024 el seccionado de 2024 (comprobado código a código el 8-nov-2026; la v0.9 decía que todos sus periodos estaban en el de 2021). Entran desde febrero de 2024 con la tabla de paso 2024 → 2021. En las secciones de 2021 que reciben una sola sección de 2024 entera se copia el porcentaje del INE; en las demás se rehace con las viviendas turísticas reproyectadas y las viviendas del Censo 2021 de la sección, el mismo denominador que usa el INE. Con el último habría que repartir las medianas del SERPAVI en las secciones divididas después de 2021.
+- **Coste:** las secciones que han cambiado desde 2021 se ven con sus límites antiguos. Por códigos, de 2021 a 2025 conservan el suyo 35.995 de 36.333 (99,1 %); desaparecen 338 y aparecen 559 (`secciones_2021`, `secciones_2025`; corregido el 8-nov-2026), con Madrid a la cabeza. Con la geometría, en la provincia de Madrid (prueba de F1, 6-nov-2026): de 2021 a 2025 desaparecen 48 códigos y otras 204 secciones conservan el código pero cambian más de un 1 % de su superficie (162, más de un 25 %), es decir, 252 de 4.417 secciones (5,7 %). Entre 2015 y 2021 son 140 las que conservan el código y cambian de límites. El coste real es mayor que el estimado por códigos (1–3 %) y se concentra en los barrios en crecimiento.
 - **Tablas de paso** sección del año *t* → sección de 2021, con pesos de dos fuentes alternativas:
   - (a) tramos del callejero (portales asignados a cada sección);
   - (b) edificios residenciales del Catastro (INSPIRE) ponderados por número de viviendas.
@@ -357,6 +359,8 @@ pruebas/      testthat + prueba de la web con chromote
         - Gipuzkoa: solo atribución en el WFS, CC BY-SA 4.0 en los metadatos y en el feed.
         - Se tratan como datos abiertos (decisión del autor, 8-nov-2026): las tablas combinadas van en git y los derivados, en CC BY-SA 4.0, que cumple también la condición de compartir igual de Gipuzkoa.
     - **Licencias:** cerradas el 8-nov-2026 por decisión del autor (datos abiertos; derivados en CC BY-SA 4.0).
+    - **Prueba de un año en toda España** (8-nov-2026; objetivo `comparacion_vias`, 1.501 municipios con Catastro). Con el ADRH 2021 (seccionado de 2022), en las 6.180 secciones que el callejero reparte: dentro de ±5 %, del 61,2 al 94,1 %; 90 % central de la razón, de 0,72–1,52 a 0,96–1,04; razón fuera de [0,8; 1,25], de 1.003 a 37. En las 21.265 que caen enteras, 96,0 % dentro de ±5 %. Con la aplicación antigua (ADRH 2019, seccionado de 2020; 6.280 secciones): del 58,3 al 94,8 % y de 1.443 a 44.
+- **Códigos postales** (revisado el 8-nov-2026): no son una unidad del INE y no hay polígonos oficiales reutilizables. La capa de CartoCiudad es de Correos y, por el convenio CNIG–Correos (BOE-A-2023-11522), solo se visualiza; Correos la vende con una licencia que no admite sublicencias. La correspondencia sección ↔ CP sale del callejero del INE (campo CPOS de los tramos): en enero de 2021, el 80,7 % de las secciones tiene un solo CP (11.051 CP; 2.262 cruzan municipios). Geometría, si hace falta: aproximación propia desde los portales de CartoCiudad (CC BY 4.0), presentada como tal. Solo para los indicadores 11 y 16 (F4).
 - **Población por sección para las pruebas:** además del ADRH, el Censo anual de población por secciones (2021–2025, con sexo y edad) y el Padrón continuo por secciones (2004–2022).
 - **Vía (a) en la práctica** (prueba de Madrid):
   - cada tabla compara tramos de la misma aplicación del INE: el callejero de enero de 2021 se publicó con la antigua y con la nueva, así que 2015 → 2021 usa la antigua en los dos extremos y 2025 → 2021, la nueva;
@@ -396,6 +400,9 @@ geo_id | nivel (sc, distrito, municipio, cp, provincia, ccaa) | anio | indicador
 
 Junto a ella, `metadatos.json` con fichas bilingües, rupturas, supuestos por defecto y fecha de cada fuente.
 
+- **Indicadores 8 y 9** (SERPAVI, desde el 8-nov-2026): la mediana va en el corte `tipologia`, con los grupos `VC` (vivienda colectiva) y `VU` (unifamiliar o rural); los cuartiles, en los cortes `tipologia_p25` y `tipologia_p75`, solo donde hay dato. No hay filas `total`: el SERPAVI no publica una mediana conjunta de las dos tipologías. Estados: `dato` (mediana publicada), `secreto` (de 1 a 9 testigos) y `ausente` (sin testigos, territorios forales antes de su entrada, y municipios o distritos que no cuadran con sus secciones). Niveles: sección, distrito, municipio, provincia y comunidad; de España solo se publica el recuento. Valores con la precisión de la fuente.
+- **Indicador 19** (viviendas turísticas): el periodo semestral va como mes de referencia, con `anio` del mes, `corte = mes` y `grupo` `M02`, `M05`, `M08` o `M11` (el calendario cambió en 2024, que tiene tres periodos). Sin filas `total`: la web toma el último mes.
+
 ### 6.5 Validación (compuerta de publicación)
 
 - **Reproducción:** agregados calculados frente a tablas publicadas. Por ejemplo, municipios del ADRH frente a sus SC cuando la agregación es válida; totales provinciales del SERPAVI; salarios provinciales de la AEAT.
@@ -408,9 +415,16 @@ Junto a ella, `metadatos.json` con fichas bilingües, rupturas, supuestos por de
 - **Mochila:** la estimación provincial agregada a comunidad cae dentro del intervalo de la mediana neta de la ECV.
 - **Web:** la página recalcula una muestra de cifras y debe coincidir con R. Si algo falla, no se publica.
 
+- **SERPAVI** (desde el 8-nov-2026): los testigos de las secciones suman exactamente los de cada provincia y los de España (en 2022 y 2023, España no incluye Gipuzkoa, porque el País Vasco aún no tiene cifra de comunidad); secciones, provincias y comunidades cumplen la regla del secreto y el orden de los cuartiles. Municipios y distritos se contrastan con sus secciones: los que no cuadran (164 cifras de territorio, año y tipología, casi todas de Navarra en 2022–2024) van como `ausente` y salen en una alerta (`serpavi_escalas_detalle`).
+- **Censo 2021** (18): España, 16,10 % de hogares en alquiler en las secciones y en la tabla 59523; provincias a 0,055 puntos como mucho (la tabla solo cuenta viviendas convencionales). Las secciones en secreto (1.363) se tratan como un intervalo.
+- **Viviendas turísticas** (19): las secciones suman exactamente los totales provinciales publicados en los 13 periodos, también después de la tabla de paso a 2021; el denominador del INE (viviendas del Censo 2021) se reproduce en las secciones 1:1.
+- **Jerarquía y mapa base**: cada sección en un solo distrito, municipio, provincia y comunidad; cada territorio suma sus partes; ningún territorio sin nombre; las 36.333 secciones en el zoom máximo del PMTiles.
+
 ### 6.6 Web
 
 - **Navegación:** mapa por SC (MapLibre + PMTiles con la geometría de referencia), ficha de sección y de municipio, comparador entre territorios, «Tu sueldo» y la sección de sobrecarga.
+- **Pila (decisión del autor, 8-nov-2026):** HTML y módulos JavaScript nativos, sin compilar ni npm: lo que se edita es lo que corre. MapLibre GL JS 6.15.0 y PMTiles 4.5.0 autoalojados en `web/vendor/` (BSD-3), importados por su nombre con un *import map*, de modo que pasar a un empaquetador no obliga a reescribir. En local, `node web/servir.mjs` (servidor propio, sin paquetes, con los rangos HTTP que pide el PMTiles). Descartadas Vite (herramientas de npm que mantener) y SvelteKit (otro marco que aprender).
+- **Manifiesto de datos** (`web/datos/manifiesto.json`): mapa base, índices de territorios, indicadores con sus años, mapas con su indicador base, su fórmula y sus cortes, y supuestos por defecto. La web lo lee al arrancar; mientras no existe, usa una muestra con valores inventados y la etiqueta «Datos de ejemplo».
 - **Tu sueldo:**
   - por defecto, el mapa muestra el sueldo neto necesario para 50 m² (indicador 21), con las fichas de una persona como marcas sobre la regla de la leyenda y la llave como un tramo, porque su renta cambia por sección;
   - al escribir un sueldo o elegir ficha, pasa a «¿te llega?»: tramos hasta el 30 %, 30–40 % y más del 40 %, y una frase resumen («te cabe en el X % de las secciones con dato»);
@@ -421,9 +435,9 @@ Junto a ella, `metadatos.json` con fichas bilingües, rupturas, supuestos por de
   - **Huecos del mapa regional** (`ilc_lvho07_r`, comprobado el 6-nov-2026): 204 regiones NUTS 2 de 26 países en 2025, de 2021 a 2025. Francia y Austria solo publican el dato del país y Países Bajos, solo NUTS 1; Dinamarca entra en 2025. Propuesta: pintar en esos países el dato disponible (país o NUTS 1) con una trama y una nota fija.
   - **Versión NUTS de cada año:** la serie mezcla NUTS 2021 (2021–2023) y NUTS 2024 (desde 2024; cambian las regiones de Portugal). La geometría se elige por año.
   - **Licencia de las geometrías:** las de GISCO (NUTS) son de uso no comercial y exigen el aviso «© EuroGeographics para los límites administrativos» en el mapa. No entran en la licencia CC BY-SA 4.0 de los datos del atlas (`LICENCIA_DATOS.md`).
-- **Datos:** binarios por indicador y año, que se cargan bajo demanda; sin servidor ni analítica.
+- **Datos:** un fichero por indicador, nivel y año, cargado bajo demanda, con el valor × 10 en enteros (un decimal exacto) y el estado de cada territorio, en el orden del índice; binario o JSON, por decidir (pregunta abierta 17). Los valores no van en las teselas: se guardan como estado de cada elemento del mapa, y el color sale de una expresión de estilo. Sin servidor ni analítica, y sin teselas de terceros.
 - **Uso:** URL con el estado de la vista, ES/EN, modo daltónico, exportación CSV y PNG, descarga del Parquet.
-- **Límites a vigilar:** 100 MB por fichero en GitHub y 1 GB por sitio de Pages. Una sola geometría de referencia mantiene el PMTiles bajo control.
+- **Límites a vigilar:** 100 MB por fichero en GitHub y 1 GB por sitio de Pages. Una sola geometría de referencia mantiene el PMTiles bajo control. Mapa base del seccionado de 2021 (8-nov-2026): 35,2 MB, con cuatro capas: comunidades (zoom 0–12), provincias (3–12), municipios (5–12) y secciones (7–12); por encima del 12, MapLibre amplía las teselas. El PMTiles no entra en la historia de git: se regenera con `targets` (pregunta abierta 16). Datos de la v0.1 para la web, estimados: unos 16 MB más el PMTiles.
 
 ---
 
@@ -450,6 +464,11 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
   - geometría de CP;
   - PMTiles de referencia.
 - **Hecho cuando:** pasa la prueba de cierre poblacional y el mapa base se ve en local.
+- **Avance (8-nov-2026):**
+  - Tablas de paso de los nueve seccionados en toda España, con el callejero y los catastros estatal y forales (§6.3).
+  - Jerarquía: `geo/jerarquia_2021.csv` (36.333 secciones) y `geo/territorios_2021.csv` (nombres, territorio superior y número de secciones de 10.479 distritos, 8.131 municipios, 52 provincias y 19 comunidades), con compuerta (`jerarquia_unica`, `jerarquia_sumas`, `jerarquia_nombres`).
+  - PMTiles de referencia, con GDAL desde R (unos 4,5 minutos): `geo/referencia/mapa_base_2021.pmtiles` (35,2 MB, fuera de git), con la compuerta `mapa_base_secciones`, visible en local con `geo/visor/`.
+  - Pendiente: geometría de CP (§6.3; solo para F4).
 
 ### F1b · Sobrecarga y Europa → v0.0 pública — M (en paralelo a F1)
 
@@ -477,6 +496,11 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
   - web con mapa, fichas, comparador y descargas, bilingüe.
 - **Hecho cuando:** la validación pasa, la web se publica en Pages y hay una nota metodológica.
 - **Nota:** el mapa por defecto (21) no necesita salarios; el indicador 15 y la mochila sí necesitan el salario provincial (7), que se adelanta en versión mínima.
+- **Avance (8-nov-2026):**
+  - Indicadores 8 y 9 (SERPAVI, 2015–2024), 18 (Censo 2021) y 19 (viviendas turísticas, febrero de 2024 – mayo de 2026) en la tabla larga, con su compuerta. Los 1–3 ya estaban.
+  - Web: pila elegida y esqueleto en local (cabecera, ES/EN, mapa MapLibre, leyenda por tramos, ficha de sección y estado de la vista en la URL), con una muestra de valores inventados y con el PMTiles del mapa base.
+  - Nota metodológica en castellano, primera versión (`docs/metodologia.md`).
+  - Falta: derivados 14, 15 y 21; exportación para la web (`exportar_web()`); «Tu sueldo»; comparador; publicación en Pages; nota en inglés.
 
 ### F3 · Salarios, fichas completas y supuestos → v0.2 — M
 
@@ -653,6 +677,13 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 9. **Intervalos de confianza de la sobrecarga.** Cerrada el 7-nov-2026: sin intervalos. Los microdatos públicos de la ECV no traen estratos ni unidades primarias de muestreo, así que no se puede calcular el error de diseño, y la aproximación con los coeficientes de variación de otro indicador (la tasa AROPE) se descarta. Cada cifra lleva el número de observaciones y la marca de fiabilidad de EU-SILC.
 10. **Desgloses en la tabla larga.** Cerrada el 7-nov-2026: dos columnas nuevas, `corte` y `grupo` (`total` en las dos por defecto), para que la sobrecarga por tenencia o edad viva en la misma tabla (§6.4).
 11. **Diferencia del ADRH entre secciones y municipio.** Cerrada el 7-nov-2026: alerta (`adrh_suma_secciones`), no bloqueo. Es un fallo de la fuente que el atlas no puede corregir; se documenta en la ficha.
+
+12. **Tipología del mapa de alquiler (indicadores 8, 9, 14, 15 y 21).** El SERPAVI no publica una mediana conjunta de vivienda colectiva y unifamiliar. Propuesta: vivienda colectiva por defecto, que reúne el 89 % de los testigos en 2024 (2,27 millones frente a 0,28), con la unifamiliar como opción y sin mezclar las dos en un mismo mapa; los derivados, con la colectiva.
+13. **Errores de las hojas de municipios y distritos del SERPAVI.** En Navarra 2022, la mediana y el P25 están cruzados en 82 municipios y los distritos, desplazados; faltan recuentos en 2023–2024 y hay casos sueltos en otras provincias. Mientras tanto van como `ausente` y las secciones conservan su dato. ¿Se comunican al MIVAU?
+14. **Viviendas turísticas antes de 2024 y Censo 2011.** Los siete periodos de agosto de 2020 a agosto de 2023 están en el seccionado del Censo 2011 (agosto de 2023, mezclado), como el Censo 2011 del indicador 18. Opciones: (a) tabla de paso 2011 → 2021 (callejero y seccionado de 2011, más la vía b); (b) dejar el 19 desde febrero de 2024 y el 18 solo con 2021; (c) para esos años, el nivel municipal del INE (tablas 39363 y 39366). Propuesta: (b) para la v0.1 y (a) en F6, con el histórico.
+15. **Estado de los derivados (14, 15 y 21).** Propuesta: el peor de sus términos, en el orden `dato` < `estimado` < `secreto` < `ausente`.
+16. **Mapa base.** Simplificación de 4 unidades de tesela (35,2 MB) frente a 1 (44,4 MB); publicación del PMTiles desde un *release* del repositorio (propuesta) o regenerándolo en Actions; códigos postales: tabla sección ↔ CP del callejero y, en F4, los portales de CartoCiudad (descarga por preguntar).
+17. **Datos de la web.** Binario (Int32 × 10 y un byte de estado; 177 KB por indicador y año de sección) o JSON de enteros (174–281 KB; comprimido pesa lo mismo, y GitHub Pages comprime JSON pero probablemente no binarios). Propuesta: JSON. Series de la ficha: un `fichas/<municipio>.json` con las series de sus secciones (Madrid, unos 350 KB comprimido).
 
 **Por verificar en F0** (no son decisiones, son comprobaciones), hechas el 6-nov-2026:
 - cortes de edad de la AEAT (<18, 18–25, 26–35, 36–45, 46–55, 56–65, >65) y módulo de año completo (desde 2019; ver §3.1);

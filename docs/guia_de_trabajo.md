@@ -5,12 +5,13 @@ Atlas web de vivienda y salarios por sección censal, con fichas de perfil («pa
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
 2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.19: fuente de verdad de las decisiones).
+3. `docs/plan_integracion_atlas.md` (plan v0.20: fuente de verdad de las decisiones).
 
 ## Estado (8 de noviembre de 2026)
 
 - Fase F0. Sin datos publicados ni web.
 - Hechas las tareas 0 (entorno y git), 1 (SERPAVI por sección censal), 3 y 4 (comprobaciones e inventario de fuentes), 5 (sobrecarga con la ECV, compuerta superada) y 6 (geografía constante: probada en Madrid y extendida a toda España, con los catastros forales de País Vasco y Navarra). Detalle en el backlog.
+- F2 en marcha (8-nov-2026): indicadores 1–3, 8, 9, 18 y 19 en la tabla larga; jerarquía y mapa base en PMTiles; esqueleto de la web y primera versión de la nota metodológica (`docs/metodologia.md`). Detalle en el backlog, al final.
 
 ## Forma de trabajo
 
@@ -43,7 +44,7 @@ F0 → en paralelo **F1b** (sobrecarga y Europa: publicable pronto, no depende d
 - **Códigos territoriales** como texto con ceros a la izquierda. Sección censal: 10 dígitos (provincia 2, municipio 3, distrito 2, sección 3).
 - **Redondeo:** `as.numeric(sprintf("%.1f", x))`, no `round()` (R redondea al par en los empates y descuadra ±0,1 respecto a las cifras publicadas).
 - **Pruebas:** `testthat` en `pruebas/testthat/`. Ejecutar con `testthat::test_dir("pruebas/testthat")`.
-- **Teselas:** `tippecanoe` no funciona de forma nativa en Windows. Se generan en GitHub Actions o en WSL.
+- **Teselas:** PMTiles con GDAL desde R (`generar_pmtiles()`, en `targets`); no hace falta tippecanoe. Para verlas en local, `node geo/visor/servir.mjs`; la web, con `node web/servir.mjs`.
 - **Credenciales:** nunca en el repositorio (`.Renviron` está en `.gitignore`).
 - **Código reaprovechado** de proyectos anteriores: lleva en la cabecera la fecha de incorporación y se anota en `CHANGELOG.md`.
 
@@ -66,4 +67,4 @@ testthat::test_dir("pruebas/testthat")    # pruebas con datos inventados
 targets::tar_outdated()                   # debe salir vacío
 ```
 
-`tar_make()` se detiene si falla una comprobación de tipo `bloqueo` de `inventario/referencias_validacion.csv`; las de tipo `alerta` salen como avisos al final (hoy, con toda España: geometrías NUTS de códigos agrupados; 579 cifras municipales del ADRH a más de ±1 % de sus secciones agregadas; 160 municipios y años donde el ADRH no suma sus secciones; nueve secciones huérfanas del ADRH y seis casos de dos secciones con un defecto conocido de cobertura). Una pasada completa desde cero tarda unas tres horas y cuarto; `PROVINCIA=28` la limita a una provincia. Para ver una compuerta: `targets::tar_read(validacion_sobrecarga)` (o `validacion_f1`, `validacion_adrh`, `validacion_modulo`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`).
+`tar_make()` se detiene si falla una comprobación de tipo `bloqueo` de `inventario/referencias_validacion.csv`; las de tipo `alerta` salen como avisos al final (hoy, con toda España: geometrías NUTS de códigos agrupados; 579 cifras municipales del ADRH a más de ±1 % de sus secciones agregadas; 160 municipios y años donde el ADRH no suma sus secciones; nueve secciones huérfanas del ADRH; seis casos de dos secciones con un defecto conocido de cobertura, y 164 cifras de municipios y distritos del SERPAVI que no cuadran con sus secciones). Una pasada completa desde cero tarda unas tres horas y cuarto; `PROVINCIA=28` la limita a una provincia. Para ver una compuerta: `targets::tar_read(validacion_sobrecarga)` (o `validacion_f1`, `validacion_adrh`, `validacion_modulo`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_serpavi`, `validacion_censo2021`, `validacion_vut`, `validacion_jerarquia`, `validacion_mapa_base`). Pruebas de la web: `node --test pruebas/web/datos.test.mjs`.

@@ -218,8 +218,70 @@ bloque_renta_adrh <- list(
     tablas[order(as.integer(names(tablas)))]
   }),
   tar_target(larga_adrh, {
-    validacion_adrh   # la compuerta va antes que la armonización
+    validacion_adrh; validacion_f1   # las compuertas (renta y tablas de paso) van antes que la armonización
     armonizar_ine_adrh(renta_adrh, pesos_adrh_prueba, tablas_paso_adrh, version = version_de(fichero_adrh_renta))
+  })
+)
+
+# Indicadores 8 y 9 (SERPAVI, MIVAU): alquiler mensual y por m², mediana y cuartiles por tipología,
+# de la sección a la comunidad. Toda la serie viene en el seccionado de 2021: sin tabla de paso.
+# Fichero manual (descargar_mivau_serpavi() indica dónde bajarlo). Serie desde 2015; País Vasco y
+# Navarra desde su entrada (ruptura serpavi_forales). larga_serpavi aún no entra en tabla_larga.
+ULTIMO_ANIO_SERPAVI <- 2024L
+bloque_serpavi <- list(
+  tar_target(fichero_serpavi, descargar_mivau_serpavi(ULTIMO_ANIO_SERPAVI), format = "file"),
+  tar_target(serpavi, leer_mivau_serpavi(fichero_serpavi, desde = 2015L)),
+  tar_target(comprobaciones_serpavi, comprobar_mivau_serpavi(serpavi)),
+  tar_target(validacion_serpavi, validar_referencias(comprobaciones_serpavi, referencias)),
+  tar_target(larga_serpavi, {
+    validacion_serpavi   # la compuerta va antes que la armonización
+    armonizar_mivau_serpavi(serpavi, version = version_de(fichero_serpavi)) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  }),
+  tar_target(resumen_larga_serpavi, resumen_serpavi(larga_serpavi))
+)
+
+# Indicador 18: hogares en alquiler (%) del Censo 2021, en el seccionado de referencia (sin tabla
+# de paso). larga_censo2021 aún no entra en tabla_larga.
+bloque_censo2021 <- list(
+  tar_target(ficheros_censo2021, descargar_ine_censo2021(), format = "file"),
+  tar_target(fichero_censo2021_tenencia, descargar_ine_censo2021_tabla(TABLA_CENSO2021_TENENCIA), format = "file"),
+  tar_target(censo2021, leer_ine_censo2021(ficheros_censo2021, AMBITO)),
+  tar_target(censo2021_tenencia, leer_ine_censo2021_tenencia(fichero_censo2021_tenencia)),
+  tar_target(comprobaciones_censo2021, comprobar_ine_censo2021(censo2021, censo2021_tenencia, secciones_2021$seccion)),
+  tar_target(validacion_censo2021, validar_referencias(comprobaciones_censo2021, referencias)),
+  tar_target(larga_censo2021, {
+    validacion_censo2021   # la compuerta va antes que la armonización
+    armonizar_ine_censo2021(censo2021, version = version_de(ficheros_censo2021)) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  })
+)
+
+# Indicador 19: viviendas turísticas sobre el total de viviendas (INE, estadística experimental).
+# Se leen los 13 periodos de la tabla 5; entran los del seccionado de 2024 (PERIODOS_VUT_2024,
+# desde febrero de 2024), llevados al de 2021 con la tabla de paso combinada 2024 -> 2021 y las
+# viviendas del Censo 2021 como denominador (ruptura vut_seccionado_2024). En `corte` «mes» y en
+# `grupo`, el mes de referencia. larga_vut aún no entra en tabla_larga.
+periodos_vut <- tarchetypes::tar_map(
+  values = list(periodo = PERIODOS_VUT), names = "periodo",
+  tar_target(fichero_vut, descargar_ine_vut(periodo), format = "file"),
+  tar_target(vut_periodo, leer_ine_vut(fichero_vut, periodo, AMBITO))
+)
+bloque_vut <- list(
+  periodos_vut,
+  tarchetypes::tar_combine(ficheros_vut, periodos_vut$fichero_vut, command = c(!!!.x), format = "file"),
+  tarchetypes::tar_combine(vut, periodos_vut$vut_periodo, command = dplyr::bind_rows(!!!.x)),
+  tar_target(ficheros_vut_provincias, vapply(TABLAS_VUT_PROVINCIAS, descargar_ine_vut_provincias, ""),
+             format = "file"),
+  tar_target(vut_provincias, leer_ine_vut_provincias(ficheros_vut_provincias[1], ficheros_vut_provincias[2])),
+  tar_target(vut_2021, reproyectar_ine_vut(vut, paso_final_2024, censo2021)),
+  tar_target(comprobaciones_vut, comprobar_ine_vut(vut, vut_2021, vut_provincias, censo2021,
+                                                   unique(secciones_2024$seccion), paso_final_2024)),
+  tar_target(validacion_vut, validar_referencias(comprobaciones_vut, referencias)),
+  tar_target(larga_vut, {
+    validacion_vut   # la compuerta va antes que la armonización
+    armonizar_ine_vut(vut_2021, version = version_de(utils::tail(ficheros_vut, 1))) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
   })
 )
 
@@ -294,12 +356,40 @@ bloque_mochila <- list(
   )
 )
 
+# F1: jerarquía territorial (sección → distrito → municipio → provincia → comunidad) y mapa base
+# del seccionado de referencia (2021) en PMTiles, con GDAL (R/geo_mapa_base.R). La jerarquía va a
+# geo/ (CSV, en git); el PMTiles, a geo/referencia/ (fuera de git). Solo el mapa base:
+#   targets::tar_make(names = c(ficheros_jerarquia, fichero_mapa_base, validacion_mapa_base))
+mapa_base <- list(
+  tar_target(provincias_2021, leer_ine_seccionado_provincias(zip_seccionado_2021)),
+  tar_target(jerarquia_2021, geo_jerarquia(secciones_2021, provincias_2021)),
+  tar_target(territorios_2021, geo_territorios(jerarquia_2021, nombres_municipios, provincias_2021, ccaa)),
+  tar_target(validacion_jerarquia, validar_referencias(
+    comprobar_jerarquia(jerarquia_2021, territorios_2021, secciones_2021$seccion), referencias)),
+  tar_target(ficheros_jerarquia, {
+    validacion_jerarquia
+    exportar_jerarquia(jerarquia_2021, territorios_2021, sufijo = SUFIJO_AMBITO)
+  }, format = "file"),
+  # Disolución de las capas (≈ 1,5 min) y teselas (≈ 4 min) en un solo paso: las capas no se guardan
+  tar_target(fichero_mapa_base, {
+    validacion_jerarquia
+    generar_pmtiles(geo_capas_mapa_base(secciones_2021, jerarquia_2021, territorios_2021),
+                    sprintf("geo/referencia/mapa_base_2021%s.pmtiles", SUFIJO_AMBITO))
+  }, format = "file"),
+  tar_target(resumen_mapa_base, pmtiles_resumen(fichero_mapa_base)),
+  tar_target(validacion_mapa_base, validar_referencias(comprobar_mapa_base(fichero_mapa_base, secciones_2021$seccion),
+                                                       referencias))
+)
+
 # Tabla larga única: cada bloque entra después de pasar su compuerta
 bloque_tabla_larga <- list(
   tar_target(tabla_larga, {
     validacion_sobrecarga; validacion_modulo
     bind_rows(
       larga_adrh,
+      larga_serpavi,      # 8 y 9: la tipología como corte; sin filas «total»
+      larga_censo2021,    # 18
+      larga_vut,          # 19: el mes de referencia en corte y grupo
       armonizar_sobrecarga_ecv(sobrecarga_ecv, sobrecarga_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)),
       armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa)),
       armonizar_ine_ecv_modulo_cortes(modulo_edad, modulo_tenencia, version = version_de(fichero_modulo_edad))
@@ -310,4 +400,4 @@ bloque_tabla_larga <- list(
              format = "file")
 )
 
-list(inventario, sobrecarga, prueba_f1, bloque_renta_adrh, modulo_acceso, bloque_mochila, bloque_tabla_larga)
+list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_mochila, bloque_tabla_larga)

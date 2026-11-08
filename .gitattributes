@@ -8,6 +8,7 @@
 *.svg text eol=lf
 
 *.parquet binary
+*.bin binary
 *.pmtiles binary
 *.xlsx binary
 *.xls binary

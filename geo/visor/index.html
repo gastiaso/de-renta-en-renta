@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visor del mapa base</title>
+<!-- Visor de comprobación del PMTiles del seccionado de referencia (2021). No es la web. -->
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
+<style>
+  :root { --fondo: #f4f1ea; --texto: #1d1d1b; --caja: rgba(255, 255, 255, 0.94); --borde: #c9c2b3; }
+  html, body { margin: 0; height: 100%; background: var(--fondo); color: var(--texto);
+               font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #mapa { position: absolute; inset: 0; }
+  .caja { position: absolute; z-index: 1; background: var(--caja); border: 1px solid var(--borde);
+          border-radius: 6px; padding: 8px 10px; max-width: min(360px, calc(100vw - 52px)); }
+  #panel { top: 10px; left: 10px; }
+  #info { bottom: 24px; left: 10px; min-height: 1.4em; }
+  #panel h1 { font-size: 15px; margin: 0 0 4px; }
+  #panel p { margin: 4px 0; }
+  #panel label { display: block; margin-top: 4px; }
+  code { font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="mapa"></div>
+<div id="panel" class="caja">
+  <h1>Mapa base · seccionado 2021</h1>
+  <p>Zoom <strong id="zoom">–</strong> · <span id="estado">cargando…</span></p>
+  <label><input type="checkbox" id="ver-secciones" checked> Secciones (relleno)</label>
+  <label>Otro fichero: <input type="file" id="fichero" accept=".pmtiles"></label>
+</div>
+<div id="info" class="caja">Pasa el ratón por el mapa.</div>
+<script>
+  // Fichero por defecto: geo/referencia/mapa_base_2021.pmtiles, con servir.mjs sirviendo la carpeta
+  // del proyecto. Sin servidor (file://), se elige el fichero con el selector del panel.
+  const parametros = new URLSearchParams(location.search);
+  const porDefecto = new URL(parametros.get("pmtiles") || "/geo/referencia/mapa_base_2021.pmtiles", location.href).href;
+
+  const protocolo = new pmtiles.Protocol();
+  maplibregl.addProtocol("pmtiles", protocolo.tile);
+
+  const mapa = new maplibregl.Map({
+    container: "mapa",
+    style: { version: 8, sources: {}, layers: [{ id: "fondo", type: "background", paint: { "background-color": "#f4f1ea" } }] },
+    center: [-3.7, 40.2], zoom: 5, hash: true, attributionControl: false
+  });
+  mapa.addControl(new maplibregl.NavigationControl(), "top-right");
+  mapa.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
+  mapa.addControl(new maplibregl.AttributionControl({ compact: true,
+    customAttribution: "Secciones censales 2021: INE" }), "bottom-right");
+
+  const zoom = document.getElementById("zoom");
+  const estado = document.getElementById("estado");
+  const info = document.getElementById("info");
+  const verZoom = () => { zoom.textContent = mapa.getZoom().toFixed(1); };
+  mapa.on("zoom", verZoom);
+  mapa.on("load", verZoom);
+
+  // Colores repetidos por el último dígito del código de sección: basta para ver los límites
+  const colorSeccion = ["match", ["%", ["to-number", ["get", "seccion"]], 6],
+    0, "#e7c873", 1, "#9fc5a8", 2, "#e9a07d", 3, "#a7b9d6", 4, "#d9b3cf", "#cfd6a0"];
+
+  function quitarCapas() {
+    for (const id of ["secciones", "secciones-borde", "municipios-zona", "provincias-zona",
+                      "municipios", "provincias", "comunidades"]) {
+      if (mapa.getLayer(id)) mapa.removeLayer(id);
+    }
+    if (mapa.getSource("base")) mapa.removeSource("base");
+  }
+
+  async function cargar(fuente, url) {
+    quitarCapas();
+    try {
+      const archivo = new pmtiles.PMTiles(fuente);
+      protocolo.add(archivo);
+      const cab = await archivo.getHeader();
+      const meta = await archivo.getMetadata();
+      const capas = (meta.vector_layers || []).map(c => `${c.id} ${c.minzoom}–${c.maxzoom}`).join(", ");
+      estado.textContent = `zooms ${cab.minZoom}–${cab.maxZoom}; ${capas}`;
+      mapa.addSource("base", { type: "vector", url: url, attribution: "INE" });
+      mapa.addLayer({ id: "secciones", type: "fill", source: "base", "source-layer": "secciones",
+        paint: { "fill-color": colorSeccion, "fill-opacity": 0.85 } });
+      mapa.addLayer({ id: "secciones-borde", type: "line", source: "base", "source-layer": "secciones",
+        minzoom: 10, paint: { "line-color": "#ffffff", "line-width": 0.6 } });
+      // Rellenos transparentes: solo sirven para saber en qué municipio y provincia está el cursor
+      mapa.addLayer({ id: "municipios-zona", type: "fill", source: "base", "source-layer": "municipios",
+        paint: { "fill-opacity": 0 } });
+      mapa.addLayer({ id: "provincias-zona", type: "fill", source: "base", "source-layer": "provincias",
+        paint: { "fill-opacity": 0 } });
+      mapa.addLayer({ id: "municipios", type: "line", source: "base", "source-layer": "municipios",
+        paint: { "line-color": "#6b6253", "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.2, 10, 1.2] } });
+      mapa.addLayer({ id: "provincias", type: "line", source: "base", "source-layer": "provincias",
+        paint: { "line-color": "#3a352c", "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.5, 10, 2] } });
+      mapa.addLayer({ id: "comunidades", type: "line", source: "base", "source-layer": "comunidades",
+        paint: { "line-color": "#1d1d1b", "line-width": ["interpolate", ["linear"], ["zoom"], 0, 0.6, 10, 3] } });
+      document.getElementById("ver-secciones").dispatchEvent(new Event("change"));
+    } catch (e) {
+      estado.textContent = "no se ha podido abrir el PMTiles (" + e.message + "); elige el fichero en el selector";
+    }
+  }
+
+  mapa.on("load", () => cargar(new pmtiles.FetchSource(porDefecto), "pmtiles://" + porDefecto));
+
+  document.getElementById("fichero").addEventListener("change", ev => {
+    const f = ev.target.files[0];
+    if (f) cargar(new pmtiles.FileSource(f), "pmtiles://" + f.name);
+  });
+  document.getElementById("ver-secciones").addEventListener("change", ev => {
+    if (mapa.getLayer("secciones")) mapa.setLayoutProperty("secciones", "visibility", ev.target.checked ? "visible" : "none");
+  });
+
+  mapa.on("mousemove", ev => {
+    if (!mapa.getSource("base")) return;
+    const rasgos = mapa.queryRenderedFeatures(ev.point, { layers: ["secciones", "municipios-zona", "provincias-zona"]
+      .filter(id => mapa.getLayer(id)) });
+    const de = capa => rasgos.find(r => r.layer.id === capa);
+    const seccion = de("secciones"), municipio = de("municipios-zona"), provincia = de("provincias-zona");
+    const partes = [];
+    if (seccion) {
+      const c = seccion.properties.seccion;
+      partes.push(`Sección <code>${c}</code> · distrito <code>${c.slice(5, 7)}</code>`);
+    }
+    if (municipio) partes.push(`${municipio.properties.nombre} <code>${municipio.properties.municipio}</code>`);
+    if (provincia) partes.push(`${provincia.properties.nombre} <code>${provincia.properties.provincia}</code>`);
+    info.innerHTML = partes.length ? partes.join("<br>") : "Fuera de España o por debajo del zoom de cada capa.";
+  });
+</script>
+</body>
+</html>
