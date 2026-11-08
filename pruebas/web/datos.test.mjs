@@ -1,5 +1,6 @@
 // Pruebas de la web sin navegador: formato de los valores (JSON de enteros), series de la
-// ficha, fórmulas, «Tu sueldo», tipología, comparador, buscador, estado de la URL y descargas.
+// ficha, fórmulas, «Tu sueldo», tipología, comparador, buscador, estado de la URL, descargas y suelo
+// sin sección.
 // Datos inventados; si el pipeline ya ha exportado web/datos/manifiesto.json, se comprueban
 // también su contrato y que la página recalcula el sueldo necesario igual que R (plan, §6.5).
 // Se ejecutan desde la raíz del proyecto, sin paquetes:
@@ -8,6 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -15,8 +17,9 @@ const raiz = process.cwd();
 const modulo = (ruta) => import(pathToFileURL(join(raiz, ruta)).href);
 const {
   decodificar, periodoPara, rutaValores, codificacionDe, serieDeTipologia, tieneTipologia, tipologiaDe,
-  fueraDeSerie, inicioSerie,
+  fueraDeSerie, inicioSerie, atributosSinSeccion,
 } = await modulo('web/js/datos.js');
+const { provinciasSinSeccion } = await modulo('web/js/ficha.js');
 const exportar = await modulo('web/js/exportar.js');
 const { FORMULAS, formulaDe } = await modulo('web/js/formulas.js');
 const sueldo = await modulo('web/js/sueldo.js');
@@ -279,6 +282,16 @@ test('comparador: con un año anterior a la serie, sin dato y desde cuándo (pre
   assert.deepEqual([filas[0].a, filas[0].b], [{ valor: null, estado: 3 }, { valor: null, estado: 3 }]);
 });
 
+test('suelo sin sección: atributos de la capa y provincias que lo rodean', () => {
+  assert.deepEqual(atributosSinSeccion({ km2: 418.44, provincias: '31 50' }), { km2: 418.44, provincias: ['31', '50'] });
+  assert.deepEqual(atributosSinSeccion({ km2: '0.25', provincias: '28' }), { km2: 0.25, provincias: ['28'] });
+  assert.deepEqual(atributosSinSeccion({}), { km2: null, provincias: [] });
+  assert.deepEqual(atributosSinSeccion({ km2: null, provincias: ' 01  x 20 ' }), { km2: null, provincias: ['01', '20'] });
+  const territorios = { provincia: { '01': 'Araba/Álava', '31': 'Navarra', '20': 'Gipuzkoa' } };
+  assert.deepEqual(provinciasSinSeccion(['31', '01', '20'], territorios), ['Araba/Álava', 'Gipuzkoa', 'Navarra']);
+  assert.deepEqual(provinciasSinSeccion(['99'], territorios), ['99']);   // sin nombre, el código
+});
+
 test('nombres del INE en orden natural', () => {
   assert.equal(ordenNatural('Coruña, A'), 'A Coruña');
   assert.equal(ordenNatural('Madrid, Comunidad de'), 'Comunidad de Madrid');
@@ -496,6 +509,34 @@ test('exportación del pipeline: el contrato de web/datos/ se cumple', { skip: !
     decodificar(fichero.series[propias[0]][serie], ps.length, codificacionDe(m, serie));
   }
 });
+
+// Metadatos de un PMTiles (v3): cabecera de 127 bytes y JSON en la posición que dice, comprimido
+// según la compresión interna (1: ninguna; 2: gzip).
+function metadatosPmtiles(ruta) {
+  const b = readFileSync(ruta);
+  assert.equal(b.toString('latin1', 0, 7), 'PMTiles');
+  assert.equal(b[7], 3, 'versión 3');
+  const desde = Number(b.readBigUInt64LE(24));
+  const largo = Number(b.readBigUInt64LE(32));
+  const crudo = b.subarray(desde, desde + largo);
+  return JSON.parse((b[97] === 2 ? gunzipSync(crudo) : crudo).toString('utf8'));
+}
+
+const teselas = exportada && join(raiz, 'web', leer('web', 'datos', 'manifiesto.json').mapa_base.url ?? '');
+test('exportación del pipeline: el PMTiles trae las capas del manifiesto y el suelo sin sección en todos los zooms',
+  { skip: !(teselas && existsSync(teselas)) && 'sin el PMTiles de web/teselas/' }, () => {
+    const m = leer('web', 'datos', 'manifiesto.json');
+    const capas = Object.fromEntries(metadatosPmtiles(teselas).vector_layers.map((c) => [c.id, c]));
+    for (const [capa, def] of Object.entries(m.mapa_base.capas)) {
+      assert.ok(capas[capa], `falta la capa ${capa}`);
+      if (def.id) assert.ok(def.id in capas[capa].fields, `${capa}: sin ${def.id}`);
+    }
+    const s = capas.sin_seccion;
+    assert.ok(s, 'capa sin_seccion');
+    assert.deepEqual([s.minzoom, s.maxzoom], [0, 12]);
+    assert.deepEqual(Object.keys(s.fields).sort(), ['km2', 'provincias']);
+    assert.deepEqual(m.mapa_base.capas.sin_seccion.atributos, ['km2', 'provincias']);
+  });
 
 // Plan, §6.5: la página recalcula y coincide con R. El mapa del sueldo necesario (21) se pinta en
 // el navegador desde el alquiler por m² (9) con formulas.js; aquí se hace la misma cuenta en

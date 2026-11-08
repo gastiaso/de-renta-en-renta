@@ -4,6 +4,11 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (8-nov-2026, suelo sin sección; plan v0.27)
+
+- Mapa: los terrenos comunales que no pertenecen a ningún término municipal se veían en blanco y no se podían pulsar. Son 95 huecos del seccionado de 2021 de al menos 0,01 km² (1.495 km²), como las Bardenas Reales o las sierras de Urbasa y Andía, casi todos en Navarra, Álava, Gipuzkoa y Burgos. El mapa base trae una capa nueva, `sin_seccion` (zooms 0–12, con `km2` y `provincias`), que la web pinta como «sin dato»; al pulsarla, la ficha explica por qué no hay datos. Los huecos que tocan una sola provincia, o varias de una sola comunidad, se suman a ella, y sus bordes ya no los rodean. Funciones `geo_huecos()` y `geo_absorber_huecos()` (`R/geo_mapa_base.R`); compuertas `mapa_base_huecos` (alerta) y `mapa_base_sin_seccion` (bloqueo). El PMTiles pasa de 35,2 a 35,3 MB, y generarlo, de unos 4 a unos 7 minutos.
+- Nota metodológica (castellano e inglés): suelo sin sección en el mapa base (§3.10: capa `sin_seccion`, 95 huecos y 1.495 km², PMTiles de 35,3 MB), compuertas `mapa_base_sin_seccion` y `mapa_base_huecos` (§4.1), limitación en §8 y volumen de la web (§9.2).
+
 ### Decidido (8-nov-2026, preguntas abiertas 22–33; plan v0.26)
 
 - Sin modo daltónico en la v0.1: la rampa de seis pasos pasa `rampa_daltonismo`.

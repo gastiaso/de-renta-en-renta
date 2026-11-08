@@ -33,6 +33,32 @@ export function fichaVacia(contenedor, { t }) {
   contenedor.replaceChildren(cabecera(t), crear('p', 'ficha-vacia', t('interfaz.ficha.vacia')));
 }
 
+// Nombres de las provincias que rodean un trozo de suelo sin sección, en orden alfabético.
+export function provinciasSinSeccion(codigos, territorios) {
+  return codigos.map((p) => ordenNatural(territorios.provincia?.[p] ?? p)).sort((a, b) => a.localeCompare(b, 'es'));
+}
+
+// Ficha del suelo sin sección (capa sin_seccion del mapa base): terreno comunal que no es de
+// ningún término municipal. Sin datos: qué es, las provincias que lo rodean y su superficie.
+export function fichaSinSeccion(contenedor, { t, km2, provincias, territorios, alCerrar }) {
+  const nombres = provinciasSinSeccion(provincias, territorios);
+  const datos = crear('dl', 'ficha-territorios');
+  if (nombres.length) {
+    const etiqueta = nombres.length === 1 ? 'vocabulario.nivel.provincia' : 'interfaz.ficha.provincias';
+    datos.append(crear('dt', null, t(etiqueta)), crear('dd', null, nombres.join(', ')));
+  }
+  if (km2 !== null) {
+    datos.append(crear('dt', null, t('interfaz.ficha.superficie')),
+      crear('dd', null, t('interfaz.ficha.km2', { superficie: t.numero(km2, km2 < 10 ? 2 : 1) })));
+  }
+  contenedor.replaceChildren(
+    cabecera(t, alCerrar),
+    crear('p', 'ficha-codigo', t('interfaz.ficha.sin_seccion')),
+    datos,
+    crear('p', 'ficha-estado', t('interfaz.ficha.sin_seccion_texto')),
+  );
+}
+
 export function fichaError(contenedor, { t, error }) {
   console.error(error);
   const aviso = crear('p', 'ficha-error', t('interfaz.error_carga'));

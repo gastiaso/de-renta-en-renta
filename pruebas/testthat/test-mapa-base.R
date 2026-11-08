@@ -91,15 +91,17 @@ test_that("las capas se disuelven por nivel y el PMTiles sale con sus zooms", {
   j <- geo_jerarquia(s, provincias_prueba)
   t <- geo_territorios(j, nombres_prueba, provincias_prueba, ccaa_prueba)
   capas <- geo_capas_mapa_base(s, j, t)
-  expect_equal(names(capas), c("comunidades", "provincias", "municipios", "secciones"))
-  expect_equal(vapply(capas, nrow, 1L), c(comunidades = 2L, provincias = 2L, municipios = 3L, secciones = 5L))
+  expect_equal(names(capas), c("comunidades", "provincias", "municipios", "secciones", "sin_seccion"))
+  expect_equal(vapply(capas, nrow, 1L),
+               c(comunidades = 2L, provincias = 2L, municipios = 3L, secciones = 5L, sin_seccion = 0L))
   m <- capas$municipios[capas$municipios$municipio == "28001", ]
   expect_equal(as.numeric(sf::st_area(m)), 3 * 500^2)
   expect_equal(m$nombre, "Dos")
 
   ruta <- tempfile(fileext = ".pmtiles")
   on.exit(unlink(ruta))
-  zooms <- list(comunidades = c(0L, 6L), provincias = c(0L, 6L), municipios = c(2L, 8L), secciones = c(4L, 8L))
+  zooms <- list(comunidades = c(0L, 6L), provincias = c(0L, 6L), municipios = c(2L, 8L), secciones = c(4L, 8L),
+                sin_seccion = c(0L, 8L))
   generar_pmtiles(capas, ruta, zooms = zooms)
   cab <- pmtiles_cabecera(ruta)
   expect_equal(cab$version, 3L)
@@ -111,4 +113,91 @@ test_that("las capas se disuelven por nivel y el PMTiles sale con sus zooms", {
   expect_true(all(r$zoom %in% 0:8))
   expect_equal(max(r$zoom), 8L)
   expect_equal(sum(r$teselas), cab$teselas)
+})
+
+# Huecos del seccionado (suelo sin sección), con cuadrados de 500 m (0,25 km²): un anillo de
+# 5 × 5 en la provincia 28 con un enclave en el centro (hueco de 8 cuadrados, 2 km², solo toca la
+# 28); un anillo de 3 × 3 con la columna izquierda en la 05 y el resto en la 28 (hueco de 0,25 km²
+# entre dos comunidades), y otro igual entre la 05 y la 40, de la misma comunidad.
+provincias_huecos <- tibble::tibble(provincia = c("05", "28", "40"), nombre = c("Avila", "Madrid", "Segovia"),
+                                    ccaa = c("07", "13", "07"))
+ccaa_huecos <- tibble::tibble(codigo = c("07", "13"), nombre_ine = c("Castilla y Leon", "Madrid, Comunidad de"),
+                              nuts2 = c("ES41", "ES30"))
+secciones_huecos <- function() {
+  cuadrado <- function(i, j, lado = 500) {
+    x <- 440000 + i * lado
+    y <- 4470000 + j * lado
+    sf::st_polygon(list(rbind(c(x, y), c(x + lado, y), c(x + lado, y + lado), c(x, y + lado), c(x, y))))
+  }
+  anillo <- function(i0, n) {
+    k <- expand.grid(i = i0 + 0:(n - 1), j = 0:(n - 1))
+    k[k$i == i0 | k$i == i0 + n - 1 | k$j == 0 | k$j == n - 1, ]
+  }
+  a <- rbind(anillo(0, 5), data.frame(i = 2, j = 2))
+  a$provincia <- "28"
+  b <- anillo(10, 3)
+  b$provincia <- ifelse(b$i == 10, "05", "28")
+  c <- anillo(20, 3)
+  c$provincia <- ifelse(c$i == 20, "05", "40")
+  k <- rbind(a, b, c)
+  k$seccion <- ave(k$provincia, k$provincia, FUN = function(p) sprintf("%s00101%03d", p, seq_along(p)))
+  sf::st_sf(seccion = k$seccion, geometry = sf::st_sfc(Map(cuadrado, k$i, k$j), crs = 25830))
+}
+
+test_that("los huecos del seccionado van en sin_seccion y se suman a su provincia o su comunidad si es una", {
+  s <- secciones_huecos()
+  h <- geo_huecos(s)
+  expect_equal(sort(h$km2), c(0.25, 0.25, 2))                         # el enclave no cuenta
+  expect_equal(nrow(geo_huecos(s, umbral_km2 = 0.5)), 1L)
+
+  j <- geo_jerarquia(s, provincias_huecos)
+  nombres <- tibble::tibble(municipio = c("05001", "28001", "40001"), nombre = c("Uno", "Dos", "Tres"))
+  t <- geo_territorios(j, nombres, provincias_huecos, ccaa_huecos)
+  capas <- geo_capas_mapa_base(s, j, t)
+  sn <- capas$sin_seccion[order(-capas$sin_seccion$km2, capas$sin_seccion$provincias), ]
+  expect_equal(names(sn), c("km2", "provincias", "geometry"))
+  expect_equal(sn$km2, c(2, 0.25, 0.25))
+  expect_equal(sn$provincias, c("28", "05 28", "05 40"))
+
+  area <- function(capa, col, codigo) as.numeric(sf::st_area(capa[capa[[col]] == codigo, ])) / 1e6
+  expect_equal(area(capas$provincias, "provincia", "28"), (17 + 5) * 0.25 + 2)   # con su hueco
+  expect_equal(area(capas$provincias, "provincia", "05"), 6 * 0.25)
+  expect_equal(area(capas$comunidades, "ccaa", "07"), 11 * 0.25 + 0.25)          # con el de 05 y 40
+  expect_equal(area(capas$municipios, "municipio", "28001"), 22 * 0.25)          # los municipios, no
+  # Quedan abiertos en las provincias los dos que tocan dos, y en las comunidades, el de 05 y 28
+  expect_equal(sort(geo_huecos(capas$provincias)$km2), c(0.25, 0.25))
+  expect_equal(nrow(geo_huecos(capas$comunidades)), 1L)
+
+  skip_if_not("PMTiles" %in% sf::st_drivers("vector")$name, "GDAL sin el controlador PMTiles")
+  zooms <- lapply(ZOOMS_MAPA_BASE, function(z) c(min(z[1], 10L), 12L))
+  comprobar <- function(capas) {
+    ruta <- tempfile(fileext = ".pmtiles")
+    on.exit(unlink(ruta))
+    generar_pmtiles(capas, ruta, zooms = zooms)
+    c <- comprobar_mapa_base(ruta, s)
+    stats::setNames(c$calculado, paste(c$id, c$detalle))
+  }
+  r <- comprobar(capas)
+  expect_equal(unname(r[grepl("^mapa_base_secciones", names(r))]), 0)
+  expect_equal(unname(r[grepl("^mapa_base_huecos", names(r))]), c(3, 2.5))
+  expect_equal(unname(r[grepl("^mapa_base_sin_seccion", names(r))]), 0)
+  # Sin la capa, o sin el hueco grande, la compuerta de bloqueo lo dice
+  expect_equal(unname(comprobar(capas[names(capas) != "sin_seccion"])[4]), 3)
+  capas$sin_seccion <- capas$sin_seccion[capas$sin_seccion$km2 < 1, ]
+  r <- comprobar(capas)
+  expect_equal(unname(r[grepl("^mapa_base_sin_seccion", names(r))]), 1)
+  expect_match(names(r)[grepl("^mapa_base_sin_seccion", names(r))], "-3[.]")   # lon,lat del hueco
+})
+
+test_that("la compuerta del mapa base admite solo los códigos de las secciones", {
+  skip_if_not("PMTiles" %in% sf::st_drivers("vector")$name, "GDAL sin el controlador PMTiles")
+  s <- secciones_huecos()
+  j <- geo_jerarquia(s, provincias_huecos)
+  t <- geo_territorios(j, tibble::tibble(municipio = character(), nombre = character()), provincias_huecos, ccaa_huecos)
+  ruta <- tempfile(fileext = ".pmtiles")
+  on.exit(unlink(ruta))
+  generar_pmtiles(geo_capas_mapa_base(s, j, t), ruta, zooms = lapply(ZOOMS_MAPA_BASE, function(z) c(10L, 12L)))
+  c <- comprobar_mapa_base(ruta, c(s$seccion, "2800109999"))
+  expect_equal(c$id, "mapa_base_secciones")
+  expect_equal(c$calculado, 1)
 })

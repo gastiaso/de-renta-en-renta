@@ -131,6 +131,8 @@ Decidido (8-nov-2026, plan v0.26): las preguntas 22–33, todas con la propuesta
 15. **SERPAVI: municipios y distritos de una sección · HECHA.** Los 36 municipios y sus distritos, como `ausente`: +2.880 filas del alquiler y +1.012 de los derivados (26).
 16. **Sobrecarga: marcas, serie, cortes, geometría y quintil · HECHA.** Eurostat con marcas (27); cortes en `inventario/indicadores.csv` (28); Bosnia y Herzegovina con la geometría de NUTS 2024 (29); serie desde el primer año publicado, cortada en las rupturas (30); España por quintil de renta, contrastado con Eurostat (31).
 
+17. **Suelo sin sección · HECHA (8-nov-2026, plan v0.27).** Los 95 huecos del seccionado de 2021 (1.495 km² de terrenos comunales) estaban en blanco y sin poder pulsarse; ahora van en la capa `sin_seccion` del PMTiles, como «sin dato» y con ficha propia.
+
 **Siguiente:**
 - decisiones del autor: remoto y visibilidad; preguntas abiertas 34–36 (plan §11); descargas por preguntar (SMI de 2015 a 2023, `chromote`, tabla del Censo 2021 de viviendas por provincia);
 - página «Datos» (la tabla larga en Parquet ya va en el *release*);

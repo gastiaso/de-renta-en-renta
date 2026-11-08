@@ -157,7 +157,12 @@
       "evolucion_llega": "Evolución del alquiler sobre el ingreso",
       "ingreso_fijo": "Con el ingreso de hoy en todos los años: solo cambia el alquiler.",
       "del_ingreso": "del ingreso se va en alquiler",
-      "alquiler_ingreso": "Alquiler: {alquiler} € · ingreso: {ingreso} € al mes"
+      "alquiler_ingreso": "Alquiler: {alquiler} € · ingreso: {ingreso} € al mes",
+      "sin_seccion": "Territorio sin sección censal",
+      "sin_seccion_texto": "Monte o terreno comunal que no pertenece a ningún término municipal. El INE no le asigna sección y no tiene población, así que no hay datos.",
+      "provincias": "Provincias",
+      "superficie": "Superficie",
+      "km2": "{superficie} km²"
     },
     "comparador": {
       "titulo": "Comparar",

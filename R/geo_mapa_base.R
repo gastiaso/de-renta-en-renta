@@ -136,13 +136,57 @@ exportar_jerarquia <- function(jerarquia, territorios, dir = "geo", anio = 2021L
 
 # Niveles de zoom de cada capa (mínimo y máximo con datos; MapLibre amplía las teselas del
 # máximo en los zooms siguientes). Las secciones empiezan donde una sección urbana mediana ya
-# ocupa unos píxeles; las capas de arriba sirven de contexto y de bordes.
+# ocupa unos píxeles; las capas de arriba sirven de contexto y de bordes. El suelo sin sección
+# va en todos los zooms, para que no se vea el fondo en ninguno.
 ZOOMS_MAPA_BASE <- list(
   comunidades = c(0L, 12L),
   provincias  = c(3L, 12L),
   municipios  = c(5L, 12L),
-  secciones   = c(7L, 12L)
+  secciones   = c(7L, 12L),
+  sin_seccion = c(0L, 12L)
 )
+
+# Suelo sin sección. El seccionado de 2021 no cubre el suelo que no es de ningún término
+# municipal: montes y terrenos comunales compartidos, como las Bardenas Reales o las sierras de
+# Urbasa y Andía. Quedan como anillos interiores de la unión de las secciones: 95 de al menos
+# 0,01 km², 1.495 km² sin las secciones que caen dentro (8-nov-2026). Por debajo del umbral solo
+# hay rendijas entre secciones vecinas, del orden de un metro de ancho, que no se ven ni se pulsan.
+UMBRAL_SIN_SECCION_KM2 <- 0.01
+
+# Huecos de una capa de polígonos (sf o sfc): anillos interiores de su unión de al menos
+# `umbral_km2`, sin las islas que caen dentro (enclaves). Devuelve un sf con `km2` (dos decimales).
+geo_huecos <- function(poligonos, umbral_km2 = UMBRAL_SIN_SECCION_KM2) {
+  geom <- sf::st_geometry(poligonos)
+  crs <- sf::st_crs(geom)
+  vacio <- sf::st_sf(km2 = numeric(), geometry = sf::st_sfc(sf::st_multipolygon(), crs = crs)[0])
+  partes <- sf::st_cast(sf::st_union(geom), "POLYGON")
+  anillos <- list()
+  for (p in partes) {
+    if (length(p) > 1) for (k in 2:length(p)) anillos[[length(anillos) + 1]] <- sf::st_polygon(list(p[[k]]))
+  }
+  if (!length(anillos)) return(vacio)
+  h <- sf::st_sfc(anillos, crs = crs)
+  h <- h[as.numeric(sf::st_area(h)) / 1e6 >= umbral_km2]     # las islas solo restan
+  if (!length(h)) return(vacio)
+  dentro <- sf::st_within(partes, h)
+  for (i in seq_along(h)) {
+    islas <- which(vapply(dentro, function(x) i %in% x, TRUE))
+    if (length(islas)) h[i] <- sf::st_difference(h[i], sf::st_union(partes[islas]))
+  }
+  km2 <- as.numeric(sf::st_area(h)) / 1e6
+  h <- geo_poligonos_validos(sf::st_sf(km2 = as.numeric(sprintf("%.2f", km2)), geometry = h))
+  h[km2 >= umbral_km2, ]
+}
+
+# Suma a cada territorio de `capa` (columna `codigo`) los huecos cuyo `destino` es su código.
+geo_absorber_huecos <- function(capa, huecos, destino) {
+  geom <- sf::st_geometry(capa)
+  for (codigo in unique(stats::na.omit(destino))) {
+    i <- match(codigo, capa$codigo)
+    geom[i] <- sf::st_cast(sf::st_union(c(geom[i], sf::st_geometry(huecos)[destino %in% codigo])), "MULTIPOLYGON")
+  }
+  geo_poligonos_validos(sf::st_set_geometry(capa, geom))
+}
 
 # Polígonos válidos y en MULTIPOLYGON (st_make_valid puede devolver colecciones con líneas).
 geo_poligonos_validos <- function(x) {
@@ -157,7 +201,12 @@ geo_poligonos_validos <- function(x) {
 
 # Capas del mapa base en el CRS del seccionado (ETRS89 / UTM 30N): GDAL las pasa a Web Mercator
 # al teselar. Atributos mínimos: el código y, salvo en las secciones, el nombre.
-geo_capas_mapa_base <- function(secciones, jerarquia, territorios) {
+# sin_seccion: los huecos del seccionado (geo_huecos), con su superficie (`km2`) y los códigos de
+# las provincias que tocan (`provincias`, separados por espacios). Los que tocan una sola
+# provincia se suman a ella, y los que tocan una sola comunidad, a ella, para que sus bordes no
+# los rodeen; los demás se quedan fuera de esas capas: sin la línea límite oficial, no se
+# reparte suelo entre provincias por suposición.
+geo_capas_mapa_base <- function(secciones, jerarquia, territorios, umbral_km2 = UMBRAL_SIN_SECCION_KM2) {
   s <- secciones |>
     select(seccion) |>
     geo_poligonos_validos() |>
@@ -174,12 +223,21 @@ geo_capas_mapa_base <- function(secciones, jerarquia, territorios) {
   municipios$ccaa <- jerarquia$ccaa[match(municipios$codigo, jerarquia$municipio)]
   provincias <- disolver(municipios, "provincia")
   provincias$ccaa <- jerarquia$ccaa[match(provincias$codigo, jerarquia$provincia)]
+
+  huecos <- geo_huecos(provincias, umbral_km2)
+  toca <- sf::st_is_within_distance(huecos, provincias, dist = 1)    # metros
+  huecos$provincias <- vapply(toca, function(i) paste(sort(provincias$codigo[i]), collapse = " "), "")
+  una <- function(x) if (length(x) == 1) x else NA_character_
+  provincias <- geo_absorber_huecos(provincias, huecos, vapply(toca, function(i) una(provincias$codigo[i]), ""))
   comunidades <- disolver(provincias, "ccaa")
+  a_comunidad <- vapply(toca, function(i) if (length(i) > 1) una(unique(provincias$ccaa[i])) else NA_character_, "")
+  comunidades <- geo_absorber_huecos(comunidades, huecos, a_comunidad)
   list(
     comunidades = select(comunidades, ccaa = codigo, nombre),
     provincias  = select(provincias, provincia = codigo, nombre),
     municipios  = select(municipios, municipio = codigo, nombre),
-    secciones   = select(s, seccion)
+    secciones   = select(s, seccion),
+    sin_seccion = select(huecos, km2, provincias)
   )
 }
 
@@ -218,15 +276,51 @@ generar_pmtiles <- function(capas, ruta, zooms = ZOOMS_MAPA_BASE, simplificacion
   ruta
 }
 
-# Compuerta del mapa base (mapa_base_secciones): toda sección del seccionado está en las teselas
-# del zoom máximo, las que MapLibre amplía después. Se leen con GDAL (unos segundos).
-comprobar_mapa_base <- function(ruta, secciones_referencia) {
+# Compuertas del mapa base, con las teselas del zoom máximo (las que MapLibre amplía después),
+# leídas con GDAL:
+#   mapa_base_secciones (bloqueo): secciones del seccionado que no están en las teselas.
+#   mapa_base_huecos (alerta): número y superficie de los huecos del seccionado (geo_huecos),
+#     calculados aquí desde las secciones, por provincia y luego juntas.
+#   mapa_base_sin_seccion (bloqueo): huecos que siguen abiertos con las secciones y la capa
+#     sin_seccion juntas. La capa llega cuantificada a la rejilla de la tesela (4.096 unidades):
+#     se ensancha una unidad para que esa cuantización no abra rendijas.
+# `secciones`: el seccionado (sf, con `seccion`), o solo sus códigos para la primera.
+comprobar_mapa_base <- function(ruta, secciones, umbral_km2 = UMBRAL_SIN_SECCION_KM2) {
   cab <- pmtiles_cabecera(ruta)
-  teselas <- suppressWarnings(sf::st_read(ruta, query = "SELECT seccion FROM secciones",
-                                          options = paste0("ZOOM_LEVEL=", cab$zoom_max), quiet = TRUE))
-  faltan <- setdiff(secciones_referencia, teselas$seccion)
-  tibble::tibble(id = "mapa_base_secciones", detalle = paste(utils::head(faltan, 5), collapse = " "),
-                 calculado = length(faltan), referencia = 0)
+  zoom <- paste0("ZOOM_LEVEL=", cab$zoom_max)
+  codigos <- if (inherits(secciones, "sf")) secciones$seccion else secciones
+  teselas <- suppressWarnings(sf::st_read(ruta, query = "SELECT seccion FROM secciones", options = zoom, quiet = TRUE))
+  faltan <- setdiff(codigos, teselas$seccion)
+  filas <- tibble::tibble(id = "mapa_base_secciones", detalle = paste(utils::head(faltan, 5), collapse = " "),
+                          calculado = length(faltan), referencia = 0)
+  if (!inherits(secciones, "sf")) return(filas)
+
+  provincias <- secciones |>
+    select(seccion) |>
+    geo_poligonos_validos() |>
+    group_by(provincia = substr(seccion, 1, 2)) |>
+    summarise(.groups = "drop")
+  huecos <- geo_huecos(provincias, umbral_km2)
+  mayor <- if (nrow(huecos)) sprintf("%.1f", max(huecos$km2)) else "0"
+  capa <- tryCatch(suppressWarnings(sf::st_read(ruta, layer = "sin_seccion", options = zoom, quiet = TRUE)),
+                   error = function(e) NULL)
+  cubierta <- if (is.null(capa) || !nrow(capa)) sf::st_sfc(crs = sf::st_crs(provincias)) else {
+    unidad <- 2 * pi * 6378137 / 2^cab$zoom_max / 4096
+    sf::st_buffer(sf::st_union(sf::st_transform(sf::st_geometry(capa), sf::st_crs(provincias))), unidad)
+  }
+  abiertos <- geo_huecos(c(sf::st_geometry(provincias), cubierta), umbral_km2)
+  centro <- function(h) {
+    if (!nrow(h)) return("")
+    p <- sf::st_coordinates(sf::st_transform(sf::st_point_on_surface(sf::st_geometry(h)), 4326))
+    paste(utils::head(sprintf("%.3f,%.3f", p[, 1], p[, 2]), 5), collapse = " ")
+  }
+  bind_rows(filas, tibble::tibble(
+    id = c("mapa_base_huecos", "mapa_base_huecos", "mapa_base_sin_seccion"),
+    detalle = c(paste0("n\u00famero (el mayor, ", mayor, " km2)"), "superficie (km2)",
+                paste("huecos sin cubrir (lon,lat):", centro(abiertos))),
+    calculado = c(nrow(huecos), as.numeric(sprintf("%.1f", sum(huecos$km2))), nrow(abiertos)),
+    referencia = 0
+  ))
 }
 
 # --- Lectura del PMTiles (formato v3) para medirlo ---------------------------------------------

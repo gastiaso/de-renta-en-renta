@@ -12,7 +12,7 @@ This note describes how the atlas figures are produced: sources, constant geogra
   - a file in `inventario/`;
   - a section of the plan (`docs/plan_integracion_atlas.md`, «plan §»).
 - **Repeated targets.** Targets ending in `_<tracts>` are repeated once per source tract map, as set by `PASOS_2021` in `_targets.R`. For example, `paso_final_2016` carries ADRH 2015.
-- **Reference store.** Unless stated otherwise, figures come from the `targets` store of 8 Nov 2026, covering all of Spain, after the full run that ended at 21:18: `tabla_larga` dates from 21:13, already with the regions and provinces of indicators 18 and 19, and the website data from 21:15; the website overburden section and its gates, from 21:04.
+- **Reference store.** Unless stated otherwise, figures come from the `targets` store of 8 Nov 2026, covering all of Spain, after the full run that ended at 22:25: `tabla_larga` dates from 21:13, already with the regions and provinces of indicators 18 and 19; the base map, from 22:12; the website data, from 22:14, and the website overburden section, from 21:04.
 - **Decisions.** Open questions already closed in the plan are cited as «plan §11, question *n*».
 - **Pending.** Marks what the pipeline does not compute yet.
 - **Format.** Figures use a comma for thousands and a point for decimals. Rounding to one decimal uses `redondear_1()`, which calls `sprintf("%.1f")`: `round()` rounds half to even.
@@ -326,7 +326,7 @@ Origin: `comparar_vias_paso()`; in `comparacion_vias`, rows with `estimada_a` tr
 **Gate** (`comprobar_jerarquia()`, `validacion_jerarquia`; §4.1). No repeated tract; no unit with two parents; codes that fit together; each unit adds up its parts, and the total, the 36,333 tracts; no unit without a name. All 14 figures are 0.
 
 **Base map** (`fichero_mapa_base`; `geo/referencia/mapa_base_2021.pmtiles`, outside git):
-- **Layers** (`ZOOMS_MAPA_BASE`). Regions, provinces and municipalities are obtained by dissolving the tracts (`geo_capas_mapa_base()`), so their borders match those of the tracts. Above zoom 12, MapLibre overzooms the tiles.
+- **Layers** (`ZOOMS_MAPA_BASE`). Regions, provinces and municipalities are obtained by dissolving the tracts (`geo_capas_mapa_base()`), so their borders match those of the tracts, except where they absorb land without a tract (below). Above zoom 12, MapLibre overzooms the tiles.
 
   | Layer | Zooms | Attributes |
   |---|---|---|
@@ -334,24 +334,27 @@ Origin: `comparar_vias_paso()`; in `comparacion_vias`, rows with `estimada_a` tr
   | provincias | 3–12 | `provincia`, `nombre` |
   | municipios | 5–12 | `municipio`, `nombre` |
   | secciones | 7–12 | `seccion` |
+  | sin_seccion | 0–12 | `km2`, `provincias` |
+
+- **Land without a tract.** The 2021 INE tract map does not cover land that belongs to no municipality: shared mountains and common land, such as the Bardenas Reales or the Urbasa and Andía ranges. It is left as interior rings of the union of the tracts (`geo_huecos()`). Rings of at least 0.01 km² (`UMBRAL_SIN_SECCION_KM2`) are counted, less any tracts inside them (enclaves): 95, totalling 1,495 km²; the largest, 418.4 km². Below the threshold there are only slivers between neighbouring tracts, 1,140 under 1 m² and one of 13 m²; there is no ring between 13 m² and 1 ha. The gaps go in the `sin_seccion` layer, with their area and the codes of the provinces they touch. The 77 that touch a single province are added to it, and the 5 that touch several provinces of a single region, to the region (`geo_absorber_huecos()`). The other 13 stay out of those layers, because without the official boundary line no land is divided between provinces. The website shows them as «no data»; clicking one, the sheet says what it is. They have no population, no tract and no data. Gaps that touch the coast or the border are not interior rings and are not detected.
 
 - **Tiles.** They are generated with GDAL from R, with the PMTiles and MVT drivers (`generar_pmtiles()`), without tippecanoe (plan §6.2). Each tile uses a grid of 4,096 units per 512 pixels. Simplification is measured in units of that grid, so it is the same on both sides of a shared border.
 - **Simplification** (plan §11, question 16): 4 units (half a pixel) below zoom 12 and none at zoom 12. In GDAL, the maximum-zoom parameter is a tolerance, not a zoom number: it is set to 0 (`simplificacion_zoom_max`).
-- **Size.** The file takes 35.2 MB (1 MB = 10⁶ bytes), with 13,235 tiles (`resumen_mapa_base`, `pmtiles_resumen()`):
+- **Size.** The file takes 35.3 MB (1 MB = 10⁶ bytes), with 13,235 tiles (`resumen_mapa_base`, `pmtiles_resumen()`):
 
   | Zoom | Tiles | MB | Largest tile (KB) |
   |---|---|---|---|
-  | 0–4 | 13 | 0.03 | 5.7 |
-  | 5 | 5 | 0.34 | 142.7 |
-  | 6 | 10 | 0.46 | 149.1 |
-  | 7 | 24 | 1.67 | 208.2 |
-  | 8 | 71 | 2.26 | 142.4 |
-  | 9 | 208 | 2.77 | 85.3 |
-  | 10 | 702 | 4.10 | 68.4 |
-  | 11 | 2,548 | 6.47 | 38.4 |
-  | 12 | 9,654 | 17.03 | 58.0 |
+  | 0–4 | 13 | 0.03 | 6.6 |
+  | 5 | 5 | 0.34 | 143.2 |
+  | 6 | 10 | 0.46 | 149.2 |
+  | 7 | 24 | 1.67 | 208.3 |
+  | 8 | 71 | 2.27 | 142.4 |
+  | 9 | 208 | 2.78 | 85.3 |
+  | 10 | 702 | 4.11 | 68.4 |
+  | 11 | 2,548 | 6.49 | 38.4 |
+  | 12 | 9,654 | 17.11 | 58.0 |
 
-- **Gate** (`mapa_base_secciones`; `comprobar_mapa_base()`, `validacion_mapa_base`). It reads the zoom 12 tiles of the file with GDAL and finds the 36,333 tracts.
+- **Gate** (`comprobar_mapa_base()`, `validacion_mapa_base`). It reads the zoom 12 tiles with GDAL. `mapa_base_secciones`: it finds the 36,333 tracts. `mapa_base_huecos` (warning): 95 gaps in the tract map and 1,495 km², computed from the tracts. `mapa_base_sin_seccion` (blocking): with the tracts and the `sin_seccion` layer together, the layer widened by one grid unit (2.4 m at zoom 12), no gap is left open.
 - **Publication** (plan §6.6; plan §11, question 16). The PMTiles file is not in the git history: it is regenerated with `targets` and published from a repository *release*, which the GitHub Pages workflow copies next to the website. Locally it can be viewed with `node geo/visor/servir.mjs` (`geo/visor/`).
 
 **Postcodes** (plan §6.3; plan §11, question 16). They are not an INE unit and there are no reusable official polygons. The tract ↔ postcode correspondence will come from the INE street register (CPOS field of the segments): in January 2021, 80.7% of tracts have a single postcode (11,051 postcodes; 2,262 cross municipalities). Only indicators 11 and 16 need it. A geometry of its own built from the CartoCiudad entrances is decided in F4.
@@ -405,6 +408,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `jerarquia_sumas` | Units that do not add up their parts; tracts in excess or missing against the 2021 tract map | Exact | Blocking | 0 in the 6 figures | `validacion_jerarquia` |
 | `jerarquia_nombres` | Regions, provinces and municipalities without a name | Exact | Blocking | 0 in the 3 figures | `validacion_jerarquia` |
 | `mapa_base_secciones` | 2021 tracts missing from the maximum-zoom tiles of the PMTiles file | Exact | Blocking | 0 | `validacion_mapa_base` |
+| `mapa_base_sin_seccion` | Gaps in the tract map still open with the tracts and the maximum-zoom `sin_seccion` layer together | Exact | Blocking | 0 | `validacion_mapa_base` |
 | `smi_neto` | Net monthly income of the 2026 Minimum wage token (`perfiles`) against the plan figure: €17,094 × (1 − 0.065) / 12 ≈ €1,332 | ±€1 | Blocking | €1,331.91; difference, −€0.09 | `validacion_derivados` |
 | `derivados_terminos` | Maximum deviation, by year and indicator, between each derived figure and the one recomputed from its terms | ±0.001% | Blocking | 4.3 × 10⁻¹⁴% at most in the 22 figures | `validacion_derivados` |
 | `derivados_estado` | Derived figures whose status is not the worst of their terms, or with a value and status `secreto` or `ausente` (or the reverse) | Exact | Blocking | 0 in the 22 figures | `validacion_derivados` |
@@ -423,6 +427,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `adrh_suma_secciones` | ADRH population by tract added up by municipality against the municipal total of the same table | ±0.5% | Warning | Warns in 160 municipality-years, all in 2015–2019 (38, 34, 30, 29 and 29) | `comprobaciones_f1` |
 | `adrh_seccion_huerfana` | ADRH tracts with no code in any tract map of 2016–2025 | Exact | Warning | 9 (§3.8) | `huerfanas_adrh` |
 | `cobertura_destino_excepcion` | 2021 tracts left empty by a known defect of the source | Exact | Warning | 2 tracts, 6 tract-years (§3.8) | `comprobaciones_f1` |
+| `mapa_base_huecos` | Gaps of at least 0.01 km² in the 2021 tract map (land in no tract): number and area | Exact | Warning | Warns with 95 gaps and 1,495 km²; the largest, 418.4 km² (§3.10) | `validacion_mapa_base` |
 | `serpavi_escalas_detalle` | Each municipality or district, year and building type that does not match its tracts | Exact | Warning | Warns in 164 rows, which go as `ausente` (§7.1) | `validacion_serpavi` |
 | `serpavi_forales` | First year with observations of each foral province against that of the break `serpavi_forales` | Exact | Warning | All four match | `validacion_serpavi` |
 | `serpavi_sin_fila` | Tracts, districts and municipalities of the 2021 tract map that the database does not have (they go as `ausente`) | Exact | Warning | Warns with 40 tracts, 36 districts and 36 municipalities (§7.1) | `validacion_serpavi` |
@@ -909,6 +914,7 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 **Hierarchy and base map:**
 - Districts have no name (§3.10).
 - Below zoom 12, borders are simplified by half a pixel; above it, MapLibre overzooms the zoom 12 tiles (§3.10).
+- **Land without a tract** (§3.10): 1,495 km² of common land have no tract and no data and show as «no data». They are not divided between provinces when they touch several, and those touching the coast or the border are not detected.
 
 **Income:**
 - **The source does not match across scales.** ADRH does not always add up its tracts to the municipal total (`adrh_suma_secciones`, 160 municipality-years in 2015–2019). Its aggregated tract means move more than 5% away from the municipal figure in 135 figures (`adrh_municipio_detalle`). The atlas does not correct this: it shows the published figure at each scale.
@@ -992,7 +998,7 @@ The export follows the author's decisions of 8 Nov 2026 (plan §6.6; plan §11, 
 - **Downloads.** The website downloads the map series as CSV, at the level in view (value with the precision of the series, status and source; for indicator 21, floor area and threshold), and the map as PNG with its legend and source. With «Your token», neither carries the pay entered: the CSV gives the rent, not the ratio. The colours of the «Can you make rent?» PNG do let it be roughly inferred, so with «Your token» it is downloaded after a warning that can be cancelled (plan §11, question 23).
 - **Year outside the series** (plan §11, question 32). With a year earlier than every period of a series (2020 for tourist dwellings), the map, the legend, the sheet, the comparison panel and both downloads show «no data» and say when the series starts; the CSV, with one row without a value per unit and the start of the series in the status column. With a later year, the last period is taken, and the legend says so.
 - **Other files.** Unit names, municipality bounding boxes for the search box (`cajas_municipios`) and token incomes (`perfiles`). The base map is copied to `web/teselas/`; on publication, it comes from a *release* (§3.10).
-- **Volume** (`ficheros_web`, 21:15): 8,500 files and 110.1 MB, including the PMTiles file (35.2 MB). On disk, `web/datos/` holds 8,734 files and 76.2 MB: the 8,499 of `ficheros_web` (75.0 MB), the 3 of the overburden section (`ficheros_web_sobrecarga`, 1.1 MB) and the versioned sample in `web/datos/ejemplo/` (232 files, 0.2 MB).
+- **Volume** (`ficheros_web`, 22:14): 8,500 files and 110.2 MB, including the PMTiles file (35.3 MB). On disk, `web/datos/` holds 8,734 files and 76.2 MB: the 8,499 of `ficheros_web` (75.0 MB), the 3 of the overburden section (`ficheros_web_sobrecarga`, 1.1 MB) and the versioned sample in `web/datos/ejemplo/` (232 files, 0.2 MB).
 - **Gate** (`comprobar_web()`, `validacion_web`): `web_valores` and `web_fichas` (blocking) and `web_fuera_indice` (warning) (§4.1).
 
 ---
@@ -1013,7 +1019,7 @@ targets::tar_read(validacion_f1)          # one gate: columns calculado, referen
 - comparing boundaries, 21 min;
 - reading the foral cadastres, about 17 min.
 
-The base map takes about 4.5 minutes (plan §7, F1). With `PROVINCIA=28` (environment variable, before `tar_make()`), the computation is limited to one province, and the files carry the code in their name.
+The base map takes about 8 minutes: 6 min 43 s for the PMTiles file (`fichero_mapa_base`) and 1 min 17 s for its gate, which computes the gaps in the tract map (8 Nov 2026). With `PROVINCIA=28` (environment variable, before `tar_make()`), the computation is limited to one province, and the files carry the code in their name.
 
 **Targets cited in this note:**
 - **Geography:** `secciones_2021`, `tablas_paso_callejero`, `tablas_paso_finales`, `edificios_paso`, `edificios_forales`, `municipios_catastro_sel`, `grupos_municipio`, `huerfanas_adrh`, `fase_codigos`, `cambios_limites`, `comprobaciones_f1`, `diagnostico_f1`, `comparacion_vias`.

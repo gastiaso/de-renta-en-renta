@@ -386,14 +386,15 @@ mapa_base <- list(
     validacion_jerarquia
     exportar_jerarquia(jerarquia_2021, territorios_2021, sufijo = SUFIJO_AMBITO)
   }, format = "file"),
-  # Disolución de las capas (≈ 1,5 min) y teselas (≈ 4 min) en un solo paso: las capas no se guardan
+  # Disolución de las capas y suelo sin sección (≈ 4,5 min) y teselas en un solo paso (≈ 7 min en
+  # total, 8-nov-2026): las capas no se guardan
   tar_target(fichero_mapa_base, {
     validacion_jerarquia
     generar_pmtiles(geo_capas_mapa_base(secciones_2021, jerarquia_2021, territorios_2021),
                     sprintf("geo/referencia/mapa_base_2021%s.pmtiles", SUFIJO_AMBITO))
   }, format = "file"),
   tar_target(resumen_mapa_base, pmtiles_resumen(fichero_mapa_base)),
-  tar_target(validacion_mapa_base, validar_referencias(comprobar_mapa_base(fichero_mapa_base, secciones_2021$seccion),
+  tar_target(validacion_mapa_base, validar_referencias(comprobar_mapa_base(fichero_mapa_base, secciones_2021),
                                                        referencias))
 )
 

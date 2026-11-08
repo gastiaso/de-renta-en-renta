@@ -11,7 +11,7 @@ import {
 } from './datos.js';
 import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
 import { pintarLeyenda } from './leyenda.js';
-import { fichaVacia, fichaSeccion, fichaSeries, fichaError } from './ficha.js';
+import { fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion } from './ficha.js';
 import { formulaDe } from './formulas.js';
 import {
   modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega,
@@ -57,6 +57,7 @@ let compartir;     // diálogo «Compartir»
 let avisoImagen;   // aviso antes de la imagen de «¿te llega?» con «Tu ficha»
 const columnas = {};            // serie → { valores, estados, periodo, clave } del periodo activo
 let eligiendoComparada = false; // el siguiente clic en el mapa elige la sección con que comparar
+let sinSeccion = null;          // suelo sin sección pulsado: { km2, provincias } (sin sección elegida)
 let turno = 0;                  // descarta cálculos superados por otro más reciente
 let turnoFicha = 0;
 
@@ -259,7 +260,10 @@ async function seriesDeSeccion(codigo, v) {
 
 function pintarFicha(v = vista()) {
   const yo = ++turnoFicha;
-  if (!estado.seccion) return fichaVacia(el.ficha, { t });
+  if (!estado.seccion) {
+    if (sinSeccion) return fichaSinSeccion(el.ficha, { t, ...sinSeccion, territorios, alCerrar: () => elegirSeccion(null) });
+    return fichaVacia(el.ficha, { t });
+  }
   const codigo = estado.seccion;
   const i = indice.get(codigo);
   const x = (serie) => valorEn(serie, i);
@@ -476,7 +480,9 @@ async function exportar(formato) {
 
 // --- Acciones -------------------------------------------------------------------------------
 
-function elegirSeccion(codigo) {
+// `hueco`: el suelo sin sección pulsado (atributosSinSeccion), que ocupa la ficha sin elegir sección.
+function elegirSeccion(codigo, hueco = null) {
+  sinSeccion = codigo ? null : hueco;
   estado.seccion = codigo ?? undefined;
   if (!codigo || estado.comparar === codigo) {
     estado.comparar = undefined;
@@ -497,6 +503,13 @@ function alPulsar(codigo) {
     return;
   }
   elegirSeccion(codigo);
+}
+
+// Suelo sin sección: su ficha sustituye a la de la sección elegida y cancela la elección de la
+// sección con que comparar (no tiene datos que comparar).
+function alPulsarSinSeccion(hueco) {
+  eligiendoComparada = false;
+  elegirSeccion(null, hueco);
 }
 
 function alCambiarSueldo(cambio) {
@@ -599,6 +612,7 @@ async function iniciar() {
         vista: estado.vista ? textoAVista(estado.vista) : null,
         t,
         alPulsar,
+        alPulsarSinSeccion,
         alMover: (mp) => {
           estado.vista = vistaATexto(mp);
           guardarEstado(estado);

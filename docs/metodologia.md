@@ -12,7 +12,7 @@ Esta nota describe cómo se obtienen las cifras del atlas: fuentes, geografía c
   - un fichero de `inventario/`;
   - una sección del plan (`docs/plan_integracion_atlas.md`, «plan §»).
 - **Objetivos repetidos.** Los que terminan en `_<seccionado>` se repiten una vez por seccionado de origen, según `PASOS_2021` en `_targets.R`. Por ejemplo, `paso_final_2016` lleva el ADRH 2015.
-- **Almacén de referencia.** Las cifras sin otra indicación salen del almacén de `targets` del 8-nov-2026, con toda España, tras la pasada completa que acabó a las 21:18: `tabla_larga` es de las 21:13, ya con las comunidades y las provincias de los indicadores 18 y 19, y los datos de la web, de las 21:15; la sección de sobrecarga de la web y sus compuertas, de las 21:04.
+- **Almacén de referencia.** Las cifras sin otra indicación salen del almacén de `targets` del 8-nov-2026, con toda España, tras la pasada completa que acabó a las 22:25: `tabla_larga` es de las 21:13, ya con las comunidades y las provincias de los indicadores 18 y 19; el mapa base, de las 22:12; los datos de la web, de las 22:14, y la sección de sobrecarga de la web, de las 21:04.
 - **Decisiones.** Las preguntas abiertas que el plan ya ha cerrado se citan como «plan §11, pregunta *n*».
 - **Pendiente.** Así se marca lo que el pipeline no calcula todavía.
 - **Formato.** Las cifras usan punto de miles y coma decimal. El redondeo a un decimal se hace con `redondear_1()`, que usa `sprintf("%.1f")`: `round()` redondea al par en los empates.
@@ -326,7 +326,7 @@ Origen: `comparar_vias_paso()`; en `comparacion_vias`, filas con `estimada_a` ve
 **Compuerta** (`comprobar_jerarquia()`, `validacion_jerarquia`; §4.1). Ninguna sección repetida; ningún territorio con dos superiores; códigos que encajan; cada territorio suma sus partes, y el total, las 36.333 secciones; ningún territorio sin nombre. Las 14 cifras valen 0.
 
 **Mapa base** (`fichero_mapa_base`; `geo/referencia/mapa_base_2021.pmtiles`, fuera de git):
-- **Capas** (`ZOOMS_MAPA_BASE`). Comunidades, provincias y municipios se obtienen disolviendo las secciones (`geo_capas_mapa_base()`), así que sus bordes coinciden con los de las secciones. Por encima del zoom 12, MapLibre amplía las teselas.
+- **Capas** (`ZOOMS_MAPA_BASE`). Comunidades, provincias y municipios se obtienen disolviendo las secciones (`geo_capas_mapa_base()`), así que sus bordes coinciden con los de las secciones, salvo donde absorben suelo sin sección (abajo). Por encima del zoom 12, MapLibre amplía las teselas.
 
   | Capa | Zooms | Atributos |
   |---|---|---|
@@ -334,24 +334,27 @@ Origen: `comparar_vias_paso()`; en `comparacion_vias`, filas con `estimada_a` ve
   | provincias | 3–12 | `provincia`, `nombre` |
   | municipios | 5–12 | `municipio`, `nombre` |
   | secciones | 7–12 | `seccion` |
+  | sin_seccion | 0–12 | `km2`, `provincias` |
+
+- **Suelo sin sección.** El seccionado del INE de 2021 no cubre el suelo que no pertenece a ningún término municipal: montes y terrenos comunales compartidos, como las Bardenas Reales o las sierras de Urbasa y Andía. Quedan como anillos interiores de la unión de las secciones (`geo_huecos()`). Se cuentan los de al menos 0,01 km² (`UMBRAL_SIN_SECCION_KM2`), sin las secciones que caen dentro (enclaves): 95, que suman 1.495 km²; el mayor, 418,4 km². Por debajo del umbral solo hay rendijas entre secciones vecinas, 1.140 de menos de 1 m² y una de 13 m²; entre 13 m² y 1 ha no hay ningún anillo. Los huecos van en la capa `sin_seccion`, con su superficie y los códigos de las provincias que tocan. Los 77 que tocan una sola provincia se suman a ella, y los 5 que tocan varias provincias de una sola comunidad, a la comunidad (`geo_absorber_huecos()`). Los 13 restantes quedan fuera de esas capas, porque sin la línea límite oficial no se reparte suelo entre provincias. La web los pinta como «sin dato»; al pulsarlos, la ficha dice qué son. No tienen población, sección ni datos. Los huecos que tocan la costa o la frontera no son anillos interiores y no se detectan.
 
 - **Teselas.** Se generan con GDAL desde R, con los controladores PMTiles y MVT (`generar_pmtiles()`), sin tippecanoe (plan §6.2). Cada tesela usa una rejilla de 4.096 unidades por 512 píxeles. La simplificación se mide en unidades de esa rejilla, así que es la misma a los dos lados de un borde compartido.
 - **Simplificación** (plan §11, pregunta 16): 4 unidades (medio píxel) por debajo del zoom 12 y ninguna en el zoom 12. En GDAL, el parámetro del zoom máximo es una tolerancia, no un número de zoom: vale 0 (`simplificacion_zoom_max`).
-- **Tamaño.** El fichero ocupa 35,2 MB (1 MB = 10⁶ bytes), con 13.235 teselas (`resumen_mapa_base`, `pmtiles_resumen()`):
+- **Tamaño.** El fichero ocupa 35,3 MB (1 MB = 10⁶ bytes), con 13.235 teselas (`resumen_mapa_base`, `pmtiles_resumen()`):
 
   | Zoom | Teselas | MB | Mayor tesela (KB) |
   |---|---|---|---|
-  | 0–4 | 13 | 0,03 | 5,7 |
-  | 5 | 5 | 0,34 | 142,7 |
-  | 6 | 10 | 0,46 | 149,1 |
-  | 7 | 24 | 1,67 | 208,2 |
-  | 8 | 71 | 2,26 | 142,4 |
-  | 9 | 208 | 2,77 | 85,3 |
-  | 10 | 702 | 4,10 | 68,4 |
-  | 11 | 2.548 | 6,47 | 38,4 |
-  | 12 | 9.654 | 17,03 | 58,0 |
+  | 0–4 | 13 | 0,03 | 6,6 |
+  | 5 | 5 | 0,34 | 143,2 |
+  | 6 | 10 | 0,46 | 149,2 |
+  | 7 | 24 | 1,67 | 208,3 |
+  | 8 | 71 | 2,27 | 142,4 |
+  | 9 | 208 | 2,78 | 85,3 |
+  | 10 | 702 | 4,11 | 68,4 |
+  | 11 | 2.548 | 6,49 | 38,4 |
+  | 12 | 9.654 | 17,11 | 58,0 |
 
-- **Compuerta** (`mapa_base_secciones`; `comprobar_mapa_base()`, `validacion_mapa_base`). Lee con GDAL las teselas del zoom 12 del fichero y encuentra las 36.333 secciones.
+- **Compuerta** (`comprobar_mapa_base()`, `validacion_mapa_base`). Lee con GDAL las teselas del zoom 12. `mapa_base_secciones`: encuentra las 36.333 secciones. `mapa_base_huecos` (alerta): 95 huecos del seccionado y 1.495 km², calculados desde las secciones. `mapa_base_sin_seccion` (bloqueo): con las secciones y la capa `sin_seccion` juntas, ensanchada la capa una unidad de la rejilla (2,4 m en el zoom 12), no queda ningún hueco abierto.
 - **Publicación** (plan §6.6; plan §11, pregunta 16). El PMTiles no entra en la historia de git: se regenera con `targets` y se publica desde un *release* del repositorio, que el flujo de GitHub Pages copia junto a la web. En local se ve con `node geo/visor/servir.mjs` (`geo/visor/`).
 
 **Códigos postales** (plan §6.3; plan §11, pregunta 16). No son una unidad del INE y no hay polígonos oficiales reutilizables. La correspondencia sección ↔ código postal saldrá del callejero del INE (campo CPOS de los tramos): en enero de 2021, el 80,7 % de las secciones tiene un solo código postal (11.051 códigos; 2.262 cruzan municipios). Solo la necesitan los indicadores 11 y 16. Una geometría propia a partir de los portales de CartoCiudad se decide en F4.
@@ -405,6 +408,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `jerarquia_sumas` | Territorios que no suman sus partes; secciones de más o de menos frente al seccionado de 2021 | Exacto | Bloqueo | 0 en las 6 cifras | `validacion_jerarquia` |
 | `jerarquia_nombres` | Comunidades, provincias y municipios sin nombre | Exacto | Bloqueo | 0 en las 3 cifras | `validacion_jerarquia` |
 | `mapa_base_secciones` | Secciones de 2021 que faltan en las teselas del zoom máximo del PMTiles | Exacto | Bloqueo | 0 | `validacion_mapa_base` |
+| `mapa_base_sin_seccion` | Huecos del seccionado que siguen abiertos con las secciones y la capa `sin_seccion` del zoom máximo juntas | Exacto | Bloqueo | 0 | `validacion_mapa_base` |
 | `smi_neto` | Ingreso neto mensual de la tartera de 2026 (`perfiles`) frente a la cifra del plan: 17.094 € × (1 − 0,065) / 12 ≈ 1.332 € | ±1 € | Bloqueo | 1.331,91 €; diferencia, −0,09 € | `validacion_derivados` |
 | `derivados_terminos` | Desviación máxima, por año e indicador, entre cada cifra derivada y la recalculada con sus términos | ±0,001 % | Bloqueo | 4,3 × 10⁻¹⁴ % como máximo en las 22 cifras | `validacion_derivados` |
 | `derivados_estado` | Cifras derivadas cuyo estado no es el peor de sus términos, o con valor y estado `secreto` o `ausente` (o al revés) | Exacto | Bloqueo | 0 en las 22 cifras | `validacion_derivados` |
@@ -423,6 +427,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `adrh_suma_secciones` | Población por sección del ADRH sumada por municipio frente al total municipal de la misma tabla | ±0,5 % | Alerta | Avisa en 160 municipios y años, todos de 2015–2019 (38, 34, 30, 29 y 29) | `comprobaciones_f1` |
 | `adrh_seccion_huerfana` | Secciones del ADRH sin código en ningún seccionado de 2016–2025 | Exacto | Alerta | 9 (§3.8) | `huerfanas_adrh` |
 | `cobertura_destino_excepcion` | Secciones de 2021 vacías por un defecto conocido de la fuente | Exacto | Alerta | 2 secciones, 6 años-sección (§3.8) | `comprobaciones_f1` |
+| `mapa_base_huecos` | Huecos del seccionado de 2021 de al menos 0,01 km² (suelo que no es de ninguna sección): número y superficie | Exacto | Alerta | Avisa con 95 huecos y 1.495 km²; el mayor, 418,4 km² (§3.10) | `validacion_mapa_base` |
 | `serpavi_escalas_detalle` | Cada municipio o distrito, año y tipología que no cuadra con sus secciones | Exacto | Alerta | Avisa en 164 filas, que van como `ausente` (§7.1) | `validacion_serpavi` |
 | `serpavi_forales` | Primer año con testigos de cada provincia foral frente al de la ruptura `serpavi_forales` | Exacto | Alerta | Coinciden los cuatro | `validacion_serpavi` |
 | `serpavi_sin_fila` | Secciones, distritos y municipios del seccionado de 2021 que la base no trae (van como `ausente`) | Exacto | Alerta | Avisa con 40 secciones, 36 distritos y 36 municipios (§7.1) | `validacion_serpavi` |
@@ -909,6 +914,7 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 **Jerarquía y mapa base:**
 - Los distritos no tienen nombre (§3.10).
 - Por debajo del zoom 12, los bordes se simplifican medio píxel; por encima, MapLibre amplía las teselas del zoom 12 (§3.10).
+- **Suelo sin sección** (§3.10): 1.495 km² de terrenos comunales no tienen sección ni datos y se ven como «sin dato». No se reparten entre provincias cuando tocan varias, y los que tocan la costa o la frontera no se detectan.
 
 **Renta:**
 - **La fuente no cuadra entre escalas.** El ADRH no siempre suma sus secciones al total municipal (`adrh_suma_secciones`, 160 municipios y años en 2015–2019). Sus medias de sección agregadas se separan más de un 5 % de la cifra municipal en 135 cifras (`adrh_municipio_detalle`). El atlas no lo corrige: muestra la cifra publicada en cada escala.
@@ -992,7 +998,7 @@ La exportación sigue las decisiones del autor del 8-nov-2026 (plan §6.6; plan 
 - **Descargas.** La web descarga la serie del mapa en CSV, en el nivel que se ve (valor con la precisión de la serie, estado y fuente; en el 21, superficie y umbral), y el mapa en PNG con su leyenda y su fuente. Con «Tu ficha», ninguna de las dos lleva el sueldo escrito: el CSV da el alquiler, no la proporción. Los colores del PNG de «¿te llega?» sí dejan deducirlo de forma aproximada, así que con «Tu ficha» se descarga tras un aviso que se puede cancelar (plan §11, pregunta 23).
 - **Año fuera de la serie** (plan §11, pregunta 32). Con un año anterior a todos los periodos de una serie (2020 en las viviendas turísticas), el mapa, la leyenda, la ficha, el comparador y las dos descargas dan «sin dato» y dicen desde cuándo hay serie; el CSV, con una fila sin valor por territorio y el inicio de la serie en la columna del estado. Con un año posterior se toma el último periodo, y la leyenda lo dice.
 - **Otros ficheros.** Los nombres de los territorios, los rectángulos de los municipios para el buscador (`cajas_municipios`) y los ingresos de las fichas (`perfiles`). El mapa base se copia a `web/teselas/`; al publicar, sale de un *release* (§3.10).
-- **Volumen** (`ficheros_web`, 21:15): 8.500 ficheros y 110,1 MB, con el PMTiles (35,2 MB). En disco, `web/datos/` suma 8.734 ficheros y 76,2 MB: los 8.499 de `ficheros_web` (75,0 MB), los 3 de la sección de sobrecarga (`ficheros_web_sobrecarga`, 1,1 MB) y la muestra versionada de `web/datos/ejemplo/` (232 ficheros, 0,2 MB).
+- **Volumen** (`ficheros_web`, 22:14): 8.500 ficheros y 110,2 MB, con el PMTiles (35,3 MB). En disco, `web/datos/` suma 8.734 ficheros y 76,2 MB: los 8.499 de `ficheros_web` (75,0 MB), los 3 de la sección de sobrecarga (`ficheros_web_sobrecarga`, 1,1 MB) y la muestra versionada de `web/datos/ejemplo/` (232 ficheros, 0,2 MB).
 - **Compuerta** (`comprobar_web()`, `validacion_web`): `web_valores` y `web_fichas` (bloqueo) y `web_fuera_indice` (alerta) (§4.1).
 
 ---
@@ -1013,7 +1019,7 @@ targets::tar_read(validacion_f1)          # una compuerta: columnas calculado, r
 - comparar límites, 21 min;
 - leer los catastros forales, unos 17 min.
 
-El mapa base tarda unos 4,5 minutos (plan §7, F1). Con `PROVINCIA=28` (variable de entorno, antes de `tar_make()`), el cálculo se limita a una provincia, y los ficheros llevan el código en el nombre.
+El mapa base tarda unos 8 minutos: 6 min 43 s el PMTiles (`fichero_mapa_base`) y 1 min 17 s su compuerta, que calcula los huecos del seccionado (8-nov-2026). Con `PROVINCIA=28` (variable de entorno, antes de `tar_make()`), el cálculo se limita a una provincia, y los ficheros llevan el código en el nombre.
 
 **Objetivos citados en esta nota:**
 - **Geografía:** `secciones_2021`, `tablas_paso_callejero`, `tablas_paso_finales`, `edificios_paso`, `edificios_forales`, `municipios_catastro_sel`, `grupos_municipio`, `huerfanas_adrh`, `fase_codigos`, `cambios_limites`, `comprobaciones_f1`, `diagnostico_f1`, `comparacion_vias`.

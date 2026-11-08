@@ -382,9 +382,12 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
 
   manifiesto <- list(
     version = fecha, ejemplo = FALSE, generado = fecha, seccionado = 2021L,
+    # sin_seccion: suelo que no es de ninguna sección (geo_capas_mapa_base), sin código propio:
+    # la web lo pinta como «sin dato» y su ficha lee estos atributos.
     mapa_base = list(tipo = "pmtiles", url = url_teselas, atribucion = "INE",
                      capas = list(comunidades = list(id = "ccaa"), provincias = list(id = "provincia"),
-                                  municipios = list(id = "municipio"), secciones = list(id = "seccion"))),
+                                  municipios = list(id = "municipio"), secciones = list(id = "seccion"),
+                                  sin_seccion = list(atributos = I(c("km2", "provincias"))))),
     secciones = rutas_indices[1],
     indices = stats::setNames(as.list(rutas_indices), names(indices)),
     territorios = "datos/territorios.json",

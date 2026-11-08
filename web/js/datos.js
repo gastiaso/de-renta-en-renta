@@ -169,3 +169,13 @@ export function decodificar(datos, n, codificacion) {
   }
   return { valores: v.map((x) => (x === null ? null : x / codificacion.escala)), estados };
 }
+
+// Atributos de un elemento de la capa sin_seccion del mapa base (suelo que no es de ninguna
+// sección): superficie en km² (o null) y códigos de las provincias que lo rodean.
+export function atributosSinSeccion(p) {
+  const km2 = p?.km2 === undefined || p?.km2 === null || p?.km2 === '' ? NaN : Number(p.km2);
+  return {
+    km2: Number.isFinite(km2) ? km2 : null,
+    provincias: String(p?.provincias ?? '').split(/\s+/).filter((c) => /^\d{2}$/.test(c)),
+  };
+}

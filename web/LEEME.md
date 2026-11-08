@@ -43,6 +43,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
   - Si el ingreso de la ficha no es del mismo año que el alquiler (la tartera es el SMI del año en curso), se avisa (regla 4).
 - **Cálculo en el navegador**, sin descargar nada más: los valores van en el estado de cada elemento del mapa (*feature-state*) y el color sale de expresiones de estilo (`js/sueldo.js`).
   - Con poco zoom, donde el PMTiles aún no trae secciones, se pintan los municipios y, más abajo, las provincias, con las cifras publicadas en su nivel.
+  - El suelo que no es de ninguna sección (terrenos comunales fuera de todo municipio) se pinta como «sin dato» en todos los zooms; al pulsarlo, la ficha dice qué es.
 - **El sueldo no sale del dispositivo.** No entra en la URL ni se guarda. Solo va en un enlace si se pulsa «Compartir» y se elige «Copiar con mi sueldo», con aviso previo, y entonces va tras «#», que el navegador no envía al servidor. Al abrir ese enlace, el sueldo se lee y se quita de la barra de direcciones.
 - **Ficha de sección:**
   - el valor del mapa activo;
@@ -87,7 +88,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 
 El manifiesto dice:
 
-- `mapa_base`: de qué tipo es (`pmtiles`, un fichero con varias capas, o `geojson`, un fichero por capa), dónde está y cómo se llama la propiedad que identifica cada elemento. Las capas son `comunidades` (`ccaa`), `provincias` (`provincia`), `municipios` (`municipio`) y `secciones` (`seccion`, código de 10 dígitos como texto).
+- `mapa_base`: de qué tipo es (`pmtiles`, un fichero con varias capas, o `geojson`, un fichero por capa), dónde está y cómo se llama la propiedad que identifica cada elemento. Las capas son `comunidades` (`ccaa`), `provincias` (`provincia`), `municipios` (`municipio`) y `secciones` (`seccion`, código de 10 dígitos como texto). En el PMTiles hay una quinta, sin código: `sin_seccion`, el suelo que no es de ninguna sección, con `km2` y `provincias` (`atributos`).
 - `indices`: un fichero por nivel (`sc`, `distrito`, `municipio`, `provincia`, `ccaa`, `nacional`) con los códigos en el orden de los valores. España es `"00"`.
 - `territorios`: nombres por nivel y `ccaa_de_provincia`, porque la comunidad no está en el código de sección.
 - `cajas`: caja de cada municipio, para el buscador.

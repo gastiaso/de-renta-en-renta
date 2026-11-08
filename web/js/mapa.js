@@ -11,9 +11,14 @@
 // como estado de cada sección (feature-state, una clave por serie). El color sale de una
 // expresión de estilo (sueldo.js), así que cambiar de sueldo, ficha, umbral o superficie no
 // descarga nada.
+//
+// Capa opcional sin_seccion: el suelo que el seccionado no cubre (terrenos comunales que no son
+// de ningún municipio). Sin código ni valores: se pinta con el color de «sin dato», en todos los
+// zooms, y al pulsarla avisa con sus atributos (km2 y provincias, códigos separados por espacios).
 
 import * as maplibregl from 'maplibre-gl';
 import { paletaDe, paletaContorno, rampaDeCss } from './colores.js';
+import { atributosSinSeccion } from './datos.js';
 
 const css = (nombre) => getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
 const absoluta = (ruta) => new URL(ruta, document.baseURI).href;
@@ -62,7 +67,7 @@ function cajaDe(geometrias) {
 }
 
 // Crea el mapa y resuelve, cuando ha cargado, con las funciones para pintarlo y manejarlo.
-export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alMover }) {
+export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsarSinSeccion, alMover }) {
   const base = manifiesto.mapa_base;
   const capas = base.capas;
   if (!capas?.secciones) throw new Error('El mapa base no tiene capa de secciones');
@@ -115,7 +120,7 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alMover 
       mapa.addSource('mapa-base', {
         type: 'vector',
         url: `pmtiles://${absoluta(base.url)}`,
-        promoteId: Object.fromEntries(Object.entries(capas).map(([capa, def]) => [capa, def.id])),
+        promoteId: Object.fromEntries(Object.entries(capas).filter(([, def]) => def.id).map(([capa, def]) => [capa, def.id])),
         attribution: base.atribucion,
       });
     } else if (base.tipo === 'geojson') {
@@ -133,6 +138,11 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alMover 
     if (tierra) mapa.addLayer({ id: 'tierra', type: 'fill', ...fuente(tierra), paint: { 'fill-color': css('--color-placa') } });
     for (const { capa, hasta } of RELLENOS.filter((r) => r.capa !== 'secciones')) {
       mapa.addLayer({ id: `${capa}-relleno`, type: 'fill', ...fuente(capa), maxzoom: hasta, paint: { 'fill-color': css('--color-placa') } });
+    }
+    // El suelo sin sección, encima de la tierra y de las provincias (que pueden incluirlo) y debajo de
+    // las secciones, que mandan en sus bordes.
+    if (capas.sin_seccion) {
+      mapa.addLayer({ id: 'sin-seccion-relleno', type: 'fill', ...fuente('sin_seccion'), paint: { 'fill-color': css('--color-fuera') } });
     }
     mapa.addLayer({ id: 'secciones-relleno', type: 'fill', ...fuente('secciones'), paint: { 'fill-color': css('--color-fuera') } });
     mapa.addLayer({
@@ -193,6 +203,15 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alMover 
       const codigo = codigoDe(e);
       if (codigo) alPulsar(codigo);
     });
+    if (capas.sin_seccion && alPulsarSinSeccion) {
+      mapa.on('mousemove', 'sin-seccion-relleno', () => { mapa.getCanvas().style.cursor = 'pointer'; });
+      mapa.on('mouseleave', 'sin-seccion-relleno', () => { mapa.getCanvas().style.cursor = ''; });
+      mapa.on('click', 'sin-seccion-relleno', (e) => {
+        if (mapa.queryRenderedFeatures(e.point, { layers: ['secciones-relleno'] }).length) return;   // la sección manda
+        const p = e.features?.[0]?.properties;
+        if (p) alPulsarSinSeccion(atributosSinSeccion(p));
+      });
+    }
     mapa.on('moveend', () => alMover(mapa));
   }
 

@@ -157,7 +157,12 @@
       "evolucion_llega": "Rent as a share of income over time",
       "ingreso_fijo": "Today's income in every year: only rent changes.",
       "del_ingreso": "of income goes on rent",
-      "alquiler_ingreso": "Rent: €{alquiler} · income: €{ingreso} a month"
+      "alquiler_ingreso": "Rent: €{alquiler} · income: €{ingreso} a month",
+      "sin_seccion": "Area without a census section",
+      "sin_seccion_texto": "Common land that belongs to no municipality. The INE assigns it no section and it has no population, so there are no data.",
+      "provincias": "Provinces",
+      "superficie": "Area",
+      "km2": "{superficie} km²"
     },
     "comparador": {
       "titulo": "Compare",
