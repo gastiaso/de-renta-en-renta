@@ -2,7 +2,8 @@
 # diputaciones forales de Álava, Bizkaia y Gipuzkoa y del Gobierno de Navarra). Completa la vía (b)
 # de las tablas de paso (plan §6.3) donde no llega el Catastro estatal (fuente_catastro_inspire.R):
 # cada edificio con su número de viviendas y su año de construcción, asignado a las secciones por
-# su posición. Licencias distintas por territorio (inventario/fuentes.csv).
+# su posición. Licencias distintas por territorio; se tratan como datos abiertos (decisión del
+# autor, 8-nov-2026; inventario/fuentes.csv).
 #   Álava y Gipuzkoa: un zip del territorio entero (el de Álava, con un GML por municipio).
 #   Bizkaia y Navarra: un zip por municipio, con el código del INE en el nombre (Navarra, sin ceros
 #   delante). Usansolo (48916, segregado de Galdakao en 2022) no tiene zip: va en el de Galdakao.

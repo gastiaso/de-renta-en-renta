@@ -4,6 +4,11 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Cambiado (8-nov-2026, licencia)
+
+- Datos derivados, textos e inventario pasan de CC BY 4.0 a CC BY-SA 4.0 (`LICENCIA_DATOS.md`, `README.md`; plan v0.19, §6.1). Las fuentes se tratan como datos abiertos (decisión del autor), incluidos el Catastro estatal y los forales de Bizkaia y Gipuzkoa, de licencia contradictoria (`inventario/fuentes.csv`).
+- Las tablas de paso combinadas (callejero y Catastro), las que se usan, entran en git: `geo/tablas_paso/combinada_<año>_2021.csv` (objetivo `fichero_paso_final`).
+
 ### Añadido (8-nov-2026, catastros forales)
 
 - Catastros forales de Álava, Bizkaia, Gipuzkoa y Navarra en la vía (b) de las tablas de paso (plan v0.18, §6.3). Fuente `catastro_foral` y fichero `R/fuente_catastro_foral.R`:

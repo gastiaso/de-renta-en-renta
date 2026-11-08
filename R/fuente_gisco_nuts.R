@@ -1,6 +1,6 @@
 # Fuente eurostat_nuts: geometrías NUTS de GISCO (paquete giscoR), una versión por fichero.
 # Licencia: uso no comercial con el aviso «© EuroGeographics para los límites
-# administrativos»; no entran en la licencia CC BY 4.0 de los datos del atlas.
+# administrativos»; no entran en la licencia CC BY-SA 4.0 de los datos del atlas.
 
 descargar_gisco_nuts <- function(version, dir = file.path("datos", "brutos", "gisco"), forzar = FALSE) {
   destino <- file.path(dir, sprintf("nuts_%s_20m_3035.gpkg", version))

@@ -129,6 +129,9 @@ pasos_2021 <- tarchetypes::tar_map(
     combinar_vias(paso_catastro, paso_callejero, datos = datos) |>
       completar_por_codigo(datos, secciones_2021$seccion)
   }),
+  # La tabla que se usa, en git desde el 8-nov-2026 (datos abiertos, CC BY-SA 4.0)
+  tar_target(fichero_paso_final, exportar_tabla_paso(
+    paso_final, sprintf("geo/tablas_paso/combinada_%d_2021%s.csv", seccionado, SUFIJO_AMBITO)), format = "file"),
   # Cierre y cobertura sobre las tablas que se usan (combinadas)
   tar_target(comprobacion_paso, bind_rows(
     comprobar_cierre_poblacional(poblacion_adrh, paso_final, anio, grupos, excluir = huerfanas_adrh$codigo),

@@ -44,5 +44,5 @@ La capa de precios de oferta de los portales está apagada por defecto. Se encie
 ## Licencias
 
 - Código: MIT (`LICENSE`).
-- Datos derivados, textos e inventario: CC BY 4.0 (`LICENCIA_DATOS.md`).
+- Datos derivados, textos e inventario: CC BY-SA 4.0 (`LICENCIA_DATOS.md`).
 - Los datos de origen mantienen las condiciones de cada fuente (`inventario/fuentes.csv`).
