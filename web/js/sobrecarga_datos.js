@@ -79,6 +79,11 @@ export const conMuestraPequena = (vista) => pintables(vista).filter(pocoFiable).
 // Años de una serie con marca de ruptura («b»): la línea se corta antes de ellos.
 export const rupturasDe = (anios, marcas = []) => anios.filter((_, i) => marcasDe(marcas[i]).includes('b'));
 
+// Todas las rupturas de una serie: las de Eurostat («b») y las del atlas, que Eurostat no marca
+// (inventario/rupturas.csv; en España, 2013), sin repetir y en orden.
+export const rupturasSerie = (anios, marcas = [], atlas = []) =>
+  anios.filter((a, i) => marcasDe(marcas[i]).includes('b') || (atlas ?? []).includes(a));
+
 // Tramos seguidos de años con una marca dada, para describirlos: [[2010, 2018], [2021, 2021]].
 export function tramosConMarca(anios, marcas = [], letra = 'e') {
   const tramos = [];

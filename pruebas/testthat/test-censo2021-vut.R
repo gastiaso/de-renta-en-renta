@@ -179,6 +179,26 @@ paso_vut <- tibble::tibble(
 )
 censo_vut <- tibble::tibble(seccion = c("0401301001", "0401301002", "0401301003", "0704002010", "0704002012", "0704002013"),
                             viviendas = c(500, 300, NA, 400, 100, 50))
+# Tabla 59521 inventada: las viviendas de cada territorio, con 80 en la sección de Almería en
+# secreto (800 en las secciones con dato). Aragón y Asturias, para que las comunidades sigan la
+# serie 01, 02, 03, 04 del INE (nivel_territorios_ine).
+viviendas_csv <- function() {
+  ruta <- tempfile(fileext = ".csv")
+  writeLines(c("\ufeffTipo de vivienda (principal o no);Comunidad Autónoma y Provincia;Año de construcción del edificio;Total",
+               "Total;Total Nacional;Total;1.430",
+               "Total;Total Nacional;Antes de 1900;30",
+               "Vivienda principal;Total Nacional;Total;1.000",
+               "Total;01 Andalucía;Total;880",
+               "Total;04 Almería;Total;880",
+               "Total;02 Aragón;Total;0",
+               "Total;22 Huesca;Total;0",
+               "Total;03 Asturias, Principado de;Total;0",
+               "Total;33 Asturias;Total;0",
+               "Total;04 Balears, Illes;Total;550",
+               "Total;07 Balears, Illes;Total;550"),
+             ruta, useBytes = TRUE)
+  ruta
+}
 vut_2024 <- function(pct_1001 = "2.4") {
   bruto <- tibble::tibble(
     a = c("cusec", "0401301001", "0401301002", "0401301004", "0401301003", "0704002010", "0704002011", "0704002099"),
@@ -260,7 +280,7 @@ test_that("la compuerta de VUT suma secciones, mira el seccionado y el denominad
   s2024 <- unique(paso_vut$origen)
   comprobar <- function(v, secciones = s2024) {
     comprobar_ine_vut(v, reproyectar_ine_vut(v, paso_vut, censo_vut, periodos = "NOV2024"), p, censo_vut,
-                      secciones, paso_vut)
+                      secciones, paso_vut, leer_ine_censo2021_viviendas(viviendas_csv()))
   }
   c <- comprobar(vut_2024())
   expect_equal(c$calculado[c$id == "vut_viviendas_provincia"], c(0, 0, 0))
@@ -353,14 +373,15 @@ test_that("la compuerta de España de VUT suma las provincias y pondera sus porc
   # comprobar_ine_vut() las incluye
   v <- vut_2024()
   todo <- comprobar_ine_vut(v, reproyectar_ine_vut(v, paso_vut, censo_vut, periodos = "NOV2024"), p, censo_vut,
-                            unique(paso_vut$origen), paso_vut, periodos = "NOV2024")
+                            unique(paso_vut$origen), paso_vut, leer_ine_censo2021_viviendas(viviendas_csv()),
+                            periodos = "NOV2024")
   expect_true(all(c("vut_nacional_viviendas", "vut_nacional_porcentaje") %in% todo$id))
 })
 
 # --- Comunidades y provincias ------------------------------------------------------------
 
 referencias_territorios <- tibble::tibble(
-  id = c("censo2021_alquiler", "vut_territorios"), tolerancia = c("±0,1 puntos", "±0,01 puntos"), tipo = "bloqueo"
+  id = c("censo2021_alquiler", "vut_territorios"), tolerancia = c("±0,1 puntos", "±0,005 puntos"), tipo = "bloqueo"
 )
 
 test_that("comunidades y provincias del indicador 18 son las cifras publicadas de la tabla 59523", {
@@ -406,34 +427,51 @@ test_that("comunidades y provincias del indicador 19 son los porcentajes publica
   expect_equal(sin_espana$estado[sin_espana$nivel == "nacional"], "ausente")
 })
 
-test_that("la compuerta de VUT compara comunidades y provincias con el cociente de las sumas de sus secciones", {
+test_that("la tabla 59521 da las viviendas de España, las comunidades y las provincias", {
+  v <- leer_ine_censo2021_viviendas(viviendas_csv())
+  expect_equal(v$nivel, c("nacional", "ccaa", "provincia", rep(c("ccaa", "provincia"), 3)))
+  expect_equal(v$codigo, c("00", "01", "04", "02", "22", "03", "33", "04", "07"))
+  expect_equal(v$ccaa, c(NA, "01", "01", "02", "02", "03", "03", "04", "04"))
+  expect_equal(v$viviendas, c(1430, 880, 880, 0, 0, 0, 0, 550, 550))   # solo el total de tipos y de años
+})
+
+test_that("la compuerta de VUT usa el denominador del INE en cada periodo (ruptura vut_denominador_2024)", {
   r <- vut_provincias_csv()
-  # Baleares (07 y comunidad 04): 60 viviendas turísticas / 550 viviendas, sin secciones en secreto:
-  # 10,909 %, que el INE publicaría como 10,91
-  p <- mutate(leer_ine_vut_provincias(r[1], r[2]), porcentaje = if_else(codigo %in% c("04", "07") & ccaa == "04", 10.91, porcentaje))
+  v <- leer_ine_censo2021_viviendas(viviendas_csv())
+  # Noviembre de 2024, con las viviendas de la tabla 59521: Baleares (07 y comunidad 04), 60 / 550 =
+  # 10,909 %, que el INE publica como 10,91; Almería (y Andalucía), 22 / 880 = 2,5 %; España,
+  # 82 / 1.430 = 5,73 %
+  p <- leer_ine_vut_provincias(r[1], r[2]) |>
+    mutate(porcentaje = case_when(nivel == "nacional" ~ 5.73, ccaa == "04" ~ 10.91, TRUE ~ 2.5))
   v21 <- reproyectar_ine_vut(vut_2024(), paso_vut, censo_vut, periodos = "NOV2024")
-  c <- territorios_vut(v21, p, periodos = "NOV2024")
-  expect_setequal(c$detalle, c("M11 01 Andalucía", "M11 04 Almería", "M11 04 Balears, Illes", "M11 07 Balears, Illes"))
-  baleares <- c[c$detalle == "M11 07 Balears, Illes", ]
-  expect_equal(baleares$calculado, 100 * 60 / 550)
-  expect_equal(baleares$referencia, 10.91)
-  # Almería (y Andalucía): 22 viviendas turísticas (una en la sección en secreto) / 800; el 2,75
-  # publicado no pasa del cociente
-  expect_equal(c$calculado[c$detalle == "M11 04 Almería"], 2.75)
+  c <- territorios_vut(v21, p, v, periodos = "NOV2024")
+  expect_setequal(c$detalle, c("M11 Total Nacional", "M11 01 Andalucía", "M11 04 Almería", "M11 04 Balears, Illes",
+                               "M11 07 Balears, Illes"))
+  expect_equal(c$calculado[c$detalle == "M11 07 Balears, Illes"], 100 * 60 / 550)
+  expect_equal(c$referencia[c$detalle == "M11 07 Balears, Illes"], 10.91)
+  expect_equal(c$calculado[c$detalle == "M11 04 Almería"], 2.5)
+  expect_equal(c$calculado[c$detalle == "M11 Total Nacional"], 100 * 82 / 1430)
   expect_silent(validar_referencias(c, referencias_territorios))
-  # Por encima del cociente no pasa; por debajo, con secciones en secreto, sí (solo hay cota superior)
-  alto <- territorios_vut(v21, mutate(p, porcentaje = if_else(codigo == "04" & nivel == "provincia", 3, porcentaje)), "NOV2024")
-  expect_equal(alto$calculado[alto$detalle == "M11 04 Almería"], 2.75)
+  # Agosto de 2024 (mismos datos con otro mes), con las viviendas de las secciones con dato: Almería,
+  # 22 / 800 = 2,75 %; España, 82 / 1.350. El 2,5 publicado no pasa
+  agosto <- function(d) mutate(d, mes = "M08")
+  c8 <- territorios_vut(agosto(v21), agosto(p), v, periodos = "NOV2024")
+  expect_equal(c8$calculado[c8$detalle == "M08 04 Almería"], 2.75)
+  expect_equal(c8$calculado[c8$detalle == "M08 Total Nacional"], 100 * 82 / 1350)
+  expect_error(validar_referencias(c8, referencias_territorios), "compuerta")
+  # Las dos direcciones cuentan, también con secciones en secreto
+  alto <- territorios_vut(v21, mutate(p, porcentaje = if_else(codigo == "04" & nivel == "provincia", 2.6, porcentaje)), v, "NOV2024")
   expect_error(validar_referencias(alto, referencias_territorios), "compuerta")
-  bajo <- territorios_vut(v21, mutate(p, porcentaje = if_else(codigo == "04" & nivel == "provincia", 1, porcentaje)), "NOV2024")
-  expect_silent(validar_referencias(bajo, referencias_territorios))
-  # Sin secciones en secreto, las dos direcciones cuentan
-  mal <- territorios_vut(v21, mutate(p, porcentaje = if_else(codigo == "07", 10.5, porcentaje)), "NOV2024")
-  expect_error(validar_referencias(mal, referencias_territorios), "compuerta")
-  # Con las secciones de una sola provincia (PROVINCIA), su comunidad entra solo si está entera
-  solo_almeria <- territorios_vut(filter(v21, startsWith(seccion, "04")), p, "NOV2024")
+  bajo <- territorios_vut(v21, mutate(p, porcentaje = if_else(codigo == "04" & nivel == "provincia", 2.4, porcentaje)), v, "NOV2024")
+  expect_error(validar_referencias(bajo, referencias_territorios), "compuerta")
+  # Un territorio sin fila en la tabla 59521 sale sin cifra y no pasa
+  sin <- territorios_vut(v21, p, filter(v, !(nivel == "provincia" & codigo == "07")), "NOV2024")
+  expect_true(is.na(sin$calculado[sin$detalle == "M11 07 Balears, Illes"]))
+  expect_error(validar_referencias(sin, referencias_territorios), "compuerta")
+  # Con las secciones de una sola provincia (PROVINCIA), su comunidad entra solo si está entera, y España no
+  solo_almeria <- territorios_vut(filter(v21, startsWith(seccion, "04")), p, v, "NOV2024")
   expect_setequal(solo_almeria$detalle, c("M11 01 Andalucía", "M11 04 Almería"))
   # comprobar_ine_vut() la incluye
-  todo <- comprobar_ine_vut(vut_2024(), v21, p, censo_vut, unique(paso_vut$origen), paso_vut, periodos = "NOV2024")
-  expect_equal(sum(todo$id == "vut_territorios"), 4L)
+  todo <- comprobar_ine_vut(vut_2024(), v21, p, censo_vut, unique(paso_vut$origen), paso_vut, v, periodos = "NOV2024")
+  expect_equal(sum(todo$id == "vut_territorios"), 5L)
 })

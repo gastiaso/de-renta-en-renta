@@ -294,6 +294,8 @@
       "anio": "Survey",
       "fuente": "Eurostat (ilc_lvho07a, ilc_lvho07c), from the first year published: for Spain, the whole population since 2004 and market-rate renting since 2007; the EU-27, since 2010. From 2023 to 2025, the calculation from EU-SILC microdata reproduces these figures (±0.1 points).",
       "rupturas": "Break in series (Eurostat flag «b»; hollow point and broken line): {lista}. Figures before and after are not fully comparable.",
+      "rupturas_atlas": "Break in series set by the atlas, not flagged by Eurostat (hollow point and broken line): {lista}. Since the 2013 survey, INE has obtained income by combining the interview with administrative records (tax agency, Social Security and the foral treasuries), and income is the denominator of the rate.",
+      "ruptura_atlas": "break in series set by the atlas (income from administrative records since 2013), not flagged by Eurostat",
       "estimados": "Eurostat estimates (flag «e»): {lista}.",
       "tabla": "Show the figures",
       "grafico": "Overburden rate in Spain and the EU-27, whole population and market-rate renting, {desde}–{hasta}"

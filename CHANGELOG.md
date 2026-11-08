@@ -4,6 +4,19 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Decidido (9-nov-2026, preguntas abiertas 34–36; plan v0.28)
+
+- **Ruptura de 2013 en la serie de sobrecarga** (34): la serie de España se corta en 2013, cuando el INE pasa a obtener los ingresos de la ECV combinando la entrevista con registros administrativos, aunque Eurostat no lo marca. `ecv_ingresos_2013` pasa a `aplicado` en `inventario/rupturas.csv`.
+- **Denominador de las viviendas turísticas por territorio** (35): ruptura `vut_denominador_2024` en `inventario/rupturas.csv` y tabla 59521 del Censo 2021 (viviendas por comunidad y provincia; 143 KB, descarga autorizada por el autor) para la compuerta.
+- **Empate en el corte de los quintiles** (36): el hogar con la renta de un corte va al quintil de arriba, como en Eurostat.
+
+### Cambiado (9-nov-2026, preguntas abiertas 34–36)
+
+- Sección «Sobrecarga»: las dos líneas de España se cortan también en 2013, con punto hueco y una nota propia («ruptura de serie del atlas, que Eurostat no marca»). `rupturas_serie_sobrecarga()` lee las rupturas aplicadas del indicador 22 de la ECV en `inventario/rupturas.csv` (objetivos nuevos `rupturas` y `rupturas_sobrecarga`); el JSON las lleva en `rupturas_atlas` y la compuerta de la página (`web_sobrecarga_valores`) las comprueba. La UE-27, sin cambio.
+- Quintil de renta (`quintil_renta()`): la renta igual a un corte va al quintil de arriba. Las 15 cifras de 2023 a 2025 coinciden a un decimal con las de Eurostat (diferencia máxima, 0,045 puntos; antes, 0,051): el primer quintil de 2025 pasa de 27,8 a 27,7 %. Cada quintil reúne del 19,95 al 20,05 % de la población con renta (antes, del 19,98 al 20,01).
+- Compuerta `vut_territorios`: exacta en los dos sentidos, con el denominador del INE en cada periodo (hasta agosto de 2024, las viviendas de las secciones con dato; desde noviembre de 2024, las de la tabla 59521, que cuenta también las de las secciones en secreto) y con España. Pasan las 432 cifras con ±0,005 puntos, el redondeo; antes, ±0,01 y solo cota superior en 33 provincias y 12 comunidades. Función nueva `leer_ine_censo2021_viviendas()` y objetivos `fichero_censo2021_viviendas` y `censo2021_viviendas`.
+- Nota metodológica (castellano e inglés) al día: compuertas (§4.1), viviendas turísticas por territorio (§7.3), quintil, marcas de Eurostat y serie de la web (§7.5) y limitaciones (§8).
+
 ### Corregido (8-nov-2026, suelo sin sección; plan v0.27)
 
 - Mapa: los terrenos comunales que no pertenecen a ningún término municipal se veían en blanco y no se podían pulsar. Son 95 huecos del seccionado de 2021 de al menos 0,01 km² (1.495 km²), como las Bardenas Reales o las sierras de Urbasa y Andía, casi todos en Navarra, Álava, Gipuzkoa y Burgos. El mapa base trae una capa nueva, `sin_seccion` (zooms 0–12, con `km2` y `provincias`), que la web pinta como «sin dato»; al pulsarla, la ficha explica por qué no hay datos. Los huecos que tocan una sola provincia, o varias de una sola comunidad, se suman a ella, y sus bordes ya no los rodean. Funciones `geo_huecos()` y `geo_absorber_huecos()` (`R/geo_mapa_base.R`); compuertas `mapa_base_huecos` (alerta) y `mapa_base_sin_seccion` (bloqueo). El PMTiles pasa de 35,2 a 35,3 MB, y generarlo, de unos 4 a unos 7 minutos.

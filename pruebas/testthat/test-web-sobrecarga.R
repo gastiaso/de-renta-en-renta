@@ -144,8 +144,9 @@ test_that("la exportación escribe sobrecarga.json y su geometría y pasa la com
   on.exit(unlink(c(dir, ruta), recursive = TRUE))
   sf::st_write(nuts_sc(), ruta, quiet = TRUE)
   europa <- filter(europa_sc(), anio >= 2024)
+  rupturas <- list(ES_TOTAL = c(2013L, 2025L), ES_RENT_MKT = c(2013L, 2025L), EU27_TOTAL = integer(), EU27_RENT_MKT = integer())
   rutas <- exportar_web_sobrecarga(anual_sc, agrupada_sc, europa, ccaa_sc, modulos_sc(), c("2024" = ruta), ind_sc,
-                                   quintil = quintil_sc, dir_web = dir, fecha = "2026-11-08")
+                                   quintil = quintil_sc, rupturas = rupturas, dir_web = dir, fecha = "2026-11-08")
   expect_equal(basename(rutas), c("sobrecarga.json", "nuts_2024.geojson"))
   x <- jsonlite::fromJSON(rutas[1], simplifyVector = FALSE)
   expect_equal(unlist(x$anios), c(2024L, 2025L))
@@ -164,6 +165,9 @@ test_that("la exportación escribe sobrecarga.json y su geometría y pasa la com
   expect_equal(unlist(x$espana$serie$anios), c(2024L, 2025L))
   expect_equal(unlist(x$espana$serie$valores$ES_TOTAL), c(78L, 72L))
   expect_equal(x$espana$serie$marcas$ES_TOTAL, list(NULL, "b"))
+  # Rupturas del atlas, solo las de dentro de la serie (2013 queda fuera); la UE-27, sin ninguna
+  expect_equal(x$espana$serie$rupturas_atlas$ES_TOTAL, list(2025L))
+  expect_equal(x$espana$serie$rupturas_atlas$EU27_TOTAL, list())
   aa12 <- t25[[which(vapply(t25, `[[`, "", "geo") == "AA12")]]
   expect_equal(aa12$bandera, "u")
   expect_equal(x$espana$anual[[1]][c("anio", "corte", "grupo", "v", "n")],
@@ -177,11 +181,14 @@ test_that("la exportación escribe sobrecarga.json y su geometría y pasa la com
   expect_equal(x$comunidades$ES30$codigo, "13")
 
   escalera <- armar_escalera(europa)
-  comprobar <- function() comprobar_web_sobrecarga(anual_sc, agrupada_sc, europa, escalera, ccaa_sc, modulos_sc(), ind_sc,
-                                                   quintil = quintil_sc, dir_web = dir)
+  comprobar <- function(r = rupturas) comprobar_web_sobrecarga(anual_sc, agrupada_sc, europa, escalera, ccaa_sc, modulos_sc(),
+                                                                ind_sc, quintil = quintil_sc, rupturas = r, dir_web = dir)
   c1 <- comprobar()
   expect_setequal(unique(c1$id), c("web_sobrecarga_valores", "web_sobrecarga_muestra", "web_sobrecarga_geometria"))
   expect_equal(sum(c1$calculado), 0)
+  # Sin las rupturas del inventario, la de 2025 sobra en la página
+  sin <- comprobar(NULL)
+  expect_equal(sin$calculado[sin$detalle == "rupturas del atlas en la serie de Espa\u00f1a"], 2)
 
   # Una cifra cambiada, una muestra cambiada, una marca quitada y una región sin geometría: la compuerta lo ve
   texto <- readLines(rutas[1], warn = FALSE, encoding = "UTF-8")
@@ -205,6 +212,19 @@ test_that("la exportación escribe sobrecarga.json y su geometría y pasa la com
   sf::st_write(g[g$id != "BB", ], rutas[2], driver = "GeoJSON", delete_dsn = TRUE, quiet = TRUE)
   c4 <- comprobar()
   expect_equal(c4$calculado[c4$id == "web_sobrecarga_geometria" & c4$detalle == "total-2025"], 1)
+})
+
+test_that("las rupturas del atlas en la serie salen de inventario/rupturas.csv (pregunta abierta 34)", {
+  r <- tibble::tibble(id = c("a", "b", "c", "d"), fuente = c("ine_ecv", "ine_ecv", "ine_ecv", "ine_vut"),
+                      indicador = c("22", "22", "21;22", "19"), anio = c("2013", "2020", "2008;2009", "2024"),
+                      estado = c("aplicado", "por revisar", "aplicado", "aplicado"))
+  s <- rupturas_serie_sobrecarga(r)
+  expect_equal(names(s), names(SERIES_ESPANA_SOBRECARGA))
+  expect_equal(s$ES_TOTAL, c(2008L, 2009L, 2013L))         # solo las aplicadas del 22 de la ECV
+  expect_equal(s$ES_RENT_MKT, c(2008L, 2009L, 2013L))
+  expect_equal(s$EU27_TOTAL, integer())
+  expect_equal(rupturas_en_serie(s, 2010:2025)$ES_TOTAL, 2013L)
+  expect_equal(rupturas_en_serie(NULL, 2010:2025)$ES_TOTAL, integer())
 })
 
 test_that("cortes del mapa: los generales y, tras «|», los de un grupo; como cortes_web()", {

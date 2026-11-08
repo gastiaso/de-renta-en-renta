@@ -31,6 +31,10 @@ PERIODOS_VUT <- c("AGO2020", "FEB2021", "AGO2021", "FEB2022", "AGO2022", "FEB202
 PERIODOS_VUT_2024 <- c("FEB2024", "AGO2024", "NOV2024", "MAY2025", "NOV2025", "MAY2026")
 MESES_VUT <- c(FEB = "M02", MAY = "M05", AGO = "M08", NOV = "M11")
 TABLAS_VUT_PROVINCIAS <- c(viviendas = "39364", porcentaje = "39365")
+# Ruptura vut_denominador_2024 (inventario/rupturas.csv): desde este periodo, el porcentaje de España,
+# las comunidades y las provincias divide por las viviendas del Censo 2021 del territorio, con las de
+# las secciones en secreto (tabla 59521); antes, por las de sus secciones con dato.
+DENOMINADOR_TABLA_VUT_DESDE <- "2024M11"
 
 url_ine_vut_tabla5 <- function(periodo) {
   sprintf("https://www.ine.es/experimental/viv_turistica/exp_viv_turistica_tabla5_%s.xlsx", periodo)
@@ -230,9 +234,11 @@ nacional_ine_vut <- function(provincias, version, periodos = PERIODOS_VUT_2024) 
 #     sumado de sus secciones con dato) frente al porcentaje de España de esa tabla, el que va a
 #     la tabla larga (puntos). Solo con todas las provincias en `censo`. Las secciones en secreto
 #     del Censo no entran en el peso y los porcentajes van con dos decimales: no es exacto.
-#   vut_territorios: porcentajes de las comunidades y provincias frente a sus secciones
-#     (territorios_vut).
-comprobar_ine_vut <- function(vut, vut_2021, provincias, censo, secciones_2024, paso, periodos = PERIODOS_VUT_2024) {
+#   vut_territorios: porcentajes de España, las comunidades y las provincias frente a sus
+#     viviendas turísticas y viviendas del Censo 2021 (territorios_vut, con `viviendas_territorios`,
+#     la tabla 59521: leer_ine_censo2021_viviendas()).
+comprobar_ine_vut <- function(vut, vut_2021, provincias, censo, secciones_2024, paso, viviendas_territorios,
+                              periodos = PERIODOS_VUT_2024) {
   sumar <- function(d) {
     s <- d |> group_by(anio, mes, codigo = substr(seccion, 1, 2)) |>
       summarise(suma = sum(viviendas, na.rm = TRUE), .groups = "drop")
@@ -270,32 +276,33 @@ comprobar_ine_vut <- function(vut, vut_2021, provincias, censo, secciones_2024, 
       transmute(id = "vut_denominador_detalle", anio, detalle = paste(mes, seccion), calculado = diferencia,
                 referencia = 0),
     nacional_vut(provincias, censo, periodos),
-    territorios_vut(vut_2021, provincias, periodos)
+    territorios_vut(vut_2021, provincias, viviendas_territorios, periodos)
   )
 }
 
-# vut_territorios: en cada periodo de `periodos`, porcentaje publicado de cada comunidad y provincia
-# (tabla 39365, el que va a la tabla larga) frente al cociente de las sumas de sus secciones en el
-# seccionado de 2021 (`vut_2021`): 100 * viviendas turísticas / viviendas del Censo 2021 (t18_1).
-# Las secciones en secreto del Censo traen viviendas turísticas, pero no viviendas, y el INE no
-# las trata igual en todos los periodos: en febrero y agosto de 2024 el porcentaje publicado es el
-# cociente sin ellas en el denominador; desde noviembre de 2024 las cuenta, y queda por debajo.
-# Con secciones en secreto, la cifra publicada solo está acotada por arriba (el cociente) y
-# `calculado` es el punto más cercano del intervalo; sin ellas, el cociente. Las comunidades, solo
-# con todas sus provincias en `vut_2021`.
-territorios_vut <- function(vut_2021, provincias, periodos = PERIODOS_VUT_2024) {
-  publicado <- filter(provincias, nivel %in% c("ccaa", "provincia"))
+# vut_territorios: en cada periodo de `periodos`, porcentaje publicado de España, de cada comunidad
+# y de cada provincia (tabla 39365, el que va a la tabla larga) frente a 100 * viviendas turísticas
+# de sus secciones en el seccionado de 2021 (`vut_2021`) / viviendas del Censo 2021, con el
+# denominador que usa el INE en cada periodo (ruptura vut_denominador_2024): en febrero y agosto de
+# 2024, la suma de t18_1 de sus secciones con dato (las que están en secreto en el Censo traen
+# viviendas turísticas, pero no viviendas); desde noviembre de 2024 (DENOMINADOR_TABLA_VUT_DESDE),
+# las viviendas de la tabla 59521 (`viviendas_territorios`), que cuenta también las de esas
+# secciones. Un territorio sin fila en la tabla sale sin cifra. España y las comunidades, solo con
+# todas sus provincias en `vut_2021`.
+territorios_vut <- function(vut_2021, provincias, viviendas_territorios, periodos = PERIODOS_VUT_2024) {
   vut_2021 |>
     filter(periodo %in% periodos) |>
     group_by(anio, mes, codigo = substr(seccion, 1, 2)) |>
-    summarise(secretas = sum(is.na(viviendas_censo)), viviendas = sum(viviendas, na.rm = TRUE),
-              viviendas_censo = sum(viviendas_censo, na.rm = TRUE), .groups = "drop") |>
-    sumar_territorios_ine(distinct(filter(publicado, nivel == "provincia"), codigo, ccaa), por = c("anio", "mes")) |>
-    inner_join(select(publicado, nivel, codigo, territorio, anio, mes, porcentaje),
+    summarise(viviendas = sum(viviendas, na.rm = TRUE), viviendas_secciones = sum(viviendas_censo, na.rm = TRUE),
+              .groups = "drop") |>
+    sumar_territorios_ine(distinct(filter(provincias, nivel == "provincia"), codigo, ccaa), por = c("anio", "mes")) |>
+    inner_join(select(provincias, nivel, codigo, territorio, anio, mes, porcentaje),
                by = c("nivel", "codigo", "anio", "mes")) |>
-    mutate(maximo = 100 * viviendas / viviendas_censo, minimo = if_else(secretas > 0, 0, maximo)) |>
+    left_join(select(viviendas_territorios, nivel, codigo, viviendas_tabla = viviendas), by = c("nivel", "codigo")) |>
+    mutate(denominador = if_else(paste0(anio, mes) >= DENOMINADOR_TABLA_VUT_DESDE, viviendas_tabla,
+                                 viviendas_secciones)) |>
     transmute(id = "vut_territorios", anio, detalle = paste(mes, territorio),
-              calculado = pmin(pmax(porcentaje, minimo), maximo), referencia = porcentaje)
+              calculado = 100 * viviendas / denominador, referencia = porcentaje)
 }
 
 # Las dos comprobaciones de España de comprobar_ine_vut() (vut_nacional_viviendas y

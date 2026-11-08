@@ -123,6 +123,10 @@ test('marcas de Eurostat: letras, poca fiabilidad, rupturas y tramos de estimaci
   const marcas = ['b', null, 'e', 'e', null, 'be'];
   assert.deepEqual(S.rupturasDe(anios, marcas), [2008, 2013]);
   assert.deepEqual(S.rupturasDe(anios), []);
+  // Con las rupturas del atlas (2013 ya marcada por Eurostat aquí: no se repite) y sin ellas
+  assert.deepEqual(S.rupturasSerie(anios, marcas, [2011, 2013, 2020]), [2008, 2011, 2013]);
+  assert.deepEqual(S.rupturasSerie(anios, [], [2011]), [2011]);
+  assert.deepEqual(S.rupturasSerie(anios, marcas, null), [2008, 2013]);
   assert.deepEqual(S.tramosConMarca(anios, marcas, 'e'), [[2010, 2011], [2013, 2013]]);
   const v = { corte: 'total', filas: [{ geo: 'PL41', bloque: 'europa', nivel: 2, bandera: 'u' }, { geo: 'ES30', bloque: 'comunidad', fiabilidad: 'normal' }] };
   assert.deepEqual(S.conMuestraPequena(v), ['PL41']);

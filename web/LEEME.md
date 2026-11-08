@@ -57,7 +57,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 | Ruta | Contenido |
 |---|---|
 | `index.html` | Página: cabecera con buscador e idioma, barra de la vista, mapa, leyenda, «Tu sueldo», ficha y diálogo «Compartir» |
-| `sobrecarga.html` | Sección «Sobrecarga» (v0.0): mapa de Europa, escalera, serie de España y de la UE-27 desde el primer año publicado (cortada en las rupturas de Eurostat; las cifras de Eurostat llevan sus marcas), desgloses de España por tenencia, edad y quintil de renta, y módulo de acceso |
+| `sobrecarga.html` | Sección «Sobrecarga» (v0.0): mapa de Europa, escalera, serie de España y de la UE-27 desde el primer año publicado (cortada en las rupturas de Eurostat y en las del atlas, como la de 2013 en España, que Eurostat no marca; las cifras de Eurostat llevan sus marcas), desgloses de España por tenencia, edad y quintil de renta, y módulo de acceso |
 | `js/principal.js` | Arranque y coordinación de todo lo demás |
 | `js/estado.js` | Estado de la vista en la URL (`idioma`, `mapa`, `anio`, que puede ser un periodo como `2025-05`, `tipologia`, `ficha`, `superficie`, `umbral`, `seccion`, `comparar`, `vista`) y enlace para compartir |
 | `js/barra_vista.js` | Barra de la vista: selectores de mapa, año y tipología, y botones de descarga |

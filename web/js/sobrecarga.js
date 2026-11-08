@@ -522,7 +522,8 @@ function pintarSerie() {
     ...x,
     valores: s.valores[x.clave].map((v) => (v === null ? null : v / datos.escala)),
     marcas: s.marcas?.[x.clave] ?? [],
-    rupturas: S.rupturasDe(anios, s.marcas?.[x.clave]),
+    rupturas: S.rupturasSerie(anios, s.marcas?.[x.clave], s.rupturas_atlas?.[x.clave]),
+    rupturasEurostat: S.rupturasDe(anios, s.marcas?.[x.clave]),
     nombre: `${t(`sobrecarga.serie.${x.zona}`)} · ${t(`sobrecarga.serie.${x.grupo}`)}`,
   }));
   // Ancho del dibujo = ancho del contenedor, para que el texto salga a su tamaño en el móvil
@@ -547,8 +548,8 @@ function pintarSerie() {
       grafico.append(svg('text', { class: 'texto-eje', x: x(a), y: alto - m.aba + 18, 'text-anchor': 'middle' }, String(a)));
     }
   });
-  // Cada serie se corta en sus rupturas (marca «b» de Eurostat): el primer año de la serie nueva
-  // lleva un punto hueco y la línea no lo une con el anterior
+  // Cada serie se corta en sus rupturas (marca «b» de Eurostat y rupturas del atlas, como la de 2013
+  // en España): el primer año de la serie nueva lleva un punto hueco y la línea no lo une con el anterior
   for (const serie of series) {
     grafico.append(svg('path', {
       class: `linea ${serie.clase}${serie.ue ? ' linea-ue' : ''}`, d: S.trazado(anios, serie.valores, x, y, serie.rupturas),
@@ -557,7 +558,8 @@ function pintarSerie() {
       const v = serie.valores[anios.indexOf(a)];
       if (v === null) continue;
       const punto = svg('circle', { class: `ruptura ${serie.clase}`, cx: x(a), cy: y(v), r: 4.5 });
-      punto.append(svg('title', {}, `${serie.nombre}, ${a}: ${textoMarcas('b')}`));
+      const motivo = serie.rupturasEurostat.includes(a) ? textoMarcas('b') : t('sobrecarga.serie.ruptura_atlas');
+      punto.append(svg('title', {}, `${serie.nombre}, ${a}: ${motivo}`));
       grafico.append(punto);
     }
   }
@@ -601,13 +603,16 @@ function pintarSerie() {
     serie.nombre)));
   caja.replaceChildren(grafico, globo, leyenda);
 
-  // Notas: rupturas de serie y estimaciones de Eurostat, por serie
+  // Notas: rupturas de serie de Eurostat y del atlas y estimaciones de Eurostat, por serie
   const lista = (clave, partes) => (partes.length ? t(clave, { lista: partes.join('; ') }) : null);
-  const rupturas = series.filter((serie) => serie.rupturas.length).map((serie) => `${serie.nombre}, ${serie.rupturas.join(', ')}`);
+  const rupturas = series.filter((serie) => serie.rupturasEurostat.length)
+    .map((serie) => `${serie.nombre}, ${serie.rupturasEurostat.join(', ')}`);
+  const delAtlas = series.map((serie) => [serie, serie.rupturas.filter((a) => !serie.rupturasEurostat.includes(a))])
+    .filter(([, a]) => a.length).map(([serie, a]) => `${serie.nombre}, ${a.join(', ')}`);
   const estimados = series.map((serie) => [serie, S.tramosConMarca(anios, serie.marcas, 'e')]).filter(([, tr]) => tr.length)
     .map(([serie, tr]) => `${serie.nombre}, ${tr.map(([a, b]) => (a === b ? a : `${a}–${b}`)).join(', ')}`);
-  $('sc-serie-notas').textContent = [lista('sobrecarga.serie.rupturas', rupturas), lista('sobrecarga.serie.estimados', estimados)]
-    .filter(Boolean).join(' ');
+  $('sc-serie-notas').textContent = [lista('sobrecarga.serie.rupturas', rupturas), lista('sobrecarga.serie.rupturas_atlas', delAtlas),
+    lista('sobrecarga.serie.estimados', estimados)].filter(Boolean).join(' ');
 
   // Tabla con todas las cifras
   $('sc-serie-tabla').querySelector('.sc-tabla-marco').replaceChildren(el('table', { class: 'sc-tabla' },

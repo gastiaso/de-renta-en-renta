@@ -162,6 +162,12 @@ SERIES_ESPANA_SOBRECARGA <- list(
   EU27_RENT_MKT = c(tabla = "ilc_lvho07c", geo = "EU27_2020", tenencia = "RENT_MKT")
 )
 
+# Rupturas de cada serie dentro de sus años (sin `rupturas`, ninguna), como enteros.
+rupturas_en_serie <- function(rupturas, anios) {
+  if (is.null(rupturas)) rupturas <- lapply(SERIES_ESPANA_SOBRECARGA, function(s) integer())
+  lapply(rupturas, function(a) as.integer(a[a %in% anios]))
+}
+
 serie_espana_sobrecarga <- function(europa) {
   filas <- lapply(SERIES_ESPANA_SOBRECARGA, function(s) {
     europa[europa$conjunto == s[["tabla"]] & europa$geo == s[["geo"]] & europa$tenencia == s[["tenencia"]] &
@@ -171,6 +177,18 @@ serie_espana_sobrecarga <- function(europa) {
   list(anios = anios,
        valores = lapply(filas, function(d) d$valor[match(anios, d$anio)]),
        marcas = lapply(filas, function(d) d$bandera[match(anios, d$anio)]))
+}
+
+# Rupturas del atlas en la serie de España (pregunta abierta 34): las del indicador 22 de la ECV
+# en inventario/rupturas.csv con estado «aplicado», que Eurostat no marca (ecv_ingresos_2013: desde
+# 2013, los ingresos salen de la entrevista y de registros administrativos). La web corta ahí la
+# línea, como en las rupturas «b» de Eurostat, con su propia nota. Años de cada serie de
+# SERIES_ESPANA_SOBRECARGA: las de España, todas; las de la UE-27, ninguna.
+rupturas_serie_sobrecarga <- function(rupturas) {
+  del_22 <- vapply(strsplit(as.character(rupturas$indicador), ";", fixed = TRUE), function(i) "22" %in% i, TRUE)
+  r <- rupturas[rupturas$fuente == "ine_ecv" & rupturas$estado == "aplicado" & del_22, ]
+  anios <- sort(unique(as.integer(unlist(strsplit(as.character(r$anio), ";", fixed = TRUE)))))
+  lapply(SERIES_ESPANA_SOBRECARGA, function(s) if (s[["geo"]] == "ES") anios else integer())
 }
 
 # Módulo de acceso (indicador 23): búsqueda sin éxito por comunidad (con su código NUTS 2), edad,
@@ -338,7 +356,7 @@ respaldos_geometria <- function(vistas, rutas_nuts) {
 # `indicadores`: inventario/indicadores.csv (cortes del mapa); `quintil`: sobrecarga de España por
 # quintil de renta (calcular_sobrecarga_quintil()). Borra antes lo exportado la vez anterior.
 exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, rutas_nuts, indicadores, quintil = NULL,
-                                    dir_web = "web", fecha = format(Sys.Date())) {
+                                    rupturas = NULL, dir_web = "web", fecha = format(Sys.Date())) {
   dir <- file.path(dir_web, "datos", DIR_SOBRECARGA_WEB)
   cortes <- cortes_de_indicadores(indicadores)
   unlink(dir, recursive = TRUE)
@@ -383,7 +401,8 @@ exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, ruta
     espana = list(
       serie = list(anios = I(serie$anios), fuente = "eurostat_ilc_lvho07",
                    valores = lapply(serie$valores, function(v) I(valor_web(v))),
-                   marcas = lapply(serie$marcas, I)),
+                   marcas = lapply(serie$marcas, I),
+                   rupturas_atlas = lapply(rupturas_en_serie(rupturas, serie$anios), I)),
       anual = lapply(seq_len(nrow(espana)), function(i) {
         f <- espana[i, ]
         fiabilidad <- fiabilidad_eusilc(f$n_personas)
@@ -416,7 +435,7 @@ exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, ruta
 #     geometría en su versión NUTS ni de respaldo) y vistas cuya geometría no se lee.
 # `indicadores` (cortes del mapa) y `quintil` (España por quintil de renta), como en la exportación.
 comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, modulos, indicadores, quintil = NULL,
-                                     dir_web = "web") {
+                                     rupturas = NULL, dir_web = "web") {
   dir <- file.path(dir_web, "datos", DIR_SOBRECARGA_WEB)
   x <- jsonlite::fromJSON(file.path(dir, "sobrecarga.json"), simplifyVector = FALSE)
   escala <- x$escala
@@ -550,6 +569,12 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
       distinto(leido, redondeo_guia(esperado)) | marca_distinta(marcas, marca_esperada))
   }
   anota("web_sobrecarga_valores", "serie de Espa\u00f1a", mal)
+  # Rupturas del atlas (rupturas_serie_sobrecarga): las mismas que en inventario/rupturas.csv
+  esperadas <- rupturas_en_serie(rupturas, anios)
+  leidas <- lapply(s$rupturas_atlas, function(v) as.integer(unlist(v)))
+  anota("web_sobrecarga_valores", "rupturas del atlas en la serie de Espa\u00f1a",
+        c(!setequal(names(leidas), names(esperadas)),
+          vapply(names(esperadas), function(k) !identical(leidas[[k]], esperadas[[k]]), TRUE)))
 
   # Desgloses anuales de España (INE), con su muestra
   a <- x$espana$anual

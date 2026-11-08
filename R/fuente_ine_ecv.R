@@ -190,7 +190,9 @@ cuantil_ponderado <- function(x, peso, p) {
   vapply(p, function(q) x[which(acumulado >= q - 1e-12)[1]], numeric(1))
 }
 
-# Quintil de cada persona (id_persona, quintil, peso_persona).
+# Quintil de cada persona (id_persona, quintil, peso_persona). Una renta igual a un corte va al
+# quintil de arriba (pregunta abierta 36): con esa regla, las 15 cifras de 2023 a 2025 coinciden a un
+# decimal con las de Eurostat (ilc_lvho07b).
 quintil_renta <- function(ecv) {
   p <- ecv$personas |>
     inner_join(select(ecv$hogares, id_hogar, renta_disponible, unidades_consumo), by = "id_hogar") |>
@@ -199,7 +201,7 @@ quintil_renta <- function(ecv) {
   cortes <- cuantil_ponderado(p$renta_equivalente, p$peso_persona, c(0.2, 0.4, 0.6, 0.8))
   p |>
     transmute(id_persona, peso_persona,
-              quintil = QUINTILES_RENTA[findInterval(renta_equivalente, cortes, left.open = TRUE) + 1L])
+              quintil = QUINTILES_RENTA[findInterval(renta_equivalente, cortes) + 1L])
 }
 
 # Tasa de sobrecarga de España por quintil de renta, una ola: con la muestra y la marca de

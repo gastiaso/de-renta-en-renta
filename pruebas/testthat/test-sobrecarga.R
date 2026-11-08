@@ -88,18 +88,20 @@ ecv_quintil <- list(
 test_that("los quintiles de renta usan la renta equivalente y cortes ponderados por persona", {
   expect_equal(cuantil_ponderado(c(5, 1, 3), c(1, 1, 2), c(0.25, 0.5, 0.75)), c(1, 3, 3))
   q <- quintil_renta(ecv_quintil)
-  expect_equal(q$quintil, rep(QUINTILES_RENTA, each = 2))   # una renta igual al corte va al quintil de abajo
+  # una renta igual a un corte va al quintil de arriba (pregunta abierta 36): los cortes son 2.000,
+  # 4.000, 6.000 y 8.000 €, y el quinto quintil se queda con tres hogares
+  expect_equal(q$quintil, c("QU1", "QU2", "QU2", "QU3", "QU3", "QU4", "QU4", "QU5", "QU5", "QU5"))
   dos <- ecv_quintil
-  dos$hogares$unidades_consumo[10] <- 10                    # 10.000 € entre 10 unidades: la renta más baja
+  dos$hogares$unidades_consumo[10] <- 20                    # 10.000 € entre 20 unidades: la renta más baja
   expect_equal(quintil_renta(dos)$quintil[10], "QU1")
 })
 
-test_that("la sobrecarga por quintil rehace la tasa total y reparte la población en quintos", {
+test_that("la sobrecarga por quintil rehace la tasa total y mide el reparto de la población", {
   s <- calcular_sobrecarga_quintil(ecv_quintil)
   expect_equal(s$grupo, QUINTILES_RENTA)
-  expect_equal(s$valor, c(100, 0, 0, 0, 0))                # 1.200 € sobre 1.000 y 2.000 € supera el 40 %; sobre 3.000, no
-  expect_equal(s$poblacion, rep(20, 5))
-  expect_equal(s$fiabilidad, rep("no publicable", 5))      # dos personas por quintil
+  expect_equal(s$valor, c(100, 50, 0, 0, 0))               # 1.200 € sobre 1.000 y 2.000 € supera el 40 %; sobre 3.000, no
+  expect_equal(s$poblacion, c(10, 20, 20, 20, 30))
+  expect_equal(s$fiabilidad, rep("no publicable", 5))      # de una a tres personas por quintil
   total <- calcular_sobrecarga_ecv(ecv_quintil)
   ch <- comprobar_sobrecarga_quintil(s, total)
   expect_equal(ch$calculado[ch$id == "sobrecarga_quintil_total"], ch$referencia[ch$id == "sobrecarga_quintil_total"])

@@ -7,10 +7,13 @@
 # Compuerta: la tabla 59523 del Censo 2021 (viviendas familiares principales convencionales por
 # régimen de tenencia, España, comunidades y provincias). Las cifras de España, de las comunidades
 # y de las provincias de la tabla larga son las publicadas en esa tabla (territorios_ine_censo2021).
+# La tabla 59521 (viviendas por comunidad y provincia) es el denominador de las viviendas turísticas
+# de los territorios desde noviembre de 2024 (compuerta vut_territorios, R/fuente_ine_vut.R).
 
 URL_CENSO2021_INDICADORES <- "https://www.ine.es/censos2021/C2021_Indicadores.csv"
 URL_CENSO2021_DICCIONARIO <- "https://www.ine.es/censos2021/indicadores_seccen_c2021.xlsx"
 TABLA_CENSO2021_TENENCIA <- "59523"
+TABLA_CENSO2021_VIVIENDAS <- "59521"
 
 # Tablas de los resultados del Censo (jaxi, ficheros px), en CSV separado por «;».
 url_ine_tabla_px <- function(id) {
@@ -163,6 +166,23 @@ leer_ine_censo2021_tenencia <- function(ruta) {
     tidyr::pivot_wider(names_from = tenencia, values_from = valor) |>
     inner_join(niveles, by = "territorio") |>
     select(nivel, codigo, ccaa, territorio, principales, propiedad, alquiler, otro_regimen)
+}
+
+# Tabla 59521: viviendas familiares convencionales, con el total de tipos (principales y no
+# principales) y de años de construcción. Una fila por territorio (nacional, ccaa, provincia) con su
+# comunidad y las viviendas. Cuenta las de las secciones en secreto, que el CSV de indicadores no
+# trae, y solo las convencionales: en 11 provincias las secciones suman algo más que la tabla (hasta
+# 791 viviendas, en Huelva). España: 26.623.708 viviendas.
+leer_ine_censo2021_viviendas <- function(ruta) {
+  d <- readr::read_delim(ruta, delim = ";", col_types = readr::cols(.default = readr::col_character()),
+                         locale = readr::locale(encoding = "UTF-8"), progress = FALSE)
+  names(d) <- c("tipo", "territorio", "construccion", "valor")
+  d <- d |>
+    filter(startsWith(tipo, "Total"), startsWith(construccion, "Total")) |>
+    mutate(viviendas = suppressWarnings(as.numeric(gsub(".", "", valor, fixed = TRUE))))
+  d |>
+    inner_join(nivel_territorios_ine(d$territorio), by = "territorio") |>
+    select(nivel, codigo, ccaa, territorio, viviendas)
 }
 
 # Compuerta (inventario/referencias_validacion.csv). Las secciones en secreto no traen recuentos,

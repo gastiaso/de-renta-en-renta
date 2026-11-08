@@ -22,9 +22,11 @@ inventario <- list(
   tar_target(fichero_fuentes, "inventario/fuentes.csv", format = "file"),
   tar_target(fichero_indicadores, "inventario/indicadores.csv", format = "file"),
   tar_target(fichero_referencias, "inventario/referencias_validacion.csv", format = "file"),
+  tar_target(fichero_rupturas, "inventario/rupturas.csv", format = "file"),
   tar_target(fuentes, readr::read_csv(fichero_fuentes, show_col_types = FALSE)),
   tar_target(indicadores, readr::read_csv(fichero_indicadores, show_col_types = FALSE)),
   tar_target(referencias, readr::read_csv(fichero_referencias, show_col_types = FALSE)),
+  tar_target(rupturas, readr::read_csv(fichero_rupturas, col_types = readr::cols(.default = "c"))),
   tar_target(fichero_ccaa, "geo/ccaa.csv", format = "file"),
   tar_target(ccaa, readr::read_csv(fichero_ccaa, col_types = "ccc")),
   tar_target(fichero_excepciones_cobertura, "inventario/excepciones_cobertura.csv", format = "file"),
@@ -254,10 +256,13 @@ bloque_serpavi <- list(
 
 # Indicador 18: hogares en alquiler (%) del Censo 2021, en el seccionado de referencia (sin tabla
 # de paso). España, comunidades y provincias: la cifra publicada en la tabla 59523 (compuertas
-# censo2021_nacional y censo2021_alquiler).
+# censo2021_nacional y censo2021_alquiler). Las viviendas por comunidad y provincia (tabla 59521)
+# son el denominador de la compuerta vut_territorios.
 bloque_censo2021 <- list(
   tar_target(ficheros_censo2021, descargar_ine_censo2021(), format = "file"),
   tar_target(fichero_censo2021_tenencia, descargar_ine_censo2021_tabla(TABLA_CENSO2021_TENENCIA), format = "file"),
+  tar_target(fichero_censo2021_viviendas, descargar_ine_censo2021_tabla(TABLA_CENSO2021_VIVIENDAS), format = "file"),
+  tar_target(censo2021_viviendas, leer_ine_censo2021_viviendas(fichero_censo2021_viviendas)),
   tar_target(censo2021, leer_ine_censo2021(ficheros_censo2021, AMBITO)),
   tar_target(censo2021_tenencia, leer_ine_censo2021_tenencia(fichero_censo2021_tenencia)),
   tar_target(comprobaciones_censo2021, comprobar_ine_censo2021(censo2021, censo2021_tenencia, secciones_2021$seccion)),
@@ -276,7 +281,7 @@ bloque_censo2021 <- list(
 # viviendas del Censo 2021 como denominador (ruptura vut_seccionado_2024). En `corte` «mes» y en
 # `grupo`, el mes de referencia. España, comunidades y provincias: el porcentaje publicado en la
 # tabla 39365, en los mismos periodos (compuertas vut_nacional_viviendas, vut_nacional_porcentaje
-# y vut_territorios).
+# y vut_territorios, esta con el denominador del INE en cada periodo: ruptura vut_denominador_2024).
 periodos_vut <- tarchetypes::tar_map(
   values = list(periodo = PERIODOS_VUT), names = "periodo",
   tar_target(fichero_vut, descargar_ine_vut(periodo), format = "file"),
@@ -291,7 +296,8 @@ bloque_vut <- list(
   tar_target(vut_provincias, leer_ine_vut_provincias(ficheros_vut_provincias[1], ficheros_vut_provincias[2])),
   tar_target(vut_2021, reproyectar_ine_vut(vut, paso_final_2024, censo2021)),
   tar_target(comprobaciones_vut, comprobar_ine_vut(vut, vut_2021, vut_provincias, censo2021,
-                                                   unique(secciones_2024$seccion), paso_final_2024)),
+                                                   unique(secciones_2024$seccion), paso_final_2024,
+                                                   censo2021_viviendas)),
   tar_target(validacion_vut, validar_referencias(comprobaciones_vut, referencias)),
   tar_target(larga_vut, {
     validacion_vut   # la compuerta va antes que la armonización
@@ -458,20 +464,23 @@ bloque_web <- list(
   }),
   # Sección «Sobrecarga» (v0.0; R/web_sobrecarga.R): web/datos/sobrecarga/, desde los objetivos de la
   # sobrecarga, del quintil y del módulo de acceso, las geometrías NUTS de GISCO y los cortes del
-  # indicador 22 (inventario/indicadores.csv). No depende de la tabla larga.
+  # indicador 22 (inventario/indicadores.csv). No depende de la tabla larga. La serie de España se
+  # corta también en las rupturas del atlas (inventario/rupturas.csv; pregunta abierta 34).
   #   targets::tar_make(names = c(ficheros_web_sobrecarga, validacion_web_sobrecarga))
+  tar_target(rupturas_sobrecarga, rupturas_serie_sobrecarga(rupturas)),
   tar_target(ficheros_web_sobrecarga, {
     validacion_sobrecarga; validacion_modulo; validacion_nuts; validacion_quintil    # las compuertas van antes
     exportar_web_sobrecarga(sobrecarga_ecv, sobrecarga_agrupada, eurostat_europa, ccaa,
                             list(ccaa = modulo_ccaa, edad = modulo_edad, tenencia = modulo_tenencia),
                             c("2021" = fichero_nuts_2021, "2024" = fichero_nuts_2024), indicadores,
-                            quintil = sobrecarga_quintil, dir_web = DIR_WEB)
+                            quintil = sobrecarga_quintil, rupturas = rupturas_sobrecarga, dir_web = DIR_WEB)
   }, format = "file"),
   tar_target(validacion_web_sobrecarga, {
     ficheros_web_sobrecarga
     validar_referencias(comprobar_web_sobrecarga(sobrecarga_ecv, sobrecarga_agrupada, eurostat_europa, escalera, ccaa,
                                                  list(ccaa = modulo_ccaa, edad = modulo_edad, tenencia = modulo_tenencia),
-                                                 indicadores, quintil = sobrecarga_quintil, dir_web = DIR_WEB),
+                                                 indicadores, quintil = sobrecarga_quintil,
+                                                 rupturas = rupturas_sobrecarga, dir_web = DIR_WEB),
                         referencias)
   })
 )

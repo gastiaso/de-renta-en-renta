@@ -133,8 +133,10 @@ Decidido (8-nov-2026, plan v0.26): las preguntas 22–33, todas con la propuesta
 
 17. **Suelo sin sección · HECHA (8-nov-2026, plan v0.27).** Los 95 huecos del seccionado de 2021 (1.495 km² de terrenos comunales) estaban en blanco y sin poder pulsarse; ahora van en la capa `sin_seccion` del PMTiles, como «sin dato» y con ficha propia.
 
+18. **Preguntas 34–36 · HECHA (9-nov-2026, plan v0.28).** Serie de sobrecarga de España cortada en 2013, ruptura del atlas que Eurostat no marca (34); compuerta `vut_territorios` exacta con la tabla 59521 del Censo 2021 y ruptura `vut_denominador_2024` (35); empate en el corte de los quintiles, al de arriba (36).
+
 **Siguiente:**
-- decisiones del autor: remoto y visibilidad; preguntas abiertas 34–36 (plan §11); descargas por preguntar (SMI de 2015 a 2023, `chromote`, tabla del Censo 2021 de viviendas por provincia);
+- decisiones del autor: remoto y visibilidad; descargas por preguntar (SMI de 2015 a 2023, `chromote`);
 - página «Datos» (la tabla larga en Parquet ya va en el *release*);
 - prueba con `chromote` (la página recalcula una muestra en el navegador y coincide con R).
 

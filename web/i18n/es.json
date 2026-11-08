@@ -294,6 +294,8 @@
       "anio": "Encuesta",
       "fuente": "Eurostat (ilc_lvho07a, ilc_lvho07c), desde el primer año publicado: en España, el total desde 2004 y el alquiler a precio de mercado desde 2007; la UE-27, desde 2010. De 2023 a 2025, el cálculo con los microdatos de la ECV reproduce estas cifras (±0,1 puntos).",
       "rupturas": "Ruptura de serie (marca «b» de Eurostat; punto hueco y línea cortada): {lista}. Las cifras de antes y de después no son del todo comparables.",
+      "rupturas_atlas": "Ruptura de serie del atlas, que Eurostat no marca (punto hueco y línea cortada): {lista}. Desde la encuesta de 2013, el INE obtiene los ingresos combinando la entrevista con registros administrativos (AEAT, Seguridad Social y haciendas forales), y la renta es el denominador de la tasa.",
+      "ruptura_atlas": "ruptura de serie del atlas (desde 2013, ingresos de registros administrativos), que Eurostat no marca",
       "estimados": "Estimaciones de Eurostat (marca «e»): {lista}.",
       "tabla": "Ver las cifras",
       "grafico": "Tasa de sobrecarga en España y en la UE-27, toda la población y alquiler a precio de mercado, {desde}–{hasta}"
