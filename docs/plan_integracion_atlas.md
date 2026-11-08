@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.20 · 8 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.21 · 8 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.21:** decisiones del autor sobre las preguntas abiertas 12–17, todas con la propuesta: vivienda colectiva por defecto en el alquiler y sus derivados; errores del SERPAVI como `ausente`; viviendas turísticas desde febrero de 2024 y tabla de paso 2011 → 2021 en F6; estado de los derivados, el peor de sus términos; mapa base desde un *release*; datos de la web en JSON (§6.6, §7, §11).
 
 **Cambios en la v0.20:** arranca F2. Entran en el pipeline los indicadores 8 y 9 (SERPAVI, 2015–2024), 18 (Censo 2021) y 19 (viviendas turísticas, desde febrero de 2024), todos en la tabla larga (§2.4, §5, §6.4, §6.5). Las viviendas turísticas no están en el seccionado de 2021 en todos sus periodos, como se anotó en la v0.9 (§6.3). Jerarquía territorial y mapa base en PMTiles, con GDAL desde R, sin tippecanoe (§6.2, §6.6, §7). Web: pila elegida (HTML y módulos JS sin compilar) y esqueleto en `web/` (§6.1, §6.6). Primera versión de la nota metodológica (`docs/metodologia.md`) y prueba de un año en toda España (§6.3). Códigos postales: sin polígonos oficiales reutilizables (§6.3). Preguntas abiertas 12–17 (§11).
 
@@ -53,6 +55,8 @@
 | Seccionado de referencia | El del Censo 2021 (1 de enero de 2021), en el que el SERPAVI publica toda su serie (§6.3) |
 | Tablas de paso | Callejero (vía a) donde las secciones caen enteras; viviendas del Catastro (vía b) donde hay que repartir (§6.3) |
 | Cifras reproyectadas | `dato` si las secciones de origen caen enteras en la de 2021; `estimado` si alguna se reparte; medianas `dato` solo 1:1, `estimado` desde un origen dominante (≥ 95 % de los portales) y `ausente` si ninguno domina (§6.3) |
+| Tipología del alquiler | Vivienda colectiva por defecto (SERPAVI), con la unifamiliar como opción y sin mezclarlas; los derivados, con la colectiva (pregunta 12) |
+| Derivados | Estado: el peor de sus términos, `dato` < `estimado` < `secreto` < `ausente` (pregunta 15) |
 | Alcance | 23 indicadores: los 20 iniciales y 3 añadidos el 6-nov (catálogo en §5) |
 | Código previo | Se reutiliza el código propio que sirva (§2.1) |
 | Para quién | Cinco fichas con ingreso neto mensual y superficie propia: llave, mochila, tartera, transistor y «Tu ficha» (§3.1) |
@@ -248,7 +252,7 @@ Las marcas ★ son el núcleo de la v0.1. «A confirmar» indica que hay que ver
 | # | Indicador | Fuente | Nivel nativo | Serie | Notas |
 |---|---|---|---|---|---|
 | 18 ★ | Hogares en alquiler (%) | INE, Censo 2021 (y 2011) | SC | Dos cortes | Fotografía, no serie |
-| 19 ★ | Viviendas de uso turístico (% sobre viviendas) | INE, estadística experimental | SC (seccionado de 2024 desde febrero de 2024) | 2024–, semestral | Presión del uso turístico. Denominador: viviendas del Censo 2021. 2020–2023, sin tabla de paso desde el seccionado de 2011 (pregunta abierta 14) |
+| 19 ★ | Viviendas de uso turístico (% sobre viviendas) | INE, estadística experimental | SC (seccionado de 2024 desde febrero de 2024) | 2024–, semestral | Presión del uso turístico. Denominador: viviendas del Censo 2021. 2020–2023, en F6, con la tabla de paso desde el seccionado de 2011 (pregunta abierta 14) |
 | 20 | Zona tensionada declarada | BOE / MIVAU | Municipio (o el ámbito que fije la declaración) | 2024– | Capa de política pública |
 
 ### E. Sobrecarga y acceso (encuesta, otra escala)
@@ -435,9 +439,9 @@ Junto a ella, `metadatos.json` con fichas bilingües, rupturas, supuestos por de
   - **Huecos del mapa regional** (`ilc_lvho07_r`, comprobado el 6-nov-2026): 204 regiones NUTS 2 de 26 países en 2025, de 2021 a 2025. Francia y Austria solo publican el dato del país y Países Bajos, solo NUTS 1; Dinamarca entra en 2025. Propuesta: pintar en esos países el dato disponible (país o NUTS 1) con una trama y una nota fija.
   - **Versión NUTS de cada año:** la serie mezcla NUTS 2021 (2021–2023) y NUTS 2024 (desde 2024; cambian las regiones de Portugal). La geometría se elige por año.
   - **Licencia de las geometrías:** las de GISCO (NUTS) son de uso no comercial y exigen el aviso «© EuroGeographics para los límites administrativos» en el mapa. No entran en la licencia CC BY-SA 4.0 de los datos del atlas (`LICENCIA_DATOS.md`).
-- **Datos:** un fichero por indicador, nivel y año, cargado bajo demanda, con el valor × 10 en enteros (un decimal exacto) y el estado de cada territorio, en el orden del índice; binario o JSON, por decidir (pregunta abierta 17). Los valores no van en las teselas: se guardan como estado de cada elemento del mapa, y el color sale de una expresión de estilo. Sin servidor ni analítica, y sin teselas de terceros.
+- **Datos:** un fichero por indicador, nivel y año, cargado bajo demanda, con el valor × 10 en enteros (un decimal exacto) y el estado de cada territorio, en el orden del índice; en JSON de enteros, con el valor × 10 y una cadena de estados (pregunta abierta 17, cerrada); las series de cada sección, en un fichero por municipio para la ficha. Los valores no van en las teselas: se guardan como estado de cada elemento del mapa, y el color sale de una expresión de estilo. Sin servidor ni analítica, y sin teselas de terceros.
 - **Uso:** URL con el estado de la vista, ES/EN, modo daltónico, exportación CSV y PNG, descarga del Parquet.
-- **Límites a vigilar:** 100 MB por fichero en GitHub y 1 GB por sitio de Pages. Una sola geometría de referencia mantiene el PMTiles bajo control. Mapa base del seccionado de 2021 (8-nov-2026): 35,2 MB, con cuatro capas: comunidades (zoom 0–12), provincias (3–12), municipios (5–12) y secciones (7–12); por encima del 12, MapLibre amplía las teselas. El PMTiles no entra en la historia de git: se regenera con `targets` (pregunta abierta 16). Datos de la v0.1 para la web, estimados: unos 16 MB más el PMTiles.
+- **Límites a vigilar:** 100 MB por fichero en GitHub y 1 GB por sitio de Pages. Una sola geometría de referencia mantiene el PMTiles bajo control. Mapa base del seccionado de 2021 (8-nov-2026): 35,2 MB, con cuatro capas: comunidades (zoom 0–12), provincias (3–12), municipios (5–12) y secciones (7–12); por encima del 12, MapLibre amplía las teselas. El PMTiles no entra en la historia de git: se regenera con `targets` y se publica desde un *release* (pregunta abierta 16, cerrada). Datos de la v0.1 para la web, estimados: unos 16 MB más el PMTiles.
 
 ---
 
@@ -528,6 +532,7 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
 ### F6 · Histórico, relato y v1.0 — M
 
 - **Contenido:**
+  - tabla de paso desde el seccionado de 2011 (callejero y seccionado de 2011, más la vía b), para las viviendas turísticas de 2020–2023 y el Censo 2011 (pregunta abierta 14);
   - módulo histórico nacional y autonómico desde 1987: esfuerzo del Banco de España, valor tasado, salarios y tipos (es la «máquina del tiempo» que da sentido a la identidad retro);
   - primeras historias;
   - enlace con *barómetros* (el problema de la vivienda en el CIS frente a los datos, por comunidad);
@@ -678,12 +683,12 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 10. **Desgloses en la tabla larga.** Cerrada el 7-nov-2026: dos columnas nuevas, `corte` y `grupo` (`total` en las dos por defecto), para que la sobrecarga por tenencia o edad viva en la misma tabla (§6.4).
 11. **Diferencia del ADRH entre secciones y municipio.** Cerrada el 7-nov-2026: alerta (`adrh_suma_secciones`), no bloqueo. Es un fallo de la fuente que el atlas no puede corregir; se documenta en la ficha.
 
-12. **Tipología del mapa de alquiler (indicadores 8, 9, 14, 15 y 21).** El SERPAVI no publica una mediana conjunta de vivienda colectiva y unifamiliar. Propuesta: vivienda colectiva por defecto, que reúne el 89 % de los testigos en 2024 (2,27 millones frente a 0,28), con la unifamiliar como opción y sin mezclar las dos en un mismo mapa; los derivados, con la colectiva.
-13. **Errores de las hojas de municipios y distritos del SERPAVI.** En Navarra 2022, la mediana y el P25 están cruzados en 82 municipios y los distritos, desplazados; faltan recuentos en 2023–2024 y hay casos sueltos en otras provincias. Mientras tanto van como `ausente` y las secciones conservan su dato. ¿Se comunican al MIVAU?
-14. **Viviendas turísticas antes de 2024 y Censo 2011.** Los siete periodos de agosto de 2020 a agosto de 2023 están en el seccionado del Censo 2011 (agosto de 2023, mezclado), como el Censo 2011 del indicador 18. Opciones: (a) tabla de paso 2011 → 2021 (callejero y seccionado de 2011, más la vía b); (b) dejar el 19 desde febrero de 2024 y el 18 solo con 2021; (c) para esos años, el nivel municipal del INE (tablas 39363 y 39366). Propuesta: (b) para la v0.1 y (a) en F6, con el histórico.
-15. **Estado de los derivados (14, 15 y 21).** Propuesta: el peor de sus términos, en el orden `dato` < `estimado` < `secreto` < `ausente`.
-16. **Mapa base.** Simplificación de 4 unidades de tesela (35,2 MB) frente a 1 (44,4 MB); publicación del PMTiles desde un *release* del repositorio (propuesta) o regenerándolo en Actions; códigos postales: tabla sección ↔ CP del callejero y, en F4, los portales de CartoCiudad (descarga por preguntar).
-17. **Datos de la web.** Binario (Int32 × 10 y un byte de estado; 177 KB por indicador y año de sección) o JSON de enteros (174–281 KB; comprimido pesa lo mismo, y GitHub Pages comprime JSON pero probablemente no binarios). Propuesta: JSON. Series de la ficha: un `fichas/<municipio>.json` con las series de sus secciones (Madrid, unos 350 KB comprimido).
+12. **Tipología del mapa de alquiler (indicadores 8, 9, 14, 15 y 21).** Cerrada (8-nov-2026), con la propuesta: vivienda colectiva por defecto, que reúne el 89 % de los testigos en 2024 (2,27 millones frente a 0,28), con la unifamiliar como opción y sin mezclar las dos en un mismo mapa. Los derivados (14, 15 y 21) se calculan con la colectiva. El SERPAVI no publica una mediana conjunta de las dos tipologías.
+13. **Errores de las hojas de municipios y distritos del SERPAVI.** Cerrada (8-nov-2026), con la propuesta: esas cifras van como `ausente` y las secciones conservan su dato (alerta `serpavi_escalas_detalle`). El aviso al MIVAU, si se envía, lo envía el autor. Son 164 cifras: en Navarra 2022, la mediana y el P25 cruzados en 82 municipios y los distritos desplazados; recuentos que faltan en 2023–2024 y casos sueltos en otras provincias.
+14. **Viviendas turísticas antes de 2024 y Censo 2011.** Cerrada (8-nov-2026), con la propuesta: en la v0.1, el indicador 19 desde febrero de 2024 y el 18 solo con 2021; la tabla de paso 2011 → 2021 (callejero y seccionado de 2011, más la vía b), en F6, con el histórico. Los siete periodos de agosto de 2020 a agosto de 2023 están en el seccionado del Censo 2011 (agosto de 2023, mezclado), como el Censo 2011. Descartado para esos años el nivel municipal del INE: mezclaría escalas en la serie.
+15. **Estado de los derivados (14, 15 y 21).** Cerrada (8-nov-2026), con la propuesta: el peor de sus términos, en el orden `dato` < `estimado` < `secreto` < `ausente`. Un derivado de una sección con alquiler en secreto queda en `secreto`; si falta algún término, `ausente`.
+16. **Mapa base.** Cerrada (8-nov-2026), con la propuesta: simplificación de 4 unidades de tesela (medio píxel; 35,2 MB, frente a 44,4 MB sin simplificar); el PMTiles no entra en git y se publica desde un *release* del repositorio, que el flujo de Pages copia junto a la web. Códigos postales: la correspondencia sección ↔ CP sale del callejero del INE; bajar los portales de CartoCiudad para una geometría propia se decide en F4.
+17. **Datos de la web.** Cerrada (8-nov-2026), con la propuesta: JSON de enteros (valor × 10 y una cadena con el estado de cada territorio), en lugar del binario: comprimido pesa lo mismo (57–121 KB por indicador y año de sección), GitHub Pages lo comprime y se escribe y revisa más fácil desde R. Series de la ficha: un `fichas/<municipio>.json` con las series de sus secciones (Madrid, unos 350 KB comprimido).
 
 **Por verificar en F0** (no son decisiones, son comprobaciones), hechas el 6-nov-2026:
 - cortes de edad de la AEAT (<18, 18–25, 26–35, 36–45, 46–55, 56–65, >65) y módulo de año completo (desde 2019; ver §3.1);

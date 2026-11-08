@@ -4,6 +4,15 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Decidido (8-nov-2026, preguntas abiertas 12–17; plan v0.21)
+
+- Alquiler (8, 9) y sus derivados (14, 15, 21): vivienda colectiva por defecto, con la unifamiliar como opción y sin mezclarlas.
+- Errores de las hojas de municipios y distritos del SERPAVI: van como `ausente`; el aviso al MIVAU, si se envía, lo envía el autor.
+- Viviendas turísticas desde febrero de 2024 y Censo 2021 en la v0.1; la tabla de paso desde el seccionado de 2011, en F6.
+- Estado de los derivados: el peor de sus términos (`dato` < `estimado` < `secreto` < `ausente`).
+- Mapa base: simplificación de medio píxel (35,2 MB) y publicación desde un *release*; códigos postales, del callejero.
+- Datos de la web: JSON de enteros en lugar de binario, y un fichero de series por municipio para la ficha.
+
 ### Añadido (8-nov-2026, F2: SERPAVI, Censo, viviendas turísticas, mapa base, web y nota metodológica)
 
 - **Indicadores 8 y 9** (alquiler mensual, mediana; alquiler por m²) con la base de datos del SERPAVI, 2015–2024, en el seccionado de 2021 sin tabla de paso (`R/fuente_mivau_serpavi.R`; bloque `bloque_serpavi`):
