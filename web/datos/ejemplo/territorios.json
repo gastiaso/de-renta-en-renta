@@ -1,11 +1,1 @@
-{
-  "municipio": {
-    "28079": "Madrid"
-  },
-  "provincia": {
-    "28": "Madrid"
-  },
-  "ccaa": {
-    "13": "Comunidad de Madrid"
-  }
-}
+{"ccaa":{"13":"Comunidad de Madrid"},"provincia":{"28":"Madrid"},"municipio":{"28079":"Madrid"},"ccaa_de_provincia":{"28":"13"}}

@@ -381,6 +381,27 @@ mapa_base <- list(
                                                        referencias))
 )
 
+# Indicadores derivados (R/derivados.R): 14 (esfuerzo de residentes), 21 (sueldo neto necesario,
+# mapa por defecto: 50 m² y umbral del 30 %) y 15 (barrera de acceso: se calcula en la web; aquí,
+# la mochila y la tartera de 2024 como control). Alquiler de vivienda colectiva; estado, el peor de
+# sus términos (plan, preguntas abiertas 12 y 15); numerador y denominador del mismo año (regla 4).
+# `perfiles`: ingreso neto mensual de cada ficha (tartera, mochila y llave), para la web.
+bloque_derivados <- list(
+  tar_target(fichero_provincias_aeat, "inventario/provincias_aeat.csv", format = "file"),
+  tar_target(provincias_aeat, readr::read_csv(fichero_provincias_aeat, col_types = "ccc")),
+  tar_target(perfiles, perfiles_fichas(mochila_neta, provincias_aeat, larga_adrh, anio_mochila = ANIO_AEAT)),
+  tar_target(resumen_perfiles_llave, resumen_llave(perfiles)),
+  tar_target(derivados, armonizar_derivados(larga_serpavi, larga_adrh, perfiles)),
+  tar_target(comprobaciones_derivados,
+             comprobar_derivados(derivados, larga_serpavi, larga_adrh, perfiles, provincias_aeat, mochila_neta)),
+  tar_target(validacion_derivados, validar_referencias(comprobaciones_derivados, referencias)),
+  tar_target(larga_derivados, {
+    validacion_derivados   # la compuerta va antes que la tabla larga
+    validar_tabla_larga(derivados, indicadores, fuentes, vocabulario)
+  }),
+  tar_target(resumen_larga_derivados, resumen_derivados(larga_derivados))
+)
+
 # Tabla larga única: cada bloque entra después de pasar su compuerta
 bloque_tabla_larga <- list(
   tar_target(tabla_larga, {
@@ -390,6 +411,7 @@ bloque_tabla_larga <- list(
       larga_serpavi,      # 8 y 9: la tipología como corte; sin filas «total»
       larga_censo2021,    # 18
       larga_vut,          # 19: el mes de referencia en corte y grupo
+      larga_derivados,    # 14 y 21 sin desglose; 15 con la ficha (tartera y mochila, 2024) como corte
       armonizar_sobrecarga_ecv(sobrecarga_ecv, sobrecarga_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)),
       armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa)),
       armonizar_ine_ecv_modulo_cortes(modulo_edad, modulo_tenencia, version = version_de(fichero_modulo_edad))
@@ -400,4 +422,23 @@ bloque_tabla_larga <- list(
              format = "file")
 )
 
-list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_mochila, bloque_tabla_larga)
+# Datos de la web (plan §6.6; preguntas abiertas 12, 14 y 17): web/datos/ y el mapa base en
+# web/teselas/ (fuera de git), desde la tabla larga ya validada y la jerarquía (R/web_exportar.R).
+# Con PROVINCIA, a datos/intermedios/web_<provincia>/, para no pisar la exportación de toda España.
+#   targets::tar_make(names = c(ficheros_web, validacion_web))
+DIR_WEB <- if (AMBITO == "") "web" else file.path("datos", "intermedios", paste0("web", SUFIJO_AMBITO))
+bloque_web <- list(
+  tar_target(cajas_municipios, cajas_web(secciones_2021, jerarquia_2021)),   # buscador de municipios
+  tar_target(ficheros_web, {
+    validacion_jerarquia; validacion_mapa_base; validacion_derivados    # lo que va, con sus compuertas pasadas
+    exportar_web(tabla_larga, indicadores, jerarquia_2021, territorios_2021, pmtiles = fichero_mapa_base,
+                 perfiles = perfiles, cajas = cajas_municipios, dir_web = DIR_WEB)
+  }, format = "file"),
+  tar_target(validacion_web, {
+    ficheros_web
+    validar_referencias(comprobar_web(tabla_larga, indicadores, jerarquia_2021, territorios_2021, DIR_WEB,
+                                      perfiles = perfiles), referencias)
+  })
+)
+
+list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_mochila, bloque_derivados, bloque_tabla_larga, bloque_web)

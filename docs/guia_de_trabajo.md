@@ -5,13 +5,13 @@ Atlas web de vivienda y salarios por sección censal, con fichas de perfil («pa
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
 2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.21: fuente de verdad de las decisiones).
+3. `docs/plan_integracion_atlas.md` (plan v0.22: fuente de verdad de las decisiones).
 
 ## Estado (8 de noviembre de 2026)
 
 - Fase F0. Sin datos publicados ni web.
 - Hechas las tareas 0 (entorno y git), 1 (SERPAVI por sección censal), 3 y 4 (comprobaciones e inventario de fuentes), 5 (sobrecarga con la ECV, compuerta superada) y 6 (geografía constante: probada en Madrid y extendida a toda España, con los catastros forales de País Vasco y Navarra). Detalle en el backlog.
-- F2 en marcha (8-nov-2026): indicadores 1–3, 8, 9, 18 y 19 en la tabla larga; jerarquía y mapa base en PMTiles; esqueleto de la web y primera versión de la nota metodológica (`docs/metodologia.md`). Detalle en el backlog, al final.
+- F2 en marcha (8-nov-2026): indicadores 1–3, 8, 9, 14, 15 (control), 18, 19 y 21 en la tabla larga; jerarquía y mapa base en PMTiles; datos de la web exportados desde el pipeline; web en local con «Tu sueldo», comparador y buscador; nota metodológica en castellano e inglés (`docs/metodologia.md`, `docs/methodology.md`). Detalle en el backlog, al final.
 
 ## Forma de trabajo
 
@@ -19,6 +19,7 @@ Lectura recomendada antes de tocar nada, en este orden:
 - Textos de fichas, metodología y web: registro impersonal, densos, sin valoraciones ni recomendaciones.
 - Todo es provisional. Lo que se decida se anota en el plan (subiendo su versión) o en `CHANGELOG.md`, en la misma tanda que el cambio.
 - Mensajes de commit en castellano. Sin remoto hasta la v0.0.
+- La nota metodológica tiene dos versiones, `docs/metodologia.md` y `docs/methodology.md`: se cambian a la vez (`test-metodologia.R` comprueba que citan lo mismo y dan las mismas cifras).
 
 ## Orden de trabajo
 
@@ -67,4 +68,4 @@ testthat::test_dir("pruebas/testthat")    # pruebas con datos inventados
 targets::tar_outdated()                   # debe salir vacío
 ```
 
-`tar_make()` se detiene si falla una comprobación de tipo `bloqueo` de `inventario/referencias_validacion.csv`; las de tipo `alerta` salen como avisos al final (hoy, con toda España: geometrías NUTS de códigos agrupados; 579 cifras municipales del ADRH a más de ±1 % de sus secciones agregadas; 160 municipios y años donde el ADRH no suma sus secciones; nueve secciones huérfanas del ADRH; seis casos de dos secciones con un defecto conocido de cobertura, y 164 cifras de municipios y distritos del SERPAVI que no cuadran con sus secciones). Una pasada completa desde cero tarda unas tres horas y cuarto; `PROVINCIA=28` la limita a una provincia. Para ver una compuerta: `targets::tar_read(validacion_sobrecarga)` (o `validacion_f1`, `validacion_adrh`, `validacion_modulo`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_serpavi`, `validacion_censo2021`, `validacion_vut`, `validacion_jerarquia`, `validacion_mapa_base`). Pruebas de la web: `node --test pruebas/web/datos.test.mjs`.
+`tar_make()` se detiene si falla una comprobación de tipo `bloqueo` de `inventario/referencias_validacion.csv`; las de tipo `alerta` salen como avisos al final (hoy, con toda España: geometrías NUTS de códigos agrupados; 579 cifras municipales del ADRH a más de ±1 % de sus secciones agregadas; 160 municipios y años donde el ADRH no suma sus secciones; nueve secciones huérfanas del ADRH; seis casos de dos secciones con un defecto conocido de cobertura, 164 cifras de municipios y distritos del SERPAVI que no cuadran con sus secciones; 26 cifras derivadas fuera del rango habitual, y 16 filas de municipio sin hueco en el índice de la web). Una pasada completa desde cero tarda unas tres horas y cuarto; `PROVINCIA=28` la limita a una provincia. Para ver una compuerta: `targets::tar_read(validacion_sobrecarga)` (o `validacion_f1`, `validacion_adrh`, `validacion_modulo`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_serpavi`, `validacion_censo2021`, `validacion_vut`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_derivados`, `validacion_web`). Pruebas de la web: `node --test pruebas/web/datos.test.mjs`. Datos de la web: `targets::tar_make(names = c(ficheros_web, validacion_web))` y `node web/servir.mjs`.

@@ -15,7 +15,7 @@ Fase F0 (cimientos): inventario, kit de diseño, plan, pipeline con la sobrecarg
 - Plan: `docs/plan_integracion_atlas.md`
 - Primeras tareas: `docs/backlog_f0.md`
 - Reglas de trabajo: `docs/guia_de_trabajo.md`
-- Nota metodológica: `docs/metodologia.md`
+- Nota metodológica: `docs/metodologia.md` (en inglés, `docs/methodology.md`)
 
 ## Estructura
 

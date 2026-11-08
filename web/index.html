@@ -25,11 +25,18 @@
       </div>
       <nav class="navegacion" data-i18n-aria="interfaz.navegacion">
         <a href="./" aria-current="page" data-i18n="nav.mapa">Mapa</a>
-        <span aria-disabled="true" data-i18n="nav.tu_sueldo" data-i18n-title="interfaz.proximamente">Tu sueldo</span>
+        <a href="#tu-sueldo" data-i18n="nav.tu_sueldo">Tu sueldo</a>
         <span aria-disabled="true" data-i18n="nav.sobrecarga" data-i18n-title="interfaz.proximamente">Sobrecarga</span>
         <span aria-disabled="true" data-i18n="nav.datos" data-i18n-title="interfaz.proximamente">Datos</span>
         <span aria-disabled="true" data-i18n="nav.metodo" data-i18n-title="interfaz.proximamente">Método</span>
       </nav>
+      <div class="buscador" role="search">
+        <label class="oculto" for="buscador-entrada" data-i18n="interfaz.buscador.etiqueta">Buscar municipio o sección</label>
+        <input id="buscador-entrada" type="search" role="combobox" autocomplete="off" spellcheck="false"
+               aria-autocomplete="list" aria-expanded="false" aria-controls="buscador-lista"
+               data-i18n-placeholder="interfaz.buscador.marcador">
+        <ul id="buscador-lista" class="buscador-lista" role="listbox" hidden></ul>
+      </div>
       <div class="idioma" role="group" data-i18n-aria="interfaz.idioma">
         <button type="button" data-idioma="es" aria-pressed="true" lang="es">ES</button>
         <button type="button" data-idioma="en" aria-pressed="false" lang="en">EN</button>
@@ -43,9 +50,72 @@
            data-i18n="avisos.ejemplo" data-i18n-title="interfaz.ejemplo_nota">Datos de ejemplo</p>
         <div id="leyenda" class="leyenda" hidden></div>
       </section>
-      <aside id="ficha" class="ficha" aria-live="polite"></aside>
+
+      <div class="lateral">
+        <section id="tu-sueldo" class="tarjeta sueldo" aria-labelledby="sueldo-titulo">
+          <header class="tarjeta-cabecera">
+            <h2 id="sueldo-titulo" class="tarjeta-titulo" data-i18n="nav.tu_sueldo">Tu sueldo</h2>
+          </header>
+          <div class="sueldo-cuerpo">
+            <p id="sueldo-intro" class="sueldo-intro"></p>
+            <div class="campos">
+              <label class="campo">
+                <span data-i18n="interfaz.sueldo.neto">Sueldo neto al mes</span>
+                <span class="campo-euros"><input id="sueldo-neto" type="text" inputmode="decimal" autocomplete="off"><span aria-hidden="true">€</span></span>
+              </label>
+              <label class="campo">
+                <span data-i18n="interfaz.sueldo.segundo">Segundo sueldo (opcional)</span>
+                <span class="campo-euros"><input id="sueldo-segundo" type="text" inputmode="decimal" autocomplete="off"><span aria-hidden="true">€</span></span>
+              </label>
+            </div>
+            <div id="sueldo-pagas" class="selector" role="group" aria-labelledby="sueldo-pagas-titulo">
+              <span id="sueldo-pagas-titulo" class="selector-titulo" data-i18n="interfaz.sueldo.pagas">Pagas al año</span>
+              <button type="button" data-pagas="12" aria-pressed="true">12</button>
+              <button type="button" data-pagas="14" aria-pressed="false">14</button>
+            </div>
+            <div id="sueldo-fichas" class="fichas" role="group" aria-labelledby="sueldo-fichas-titulo">
+              <span id="sueldo-fichas-titulo" class="selector-titulo" data-i18n="interfaz.sueldo.fichas">O elige una ficha</span>
+              <div class="fichas-botones"></div>
+            </div>
+            <div id="sueldo-superficie" class="selector" role="group" aria-labelledby="sueldo-superficie-titulo">
+              <span id="sueldo-superficie-titulo" class="selector-titulo" data-i18n="interfaz.sueldo.superficie">Vivienda</span>
+              <button type="button" data-superficie="50" aria-pressed="true">50 m²</button>
+              <button type="button" data-superficie="70" aria-pressed="false">70 m²</button>
+              <button type="button" data-superficie="90" aria-pressed="false">90 m²</button>
+            </div>
+            <p id="sueldo-superficie-nota" class="nota" hidden></p>
+            <div id="sueldo-umbral" class="selector" role="group" aria-labelledby="sueldo-umbral-titulo">
+              <span id="sueldo-umbral-titulo" class="selector-titulo" data-i18n="interfaz.sueldo.umbral">Umbral</span>
+              <button type="button" data-umbral="30" aria-pressed="true">30 %</button>
+              <button type="button" data-umbral="40" aria-pressed="false">40 %</button>
+            </div>
+            <p id="sueldo-resumen" class="sueldo-resumen" aria-live="polite" hidden></p>
+            <p id="sueldo-detalle" class="nota" hidden></p>
+            <div class="acciones">
+              <button id="sueldo-volver" type="button" class="boton" data-i18n="interfaz.sueldo.volver" hidden>Ver el sueldo necesario</button>
+              <button id="sueldo-compartir" type="button" class="boton boton-principal" data-i18n="interfaz.compartir.boton">Compartir</button>
+            </div>
+            <p class="nota" data-i18n="interfaz.sueldo.privacidad">Tu sueldo no sale de este dispositivo.</p>
+          </div>
+        </section>
+
+        <aside id="ficha" class="tarjeta ficha" aria-live="polite"></aside>
+      </div>
     </main>
   </div>
+
+  <dialog id="compartir" class="dialogo" aria-labelledby="compartir-titulo">
+    <h2 id="compartir-titulo" class="tarjeta-titulo" data-i18n="interfaz.compartir.titulo">Compartir esta vista</h2>
+    <p id="compartir-aviso"></p>
+    <input id="compartir-enlace" class="dialogo-enlace" type="text" readonly data-i18n-aria="interfaz.compartir.enlace">
+    <div class="acciones">
+      <button id="compartir-con" type="button" class="boton" data-i18n="interfaz.compartir.copiar_con">Copiar con mi sueldo</button>
+      <button id="compartir-sin" type="button" class="boton boton-principal" data-i18n="interfaz.compartir.copiar_sin">Copiar sin el sueldo</button>
+      <button id="compartir-cerrar" type="button" class="boton" data-i18n="interfaz.compartir.cerrar">Cerrar</button>
+    </div>
+    <p id="compartir-hecho" class="nota" aria-live="polite"></p>
+  </dialog>
+
   <noscript>
     <p class="sin-js">Esta web necesita JavaScript para dibujar el mapa. · This site needs JavaScript to draw the map.</p>
   </noscript>

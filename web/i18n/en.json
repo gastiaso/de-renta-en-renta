@@ -24,6 +24,106 @@
     "secreto": "No data (statistical confidentiality)",
     "muestra_pequena": "Small sample: read with caution"
   },
+  "interfaz": {
+    "idioma": "Language",
+    "navegacion": "Site sections",
+    "proximamente": "Coming soon",
+    "ejemplo_nota": "Made-up values to test the site: not data.",
+    "error_carga": "The map data could not be loaded.",
+    "mapa": {
+      "region": "Census tract map",
+      "acercar": "Zoom in",
+      "alejar": "Zoom out"
+    },
+    "buscador": {
+      "etiqueta": "Search municipality or tract",
+      "marcador": "Search municipality or tract"
+    },
+    "leyenda": {
+      "sin_dato": "No data",
+      "secreto": "Statistical confidentiality",
+      "supuestos": "{superficie} m² · {umbral} threshold",
+      "ficha_mediana": "{ficha} (median of provinces)",
+      "llave": "{ficha}: €{desde} to €{hasta} (tract quartiles)",
+      "llega_titulo": "Can you make rent?",
+      "llega_sub": "Rent for {vivienda} against {ingreso}",
+      "llega_1": "Up to 30% of income",
+      "llega_2": "30 to 40%",
+      "llega_3": "Over 40%",
+      "llega_nota": "Bands do not change with the threshold; the threshold decides what “fits”."
+    },
+    "sueldo": {
+      "intro_necesario": "Net pay needed so that rent stays under the threshold. With a pay figure or a token, the map switches to “Can you make rent?”.",
+      "intro_llega": "Share of income that goes on rent, tract by tract.",
+      "neto": "Net monthly pay",
+      "segundo": "Second pay (optional)",
+      "pagas": "Payments a year",
+      "fichas": "Or choose a token",
+      "superficie": "Home size",
+      "umbral": "Threshold",
+      "superficie_fija": "Single-person tokens use {superficie} m².",
+      "superficie_llave": "The key pays the median rent of its tract.",
+      "peon_sin_sueldo": "Type a pay figure to use your token.",
+      "resumen_peon": "It fits your pay in {pct} of tracts with data ({caben} of {total}).",
+      "resumen_ficha": "It fits “{ficha}” in {pct} of tracts with data ({caben} of {total}).",
+      "detalle": "It fits if rent for {vivienda} stays within {umbral} of {ingreso}.",
+      "vivienda_m2": "{superficie} m²",
+      "vivienda_llave": "the tract's median home",
+      "ingreso_euros": "€{euros} net a month",
+      "ingreso_provincia": "the income of “{ficha}” in each province",
+      "ingreso_llave": "the average household income of the tract, divided by 12",
+      "sin_datos": "No tracts with data for this calculation.",
+      "anios_distintos": "Income from {ingreso} and rent from {alquiler}: not the same year.",
+      "volver": "Show pay needed",
+      "privacidad": "Typed pay never leaves this device: the calculation runs in the browser. It only goes into a link if “Share” is pressed and copying it is chosen."
+    },
+    "compartir": {
+      "boton": "Share",
+      "titulo": "Share this view",
+      "aviso": "The link with pay includes €{sueldo} net a month: anyone who opens it will see it. It goes after “#”, which browsers do not send to the server.",
+      "sin_sueldo": "The link carries the map, token, tract and view; no pay.",
+      "copiar": "Copy link",
+      "copiar_con": "Copy with my pay",
+      "copiar_sin": "Copy without pay",
+      "cerrar": "Close",
+      "enlace": "Link",
+      "copiado": "Link copied.",
+      "copiado_con": "Link copied, with pay.",
+      "copia_a_mano": "Could not copy: the link is selected so it can be copied by hand (Ctrl+C)."
+    },
+    "ficha": {
+      "titulo": "Tract profile",
+      "vacia": "Choose a tract on the map to see its profile.",
+      "seccion": "Tract {codigo}",
+      "anio": "Year {anio}",
+      "cerrar": "Close the profile",
+      "evolucion": "Over time",
+      "evolucion_llega": "Rent as a share of income over time",
+      "ingreso_fijo": "Today's income in every year: only rent changes.",
+      "del_ingreso": "of income goes on rent",
+      "alquiler_ingreso": "Rent: €{alquiler} · income: €{ingreso} a month"
+    },
+    "comparador": {
+      "titulo": "Compare",
+      "con": "With",
+      "nada": "Choose what to compare with",
+      "su_distrito": "Its district: {nombre}",
+      "su_municipio": "Its municipality: {nombre}",
+      "su_provincia": "Its province: {nombre}",
+      "su_ccaa": "Its autonomous community: {nombre}",
+      "otra_seccion": "Another tract (picked on the map)",
+      "elige_en_mapa": "Click the tract to compare with on the map.",
+      "cancelar": "Cancel",
+      "indicador": "Indicator",
+      "esta_seccion": "This tract",
+      "nota": "e: estimated. —: no data or statistical confidentiality. Each row uses the same year in both columns."
+    },
+    "estado_corto": {
+      "estimado": "estimated",
+      "secreto": "confidential",
+      "ausente": "no data"
+    }
+  },
   "indicadores": {
     "renta_persona": {
       "nombre": "Average net income per person",
@@ -120,14 +220,14 @@
       "nombre": "Resident rent burden",
       "unidad": "% of household income",
       "definicion": "Share of the average household’s annual income in the tract that the median rent of that same tract would take.",
-      "calculo": "Median monthly rent × 12 / average net household income, same year.",
+      "calculo": "Median monthly rent of flats × 12 / average net household income, same year, × 100. Census tract and municipality. If either term is confidential or missing, so is the result.",
       "lectura": "Measures the vulnerability of current residents, not access: expensive areas look affordable because higher-income people live there."
     },
     "barrera_acceso": {
       "nombre": "Rental access barrier",
       "unidad": "% of reference income",
       "definicion": "Share of a token’s net monthly income (minimum wage, under-35, pensioner or the user’s own pay) that 50 m² of rent in the tract would take.",
-      "calculo": "Median rent per m² × 50 / token’s net monthly income spread over 12 payments.",
+      "calculo": "Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token; if the income is not from the same year as the rent (this year’s minimum wage against the latest published rent), this is stated.",
       "lectura": "Measures the barrier to moving in with a given income. Read by bands (up to 30%, 30–40% and over 40%), not as an exact figure."
     },
     "anios_salario_compra": {
@@ -169,7 +269,7 @@
       "nombre": "Net monthly pay needed to stay under the threshold",
       "unidad": "net € per month",
       "definicion": "Net monthly pay needed so that 50 m² of rent in the tract does not exceed 30% of pay.",
-      "calculo": "Median rent per m² × 50 / 0.30 (threshold can be changed to 40%).",
+      "calculo": "Median rent per m² of flats × 50 / 0.30 (floor area can be changed to 70 or 90 m² and the threshold to 40%). Carries the status of the rent figure.",
       "lectura": "It is rent expressed in another unit, not a new indicator. The 30% threshold draws on the stressed-zone criterion of Law 12/2023, which uses household income and utilities; it is not that criterion."
     },
     "sobrecarga": {
@@ -215,7 +315,8 @@
     "eustat_nastat": "Income indicators for the Basque Country (Eustat) and Navarre (Nastat)",
     "ine_epa_deciles": "Wage deciles of the main job (Labour Force Survey)",
     "idescat_e02": "Territorial wage statistics (experimental)",
-    "bde_accesibilidad": "Housing affordability indicators (years of income, theoretical burden)"
+    "bde_accesibilidad": "Housing affordability indicators (years of income, theoretical burden)",
+    "calculo_propio": "Own calculation from the sources of each term"
   },
   "vocabulario": {
     "corte": {
@@ -226,7 +327,8 @@
       "tipologia": "Dwelling type (median)",
       "tipologia_p25": "Dwelling type, first quartile",
       "tipologia_p75": "Dwelling type, third quartile",
-      "mes": "Reference month"
+      "mes": "Reference month",
+      "ficha": "Token (reference income)"
     },
     "edad": {
       "Y_LT18": "Under 18",
@@ -254,6 +356,10 @@
       "normal": "Sufficient sample",
       "baja": "Small sample (20 to 49 observations): read with caution",
       "no publicable": "Insufficient sample (fewer than 20 observations)"
+    },
+    "ficha": {
+      "tartera": "Minimum wage",
+      "mochila": "Under-35"
     },
     "mes": {
       "M02": "February",

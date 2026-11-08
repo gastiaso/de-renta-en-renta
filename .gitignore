@@ -15,6 +15,11 @@ datos/portales/
 
 # Capas y salidas pesadas
 *.pmtiles
+
+# Exportación del pipeline para la web (unos 8.500 ficheros y 75 MB): se regenera y se publica
+# con el mapa base desde un release. La muestra con valores inventados sí va en git.
+web/datos/*
+!web/datos/ejemplo/
 geo/brutos/
 *.zip
 

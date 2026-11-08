@@ -24,6 +24,106 @@
     "secreto": "Sin dato por secreto estadístico",
     "muestra_pequena": "Muestra pequeña: leer con cautela"
   },
+  "interfaz": {
+    "idioma": "Idioma",
+    "navegacion": "Secciones de la web",
+    "proximamente": "Próximamente",
+    "ejemplo_nota": "Valores inventados para probar la web: no son datos.",
+    "error_carga": "No se han podido cargar los datos del mapa.",
+    "mapa": {
+      "region": "Mapa de secciones censales",
+      "acercar": "Acercar",
+      "alejar": "Alejar"
+    },
+    "buscador": {
+      "etiqueta": "Buscar municipio o sección",
+      "marcador": "Buscar municipio o sección"
+    },
+    "leyenda": {
+      "sin_dato": "Sin dato",
+      "secreto": "Secreto estadístico",
+      "supuestos": "{superficie} m² · umbral del {umbral}",
+      "ficha_mediana": "{ficha} (mediana de las provincias)",
+      "llave": "{ficha}: de {desde} a {hasta} € (cuartiles de las secciones)",
+      "llega_titulo": "¿Te llega?",
+      "llega_sub": "Alquiler de {vivienda} sobre {ingreso}",
+      "llega_1": "Hasta el 30 % del ingreso",
+      "llega_2": "Del 30 al 40 %",
+      "llega_3": "Más del 40 %",
+      "llega_nota": "Los tramos no cambian con el umbral; el umbral decide cuándo «cabe»."
+    },
+    "sueldo": {
+      "intro_necesario": "Sueldo neto necesario para que el alquiler no pase del umbral. Con un sueldo o una ficha, el mapa pasa a «¿te llega?».",
+      "intro_llega": "Parte del ingreso que se va en alquiler, sección a sección.",
+      "neto": "Sueldo neto al mes",
+      "segundo": "Segundo sueldo (opcional)",
+      "pagas": "Pagas al año",
+      "fichas": "O elige una ficha",
+      "superficie": "Vivienda",
+      "umbral": "Umbral",
+      "superficie_fija": "Las fichas de una persona usan {superficie} m².",
+      "superficie_llave": "La llave paga el alquiler mediano de su sección.",
+      "peon_sin_sueldo": "Escribe un sueldo para usar tu ficha.",
+      "resumen_peon": "Te cabe en el {pct} de las secciones con dato ({caben} de {total}).",
+      "resumen_ficha": "A «{ficha}» le cabe en el {pct} de las secciones con dato ({caben} de {total}).",
+      "detalle": "Cabe si el alquiler de {vivienda} no pasa del {umbral} de {ingreso}.",
+      "vivienda_m2": "{superficie} m²",
+      "vivienda_llave": "la vivienda mediana de la sección",
+      "ingreso_euros": "{euros} € netos al mes",
+      "ingreso_provincia": "el ingreso de «{ficha}» en cada provincia",
+      "ingreso_llave": "la renta media de sus hogares, entre 12",
+      "sin_datos": "No hay secciones con dato para este cálculo.",
+      "anios_distintos": "Ingreso de {ingreso} y alquiler de {alquiler}: no son del mismo año.",
+      "volver": "Ver el sueldo necesario",
+      "privacidad": "El sueldo escrito no sale de este dispositivo: el cálculo se hace en el navegador. Solo va en un enlace si se pulsa «Compartir» y se elige copiarlo."
+    },
+    "compartir": {
+      "boton": "Compartir",
+      "titulo": "Compartir esta vista",
+      "aviso": "El enlace con el sueldo lleva escrito {sueldo} € netos al mes: quien lo abra lo verá. Va tras «#», que el navegador no envía al servidor.",
+      "sin_sueldo": "El enlace lleva el mapa, la ficha, la sección y la vista; ningún sueldo.",
+      "copiar": "Copiar el enlace",
+      "copiar_con": "Copiar con mi sueldo",
+      "copiar_sin": "Copiar sin el sueldo",
+      "cerrar": "Cerrar",
+      "enlace": "Enlace",
+      "copiado": "Enlace copiado.",
+      "copiado_con": "Enlace copiado, con el sueldo.",
+      "copia_a_mano": "No se ha podido copiar: el enlace está seleccionado para copiarlo a mano (Ctrl+C)."
+    },
+    "ficha": {
+      "titulo": "Ficha de sección",
+      "vacia": "Elige una sección en el mapa para ver su ficha.",
+      "seccion": "Sección {codigo}",
+      "anio": "Año {anio}",
+      "cerrar": "Cerrar la ficha",
+      "evolucion": "Evolución",
+      "evolucion_llega": "Evolución del alquiler sobre el ingreso",
+      "ingreso_fijo": "Con el ingreso de hoy en todos los años: solo cambia el alquiler.",
+      "del_ingreso": "del ingreso se va en alquiler",
+      "alquiler_ingreso": "Alquiler: {alquiler} € · ingreso: {ingreso} € al mes"
+    },
+    "comparador": {
+      "titulo": "Comparar",
+      "con": "Con",
+      "nada": "Elige con qué comparar",
+      "su_distrito": "Su distrito: {nombre}",
+      "su_municipio": "Su municipio: {nombre}",
+      "su_provincia": "Su provincia: {nombre}",
+      "su_ccaa": "Su comunidad: {nombre}",
+      "otra_seccion": "Otra sección (se elige en el mapa)",
+      "elige_en_mapa": "Pulsa en el mapa la sección con la que comparar.",
+      "cancelar": "Cancelar",
+      "indicador": "Indicador",
+      "esta_seccion": "Esta sección",
+      "nota": "e: estimado. —: sin dato o en secreto estadístico. En cada fila, el mismo año en las dos columnas."
+    },
+    "estado_corto": {
+      "estimado": "estimado",
+      "secreto": "secreto",
+      "ausente": "sin dato"
+    }
+  },
   "indicadores": {
     "renta_persona": {
       "nombre": "Renta neta media por persona",
@@ -120,14 +220,14 @@
       "nombre": "Esfuerzo de residentes en alquiler",
       "unidad": "% de la renta del hogar",
       "definicion": "Parte de la renta anual del hogar medio de la sección que se iría en el alquiler mediano de esa misma sección.",
-      "calculo": "Alquiler mediano mensual × 12 / renta neta media por hogar, del mismo año.",
+      "calculo": "Alquiler mensual mediano de la vivienda colectiva × 12 / renta neta media por hogar, del mismo año, × 100. Sección censal y municipio. Si alguno de los dos términos está en secreto o falta, la cifra también.",
       "lectura": "Mide la vulnerabilidad de quien ya vive allí, no el acceso: los barrios caros parecen asequibles porque los habita gente con más renta."
     },
     "barrera_acceso": {
       "nombre": "Barrera de acceso al alquiler",
       "unidad": "% del ingreso de referencia",
       "definicion": "Parte del ingreso neto mensual de una ficha (salario mínimo, joven, pensionista o el sueldo del usuario) que se iría en el alquiler de 50 m² de la sección.",
-      "calculo": "Alquiler mediano por m² × 50 / ingreso neto mensual de la ficha repartido en 12 pagas.",
+      "calculo": "Alquiler mediano por m² de la vivienda colectiva × 50 / ingreso neto mensual de la ficha repartido en 12 pagas, × 100. Se calcula en la web con la ficha elegida; si el ingreso no es del mismo año que el alquiler (el salario mínimo del año en curso frente al último alquiler publicado), se indica.",
       "lectura": "Mide la barrera para entrar con un ingreso dado. Se lee por tramos (hasta el 30 %, del 30 al 40 % y más del 40 %), no como cifra exacta."
     },
     "anios_salario_compra": {
@@ -169,7 +269,7 @@
       "nombre": "Sueldo neto necesario para no pasar del umbral",
       "unidad": "€ netos por mes",
       "definicion": "Sueldo neto mensual necesario para que el alquiler de 50 m² en la sección no pase del 30 % del sueldo.",
-      "calculo": "Alquiler mediano por m² × 50 / 0,30 (umbral cambiable al 40 %).",
+      "calculo": "Alquiler mediano por m² de la vivienda colectiva × 50 / 0,30 (superficie cambiable a 70 y 90 m² y umbral al 40 %). Lleva el estado del alquiler.",
       "lectura": "Es el alquiler expresado en otra unidad, no un indicador nuevo. El umbral del 30 % se inspira en el criterio de zona tensionada de la Ley 12/2023, que usa renta del hogar y suministros; no es ese criterio."
     },
     "sobrecarga": {
@@ -215,7 +315,8 @@
     "eustat_nastat": "Indicadores de renta del País Vasco (Eustat) y Navarra (Nastat)",
     "ine_epa_deciles": "Decil de salarios del empleo principal (EPA)",
     "idescat_e02": "Estadística territorial de salarios (experimental)",
-    "bde_accesibilidad": "Indicadores de accesibilidad a la vivienda (años de renta, esfuerzo teórico)"
+    "bde_accesibilidad": "Indicadores de accesibilidad a la vivienda (años de renta, esfuerzo teórico)",
+    "calculo_propio": "Cálculo propio a partir de las fuentes de cada término"
   },
   "vocabulario": {
     "corte": {
@@ -226,7 +327,8 @@
       "tipologia": "Tipología de la vivienda (mediana)",
       "tipologia_p25": "Tipología de la vivienda, primer cuartil",
       "tipologia_p75": "Tipología de la vivienda, tercer cuartil",
-      "mes": "Mes de referencia"
+      "mes": "Mes de referencia",
+      "ficha": "Ficha (ingreso de referencia)"
     },
     "edad": {
       "Y_LT18": "Menos de 18 años",
@@ -254,6 +356,10 @@
       "normal": "Muestra suficiente",
       "baja": "Muestra pequeña (20 a 49 observaciones): leer con cautela",
       "no publicable": "Muestra insuficiente (menos de 20 observaciones)"
+    },
+    "ficha": {
+      "tartera": "Salario mínimo",
+      "mochila": "Joven menor de 35"
     },
     "mes": {
       "M02": "Febrero",

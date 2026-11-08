@@ -1,18 +1,18 @@
 # Muestra de la web: geometría real, valores inventados.
 #
-# Genera en web/datos/ejemplo/ los ficheros con que el esqueleto de la web funciona mientras
-# no exista la exportación del pipeline (web/datos/manifiesto.json y web/teselas/):
-#   - secciones.geojson   secciones del distrito Centro de Madrid (seccionado de 2021, INE),
-#                         con los nombres de capa y de propiedad del mapa base (`seccion`)
-#   - provincias.geojson  contorno de la provincia de Madrid (fondo provisional)
-#   - secciones.json      índice: códigos de sección en el orden de los valores
-#   - territorios.json    nombres de municipio, provincia y comunidad
-#   - sc/alquiler_m2/<año>.json   valores INVENTADOS de 2020 a 2024, uno por año
-#   - fichas/28079.json   series de cada sección para la ficha (todas son de Madrid)
-#   - manifiesto.json     qué hay y dónde (mismo esquema que el manifiesto real)
+# Genera en web/datos/ejemplo/ los ficheros con que la web funciona mientras no exista la
+# exportación del pipeline (web/datos/manifiesto.json y web/teselas/), con el mismo esquema
+# (contrato de datos de la web: web/LEEME.md):
+#   - secciones.geojson, provincias.geojson   mapa base: las secciones del distrito Centro de
+#       Madrid (seccionado de 2021, INE) y el contorno de la provincia
+#   - indices/<nivel>.json     códigos de cada nivel en el orden de los valores
+#   - <nivel>/<serie>/<periodo>.json   valores INVENTADOS de los indicadores de la v0.1
+#   - fichas/28079.json        series de cada sección para la ficha
+#   - territorios.json, cajas.json, perfiles.json, manifiesto.json
 #
-# Los valores son de ejemplo (guía, regla 9): aleatorios, sin relación con la sección.
-# No es parte del pipeline. Se ejecuta a mano desde la raíz del proyecto:
+# Los valores son de ejemplo (guía, regla 9): aleatorios, sin relación con la sección ni con
+# las cifras reales; también los ingresos de las fichas. No es parte del pipeline. Se ejecuta a
+# mano desde la raíz del proyecto:
 #   Rscript web/herramientas/generar_ejemplo.R
 # Necesita datos/brutos/ine_seccionado/seccionado_2021.zip (descarga del pipeline).
 
@@ -23,81 +23,156 @@ if (!file.exists(zip_2021)) stop("Falta ", zip_2021, ": se descarga con el pipel
 capa <- "SECC_CE_20210101"
 dsn <- paste0("/vsizip/", zip_2021, "/Seccionado_2021/", capa, ".shp")
 salida <- file.path("web", "datos", "ejemplo")
+ruta_web <- "datos/ejemplo"
 unlink(salida, recursive = TRUE)
-dir.create(file.path(salida, "sc", "alquiler_m2"), recursive = TRUE, showWarnings = FALSE)
-dir.create(file.path(salida, "fichas"), showWarnings = FALSE)
+dir.create(salida, recursive = TRUE, showWarnings = FALSE)
 
 leer <- function(where) {
   st_read(dsn, quiet = TRUE,
           query = sprintf("SELECT CUSEC, CUMUN, CPRO, CCA, NMUN, NPRO, NCA FROM %s WHERE %s", capa, where))
 }
+escribir_geojson <- function(x, ruta) {
+  st_write(x, ruta, driver = "GeoJSON", quiet = TRUE,
+           layer_options = c("COORDINATE_PRECISION=6", "RFC7946=YES", "WRITE_BBOX=NO"))
+}
+escribir_json <- function(x, ...) {
+  ruta <- file.path(salida, ...)
+  dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
+  jsonlite::write_json(x, ruta, auto_unbox = TRUE, na = "null", digits = NA)
+}
+
+# --- Mapa base --------------------------------------------------------------------------------
 
 # Secciones de Centro (Madrid, distrito 01), simplificadas a 2 m y en grados.
 centro <- leer("CUMUN = '28079' AND CDIS = '01'")
 centro <- centro[order(centro$CUSEC), ]
 secciones <- st_simplify(centro, preserveTopology = TRUE, dTolerance = 2) |> st_transform(4326)
 secciones <- st_sf(seccion = secciones$CUSEC, municipio = secciones$CUMUN, geometry = st_geometry(secciones))
+escribir_geojson(secciones, file.path(salida, "secciones.geojson"))
 
 # Fondo provisional: la provincia de Madrid disuelta y muy simplificada.
 provincia <- leer("CPRO = '28'")
 contorno <- st_union(st_buffer(provincia, 1)) |> st_simplify(dTolerance = 150) |> st_transform(4326)
-provincias <- st_sf(provincia = "28", nombre = provincia$NPRO[1], geometry = contorno)
+escribir_geojson(st_sf(provincia = "28", nombre = provincia$NPRO[1], geometry = contorno),
+                 file.path(salida, "provincias.geojson"))
 
-escribir_geojson <- function(x, ruta) {
-  st_write(x, ruta, driver = "GeoJSON", quiet = TRUE,
-           layer_options = c("COORDINATE_PRECISION=6", "RFC7946=YES", "WRITE_BBOX=NO"))
-}
-escribir_geojson(secciones, file.path(salida, "secciones.geojson"))
-escribir_geojson(provincias, file.path(salida, "provincias.geojson"))
+# --- Territorios ------------------------------------------------------------------------------
 
-# Índice de secciones (el orden de los valores) y nombres de los territorios.
-jsonlite::write_json(secciones$seccion, file.path(salida, "secciones.json"))
-territorios <- list(
-  municipio = stats::setNames(as.list(unique(centro$NMUN)), unique(centro$CUMUN)),
-  provincia = stats::setNames(as.list(unique(centro$NPRO)), unique(centro$CPRO)),
-  ccaa = stats::setNames(as.list(unique(centro$NCA)), unique(centro$CCA))
-)
-jsonlite::write_json(territorios, file.path(salida, "territorios.json"), auto_unbox = TRUE, pretty = TRUE)
+codigos <- list(sc = secciones$seccion, municipio = "28079", provincia = "28", ccaa = "13", nacional = "00")
+for (nivel in names(codigos)) escribir_json(I(codigos[[nivel]]), "indices", paste0(nivel, ".json"))
 
-# Valores INVENTADOS de alquiler por m² (€/m²/mes), 2020-2024: un punto de partida aleatorio
-# entre 11 y 26 y una subida anual aleatoria del 0 al 6 %. Estados (0 dato, 1 estimado,
-# 2 secreto, 3 ausente): cuatro secciones en secreto todos los años y algún hueco suelto.
+escribir_json(list(
+  ccaa = list(`13` = centro$NCA[1]),
+  provincia = list(`28` = centro$NPRO[1]),
+  municipio = list(`28079` = centro$NMUN[1]),
+  ccaa_de_provincia = list(`28` = "13")
+), "territorios.json")
+
+madrid <- st_transform(provincia[provincia$CUMUN == "28079", ], 4326)
+escribir_json(list(municipio = list(`28079` = I(round(as.numeric(st_bbox(madrid)), 5)))), "cajas.json")
+
+# --- Valores INVENTADOS -----------------------------------------------------------------------
+
 set.seed(20261108)
-n <- nrow(secciones)
+n <- length(codigos$sc)
 anios <- 2020:2024
-inicio <- runif(n, 11, 26)
-subida <- runif(n, 0, 0.06)
-valor <- sapply(seq_along(anios), function(k) as.numeric(sprintf("%.1f", inicio * (1 + subida)^(k - 1))))
-estado <- matrix(sample(0:1, n * length(anios), replace = TRUE, prob = c(0.85, 0.15)), n)
-estado[sample(n, 4), ] <- 2L
-huecos <- cbind(sample(which(estado[, 1] != 2L), 6), sample(seq_along(anios), 6, replace = TRUE))
-estado[huecos] <- 3L
-valor[estado >= 2L] <- NA
+k <- length(anios)
 
-# Formato de la web (plan, §6.6): {"v": [valor × 10 en enteros, null sin valor], "e": "0012…"},
-# en el orden del índice; un carácter de estado por territorio. I() impide que jsonlite
-# convierta en escalar un vector de longitud 1.
-por_diez <- function(x) {
-  y <- rep(NA_integer_, length(x))
-  y[!is.na(x)] <- as.integer(sprintf("%.0f", x[!is.na(x)] * 10))
-  y
+# Serie de cada sección: un punto de partida aleatorio y una subida anual aleatoria.
+crecer <- function(desde, hasta, subida_max) {
+  inicio <- runif(n, desde, hasta)
+  subida <- runif(n, 0, subida_max)
+  sapply(seq_len(k), function(j) inicio * (1 + subida)^(j - 1))
 }
-codificar <- function(x, e) list(v = I(por_diez(x)), e = paste(e, collapse = ""))
-escribir_json <- function(x, ruta) jsonlite::write_json(x, ruta, auto_unbox = TRUE, na = "null", digits = NA)
+# Estados: casi todo dato, algo estimado, y opcionalmente secretos y huecos.
+estados_al_azar <- function(columnas, secretos = 0, huecos = 0) {
+  e <- matrix(sample(0:1, n * columnas, replace = TRUE, prob = c(0.85, 0.15)), n)
+  if (secretos > 0) e[sample(n, secretos), ] <- 2L
+  if (huecos > 0) e[cbind(sample(which(e[, 1] != 2L), huecos), sample(seq_len(columnas), huecos, replace = TRUE))] <- 3L
+  e
+}
+peor <- function(...) do.call(pmax, list(...))   # orden dato < estimado < secreto < ausente (pregunta 15)
 
-for (k in seq_along(anios)) {
-  escribir_json(codificar(valor[, k], estado[, k]),
-                file.path(salida, "sc", "alquiler_m2", sprintf("%d.json", anios[k])))
+alquiler_m2 <- crecer(11, 26, 0.06)
+e_alquiler <- estados_al_azar(k, secretos = 4, huecos = 6)
+superficie_mediana <- runif(n, 50, 85)
+alquiler_mes <- alquiler_m2 * superficie_mediana
+renta_hogar <- crecer(28000, 80000, 0.04)
+e_renta <- estados_al_azar(k)
+tamano_hogar <- runif(n, 1.8, 2.8)
+renta_persona <- renta_hogar / tamano_hogar
+renta_uc_mediana <- renta_persona * runif(n, 1.25, 1.5)
+esfuerzo <- alquiler_mes * 12 / renta_hogar * 100
+periodos_vut <- c("2024-08", "2025-02", "2025-08")
+vut <- sapply(seq_along(periodos_vut), function(j) runif(n, 0, 20))
+
+# serie: valores (n × periodos), estados, periodos, decimales y si los periodos son años.
+series <- list(
+  renta_persona = list(v = renta_persona, e = e_renta, periodos = anios, decimales = 0L),
+  renta_hogar = list(v = renta_hogar, e = e_renta, periodos = anios, decimales = 0L),
+  renta_uc_mediana = list(v = renta_uc_mediana, e = e_renta, periodos = anios, decimales = 0L),
+  alquiler_mes = list(v = alquiler_mes, e = e_alquiler, periodos = anios, decimales = 0L),
+  alquiler_m2 = list(v = alquiler_m2, e = e_alquiler, periodos = anios, decimales = 1L),
+  esfuerzo_residentes = list(v = esfuerzo, e = peor(e_alquiler, e_renta), periodos = anios, decimales = 1L),
+  hogares_alquiler = list(v = matrix(runif(n, 15, 55)), e = estados_al_azar(1), periodos = 2021L, decimales = 1L),
+  viviendas_turisticas = list(v = vut, e = estados_al_azar(3, huecos = 2), periodos = periodos_vut, decimales = 1L)
+)
+
+# Formato de la web (plan, §6.6): {"v": [valor × 10 en enteros, null sin valor], "e": "0012…"}.
+# Primero se redondea a una décima como manda la guía (sprintf("%.1f")) y después se multiplica:
+# sprintf("%.0f", x * 10) no da lo mismo en algunos casos (0,15 → 0,1 con la guía, pero 2 décimas así).
+# I() impide que jsonlite convierta en escalar un vector de longitud 1.
+codificar <- function(x, e) {
+  x[e >= 2L] <- NA
+  v <- rep(NA_integer_, length(x))
+  v[!is.na(x)] <- as.integer(round(as.numeric(sprintf("%.1f", x[!is.na(x)])) * 10))
+  list(v = I(v), e = paste(e, collapse = ""))
 }
 
-# Series de la ficha, un fichero por municipio: {"municipio", "anios": {indicador: [años]},
-# "series": {sección: {indicador: {"v", "e"}}}}, con los años en el orden de "anios".
-series <- stats::setNames(lapply(seq_len(n), function(i) list(alquiler_m2 = codificar(valor[i, ], estado[i, ]))),
-                          secciones$seccion)
-escribir_json(list(municipio = "28079", anios = list(alquiler_m2 = I(anios)), series = series),
-              file.path(salida, "fichas", "28079.json"))
+niveles <- names(codigos)
+for (s in names(series)) {
+  d <- series[[s]]
+  for (j in seq_along(d$periodos)) {
+    escribir_json(codificar(d$v[, j], d$e[, j]), "sc", s, paste0(d$periodos[j], ".json"))
+    # Territorios superiores: una cifra inventada, alrededor de la media de las secciones.
+    media <- mean(d$v[, j])
+    otros <- c(municipio = media * runif(1, 0.9, 1.1), provincia = media * runif(1, 0.75, 0.95))
+    otros <- c(otros, ccaa = otros[["provincia"]], nacional = otros[["provincia"]] * runif(1, 0.6, 0.85))
+    for (nivel in names(otros)) escribir_json(codificar(otros[[nivel]], 0L), nivel, s, paste0(d$periodos[j], ".json"))
+  }
+}
 
-caja <- as.numeric(st_bbox(secciones))
+# Series de la ficha, un fichero por municipio (todas las secciones de la muestra son de Madrid).
+escribir_json(list(
+  municipio = "28079",
+  anios = lapply(series, function(d) I(d$periodos)),
+  series = stats::setNames(lapply(seq_len(n), function(i) lapply(series, function(d) codificar(d$v[i, ], d$e[i, ]))),
+                           codigos$sc)
+), "fichas", "28079.json")
+
+# Ingresos de las fichas (neto mensual en euros, INVENTADOS). Sin transistor: llega en F3.
+escribir_json(list(
+  llave = list(ingreso = list(serie = "renta_hogar", divisor = 12L), vivienda = list(serie = "alquiler_mes")),
+  mochila = list(anio = 2024L, nivel = "provincia", neto_mensual = list(`28` = 1450), superficie_m2 = 50L),
+  tartera = list(anio = 2026L, nivel = "nacional", neto_mensual = list(`00` = 1300), superficie_m2 = 50L)
+), "perfiles.json")
+
+# --- Manifiesto ---------------------------------------------------------------------------------
+
+indicadores <- lapply(names(series), function(s) {
+  d <- series[[s]]
+  def <- list(niveles = I(niveles), decimales = d$decimales)
+  if (is.numeric(d$periodos)) {
+    def$anios <- I(d$periodos)
+    def$ruta <- sprintf("%s/{nivel}/%s/{anio}.json", ruta_web, s)
+  } else {
+    def$periodos <- I(d$periodos)
+    def$ruta <- sprintf("%s/{nivel}/%s/{periodo}.json", ruta_web, s)
+  }
+  def
+})
+names(indicadores) <- names(series)
+
 manifiesto <- list(
   version = "ejemplo",
   ejemplo = TRUE,
@@ -107,26 +182,27 @@ manifiesto <- list(
     tipo = "geojson",
     atribucion = "INE",
     capas = list(
-      provincias = list(url = "datos/ejemplo/provincias.geojson", id = "provincia"),
-      secciones = list(url = "datos/ejemplo/secciones.geojson", id = "seccion")
+      provincias = list(url = file.path(ruta_web, "provincias.geojson"), id = "provincia"),
+      secciones = list(url = file.path(ruta_web, "secciones.geojson"), id = "seccion")
     )
   ),
-  secciones = "datos/ejemplo/secciones.json",
-  territorios = "datos/ejemplo/territorios.json",
-  fichas = "datos/ejemplo/fichas/{municipio}.json",
+  indices = stats::setNames(lapply(niveles, function(nv) sprintf("%s/indices/%s.json", ruta_web, nv)), niveles),
+  territorios = file.path(ruta_web, "territorios.json"),
+  cajas = file.path(ruta_web, "cajas.json"),
+  fichas = file.path(ruta_web, "fichas", "{municipio}.json"),
+  perfiles = file.path(ruta_web, "perfiles.json"),
   codificacion = list(escala = 10L, estados = c("dato", "estimado", "secreto", "ausente")),
   supuestos = list(superficie_m2 = 50L, umbral = 0.30),
-  indicadores = list(
-    alquiler_m2 = list(nivel = "sc", anios = I(anios), ruta = "datos/ejemplo/sc/alquiler_m2/{anio}.json")
-  ),
+  indicadores = indicadores,
   mapas = list(
     # formula: nombre de una transformación conocida por la web (js/formulas.js), no código.
     sueldo_necesario = list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo",
                             cortes = c(2600L, 3200L, 3800L, 4400L), decimales = 0L)
   ),
-  vista_inicial = list(limites = round(caja, 5))
+  vista_inicial = list(limites = round(as.numeric(st_bbox(secciones)), 5))
 )
 jsonlite::write_json(manifiesto, file.path(salida, "manifiesto.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA)
 
 tam <- file.size(list.files(salida, recursive = TRUE, full.names = TRUE))
-message(sprintf("Muestra en %s: %d secciones, %d años, %s KB.", salida, n, length(anios), sprintf("%.1f", sum(tam) / 1024)))
+message(sprintf("Muestra en %s: %d secciones, %d series, %d ficheros, %s KB.", salida, n, length(series),
+                length(tam), sprintf("%.1f", sum(tam) / 1024)))

@@ -1,0 +1,149 @@
+// Comparador: la sección elegida frente a otra sección, su municipio, su provincia, su comunidad
+// o España, con los indicadores de la v0.1 que tenga el manifiesto. Cada fila usa el periodo de
+// la serie que corresponde al año del mapa (el mismo o el último anterior), igual en las dos
+// columnas (regla 4).
+
+import { periodoPara, valorDe, cargarSeries } from './datos.js';
+import { formulaDe } from './formulas.js';
+import { ordenNatural } from './nombres.js';
+
+// Indicadores de la v0.1 (plan, §7, F2), en el orden de la tabla. El 21 se calcula con el 9.
+export const INDICADORES_V01 = [
+  'renta_persona', 'renta_hogar', 'renta_uc_mediana', 'alquiler_mes', 'alquiler_m2',
+  'sueldo_necesario', 'esfuerzo_residentes', 'hogares_alquiler', 'viviendas_turisticas',
+];
+export const NIVELES_COMPARAR = ['distrito', 'municipio', 'provincia', 'ccaa', 'nacional'];
+
+const crear = (etiqueta, clase, texto) => {
+  const el = document.createElement(etiqueta);
+  if (clase) el.className = clase;
+  if (texto !== undefined) el.textContent = texto;
+  return el;
+};
+
+// Código del territorio con el que se compara una sección.
+export function codigoComparado(seccion, comparar, territorios) {
+  if (/^\d{10}$/.test(comparar)) return { nivel: 'sc', codigo: comparar };
+  const provincia = seccion.slice(0, 2);
+  const codigo = {
+    distrito: seccion.slice(0, 7),
+    municipio: seccion.slice(0, 5),
+    provincia,
+    ccaa: territorios?.ccaa_de_provincia?.[provincia],
+    nacional: '00',
+  }[comparar];
+  return codigo ? { nivel: comparar, codigo } : null;
+}
+
+export function nombreTerritorio(t, nivel, codigo, territorios) {
+  if (nivel === 'sc') return t('interfaz.ficha.seccion', { codigo });
+  if (nivel === 'nacional') return t('vocabulario.nivel.nacional');
+  if (nivel === 'distrito') return `${t('vocabulario.nivel.distrito')} ${codigo.slice(5, 7)}`;
+  return ordenNatural(territorios?.[nivel]?.[codigo] ?? codigo);
+}
+
+// Valor de una serie en una sección: de sus series (fichero del municipio) o, si no, del fichero
+// del año.
+async function valorSeccion(m, series, serie, codigo, periodo) {
+  const s = series?.[serie];
+  if (s) {
+    const k = s.anios.findIndex((p) => String(p) === String(periodo));
+    return k < 0 ? null : { valor: s.valores[k], estado: s.estados[k] };
+  }
+  return valorDe(m, serie, 'sc', codigo, periodo);
+}
+
+// Filas de la tabla: [{ indicador, periodo, decimales, a: {valor, estado} | null, b: ... }].
+export async function filasComparador({ m, seccion, comparado, anio, supuestos, seriesA }) {
+  const seriesB = comparado.nivel === 'sc' ? await cargarSeries(m, comparado.codigo).catch(() => null) : null;
+  const valor = (serie, periodo, lado) => lado === 'a'
+    ? valorSeccion(m, seriesA, serie, seccion, periodo)
+    : comparado.nivel === 'sc'
+      ? valorSeccion(m, seriesB, serie, comparado.codigo, periodo)
+      : valorDe(m, serie, comparado.nivel, comparado.codigo, periodo);
+
+  const filas = [];
+  for (const indicador of INDICADORES_V01) {
+    const derivado = indicador === 'sueldo_necesario' ? m.mapas?.sueldo_necesario : null;
+    const serie = derivado ? derivado.base : indicador;
+    const def = m.indicadores?.[serie];
+    if (!def || (indicador === 'sueldo_necesario' && !derivado)) continue;
+    const periodo = periodoPara(def, anio);
+    const [a, b] = await Promise.all([valor(serie, periodo, 'a'), valor(serie, periodo, 'b')]);
+    const transformar = (x) => {
+      if (!x || !derivado || x.valor === null) return x;
+      return { ...x, valor: formulaDe(derivado).calcular(x.valor, supuestos) };
+    };
+    filas.push({
+      indicador, periodo, derivado: Boolean(derivado),
+      decimales: derivado ? derivado.decimales ?? 0 : def.decimales ?? 1,
+      a: transformar(a), b: transformar(b),
+    });
+  }
+  return filas;
+}
+
+// Bloque del comparador dentro de la ficha. `eleccion`: '' | nivel | 'seccion'.
+export function pintarComparador(contenedor, { t, eleccion, opciones, filas, nombreA, nombreB, eligiendo, supuestos, estados, alElegir, alCancelar }) {
+  const bloque = crear('section', 'ficha-comparador');
+  bloque.append(crear('h3', 'ficha-indicador', t('interfaz.comparador.titulo')));
+
+  const etiqueta = crear('label', 'comparador-eleccion');
+  etiqueta.append(crear('span', null, t('interfaz.comparador.con')));
+  const select = crear('select');
+  for (const { valor, texto } of [{ valor: '', texto: t('interfaz.comparador.nada') }, ...opciones]) {
+    const opcion = crear('option', null, texto);
+    opcion.value = valor;
+    opcion.selected = valor === eleccion;
+    select.append(opcion);
+  }
+  select.addEventListener('change', () => alElegir(select.value));
+  etiqueta.append(select);
+  bloque.append(etiqueta);
+
+  if (eligiendo) {
+    const aviso = crear('p', 'comparador-aviso', t('interfaz.comparador.elige_en_mapa'));
+    const cancelar = crear('button', 'boton-texto', t('interfaz.comparador.cancelar'));
+    cancelar.type = 'button';
+    cancelar.addEventListener('click', alCancelar);
+    aviso.append(' ', cancelar);
+    bloque.append(aviso);
+  }
+
+  if (filas?.length) {
+    const celda = (x, decimales) => {
+      const td = crear('td', 'comparador-cifra');
+      if (!x || x.valor === null) {
+        td.textContent = '—';
+        if (x) td.title = t(`vocabulario.estado.${estados[x.estado]}`);
+        return td;
+      }
+      td.textContent = t.numero(x.valor, decimales);
+      if (estados[x.estado] === 'estimado') {
+        const marca = crear('sup', 'comparador-marca', 'e');
+        marca.title = t('vocabulario.estado.estimado');
+        td.append(marca);
+      }
+      return td;
+    };
+    const tabla = crear('table', 'comparador-tabla');
+    const cabecera = crear('tr');
+    cabecera.append(crear('th', null, t('interfaz.comparador.indicador')), crear('th', 'comparador-cifra', nombreA), crear('th', 'comparador-cifra', nombreB));
+    tabla.append(crear('thead'), crear('tbody'));
+    tabla.tHead.append(cabecera);
+    for (const fila of filas) {
+      const tr = crear('tr');
+      const th = crear('th');
+      th.scope = 'row';
+      th.append(crear('span', 'comparador-nombre', t(`indicadores.${fila.indicador}.nombre`)));
+      const unidad = fila.derivado
+        ? `${t(`indicadores.${fila.indicador}.unidad`)} · ${t('interfaz.leyenda.supuestos', { superficie: t.numero(supuestos.superficie_m2), umbral: t.porcentaje(supuestos.umbral) })}`
+        : t(`indicadores.${fila.indicador}.unidad`);
+      th.append(crear('span', 'comparador-unidad', `${unidad} · ${t.periodo(fila.periodo)}`));
+      tr.append(th, celda(fila.a, fila.decimales), celda(fila.b, fila.decimales));
+      tabla.tBodies[0].append(tr);
+    }
+    bloque.append(tabla, crear('p', 'comparador-nota', t('interfaz.comparador.nota')));
+  }
+  contenedor.replaceChildren(bloque);
+}

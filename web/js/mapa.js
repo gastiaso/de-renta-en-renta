@@ -7,16 +7,31 @@
 //   - geojson: un fichero por capa (la muestra de web/datos/ejemplo/).
 // Sin teselas de terceros: el fondo es el color del mar y la tierra sale de las propias capas.
 //
-// Los valores no van en las teselas: se cargan aparte (un JSON por indicador y año) y se
-// guardan como estado de cada sección (feature-state `b`, el valor base). El color se calcula
-// con una expresión de estilo, así que cambiar de umbral o de superficie no descarga nada.
+// Los valores no van en las teselas: se cargan aparte (un JSON por serie y año) y se guardan
+// como estado de cada sección (feature-state, una clave por serie). El color sale de una
+// expresión de estilo (sueldo.js), así que cambiar de sueldo, ficha, umbral o superficie no
+// descarga nada.
 
 import * as maplibregl from 'maplibre-gl';
-import { formulaDe } from './formulas.js';
 
 const css = (nombre) => getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
 const absoluta = (ruta) => new URL(ruta, document.baseURI).href;
 let pmtilesRegistrado = false;
+
+// Colores del mapa, de tokens.css: rampa de cinco pasos para el sueldo necesario; pasos 1, 3 y 5
+// para los tres tramos de «¿te llega?» (de claro a oscuro: se distinguen también sin color).
+export function coloresMapa() {
+  const rampa = [1, 2, 3, 4, 5].map((i) => css(`--rampa-${i}`));
+  return { rampa, llega: [rampa[0], rampa[2], rampa[4]], fuera: css('--color-fuera') };
+}
+
+// Colores del contorno de cada tramo: tinta sobre los tramos claros (los dos primeros no llegan
+// a 3:1 sobre la crema) y placa sobre los oscuros, donde la tinta no se ve.
+export function coloresContorno() {
+  const tinta = css('--color-tinta');
+  const placa = css('--color-placa');
+  return { rampa: [tinta, tinta, tinta, placa, placa], llega: [tinta, placa, placa], fuera: tinta };
+}
 
 // Trama del secreto estadístico (como la clase .secreto de tokens.css).
 function trama(color) {
@@ -35,8 +50,21 @@ function trama(color) {
   return ctx.getImageData(0, 0, lado, lado);
 }
 
+// Caja [oeste, sur, este, norte] de una lista de geometrías GeoJSON.
+function cajaDe(geometrias) {
+  const caja = [Infinity, Infinity, -Infinity, -Infinity];
+  const recorrer = (c) => {
+    if (typeof c[0] === 'number') {
+      caja[0] = Math.min(caja[0], c[0]); caja[1] = Math.min(caja[1], c[1]);
+      caja[2] = Math.max(caja[2], c[0]); caja[3] = Math.max(caja[3], c[1]);
+    } else c.forEach(recorrer);
+  };
+  geometrias.forEach((g) => recorrer(g.coordinates));
+  return Number.isFinite(caja[0]) ? caja : null;
+}
+
 // Crea el mapa y resuelve, cuando ha cargado, con las funciones para pintarlo y manejarlo.
-export function crearMapa({ contenedor, manifiesto, vista, t, alSeleccionar, alMover }) {
+export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alMover }) {
   const base = manifiesto.mapa_base;
   const capas = base.capas;
   if (!capas?.secciones) throw new Error('El mapa base no tiene capa de secciones');
@@ -66,8 +94,18 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alSeleccionar, alM
 
   // Fuente de cada capa, en la forma que piden addLayer (`source-layer`) y setFeatureState (`sourceLayer`).
   const fuente = (capa) => (base.tipo === 'pmtiles' ? { source: 'mapa-base', 'source-layer': capa } : { source: `capa-${capa}` });
-  const objetivo = (codigo) =>
-    base.tipo === 'pmtiles' ? { source: 'mapa-base', sourceLayer: 'secciones', id: codigo } : { source: 'capa-secciones', id: codigo };
+  const objetivoEn = (capa, codigo) =>
+    base.tipo === 'pmtiles' ? { source: 'mapa-base', sourceLayer: capa, id: codigo } : { source: `capa-${capa}`, id: codigo };
+  const objetivo = (codigo) => objetivoEn('secciones', codigo);
+
+  // Capas que se colorean con valores, con su nivel y el zoom hasta el que se ven (las secciones
+  // del PMTiles empiezan en el zoom 7; por debajo, municipios y, más abajo, provincias, con las
+  // cifras publicadas en su nivel).
+  const RELLENOS = [
+    { capa: 'provincias', nivel: 'provincia', hasta: 5 },
+    { capa: 'municipios', nivel: 'municipio', hasta: 7 },
+    { capa: 'secciones', nivel: 'sc', hasta: 24 },
+  ].filter((r) => capas[r.capa]);
 
   function anadirFuentes() {
     if (base.tipo === 'pmtiles') {
@@ -95,13 +133,16 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alSeleccionar, alM
     const tinta = css('--color-tinta');
     const tierra = capas.comunidades ? 'comunidades' : capas.provincias ? 'provincias' : null;
     if (tierra) mapa.addLayer({ id: 'tierra', type: 'fill', ...fuente(tierra), paint: { 'fill-color': css('--color-placa') } });
+    for (const { capa, hasta } of RELLENOS.filter((r) => r.capa !== 'secciones')) {
+      mapa.addLayer({ id: `${capa}-relleno`, type: 'fill', ...fuente(capa), maxzoom: hasta, paint: { 'fill-color': css('--color-placa') } });
+    }
     mapa.addLayer({ id: 'secciones-relleno', type: 'fill', ...fuente('secciones'), paint: { 'fill-color': css('--color-fuera') } });
     mapa.addLayer({
       id: 'secciones-secreto', type: 'fill', ...fuente('secciones'),
       filter: ['in', ['get', idSeccion], ['literal', []]],
       paint: { 'fill-pattern': 'trama-secreto' },
     });
-    // Contorno de todas las secciones: los tramos 1 y 2 de la rampa no llegan a 3:1 sobre la crema.
+    // Contorno de todas las secciones: los tramos claros de la rampa no llegan a 3:1 sobre la crema.
     mapa.addLayer({
       id: 'secciones-contorno', type: 'line', ...fuente('secciones'),
       paint: { 'line-color': tinta, 'line-opacity': 0.6, 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 0.1, 12, 0.4, 16, 1] },
@@ -109,32 +150,30 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alSeleccionar, alM
     for (const [capa, ancho] of [['municipios', 1], ['provincias', 1.5], ['comunidades', 2]]) {
       if (capas[capa]) mapa.addLayer({ id: `${capa}-borde`, type: 'line', ...fuente(capa), paint: { 'line-color': tinta, 'line-width': ancho } });
     }
-    const resalte = (id, estado, ancho) =>
+    // Resaltes: un halo de placa debajo de la línea de tinta, para que se vean sobre cualquier tramo.
+    const resalte = (id, estado, ancho, discontinua) => {
+      const visible = ['case', ['boolean', ['feature-state', estado], false], 1, 0];
+      mapa.addLayer({
+        id: `${id}-halo`, type: 'line', ...fuente('secciones'),
+        paint: { 'line-color': css('--color-placa'), 'line-width': ancho + 3, 'line-opacity': visible },
+      });
       mapa.addLayer({
         id, type: 'line', ...fuente('secciones'),
-        paint: { 'line-color': tinta, 'line-width': ancho, 'line-opacity': ['case', ['boolean', ['feature-state', estado], false], 1, 0] },
+        paint: {
+          'line-color': tinta, 'line-width': ancho, 'line-opacity': visible,
+          ...(discontinua ? { 'line-dasharray': [1.5, 1] } : {}),
+        },
       });
-    resalte('secciones-encima', 'encima', 2);
-    resalte('secciones-seleccion', 'sel', 4);
-  }
-
-  // Color por tramos: valor base del estado de la sección → fórmula del mapa → rampa de cinco pasos.
-  function expresionColor(mapaDef, supuestos) {
-    const valor = formulaDe(mapaDef).expresion(['to-number', ['feature-state', 'b']], supuestos);
-    const pasos = ['step', valor, css('--rampa-1')];
-    mapaDef.cortes.forEach((corte, i) => pasos.push(corte, css(`--rampa-${i + 2}`)));
-    return ['case', ['==', ['feature-state', 'b'], null], css('--color-fuera'), pasos];
+    };
+    resalte('secciones-encima', 'encima', 1.5);
+    resalte('secciones-comparada', 'cmp', 3, true);
+    resalte('secciones-seleccion', 'sel', 3.5);
   }
 
   let seleccionada = null;
+  let comparada = null;
   let encima = null;
   const marcar = (codigo, estado) => codigo && mapa.setFeatureState(objetivo(codigo), estado);
-
-  function seleccionar(codigo) {
-    marcar(seleccionada, { sel: false });
-    seleccionada = codigo ?? null;
-    marcar(seleccionada, { sel: true });
-  }
 
   function interaccion() {
     const codigoDe = (e) => e.features?.[0]?.properties?.[idSeccion] ?? null;
@@ -154,24 +193,62 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alSeleccionar, alM
     });
     mapa.on('click', 'secciones-relleno', (e) => {
       const codigo = codigoDe(e);
-      if (!codigo) return;
-      seleccionar(codigo);
-      alSeleccionar(codigo);
+      if (codigo) alPulsar(codigo);
     });
     mapa.on('moveend', () => alMover(mapa));
   }
 
+  // Geometrías de una sección ya cargadas en el mapa (en PMTiles, solo las de las teselas vistas).
+  const geometriasDe = (codigo) =>
+    mapa.querySourceFeatures(fuente('secciones').source, {
+      sourceLayer: base.tipo === 'pmtiles' ? 'secciones' : undefined,
+      filter: ['==', ['get', idSeccion], codigo],
+    }).map((f) => f.geometry);
+
   const api = {
     mapa,
-    seleccionar,
-    // Guarda el valor base y el estado de cada sección y recalcula el color.
-    pintar({ secciones, datos, mapaDef, supuestos }) {
-      for (let i = 0; i < secciones.length; i++) {
-        mapa.setFeatureState(objetivo(secciones[i]), { b: datos.valores[i], e: datos.estados[i] });
+    seleccionar(codigo) {
+      marcar(seleccionada, { sel: false });
+      seleccionada = codigo ?? null;
+      marcar(seleccionada, { sel: true });
+    },
+    comparar(codigo) {
+      marcar(comparada, { cmp: false });
+      comparada = codigo ?? null;
+      marcar(comparada, { cmp: true });
+    },
+    // Capas coloreadas por valores: [{ capa, nivel, id }].
+    rellenos: RELLENOS.map((r) => ({ ...r, id: capas[r.capa].id })),
+    // Guarda en cada elemento de una capa los valores de varias series a la vez: { serie: [valor | null] },
+    // en el orden de `codigos`.
+    ponerSeries(capa, codigos, columnas) {
+      const series = Object.entries(columnas);
+      if (!series.length) return;
+      for (let i = 0; i < codigos.length; i++) {
+        const estado = {};
+        for (const [serie, valores] of series) estado[serie] = valores[i];
+        mapa.setFeatureState(objetivoEn(capa, codigos[i]), estado);
       }
-      const secretos = secciones.filter((_, i) => datos.estados[i] === 2);
-      mapa.setFilter('secciones-secreto', ['in', ['get', idSeccion], ['literal', secretos]]);
-      mapa.setPaintProperty('secciones-relleno', 'fill-color', expresionColor(mapaDef, supuestos));
+    },
+    // Color de una capa (expresión de sueldo.js); en las secciones, también el del contorno y la
+    // trama del secreto; en los municipios, su borde mientras no se ven las secciones.
+    colorear(capa, relleno, contorno, secretos) {
+      mapa.setPaintProperty(`${capa}-relleno`, 'fill-color', relleno);
+      if (capa === 'secciones') {
+        mapa.setPaintProperty('secciones-contorno', 'line-color', contorno);
+        mapa.setFilter('secciones-secreto', ['in', ['get', idSeccion], ['literal', secretos ?? []]]);
+      } else if (capa === 'municipios' && mapa.getLayer('municipios-borde')) {
+        mapa.setPaintProperty('municipios-borde', 'line-color', ['step', ['zoom'], contorno, 7, css('--color-tinta')]);
+      }
+    },
+    irA(caja) {
+      if (caja) mapa.fitBounds(caja, { padding: 24, maxZoom: 15 });
+    },
+    // Encuadra una sección; si aún no está cargada, lo intenta otra vez cuando el mapa se quede quieto.
+    encuadrarSeccion(codigo, reintento = true) {
+      const caja = cajaDe(geometriasDe(codigo));
+      if (caja) mapa.fitBounds(caja, { padding: 48, maxZoom: 16 });
+      else if (reintento) mapa.once('idle', () => api.encuadrarSeccion(codigo, false));
     },
     // Textos de los controles al cambiar de idioma.
     traducir(t) {

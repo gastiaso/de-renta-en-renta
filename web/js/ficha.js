@@ -1,6 +1,11 @@
-// Ficha de sección (panel lateral). Esqueleto: sin sección elegida, una invitación a elegirla;
-// con sección, su código, sus territorios y el valor del mapa activo con su estado. El
-// contenido completo de la ficha (series, fichas de perfil, comparador) llega en F2.
+// Ficha de sección (panel lateral). Sin sección elegida, una invitación a elegirla; con sección,
+// su código, sus territorios y el valor del mapa activo:
+//   - sueldo necesario: la cifra en euros, con la superficie y el umbral;
+//   - «¿te llega?»: el alquiler sobre el ingreso de la ficha, con las dos cantidades.
+// Debajo, dos huecos que se rellenan cuando llegan sus datos: la evolución por años y el
+// comparador.
+
+import { ordenNatural } from './nombres.js';
 
 const crear = (etiqueta, clase, texto) => {
   const el = document.createElement(etiqueta);
@@ -34,56 +39,81 @@ export function fichaError(contenedor, { t, error }) {
   contenedor.replaceChildren(cabecera(t), aviso);
 }
 
-// `valor`: ya calculado con la fórmula del mapa (o null); `estado`: índice en codificacion.estados.
-export function fichaSeccion(contenedor, { t, codigo, territorios, mapaId, mapaDef, anio, valor, estado, estados, ejemplo, alCerrar }) {
+const TRAMOS_LLEGA = ['interfaz.leyenda.llega_1', 'interfaz.leyenda.llega_2', 'interfaz.leyenda.llega_3'];
+
+// `valor`: en el modo «necesario», el sueldo necesario (o null); en «llega», { alquiler,
+// ingreso, ratio, tramo } (o null). `estado`: índice en codificacion.estados.
+// Devuelve los huecos de la evolución y del comparador.
+export function fichaSeccion(contenedor, { t, codigo, territorios, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, alCerrar }) {
   const municipio = codigo.slice(0, 5);
   const provincia = codigo.slice(0, 2);
   const lineas = [
-    ['vocabulario.nivel.municipio', territorios.municipio?.[municipio] ?? municipio],
+    ['vocabulario.nivel.municipio', ordenNatural(territorios.municipio?.[municipio] ?? municipio)],
     ['vocabulario.nivel.distrito', codigo.slice(5, 7)],
-    ['vocabulario.nivel.provincia', territorios.provincia?.[provincia] ?? provincia],
+    ['vocabulario.nivel.provincia', ordenNatural(territorios.provincia?.[provincia] ?? provincia)],
   ];
   const datos = crear('dl', 'ficha-territorios');
   for (const [clave, texto] of lineas) datos.append(crear('dt', null, t(clave)), crear('dd', null, texto));
 
   const bloque = crear('section', 'ficha-valor');
-  bloque.append(crear('h3', 'ficha-indicador', t(`indicadores.${mapaId}.nombre`)));
   const cifra = crear('p', 'ficha-cifra');
-  cifra.append(crear('span', 'ficha-numero', valor === null ? '—' : t.numero(valor, mapaDef.decimales ?? 0)));
-  cifra.append(crear('span', 'ficha-unidad', t(`indicadores.${mapaId}.unidad`)));
-  bloque.append(cifra);
-  const nombreEstado = estados[estado];
-  bloque.append(crear('p', 'ficha-estado', `${t('interfaz.ficha.anio', { anio })} · ${t(`vocabulario.estado.${nombreEstado}`)}`));
+  if (modo === 'necesario') {
+    bloque.append(crear('h3', 'ficha-indicador', t(`indicadores.${mapaId}.nombre`)));
+    cifra.append(crear('span', 'ficha-numero', valor === null ? '—' : t.numero(valor, mapaDef.decimales ?? 0)));
+    cifra.append(crear('span', 'ficha-unidad', t(`indicadores.${mapaId}.unidad`)));
+    bloque.append(cifra, crear('p', 'ficha-estado',
+      t('interfaz.leyenda.supuestos', { superficie: t.numero(supuestos.superficie_m2), umbral: t.porcentaje(supuestos.umbral) })));
+  } else {
+    bloque.append(crear('h3', 'ficha-indicador', `${t('interfaz.leyenda.llega_titulo')} · ${t(`fichas.${ficha}`)}`));
+    cifra.append(crear('span', 'ficha-numero', valor === null ? '—' : t.porcentaje(valor.ratio)));
+    cifra.append(crear('span', 'ficha-unidad', t('interfaz.ficha.del_ingreso')));
+    bloque.append(cifra);
+    if (valor !== null) {
+      const tramo = crear('p', 'ficha-tramo');
+      tramo.append(crear('span', `leyenda-muestra tramo-${[1, 3, 5][valor.tramo]}`), crear('span', null, t(TRAMOS_LLEGA[valor.tramo])));
+      bloque.append(
+        crear('p', 'ficha-estado', t('interfaz.ficha.alquiler_ingreso', { alquiler: t.numero(valor.alquiler), ingreso: t.numero(valor.ingreso) })),
+        tramo,
+      );
+    }
+  }
+  bloque.append(crear('p', 'ficha-estado', `${t('interfaz.ficha.anio', { anio: t.periodo(anio) })} · ${t(`vocabulario.estado.${estados[estado]}`)}`));
+  if (aviso) bloque.append(crear('p', 'nota', aviso));
   if (ejemplo) bloque.append(crear('p', 'etiqueta-ejemplo', t('avisos.ejemplo')));
 
+  const huecoSerie = crear('div', 'ficha-hueco');
+  const huecoComparador = crear('div', 'ficha-hueco');
   contenedor.replaceChildren(
     cabecera(t, alCerrar),
     crear('p', 'ficha-codigo', t('interfaz.ficha.seccion', { codigo })),
     datos,
     bloque,
+    huecoSerie,
+    huecoComparador,
   );
+  return { huecoSerie, huecoComparador };
 }
 
-// Evolución del mapa activo en la sección: una fila por año, con el valor calculado con la
-// fórmula del mapa y, si no es «dato», su estado. Se añade al final de la ficha.
-export function fichaSeries(contenedor, { t, serie, mapaDef, calcular, estados, anio }) {
+// Evolución del mapa activo en la sección: una fila por periodo, con el texto ya formateado y,
+// si no es «dato», su estado. `filas`: [{ periodo, texto, estado }].
+export function fichaSeries(contenedor, { t, titulo, nota, filas, estados, periodo }) {
   const cuerpo = crear('tbody');
-  serie.anios.forEach((a, i) => {
-    const fila = crear('tr', a === anio ? 'ficha-tabla-activa' : undefined);
-    const ano = crear('th', null, String(a));
-    ano.scope = 'row';
-    const valor = serie.valores[i];
-    const nombre = estados[serie.estados[i]];
-    fila.append(
-      ano,
-      crear('td', 'ficha-tabla-cifra', valor === null ? '—' : t.numero(calcular(valor), mapaDef.decimales ?? 0)),
+  for (const fila of filas) {
+    const tr = crear('tr', String(fila.periodo) === String(periodo) ? 'ficha-tabla-activa' : undefined);
+    const th = crear('th', null, t.periodo(fila.periodo));
+    th.scope = 'row';
+    const nombre = estados[fila.estado];
+    tr.append(
+      th,
+      crear('td', 'ficha-tabla-cifra', fila.texto),
       crear('td', 'ficha-tabla-estado', nombre === 'dato' ? '' : t(`interfaz.estado_corto.${nombre}`)),
     );
-    cuerpo.append(fila);
-  });
+    cuerpo.append(tr);
+  }
   const tabla = crear('table', 'ficha-tabla');
   tabla.append(cuerpo);
   const bloque = crear('section', 'ficha-serie');
-  bloque.append(crear('h3', 'ficha-indicador', t('interfaz.ficha.evolucion')), tabla);
-  contenedor.append(bloque);
+  bloque.append(crear('h3', 'ficha-indicador', titulo), tabla);
+  if (nota) bloque.append(crear('p', 'nota', nota));
+  contenedor.replaceChildren(bloque);
 }

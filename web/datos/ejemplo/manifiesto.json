@@ -17,9 +17,17 @@
       }
     }
   },
-  "secciones": "datos/ejemplo/secciones.json",
+  "indices": {
+    "sc": "datos/ejemplo/indices/sc.json",
+    "municipio": "datos/ejemplo/indices/municipio.json",
+    "provincia": "datos/ejemplo/indices/provincia.json",
+    "ccaa": "datos/ejemplo/indices/ccaa.json",
+    "nacional": "datos/ejemplo/indices/nacional.json"
+  },
   "territorios": "datos/ejemplo/territorios.json",
+  "cajas": "datos/ejemplo/cajas.json",
   "fichas": "datos/ejemplo/fichas/{municipio}.json",
+  "perfiles": "datos/ejemplo/perfiles.json",
   "codificacion": {
     "escala": 10,
     "estados": ["dato", "estimado", "secreto", "ausente"]
@@ -29,10 +37,53 @@
     "umbral": 0.3
   },
   "indicadores": {
-    "alquiler_m2": {
-      "nivel": "sc",
+    "renta_persona": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 0,
       "anios": [2020, 2021, 2022, 2023, 2024],
-      "ruta": "datos/ejemplo/sc/alquiler_m2/{anio}.json"
+      "ruta": "datos/ejemplo/{nivel}/renta_persona/{anio}.json"
+    },
+    "renta_hogar": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 0,
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/renta_hogar/{anio}.json"
+    },
+    "renta_uc_mediana": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 0,
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/renta_uc_mediana/{anio}.json"
+    },
+    "alquiler_mes": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 0,
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/alquiler_mes/{anio}.json"
+    },
+    "alquiler_m2": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 1,
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/alquiler_m2/{anio}.json"
+    },
+    "esfuerzo_residentes": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 1,
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/esfuerzo_residentes/{anio}.json"
+    },
+    "hogares_alquiler": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 1,
+      "anios": [2021],
+      "ruta": "datos/ejemplo/{nivel}/hogares_alquiler/{anio}.json"
+    },
+    "viviendas_turisticas": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 1,
+      "periodos": ["2024-08", "2025-02", "2025-08"],
+      "ruta": "datos/ejemplo/{nivel}/viviendas_turisticas/{periodo}.json"
     }
   },
   "mapas": {

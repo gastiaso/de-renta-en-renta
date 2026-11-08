@@ -4,6 +4,27 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (8-nov-2026, derivados, datos de la web, «Tu sueldo» y nota en inglés)
+
+- **Derivados** con el alquiler de vivienda colectiva y el estado del peor de sus términos (preguntas 12 y 15), en `R/derivados.R` y el bloque `bloque_derivados`:
+  - 14, esfuerzo de residentes: alquiler mensual × 12 / renta media por hogar del ADRH, en sección y municipio, 2015–2024. En 2024, mediana del 17,6 % en las secciones;
+  - 21, sueldo neto necesario: alquiler por m² × 50 / 0,30, en todas las escalas del SERPAVI, 2015–2024. En 2024, mediana de 1.220 € netos al mes;
+  - 15, barrera de acceso: la mochila y la tartera de 2024, con el ingreso del mismo año que el alquiler, como control de la web.
+  - `larga_derivados` en `tabla_larga` (fuente nueva `calculo_propio`; corte `ficha` con los grupos `tartera` y `mochila`): 6,6 millones de filas.
+  - `perfiles`: ingreso neto mensual de la tartera (SMI de 2024 y 2026), la mochila (por provincia) y la llave (por sección y municipio); `resumen_perfiles_llave`. Correspondencia de las provincias de la AEAT con el INE (`inventario/provincias_aeat.csv`).
+  - Compuerta `derivados_terminos`, `derivados_estado`, `derivados_rango`, `smi_neto` y `perfiles_mochila` (bloqueo), y `derivados_rango_detalle` (alerta; avisa en 26).
+- **Datos de la web** (`R/web_exportar.R`; objetivos `cajas_municipios`, `ficheros_web` y `validacion_web`): manifiesto, índices por nivel, valores por serie, nivel y periodo, fichas por municipio con `series_municipio`, `territorios.json`, `cajas.json` y `perfiles.json`; copia del mapa base a `web/teselas/`. Toda España: 8.478 ficheros, 75 MB (15 MB comprimido). La unifamiliar como `alquiler_m2_vu` y `alquiler_mes_vu`; viviendas turísticas por periodo «AAAA-MM». Columna `cortes_web` en `inventario/indicadores.csv` (cuatro cortes fijos por mapa). Compuertas `web_valores` y `web_fichas` (bloqueo) y `web_fuera_indice` (alerta).
+- **«Tu sueldo»** en la web: sueldo necesario calculado en el navegador con superficie (50/70/90 m²) y umbral (30/40 %); fichas como marcas en la regla y la llave como tramo; «¿te llega?» con sueldo propio (12 o 14 pagas, segundo sueldo) o con ficha, con la proporción de secciones en que cabe el alquiler; aviso si ingreso y alquiler son de años distintos. El sueldo no sale del dispositivo; «Compartir» avisa y lo lleva tras «#». `web/js/sueldo.js`, `panel_sueldo.js`, `compartir.js`.
+- **Comparador** entre territorios (`web/js/comparador.js`), **buscador** de municipio y sección (`web/js/buscador.js`), leyenda plegable y nombres en orden natural (`web/js/nombres.js`).
+- **Nota metodológica en inglés** (`docs/methodology.md`) y nota en castellano al día: alquiler, hogares en alquiler, viviendas turísticas, derivados, jerarquía, mapa base, datos de la web y decisiones 12–17. `test-metodologia.R` comprueba que las dos versiones citan lo mismo y dan las mismas cifras.
+- Pruebas con datos inventados: `test-derivados.R`, `test-web-exportar.R`; pruebas de la web: 16, una de ellas del contrato con la exportación real.
+
+### Cambiado (8-nov-2026, derivados y web)
+
+- Fichas 14, 15 y 21: el cálculo dice que el alquiler es el de la vivienda colectiva y cómo se tratan los estados; el 21 ya no cita la estadística de fianzas entre sus fuentes. `smi_neto`: tolerancia de ±1 €.
+- Textos de la interfaz en la sección `interfaz` de `web/i18n/es.json` y `en.json`; se borra `web/i18n/pendiente_interfaz.json`.
+- `.gitignore`: `web/datos/` fuera de git, salvo la muestra (pregunta 21).
+
 ### Cambiado (8-nov-2026, web)
 
 - Datos de la web en JSON de enteros (pregunta abierta 17): un fichero por indicador, nivel y año con `v` (valor × 10, `null` sin valor) y `e` (un carácter de estado por territorio: 0 dato, 1 estimado, 2 secreto, 3 ausente), en el orden del índice. Sustituye al binario.
