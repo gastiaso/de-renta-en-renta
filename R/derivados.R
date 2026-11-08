@@ -6,6 +6,9 @@
 # El alquiler es siempre el de la vivienda colectiva (pregunta abierta 12). Estado: el peor de sus
 # términos, en el orden dato < estimado < secreto < ausente; sin algún término, ausente (pregunta
 # abierta 15). Numerador y denominador, del mismo año (regla 4).
+# Términos tal como se publican: el alquiler, la renta y el ingreso de la ficha entran redondeados a
+# un decimal con el redondeo de la guía, como los recibe la web, para que la página y R den la misma
+# cifra (pregunta abierta 19). La tabla larga del SERPAVI y del ADRH conserva la precisión de la fuente.
 # El 14 y el 21 no tienen desglose (corte y grupo «total»); el 15 lleva la ficha como corte.
 
 ORDEN_ESTADOS <- c("dato", "estimado", "secreto", "ausente")
@@ -53,18 +56,27 @@ peor_estado <- function(...) {
 
 con_valor <- function(estado) estado %in% c("dato", "estimado")
 
-# Mediana de la vivienda colectiva de un indicador del SERPAVI (alquiler_mes o alquiler_m2).
+# Término tal como se publica: redondeo de la guía a un decimal (sprintf, no round()), sin aviso
+# con los NA (pregunta abierta 19).
+termino_publicado <- function(x) {
+  r <- rep(NA_real_, length(x))
+  ok <- !is.na(x)
+  r[ok] <- as.numeric(sprintf("%.1f", x[ok]))
+  r
+}
+
+# Mediana de la vivienda colectiva de un indicador del SERPAVI (alquiler_mes o alquiler_m2), redondeada.
 alquiler_vc <- function(larga_serpavi, ind) {
   larga_serpavi |>
     filter(indicador == ind, corte == "tipologia", grupo == "VC") |>
-    select(geo_id, nivel, anio, valor, estado)
+    transmute(geo_id, nivel, anio, valor = termino_publicado(valor), estado)
 }
 
-# Renta neta media por hogar del ADRH (indicador 2), por sección (seccionado de 2021) y municipio.
+# Renta neta media por hogar del ADRH (indicador 2), por sección (seccionado de 2021) y municipio, redondeada.
 renta_hogar_adrh <- function(larga_adrh, niveles = NIVELES_ESFUERZO) {
   larga_adrh |>
     filter(indicador == "renta_hogar", nivel %in% niveles, corte == "total") |>
-    select(geo_id, nivel, anio, valor, estado)
+    transmute(geo_id, nivel, anio, valor = termino_publicado(valor), estado)
 }
 
 # 14: alquiler mensual mediano (VC) × 12 / renta media por hogar × 100, en los años con los dos términos.
@@ -121,13 +133,21 @@ resumen_llave <- function(perfiles) {
               p90 = stats::quantile(ingreso, 0.90), .groups = "drop")
 }
 
+# Ingreso de la tartera y la mochila tal como lo recibe la web (perfiles.json, redondeado).
+ingresos_fichas <- function(perfiles) {
+  perfiles |>
+    filter(ficha %in% c("tartera", "mochila")) |>
+    transmute(ficha, geo_id, anio, ingreso = termino_publicado(ingreso), estado)
+}
+
 # 15, control en R: alquiler mediano por m² (VC) × superficie / ingreso de la ficha × 100, con el
 # ingreso del mismo año que el alquiler (regla 4): la tartera en los años de SMI_FICHAS con alquiler
 # (2024), la mochila en su año, en las provincias y sus secciones, distritos y municipios.
 calcular_barrera_acceso <- function(larga_serpavi, perfiles, superficie = SUPERFICIE_FICHA) {
   m2 <- alquiler_vc(larga_serpavi, "alquiler_m2") |> rename(alquiler_m2 = valor, e_alquiler = estado)
-  tartera <- perfiles |> filter(ficha == "tartera") |> select(anio, ingreso, e_ingreso = estado)
-  mochila <- perfiles |> filter(ficha == "mochila") |> select(provincia = geo_id, anio, ingreso, e_ingreso = estado)
+  ingresos <- ingresos_fichas(perfiles)
+  tartera <- ingresos |> filter(ficha == "tartera") |> select(anio, ingreso, e_ingreso = estado)
+  mochila <- ingresos |> filter(ficha == "mochila") |> select(provincia = geo_id, anio, ingreso, e_ingreso = estado)
   bind_rows(
     m2 |> inner_join(tartera, by = "anio") |> mutate(grupo = "tartera"),
     m2 |>
@@ -157,7 +177,8 @@ armonizar_derivados <- function(larga_serpavi, larga_adrh, perfiles,
     select(all_of(COLUMNAS_TABLA_LARGA))
 }
 
-# Términos de cada cifra derivada, para la compuerta: numerador y denominador con sus estados.
+# Términos de cada cifra derivada, para la compuerta: numerador y denominador con sus estados,
+# redondeados como en el cálculo.
 terminos_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles,
                                superficie = SUPERFICIE_FICHA, umbral = UMBRAL_SUELDO) {
   clave <- c("geo_id", "nivel", "anio")
@@ -170,7 +191,7 @@ terminos_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles,
   sueldo <- derivados |> filter(indicador == "sueldo_necesario") |>
     left_join(m2, by = clave) |>
     mutate(den = umbral, e_den = "dato", num = num * superficie, recalculado = num / den)
-  ingresos <- perfiles |> filter(ficha %in% c("tartera", "mochila")) |>
+  ingresos <- ingresos_fichas(perfiles) |>
     transmute(grupo = ficha, provincia = if_else(ficha == "tartera", NA_character_, geo_id), anio, den = ingreso, e_den = estado)
   barrera <- derivados |> filter(indicador == "barrera_acceso") |>
     left_join(m2, by = clave) |>

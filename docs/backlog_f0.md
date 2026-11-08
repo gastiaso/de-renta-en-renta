@@ -113,12 +113,14 @@ Cinco tareas en paralelo, integradas el 8-nov-2026 (plan v0.20):
 3. **Jerarquía y mapa base (cierra F1) · HECHA.** Jerarquía en `geo/` con su compuerta y PMTiles del seccionado de 2021 (35,2 MB) con GDAL desde R, visible en local con `geo/visor/`. CP: no hay polígonos oficiales reutilizables; la tabla sección ↔ CP sale del callejero. El PMTiles se publica desde un *release* (pregunta 16, cerrada).
 4. **Web: pila y esqueleto · HECHA.** HTML y módulos JS sin compilar; funciona en local con `node web/servir.mjs` y una muestra de valores inventados. Formato de datos: JSON de enteros y un fichero de series por municipio (pregunta 17, cerrada); cambio en curso.
 5. **Nota metodológica · AL DÍA (8-nov-2026).** `docs/metodologia.md` y su versión inglesa, `docs/methodology.md`, con cifras trazables de los indicadores de la v0.1, la jerarquía, el mapa base y los datos de la web; `test-metodologia.R` exige que las dos versiones citen lo mismo y den las mismas cifras.
-6. **Derivados (14, 15 y 21) y perfiles · HECHA.** 14 y 21 de 2015 a 2024 y 15 de la mochila y la tartera de 2024, como control, en la tabla larga. En 2024: 25.271 secciones con esfuerzo (854 estimadas), mediana del 17,6 %; 26.137 con sueldo necesario, mediana de 1.220 € netos. `perfiles` con la tartera, la mochila y la llave; el transistor, en F3.
+6. **Derivados (14, 15 y 21) y perfiles · HECHA.** 14 y 21 de 2015 a 2024 y 15 de la mochila y la tartera de 2024, como control, en la tabla larga. En 2024: 25.271 secciones con esfuerzo (854 estimadas), mediana del 17,6 %; 26.137 con sueldo necesario, mediana de 1.217 € netos. `perfiles` con la tartera, la mochila y la llave; el transistor, en F3.
 7. **Datos de la web · HECHA.** `exportar_web()` lleva a `web/datos/` las 11 series de la v0.1 de toda España, con fichas, perfiles, cajas y compuerta de ida y vuelta; fuera de git (pregunta 21).
 8. **Web: «Tu sueldo», comparador y textos · HECHA.** «¿Te llega?» con sueldo propio o ficha, superficie, umbral y «Compartir» con aviso; comparador, buscador y leyenda plegable, en castellano e inglés, con la muestra y con los datos reales. Con 1.500 € netos, el alquiler de 50 m² cabe en el 68,6 % de las secciones con dato en 2024.
 
+Decidido (8-nov-2026, plan v0.23): la serie del SMI de 2015 a 2023 para la tartera, en F3 (pregunta 18); los derivados se calculan desde sus términos redondeados a un decimal, como los recibe la web (19); `web/datos/` fuera de git y publicado desde un *release* (21).
+
 **Siguiente:**
-- preguntas abiertas 18–21 (serie de la tartera, redondeo del sueldo necesario, tramos de su mapa, datos de la web fuera de git);
+- pregunta abierta 20 (tramos del mapa del sueldo necesario): un sexto tramo exige un sexto color en la rampa de cinco pasos;
 - selector de año, de mapa y de tipología; nivel nacional en la exportación; filas `ausente` para las 40 secciones de 2021 que la base del SERPAVI no trae;
 - modo daltónico, CSV y PNG, y la prueba con `chromote` (la página recalcula una muestra y coincide con R);
 - publicación en Pages (sin remoto todavía).

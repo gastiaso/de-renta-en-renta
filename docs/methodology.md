@@ -400,7 +400,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `jerarquia_nombres` | Regions, provinces and municipalities without a name | Exact | Blocking | 0 in the 3 figures | `validacion_jerarquia` |
 | `mapa_base_secciones` | 2021 tracts missing from the maximum-zoom tiles of the PMTiles file | Exact | Blocking | 0 | `validacion_mapa_base` |
 | `smi_neto` | Net monthly income of the 2026 Minimum wage token (`perfiles`) against the plan figure: €17,094 × (1 − 0.065) / 12 ≈ €1,332 | ±€1 | Blocking | €1,331.91; difference, −€0.09 | `validacion_derivados` |
-| `derivados_terminos` | Maximum deviation, by year and indicator, between each derived figure and the one recomputed from its terms | ±0.001% | Blocking | 4.4 × 10⁻¹⁴% at most in the 22 figures | `validacion_derivados` |
+| `derivados_terminos` | Maximum deviation, by year and indicator, between each derived figure and the one recomputed from its terms | ±0.001% | Blocking | 4.3 × 10⁻¹⁴% at most in the 22 figures | `validacion_derivados` |
 | `derivados_estado` | Derived figures whose status is not the worst of their terms, or with a value and status `secreto` or `ausente` (or the reverse) | Exact | Blocking | 0 in the 22 figures | `validacion_derivados` |
 | `derivados_rango` | Derived figures outside the possible range: burden, from 0.1 to 100%; barrier, from 0.1 to 300%; pay needed, from 100 to 10,000 net € a month | Exact | Blocking | 0 in the 22 figures | `validacion_derivados` |
 | `perfiles_mochila` | Provinces of the Under-35 token without an INE code in `inventario/provincias_aeat.csv`, repeated codes and names without the token | Exact | Blocking | 0 in the 3 figures | `validacion_derivados` |
@@ -416,7 +416,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `serpavi_escalas_detalle` | Each municipality or district, year and building type that does not match its tracts | Exact | Warning | Warns in 164 rows, which go as `ausente` (§7.1) | `validacion_serpavi` |
 | `serpavi_forales` | First year with observations of each foral province against that of the break `serpavi_forales` | Exact | Warning | All four match | `validacion_serpavi` |
 | `vut_denominador_detalle` | The tracts of `vut_denominador`, one by one (only those more than 0.001 points apart) | ±0.1 points | Warning | Passes: 839 tract-periods, all since November 2024; maximum difference, 0.091 points | `validacion_vut` |
-| `derivados_rango_detalle` | Each derived figure outside the usual range: burden, below 3% or above 60%; barrier, 3% or 150%; pay needed, €200 or €4,000 | Exact | Warning | Warns in 26 figures: three burdens above 60% (2019 and 2022), 21 pay-needed figures below €200 in 2015–2019 and two above €4,000 (two tracts in Madrid, 2024) | `validacion_derivados` |
+| `derivados_rango_detalle` | Each derived figure outside the usual range: burden, below 3% or above 60%; barrier, 3% or 150%; pay needed, €200 or €4,000 | Exact | Warning | Warns in 23 figures: three burdens above 60% (2019 and 2022), 18 pay-needed figures below €200 in 2015–2018 and two above €4,000 (two tracts in Madrid, 2024) | `validacion_derivados` |
 | `web_fuera_indice` | Long-table rows going to the website with no slot in the index of their level | Exact | Warning | Warns in 16 municipality rows; at the other levels, 0 | `validacion_web` |
 | `aeat_mediana_deciles` | Median of the SME by region interpolated from deciles against centiles | ±0.5% | Warning | Between −0.11 and +0.20% | `validacion_mochila` |
 | `mochila_ecv` | Under-35 token of each region against the median gross pay in the ECV | ±15% | Warning | Between −10.6 and +7.2% | `validacion_mochila_ecv` |
@@ -617,7 +617,7 @@ The author's decision dates from 7 Nov 2026 (plan §3.1; open question 7, closed
 - no `total` rows: SERPAVI does not publish a joint median of the two building types (§1);
 - levels: tract, district, municipality, province and region. Spain has no medians and is left out;
 - `geo_ref = 2021`, no conversion table;
-- values with the precision of the source, unrounded: rounding rent per m² would throw indicator 21 off.
+- values with the precision of the source, unrounded. The derived indicators take the value rounded to one decimal, the same one the website receives (§7.4).
 
 **States** (`estado_serpavi()`):
 - `dato`: published median;
@@ -773,6 +773,8 @@ Confidentiality is concentrated in rural provinces: Guadalajara, 173 of 394 trac
 - If any term is missing, `ausente`. That is the case of the barrier with the Under-35 token in the Basque Country, Navarre, Ceuta and Melilla, where the token has no income (§6.2).
 - Indicator 21 has a single term: it takes the status of indicator 9.
 
+**Rounded terms** (plan §11, question 19; `termino_publicado()`). Rent, household income and token income enter the computation rounded to one decimal with `sprintf("%.1f")` (§0), as the website receives them. So the figure from R and the one the website recomputes in the browser match exactly.
+
 **Same year** (guide, rule 4). In the burden, SERPAVI and ADRH match in 2015–2024. The barrier in the long table uses 2024 incomes, the year of the latest rent: the Under-35 token (AEAT 2024) and the Minimum wage token with the 2024 minimum wage. The website uses the Minimum wage token with the 2026 minimum wage; when the years do not match, the indicator sheet and the website say so.
 
 **How to read them:**
@@ -811,9 +813,9 @@ Confidentiality is concentrated in rural provinces: Guadalajara, 173 of 394 trac
 | Indicator | Tracts with a value | Minimum | 10th percentile | Median | 90th percentile | Maximum |
 |---|---|---|---|---|---|---|
 | Resident rent burden (%) | 26,125 | 6.2 | 12.6 | 17.6 | 24.0 | 51.3 |
-| Net pay needed (€ a month) | 26,137 | 296 | 708 | 1,220 | 2,121 | 4,288 |
-| Barrier with the Under-35 token (%) | 24,117 | 7.1 | 16.8 | 27.5 | 43.6 | 87.9 |
-| Barrier with the Minimum wage token, 2024 minimum wage (%) | 26,137 | 7.2 | 17.2 | 29.6 | 51.4 | 104.0 |
+| Net pay needed (€ a month) | 26,137 | 300 | 700 | 1,217 | 2,117 | 4,283 |
+| Barrier with the Under-35 token (%) | 24,117 | 7.2 | 16.8 | 27.5 | 43.7 | 87.9 |
+| Barrier with the Minimum wage token, 2024 minimum wage (%) | 26,137 | 7.3 | 17.0 | 29.5 | 51.3 | 103.8 |
 
 With the Under-35 token, 7,576 tracts are `ausente` in 2024: all those in the Basque Country, Navarre, Ceuta and Melilla, where the token has no income, and those without rent.
 

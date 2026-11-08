@@ -400,7 +400,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `jerarquia_nombres` | Comunidades, provincias y municipios sin nombre | Exacto | Bloqueo | 0 en las 3 cifras | `validacion_jerarquia` |
 | `mapa_base_secciones` | Secciones de 2021 que faltan en las teselas del zoom máximo del PMTiles | Exacto | Bloqueo | 0 | `validacion_mapa_base` |
 | `smi_neto` | Ingreso neto mensual de la tartera de 2026 (`perfiles`) frente a la cifra del plan: 17.094 € × (1 − 0,065) / 12 ≈ 1.332 € | ±1 € | Bloqueo | 1.331,91 €; diferencia, −0,09 € | `validacion_derivados` |
-| `derivados_terminos` | Desviación máxima, por año e indicador, entre cada cifra derivada y la recalculada con sus términos | ±0,001 % | Bloqueo | 4,4 × 10⁻¹⁴ % como máximo en las 22 cifras | `validacion_derivados` |
+| `derivados_terminos` | Desviación máxima, por año e indicador, entre cada cifra derivada y la recalculada con sus términos | ±0,001 % | Bloqueo | 4,3 × 10⁻¹⁴ % como máximo en las 22 cifras | `validacion_derivados` |
 | `derivados_estado` | Cifras derivadas cuyo estado no es el peor de sus términos, o con valor y estado `secreto` o `ausente` (o al revés) | Exacto | Bloqueo | 0 en las 22 cifras | `validacion_derivados` |
 | `derivados_rango` | Cifras derivadas fuera del rango posible: esfuerzo, del 0,1 al 100 %; barrera, del 0,1 al 300 %; sueldo necesario, de 100 a 10.000 € netos al mes | Exacto | Bloqueo | 0 en las 22 cifras | `validacion_derivados` |
 | `perfiles_mochila` | Provincias de la mochila sin código del INE en `inventario/provincias_aeat.csv`, códigos repetidos y nombres sin mochila | Exacto | Bloqueo | 0 en las 3 cifras | `validacion_derivados` |
@@ -416,7 +416,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `serpavi_escalas_detalle` | Cada municipio o distrito, año y tipología que no cuadra con sus secciones | Exacto | Alerta | Avisa en 164 filas, que van como `ausente` (§7.1) | `validacion_serpavi` |
 | `serpavi_forales` | Primer año con testigos de cada provincia foral frente al de la ruptura `serpavi_forales` | Exacto | Alerta | Coinciden los cuatro | `validacion_serpavi` |
 | `vut_denominador_detalle` | Las secciones de `vut_denominador`, una a una (solo las que se apartan más de 0,001 puntos) | ±0,1 puntos | Alerta | Pasa: 839 secciones y periodos, todos desde noviembre de 2024; diferencia máxima, 0,091 puntos | `validacion_vut` |
-| `derivados_rango_detalle` | Cada cifra derivada fuera del rango habitual: esfuerzo, por debajo del 3 % o por encima del 60 %; barrera, del 3 % o del 150 %; sueldo necesario, de 200 € o de 4.000 € | Exacto | Alerta | Avisa en 26 cifras: tres esfuerzos de más del 60 % (2019 y 2022), 21 sueldos necesarios por debajo de 200 € en 2015–2019 y dos por encima de 4.000 € (dos secciones de Madrid, 2024) | `validacion_derivados` |
+| `derivados_rango_detalle` | Cada cifra derivada fuera del rango habitual: esfuerzo, por debajo del 3 % o por encima del 60 %; barrera, del 3 % o del 150 %; sueldo necesario, de 200 € o de 4.000 € | Exacto | Alerta | Avisa en 23 cifras: tres esfuerzos de más del 60 % (2019 y 2022), 18 sueldos necesarios por debajo de 200 € en 2015–2018 y dos por encima de 4.000 € (dos secciones de Madrid, 2024) | `validacion_derivados` |
 | `web_fuera_indice` | Filas de la tabla larga que van a la web sin hueco en el índice de su nivel | Exacto | Alerta | Avisa en 16 filas de municipio; en los demás niveles, 0 | `validacion_web` |
 | `aeat_mediana_deciles` | Mediana del SME por comunidad interpolada desde deciles frente a centiles | ±0,5 % | Alerta | Entre −0,11 y +0,20 % | `validacion_mochila` |
 | `mochila_ecv` | Mochila de cada comunidad frente a la mediana del bruto de la ECV | ±15 % | Alerta | Entre −10,6 y +7,2 % | `validacion_mochila_ecv` |
@@ -617,7 +617,7 @@ La decisión del autor es del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrad
 - sin filas `total`: el SERPAVI no publica una mediana conjunta de las dos tipologías (§1);
 - niveles: sección, distrito, municipio, provincia y comunidad. España no tiene medianas y queda fuera;
 - `geo_ref = 2021`, sin tabla de paso;
-- valores con la precisión de la fuente, sin redondear: redondear el alquiler por m² descuadraría el indicador 21.
+- valores con la precisión de la fuente, sin redondear. Los derivados toman el valor redondeado a un decimal, el mismo que recibe la web (§7.4).
 
 **Estados** (`estado_serpavi()`):
 - `dato`: mediana publicada;
@@ -773,6 +773,8 @@ El secreto se concentra en provincias rurales: Guadalajara, 173 de 394 secciones
 - Si falta algún término, `ausente`. Es el caso de la barrera con la mochila en País Vasco, Navarra, Ceuta y Melilla, donde la ficha no tiene ingreso (§6.2).
 - El 21 tiene un solo término: lleva el estado del indicador 9.
 
+**Términos redondeados** (plan §11, pregunta 19; `termino_publicado()`). El alquiler, la renta por hogar y el ingreso de la ficha entran en el cálculo redondeados a un decimal con `sprintf("%.1f")` (§0), como los recibe la web. Así, la cifra de R y la que la web recalcula en el navegador coinciden exactamente.
+
 **Mismo año** (guía, regla 4). En el esfuerzo, el SERPAVI y el ADRH coinciden en 2015–2024. La barrera de la tabla larga usa ingresos de 2024, el año del último alquiler: la mochila (AEAT de 2024) y la tartera con el SMI de 2024. La web usa la tartera con el SMI de 2026; cuando los años no coinciden, se dice en la ficha y en la web.
 
 **Cómo se leen:**
@@ -811,9 +813,9 @@ El secreto se concentra en provincias rurales: Guadalajara, 173 de 394 secciones
 | Indicador | Secciones con valor | Mínimo | Percentil 10 | Mediana | Percentil 90 | Máximo |
 |---|---|---|---|---|---|---|
 | Esfuerzo de residentes (%) | 26.125 | 6,2 | 12,6 | 17,6 | 24,0 | 51,3 |
-| Sueldo neto necesario (€ al mes) | 26.137 | 296 | 708 | 1.220 | 2.121 | 4.288 |
-| Barrera con la mochila (%) | 24.117 | 7,1 | 16,8 | 27,5 | 43,6 | 87,9 |
-| Barrera con la tartera, SMI de 2024 (%) | 26.137 | 7,2 | 17,2 | 29,6 | 51,4 | 104,0 |
+| Sueldo neto necesario (€ al mes) | 26.137 | 300 | 700 | 1.217 | 2.117 | 4.283 |
+| Barrera con la mochila (%) | 24.117 | 7,2 | 16,8 | 27,5 | 43,7 | 87,9 |
+| Barrera con la tartera, SMI de 2024 (%) | 26.137 | 7,3 | 17,0 | 29,5 | 51,3 | 103,8 |
 
 Con la mochila, 7.576 secciones quedan `ausente` en 2024: todas las de País Vasco, Navarra, Ceuta y Melilla, donde la ficha no tiene ingreso, y las que no tienen alquiler.
 

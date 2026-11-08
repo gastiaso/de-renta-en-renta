@@ -4,6 +4,18 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Decidido (8-nov-2026, preguntas abiertas 18, 19 y 21; plan v0.23)
+
+- Tartera: el SMI de 2015 a 2023 se completa en F3, con las cuantías de los reales decretos; cada descarga se pregunta antes.
+- Derivados desde sus términos redondeados a un decimal, como los recibe la web, para que la página y R coincidan.
+- `web/datos/` fuera de git, salvo la muestra, y publicado con el PMTiles desde un *release*.
+- La 20 (sexto tramo en el mapa del sueldo necesario) queda en suspenso: exige un sexto color y la rampa tiene cinco pasos. Nueva propuesta: cinco tramos con los cortes 800 · 1.100 · 1.500 · 2.000 €.
+
+### Cambiado (8-nov-2026, redondeo de los derivados)
+
+- `R/derivados.R`: el alquiler, la renta por hogar y el ingreso de la ficha entran redondeados con `sprintf("%.1f")` (`termino_publicado()`, `ingresos_fichas()`) en el 14, el 15, el 21 y su compuerta. El 21 cambia 4,18 € de media y 8,33 € como máximo; la mediana de las secciones en 2024 pasa de 1.220 a 1.217 €. El 14 cambia como mucho 0,005 puntos. `derivados_rango_detalle` avisa ahora en 23 cifras.
+- Nota metodológica (§7.1, §7.4 y compuertas), `web/LEEME.md`, guía y backlog al día. Pruebas: 539 en R.
+
 ### Añadido (8-nov-2026, derivados, datos de la web, «Tu sueldo» y nota en inglés)
 
 - **Derivados** con el alquiler de vivienda colectiva y el estado del peor de sus términos (preguntas 12 y 15), en `R/derivados.R` y el bloque `bloque_derivados`:

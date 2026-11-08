@@ -60,7 +60,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 | `estilo/fuentes/` | Tipografías autoalojadas, con su licencia |
 | `i18n/es.json`, `i18n/en.json` | Diccionarios (ver abajo) |
 | `vendor/` | Librerías de terceros, con su licencia |
-| `datos/` | Exportación del pipeline (`exportar_web()`); `datos/ejemplo/`, la muestra (`herramientas/generar_ejemplo.R`) |
+| `datos/` | Exportación del pipeline (`exportar_web()`, fuera de git); `datos/ejemplo/`, la muestra (`herramientas/generar_ejemplo.R`), en git |
 | `teselas/` | Mapa base en PMTiles (fuera de git, como todo `*.pmtiles`) |
 
 ## Datos: el contrato con el pipeline
@@ -111,7 +111,7 @@ Primero se redondea como manda la guía y después se multiplica por 10. `sprint
  "series": {"2807901001": {"alquiler_m2": {"v": [221, 227, 234, 240, 247], "e": "00000"}}}}
 ```
 
-**Cálculos de la web y del pipeline.** La web calcula el indicador 21 con el 9 ya redondeado a una décima. Para que coincida exactamente con el que exporta el pipeline (y con la prueba en navegador de §6.5), el pipeline tiene que calcularlo también desde el 9 redondeado, o publicar el 9 con dos decimales (`escala: 100`).
+**Cálculos de la web y del pipeline.** La web calcula el indicador 21 con el 9 ya redondeado a una décima, y el 15 con el 9 y el ingreso de la ficha de `perfiles.json`, también redondeados. El pipeline calcula los derivados (14, 15 y 21) desde esos mismos términos redondeados (`termino_publicado()`, pregunta abierta 19), así que la página y R dan la misma cifra.
 
 ## Diccionarios
 
@@ -153,4 +153,4 @@ Queda para más adelante la prueba en navegador con `chromote`: la página recal
 
 ## Publicación
 
-GitHub Pages sirve esta carpeta tal cual, con los rangos HTTP que pide el PMTiles. El PMTiles no entra en la historia de git: se publica desde un *release* y el flujo de Pages lo copia junto a la web (pregunta abierta 16). El flujo de publicación está pendiente.
+GitHub Pages sirve esta carpeta tal cual, con los rangos HTTP que pide el PMTiles. Ni el PMTiles ni los datos exportados (`datos/`, salvo la muestra de `datos/ejemplo/`) entran en la historia de git: se publican desde un *release* y el flujo de Pages los copia junto a la web (preguntas abiertas 16 y 21). El sitio publicado ocupa unos 110 MB. El flujo de publicación está pendiente.

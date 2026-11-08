@@ -90,11 +90,32 @@ test_that("21: alquiler por m² × 50 / 0,30 en todos los niveles, con el estado
                  fila("2800101001", 2024L, "sueldo_necesario") |> pull(valor), 15 * 70 / 0.4)
 })
 
+test_that("los derivados parten de los términos redondeados a un decimal, como la web (pregunta 19)", {
+  s <- serpavi_largo() |>
+    mutate(valor = case_when(geo_id == "2800101001" & indicador == "alquiler_m2" & grupo == "VC" & corte == "tipologia" ~ 12.3456,
+                             geo_id == "2800101001" & indicador == "alquiler_mes" ~ 900.06,
+                             TRUE ~ valor))
+  a <- adrh_largo() |> mutate(valor = ifelse(geo_id == "2800101001" & indicador == "renta_hogar", 36000.04, valor))
+  expect_equal(fila(calcular_sueldo_necesario(s), "2800101001", 2024L, "sueldo_necesario")$valor, 12.3 * 50 / 0.3)
+  expect_equal(fila(calcular_esfuerzo_residentes(s, a), "2800101001", 2024L, "esfuerzo_residentes")$valor,
+               100 * 900.1 * 12 / 36000)
+  # El redondeo de la guía (sprintf) y sin aviso con los NA
+  expect_equal(termino_publicado(c(0.15, 1237.4049, NA)), c(as.numeric(sprintf("%.1f", c(0.15, 1237.4049))), NA))
+  expect_silent(termino_publicado(c(NA_real_, 2)))
+  p <- perfiles_fichas(tibble::tibble(provincia = "Madrid, Comunidad de", neto_mensual = 1500.04), provincias_inventadas, a,
+                       anio_mochila = 2024L)
+  b <- calcular_barrera_acceso(s, p)
+  expect_equal(fila(b, "28001", 2024L, "barrera_acceso", "mochila")$valor, 100 * 14 * 50 / 1500)
+  comp <- comprobar_derivados(armonizar_derivados(s, a, p), s, a, p, provincias_inventadas,
+                              tibble::tibble(provincia = "Madrid, Comunidad de", neto_mensual = 1500.04))
+  expect_true(all(comp$calculado[comp$id == "derivados_terminos"] < 1e-9))
+})
+
 test_that("15 en R: tartera y mochila con el ingreso del mismo año que el alquiler", {
   p <- perfiles_fichas(mochila_inventada, provincias_inventadas, adrh_largo(), anio_mochila = 2024L)
   b <- calcular_barrera_acceso(serpavi_largo(), p)
   expect_equal(unique(b$anio), 2024L)   # ni 2023 (sin SMI ni mochila de ese año) ni 2026 (sin alquiler)
-  tartera <- 1134 * 14 * (1 - 0.0647) / 12
+  tartera <- as.numeric(sprintf("%.1f", 1134 * 14 * (1 - 0.0647) / 12))   # como en perfiles.json
   expect_equal(fila(b, "2800101001", 2024L, "barrera_acceso", "tartera")$valor, 100 * 15 * 50 / tartera)
   expect_equal(fila(b, "13", 2024L, "barrera_acceso", "tartera")$valor, 100 * 12 * 50 / tartera)
   expect_equal(fila(b, "2800101001", 2024L, "barrera_acceso", "mochila")$valor, 50)
