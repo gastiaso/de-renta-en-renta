@@ -87,7 +87,7 @@ El inventario completo, con dirección, acceso, cadencia y notas, está en `inve
 | `catastro_inspire` | D. G. del Catastro | Tablas de paso, vía (b) | Contradictoria: ver abajo |
 | `catastro_foral` | Diputaciones forales de Álava, Bizkaia y Gipuzkoa; Gobierno de Navarra | Vía (b) en País Vasco y Navarra | Distinta en cada territorio: ver abajo |
 | `gv_emal` | Gobierno Vasco | Capa municipal de contexto (fianzas); no se mezcla con el indicador 8 | CC BY 4.0 |
-| `calculo_propio` | De renta en renta | Indicadores derivados 14, 15 y 21, a partir de las fuentes de cada término | CC BY-SA 4.0 |
+| `calculo_propio` | De renta en renta | Indicadores derivados 14, 15 y 21, a partir de las fuentes de cada término, y margen aproximado de la mediana del alquiler (§7.6) | CC BY-SA 4.0 |
 
 **Descarga manual del SERPAVI.** La web del MIVAU bloquea las descargas automáticas. Si falta el Excel, `descargar_mivau_serpavi()` detiene el pipeline e indica la página y el nombre con el que guardarlo (`inventario/fuentes.csv`, columna `acceso`).
 
@@ -393,6 +393,8 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `serpavi_cuartiles` | Mediana sin cuartiles, alquiler mensual sin alquiler por m² (o al revés) o cuartiles desordenados | Exacto | Bloqueo | 0 casos en las 60 cifras | `validacion_serpavi` |
 | `serpavi_escalas` | Porcentaje de municipios y distritos que no cuadran con sus secciones, por año y nivel | ±1 % | Bloqueo | Máximo, 0,56 % (municipios de 2022) | `validacion_serpavi` |
 | `serpavi_seccionado` | Secciones de la base fuera del seccionado de 2021, y distritos y municipios fuera de él con testigos o mediana | Exacto | Bloqueo | 0 en los tres niveles | `validacion_serpavi` |
+| `contratos_mediana` | Territorios cuya mediana y cuyos contratos (`contratos_alquiler`) no casan con la regla de secreto: con mediana, 10 o más; en secreto, de 1 a 9; sin dato, 0 o ninguno | Exacto | Bloqueo | 0 casos en las 100 cifras de año, nivel y tipología | `validacion_fiabilidad` |
+| `contratos_suma` | Contratos de las secciones sumados a provincia y, como en `serpavi_espana`, a España, en la tabla larga | Exacto | Bloqueo | Pasa en las 1.080 cifras: 1.040 de provincia y 40 de España | `validacion_fiabilidad` |
 | `censo2021_alquiler` | Hogares en alquiler (%) de España, de cada comunidad y de cada provincia con las secciones, frente a la tabla 59523. Las secciones en secreto entran como un intervalo: sus hogares pueden estar entre el 0 y el 100 % en alquiler | ±0,1 puntos | Bloqueo | Pasa en los 72 territorios; la cifra publicada cae dentro del intervalo en 52; España, 16,10 % en las dos; diferencia máxima, 0,055 puntos (Huelva) | `validacion_censo2021` |
 | `censo2021_principales` | Hogares de las secciones frente a los publicados, en España y en las 7 comunidades y 19 provincias sin secciones en secreto | ±0,5 % | Bloqueo | España, −0,20 % (los hogares de las secciones en secreto); comunidades y provincias, de 0 a +0,17 % (Melilla) | `validacion_censo2021` |
 | `censo2021_seccionado` | Secciones del CSV fuera del seccionado de 2021 y secciones del seccionado sin fila en el CSV | Exacto | Bloqueo | 0 y 0 | `validacion_censo2021` |
@@ -411,10 +413,10 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `mapa_base_sin_seccion` | Huecos del seccionado que siguen abiertos con las secciones y la capa `sin_seccion` del zoom máximo juntas | Exacto | Bloqueo | 0 | `validacion_mapa_base` |
 | `smi_neto` | Ingreso neto mensual de la tartera de 2026 (`perfiles`) frente a la cifra del plan: 17.094 € × (1 − 0,065) / 12 ≈ 1.332 € | ±1 € | Bloqueo | 1.331,91 €; diferencia, −0,09 € | `validacion_derivados` |
 | `derivados_terminos` | Desviación máxima, por año e indicador, entre cada cifra derivada y la recalculada con sus términos | ±0,001 % | Bloqueo | 4,3 × 10⁻¹⁴ % como máximo en las 22 cifras | `validacion_derivados` |
-| `derivados_estado` | Cifras derivadas cuyo estado no es el peor de sus términos, o con valor y estado `secreto` o `ausente` (o al revés) | Exacto | Bloqueo | 0 en las 22 cifras | `validacion_derivados` |
+| `derivados_estado` | Cifras derivadas cuyo estado no es el peor de sus términos (en el 15, el del alquiler, o `ausente` sin ingreso de la ficha), o con valor y estado `secreto` o `ausente` (o al revés) | Exacto | Bloqueo | 0 en las 22 cifras | `validacion_derivados` |
 | `derivados_rango` | Cifras derivadas fuera del rango posible: esfuerzo, del 0,1 al 100 %; barrera, del 0,1 al 300 %; sueldo necesario, de 100 a 10.000 € netos al mes | Exacto | Bloqueo | 0 en las 22 cifras | `validacion_derivados` |
 | `perfiles_mochila` | Provincias de la mochila sin código del INE en `inventario/provincias_aeat.csv`, códigos repetidos y nombres sin mochila | Exacto | Bloqueo | 0 en las 3 cifras | `validacion_derivados` |
-| `web_valores` | Ficheros de valores de `web/datos/` cuyos valores o estados no son los de la tabla larga (con el redondeo de la guía a la precisión de cada serie: una décima; dos en el 19) o cuya longitud no es la del índice; series sin fichero | Exacto | Bloqueo | 0 en las 360 cifras | `validacion_web` |
+| `web_valores` | Ficheros de valores de `web/datos/` cuyos valores o estados no son los de la tabla larga (con el redondeo de la guía a la precisión de cada serie: una décima; dos en el 19) o cuya longitud no es la del índice; series sin fichero. También los contratos y el margen de cada serie del alquiler | Exacto | Bloqueo | 0 en las 680 cifras | `validacion_web` |
 | `web_fichas` | Por municipio: celdas de las series de su ficha que no reproducen la tabla larga con la precisión de cada serie, y secciones de más o de menos | Exacto | Bloqueo | 0 en los 8.131 municipios | `validacion_web` |
 | `web_sobrecarga_valores` | Sección de sobrecarga de la web: por vista, valor, puesto, bloque, fuente y marca de cada cifra frente a los objetivos del pipeline (con el redondeo de la guía), y territorios de más o de menos; serie de España, desgloses anuales con el quintil, módulo de acceso y cortes del mapa frente a `cortes_web` del indicador 22 | Exacto | Bloqueo | 0 en las 17 cifras | `validacion_web_sobrecarga` |
 | `web_sobrecarga_muestra` | Cifras del INE sin muestra, con una muestra distinta de la del cálculo, con una marca que no es la de EU-SILC o con valor y menos de 20 observaciones; cifras de Eurostat sin su tabla, con muestra o con una marca distinta de la de la fuente | Exacto | Bloqueo | 0 en las 13 cifras | `validacion_web_sobrecarga` |
@@ -431,6 +433,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `serpavi_escalas_detalle` | Cada municipio o distrito, año y tipología que no cuadra con sus secciones | Exacto | Alerta | Avisa en 164 filas, que van como `ausente` (§7.1) | `validacion_serpavi` |
 | `serpavi_forales` | Primer año con testigos de cada provincia foral frente al de la ruptura `serpavi_forales` | Exacto | Alerta | Coinciden los cuatro | `validacion_serpavi` |
 | `serpavi_sin_fila` | Secciones, distritos y municipios del seccionado de 2021 que la base no trae (van como `ausente`) | Exacto | Alerta | Avisa con 40 secciones, 36 distritos y 36 municipios (§7.1) | `validacion_serpavi` |
+| `margen_rango` | Secciones con el margen aproximado de la mediana fuera del 1–40 %, por año, indicador y tipología | Exacto | Alerta | Avisa en las 40 cifras: 2.414 secciones y años en 2015–2024, 2.242 de vivienda unifamiliar; en 2024, 16 de colectiva y 268 de unifamiliar (§7.6) | `validacion_fiabilidad` |
 | `vut_denominador_detalle` | Las secciones de `vut_denominador`, una a una (solo las que se apartan más de 0,001 puntos) | ±0,1 puntos | Alerta | Pasa: 839 secciones y periodos, todos desde noviembre de 2024; diferencia máxima, 0,091 puntos | `validacion_vut` |
 | `derivados_rango_detalle` | Cada cifra derivada fuera del rango habitual: esfuerzo, por debajo del 3 % o por encima del 60 %; barrera, del 3 % o del 150 %; sueldo necesario, de 200 € o de 4.000 € | Exacto | Alerta | Avisa en 23 cifras: tres esfuerzos de más del 60 % (2019 y 2022), 18 sueldos necesarios por debajo de 200 € en 2015–2018 y dos por encima de 4.000 € (dos secciones de Madrid, 2024) | `validacion_derivados` |
 | `web_fuera_indice` | Filas de la tabla larga que van a la web sin hueco en el índice de su nivel | Exacto | Alerta | Avisa en 16 filas de municipio; en los demás niveles, 0 | `validacion_web` |
@@ -555,7 +558,7 @@ Los dos indicadores de media tienen los mismos recuentos por estado.
 | Ficha | Ingreso de referencia | Fuente | Escala | Vivienda | Estado |
 |---|---|---|---|---|---|
 | Llave (hogar del barrio) | Renta neta media por hogar ÷ 12 | INE, ADRH (indicador 2) | Sección | Alquiler mediano de su sección, sin superficie fija | Ingreso calculado (`perfiles`); esfuerzo (indicador 14), en `larga_derivados` (§7.4) |
-| Mochila (joven de 26 a 35 años) | Mediana estimada del salario cobrado en el año, neta, ÷ 12 | AEAT; control con la ECV | Provincia | 50 m² | Calculada para 2024 (`mochila_neta`, `perfiles`) |
+| Mochila (joven de 26 a 35 años) | Mediana estimada del salario cobrado en el año, neta, ÷ 12 | AEAT; control con la ECV | Provincia | 50 m² | Calculada para 2024 (`mochila_neta`, `perfiles`), como `estimado` |
 | Tartera (salario mínimo) | SMI neto anual ÷ 12 | RD 126/2026 (y RD 145/2024) | Nacional | 50 m² | Calculada con el SMI de 2024 y el de 2026 (`perfiles`) |
 | Transistor (pensionista) | Pensión media de jubilación, neta de IRPF, ÷ 12 | INSS | Provincia | 50 m² | Fase F3: pendiente |
 | Tu ficha | Neto mensual que escribe quien consulta: 12 o 14 pagas, segundo sueldo opcional | — | — | 50 m² con un sueldo, 70 m² con dos; cambiable a 50, 70 o 90 | Se calcula en el navegador y no se guarda (`js/sueldo.js`) |
@@ -629,11 +632,12 @@ La decisión del autor es del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrad
 
 **Lectura** (`leer_mivau_serpavi()`; objetivo `serpavi`, 1.099.500 filas). Una fila por territorio, año (desde 2015) y tipología: vivienda colectiva (`VC`) y unifamiliar o rural (`VU`). Cada fila trae el recuento de testigos y la mediana, el primer y el tercer cuartil del alquiler mensual y del alquiler por m². España sale de la fila sin código de la hoja de comunidades y solo trae el recuento.
 
-**Tabla larga** (`armonizar_mivau_serpavi()`; objetivo `larga_serpavi`, 3.932.340 filas; plan §6.4):
+**Tabla larga** (`armonizar_mivau_serpavi()`; objetivo `larga_serpavi`, 5.898.530 filas con los auxiliares; plan §6.4):
 - indicadores `alquiler_mes` (8) y `alquiler_m2` (9);
 - la mediana, en el corte `tipologia`, con los grupos `VC` y `VU`; los cuartiles, en los cortes `tipologia_p25` y `tipologia_p75`, solo donde hay dato;
+- como auxiliares, los contratos de cada mediana (`contratos_alquiler`) y su margen aproximado (`margen_alquiler_mes` y `margen_alquiler_m2`; §7.6);
 - sin filas `total`: el SERPAVI no publica una mediana conjunta de las dos tipologías (§1);
-- niveles: sección, distrito, municipio, provincia y comunidad. España no tiene medianas y queda fuera;
+- niveles: sección, distrito, municipio, provincia y comunidad. España no tiene medianas: solo entra su recuento de contratos (§7.6);
 - `geo_ref = 2021`, sin tabla de paso;
 - valores con la precisión de la fuente, sin redondear. Los derivados toman el valor redondeado a un decimal, el mismo que recibe la web (§7.4).
 
@@ -695,7 +699,7 @@ La decisión del autor es del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrad
 - En las 26.137 secciones con dato, la mediana de cada sección va de 150 a 3.504 €/mes. Percentil 10, 370 €; mediana, 570 €; percentil 90, 893 €. En alquiler por m²: 4,2, 7,3 y 12,7 €/m².
 - Provincias: Madrid, 800 € y 12,1 €/m²; Barcelona, 753 € y 11,0 €/m²; Bizkaia, 734 € y 10,2 €/m²; Navarra, 598 € y 6,9 €/m².
 
-**Compuerta** (`comprobar_mivau_serpavi()`; §4.1): `serpavi_provincia`, `serpavi_espana`, `serpavi_secreto`, `serpavi_cuartiles`, `serpavi_escalas` y `serpavi_seccionado` (bloqueo), y `serpavi_escalas_detalle`, `serpavi_forales` y `serpavi_sin_fila` (alerta). Las medianas no se agregan: la compuerta suma testigos y comprueba las reglas de la fuente.
+**Compuerta** (`comprobar_mivau_serpavi()`; §4.1): `serpavi_provincia`, `serpavi_espana`, `serpavi_secreto`, `serpavi_cuartiles`, `serpavi_escalas` y `serpavi_seccionado` (bloqueo), y `serpavi_escalas_detalle`, `serpavi_forales` y `serpavi_sin_fila` (alerta). Las medianas no se agregan: la compuerta suma testigos y comprueba las reglas de la fuente. Los contratos y el margen tienen su propia compuerta, sobre la tabla larga (§7.6).
 
 **Territorios forales** (ruptura `serpavi_forales` en `inventario/rupturas.csv`). Antes de su entrada, esas secciones van sin dato. La estadística de fianzas del Gobierno Vasco (`gv_emal`) no baja a sección y da la media, no la mediana: se muestra como capa municipal aparte (plan §11, pregunta 8).
 
@@ -798,6 +802,7 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 - Una sección con el alquiler en secreto queda en `secreto`.
 - Con el alquiler `dato` y la renta `estimado`, el esfuerzo queda `estimado`.
 - Si falta algún término, `ausente`. Es el caso de la barrera con la mochila en País Vasco, Navarra, Ceuta y Melilla, donde la ficha no tiene ingreso (§6.2).
+- En el 15, el ingreso de la ficha no cuenta como término (`estado_barrera()`; plan §11, pregunta 15 ampliada): la barrera lleva el estado del alquiler, y es `ausente` si la ficha no tiene ingreso. La mochila va como `estimado` (es una estimación, §6.2), y eso se explica una vez, en su método, no en cada sección.
 - El 21 tiene un solo término: lleva el estado del indicador 9.
 
 **Términos redondeados** (plan §11, pregunta 19; `termino_publicado()`). El alquiler, la renta por hogar y el ingreso de la ficha entran en el cálculo redondeados a un decimal con `sprintf("%.1f")` (§0), como los recibe la web. Así, la cifra de R y la que la web recalcula en el navegador coinciden exactamente.
@@ -902,6 +907,41 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 
 ---
 
+### 7.6 Fiabilidad de las medianas del alquiler
+
+**Por qué** (plan §11, preguntas 12 y 15 ampliadas; `docs/especificacion_contratos_margen.md`). `estado` dice si hay cifra, no si es fiable. En 2024, de las 26.137 medianas de vivienda colectiva por sección, 2.360 salen de 10 a 19 contratos y 2.047 de 20 a 29: 4.407 (16,9 %) de menos de 30. La sección típica tiene 72.
+
+**Contratos** (`armonizar_fiabilidad_serpavi()`; indicador auxiliar `contratos_alquiler`, corte `tipologia`, grupos `VC` y `VU`). Es el recuento de testigos del SERPAVI, de la sección a España:
+- `dato` cuando la fuente publica un recuento, también 0;
+- `ausente` cuando la celda viene vacía o la fila falta, cuando la provincia foral aún no ha entrado o cuando el municipio o el distrito no cuadra con sus secciones: los mismos casos en que la mediana va como `ausente` (§7.1);
+- España entra con el recuento que publica el SERPAVI: en 2024, 2.271.987 contratos de vivienda colectiva y 284.591 de unifamiliar. En 2022 y 2023 no cuenta Gipuzkoa, como la fuente (§7.1);
+- ninguna sección tiene mediana con menos de 10 contratos (`serpavi_secreto`); los únicos casos de la base son siete municipios de vivienda unifamiliar de 2022, que ya van como `ausente` (§7.1).
+
+**Margen aproximado de la mediana** (`margen_mediana()`; indicadores auxiliares `margen_alquiler_mes` y `margen_alquiler_m2`, fuente `calculo_propio`). Es el error típico relativo de la mediana de n contratos, en %: 1,2533 × σ / (P50 × √n), con σ ≈ (P75 − P25) / 1,349; en total, 0,929 × (P75 − P25) / (P50 × √n).
+- Se calcula con los cuartiles del alquiler por m² para el 9, el 15 y el 21, y con los del alquiler mensual para el 8 y el 14, solo donde hay mediana (10 o más contratos).
+- Ejemplo: P25 = 8, P50 = 10 y P75 = 12 €/m² con 10 contratos dan ±11,8 %.
+- Es una aproximación: supone una distribución regular dentro del territorio y no corrige el sesgo de la fuente (contratos vigentes, no nuevos; §7.1).
+- La tabla larga lo guarda sin redondear; la web lo recibe con una décima, la misma cifra que usa R (plan §11, pregunta 19).
+
+**Resultado de 2024 en las secciones** (`resumen_fiabilidad`):
+
+| Tipología | Con mediana | De 10 a 19 contratos | De 20 a 29 | Menos de 30 | Contratos (mediana) | Margen por m² (mediana) | Margen por m² (percentil 90) | Margen mensual (mediana) | Sin mediana: 0 contratos | Sin mediana ni recuento |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `VC` | 26.137 | 2.360 | 2.047 | 4.407 | 72 | 4,3 % | 9,1 % | 3,6 % | 3.630 | 1.717 |
+| `VU` | 9.065 | 4.925 | 1.883 | 6.808 | 18 | 13,4 % | 26,6 % | 11,2 % | 10.064 | 2.722 |
+
+- En la vivienda colectiva, el margen típico baja con los años, del 5,1 % por m² en 2015 al 4,3 % en 2024, porque cada sección tiene más contratos: 51 de mediana en 2015 y 72 en 2024.
+- Las 1.717 secciones de colectiva sin recuento en 2024 son las 1.677 que la base trae vacías y las 40 que no trae (§7.1).
+
+**En la ficha de la web** (`web/js/fiabilidad.js`; §9.2):
+- bajo la cifra, «Mediana de N contratos · margen aproximado ±X %», con la marca «pocos contratos» por debajo de 30 (`UMBRAL_POCOS_CONTRATOS`, que va en el manifiesto);
+- en el sueldo necesario y en los mapas del alquiler, el intervalo de la cifra con ese margen;
+- en «¿te llega?», los tres tramos no cambian: si el intervalo de la proporción cruza el 30 o el 40 %, la ficha dice que está en el límite entre dos tramos, también con «Tu ficha» y con el umbral del 40 %;
+- sin mediana: con 1 a 9 contratos, cuántos hay; con 0, «sin contratos de alquiler de pisos registrados» (o de viviendas unifamiliares) en lugar de «sin dato», y un contexto rotulado que nunca se pinta en el mapa (guía, regla 1): la mediana de la otra tipología en la sección y la de la misma tipología en su municipio;
+- el mapa no cambia: sin una prueba visual que lo justifique, las secciones con pocos contratos no se atenúan, y la marca va en la ficha y en el CSV.
+
+**Compuerta** (`comprobar_fiabilidad_serpavi()`, `validacion_fiabilidad`; §4.1): `contratos_mediana` y `contratos_suma` (bloqueo), y `margen_rango` (alerta). El margen solo se comprueba en las secciones: en los territorios grandes baja de forma natural del 1 % (en las provincias, 0,3 % de mediana).
+
 ## 8. Limitaciones conocidas
 
 **Geografía constante:**
@@ -928,6 +968,7 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 - **Territorios forales.** Series cortas: Navarra desde 2021, Gipuzkoa desde 2022, Álava y Bizkaia desde 2024 (§7.1).
 - **Territorios sin fila en la fuente.** 40 secciones de 2021, 36 distritos y 36 municipios no están en la base del SERPAVI: van como `ausente` (§7.1).
 - **Errores de la fuente.** 164 cifras de municipios y distritos van como `ausente` (§7.1).
+- **Margen aproximado.** El margen de la mediana supone una distribución regular dentro de la sección y no corrige que sean contratos vigentes; con pocos contratos es solo un orden de magnitud. En 2024, 4.407 medianas de vivienda colectiva salen de menos de 30 contratos (§7.6).
 
 **Hogares en alquiler:**
 - Es una fotografía de 2021, no una serie (§7.2).
@@ -971,19 +1012,19 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 
 **Esquema** (plan §6.4): `geo_id`, `nivel`, `anio`, `indicador`, `corte`, `grupo`, `valor`, `estado`, `fuente`, `geo_ref` y `version`. La clave de una fila es `geo_id`, `nivel`, `anio`, `indicador`, `corte` y `grupo`.
 
-**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 6.595.745 filas.
+**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 8.561.935 filas.
 
 | Fuente (`fuente`) | Filas | Niveles | Versión |
 |---|---|---|---|
 | `ine_adrh` | 1.303.484 | Sección (1.089.972) y municipio (213.512) | 7-nov-2026 |
-| `mivau_serpavi` | 3.932.340 | Sección (2.692.792), distrito (717.144), municipio (514.252), provincia (5.992) y comunidad (2.160) | 6-nov-2026 |
+| `mivau_serpavi` | 5.032.640 | Sección (3.419.452), distrito (926.724), municipio (676.872), provincia (7.032), comunidad (2.540) y España (20) | 6-nov-2026 |
 | `ine_censo2021` | 36.405 | Sección (36.333), comunidad (19), provincia (52) y España (1) | 8-nov-2026 |
 | `ine_vut` | 218.430 | Sección (217.998), comunidad (114), provincia (312) y España (6) | 8-nov-2026 |
 | `ine_ecv` | 261 | Comunidad (228) y España (33) | 6-nov-2026 |
 | `ine_ecv_modulo` | 32 | Comunidad (19) y España (13) | 6-nov-2026 |
-| `calculo_propio` | 1.104.793 | Sección (799.326), distrito (125.748), municipio (178.886), provincia (624) y comunidad (209) | 7-nov-2026 |
+| `calculo_propio` | 1.970.683 | Sección (1.419.062), distrito (274.740), municipio (273.392), provincia (2.580) y comunidad (909) | 7-nov-2026 |
 
-**Por estado:** `dato`, 4.689.947 filas; `ausente`, 1.032.718; `secreto`, 842.257; `estimado`, 30.823.
+**Por estado:** `dato`, 6.487.909 filas; `ausente`, 1.200.946; `secreto`, 842.257; `estimado`, 30.823.
 
 **Sin publicar.** No hay todavía datos publicados: la carpeta `datos/publicados/` no existe.
 
@@ -991,14 +1032,15 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 
 La exportación sigue las decisiones del autor del 8-nov-2026 (plan §6.6; plan §11, preguntas 16 y 17). `exportar_web()` (objetivo `ficheros_web`) escribe en `web/datos/`, desde la tabla larga ya validada, los indicadores del núcleo de la v0.1, de la sección a España:
 - **Valores.** Un fichero JSON por serie, nivel y periodo, con los valores × 10 en enteros (× 100 en las viviendas turísticas, con dos decimales, como las publica el INE: columna `escala_web` de `inventario/indicadores.csv`, vacía en los demás; plan §11, pregunta 24), con el redondeo de la guía a esos decimales, y una cadena con el estado de cada territorio, en el orden del índice de su nivel. Comprimido pesa lo mismo que un binario (plan §11, pregunta 17): cada fichero de secciones ocupa de 139 a 291 KB, y de 19 a 98 KB con gzip.
-- **España, comunidades y provincias.** Los indicadores 18 y 19 tienen las cifras publicadas de España, de las 19 comunidades y de las 52 provincias (§7.2 y §7.3); las de España, en siete ficheros. El alquiler (8 y 9) y el sueldo necesario (21) tienen comunidades y provincias, pero no España: el SERPAVI solo publica su recuento de testigos. La renta (1–3) y el esfuerzo (14) llegan al municipio (§5.3 y §7.4).
+- **España, comunidades y provincias.** Los indicadores 18 y 19 tienen las cifras publicadas de España, de las 19 comunidades y de las 52 provincias (§7.2 y §7.3); las de España, en siete ficheros. El alquiler (8 y 9) y el sueldo necesario (21) tienen comunidades y provincias, pero no España: el SERPAVI solo publica su recuento de testigos, que va en la serie de contratos (§7.6). La renta (1–3) y el esfuerzo (14) llegan al municipio (§5.3 y §7.4).
 - **Series de la ficha.** Un fichero por municipio (`fichas/<municipio>.json`) con las series de sus secciones y del propio municipio.
+- **Fiabilidad** (§7.6). Los contratos y el margen de la mediana van como series auxiliares de cada serie del alquiler, de su misma tipología (`fiabilidad` en el manifiesto), sin número de indicador ni mapa propio. No van en las fichas por municipio, donde pesarían una cuarta parte más: la ficha los lee de los ficheros del periodo que pinta el mapa.
 - **Qué no se exporta.** Los cuartiles del SERPAVI y la barrera (15), que la web calcula con la ficha elegida. El sueldo necesario (21) se recalcula en el navegador desde el alquiler por m² cuando cambian la superficie o el umbral (`FORMULAS_WEB`).
 - **La web frente a R.** La prueba de la web (`pruebas/web/datos.test.mjs`, en node) recalcula con el módulo de la página, `web/js/formulas.js`, el sueldo necesario desde el alquiler por m² en todas las secciones, distritos, municipios, provincias y comunidades de 2015 a 2024, y lo compara con el que exporta R: 550.140 territorios y años, 294.082 con valor, sin diferencias en el valor, los nulos ni el estado (plan §6.5).
-- **Descargas.** La web descarga la serie del mapa en CSV, en el nivel que se ve (valor con la precisión de la serie, estado y fuente; en el 21, superficie y umbral), y el mapa en PNG con su leyenda y su fuente. Con «Tu ficha», ninguna de las dos lleva el sueldo escrito: el CSV da el alquiler, no la proporción. Los colores del PNG de «¿te llega?» sí dejan deducirlo de forma aproximada, así que con «Tu ficha» se descarga tras un aviso que se puede cancelar (plan §11, pregunta 23).
+- **Descargas.** La web descarga la serie del mapa en CSV, en el nivel que se ve (valor con la precisión de la serie, estado y fuente; en las series del alquiler, contratos y margen; en el 21, superficie y umbral), y el mapa en PNG con su leyenda y su fuente. Con «Tu ficha», ninguna de las dos lleva el sueldo escrito: el CSV da el alquiler, no la proporción. Los colores del PNG de «¿te llega?» sí dejan deducirlo de forma aproximada, así que con «Tu ficha» se descarga tras un aviso que se puede cancelar (plan §11, pregunta 23).
 - **Año fuera de la serie** (plan §11, pregunta 32). Con un año anterior a todos los periodos de una serie (2020 en las viviendas turísticas), el mapa, la leyenda, la ficha, el comparador y las dos descargas dan «sin dato» y dicen desde cuándo hay serie; el CSV, con una fila sin valor por territorio y el inicio de la serie en la columna del estado. Con un año posterior se toma el último periodo, y la leyenda lo dice.
 - **Otros ficheros.** Los nombres de los territorios, los rectángulos de los municipios para el buscador (`cajas_municipios`) y los ingresos de las fichas (`perfiles`). El mapa base se copia a `web/teselas/`; al publicar, sale de un *release* (§3.10).
-- **Volumen** (`ficheros_web`, 22:14): 8.500 ficheros y 110,2 MB, con el PMTiles (35,3 MB). En disco, `web/datos/` suma 8.734 ficheros y 76,2 MB: los 8.499 de `ficheros_web` (75,0 MB), los 3 de la sección de sobrecarga (`ficheros_web_sobrecarga`, 1,1 MB) y la muestra versionada de `web/datos/ejemplo/` (232 ficheros, 0,2 MB).
+- **Volumen** (`ficheros_web`, 9-nov-2026): 8.820 ficheros y 127,0 MB, con el PMTiles (35,3 MB). En disco, `web/datos/` suma 9.204 ficheros y 93,0 MB: los 8.819 de `ficheros_web` (91,7 MB; las fichas por municipio, 44,1 MB), los 3 de la sección de sobrecarga (`ficheros_web_sobrecarga`, 1,1 MB) y la muestra versionada de `web/datos/ejemplo/` (382 ficheros, 0,2 MB). Los contratos y el margen (§7.6) añaden unos 17 MB.
 - **Compuerta** (`comprobar_web()`, `validacion_web`): `web_valores` y `web_fichas` (bloqueo) y `web_fuera_indice` (alerta) (§4.1).
 
 ---
@@ -1025,10 +1067,10 @@ El mapa base tarda unos 8 minutos: 6 min 43 s el PMTiles (`fichero_mapa_base`) y
 - **Geografía:** `secciones_2021`, `tablas_paso_callejero`, `tablas_paso_finales`, `edificios_paso`, `edificios_forales`, `municipios_catastro_sel`, `grupos_municipio`, `huerfanas_adrh`, `fase_codigos`, `cambios_limites`, `comprobaciones_f1`, `diagnostico_f1`, `comparacion_vias`.
 - **Jerarquía y mapa base:** `jerarquia_2021`, `territorios_2021`, `ficheros_jerarquia`, `fichero_mapa_base`, `resumen_mapa_base`.
 - **Renta:** `comprobaciones_adrh`, `tablas_paso_adrh`, `larga_adrh`, `tabla_larga`.
-- **Alquiler:** `serpavi`, `larga_serpavi`, `resumen_larga_serpavi`.
+- **Alquiler:** `serpavi`, `larga_serpavi`, `resumen_larga_serpavi`, `comprobaciones_fiabilidad`, `resumen_fiabilidad`.
 - **Hogares en alquiler y viviendas turísticas:** `censo2021`, `larga_censo2021`, `vut`, `vut_2021`, `larga_vut`.
 - **Mochila:** `mochila_opciones`, `mochila`, `mochila_neta`, `retenciones_mochila`, `ecv_mochila`.
 - **Fichas y derivados:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`.
 - **Sobrecarga:** `sobrecarga_agrupada`, `comprobaciones_sobrecarga`, `sobrecarga_quintil`, `eurostat_quintil`.
 - **Web:** `ficheros_web`, `cajas_municipios`, `ficheros_web_sobrecarga`.
-- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_serpavi`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.
+- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.

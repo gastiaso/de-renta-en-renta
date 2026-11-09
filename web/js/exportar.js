@@ -44,18 +44,27 @@ const COLUMNAS = ['codigo', 'nombre', 'nivel', 'indicador', 'tipologia', 'period
 //   transformar(x): la fórmula del mapa (sueldo necesario) o nada;
 //   supuestos: { superficie_m2, umbral } si la fórmula los usa (dos columnas más);
 //   desde: con un año anterior a toda la serie (`periodo`), su primer periodo; las filas van sin
-//   valor y el estado dice desde cuándo hay serie (pregunta abierta 32).
+//   valor y el estado dice desde cuándo hay serie (pregunta abierta 32);
+//   fiabilidad: { contratos, margen }, los valores de las series auxiliares del alquiler en el
+//   mismo nivel y periodo (o null), si la serie los tiene: dos columnas más, contratos y
+//   margen_pct (preguntas 12 y 15 ampliadas). Un territorio sin recuento o sin margen, vacío.
 // Los textos (cabecera, nivel, indicador…) llegan ya traducidos, salvo los que pide `t`.
-export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, nombreDe, indicador, unidad, tipologia, periodo, fuente, transformar, decimales, supuestos, desde = null }) {
-  const columnas = supuestos ? [...COLUMNAS, 'superficie_m2', 'umbral'] : COLUMNAS;
+export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, nombreDe, indicador, unidad, tipologia, periodo, fuente, transformar, decimales, supuestos, desde = null, fiabilidad = null }) {
+  const columnas = [...COLUMNAS, ...(fiabilidad ? ['contratos', 'margen_pct'] : []), ...(supuestos ? ['superficie_m2', 'umbral'] : [])];
   const cabecera = columnas.map((c) => t(`interfaz.exportar.columnas.${c}`));
   const textoNivel = t(`vocabulario.nivel.${nivel}`);
   const fuera = desde === null ? null : t('interfaz.exportar.estados.fuera', { desde });
+  const de = (lista, i) => (fuera || !lista ? null : lista[i] ?? null);
   const filas = codigos.map((codigo, i) => {
     const x = fuera ? null : valores[i];
     const valor = x === null || x === undefined ? null : redondear(transformar ? transformar(x) : x, decimales);
     const fila = [codigo, nombreDe(codigo), textoNivel, indicador, tipologia ?? '', periodo, valor, unidad,
       fuera ?? t(`interfaz.exportar.estados.${nombresEstado[estados[i]]}`), fuente];
+    if (fiabilidad) {
+      const n = de(fiabilidad.contratos, i);
+      const margen = de(fiabilidad.margen, i);
+      fila.push(n === null ? null : Math.round(n), margen === null ? null : redondear(margen, 1));
+    }
     if (supuestos) fila.push(supuestos.superficie_m2, supuestos.umbral);
     return fila;
   });

@@ -137,7 +137,9 @@
         "estado": "estado",
         "fuente": "fuente",
         "superficie_m2": "superficie_m2",
-        "umbral": "umbral"
+        "umbral": "umbral",
+        "contratos": "contratos",
+        "margen_pct": "margen_pct"
       },
       "estados": {
         "dato": "dato",
@@ -162,7 +164,21 @@
       "sin_seccion_texto": "Monte o terreno comunal que no pertenece a ningún término municipal. El INE no le asigna sección y no tiene población, así que no hay datos.",
       "provincias": "Provincias",
       "superficie": "Superficie",
-      "km2": "{superficie} km²"
+      "km2": "{superficie} km²",
+      "contratos": "Mediana de {contratos} contratos · margen aproximado ±{margen} %",
+      "contratos_sin_margen": "Mediana de {contratos} contratos",
+      "contratos_secreto": "{contratos} contratos: con menos de 10, la fuente no publica la mediana",
+      "pocos_contratos": "pocos contratos",
+      "intervalo": "Entre {desde} y {hasta} {unidad}, con el margen de la mediana",
+      "en_limite": "En el límite entre dos tramos: con el margen de la mediana, podría caer en el de al lado.",
+      "contexto": "Contexto",
+      "contexto_tipologia": "{tipologia} en esta sección",
+      "contexto_municipio": "{tipologia} en {municipio}",
+      "contexto_nota": "Solo como referencia: no se pinta en el mapa, que usa la mediana de cada sección y tipología.",
+      "sin_contratos": {
+        "VC": "Sin contratos de alquiler de pisos registrados",
+        "VU": "Sin contratos de alquiler de viviendas unifamiliares registrados"
+      }
     },
     "comparador": {
       "titulo": "Comparar",
@@ -577,6 +593,27 @@
       "definicion": "Personas de 16 o más años que han buscado vivienda activamente en los últimos 12 meses sin llegar a cambiarse.",
       "calculo": "Cifra publicada por el INE en las tablas del módulo de 2025 de la ECV sobre dificultades de acceso a la vivienda, con la razón principal (sobre todo, el precio).",
       "lectura": "Es un corte único (2025). Ve a quien intenta entrar y no puede, al contrario que la sobrecarga."
+    },
+    "contratos_alquiler": {
+      "nombre": "Contratos de alquiler de la mediana",
+      "unidad": "contratos",
+      "definicion": "Número de contratos de vivienda habitual vigentes con que el SERPAVI calcula la mediana del alquiler del territorio, por tipología (colectiva y unifamiliar).",
+      "calculo": "Recuento publicado por el MIVAU (SERPAVI). Con menos de 10 contratos no se publica la mediana; con 0, no hay contratos de alquiler registrados, que no es lo mismo que «sin dato».",
+      "lectura": "Dice cuántos contratos sostienen la mediana: con menos de 30, la ficha marca «pocos contratos». Acompaña al 8, el 9, el 14, el 15 y el 21; no tiene mapa propio."
+    },
+    "margen_alquiler_mes": {
+      "nombre": "Margen aproximado de la mediana del alquiler mensual",
+      "unidad": "% de la mediana",
+      "definicion": "Error típico aproximado de la mediana del alquiler mensual (8), en porcentaje de la mediana, por tipología.",
+      "calculo": "0,929 × (P75 − P25) / (P50 × √n), con los cuartiles y los contratos (n) del SERPAVI; solo donde se publica la mediana (10 o más contratos).",
+      "lectura": "Orden de magnitud del ruido de la mediana: supone una distribución regular dentro del territorio y no corrige que sean contratos vigentes, no nuevos. Acompaña al 8 y al 14."
+    },
+    "margen_alquiler_m2": {
+      "nombre": "Margen aproximado de la mediana del alquiler por m²",
+      "unidad": "% de la mediana",
+      "definicion": "Error típico aproximado de la mediana del alquiler por metro cuadrado (9), en porcentaje de la mediana, por tipología.",
+      "calculo": "0,929 × (P75 − P25) / (P50 × √n), con los cuartiles del alquiler por m² y los contratos (n) del SERPAVI; solo donde se publica la mediana (10 o más contratos).",
+      "lectura": "Vale también para el 15 y el 21, que son el alquiler por m² en otra unidad: la ficha da el sueldo necesario con su intervalo y avisa cuando «¿te llega?» queda en el límite entre dos tramos."
     }
   },
   "fuentes": {

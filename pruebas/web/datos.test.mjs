@@ -28,6 +28,7 @@ const { buscar, formasDeNombre } = await modulo('web/js/buscador.js');
 const { ordenNatural } = await modulo('web/js/nombres.js');
 const { consulta, leerEstado } = await modulo('web/js/estado.js');
 const colores = await modulo('web/js/colores.js');
+const fiabilidad = await modulo('web/js/fiabilidad.js');
 
 const CODIFICACION = { escala: 10, estados: ['dato', 'estimado', 'secreto', 'ausente'] };
 const leer = (...ruta) => JSON.parse(readFileSync(join(raiz, ...ruta), 'utf8'));
@@ -393,7 +394,113 @@ test('descargas: dos decimales con escala 100 y año anterior a la serie (pregun
   ]);
 });
 
+// --- Fiabilidad de la mediana del alquiler (preguntas 12 y 15 ampliadas) -----------------------
+
+test('fiabilidad: intervalo con el margen y «en el límite» a los dos lados del 30 y del 40 %', () => {
+  assert.deepEqual(sueldo.intervaloMargen(2000, 10), { desde: 1800, hasta: 2200 });
+  assert.equal(sueldo.intervaloMargen(null, 10), null);
+  assert.equal(sueldo.intervaloMargen(2000, null), null);
+  assert.equal(sueldo.intervaloMargen(2000, Number.NaN), null);
+  // ±10 %: 0,28 llega a 0,308 (cruza el 30 %); 0,26 se queda en 0,286 (no cruza)
+  assert.equal(sueldo.enLimiteLlega(0.28, 10), true);
+  assert.equal(sueldo.enLimiteLlega(0.32, 10), true);    // baja a 0,288: debajo del 30 %
+  assert.equal(sueldo.enLimiteLlega(0.26, 10), false);
+  assert.equal(sueldo.enLimiteLlega(0.38, 10), true);    // sube a 0,418: pasa del 40 %
+  assert.equal(sueldo.enLimiteLlega(0.43, 10), true);    // baja a 0,387: debajo del 40 %
+  assert.equal(sueldo.enLimiteLlega(0.35, 10), false);   // de 0,315 a 0,385: el mismo tramo
+  assert.equal(sueldo.enLimiteLlega(0.5, 10), false);
+  assert.equal(sueldo.enLimiteLlega(0.28, null), false); // sin margen, nunca
+  // Los tramos no cambian con el umbral elegido (40 %): «en el límite» tampoco
+  const x = (valores) => (serie) => valores[serie] ?? null;
+  for (const umbral of [30, 40]) {
+    assert.equal(sueldo.umbralDe({ umbral }), umbral / 100);
+    const peon = sueldo.calculoLlega({ ficha: 'peon', perfiles: PERFILES, sueldo: { neto: 1500, pagas: 12 }, superficie: 50 });
+    const r = peon.calcular('2807901001', x({ alquiler_m2: 8.4 }));   // 420 / 1500 = 0,28
+    assert.equal(sueldo.enLimiteLlega(r.ratio, 10), true);
+  }
+});
+
+test('fiabilidad: estado de «¿te llega?», el del alquiler; sin ingreso de la ficha, ausente', () => {
+  const x = (valores) => (serie) => valores[serie] ?? null;
+  const mochila = sueldo.calculoLlega({ ficha: 'mochila', perfiles: PERFILES, superficie: 50 });
+  assert.equal(mochila.ingreso('2807901001'), 1500);
+  assert.equal(mochila.ingreso('4802001001'), null);                      // foral: sin mochila
+  assert.equal(sueldo.estadoLlega(0, mochila.ingreso('2807901001'), 3), 0);
+  assert.equal(sueldo.estadoLlega(2, mochila.ingreso('2807901001'), 3), 2);   // el del alquiler, también secreto
+  assert.equal(sueldo.estadoLlega(0, mochila.ingreso('4802001001'), 3), 3);
+  const llave = sueldo.calculoLlega({ ficha: 'llave', perfiles: PERFILES, superficie: null });
+  assert.equal(llave.ingreso('2807901001', x({ renta_hogar: 36000 })), 3000);
+  assert.equal(llave.ingreso('2807901001', x({ renta_hogar: null })), null);
+  const peon = sueldo.calculoLlega({ ficha: 'peon', perfiles: PERFILES, sueldo: { neto: 1500 }, superficie: 50 });
+  assert.equal(peon.ingreso('4802001001'), 1500);
+});
+
+test('fiabilidad: la ficha dice contratos y margen, «pocos contratos», secreto y «sin contratos»', () => {
+  const f = fiabilidad.fiabilidadFicha;
+  assert.deepEqual(f({ contratos: 72, margen: 4.3, estado: 'dato' }), { tipo: 'mediana', contratos: 72, margen: 4.3, pocos: false });
+  assert.deepEqual(f({ contratos: 12, margen: 11.8, estado: 'dato' }), { tipo: 'mediana', contratos: 12, margen: 11.8, pocos: true });
+  assert.equal(f({ contratos: 30, margen: 5, estado: 'estimado' }).pocos, false);
+  assert.equal(f({ contratos: 29, margen: 5, estado: 'dato', umbral: 20 }).pocos, false);
+  assert.equal(f({ contratos: 15, margen: null, estado: 'dato' }).margen, null);
+  assert.deepEqual(f({ contratos: 4, estado: 'secreto' }), { tipo: 'secreto', contratos: 4 });
+  // Una sección con 0 contratos: no es «sin dato»
+  assert.deepEqual(f({ contratos: 0, estado: 'ausente' }), { tipo: 'sin_contratos' });
+  assert.equal(f({ contratos: null, estado: 'ausente' }), null);
+  assert.equal(f({ contratos: undefined, estado: 'dato' }), null);
+  // Series y umbral del manifiesto
+  const m = { indicadores: { alquiler_m2: { fiabilidad: { contratos: 'c', margen: 'm' } }, renta_hogar: {} }, umbral_pocos_contratos: 25 };
+  assert.deepEqual(fiabilidad.seriesFiabilidad(m, 'alquiler_m2'), { contratos: 'c', margen: 'm' });
+  assert.equal(fiabilidad.seriesFiabilidad(m, 'renta_hogar'), null);
+  assert.equal(fiabilidad.umbralPocos(m), 25);
+  assert.equal(fiabilidad.umbralPocos({}), fiabilidad.UMBRAL_POCOS_CONTRATOS);
+});
+
+test('fiabilidad: el CSV lleva contratos y margen_pct, vacíos sin recuento o sin margen', () => {
+  const { cabecera, filas } = exportar.tablaCsv({
+    t: tPrueba, codigos: ['2807901001', '2807901002', '2807901003'], valores: [7.3, null, null],
+    estados: Uint8Array.from([0, 2, 3]), nombresEstado: CODIFICACION.estados, nivel: 'sc', nombreDe: (c) => c,
+    indicador: 'Sueldo neto necesario', unidad: '€ netos por mes', tipologia: 'Vivienda colectiva', periodo: 2024, fuente: 'SERPAVI',
+    transformar: (x) => FORMULAS.alquiler_m2_a_sueldo.calcular(x, { superficie_m2: 50, umbral: 0.3 }), decimales: 1,
+    supuestos: { superficie_m2: 50, umbral: 0.3 },
+    fiabilidad: { contratos: [25, 4, 0], margen: [8.36, null, null] },
+  });
+  assert.deepEqual(cabecera.slice(-4), ['contratos', 'margen_pct', 'superficie_m2', 'umbral']);
+  assert.deepEqual(filas.map((fila) => fila.slice(10, 12)), [[25, 8.4], [4, null], [0, null]]);
+  // Sin series de fiabilidad, las columnas de siempre
+  const sin = exportar.tablaCsv({ t: tPrueba, codigos: ['1'], valores: [1], estados: Uint8Array.from([0]), nombresEstado: CODIFICACION.estados,
+    nivel: 'sc', nombreDe: (c) => c, indicador: 'x', unidad: 'u', periodo: 2024, fuente: 'f', decimales: 1 });
+  assert.equal(sin.cabecera.includes('contratos'), false);
+  // Con un año anterior a la serie, vacías
+  const fuera = exportar.tablaCsv({ t: (c) => c.split('.').at(-1), codigos: ['1'], valores: [1], estados: Uint8Array.from([0]),
+    nombresEstado: CODIFICACION.estados, nivel: 'sc', nombreDe: (c) => c, indicador: 'x', unidad: 'u', periodo: 2010,
+    fuente: 'f', decimales: 1, desde: 2015, fiabilidad: { contratos: [25], margen: [8] } });
+  assert.deepEqual(fuera.filas[0].slice(10, 12), [null, null]);
+});
+
 // --- Muestra y exportación del pipeline -------------------------------------------------------
+
+// Contratos y margen de cada serie con `fiabilidad`, frente al estado de su mediana (regla de
+// secreto del SERPAVI): con mediana, 10 o más contratos y margen; en secreto, de 1 a 9 y sin
+// margen; sin dato, 0 contratos o ninguno, y sin margen. Devuelve los fallos.
+function comprobarFiabilidad(m, indices, serie, nivel, p) {
+  const fia = m.indicadores[serie].fiabilidad;
+  const n = indices[nivel].length;
+  const leerSerie = (s) => decodificar(leer('web', rutaValores(m.indicadores[s], nivel, p)), n, codificacionDe(m, s));
+  const mediana = leerSerie(serie);
+  const contratos = leerSerie(fia.contratos);
+  const margen = leerSerie(fia.margen);
+  const fallos = [];
+  for (let i = 0; i < n; i++) {
+    const e = m.codificacion.estados[mediana.estados[i]];
+    const c = contratos.valores[i];
+    const mg = margen.valores[i];
+    const bien = e === 'dato' || e === 'estimado' ? c >= 10 && mg !== null
+      : e === 'secreto' ? c >= 1 && c <= 9 && mg === null
+        : (c === null || c === 0) && mg === null;
+    if (!bien) fallos.push({ serie, nivel, p, codigo: indices[nivel][i], estado: e, contratos: c, margen: mg });
+  }
+  return fallos;
+}
 
 function comprobarManifiesto(dir, { completo }) {
   const m = leer(dir, 'manifiesto.json');
@@ -434,6 +541,18 @@ function comprobarManifiesto(dir, { completo }) {
       assert.deepEqual(periodos(otra), periodos(def), `${variante}: periodos`);
     }
   }
+  // Fiabilidad (contratos y margen de la mediana del alquiler): las series existen, con los mismos
+  // periodos que la serie a la que acompañan, sin mapa propio y con la tipología de la serie.
+  for (const [serie, def] of Object.entries(m.indicadores)) {
+    if (!def.fiabilidad) continue;
+    for (const [papel, aux] of Object.entries(def.fiabilidad)) {
+      assert.ok(['contratos', 'margen'].includes(papel), `${serie}: papel ${papel}`);
+      assert.ok(m.indicadores[aux], `${serie}: falta ${aux}`);
+      assert.deepEqual(periodos(m.indicadores[aux]), periodos(def), `${serie}: periodos de ${aux}`);
+      assert.ok(!m.mapas[aux], `${aux}: sin mapa propio`);
+      assert.equal(tipologiaDe(m, aux), tipologiaDe(m, serie) ?? 'VC', `${serie}: tipología de ${aux}`);
+    }
+  }
   for (const [id, def] of Object.entries(m.mapas)) {
     assert.ok(m.indicadores[def.base], `mapa sin serie base: ${def.base}`);
     assert.ok(!m.indicadores[def.base].por_defecto, `${id}: la base es la serie de por defecto, no una variante`);
@@ -456,8 +575,15 @@ function comprobarManifiesto(dir, { completo }) {
 }
 
 test('muestra: los valores que escribe R se leen enteros y los nulos son secreto o ausente', () => {
-  const { m } = comprobarManifiesto(join('web', 'datos', 'ejemplo'), { completo: true });
+  const { m, indices } = comprobarManifiesto(join('web', 'datos', 'ejemplo'), { completo: true });
   assert.equal(m.ejemplo, true);
+  // Contratos y margen, coherentes con la mediana en todas las series de alquiler y años
+  // (las del alquiler: el esfuerzo lleva también el estado de la renta)
+  const conFiabilidad = Object.keys(m.indicadores).filter((s) => m.indicadores[s].fiabilidad && tieneTipologia(m, s));
+  assert.ok(conFiabilidad.includes('alquiler_m2') && conFiabilidad.includes('alquiler_mes_vu'));
+  const fallos = conFiabilidad.flatMap((s) => periodos(m.indicadores[s]).flatMap((p) => comprobarFiabilidad(m, indices, s, 'sc', p)));
+  assert.deepEqual(fallos.slice(0, 3), []);
+  assert.equal(m.umbral_pocos_contratos, 30);
   // La muestra prueba los selectores: varios mapas, uno por periodos con mes, y una tipología
   assert.ok(Object.keys(m.mapas).length > 1 && m.mapas.sueldo_necesario);
   assert.ok(Object.values(m.mapas).some((d) => m.indicadores[d.base].periodos));
@@ -468,9 +594,11 @@ test('muestra: las series de la ficha cuadran, año a año, con los valores del 
   const m = leer('web', 'datos', 'ejemplo', 'manifiesto.json');
   const secciones = leer('web', m.indices.sc);
   const fichas = new Map();
+  // Las series auxiliares (contratos y margen de la mediana) tampoco: la ficha las lee del periodo
+  const auxiliares = new Set(Object.values(m.indicadores).flatMap((d) => Object.values(d.fiabilidad ?? {})));
   for (const [serie, def] of Object.entries(m.indicadores)) {
     // Las variantes de vivienda unifamiliar no van en las fichas (la web las saca de cada periodo).
-    if (def.por_defecto) {
+    if (def.por_defecto || auxiliares.has(serie)) {
       assert.equal(leer('web', m.fichas.replace('{municipio}', secciones[0].slice(0, 5))).anios[serie], undefined);
       continue;
     }
@@ -508,6 +636,31 @@ test('exportación del pipeline: el contrato de web/datos/ se cumple', { skip: !
     assert.deepEqual(ps, periodos(m.indicadores[serie]), `${municipio}: periodos de ${serie}`);
     decodificar(fichero.series[propias[0]][serie], ps.length, codificacionDe(m, serie));
   }
+});
+
+// Preguntas 12 y 15 ampliadas: lo que la página lee de contratos y margen casa con la mediana que
+// pinta, en cada serie de alquiler (colectiva y unifamiliar) y en cada nivel del último año, y el
+// umbral de «pocos contratos» es el de R.
+test('exportación del pipeline: contratos y margen de cada mediana, coherentes con su estado', { skip: !exportada && 'sin web/datos/manifiesto.json' }, (t) => {
+  const m = leer('web', 'datos', 'manifiesto.json');
+  const indices = Object.fromEntries(Object.entries(m.indices).map(([nivel, ruta]) => [nivel, leer('web', ruta)]));
+  assert.equal(m.umbral_pocos_contratos, 30);
+  const series = ['alquiler_m2', 'alquiler_m2_vu', 'alquiler_mes', 'alquiler_mes_vu'].filter((s) => m.indicadores[s]?.fiabilidad);
+  assert.equal(series.length, 4, 'las cuatro series del alquiler llevan fiabilidad');
+  assert.deepEqual(m.indicadores.alquiler_m2.fiabilidad, { contratos: 'contratos_alquiler', margen: 'margen_alquiler_m2' });
+  assert.deepEqual(m.indicadores.alquiler_mes_vu.fiabilidad, { contratos: 'contratos_alquiler_vu', margen: 'margen_alquiler_mes_vu' });
+  let comparadas = 0;
+  const fallos = [];
+  for (const serie of series) {
+    const def = m.indicadores[serie];
+    const p = periodos(def).at(-1);
+    for (const nivel of def.niveles) {
+      fallos.push(...comprobarFiabilidad(m, indices, serie, nivel, p));
+      comparadas += indices[nivel].length;
+    }
+  }
+  t.diagnostic(`${comparadas} territorios comparados; ${fallos.length} fallos`);
+  assert.deepEqual(fallos.slice(0, 5), []);
 });
 
 // Metadatos de un PMTiles (v3): cabecera de 127 bytes y JSON en la posición que dice, comprimido

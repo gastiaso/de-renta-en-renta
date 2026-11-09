@@ -4,6 +4,18 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (9-nov-2026, tarea 19: contratos y margen del alquiler; plan v0.31)
+
+- Tres indicadores auxiliares en `inventario/indicadores.csv` (columna nueva `auxiliar_de`, sin número ni mapa): `contratos_alquiler`, el recuento de testigos del SERPAVI de cada mediana, con 0 como dato y también España; `margen_alquiler_mes` y `margen_alquiler_m2`, el margen aproximado de la mediana, 0,929 × (P75 − P25) / (P50 × √n), solo donde hay mediana (`margen_mediana()`, `armonizar_fiabilidad_serpavi()`). `larga_serpavi` pasa de 3.932.340 a 5.898.530 filas, y la tabla larga, a 8.561.935.
+- Compuerta de la fiabilidad (`comprobar_fiabilidad_serpavi()`, `validacion_fiabilidad`, antes de la tabla larga): `contratos_mediana` (regla de secreto entre mediana y contratos; 0 casos) y `contratos_suma` (secciones sumadas a provincia y a España; pasan las 1.080 cifras), de bloqueo, y `margen_rango` (margen de las secciones fuera del 1–40 %), de alerta: avisa en 2.414 secciones y años, casi todas de vivienda unifamiliar.
+- Web: cada serie del alquiler lleva en el manifiesto sus series de `fiabilidad`, y el manifiesto, `umbral_pocos_contratos` (30). La ficha da «Mediana de N contratos · margen aproximado ±X %», la marca «pocos contratos», el intervalo del sueldo necesario y de los mapas del alquiler, el aviso «en el límite entre dos tramos» en «¿te llega?», «sin contratos de alquiler de pisos registrados» en lugar de «sin dato» con 0 contratos y, sin mediana, un contexto rotulado que no se pinta (`web/js/fiabilidad.js`). El CSV lleva `contratos` y `margen_pct`. Las secciones con pocos contratos no se atenúan en el mapa. Los auxiliares no van en las fichas por municipio.
+- Muestra de la web (`web/datos/ejemplo/`) con contratos y margen inventados, coherentes con el estado de la mediana.
+
+### Cambiado (9-nov-2026, tarea 19)
+
+- Mochila `estimado` en `perfiles` (el método B es una estimación) y estado de la barrera (15), el del alquiler: el ingreso de la ficha solo aporta `ausente` cuando falta (`estado_barrera()`; compuerta `derivados_estado`, con la misma regla). En la web, la ficha y su evolución en «¿te llega?» siguen la misma regla. Las cifras de la barrera no cambian.
+- Nota metodológica (castellano e inglés): §7.6 nueva, «Fiabilidad de las medianas del alquiler», y al día §2.1, §4.1, §6.1, §7.1, §7.4, §8, §9 y §10.
+
 ### Decidido (9-nov-2026, SMI de 2021 y orden de trabajo; plan v0.30)
 
 - **SMI de 2021** (18): media de las dos cuantías ponderada por meses de vigencia, 955 € × 14 pagas (950 € hasta agosto, 965 € desde el 1 de septiembre, RD 817/2021).

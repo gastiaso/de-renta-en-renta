@@ -58,7 +58,7 @@ test_that("perfiles: tartera con el SMI de cada año, mochila por provincia y ll
   expect_equal(tartera$ingreso, c(1134 * 14 * (1 - 0.0647) / 12, 1221 * 14 * (1 - 0.065) / 12))
   expect_equal(round(tartera$ingreso[2]), 1332)
   mochila <- filter(p, ficha == "mochila") |> arrange(geo_id)
-  expect_equal(mochila$estado, c("ausente", "dato", "dato"))   # Álava: foral, sin mochila
+  expect_equal(mochila$estado, c("ausente", "estimado", "estimado"))   # Álava: foral, sin mochila; método B, estimación
   expect_equal(mochila$ingreso[mochila$geo_id == "28"], 1500)
   expect_equal(filter(p, ficha == "llave", geo_id == "2800101001", anio == 2024L)$ingreso, 3000)
   expect_true(all(is.na(p$superficie_m2[p$ficha == "llave"])))
@@ -123,6 +123,27 @@ test_that("15 en R: tartera y mochila con el ingreso del mismo año que el alqui
   expect_equal(fila(b, "0100101001", 2024L, "barrera_acceso", "mochila")$estado, "ausente")   # foral, sin mochila
   expect_equal(nrow(fila(b, "13", 2024L, "barrera_acceso", "mochila")), 0L)   # la comunidad no tiene una sola provincia
   expect_equal(unique(b$corte), "ficha")
+})
+
+test_that("estado del 15: el del alquiler; el ingreso de la ficha solo aporta ausente (pregunta 15 ampliada)", {
+  # Mochila «estimado» y alquiler «dato»: la barrera es «dato»
+  p <- perfiles_fichas(mochila_inventada, provincias_inventadas, adrh_largo(), anio_mochila = 2024L)
+  b <- calcular_barrera_acceso(serpavi_largo(), p)
+  expect_equal(fila(b, "2800101001", 2024L, "barrera_acceso", "mochila")$estado, "dato")
+  expect_equal(fila(b, "2800101002", 2024L, "barrera_acceso", "mochila")$estado, "secreto")   # el del alquiler
+  # Sin ingreso de la ficha: ausente, aunque el alquiler sea dato
+  expect_equal(fila(b, "0100101001", 2024L, "barrera_acceso", "mochila")$estado, "ausente")
+  expect_equal(estado_barrera(c("dato", "estimado", "secreto", "dato", NA), c("estimado", "dato", "estimado", "ausente", "dato")),
+               c("dato", "estimado", "secreto", "ausente", "ausente"))
+  expect_equal(estado_barrera("dato", NA_character_), "ausente")
+  # Y la compuerta lo acepta: el estado esperado del 15 sigue la misma regla
+  d <- armonizar_derivados(serpavi_largo(), adrh_largo(), p)
+  comp <- comprobar_derivados(d, serpavi_largo(), adrh_largo(), p, provincias_inventadas, mochila_inventada)
+  expect_equal(sum(comp$calculado[comp$id == "derivados_estado"]), 0)
+  mal <- mutate(d, estado = ifelse(indicador == "barrera_acceso" & grupo == "mochila" & geo_id == "2800101001" & anio == 2024L,
+                                   "estimado", estado))
+  c2 <- comprobar_derivados(mal, serpavi_largo(), adrh_largo(), p, provincias_inventadas, mochila_inventada)
+  expect_equal(filter(c2, id == "derivados_estado", detalle == "barrera_acceso mochila")$calculado, 1)
 })
 
 test_that("la tabla larga de los derivados pasa la validación y la compuerta cuadra", {

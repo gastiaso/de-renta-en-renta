@@ -437,6 +437,22 @@ body {
 .ficha-unidad { color: var(--color-tenue); }
 .ficha-estado { margin: 4px 0 8px; color: var(--color-tenue); }
 .ficha-tramo { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font: 600 0.9rem var(--fuente-tablero); }
+/* Fiabilidad de la mediana del alquiler: contratos, margen, intervalo y «en el límite» */
+.ficha-fiabilidad, .ficha-intervalo { margin: 2px 0 4px; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.ficha-intervalo { color: var(--color-tenue); }
+.marca-pocos {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid var(--color-tinta);
+  border-radius: 999px;
+  background: var(--color-aviso);
+  color: var(--color-tinta);
+  font: 600 0.8rem var(--fuente-tablero);
+  white-space: nowrap;
+}
+.ficha-limite { margin: 2px 0 4px; padding-left: 8px; border-left: 3px solid var(--color-aviso); font-size: 0.9rem; }
+.ficha-contexto { margin: 0 16px 16px; padding-top: 10px; border-top: 1px dashed var(--color-tenue); }
+.ficha-contexto .ficha-territorios { margin: 4px 0; }
 .ficha-tabla { border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .ficha-tabla th, .ficha-tabla td { padding: 2px 12px 2px 0; text-align: left; font-weight: 400; }
 .ficha-tabla th { font-family: var(--fuente-tablero); }

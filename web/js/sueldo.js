@@ -75,6 +75,7 @@ const falta = (serie) => ['==', estadoMapa(serie), null];
 // elegida (vivienda colectiva o unifamiliar; datos.js, serieDeTipologia); por defecto, la misma.
 //   series: las que hay que cargar en el mapa (la primera, la del alquiler);
 //   calcular(seccion, x) → { alquiler, ingreso, ratio } o null;
+//   ingreso(seccion, x) → el ingreso de la ficha en la sección, o null si falta (estadoLlega);
 //   expresion(idSeccion) → { valido, ratio }, expresiones de MapLibre.
 export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) => s }) {
   if (ficha === 'llave') {
@@ -84,6 +85,10 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
     return {
       ficha,
       series: [vivienda.serie, ingreso.serie],
+      ingreso(seccion, x) {
+        const renta = x(ingreso.serie);
+        return renta === null || !(renta > 0) ? null : renta / divisor;
+      },
       calcular(seccion, x) {
         const alquiler = x(vivienda.serie);
         const renta = x(ingreso.serie);
@@ -106,6 +111,7 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
   return {
     ficha,
     series: [m2Serie],
+    ingreso: (seccion) => ingresoDe(seccion) || null,
     calcular(seccion, x) {
       const m2 = x(m2Serie);
       const ingreso = ingresoDe(seccion);
@@ -125,6 +131,27 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
 
 // Tramo de «¿te llega?»: 0 hasta el 30 %, 1 del 30 al 40 %, 2 más del 40 %.
 export const tramoLlega = (ratio) => (ratio <= LIMITES_LLEGA[0] ? 0 : ratio <= LIMITES_LLEGA[1] ? 1 : 2);
+
+// Intervalo de una cifra con el margen aproximado de la mediana del alquiler (en %, el que
+// exporta R; plan §11, pregunta 15 ampliada): cifra × (1 ± margen). Vale para el alquiler, el
+// sueldo necesario y la proporción de «¿te llega?», que son el alquiler en otra unidad. Sin
+// cifra o sin margen, null.
+export function intervaloMargen(valor, margenPct) {
+  if (valor === null || valor === undefined || !Number.isFinite(valor)) return null;
+  if (margenPct === null || margenPct === undefined || !Number.isFinite(margenPct) || margenPct < 0) return null;
+  return { desde: valor * (1 - margenPct / 100), hasta: valor * (1 + margenPct / 100) };
+}
+
+// «En el límite entre dos tramos» de «¿te llega?»: el intervalo de la proporción cruza el corte
+// del 30 o del 40 %. Los tramos son fijos: no cambian con el umbral elegido.
+export function enLimiteLlega(ratio, margenPct) {
+  const i = intervaloMargen(ratio, margenPct);
+  return i !== null && tramoLlega(i.desde) !== tramoLlega(i.hasta);
+}
+
+// Estado de «¿te llega?» (indicador 15): el del alquiler; si falta el ingreso de la ficha, el de
+// «ausente» (pregunta 15 ampliada: la calidad del ingreso no rebaja cada cifra).
+export const estadoLlega = (estadoAlquiler, ingreso, ausente) => (ingreso === null || ingreso === undefined ? ausente : estadoAlquiler);
 
 export function colorLlega(calculo, idSeccion, colores) {
   const { valido, ratio } = calculo.expresion(idSeccion);

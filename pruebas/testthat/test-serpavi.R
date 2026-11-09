@@ -244,3 +244,76 @@ test_that("los territorios del seccionado que la base no trae van como ausente y
   expect_false(any(c("serpavi_seccionado", "serpavi_sin_fila") %in%
                      comprobar_mivau_serpavi(s, entrada_forales = c("31" = 2021L))$id))
 })
+
+# --- Fiabilidad de las medianas: contratos y margen (preguntas 12 y 15 ampliadas) ----------------
+
+test_that("margen aproximado de la mediana: 0,929 × (P75 − P25) / (P50 × √n), solo con 10 o más contratos", {
+  expect_equal(sprintf("%.1f", margen_mediana(8, 10, 12, 10)), "11.8")
+  expect_equal(margen_mediana(8, 10, 12, 10), 100 * FACTOR_MARGEN_MEDIANA * 4 / (10 * sqrt(10)))
+  expect_equal(round(FACTOR_MARGEN_MEDIANA, 3), 0.929)
+  expect_true(is.na(margen_mediana(8, 10, 12, 9)))
+  expect_true(all(is.na(margen_mediana(c(NA, 8, 8), c(10, NA, 10), c(12, 12, NA), 20))))
+  expect_true(is.na(margen_mediana(8, 10, 12, NA)))
+  expect_length(margen_mediana(numeric(), numeric(), numeric(), numeric()), 0L)
+})
+
+test_that("contratos: dato también con 0, ausente sin recuento o antes de la entrada foral; España incluida", {
+  s <- serpavi_inventado()
+  f <- armonizar_fiabilidad_serpavi(s, version = "2026-11-08", entrada_forales = c("31" = 2021L))
+  expect_silent(validar_tabla_larga(f, vocabulario = voc))
+  con <- function(geo, a, g) filter(f, indicador == "contratos_alquiler", geo_id == geo, anio == a, grupo == g)
+  expect_equal(con("2800101001", 2020L, "VC")$valor, 25)
+  expect_equal(con("2800101001", 2020L, "VU")$valor, 3)              # mediana en secreto: el recuento sí se publica
+  expect_equal(as.list(con("2800101002", 2020L, "VU")[c("valor", "estado")]), list(valor = 0, estado = "dato"))
+  expect_equal(con("2800201001", 2020L, "VU")$estado, "ausente")     # celda vacía
+  expect_true(is.na(con("2800201001", 2020L, "VU")$valor))
+  expect_equal(con("3100101001", 2020L, "VC")$estado, "ausente")     # antes de la entrada foral
+  expect_equal(con("3100101001", 2021L, "VC")$valor, 15)
+  expect_equal(con("00", 2021L, "VC")$valor, 56)                     # España, como la publica el SERPAVI
+  expect_equal(unique(filter(f, indicador == "contratos_alquiler")$fuente), "mivau_serpavi")
+  # Margen: solo donde hay mediana, del alquiler mensual y por m², calculado por el atlas
+  m <- filter(f, startsWith(indicador, "margen_"))
+  expect_equal(unique(m$fuente), "calculo_propio")
+  expect_true(all(m$estado == "dato" & !is.na(m$valor)))
+  margen <- function(ind, geo, a, g) filter(m, indicador == ind, geo_id == geo, anio == a, grupo == g)$valor
+  expect_equal(margen("margen_alquiler_mes", "2800101001", 2020L, "VC"), margen_mediana(640, 800, 1000, 25))
+  expect_equal(margen("margen_alquiler_m2", "2800101001", 2020L, "VC"), margen_mediana(8, 10, 800 / 60, 25))
+  expect_equal(nrow(filter(m, geo_id == "2800101001", grupo == "VU")), 0L)   # secreto: sin margen
+  expect_equal(nrow(filter(m, geo_id == "3100101001", anio == 2020L)), 0L)
+  # Un distrito que no cuadra con sus secciones: sus contratos, ausente, como su mediana
+  roto <- mutate(s, testigos = ifelse(nivel == "distrito" & codigo == "2800201" & tipologia == "VC" & anio == 2021L, 13, testigos))
+  g <- armonizar_fiabilidad_serpavi(roto, version = "2026-11-08", entrada_forales = c("31" = 2021L))
+  expect_equal(filter(g, indicador == "contratos_alquiler", geo_id == "2800201", anio == 2021L, grupo == "VC")$estado, "ausente")
+})
+
+test_that("contratos de los territorios del seccionado que la base no trae: ausente", {
+  secciones <- c("2800101001", "2800101002", "2800201001", "3100101001", "2800201002", "3100201001")
+  f <- armonizar_fiabilidad_serpavi(serpavi_inventado(), version = "2026-11-08", entrada_forales = c("31" = 2021L),
+                                    secciones = secciones)
+  nuevas <- filter(f, geo_id %in% c("2800201002", "3100201001", "3100201", "31002"))
+  expect_equal(nrow(nuevas), 4 * 2 * 2)   # territorios × tipologías × años
+  expect_true(all(nuevas$indicador == "contratos_alquiler" & nuevas$estado == "ausente" & is.na(nuevas$valor)))
+})
+
+test_that("la compuerta de la fiabilidad cuadra con datos coherentes y ve los descuadres", {
+  s <- serpavi_inventado()
+  l <- bind_rows(armonizar_mivau_serpavi(s, version = "2026-11-08", entrada_forales = c("31" = 2021L)),
+                 armonizar_fiabilidad_serpavi(s, version = "2026-11-08", entrada_forales = c("31" = 2021L)))
+  comp <- comprobar_fiabilidad_serpavi(l)
+  bloqueo <- filter(comp, id %in% c("contratos_mediana", "contratos_suma"))
+  expect_equal(bloqueo$calculado, bloqueo$referencia)
+  expect_equal(filter(comp, id == "contratos_suma", anio == 2021L, startsWith(detalle, "Espa"))$calculado, c(56, 5, 56, 5))
+  expect_true(all(comp$calculado[comp$id == "margen_rango"] == 0))
+  # Una mediana publicada con 4 contratos: rompe la regla de secreto y la suma de la provincia y de España
+  roto <- mutate(l, valor = ifelse(indicador == "contratos_alquiler" & geo_id == "2800101001" & grupo == "VC" &
+                                     anio == 2021L, 4, valor))
+  c2 <- comprobar_fiabilidad_serpavi(roto)
+  expect_equal(filter(c2, id == "contratos_mediana", anio == 2021L, detalle == "sc VC")$calculado, 1)
+  suma <- filter(c2, id == "contratos_suma", anio == 2021L)
+  expect_setequal(suma$detalle[suma$calculado != suma$referencia], c("provincia 28 VC", "Espa\u00f1a desde secciones VC"))
+  # Margen fuera del 1–40 % en una sección: alerta
+  m <- mutate(l, valor = ifelse(indicador == "margen_alquiler_m2" & geo_id == "2800101001" & anio == 2021L & grupo == "VC",
+                                55, valor))
+  expect_equal(filter(comprobar_fiabilidad_serpavi(m), id == "margen_rango", anio == 2021L,
+                      detalle == "margen_alquiler_m2 VC")$calculado, 1)
+})

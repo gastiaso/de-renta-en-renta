@@ -18,7 +18,7 @@ test_that("los identificadores de fuentes e indicadores son únicos", {
   fuentes <- leer_inventario("fuentes.csv")
   indicadores <- leer_inventario("indicadores.csv")
   expect_false(anyDuplicated(fuentes$id) > 0)
-  expect_false(anyDuplicated(indicadores$id) > 0)
+  expect_false(anyDuplicated(stats::na.omit(indicadores$id)) > 0)
   expect_false(anyDuplicated(indicadores$codigo) > 0)
 })
 
@@ -47,7 +47,21 @@ test_that("cada indicador tiene su ficha completa en castellano e inglés (tarea
   campos <- as.vector(outer(c("nombre", "unidad", "definicion", "calculo", "lectura"), c("es", "en"), paste, sep = "_"))
   vacios <- vapply(campos, function(cmp) sum(is.na(indicadores[[cmp]]) | !nzchar(trimws(indicadores[[cmp]]))), integer(1))
   expect_equal(sum(vacios), 0L, info = paste(names(vacios)[vacios > 0], collapse = ", "))
-  expect_equal(nrow(indicadores), 23L)
+  auxiliar <- !is.na(indicadores$auxiliar_de)
+  expect_equal(sum(!auxiliar), 23L)
+})
+
+test_that("los indicadores auxiliares van sin número, fuera del núcleo y acompañan a indicadores que existen", {
+  indicadores <- leer_inventario("indicadores.csv")
+  aux <- indicadores[!is.na(indicadores$auxiliar_de), ]
+  expect_setequal(aux$codigo, c("contratos_alquiler", "margen_alquiler_mes", "margen_alquiler_m2"))
+  expect_true(all(is.na(aux$id)))
+  expect_true(all(!is.na(indicadores$id[is.na(indicadores$auxiliar_de)])))
+  expect_true(all(aux$nucleo_v01 == "FALSE"))
+  expect_true(all(is.na(aux$cortes_web)))                     # sin mapa propio: van a la ficha y al CSV
+  acompanados <- separar(aux$auxiliar_de)
+  expect_equal(setdiff(acompanados, indicadores$codigo[is.na(indicadores$auxiliar_de)]), character(0))
+  expect_true(all(sub("_.*$", "", aux$codigo) %in% c("contratos", "margen")))   # su papel en la web
 })
 
 test_that("fuentes y vocabulario tienen su texto en los dos idiomas", {

@@ -7,7 +7,8 @@
 #       Madrid (seccionado de 2021, INE) y el contorno de la provincia
 #   - indices/<nivel>.json     códigos de cada nivel en el orden de los valores
 #   - <nivel>/<serie>/<periodo>.json   valores INVENTADOS de los indicadores de la v0.1, con la
-#       variante de vivienda unifamiliar de los alquileres (alquiler_m2_vu, alquiler_mes_vu)
+#       variante de vivienda unifamiliar de los alquileres (alquiler_m2_vu, alquiler_mes_vu) y
+#       los auxiliares del alquiler (contratos y margen de la mediana, enlazados con `fiabilidad`)
 #   - fichas/28079.json        series de cada sección para la ficha (sin las variantes)
 #   - territorios.json, cajas.json, perfiles.json, manifiesto.json
 #
@@ -162,6 +163,54 @@ series$alquiler_m2_vu <- list(v = alquiler_m2_vu, e = e_vu, periodos = anios, de
 series$alquiler_mes_vu <- list(v = alquiler_m2_vu * runif(n, 70, 140), e = e_vu, periodos = anios, decimales = 0L)
 escribir_series(variantes)
 
+# Contratos y margen de la mediana (auxiliares del alquiler; plan §11, preguntas 12 y 15
+# ampliadas), coherentes con el estado del alquiler: con mediana, de 10 a 300 contratos (algunas
+# secciones con menos de 30, «pocos contratos»); en secreto, de 1 a 9; sin dato, 0 o sin recuento.
+# El margen, con la fórmula del pipeline (margen_mediana(): 0,929 × recorrido intercuartílico
+# relativo / √n) y una dispersión inventada; solo donde hay mediana. Se sortean después del resto
+# para no cambiar los valores anteriores de la muestra.
+contratos_de <- function(e) {
+  x <- matrix(NA_real_, n, k)
+  con <- e <= 1L
+  x[con] <- round(exp(runif(sum(con), log(10), log(300))))
+  x[e == 2L] <- sample(1:9, sum(e == 2L), replace = TRUE)
+  aus <- which(e == 3L)
+  x[aus] <- ifelse(runif(length(aus)) < 0.5, 0, NA)
+  x
+}
+margen_de <- function(contratos, e) {
+  m <- 100 * sqrt(pi / 2) / (2 * qnorm(0.75)) * runif(n * k, 0.25, 0.6) / sqrt(contratos)
+  m[e > 1L] <- NA
+  m
+}
+estado_recuento <- function(x) matrix(ifelse(is.na(x), 3L, 0L), n)
+estado_margen <- function(x) matrix(ifelse(is.na(x), 3L, 0L), n)
+c_vc <- contratos_de(e_alquiler)
+c_vu <- contratos_de(e_vu)
+auxiliares <- list(
+  contratos_alquiler = list(v = c_vc, e = estado_recuento(c_vc), periodos = anios, decimales = 0L),
+  contratos_alquiler_vu = list(v = c_vu, e = estado_recuento(c_vu), periodos = anios, decimales = 0L),
+  margen_alquiler_m2 = list(v = matrix(margen_de(c_vc, e_alquiler), n), periodos = anios, decimales = 1L),
+  margen_alquiler_m2_vu = list(v = matrix(margen_de(c_vu, e_vu), n), periodos = anios, decimales = 1L),
+  margen_alquiler_mes = list(v = matrix(margen_de(c_vc, e_alquiler), n), periodos = anios, decimales = 1L),
+  margen_alquiler_mes_vu = list(v = matrix(margen_de(c_vu, e_vu), n), periodos = anios, decimales = 1L)
+)
+for (s in grep("^margen_", names(auxiliares), value = TRUE)) auxiliares[[s]]$e <- estado_margen(auxiliares[[s]]$v)
+series <- c(series, auxiliares)
+escribir_series(names(auxiliares))
+variantes <- c(variantes, contratos_alquiler = "contratos_alquiler_vu", margen_alquiler_m2 = "margen_alquiler_m2_vu",
+               margen_alquiler_mes = "margen_alquiler_mes_vu")
+# Los auxiliares no van en las fichas (la web los lee de los ficheros del periodo, como el pipeline)
+en_ficha <- setdiff(names(series), c(variantes, names(auxiliares)))
+# Series de fiabilidad de cada serie del alquiler (y de las que salen de él), de su misma tipología
+fiabilidad <- list(
+  alquiler_m2 = list(contratos = "contratos_alquiler", margen = "margen_alquiler_m2"),
+  alquiler_m2_vu = list(contratos = "contratos_alquiler_vu", margen = "margen_alquiler_m2_vu"),
+  alquiler_mes = list(contratos = "contratos_alquiler", margen = "margen_alquiler_mes"),
+  alquiler_mes_vu = list(contratos = "contratos_alquiler_vu", margen = "margen_alquiler_mes_vu"),
+  esfuerzo_residentes = list(contratos = "contratos_alquiler", margen = "margen_alquiler_mes")
+)
+
 # Series de la ficha, un fichero por municipio (todas las secciones de la muestra son de Madrid).
 escribir_json(list(
   municipio = "28079",
@@ -184,6 +233,7 @@ indicadores <- lapply(names(series), function(s) {
   def <- list(niveles = I(niveles), decimales = d$decimales)
   if (s %in% names(variantes)) def$variantes <- list(VU = variantes[[s]])
   if (s %in% variantes) def$por_defecto <- names(variantes)[variantes == s]
+  if (!is.null(fiabilidad[[s]])) def$fiabilidad <- fiabilidad[[s]]
   if (is.numeric(d$periodos)) {
     def$anios <- I(d$periodos)
     def$ruta <- sprintf("%s/{nivel}/%s/{anio}.json", ruta_web, s)
@@ -215,6 +265,7 @@ manifiesto <- list(
   perfiles = file.path(ruta_web, "perfiles.json"),
   codificacion = list(escala = 10L, estados = c("dato", "estimado", "secreto", "ausente")),
   supuestos = list(superficie_m2 = 50L, umbral = 0.30),
+  umbral_pocos_contratos = 30L,
   indicadores = indicadores,
   mapas = list(
     # formula: nombre de una transformación conocida por la web (js/formulas.js), no código.

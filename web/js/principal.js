@@ -7,16 +7,17 @@ import { cargarIdioma, traducirPagina } from './i18n.js';
 import {
   cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarCajas,
   cargarIndice, cargarValores, cargarSeries, valorDe, periodoPara, periodosDe, fueraDeSerie,
-  serieDeTipologia, tipologiaDe,
+  serieDeTipologia, tipologiaDe, tieneTipologia,
 } from './datos.js';
 import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
 import { pintarLeyenda } from './leyenda.js';
-import { fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion } from './ficha.js';
+import { fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fichaContexto } from './ficha.js';
 import { formulaDe } from './formulas.js';
 import {
   modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega,
-  marcasRegla, tramoLlega, ingresoPeon,
+  marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, estadoLlega,
 } from './sueldo.js';
+import { seriesFiabilidad, fiabilidadFicha, umbralPocos } from './fiabilidad.js';
 import { crearPanelSueldo } from './panel_sueldo.js';
 import { crearCompartir } from './compartir.js';
 import { codigoComparado, nombreTerritorio, filasComparador, pintarComparador } from './comparador.js';
@@ -92,8 +93,11 @@ function vista() {
   const series = [...seriesColor];
   const renta = perfiles.llave?.ingreso.serie;
   if (enSueldo && renta && m.indicadores[renta]) series.push(renta);   // banda de la llave en la regla
+  // Contratos y margen de la mediana de la serie que da color, para la ficha (preguntas 12 y 15 ampliadas)
+  const fiabilidad = seriesFiabilidad(m, seriesColor[0]);
+  if (fiabilidad) series.push(...Object.values(fiabilidad).filter((s) => m.indicadores[s]));
   return {
-    modo, superficie, umbral, supuestos, calculo, mapa: mapaTipo, seriesColor, periodo, fuera,
+    modo, superficie, umbral, supuestos, calculo, mapa: mapaTipo, seriesColor, periodo, fuera, fiabilidad,
     referencia: periodo ?? estado.anio, enSueldo, tipologia: tipologiaDe(m, seriesColor[0]), series: [...new Set(series)],
   };
 }
@@ -133,11 +137,6 @@ async function cargarColumnas(series, referencia) {
 }
 
 const valorEn = (serie, i) => (i === undefined ? null : columnas[serie]?.valores[i] ?? null);
-
-function peorEstado(series, i) {
-  if (i === undefined) return indiceEstado('ausente');
-  return Math.max(...series.map((s) => columnas[s]?.estados[i] ?? indiceEstado('ausente')));
-}
 
 function secretos(series) {
   const secreto = indiceEstado('secreto');
@@ -258,6 +257,13 @@ async function seriesDeSeccion(codigo, v) {
   return series;
 }
 
+// Estado de la cifra de la ficha: en el modo «necesario», el peor de las series que dan color; en
+// «¿te llega?», el del alquiler, o «ausente» si falta el ingreso de la ficha (pregunta 15 ampliada).
+function estadoCifra(v, codigo, x, estadoDe) {
+  if (v.modo !== 'llega') return Math.max(...v.seriesColor.map(estadoDe));
+  return estadoLlega(estadoDe(v.seriesColor[0]), v.calculo.ingreso(codigo, x), indiceEstado('ausente'));
+}
+
 function pintarFicha(v = vista()) {
   const yo = ++turnoFicha;
   if (!estado.seccion) {
@@ -267,23 +273,84 @@ function pintarFicha(v = vista()) {
   const codigo = estado.seccion;
   const i = indice.get(codigo);
   const x = (serie) => valorEn(serie, i);
+  const estadoDe = (serie) => (i === undefined ? indiceEstado('ausente') : columnas[serie]?.estados[i] ?? indiceEstado('ausente'));
+  // Fiabilidad de la mediana del alquiler que da color (sin serie de fiabilidad o fuera de la serie, nada)
+  const fia = v.fiabilidad && !v.fuera ? v.fiabilidad : null;
+  const margen = fia?.margen ? x(fia.margen) : null;
+  const fiabilidad = fia?.contratos
+    ? fiabilidadFicha({ contratos: x(fia.contratos), margen, estado: m.codificacion.estados[estadoDe(v.seriesColor[0])], umbral: umbralPocos(m) })
+    : null;
   let valor = null;
+  let intervalo = null;
+  let enLimite = false;
   if (v.modo === 'necesario') {
     const base = x(v.mapa.base);
     valor = base === null ? null : formulaDe(v.mapa).calcular(base, v.supuestos);
+    // El intervalo, en los mapas que son el alquiler en alguna unidad (no en el esfuerzo, con la renta)
+    if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen);
   } else {
     const r = v.calculo.calcular(codigo, x);
     valor = r && { ...r, tramo: tramoLlega(r.ratio) };
+    enLimite = Boolean(r) && enLimiteLlega(r.ratio, margen);
   }
-  const { huecoSerie, huecoComparador } = fichaSeccion(el.ficha, {
+  const { huecoContexto, huecoSerie, huecoComparador } = fichaSeccion(el.ficha, {
     t, codigo, territorios, modo: v.modo, mapaId: estado.mapa, mapaDef: v.mapa, ficha: estado.ficha,
     supuestos: v.supuestos, anio: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo,
-    tipologia: v.tipologia, valor, estado: peorEstado(v.seriesColor, i), estados: m.codificacion.estados, ejemplo: m.ejemplo,
+    tipologia: v.tipologia, valor, estado: estadoCifra(v, codigo, x, estadoDe), estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirSeccion(null),
+    fiabilidad, intervalo, enLimite,
   });
+  if (valor === null && !v.fuera) {
+    contextoSinMediana(v, codigo, x)
+      .then((filas) => { if (yo === turnoFicha) fichaContexto(huecoContexto, { t, filas }); })
+      .catch((error) => console.error(error));
+  }
   const series = seriesDeSeccion(codigo, v).catch((error) => { console.error(error); return null; });
   series.then((s) => { if (yo === turnoFicha && s) pintarEvolucion(huecoSerie, s, v, codigo); });
   series.then((s) => pintarComparadorFicha(huecoComparador, s, v, codigo, yo)).catch((error) => console.error(error));
+}
+
+// Contexto de una sección sin mediana del alquiler de su tipología (pregunta 12 ampliada): la
+// mediana de la otra tipología en la sección y la de la misma tipología en su municipio, en la
+// unidad del mapa. Rotulado como contexto, nunca se pinta en el mapa (regla 1). Solo en los mapas
+// del alquiler (los que tienen tipología) y en «¿te llega?».
+async function contextoSinMediana(v, codigo, x) {
+  const base = v.seriesColor[0];
+  if (!tieneTipologia(m, base)) return [];
+  const periodo = columnas[base]?.periodo ?? v.periodo;
+  if (periodo === null || periodo === undefined) return [];
+  const tipologia = v.tipologia ?? 'VC';
+  const otra = tipologia === 'VU' ? 'VC' : 'VU';
+  const serieOtra = serieDeTipologia(m, base, otra);
+  const municipio = codigo.slice(0, 5);
+  const [enSeccion, enMunicipio] = await Promise.all([
+    serieOtra !== base ? valorDe(m, serieOtra, 'sc', codigo, periodo) : null,
+    valorDe(m, base, 'municipio', municipio, periodo),
+  ]);
+  // Cifra en la unidad del mapa: el sueldo necesario o el alquiler, o la proporción del ingreso
+  const enUnidad = (alquiler) => {
+    if (alquiler === null || alquiler === undefined) return null;
+    if (v.modo === 'necesario') {
+      const d = v.mapa.decimales ?? 0;
+      return `${t.numero(formulaDe(v.mapa).calcular(alquiler, v.supuestos), d)} ${t(`indicadores.${estado.mapa}.unidad`)}`;
+    }
+    const r = v.calculo.calcular(codigo, (s) => (s === base ? alquiler : x(s)));
+    return r ? `${t.porcentaje(r.ratio)} ${t('interfaz.ficha.del_ingreso')}` : null;
+  };
+  const filas = [];
+  const cifraSeccion = enUnidad(enSeccion?.valor);
+  if (cifraSeccion) filas.push({ texto: t('interfaz.ficha.contexto_tipologia', { tipologia: t(`vocabulario.tipologia.${otra}`) }), cifra: cifraSeccion });
+  const cifraMunicipio = enUnidad(enMunicipio?.valor);
+  if (cifraMunicipio) {
+    filas.push({
+      texto: t('interfaz.ficha.contexto_municipio', {
+        tipologia: t(`vocabulario.tipologia.${tipologia}`),
+        municipio: ordenNatural(territorios.municipio?.[municipio] ?? municipio),
+      }),
+      cifra: cifraMunicipio,
+    });
+  }
+  return filas;
 }
 
 function pintarEvolucion(hueco, series, v, codigo) {
@@ -297,7 +364,7 @@ function pintarEvolucion(hueco, series, v, codigo) {
     return k < 0 ? { valor: null, estado: indiceEstado('ausente') } : { valor: s.valores[k], estado: s.estados[k] };
   };
   const filas = periodos.map((p) => {
-    const estadoPeor = Math.max(...v.seriesColor.map((s) => en(s, p).estado));
+    const estadoPeor = estadoCifra(v, codigo, (serie) => en(serie, p).valor, (s) => en(s, p).estado);
     let texto = '—';
     if (v.modo === 'necesario') {
       const b = en(base, p).valor;
@@ -395,6 +462,10 @@ async function exportarCsv(v) {
   const datos = v.fuera ? vacia(serie, nivel, codigos?.length ?? 0) : await cargarValores(m, serie, nivel, periodo);
   if (!codigos || !datos) throw new Error(`Sin datos de ${serie} en ${nivel} (${periodo})`);
   const formula = derivado ? formulaDe(v.mapa) : null;
+  // Contratos y margen de la mediana de la serie, si los tiene (columnas contratos y margen_pct)
+  const fia = seriesFiabilidad(m, serie);
+  const columnaDe = async (s) => (s && !v.fuera ? (await cargarValores(m, s, nivel, periodo))?.valores ?? null : null);
+  const fiabilidad = fia ? { contratos: await columnaDe(fia.contratos), margen: await columnaDe(fia.margen) } : null;
   const { cabecera, filas } = tablaCsv({
     t, codigos, valores: datos.valores, estados: datos.estados, nombresEstado: m.codificacion.estados,
     nivel, nombreDe: (codigo) => nombreParaExportar(nivel, codigo),
@@ -405,6 +476,7 @@ async function exportarCsv(v) {
     decimales: decimalesDeEscala(m.indicadores[serie]?.escala ?? m.codificacion.escala),
     supuestos: derivado ? v.supuestos : null,
     desde: v.fuera ? v.fuera.desde : null,
+    fiabilidad,
   });
   const nombre = nombreFichero({ mapa: id, periodo, tipologia: v.tipologia, nivel, extension: 'csv' });
   descargar(new Blob([textoCsv(cabecera, filas)], { type: 'text/csv;charset=utf-8' }), nombre);

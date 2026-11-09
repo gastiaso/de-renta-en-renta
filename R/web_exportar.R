@@ -16,7 +16,10 @@
 #     municipio, para el buscador) y perfiles.json (ingresos de las fichas).
 #
 # Qué se exporta: los indicadores del núcleo de la v0.1 (inventario/indicadores.csv, nucleo_v01)
-# que estén en la tabla larga, en los niveles de NIVELES_WEB. Cada combinación de indicador,
+# que estén en la tabla larga, en los niveles de NIVELES_WEB, y sus auxiliares (columna
+# auxiliar_de: contratos y margen de la mediana del alquiler; preguntas 12 y 15 ampliadas). Cada
+# serie con auxiliares lleva en el manifiesto `fiabilidad` ({"contratos": clave, "margen": clave},
+# de su misma tipología), y el manifiesto, `umbral_pocos_contratos`. Cada combinación de indicador,
 # corte y grupo que ve la web es una «serie» con su clave:
 #   - sin desglose (corte total), la clave es el indicador y el periodo, el año;
 #   - con tipología (SERPAVI), el grupo por defecto (GRUPO_POR_DEFECTO_WEB, vivienda colectiva:
@@ -125,11 +128,31 @@ decimales_web <- function(unidad, escala = ESCALA_WEB) {
   ifelse(escala > ESCALA_WEB, decimales_escala(escala), ifelse(grepl("^%", unidad) | grepl("m\u00b2", unidad), 1L, 0L))
 }
 
-# Filas de la tabla larga que van a la web, con su clave, su grupo en la web y su periodo.
+# Indicadores auxiliares (columna auxiliar_de de inventario/indicadores.csv: los indicadores a los
+# que acompañan, separados por «;»), con su papel en la web: «contratos» o «margen», por el
+# principio de su código. Sin la columna, ninguno.
+PAPELES_AUXILIARES_WEB <- c("contratos", "margen")
+auxiliares_web <- function(indicadores) {
+  vacio <- tibble::tibble(codigo = character(), papel = character(), de = list())
+  if (!"auxiliar_de" %in% names(indicadores)) return(vacio)
+  a <- indicadores[!is.na(indicadores$auxiliar_de) & nzchar(trimws(indicadores$auxiliar_de)), ]
+  if (!nrow(a)) return(vacio)
+  papel <- sub("_.*$", "", a$codigo)
+  if (!all(papel %in% PAPELES_AUXILIARES_WEB)) {
+    stop("Auxiliar sin papel conocido en la web: ", paste(a$codigo[!papel %in% PAPELES_AUXILIARES_WEB], collapse = ", "),
+         call. = FALSE)
+  }
+  tibble::tibble(codigo = a$codigo, papel = papel, de = strsplit(a$auxiliar_de, ";", fixed = TRUE))
+}
+
+# Filas de la tabla larga que van a la web, con su clave, su grupo en la web y su periodo: las
+# del núcleo y las de sus auxiliares.
 series_web <- function(larga, indicadores) {
   nucleo <- indicadores$codigo[indicadores$nucleo_v01 %in% c(TRUE, "TRUE")]
+  aux <- auxiliares_web(indicadores)
+  aux <- aux$codigo[vapply(aux$de, function(d) any(d %in% nucleo), TRUE)]
   x <- larga |>
-    filter(indicador %in% nucleo, nivel %in% NIVELES_WEB, corte %in% CORTES_WEB) |>
+    filter(indicador %in% c(nucleo, aux), nivel %in% NIVELES_WEB, corte %in% CORTES_WEB) |>
     select(geo_id, nivel, anio, indicador, corte, grupo, valor, estado, fuente, version)
   por_defecto <- unname(GRUPO_POR_DEFECTO_WEB[x$corte])
   sin_grupo <- x$corte %in% c("total", "mes")
@@ -138,7 +161,8 @@ series_web <- function(larga, indicadores) {
       periodo = ifelse(corte == "mes", sprintf("%d-%s", anio, substr(grupo, 2, 3)), as.character(anio)),
       grupo_web = ifelse(sin_grupo, "total", grupo),
       clave = ifelse(sin_grupo | grupo == por_defecto, indicador, paste0(indicador, "_", tolower(grupo))),
-      escala = escala_web(indicadores, indicador)
+      escala = escala_web(indicadores, indicador),
+      auxiliar = indicador %in% aux
     )
 }
 
@@ -155,8 +179,9 @@ ruta_valores <- function(ruta, nivel, periodo) {
 
 # Una fila por serie: indicador, corte, grupo, escala, niveles, periodos, ruta, fuente y versión.
 catalogo_web <- function(series) {
+  if (!"auxiliar" %in% names(series)) series$auxiliar <- FALSE
   series |>
-    group_by(clave, indicador, corte, grupo_web, escala) |>
+    group_by(clave, indicador, corte, grupo_web, escala, auxiliar) |>
     summarise(niveles = list(NIVELES_WEB[NIVELES_WEB %in% nivel]), periodos = list(sort(unique(periodo))),
               fuente = paste(sort(unique(fuente)), collapse = ";"), version = max(version), .groups = "drop") |>
     mutate(ruta = ruta_web(clave, corte)) |>
@@ -201,8 +226,12 @@ matriz_web <- function(datos, codigos, periodos, escala = ESCALA_WEB) {
 # Fichas: un JSON por municipio con las series de sus secciones (las series con nivel sc) y, en
 # `series_municipio`, las del propio municipio (las series con nivel municipio). Solo las series
 # por defecto (la ficha usa la vivienda colectiva; las variantes, como alquiler_m2_vu, se leen de
-# los ficheros por periodo).
-series_ficha <- function(catalogo) catalogo[catalogo$clave == catalogo$indicador, ]
+# los ficheros por periodo) y sin las auxiliares (contratos y margen: la ficha las lee de los
+# ficheros del periodo que pinta el mapa; en las fichas pesarían una cuarta parte más).
+series_ficha <- function(catalogo) {
+  auxiliar <- if ("auxiliar" %in% names(catalogo)) catalogo$auxiliar else FALSE
+  catalogo[catalogo$clave == catalogo$indicador & !auxiliar, ]
+}
 
 escribir_fichas_web <- function(series, catalogo, jerarquia, dir_web = "web", prefijo = "datos") {
   catalogo <- series_ficha(catalogo)
@@ -312,18 +341,40 @@ mapas_web <- function(catalogo, indicadores) {
   mapas
 }
 
+# Series de fiabilidad de cada serie del catálogo con auxiliares: {"contratos": clave, "margen":
+# clave}, de la misma tipología (las series sin desglose, como el esfuerzo de residentes, toman
+# la de por defecto, la vivienda colectiva). Una lista con nombre por clave; sin auxiliares, vacía.
+fiabilidad_web <- function(catalogo, indicadores) {
+  aux <- auxiliares_web(indicadores)
+  out <- list()
+  if (!nrow(aux)) return(out)
+  for (k in seq_len(nrow(catalogo))) {
+    c_k <- catalogo[k, ]
+    g <- if (c_k$grupo_web %in% c("VC", "VU")) c_k$grupo_web else GRUPO_POR_DEFECTO_WEB[["tipologia"]]
+    f <- list()
+    for (j in which(vapply(aux$de, function(d) c_k$indicador %in% d, TRUE))) {
+      clave <- catalogo$clave[catalogo$indicador == aux$codigo[j] & catalogo$grupo_web == g]
+      if (length(clave) == 1) f[[aux$papel[j]]] <- clave
+    }
+    if (length(f)) out[[c_k$clave]] <- f
+  }
+  out
+}
+
 # Entradas del manifiesto por serie: niveles, años (o periodos «AAAA-MM»), escala (si no es la de
 # codificacion), decimales y ruta, que es lo que lee web/js/datos.js; con desglose, además, el
 # indicador, el corte y el grupo. Por
-# conveniencia, el número del indicador, la fuente, la versión y las variantes de la serie por
-# defecto (`variantes`: {"VU": "alquiler_m2_vu"}) o la serie por defecto de una variante.
+# conveniencia, el número del indicador (los auxiliares no tienen), la fuente, la versión y las
+# variantes de la serie por defecto (`variantes`: {"VU": "alquiler_m2_vu"}) o la serie por defecto
+# de una variante; con auxiliares, `fiabilidad` (fiabilidad_web()).
 indicadores_manifiesto_web <- function(catalogo, indicadores) {
+  fiabilidad <- fiabilidad_web(catalogo, indicadores)
   entradas <- lapply(seq_len(nrow(catalogo)), function(k) {
     c_k <- catalogo[k, ]
     ind <- c_k$indicador
     fila <- match(ind, indicadores$codigo)
     p <- c_k$periodos[[1]]
-    e <- list(id = indicadores$id[fila])
+    e <- if (is.na(indicadores$id[fila])) list() else list(id = indicadores$id[fila])
     if (!c_k$corte %in% c("total", "mes")) e <- c(e, list(indicador = ind, corte = c_k$corte, grupo = c_k$grupo_web))
     e$niveles <- I(c_k$niveles[[1]])
     if (c_k$corte == "mes") e$periodos <- I(p) else e$anios <- I(as.integer(p))
@@ -336,6 +387,7 @@ indicadores_manifiesto_web <- function(catalogo, indicadores) {
     } else {
       e$por_defecto <- ind
     }
+    if (!is.null(fiabilidad[[c_k$clave]])) e$fiabilidad <- fiabilidad[[c_k$clave]]
     e
   })
   stats::setNames(entradas, catalogo$clave)
@@ -396,6 +448,7 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
     perfiles = if (!is.null(perfiles)) "datos/perfiles.json",
     codificacion = list(escala = ESCALA_WEB, estados = I(ESTADOS_WEB)),
     supuestos = SUPUESTOS_WEB,
+    umbral_pocos_contratos = UMBRAL_POCOS_CONTRATOS,
     indicadores = indicadores_manifiesto_web(catalogo, indicadores),
     mapas = mapas_web(catalogo, indicadores),
     vista_inicial = list(limites = I(LIMITES_INICIALES_WEB))

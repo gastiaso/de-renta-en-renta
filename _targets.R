@@ -238,7 +238,8 @@ bloque_renta_adrh <- list(
 # Fichero manual (descargar_mivau_serpavi() indica dónde bajarlo). Serie desde 2015; País Vasco y
 # Navarra desde su entrada (ruptura serpavi_forales). Las 40 secciones, 36 distritos y 36 municipios
 # del seccionado de 2021 que la base no trae van como «ausente» (compuertas serpavi_seccionado y
-# serpavi_sin_fila).
+# serpavi_sin_fila). Como auxiliares, los contratos de cada mediana (también España) y su margen
+# aproximado (compuertas contratos_mediana, contratos_suma y margen_rango, antes de la tabla larga).
 ULTIMO_ANIO_SERPAVI <- 2024L
 bloque_serpavi <- list(
   tar_target(fichero_serpavi, descargar_mivau_serpavi(ULTIMO_ANIO_SERPAVI), format = "file"),
@@ -247,11 +248,18 @@ bloque_serpavi <- list(
   tar_target(validacion_serpavi, validar_referencias(comprobaciones_serpavi, referencias)),
   tar_target(larga_serpavi, {
     validacion_serpavi   # la compuerta va antes que la armonización
-    armonizar_mivau_serpavi(serpavi, version = version_de(fichero_serpavi),
-                            secciones = secciones_2021$seccion) |>   # lo que la base no trae, «ausente»
+    bind_rows(
+      armonizar_mivau_serpavi(serpavi, version = version_de(fichero_serpavi),
+                              secciones = secciones_2021$seccion),   # lo que la base no trae, «ausente»
+      # contratos y margen de la mediana (auxiliares; plan §11, preguntas 12 y 15 ampliadas)
+      armonizar_fiabilidad_serpavi(serpavi, version = version_de(fichero_serpavi), secciones = secciones_2021$seccion)
+    ) |>
       validar_tabla_larga(indicadores, fuentes, vocabulario)
   }),
-  tar_target(resumen_larga_serpavi, resumen_serpavi(larga_serpavi))
+  tar_target(comprobaciones_fiabilidad, comprobar_fiabilidad_serpavi(larga_serpavi)),
+  tar_target(validacion_fiabilidad, validar_referencias(comprobaciones_fiabilidad, referencias)),
+  tar_target(resumen_larga_serpavi, resumen_serpavi(larga_serpavi)),
+  tar_target(resumen_fiabilidad, resumen_fiabilidad_serpavi(larga_serpavi))
 )
 
 # Indicador 18: hogares en alquiler (%) del Censo 2021, en el seccionado de referencia (sin tabla
@@ -428,10 +436,10 @@ bloque_derivados <- list(
 # Tabla larga única: cada bloque entra después de pasar su compuerta
 bloque_tabla_larga <- list(
   tar_target(tabla_larga, {
-    validacion_sobrecarga; validacion_modulo
+    validacion_sobrecarga; validacion_modulo; validacion_fiabilidad
     bind_rows(
       larga_adrh,
-      larga_serpavi,      # 8 y 9: la tipología como corte; sin filas «total»
+      larga_serpavi,      # 8 y 9, contratos y margen: la tipología como corte; sin filas «total»
       larga_censo2021,    # 18
       larga_vut,          # 19: el mes de referencia en corte y grupo
       larga_derivados,    # 14 y 21 sin desglose; 15 con la ficha (tartera y mochila, 2024) como corte

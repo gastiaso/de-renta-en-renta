@@ -137,7 +137,9 @@
         "estado": "status",
         "fuente": "source",
         "superficie_m2": "floor_area_m2",
-        "umbral": "threshold"
+        "umbral": "threshold",
+        "contratos": "contracts",
+        "margen_pct": "margin_pct"
       },
       "estados": {
         "dato": "data",
@@ -162,7 +164,21 @@
       "sin_seccion_texto": "Common land that belongs to no municipality. The INE assigns it no section and it has no population, so there are no data.",
       "provincias": "Provinces",
       "superficie": "Area",
-      "km2": "{superficie} km²"
+      "km2": "{superficie} km²",
+      "contratos": "Median of {contratos} contracts · approximate margin ±{margen}%",
+      "contratos_sin_margen": "Median of {contratos} contracts",
+      "contratos_secreto": "{contratos} contracts: with fewer than 10, the source does not publish the median",
+      "pocos_contratos": "few contracts",
+      "intervalo": "Between {desde} and {hasta} {unidad}, given the margin of the median",
+      "en_limite": "On the edge between two bands: given the margin of the median, it could fall into the next one.",
+      "contexto": "Context",
+      "contexto_tipologia": "{tipologia} in this tract",
+      "contexto_municipio": "{tipologia} in {municipio}",
+      "contexto_nota": "For reference only: it is not shown on the map, which uses the median of each tract and housing type.",
+      "sin_contratos": {
+        "VC": "No registered rental contracts for flats",
+        "VU": "No registered rental contracts for single-family homes"
+      }
     },
     "comparador": {
       "titulo": "Compare",
@@ -577,6 +593,27 @@
       "definicion": "People aged 16 and over who actively looked for housing in the last 12 months without moving.",
       "calculo": "Published by INE in the tables of the 2025 EU-SILC module on housing access difficulties, with the main reason (mostly price).",
       "lectura": "A one-off measure (2025). It captures those trying to move in and failing, unlike the overburden rate."
+    },
+    "contratos_alquiler": {
+      "nombre": "Rental contracts behind the median",
+      "unidad": "contracts",
+      "definicion": "Number of current main-residence tenancies from which SERPAVI computes the area's median rent, by building type (apartment and single-family).",
+      "calculo": "Count published by the Housing Ministry (SERPAVI). With fewer than 10 tenancies the median is not published; 0 means there are no registered rental contracts, which is not the same as «no data».",
+      "lectura": "Shows how many tenancies support the median: with fewer than 30, the tract profile flags «few contracts». It accompanies 8, 9, 14, 15 and 21 and has no map of its own."
+    },
+    "margen_alquiler_mes": {
+      "nombre": "Approximate margin of the median monthly rent",
+      "unidad": "% of the median",
+      "definicion": "Approximate standard error of the median monthly rent (8), as a percentage of the median, by building type.",
+      "calculo": "0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI quartiles and tenancies (n); only where the median is published (10 or more tenancies).",
+      "lectura": "Order of magnitude of the noise in the median: it assumes a regular distribution within the area and does not correct for current rather than new tenancies. It accompanies 8 and 14."
+    },
+    "margen_alquiler_m2": {
+      "nombre": "Approximate margin of the median rent per m²",
+      "unidad": "% of the median",
+      "definicion": "Approximate standard error of the median rent per square metre (9), as a percentage of the median, by building type.",
+      "calculo": "0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI rent-per-m² quartiles and tenancies (n); only where the median is published (10 or more tenancies).",
+      "lectura": "It also applies to 15 and 21, which are rent per m² in another unit: the profile gives the pay needed with its range and warns when «Can you make rent?» sits on the edge between two bands."
     }
   },
   "fuentes": {

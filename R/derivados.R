@@ -5,7 +5,9 @@
 #      calcula en el navegador con la ficha elegida; en R, solo la mochila y la tartera, como control.
 # El alquiler es siempre el de la vivienda colectiva (pregunta abierta 12). Estado: el peor de sus
 # términos, en el orden dato < estimado < secreto < ausente; sin algún término, ausente (pregunta
-# abierta 15). Numerador y denominador, del mismo año (regla 4).
+# abierta 15). En el 15, el del alquiler: el ingreso de la ficha solo aporta «ausente» cuando
+# falta (pregunta 15 ampliada, 9-nov-2026; estado_barrera()). Numerador y denominador, del mismo
+# año (regla 4).
 # Términos tal como se publican: el alquiler, la renta y el ingreso de la ficha entran redondeados a
 # un decimal con el redondeo de la guía, como los recibe la web, para que la página y R den la misma
 # cifra (pregunta abierta 19). La tabla larga del SERPAVI y del ADRH conserva la precisión de la fuente.
@@ -56,6 +58,13 @@ peor_estado <- function(...) {
 
 con_valor <- function(estado) estado %in% c("dato", "estimado")
 
+# Estado de la barrera (15): el del alquiler; si el ingreso de la ficha no tiene valor (la mochila
+# en los territorios forales, Ceuta y Melilla), «ausente». La calidad del ingreso (la mochila es
+# una estimación) se explica una vez, en el método de la ficha, y no rebaja cada cifra.
+estado_barrera <- function(e_alquiler, e_ingreso) {
+  ifelse(con_valor(e_ingreso), ifelse(is.na(e_alquiler), "ausente", e_alquiler), "ausente")
+}
+
 # Término tal como se publica: redondeo de la guía a un decimal (sprintf, no round()), sin aviso
 # con los NA (pregunta abierta 19).
 termino_publicado <- function(x) {
@@ -102,8 +111,9 @@ calcular_sueldo_necesario <- function(larga_serpavi, superficie = SUPERFICIE_FIC
 
 # Ingreso neto mensual (12 pagas) de cada ficha:
 #   tartera: salario mínimo de cada año de SMI_FICHAS (nacional);
-#   mochila: mochila_neta (método B, neto) de cada provincia, año de la AEAT; sin dato en los
-#     territorios forales, Ceuta y Melilla (ausente). La provincia sale de inventario/provincias_aeat.csv;
+#   mochila: mochila_neta (método B, neto) de cada provincia, año de la AEAT, como «estimado» (el
+#     método B es una estimación; pregunta 15 ampliada); sin dato en los territorios forales, Ceuta
+#     y Melilla (ausente). La provincia sale de inventario/provincias_aeat.csv;
 #   llave: renta neta media por hogar / 12 de cada sección y municipio, con el estado del ADRH.
 # El transistor (pensionista) queda para F3.
 perfiles_fichas <- function(mochila_neta, provincias_aeat, larga_adrh, anio_mochila,
@@ -115,7 +125,7 @@ perfiles_fichas <- function(mochila_neta, provincias_aeat, larga_adrh, anio_moch
   mochila <- provincias_aeat |>
     left_join(select(mochila_neta, nombre_aeat = provincia, neto_mensual), by = "nombre_aeat") |>
     transmute(ficha = "mochila", nivel = "provincia", geo_id = provincia, anio = as.integer(anio_mochila),
-              ingreso = neto_mensual, estado = if_else(is.na(neto_mensual), "ausente", "dato"),
+              ingreso = neto_mensual, estado = if_else(is.na(neto_mensual), "ausente", "estimado"),
               superficie_m2 = superficie, fuente = "aeat_mercado_trabajo")
   llave <- renta_hogar_adrh(larga_adrh) |>
     transmute(ficha = "llave", nivel, geo_id, anio, ingreso = valor / 12, estado,
@@ -142,7 +152,8 @@ ingresos_fichas <- function(perfiles) {
 
 # 15, control en R: alquiler mediano por m² (VC) × superficie / ingreso de la ficha × 100, con el
 # ingreso del mismo año que el alquiler (regla 4): la tartera en los años de SMI_FICHAS con alquiler
-# (2024), la mochila en su año, en las provincias y sus secciones, distritos y municipios.
+# (2024), la mochila en su año, en las provincias y sus secciones, distritos y municipios. Estado:
+# estado_barrera().
 calcular_barrera_acceso <- function(larga_serpavi, perfiles, superficie = SUPERFICIE_FICHA) {
   m2 <- alquiler_vc(larga_serpavi, "alquiler_m2") |> rename(alquiler_m2 = valor, e_alquiler = estado)
   ingresos <- ingresos_fichas(perfiles)
@@ -157,7 +168,7 @@ calcular_barrera_acceso <- function(larga_serpavi, perfiles, superficie = SUPERF
       select(-provincia) |>
       mutate(grupo = "mochila")
   ) |>
-    mutate(estado = peor_estado(e_alquiler, e_ingreso),
+    mutate(estado = estado_barrera(e_alquiler, e_ingreso),
            valor = if_else(con_valor(estado), 100 * alquiler_m2 * superficie / ingreso, NA_real_),
            indicador = "barrera_acceso", corte = "ficha") |>
     select(geo_id, nivel, anio, indicador, corte, grupo, valor, estado)
@@ -204,8 +215,9 @@ terminos_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles,
 
 # Compuerta de los derivados (inventario/referencias_validacion.csv):
 #   derivados_terminos (bloqueo): desviación máxima (%) entre cada cifra y la recalculada con sus términos;
-#   derivados_estado (bloqueo): cifras cuyo estado no es el peor de sus términos, o con valor y estado
-#     secreto o ausente (o al revés);
+#   derivados_estado (bloqueo): cifras cuyo estado no es el peor de sus términos (en el 15, el
+#     del alquiler, o «ausente» sin ingreso: estado_barrera()), o con valor y estado secreto o
+#     ausente (o al revés);
 #   derivados_rango (bloqueo): cifras fuera del rango posible (RANGOS_DERIVADOS);
 #   derivados_rango_detalle (alerta): cada cifra fuera del rango habitual;
 #   smi_neto (bloqueo): ingreso neto de la tartera de 2026 frente a la cifra del plan;
@@ -215,7 +227,8 @@ comprobar_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles, 
   t <- terminos_derivados(derivados, larga_serpavi, larga_adrh, perfiles)
   rango <- c(dato = 1L, estimado = 2L, secreto = 3L, ausente = 4L)
   t <- t |>
-    mutate(esperado = names(rango)[pmax(coalesce(rango[e_num], 4L), coalesce(rango[e_den], 4L))],
+    mutate(esperado = if_else(indicador == "barrera_acceso", estado_barrera(e_num, e_den),
+                              names(rango)[pmax(coalesce(rango[e_num], 4L), coalesce(rango[e_den], 4L))]),
            desviacion = 100 * abs(valor - recalculado) / abs(recalculado))
   etiqueta_derivado <- function(x) if_else(x$indicador == "barrera_acceso", paste(x$indicador, x$grupo), x$indicador)
 

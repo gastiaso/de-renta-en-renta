@@ -158,3 +158,49 @@ test_that("cortes de los mapas: de uno a cinco valores crecientes (seis tramos c
   expect_error(cortes_web("1;3;2"), "crecientes")
   expect_error(suppressWarnings(cortes_web("1;x")), "crecientes")
 })
+
+test_that("auxiliares del alquiler: contratos y margen van a la web con su tipología y la compuerta los comprueba", {
+  ind <- bind_rows(dplyr::mutate(ind_web, auxiliar_de = NA_character_),
+                   tibble::tibble(id = NA, codigo = c("contratos_alquiler", "margen_alquiler_m2", "margen_otro"),
+                                  unidad_es = c("contratos", "% de la mediana", "% de la mediana"), nucleo_v01 = FALSE,
+                                  cortes_web = NA, escala_web = NA,
+                                  auxiliar_de = c("alquiler_m2;sueldo_necesario", "alquiler_m2;sueldo_necesario", "sobrecarga")))
+  aux <- bind_rows(
+    fila_web(c("2800101001", "2800101002", "2800201001"), "sc", 2024, "contratos_alquiler", c(25, 4, 0), corte = "tipologia", grupo = "VC"),
+    fila_web(c("2800101001", "2800201001"), "sc", 2024, "contratos_alquiler", c(12, NA), c("dato", "ausente"),
+             corte = "tipologia", grupo = "VU"),
+    fila_web("28", "provincia", 2024, "contratos_alquiler", 29, corte = "tipologia", grupo = "VC"),
+    fila_web(c("2800101001", "2800201001"), "sc", 2024, "margen_alquiler_m2", c(8.36, 11.75), corte = "tipologia", grupo = "VC"),
+    fila_web("2800101001", "sc", 2024, "margen_alquiler_m2", 20.04, corte = "tipologia", grupo = "VU"),
+    fila_web("13", "ccaa", 2024, "margen_otro", 1)                 # auxiliar de un indicador fuera del núcleo: no va
+  )
+  larga <- bind_rows(larga_web, aux)
+  s <- series_web(larga, ind)
+  expect_setequal(unique(s$clave), c("renta_persona", "alquiler_m2", "alquiler_m2_vu", "viviendas_turisticas",
+                                     "contratos_alquiler", "contratos_alquiler_vu", "margen_alquiler_m2", "margen_alquiler_m2_vu"))
+  expect_error(auxiliares_web(dplyr::mutate(ind, codigo = ifelse(codigo == "margen_otro", "raro_otro", codigo))), "raro_otro")
+  expect_equal(nrow(auxiliares_web(ind_web)), 0L)                  # sin la columna, ninguno
+
+  dir <- tempfile("web_")
+  on.exit(unlink(dir, recursive = TRUE))
+  exportar_web(larga, ind, jer_web, ter_web, perfiles = perfiles_prueba, dir_web = dir, fecha = "2026-11-09")
+  m <- jsonlite::fromJSON(file.path(dir, "datos", "manifiesto.json"), simplifyVector = FALSE)
+  expect_equal(m$umbral_pocos_contratos, UMBRAL_POCOS_CONTRATOS)
+  expect_equal(m$indicadores$alquiler_m2$fiabilidad, list(contratos = "contratos_alquiler", margen = "margen_alquiler_m2"))
+  expect_equal(m$indicadores$alquiler_m2_vu$fiabilidad, list(contratos = "contratos_alquiler_vu", margen = "margen_alquiler_m2_vu"))
+  expect_null(m$indicadores$renta_persona$fiabilidad)
+  expect_null(m$indicadores$contratos_alquiler$id)                   # los auxiliares no tienen número
+  expect_equal(m$indicadores$contratos_alquiler$decimales, 0L)
+  expect_equal(m$indicadores$margen_alquiler_m2$decimales, 1L)
+  expect_equal(m$indicadores$contratos_alquiler$variantes$VU, "contratos_alquiler_vu")
+  expect_null(m$mapas$contratos_alquiler)                           # sin mapa propio
+  leer <- function(r) readLines(file.path(dir, "datos", r))
+  expect_equal(leer("sc/contratos_alquiler/2024.json"), '{"v":[250,40,0],"e":"000"}')   # 0 contratos: dato
+  expect_equal(leer("sc/margen_alquiler_m2/2024.json"), '{"v":[84,null,118],"e":"030"}')
+  f <- jsonlite::fromJSON(file.path(dir, "datos/fichas/28001.json"), simplifyVector = FALSE)
+  expect_false(any(c("contratos_alquiler", "margen_alquiler_m2") %in% names(f$anios)))  # no van en las fichas
+  expect_true("alquiler_m2" %in% names(f$anios))
+  comp <- comprobar_web(larga, ind, jer_web, ter_web, dir, perfiles = perfiles_prueba)
+  expect_true(all(comp$calculado == 0))
+  expect_true(any(grepl("contratos_alquiler", comp$detalle)))
+})

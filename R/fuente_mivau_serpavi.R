@@ -363,6 +363,163 @@ armonizar_mivau_serpavi <- function(serpavi, version, entrada_forales = ENTRADA_
     select(all_of(COLUMNAS_TABLA_LARGA))
 }
 
+# --- Fiabilidad de las medianas (plan §11, preguntas 12 y 15 ampliadas; docs/especificacion_contratos_margen.md)
+#
+# Tres indicadores auxiliares (inventario/indicadores.csv, columna auxiliar_de), con la tipología
+# como corte (grupo VC o VU):
+#   contratos_alquiler: recuento de testigos del SERPAVI, de la sección a España. «dato» cuando la
+#     fuente publica un recuento, también 0; «ausente» cuando la celda viene vacía, la fila falta
+#     (completar_secciones_serpavi()), la provincia foral aún no ha entrado o el municipio o el
+#     distrito no cuadra con sus secciones (los mismos casos en que la mediana va como «ausente»;
+#     preguntas 13 y 26);
+#   margen_alquiler_mes y margen_alquiler_m2: margen aproximado de la mediana del alquiler mensual
+#     (indicadores 8 y 14) y del alquiler por m² (9, 15 y 21), en %, solo donde hay mediana
+#     (margen_mediana()). Es un cálculo del atlas: fuente calculo_propio.
+# Con menos de UMBRAL_POCOS_CONTRATOS contratos, la ficha de la web marca «pocos contratos» (va
+# en el manifiesto de la web, umbral_pocos_contratos).
+UMBRAL_POCOS_CONTRATOS <- 30L
+MINIMO_TESTIGOS_SERPAVI <- 10L       # regla de secreto del SERPAVI: con menos, solo el recuento
+RANGO_MARGEN_MEDIANA <- c(1, 40)     # alerta margen_rango (%), en las secciones
+
+# Margen aproximado de la mediana, en %: error típico relativo de la mediana de n contratos,
+# 1,2533 × σ / √n (√(π/2) σ / √n), con σ ≈ (P75 − P25) / 1,349 (2 × z de 0,75): en total,
+# ≈ 0,929 × (P75 − P25) / (P50 × √n). Supone una distribución regular dentro del territorio y no
+# corrige el sesgo de la fuente (contratos vigentes, no nuevos). NA sin cuartiles, sin mediana
+# positiva o con menos de 10 contratos.
+FACTOR_MARGEN_MEDIANA <- sqrt(pi / 2) / (2 * stats::qnorm(0.75))
+margen_mediana <- function(p25, p50, p75, n) {
+  ok <- !is.na(p25) & !is.na(p50) & !is.na(p75) & !is.na(n) & n >= MINIMO_TESTIGOS_SERPAVI & p50 > 0
+  out <- rep(NA_real_, length(ok))
+  out[ok] <- 100 * FACTOR_MARGEN_MEDIANA * (p75[ok] - p25[ok]) / (p50[ok] * sqrt(n[ok]))
+  out
+}
+
+# Contratos y márgenes en el formato de la tabla larga (ver arriba). Con `secciones`, las
+# secciones, distritos y municipios del seccionado de 2021 que la base no trae van como «ausente»
+# en los contratos, como en armonizar_mivau_serpavi().
+armonizar_fiabilidad_serpavi <- function(serpavi, version, entrada_forales = ENTRADA_SERPAVI_FORALES,
+                                         secciones = NULL) {
+  descuadre <- descuadres_serpavi(serpavi) |> distinct(nivel, codigo, anio, tipologia) |> mutate(descuadre = TRUE)
+  provincia <- ifelse(serpavi$nivel %in% c("ccaa", "nacional"), NA_character_, substr(serpavi$codigo, 1, 2))
+  entrada <- unname(entrada_forales[provincia])
+  base <- serpavi |>
+    mutate(antes_de_entrar = !is.na(entrada) & anio < entrada) |>
+    filter(!nivel %in% c("municipio", "distrito") |
+             paste(nivel, codigo) %in% do.call(paste, unidades_con_secciones(serpavi))) |>
+    left_join(descuadre, by = c("nivel", "codigo", "anio", "tipologia")) |>
+    mutate(estado = if_else(antes_de_entrar | coalesce(descuadre, FALSE) | is.na(testigos), "ausente", "dato"))
+  contratos <- base |>
+    transmute(geo_id = codigo, nivel, anio, indicador = "contratos_alquiler", corte = "tipologia", grupo = tipologia,
+              valor = if_else(estado == "dato", testigos, NA_real_), estado, fuente = "mivau_serpavi")
+  if (!is.null(secciones)) {
+    faltan <- faltan_seccionado_serpavi(base, secciones)
+    if (nrow(faltan)) {
+      sc <- filter(base, nivel == "sc")
+      contratos <- bind_rows(contratos, tidyr::expand_grid(faltan, anio = sort(unique(sc$anio)),
+                                                           grupo = sort(unique(sc$tipologia))) |>
+        transmute(geo_id = codigo, nivel, anio, indicador = "contratos_alquiler", corte = "tipologia", grupo,
+                  valor = NA_real_, estado = "ausente", fuente = "mivau_serpavi"))
+    }
+  }
+  # Margen: donde la mediana es dato (estado_serpavi()), con los cuartiles y el recuento de la fuente
+  con_mediana <- filter(estado_serpavi(serpavi, entrada_forales), estado == "dato")
+  margen <- function(ind) {
+    con_mediana |>
+      transmute(geo_id = codigo, nivel, anio, indicador = paste0("margen_", ind), corte = "tipologia", grupo = tipologia,
+                valor = margen_mediana(.data[[paste0(ind, "_p25")]], .data[[paste0(ind, "_p50")]],
+                                       .data[[paste0(ind, "_p75")]], testigos),
+                estado = "dato", fuente = "calculo_propio") |>
+      filter(!is.na(valor))
+  }
+  bind_rows(contratos, margen("alquiler_mes"), margen("alquiler_m2")) |>
+    mutate(geo_ref = "2021", version = version) |>
+    select(all_of(COLUMNAS_TABLA_LARGA))
+}
+
+# Compuerta de la fiabilidad, sobre la tabla larga (inventario/referencias_validacion.csv):
+#   contratos_mediana (bloqueo): por año, nivel y tipología, territorios cuya mediana y cuyos
+#     contratos no casan con la regla de secreto: con mediana, 10 o más contratos; en secreto, de
+#     1 a 9; en «ausente», 0 o sin recuento (la lógica de secreto_roto, en incoherencias_serpavi());
+#   contratos_suma (bloqueo): contratos de las secciones sumados a provincia, y de las secciones
+#     (sin las provincias forales de una comunidad todavía sin cifra) y de las comunidades sumados
+#     a España (como serpavi_provincia y serpavi_espana, ahora sobre la tabla larga);
+#   margen_rango (alerta): por año, indicador y tipología, secciones con el margen fuera de
+#     RANGO_MARGEN_MEDIANA. En los territorios grandes, el margen baja de forma natural del 1 %.
+comprobar_fiabilidad_serpavi <- function(larga, comunidad_foral = COMUNIDAD_FORAL_SERPAVI, rango = RANGO_MARGEN_MEDIANA) {
+  con <- larga |>
+    filter(indicador == "contratos_alquiler", corte == "tipologia") |>
+    select(geo_id, nivel, anio, grupo, n = valor, e_n = estado)
+  med <- larga |>
+    filter(indicador == "alquiler_mes", corte == "tipologia") |>
+    select(geo_id, nivel, anio, grupo, e_med = estado) |>
+    left_join(con, by = c("geo_id", "nivel", "anio", "grupo")) |>
+    mutate(mal = case_when(
+      e_med == "dato" ~ !(coalesce(e_n, "ausente") == "dato" & coalesce(n, 0) >= MINIMO_TESTIGOS_SERPAVI),
+      e_med == "secreto" ~ !(coalesce(e_n, "ausente") == "dato" & coalesce(n, 0) >= 1 & coalesce(n, 0) < MINIMO_TESTIGOS_SERPAVI),
+      TRUE ~ !(coalesce(e_n, "ausente") == "ausente" | coalesce(n, 0) == 0)))
+  mediana <- med |>
+    group_by(anio, nivel, grupo) |>
+    summarise(calculado = sum(mal), .groups = "drop") |>
+    transmute(id = "contratos_mediana", anio, detalle = paste(nivel, grupo), calculado, referencia = 0)
+
+  sc <- filter(con, nivel == "sc")
+  publicado <- function(niv) con |> filter(nivel == niv) |> transmute(geo_id, anio, grupo, referencia = coalesce(n, 0))
+  provincia <- sc |>
+    group_by(geo_id = substr(geo_id, 1, 2), anio, grupo) |>
+    summarise(calculado = sum(n, na.rm = TRUE), .groups = "drop") |>
+    full_join(publicado("provincia"), by = c("geo_id", "anio", "grupo")) |>
+    transmute(id = "contratos_suma", anio, detalle = paste("provincia", geo_id, grupo),
+              calculado = coalesce(calculado, 0), referencia = coalesce(referencia, 0))
+  ccaa_sin_cifra <- con |> filter(nivel == "ccaa", is.na(n)) |> transmute(ccaa = geo_id, anio, grupo, fuera = TRUE)
+  espana <- bind_rows(
+    sc |>
+      mutate(ccaa = unname(comunidad_foral[substr(geo_id, 1, 2)])) |>
+      left_join(ccaa_sin_cifra, by = c("ccaa", "anio", "grupo")) |>
+      filter(is.na(fuera)) |>
+      group_by(anio, grupo) |> summarise(calculado = sum(n, na.rm = TRUE), .groups = "drop") |>
+      mutate(origen = "secciones"),
+    con |> filter(nivel == "ccaa") |> group_by(anio, grupo) |>
+      summarise(calculado = sum(n, na.rm = TRUE), .groups = "drop") |> mutate(origen = "comunidades")
+  ) |>
+    inner_join(select(publicado("nacional"), -geo_id), by = c("anio", "grupo")) |>
+    transmute(id = "contratos_suma", anio, detalle = paste("Espa\u00f1a desde", origen, grupo), calculado, referencia)
+
+  margen <- larga |>
+    filter(startsWith(indicador, "margen_alquiler"), nivel == "sc", !is.na(valor)) |>
+    group_by(anio, indicador, grupo) |>
+    summarise(calculado = sum(valor < rango[1] | valor > rango[2]), .groups = "drop") |>
+    transmute(id = "margen_rango", anio, detalle = paste(indicador, grupo), calculado, referencia = 0)
+
+  bind_rows(mediana, provincia, espana, margen) |>
+    mutate(calculado = as.numeric(calculado), referencia = as.numeric(referencia))
+}
+
+# Cifras para la nota metodológica: en las secciones con mediana de cada año y tipología, cuántas
+# salen de 10 a 19, de 20 a 29 y de menos de UMBRAL_POCOS_CONTRATOS contratos, la mediana de los
+# contratos y el margen típico (mediana y percentil 90) del alquiler por m² y del mensual; y, en
+# las secciones sin mediana, cuántas tienen 0 contratos y cuántas ningún recuento.
+resumen_fiabilidad_serpavi <- function(larga, umbral = UMBRAL_POCOS_CONTRATOS) {
+  sc <- filter(larga, nivel == "sc", corte == "tipologia")
+  ancho <- sc |>
+    filter(indicador %in% c("alquiler_mes", "contratos_alquiler", "margen_alquiler_m2", "margen_alquiler_mes")) |>
+    select(geo_id, anio, grupo, indicador, valor, estado) |>
+    tidyr::pivot_wider(names_from = indicador, values_from = c(valor, estado))
+  ancho |>
+    group_by(anio, grupo) |>
+    summarise(
+      con_mediana = sum(estado_alquiler_mes == "dato"),
+      de_10_a_19 = sum(estado_alquiler_mes == "dato" & valor_contratos_alquiler < 20),
+      de_20_a_29 = sum(estado_alquiler_mes == "dato" & valor_contratos_alquiler >= 20 & valor_contratos_alquiler < 30),
+      pocos = sum(estado_alquiler_mes == "dato" & valor_contratos_alquiler < umbral),
+      contratos_mediana = stats::median(valor_contratos_alquiler[estado_alquiler_mes == "dato"]),
+      margen_m2_p50 = stats::median(valor_margen_alquiler_m2, na.rm = TRUE),
+      margen_m2_p90 = unname(stats::quantile(valor_margen_alquiler_m2, 0.9, na.rm = TRUE)),
+      margen_mes_p50 = stats::median(valor_margen_alquiler_mes, na.rm = TRUE),
+      sin_mediana_cero = sum(estado_alquiler_mes != "dato" & coalesce(valor_contratos_alquiler, -1) == 0),
+      sin_mediana_vacio = sum(estado_alquiler_mes == "ausente" & is.na(valor_contratos_alquiler)),
+      .groups = "drop")
+}
+
 # Cifras para el informe: secciones con dato, secreto y ausente por año y tipología, y cobertura
 # por provincia (secciones con mediana de vivienda colectiva sobre el total de la provincia).
 resumen_serpavi <- function(larga) {

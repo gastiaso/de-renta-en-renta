@@ -2,6 +2,8 @@
 
 *Encargo de F2. Decisión del autor del 9-nov-2026: preguntas abiertas 12 y 15, ampliadas (plan v0.29, §11). Provisional, como todo el plan.*
 
+**Estado: hecho (9-nov-2026; plan v0.31, backlog, tarea 19).** El margen se guarda como dos indicadores auxiliares (`margen_alquiler_mes` y `margen_alquiler_m2`), sin cambiar el esquema de la tabla larga. `margen_rango` solo se comprueba en las secciones: por encima, el margen baja de forma natural del 1 %. En los datos no hay secciones con mediana y menos de 10 contratos (abajo se citan 118): los únicos casos de la base son siete municipios de vivienda unifamiliar de 2022, que ya van como `ausente`. Detalle y cifras: `docs/metodologia.md`, §7.6.
+
 ## Por qué
 
 **Cobertura (pregunta 12).** En 2024, la vivienda colectiva tiene mediana en 26.137 de las 36.293 secciones. De las 10.156 restantes, solo 2.598 tienen mediana de la unifamiliar: mezclar tipologías apenas ganaría cobertura y rompería el precio por m² de un piso de 50 m². Se mantiene la colectiva. El hueco es sobre todo rural: en los 5.830 municipios de una sola sección, 662 tienen colectiva y 549 más, solo unifamiliar.

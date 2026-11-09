@@ -1,7 +1,7 @@
 {
   "version": "ejemplo",
   "ejemplo": true,
-  "generado": "2026-11-08",
+  "generado": "2026-11-09",
   "seccionado": 2021,
   "mapa_base": {
     "tipo": "geojson",
@@ -36,6 +36,7 @@
     "superficie_m2": 50,
     "umbral": 0.3
   },
+  "umbral_pocos_contratos": 30,
   "indicadores": {
     "renta_persona": {
       "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
@@ -61,6 +62,10 @@
       "variantes": {
         "VU": "alquiler_mes_vu"
       },
+      "fiabilidad": {
+        "contratos": "contratos_alquiler",
+        "margen": "margen_alquiler_mes"
+      },
       "anios": [2020, 2021, 2022, 2023, 2024],
       "ruta": "datos/ejemplo/{nivel}/alquiler_mes/{anio}.json"
     },
@@ -70,12 +75,20 @@
       "variantes": {
         "VU": "alquiler_m2_vu"
       },
+      "fiabilidad": {
+        "contratos": "contratos_alquiler",
+        "margen": "margen_alquiler_m2"
+      },
       "anios": [2020, 2021, 2022, 2023, 2024],
       "ruta": "datos/ejemplo/{nivel}/alquiler_m2/{anio}.json"
     },
     "esfuerzo_residentes": {
       "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
       "decimales": 1,
+      "fiabilidad": {
+        "contratos": "contratos_alquiler",
+        "margen": "margen_alquiler_mes"
+      },
       "anios": [2020, 2021, 2022, 2023, 2024],
       "ruta": "datos/ejemplo/{nivel}/esfuerzo_residentes/{anio}.json"
     },
@@ -95,6 +108,10 @@
       "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
       "decimales": 1,
       "por_defecto": "alquiler_m2",
+      "fiabilidad": {
+        "contratos": "contratos_alquiler_vu",
+        "margen": "margen_alquiler_m2_vu"
+      },
       "anios": [2020, 2021, 2022, 2023, 2024],
       "ruta": "datos/ejemplo/{nivel}/alquiler_m2_vu/{anio}.json"
     },
@@ -102,8 +119,60 @@
       "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
       "decimales": 0,
       "por_defecto": "alquiler_mes",
+      "fiabilidad": {
+        "contratos": "contratos_alquiler_vu",
+        "margen": "margen_alquiler_mes_vu"
+      },
       "anios": [2020, 2021, 2022, 2023, 2024],
       "ruta": "datos/ejemplo/{nivel}/alquiler_mes_vu/{anio}.json"
+    },
+    "contratos_alquiler": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 0,
+      "variantes": {
+        "VU": "contratos_alquiler_vu"
+      },
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/contratos_alquiler/{anio}.json"
+    },
+    "contratos_alquiler_vu": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 0,
+      "por_defecto": "contratos_alquiler",
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/contratos_alquiler_vu/{anio}.json"
+    },
+    "margen_alquiler_m2": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 1,
+      "variantes": {
+        "VU": "margen_alquiler_m2_vu"
+      },
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/margen_alquiler_m2/{anio}.json"
+    },
+    "margen_alquiler_m2_vu": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 1,
+      "por_defecto": "margen_alquiler_m2",
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/margen_alquiler_m2_vu/{anio}.json"
+    },
+    "margen_alquiler_mes": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 1,
+      "variantes": {
+        "VU": "margen_alquiler_mes_vu"
+      },
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/margen_alquiler_mes/{anio}.json"
+    },
+    "margen_alquiler_mes_vu": {
+      "niveles": ["sc", "municipio", "provincia", "ccaa", "nacional"],
+      "decimales": 1,
+      "por_defecto": "margen_alquiler_mes",
+      "anios": [2020, 2021, 2022, 2023, 2024],
+      "ruta": "datos/ejemplo/{nivel}/margen_alquiler_mes_vu/{anio}.json"
     }
   },
   "mapas": {
