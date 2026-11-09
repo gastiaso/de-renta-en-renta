@@ -4,6 +4,11 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Decidido (9-nov-2026, portada y mapa; plan v0.34)
+
+- **Portada** (tarea 24): el tablero completo en la raíz del sitio y el mapa en `mapa.html`, con redirección de los enlaces ya compartidos; antes de anunciar el sitio. Especificación: `docs/especificacion_portada.md`.
+- **Mapa** (tareas 25 y 26): etiqueta con los nombres del territorio al pasar el ratón, y clic con ficha en las escalas de municipio, provincia y comunidad.
+
 Tareas 20–23 (F3 y página «Datos»), hechas en paralelo el 9-nov-2026 con las decisiones del autor de ese día (plan v0.33). Aún no hay release con estos datos: el sitio publicado sigue con los del `v0.1.0`.
 
 ### Añadido (9-nov-2026, F3: tartera de 2015 a 2026 y transistor)

@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.33 · 9 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.34 · 9 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.34:** portada con el tablero completo en la raíz del sitio y el mapa en `mapa.html` (§10.2; `docs/especificacion_portada.md`); mejoras del mapa pedidas por el autor: etiqueta con los nombres del territorio y clic con ficha en las escalas de municipio, provincia y comunidad (backlog, tareas 24–26).
 
 **Cambios en la v0.33:** primeras piezas de F3 y página «Datos», hechas en paralelo el 9-nov-2026, con las decisiones del autor de ese día. (a) Fichas: la tartera, con el SMI de cada año de 2015 a 2026, y su barrera con el alquiler del mismo año, en la tabla larga; la web usa el ingreso de la ficha del año del alquiler (pregunta 18, cerrada del todo). Transistor de 2015 a 2024: pensión media de jubilación del INSS por provincia, × 14, neta con la retención de la AEAT de los pensionistas de su comunidad y año, ÷ 12; País Vasco y Navarra, con la curva de España, como `estimado` (§3.1). (b) Indicadores 4–6 del ADRH, 2015–2024, de la sección a España y con mapa en la web; los huecos forales, `ausente` (§5, §6.4, §6.5; preguntas 38–41). (c) Página «Datos»: descarga, modelo de datos, cobertura por indicador y diccionario generado desde el inventario (§6.6; pregunta 37). (d) Nombres del IGN en el suelo sin sección: 57 de los 95 huecos (§6.6).
 
@@ -702,7 +704,7 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 - **Tablero:** los dos tramos bajos quedan por debajo de 3:1 sobre la crema; es la menos «8 bits».
 
 **Elegido (6-nov-2026): tablero** (entonces con el nombre de trabajo *Casilla de salida*; nombre definitivo en §10.1).
-- **Portada:** el tablero completo.
+- **Portada:** el tablero completo, en la raíz del sitio; el mapa pasa a `mapa.html`, con redirección de los enlaces ya compartidos. Decisión del autor (9-nov-2026): antes de anunciar el sitio. Especificación: `docs/especificacion_portada.md`.
 - **Tipografía:** el juego de cartas clásico, con equivalentes libres (OFL; Yellowtail, Apache 2.0):
   - Jost para el tablero, los titulares y las cifras (en lugar de Kabel y Futura);
   - Marcellus SC para las cabeceras de escritura (en lugar de Copperplate Gothic);
