@@ -4,7 +4,7 @@ Cómo se publica la web (plan §6.6; §11, preguntas abiertas 16 y 21). Comproba
 
 ## Cómo funciona
 
-El sitio se monta en GitHub Actions con el flujo `.github/workflows/pages.yml`. Se ejecuta en cada push a `main` y a mano. Junta dos cosas:
+El sitio se monta en GitHub Actions con el flujo `.github/workflows/pages.yml`. Sitio congelado hasta la v1.0 (decisión del autor, 9-nov-2026): el flujo solo se lanza a mano y monta el código y la nota de la referencia `ref` (por defecto, el commit `cdd9892`, el de la v0.1) con los datos del último release; un push a `main` no publica nada. En la v1.0, `ref` pasa a ser la etiqueta del release y se decide si vuelve a publicar en cada push. Junta dos cosas:
 
 | Parte del sitio | De dónde sale | Por qué |
 |---|---|---|
@@ -160,8 +160,8 @@ Comprobaciones en `https://gastiaso.github.io/de-renta-en-renta/`:
 
 ## Actualizar
 
-- **Cambia el código de la web:** push a `main`. El flujo vuelve a publicar con los datos del último release.
-- **Hasta la v1.0** (sin releases intermedios, decisión del autor, 9-nov-2026): cada push a `main` monta el código nuevo con los datos del `v0.1.0`. El 9-nov-2026 se comprobó que el código del commit `e0d5132` funciona con ellos: la prueba en el navegador no da errores, y lo que necesita datos nuevos (transistor, mapas 4–6, nombres del IGN, SMI de cada año) no aparece.
+- **Hasta la v1.0** (sin releases intermedios, decisión del autor, 9-nov-2026): sitio congelado en la v0.1. Un push a `main` no publica nada; *Actions → Publicar en Pages → Run workflow* vuelve a montar la referencia `ref` (por defecto, `cdd9892`) con los datos del último release (`v0.1.0`). Antes de congelarlo, el sitio llegó a montar el código del commit `e0d5132` con esos datos: la prueba en el navegador no dio errores, y lo que necesita datos nuevos no aparecía.
+- **Cambia el código de la web (desde la v1.0):** se publica la referencia que se pase al flujo (la etiqueta del release).
 - **Cambian los datos:** `tar_make()`, `empaquetar_publicacion()`, release nuevo (paso 4) y `gh workflow run pages.yml` (paso 5). Crear un release no relanza el flujo: un flujo lanzado por un release correría sobre su etiqueta, y el entorno `github-pages` solo admite publicaciones desde `main`.
 - **Cambian a la vez el formato de los datos y el código que los lee:** primero el release y después el push, para que el sitio nunca junte código nuevo con datos viejos.
 - **Volver a unos datos anteriores:** `gh release edit <etiqueta anterior> --latest` y `gh workflow run pages.yml`.

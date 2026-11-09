@@ -7,6 +7,7 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 ### Decidido (9-nov-2026, publicación; plan v0.35)
 
 - **Sin releases hasta la v1.0** (decisión del autor): los cambios de F3 a F6 se acumulan y se publican juntos en la v1.0; v0.2 a v0.4 quedan como hitos internos del plan. El sitio sigue con los datos del `v0.1.0`. El paquete que se preparó para un `v0.1.1` (datos del commit `e0d5132`) no se publica.
+- **Sitio congelado en la v0.1** (decisión del autor): el flujo de Pages solo se lanza a mano y monta una referencia fija (`ref`, por defecto el commit `cdd9892`) con los datos del último release; un push a `main` ya no publica. La página «Datos» vuelve con la v1.0.
 
 ### Decidido (9-nov-2026, portada y mapa; plan v0.34)
 

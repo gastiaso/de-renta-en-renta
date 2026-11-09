@@ -206,8 +206,18 @@ test_that("el flujo de Pages cuadra con el empaquetado", {
   texto <- readLines(ruta, encoding = "UTF-8", warn = FALSE)
   flujo <- yaml::read_yaml(ruta)
   disparadores <- flujo[["on"]] %||% flujo[["TRUE"]]               # yaml lee «on» como lógico
-  expect_setequal(names(disparadores), c("push", "workflow_dispatch"))
-  expect_equal(disparadores$push$branches, "main")
+  # Sitio congelado hasta la v1.0 (plan, pregunta 42): solo a mano, sobre una referencia fija que
+  # existe en el repositorio, y el checkout monta esa referencia.
+  expect_equal(names(disparadores), "workflow_dispatch")
+  ref <- disparadores$workflow_dispatch$inputs$ref
+  expect_true(isTRUE(ref$required))
+  expect_match(ref$default, "^[0-9a-f]{40}$")
+  if (nzchar(Sys.which("git"))) {
+    existe <- suppressWarnings(system2("git", c("cat-file", "-e", paste0(ref$default, "^{commit}")),
+                                       stdout = FALSE, stderr = FALSE))
+    expect_equal(existe, 0L)
+  }
+  expect_equal(flujo$jobs$montar$steps[[1]]$with$ref, "${{ inputs.ref }}")
   expect_length(flujo$permissions, 0)
   expect_setequal(names(flujo$jobs), c("montar", "desplegar"))
   expect_equal(flujo$jobs$montar$permissions, list(contents = "read"))

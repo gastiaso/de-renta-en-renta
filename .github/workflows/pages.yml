@@ -15,10 +15,17 @@
 
 name: Publicar en Pages
 
+# Sitio congelado hasta la v1.0 (decisión del autor, 9-nov-2026; plan §11, pregunta 42): sin
+# releases intermedios, un push a main no publica nada. Se lanza a mano y monta el código y la nota
+# de la referencia `ref` (por defecto, la de la v0.1: commit cdd9892) con los datos del último
+# release. En la v1.0, `ref` pasa a ser la etiqueta del release.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit o etiqueta del código y la nota que se publican
+        required: true
+        default: cdd989271ab5febbd5cff6aeb646a83dc8f1e9fe
 
 permissions: {}
 
@@ -38,6 +45,7 @@ jobs:
       - name: Copiar el repositorio
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.ref }}
           persist-credentials: false
 
       - name: Bajar los ficheros del último release
@@ -128,6 +136,11 @@ jobs:
               --metadata texto_idioma="$(jq -r .interfaz.idioma "$dic")")
             pandoc "docs/$2" "${comunes[@]}" --output "$sitio/$3"
 
+            # La página «Datos» llegó después de la v0.1: con una referencia anterior, no se monta.
+            if [ ! -f web/herramientas/pagina_datos.mjs ] || [ ! -f "docs/$4" ]; then
+              echo "Sin página «Datos» en esta referencia: solo $3."
+              continue
+            fi
             node web/herramientas/pagina_datos.mjs --idioma "$1" --nota "docs/$4" --diccionario "docs/$5" \
               --version "$sitio/descargas/version.json" --cita CITATION.cff \
               --etiqueta "$etiqueta" --repositorio "$GITHUB_REPOSITORY" --salida "$RUNNER_TEMP/datos_$1.md"
@@ -141,6 +154,8 @@ jobs:
           done
 
       - name: Comprobar los límites de Pages
+        env:
+          REF_SITIO: ${{ inputs.ref }}
         run: |
           sitio="$RUNNER_TEMP/sitio"
           total=$(find "$sitio" -type f -printf '%s\n' | awk '{s += $1} END {print s + 0}')
@@ -156,7 +171,7 @@ jobs:
             echo
             echo "- Release: \`$(cat "$RUNNER_TEMP/etiqueta")\`"
             echo "- Datos generados el $(jq -r .fecha "$sitio/descargas/version.json"), commit \`$(jq -r .commit.id "$sitio/descargas/version.json")\`"
-            echo "- Web del commit \`$GITHUB_SHA\`"
+            echo "- Web y nota del commit \`$(git rev-parse HEAD)\` (referencia \`$REF_SITIO\`)"
             echo "- $ficheros ficheros, $(( total / 1000000 )) MB"
           } >> "$GITHUB_STEP_SUMMARY"
 
