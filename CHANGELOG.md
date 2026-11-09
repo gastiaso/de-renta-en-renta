@@ -4,13 +4,13 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
-### Cambiado (9-nov-2026, tras publicar)
-
-- Documentación al día con la v0.1 publicada (plan v0.32): README, `CITATION.cff` (versión 0.1.0, fecha y direcciones), guía, backlog, nota metodológica y `docs/publicacion.md`, donde la comprobación de rangos del PMTiles pasa a hacerse con un `GET` (con `HEAD`, GitHub responde `200` aunque sirva por rangos).
-
 ## [0.1.0] · 9-nov-2026
 
-Primera publicación: release `v0.1.0` (datos de la pasada del commit `573dbf6`) y web en GitHub Pages, https://gastiaso.github.io/de-renta-en-renta/. Lleva el mapa por sección censal y la sección europea de sobrecarga en un solo sitio (no hubo v0.0 aparte). Contra el sitio publicado pasan la prueba en el navegador (`comprobar_web_navegador()`: seis fichas y 300 secciones en los 10 años, sin errores), el mapa base se sirve por rangos y el Parquet de la tabla larga se baja con su suma.
+Primera publicación: release `v0.1.0` (datos de la pasada del commit `573dbf6`) y web en GitHub Pages, https://gastiaso.github.io/de-renta-en-renta/. Lleva el mapa por sección censal y la sección europea de sobrecarga en un solo sitio (no hubo v0.0 aparte). Contra el sitio publicado pasan la prueba en el navegador (`comprobar_web_navegador()`: seis fichas y 300 secciones en los 10 años, sin errores), el mapa base se sirve por rangos y el Parquet de la tabla larga se baja con su suma. La etiqueta `v0.1.0` apunta al commit `573dbf6`; la prueba en el navegador, el paquete y la documentación de la publicación entraron justo después (`38d6870` y `fc7461c`), sin cambiar los datos ni la web.
+
+### Cambiado (9-nov-2026, al publicar)
+
+- Documentación al día con la v0.1 publicada (plan v0.32): README, `CITATION.cff` (versión 0.1.0, fecha y direcciones), guía, backlog, nota metodológica y `docs/publicacion.md`, donde la comprobación de rangos del PMTiles pasa a hacerse con un `GET` (con `HEAD`, GitHub responde `200` aunque sirva por rangos).
 
 ### Añadido (9-nov-2026, primer release)
 
