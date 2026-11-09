@@ -50,7 +50,7 @@ Las capas de los portales tampoco entran en git ni se publican (guía, regla 6).
 2. **Visibilidad.** Con GitHub Free, **Pages solo funciona en repositorios públicos**: «If the account that owns the repository uses GitHub Free or GitHub Free for organizations, the repository must be public» (*Creating a GitHub Pages site*, consultada el 8-nov-2026). Con GitHub Pro se puede publicar desde un repositorio privado, pero el sitio es público igualmente: los sitios privados exigen una organización con GitHub Enterprise Cloud (*GitHub's plans*). El plan prevé un repositorio público (§6.1).
    - En un repositorio público, los *releases* (datos, mapa base y tabla larga) también son públicos.
    - En un repositorio público, Actions no cuesta nada. En uno privado, el flujo gasta minutos del plan (pocos por publicación: a medir en la primera).
-3. **Revisión de privacidad** de todo lo versionado antes del primer push: la historia de git se publica entera.
+3. **Revisión de privacidad** de todo lo versionado antes de hacer público el repositorio: la historia de git se publica entera. Hecha el 9-nov-2026 (31 commits, todos los ficheros de la historia y el paquete del *release*, con los metadatos del PMTiles y del Parquet): sin rutas locales, enlaces privados, secretos, ficheros de datos en bruto ni metadatos de procedencia en los SVG. El correo de autor de cada commit (`git config user.email`) también se publica: GitHub ofrece una dirección `noreply` (*Settings → Emails → Keep my email addresses private*), que vale para los commits nuevos; los ya hechos solo cambian reescribiendo la historia antes de hacer público el repositorio.
 
 ## Paso a paso
 
