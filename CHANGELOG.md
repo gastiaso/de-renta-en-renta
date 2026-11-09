@@ -4,6 +4,14 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Cambiado (9-nov-2026, tras publicar)
+
+- Documentación al día con la v0.1 publicada (plan v0.32): README, `CITATION.cff` (versión 0.1.0, fecha y direcciones), guía, backlog, nota metodológica y `docs/publicacion.md`, donde la comprobación de rangos del PMTiles pasa a hacerse con un `GET` (con `HEAD`, GitHub responde `200` aunque sirva por rangos).
+
+## [0.1.0] · 9-nov-2026
+
+Primera publicación: release `v0.1.0` (datos de la pasada del commit `573dbf6`) y web en GitHub Pages, https://gastiaso.github.io/de-renta-en-renta/. Lleva el mapa por sección censal y la sección europea de sobrecarga en un solo sitio (no hubo v0.0 aparte). Contra el sitio publicado pasan la prueba en el navegador (`comprobar_web_navegador()`: seis fichas y 300 secciones en los 10 años, sin errores), el mapa base se sirve por rangos y el Parquet de la tabla larga se baja con su suma.
+
 ### Añadido (9-nov-2026, primer release)
 
 - Prueba de la web en un navegador (`comprobar_web_navegador()`, `R/web_navegador.R`; `pruebas/testthat/test-navegador.R`): con `chromote`, Chrome sin ventana abre la página (en local, con `node web/servir.mjs`, o ya publicada), recalcula con sus propios módulos el sueldo necesario de una muestra de secciones en todos los años y lee sus contratos y su margen, abre seis fichas (con mediana, con pocos contratos, en secreto, con 0 contratos y «¿te llega?» en el límite y lejos de él) y lo compara con la tabla larga, sin errores de JavaScript ni de carga. Pasa en local.

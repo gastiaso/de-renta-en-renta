@@ -5,7 +5,10 @@ type: software
 authors:
   - family-names: "Astiaso Llamazares"
     given-names: "Guillermo"
-version: "0.0.0-dev"
+version: "0.1.0"
+date-released: "2026-11-09"
+url: "https://gastiaso.github.io/de-renta-en-renta/"
+repository-code: "https://github.com/gastiaso/de-renta-en-renta"
 license: MIT
 keywords:
   - vivienda

@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.31 · 9 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.32 · 9 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.32:** v0.1 publicada (9-nov-2026): release `v0.1.0` (datos del commit `573dbf6`) y web en GitHub Pages, https://gastiaso.github.io/de-renta-en-renta/, con el mapa por sección y la sección de sobrecarga en un solo sitio (no hubo v0.0 aparte). La prueba en el navegador (`comprobar_web_navegador()`) pasa contra el sitio publicado (§7).
 
 **Cambios en la v0.31:** tarea 19 hecha (preguntas 12 y 15 ampliadas): contratos de cada mediana del alquiler y su margen aproximado, como indicadores auxiliares de la tabla larga, con su compuerta; mochila `estimado` y estado de la barrera, el del alquiler; ficha de la web con contratos, margen, «pocos contratos», intervalo, «en el límite», «sin contratos de pisos» y contexto, y CSV con contratos y margen (§7, §11; `docs/metodologia.md`, §7.6).
 
@@ -548,7 +550,8 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
   - Repositorio `gastiaso/de-renta-en-renta` creado y público (9-nov-2026, decisión del autor), tras la revisión de privacidad de toda la historia y con el correo de los commits en `noreply`.
   - Tarea 19, hecha (9-nov-2026): contratos y margen aproximado de la mediana del alquiler en la tabla larga y en la ficha de la web (preguntas 12 y 15 ampliadas).
   - Prueba en el navegador con `chromote` (`comprobar_web_navegador()`, 9-nov-2026): la página, en local o publicada, recalcula una muestra y abre seis fichas, y coincide con R. Paquete del `v0.1.0` preparado.
-  - Falta: el primer *release* y activar Pages (en la web de GitHub); página «Datos».
+  - **Publicada (9-nov-2026):** release `v0.1.0` y web en https://gastiaso.github.io/de-renta-en-renta/. Contra el sitio publicado, la prueba en el navegador pasa entera (seis fichas, 300 secciones en los 10 años, sin errores), el mapa base se sirve por rangos y el Parquet de la tabla larga se baja con su suma. Se cumple el «hecho cuando» de la v0.1.
+  - Falta: página «Datos».
 
 ### F3 · Salarios, fichas completas y supuestos → v0.2 — M
 

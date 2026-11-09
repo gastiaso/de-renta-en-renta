@@ -5,11 +5,11 @@ Atlas web de vivienda y salarios por sección censal, con fichas de perfil («pa
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
 2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.31: fuente de verdad de las decisiones).
+3. `docs/plan_integracion_atlas.md` (plan v0.32: fuente de verdad de las decisiones).
 
-## Estado (8 de noviembre de 2026)
+## Estado (9 de noviembre de 2026)
 
-- Fase F0. Sin datos publicados ni web.
+- v0.1 publicada (9-nov-2026): web en <https://gastiaso.github.io/de-renta-en-renta/>, datos en el release `v0.1.0` de GitHub (`docs/publicacion.md`).
 - Hechas las tareas 0 (entorno y git), 1 (SERPAVI por sección censal), 3 y 4 (comprobaciones e inventario de fuentes), 5 (sobrecarga con la ECV, compuerta superada) y 6 (geografía constante: probada en Madrid y extendida a toda España, con los catastros forales de País Vasco y Navarra). Detalle en el backlog.
 - F2 en marcha (8-nov-2026): indicadores 1–3, 8, 9, 14, 15 (control), 18, 19 y 21 en la tabla larga; jerarquía y mapa base en PMTiles; datos de la web exportados desde el pipeline; web en local con «Tu sueldo», comparador, buscador, barra de la vista, descargas CSV y PNG y la sección «Sobrecarga»; publicación en Pages preparada (`docs/publicacion.md`), sin remoto; nota metodológica en castellano e inglés (`docs/metodologia.md`, `docs/methodology.md`). Detalle en el backlog, al final.
 
@@ -52,7 +52,7 @@ F0 → en paralelo **F1b** (sobrecarga y Europa: publicable pronto, no depende d
 ## Datos
 
 - `datos/brutos/` y `datos/intermedios/`: fuera de git. Se regeneran con el pipeline.
-- `datos/publicados/`: solo derivados que han pasado la compuerta. Ojo con el límite de GitHub: 100 MB por fichero, 1 GB por sitio de Pages.
+- Lo publicado (solo derivados que han pasado la compuerta) sale en un release de GitHub, desde `publicacion/` (`empaquetar_publicacion()`, fuera de git; `docs/publicacion.md`). Ojo con los límites de GitHub: 100 MB por fichero en el sitio, 1 GB por sitio de Pages.
 - No se copian datos en bloque de otras carpetas: el pipeline descarga de la fuente para que todo sea reproducible. Excepción documentada: ficheros que la fuente no deja descargar de forma automática.
 
 ## Identidad

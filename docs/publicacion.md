@@ -56,7 +56,7 @@ Las capas de los portales tampoco entran en git ni se publican (guía, regla 6).
 
 Hace falta la línea de comandos de GitHub (`gh`), con la sesión iniciada (`gh auth login`). Todo lo que se hace con `gh` se puede hacer también en la web de GitHub; se indica en cada paso.
 
-**Estado (9-nov-2026).** Paquete del `v0.1.0` preparado en `publicacion/`, con los datos del commit `573dbf6`, y la prueba en el navegador superada en local. El flujo de Pages está desactivado a mano hasta el primer release (*Actions → Publicar en Pages → Enable workflow* para volver a activarlo). Faltan los pasos 1 (activar Pages), 4 y 5, en la web de GitHub.
+**Estado (9-nov-2026).** Publicado: release `v0.1.0` (datos del commit `573dbf6`) y sitio en <https://gastiaso.github.io/de-renta-en-renta/>, montado por el flujo. Contra el sitio publicado pasan la prueba en el navegador (seis fichas y 300 secciones en los 10 años, sin errores) y las comprobaciones del paso 5.
 
 ### 1. Crear el repositorio y activar Pages
 
@@ -131,10 +131,10 @@ Comprobaciones en `https://gastiaso.github.io/de-renta-en-renta/`:
 - el mapa carga toda España y no aparece la etiqueta «Datos de ejemplo»;
 - el buscador encuentra un municipio y la ficha de una sección muestra su evolución;
 - ES/EN cambian todos los textos;
-- el PMTiles se sirve por rangos (debe responder `206`):
+- el PMTiles se sirve por rangos (debe responder `206` y 16 bytes). La petición tiene que ser un `GET`: con `curl -sI`, que solo pide la cabecera, GitHub responde `200` con el tamaño entero aunque sí sirva por rangos:
 
   ```bash
-  curl -sI -H "Range: bytes=0-15" https://gastiaso.github.io/de-renta-en-renta/teselas/seccionado_2021.pmtiles
+  curl -s -o /dev/null -D - -H "Range: bytes=0-15" https://gastiaso.github.io/de-renta-en-renta/teselas/seccionado_2021.pmtiles
   ```
 
 - `descargas/version.json` dice la fecha y el commit esperados, y `descargas/tabla_larga.parquet` se baja entera.

@@ -2,6 +2,8 @@
 
 > **En construcción.** Nada de lo que hay aquí es definitivo.
 
+**Web:** <https://gastiaso.github.io/de-renta-en-renta/> · **Datos:** [release `v0.1.0`](https://github.com/gastiaso/de-renta-en-renta/releases/tag/v0.1.0)
+
 **Pregunta:** dónde, desde cuándo y para quién se ha roto la relación entre lo que cuesta vivir y la capacidad de pago.
 
 Atlas web de vivienda, salarios y otros indicadores sociales para España, por sección censal y desde 2015. Incluye fichas de perfil (hogar del barrio, joven menor de 35, salario mínimo, pensionista y el sueldo de cada usuario) y una sección europea de sobrecarga por gastos de vivienda con el método de Eurostat.
@@ -10,7 +12,7 @@ Atlas web de vivienda, salarios y otros indicadores sociales para España, por s
 
 ## Estado
 
-Fase F0 (cimientos): inventario, kit de diseño, plan, pipeline con la sobrecarga de la ECV validada contra Eurostat y una prueba de la geografía constante en Madrid. Sin datos publicados ni web todavía.
+v0.1 publicada (9-nov-2026): mapa por sección censal de 2015 a 2024 (renta, alquiler, sueldo necesario, esfuerzo, hogares en alquiler y viviendas turísticas), «Tu sueldo» con las fichas de perfil, la sección europea de sobrecarga y la nota metodológica en castellano e inglés. Los datos (tabla larga en Parquet, mapa base y datos de la web) van en el release `v0.1.0`.
 
 - Plan: `docs/plan_integracion_atlas.md`
 - Primeras tareas: `docs/backlog_f0.md`
@@ -25,7 +27,7 @@ Fase F0 (cimientos): inventario, kit de diseño, plan, pipeline con la sobrecarg
 | `R/` | Funciones por fuente y comunes |
 | `inventario/` | Fuentes, indicadores, rupturas y referencias de validación (CSV) |
 | `geo/` | Seccionado, tablas de paso y geometría de referencia |
-| `datos/` | Brutos e intermedios (fuera de git) y publicados |
+| `datos/` | Brutos e intermedios (fuera de git); lo publicado sale en el release (`publicacion/`, `docs/publicacion.md`) |
 | `web/` | Web (MapLibre, PMTiles, d3) y diccionarios ES/EN |
 | `diseno/` | Identidad: colores, tipografías y fichas |
 | `pruebas/` | Pruebas (`testthat`) |
