@@ -547,7 +547,8 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
   - Preguntas 34–36, cerradas con la propuesta (9-nov-2026) y hechas: serie de sobrecarga de España cortada en 2013; compuerta de las viviendas turísticas por territorio exacta con la tabla 59521 del Censo 2021; empate en el corte de los quintiles, al de arriba.
   - Repositorio `gastiaso/de-renta-en-renta` creado y público (9-nov-2026, decisión del autor), tras la revisión de privacidad de toda la historia y con el correo de los commits en `noreply`.
   - Tarea 19, hecha (9-nov-2026): contratos y margen aproximado de la mediana del alquiler en la tabla larga y en la ficha de la web (preguntas 12 y 15 ampliadas).
-  - Falta: el primer *release* y activar Pages; página «Datos»; prueba con `chromote` (paquete ya instalado y en `renv.lock`).
+  - Prueba en el navegador con `chromote` (`comprobar_web_navegador()`, 9-nov-2026): la página, en local o publicada, recalcula una muestra y abre seis fichas, y coincide con R. Paquete del `v0.1.0` preparado.
+  - Falta: el primer *release* y activar Pages (en la web de GitHub); página «Datos».
 
 ### F3 · Salarios, fichas completas y supuestos → v0.2 — M
 

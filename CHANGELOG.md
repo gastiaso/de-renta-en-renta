@@ -4,6 +4,11 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (9-nov-2026, primer release)
+
+- Prueba de la web en un navegador (`comprobar_web_navegador()`, `R/web_navegador.R`; `pruebas/testthat/test-navegador.R`): con `chromote`, Chrome sin ventana abre la página (en local, con `node web/servir.mjs`, o ya publicada), recalcula con sus propios módulos el sueldo necesario de una muestra de secciones en todos los años y lee sus contratos y su margen, abre seis fichas (con mediana, con pocos contratos, en secreto, con 0 contratos y «¿te llega?» en el límite y lejos de él) y lo compara con la tabla larga, sin errores de JavaScript ni de carga. Pasa en local.
+- Paquete del release `v0.1.0` en `publicacion/` (fuera de git): datos de la web (15,8 MB comprimidos), mapa base (35,3 MB), tabla larga (36,9 MB), `version.json` y `SHA256SUMS`, de la pasada del commit `573dbf6`. El sitio publicado ocupará 167,3 MB en 9.251 ficheros.
+
 ### Añadido (9-nov-2026, tarea 19: contratos y margen del alquiler; plan v0.31)
 
 - Tres indicadores auxiliares en `inventario/indicadores.csv` (columna nueva `auxiliar_de`, sin número ni mapa): `contratos_alquiler`, el recuento de testigos del SERPAVI de cada mediana, con 0 como dato y también España; `margen_alquiler_mes` y `margen_alquiler_m2`, el margen aproximado de la mediana, 0,929 × (P75 − P25) / (P50 × √n), solo donde hay mediana (`margen_mediana()`, `armonizar_fiabilidad_serpavi()`). `larga_serpavi` pasa de 3.932.340 a 5.898.530 filas, y la tabla larga, a 8.561.935.

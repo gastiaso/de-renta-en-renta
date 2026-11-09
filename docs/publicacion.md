@@ -9,9 +9,9 @@ El sitio se monta en GitHub Actions con el flujo `.github/workflows/pages.yml`. 
 | Parte del sitio | De dónde sale | Por qué |
 |---|---|---|
 | `web/` (HTML, JS, estilo, diccionarios, librerías, muestra de `datos/ejemplo/`) | git | Es código: cambia poco y cada cambio se revisa |
-| `datos/` (manifiesto, índices, valores, fichas, perfiles…) | release: `datos_web.tar.gz` | Unos 8.500 ficheros y 75 MB (12,5 MB comprimido); cada actualización los reescribe casi todos y engordaría la historia de git sin aportar nada (pregunta 21) |
-| `teselas/seccionado_2021.pmtiles` | release: `seccionado_2021.pmtiles` | 35,2 MB binarios que se regeneran con el pipeline (pregunta 16) |
-| `descargas/tabla_larga.parquet` | release: `tabla_larga.parquet` | La tabla larga completa (26,6 MB), para la página «Datos» |
+| `datos/` (manifiesto, índices, valores, fichas, perfiles…) | release: `datos_web.tar.gz` | Unos 8.800 ficheros y 92 MB (15,8 MB comprimido); cada actualización los reescribe casi todos y engordaría la historia de git sin aportar nada (pregunta 21) |
+| `teselas/seccionado_2021.pmtiles` | release: `seccionado_2021.pmtiles` | 35,3 MB binarios que se regeneran con el pipeline (pregunta 16) |
+| `descargas/tabla_larga.parquet` | release: `tabla_larga.parquet` | La tabla larga completa (36,9 MB), para la página «Datos» |
 | `descargas/version.json` | release: `version.json` | Fecha, commit, versiones de las fuentes y suma de cada fichero |
 | `metodo.html`, `method.html` | git: se generan en el flujo desde `docs/metodologia.md` y `docs/methodology.md` | La página «Método» sale siempre de la nota que hay en `main` |
 
@@ -56,6 +56,8 @@ Las capas de los portales tampoco entran en git ni se publican (guía, regla 6).
 
 Hace falta la línea de comandos de GitHub (`gh`), con la sesión iniciada (`gh auth login`). Todo lo que se hace con `gh` se puede hacer también en la web de GitHub; se indica en cada paso.
 
+**Estado (9-nov-2026).** Paquete del `v0.1.0` preparado en `publicacion/`, con los datos del commit `573dbf6`, y la prueba en el navegador superada en local. El flujo de Pages está desactivado a mano hasta el primer release (*Actions → Publicar en Pages → Enable workflow* para volver a activarlo). Faltan los pasos 1 (activar Pages), 4 y 5, en la web de GitHub.
+
 ### 1. Crear el repositorio y activar Pages
 
 El repositorio ya existe (9-nov-2026): de este paso solo falta activar Pages. Para crearlo de nuevo, desde la carpeta del proyecto:
@@ -74,7 +76,7 @@ En R, desde la raíz del proyecto:
 
 ```r
 targets::tar_make()                       # pipeline y compuertas, con la exportación de la web
-testthat::test_dir("pruebas/testthat")    # pruebas
+testthat::test_dir("pruebas/testthat")    # pruebas, también la del navegador (test-navegador.R, con chromote)
 empaquetar_publicacion()                  # (tras source("R/publicar.R") si no se ha cargado)
 ```
 
@@ -118,6 +120,14 @@ En la web: *Actions → Publicar en Pages → Run workflow*. El resumen de la ej
 
 Comprobaciones en `https://gastiaso.github.io/de-renta-en-renta/`:
 
+- la prueba en el navegador contra el sitio publicado (`R/web_navegador.R`; Chrome sin ventana, con `chromote`): la página recalcula una muestra de 300 secciones en todos los años y abre seis fichas, y todo coincide con la tabla larga, sin errores de JavaScript ni de carga. Todas las filas deben dar 0:
+
+  ```r
+  comprobar_web_navegador("https://gastiaso.github.io/de-renta-en-renta/",
+                          larga = targets::tar_read(tabla_larga), perfiles = targets::tar_read(perfiles))
+  ```
+
+
 - el mapa carga toda España y no aparece la etiqueta «Datos de ejemplo»;
 - el buscador encuentra un municipio y la ficha de una sección muestra su evolución;
 - ES/EN cambian todos los textos;
@@ -143,13 +153,13 @@ Documentación de GitHub, consultada el 8-nov-2026:
 
 | Límite | Valor | Hoy |
 |---|---|---|
-| Sitio publicado en Pages | 1 GB | 138,6 MB (8.704 ficheros) |
-| Fichero dentro del sitio | 100 MiB (límite de git, que se mantiene también aquí) | 35,2 MB (el PMTiles) |
-| Fichero de un release | menos de 2 GiB; sin límite del total ni de tráfico | 35,2 MB |
+| Sitio publicado en Pages | 1 GB | 167,3 MB (9.251 ficheros) |
+| Fichero dentro del sitio | 100 MiB (límite de git, que se mantiene también aquí) | 36,9 MB (la tabla larga) |
+| Fichero de un release | menos de 2 GiB; sin límite del total ni de tráfico | 36,9 MB |
 | Ficheros por release | 1.000 | 5 |
 | Tráfico de Pages | 100 GB al mes (límite blando) | — |
 | Publicación | 10 minutos como máximo | A medir en la primera |
-| Artefacto que se sube a Pages | 10 GB, sin enlaces simbólicos ni duros | 138,6 MB |
+| Artefacto que se sube a Pages | 10 GB, sin enlaces simbólicos ni duros | 167,3 MB |
 
 El límite de diez publicaciones por hora no se aplica a los flujos propios de Actions.
 
