@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.29 · 9 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.30 · 9 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.30:** SMI de 2021 para la tartera, media de sus dos cuantías ponderada por meses de vigencia (pregunta 18), y orden de trabajo revisado (backlog, «Siguiente»): la tarea 19 va antes del primer *release*.
 
 **Cambios en la v0.29:** preguntas abiertas 12 y 15, ampliadas por decisión del autor: contratos y margen de la mediana del alquiler, «sin contratos de pisos», contexto en la ficha y estado de la barrera sin la calidad del ingreso de la ficha (§11; `docs/especificacion_contratos_margen.md`).
 
@@ -538,10 +540,11 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
   - Web: barra de la vista (mapa, año y tipología) y descargas en CSV y PNG; la página y R coinciden en el sueldo necesario de todas las secciones y años (prueba de node).
   - España en la tabla larga donde la fuente la publica (18 y 19); las 40 secciones que el SERPAVI no trae, como `ausente`.
   - Sección «Sobrecarga» (v0.0) con datos reales: mapa de Europa, escalera, serie, desgloses y módulo de acceso.
-  - Publicación preparada (sin remoto todavía): flujo de Pages, paquete del *release* con comprobaciones, página «Método» generada al publicar y guía (`docs/publicacion.md`).
+  - Publicación preparada: flujo de Pages, paquete del *release* con comprobaciones, página «Método» generada al publicar y guía (`docs/publicacion.md`).
   - Preguntas 22–33, cerradas con la propuesta (8-nov-2026) y hechas: aviso antes del PNG con «Tu ficha», viviendas turísticas con dos decimales, «sin dato» fuera de la serie; comunidades y provincias del 18 y el 19; municipios y distritos de una sección sin SERPAVI, como `ausente`; en la sobrecarga, marcas de Eurostat, serie desde el primer año, cortes en CSV, geometría de Bosnia y Herzegovina y quintil de renta de España.
   - Preguntas 34–36, cerradas con la propuesta (9-nov-2026) y hechas: serie de sobrecarga de España cortada en 2013; compuerta de las viviendas turísticas por territorio exacta con la tabla 59521 del Censo 2021; empate en el corte de los quintiles, al de arriba.
-  - Falta: crear el repositorio y el primer *release* (con GitHub Free, público: decisión del autor); página «Datos»; prueba con `chromote`.
+  - Repositorio `gastiaso/de-renta-en-renta` creado y público (9-nov-2026, decisión del autor), tras la revisión de privacidad de toda la historia y con el correo de los commits en `noreply`.
+  - Falta: el primer *release* y activar Pages; página «Datos»; prueba con `chromote` (paquete ya instalado y en `renv.lock`).
 
 ### F3 · Salarios, fichas completas y supuestos → v0.2 — M
 
@@ -727,7 +730,7 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 16. **Mapa base.** Cerrada (8-nov-2026), con la propuesta: simplificación de 4 unidades de tesela (medio píxel; 35,2 MB, frente a 44,4 MB sin simplificar); el PMTiles no entra en git y se publica desde un *release* del repositorio, que el flujo de Pages copia junto a la web. Códigos postales: la correspondencia sección ↔ CP sale del callejero del INE; bajar los portales de CartoCiudad para una geometría propia se decide en F4.
 17. **Datos de la web.** Cerrada (8-nov-2026), con la propuesta: JSON de enteros (valor × 10 y una cadena con el estado de cada territorio), en lugar del binario: comprimido pesa lo mismo (57–121 KB por indicador y año de sección, según la estimación; en el almacén del 8-nov-2026, de 139 a 291 KB, y de 19 a 98 KB con gzip), GitHub Pages lo comprime y se escribe y revisa más fácil desde R. Series de la ficha: un `fichas/<municipio>.json` con las series de sus secciones (Madrid, unos 350 KB comprimido).
 
-18. **Serie de la tartera.** Cerrada (8-nov-2026), con la propuesta: el SMI de 2015 a 2023 se completa en F3 con las cuantías de los reales decretos de cada año (`SMI_FICHAS`), y cada descarga se pregunta antes. Hasta entonces, la barrera de la tartera con el alquiler del mismo año solo existe para 2024 (control en R), y la web usa el SMI vigente (2026) con el aviso de años distintos (regla 4).
+18. **Serie de la tartera.** Cerrada (8-nov-2026), con la propuesta: el SMI de 2015 a 2023 se completa en F3 con las cuantías de los reales decretos de cada año (`SMI_FICHAS`), y cada descarga se pregunta antes. Hasta entonces, la barrera de la tartera con el alquiler del mismo año solo existe para 2024 (control en R), y la web usa el SMI vigente (2026) con el aviso de años distintos (regla 4). **Ampliada (9-nov-2026), decisión del autor:** 2021 tuvo dos cuantías, 950 € de enero a agosto (la de 2020, prorrogada) y 965 € desde el 1 de septiembre (RD 817/2021); se usa su media ponderada por meses de vigencia, (950 × 8 + 965 × 4) / 12 = 955 € × 14 pagas, coherente con las rentas anuales del ADRH y de la AEAT. Se descarta la cuantía de final de año.
 19. **Sueldo necesario y redondeo.** Cerrada (8-nov-2026), con la propuesta, extendida al control del 15: el 14, el 15 y el 21 se calculan en R desde sus términos redondeados a un decimal con `sprintf("%.1f")` (alquiler, renta por hogar e ingreso de la ficha; `termino_publicado()`). Son los mismos que recibe la web, así que la página y R coinciden exactamente (prueba de §6.5). La tabla larga del SERPAVI y del ADRH conserva la precisión de la fuente. Efecto en el 21: cambian 287.641 de sus 294.082 cifras, 4,18 € de media y 8,33 € como máximo (5 céntimos por m² × 50 / 0,30); la mediana de las secciones en 2024 pasa de 1.220 a 1.217 €. En el 14, la diferencia máxima es de 0,005 puntos, y 1.043 cifras cambian en su primer decimal.
 20. **Tramos del mapa del sueldo necesario.** Cerrada (8-nov-2026): seis tramos, con una rampa nueva de seis pasos (opción a). Con los cortes nacionales de antes (700 · 900 · 1.100 · 1.500 €, quintiles de todas las secciones y años), el centro de las grandes ciudades caía entero en el último tramo: en 2024 llegan a 1.500 € el 97 % de las secciones de Madrid, el 99 % de las de Barcelona y el 32 % de las de España.
     - **Cortes:** 700 · 900 · 1.100 · 1.500 · 2.000 €, nacionales e iguales todos los años (`cortes_web` del indicador 21). En 2024, las secciones quedan repartidas en 9,1 · 12,9 · 17,5 · 28,2 · 19,3 · 13,0 %; en 2015, en 28,6 · 25,1 · 17,0 · 18,7 · 8,6 · 2,0 %. El último tramo reúne todavía el 64 % de las secciones de Madrid y el 84 % de las de Barcelona en 2024.

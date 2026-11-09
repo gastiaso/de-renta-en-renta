@@ -5,7 +5,7 @@ Atlas web de vivienda y salarios por sección censal, con fichas de perfil («pa
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
 2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.28: fuente de verdad de las decisiones).
+3. `docs/plan_integracion_atlas.md` (plan v0.30: fuente de verdad de las decisiones).
 
 ## Estado (8 de noviembre de 2026)
 
@@ -18,7 +18,7 @@ Lectura recomendada antes de tocar nada, en este orden:
 - Todo en español: código, comentarios, nombres de funciones y de ficheros, documentación. Textos visibles en castellano e inglés desde el principio (`web/i18n/`).
 - Textos de fichas, metodología y web: registro impersonal, densos, sin valoraciones ni recomendaciones.
 - Todo es provisional. Lo que se decida se anota en el plan (subiendo su versión) o en `CHANGELOG.md`, en la misma tanda que el cambio.
-- Mensajes de commit en castellano. Remoto en GitHub (`gastiaso/de-renta-en-renta`, desde el 9-nov-2026), privado hasta publicar la v0.0.
+- Mensajes de commit en castellano. Remoto en GitHub: `gastiaso/de-renta-en-renta`, público desde el 9-nov-2026 (decisión del autor), con el correo `noreply` de GitHub en los commits.
 - La nota metodológica tiene dos versiones, `docs/metodologia.md` y `docs/methodology.md`: se cambian a la vez (`test-metodologia.R` comprueba que citan lo mismo y dan las mismas cifras).
 
 ## Orden de trabajo

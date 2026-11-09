@@ -4,6 +4,16 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Decidido (9-nov-2026, SMI de 2021 y orden de trabajo; plan v0.30)
+
+- **SMI de 2021** (18): media de las dos cuantías ponderada por meses de vigencia, 955 € × 14 pagas (950 € hasta agosto, 965 € desde el 1 de septiembre, RD 817/2021).
+- **Orden de trabajo** (backlog, «Siguiente»): desactivar el flujo de Pages hasta el primer *release*; la tarea 19 (contratos y margen) antes de publicar; después, el *release* `v0.1.0` con la prueba de `chromote`.
+
+### Decidido (9-nov-2026, repositorio)
+
+- **Repositorio público** en GitHub, `gastiaso/de-renta-en-renta`, desde su creación (decisión del autor), tras la revisión de privacidad de toda la historia, los ficheros y el paquete del *release* (`docs/publicacion.md`). El correo de autor de los commits pasa a la dirección `noreply` de GitHub, también en los ya hechos: la historia se reescribió con el mismo contenido antes de subirla.
+- **Descargas** (autorizadas por el autor): `chromote` (en `renv.lock`), los reales decretos del SMI de 2015 a 2023 (XML del BOE, comprobados en `inventario/fuentes.csv`; entran en `SMI_FICHAS` en F3) y las unidades administrativas del IGN con código de provincia 53 y 54 (WFS INSPIRE, CC BY 4.0), para nombrar el suelo sin sección.
+
 ### Decidido (9-nov-2026, preguntas abiertas 12 y 15 ampliadas; plan v0.29)
 
 - **Tipología del alquiler** (12): se confirma la colectiva; la ficha distingue «sin contratos de alquiler de pisos registrados» (0 contratos en la fuente: 3.630 secciones en 2024) de «sin dato» y da contexto rotulado sin pintarlo en el mapa.

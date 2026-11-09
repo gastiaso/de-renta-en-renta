@@ -122,7 +122,7 @@ Decidido (8-nov-2026, plan v0.23): la serie del SMI de 2015 a 2023 para la tarte
 9. **Web: barra de la vista y descargas · HECHA.** Selectores de mapa, año y tipología, en la URL; descargas en CSV y PNG sin el sueldo escrito; la página y R coinciden en el sueldo necesario de 550.140 territorios y años (prueba de node).
 10. **Tabla larga: España y huecos del SERPAVI · HECHA.** España donde la fuente la publica (18: 16,10 %; 19: seis periodos), con compuerta; sin España, la renta, el alquiler y sus derivados (regla 1). Las 40 secciones que el SERPAVI no trae, como `ausente`.
 11. **Sección «Sobrecarga» (v0.0) · HECHA.** `web/sobrecarga.html` con datos reales: mapa de Europa, escalera, serie de España y de la UE-27, desgloses con su muestra y módulo de acceso, con su compuerta de ida y vuelta.
-12. **Publicación · PREPARADA.** Flujo de Pages, paquete del *release* (`empaquetar_publicacion()`), página «Método» y guía (`docs/publicacion.md`). Falta crear el repositorio (con GitHub Free, público) y el primer *release*.
+12. **Publicación · PREPARADA.** Flujo de Pages, paquete del *release* (`empaquetar_publicacion()`), página «Método» y guía (`docs/publicacion.md`). Repositorio creado y público (9-nov-2026); falta el primer *release* y activar Pages.
 
 Decidido (8-nov-2026, plan v0.26): las preguntas 22–33, todas con la propuesta. Cuatro tareas en paralelo:
 
@@ -137,11 +137,13 @@ Decidido (8-nov-2026, plan v0.26): las preguntas 22–33, todas con la propuesta
 
 19. **Contratos y margen del alquiler · POR HACER (9-nov-2026, plan v0.29).** Preguntas 12 y 15 ampliadas: número de contratos y margen aproximado de la mediana en la tabla larga, «sin contratos de pisos», contexto y aviso «en el límite» en la ficha, y estado de la barrera sin la calidad del ingreso. Especificación y criterio de hecho: `docs/especificacion_contratos_margen.md`.
 
-**Siguiente:**
-- contratos y margen del alquiler (tarea 19);
-- remoto creado (9-nov-2026), privado; pasa a público al publicar la v0.0, porque Pages con GitHub Free lo exige;
-- descargas por preguntar (SMI de 2015 a 2023, `chromote`);
-- página «Datos» (la tabla larga en Parquet ya va en el *release*);
-- prueba con `chromote` (la página recalcula una muestra en el navegador y coincide con R).
+**Siguiente** (orden revisado el 9-nov-2026, decisión del autor):
+1. **Ahora:** desactivar el flujo «Publicar en Pages» hasta el primer *release* (sin él, cada push a `main` falla en público; la primera ejecución, del 9-nov-2026, falló) y borrar la copia de la historia anterior que deja `filter-branch` (`git update-ref -d refs/original/refs/heads/main`; solo local, pero lleva el correo antiguo).
+2. **Contratos y margen del alquiler** (tarea 19). Bloquea la publicación: «¿te llega?» no sale sin contratos ni margen (falsa precisión, §2.7 y pregunta 15).
+3. **Primer *release* `v0.1.0` y Pages** (`docs/publicacion.md`): regenerar el paquete con `empaquetar_publicacion()`, reactivar el flujo y comprobar la publicación con la prueba de `chromote` (la página recalcula una muestra en el navegador y coincide con R). Con el flujo actual no hay v0.0 aparte: el primer sitio lleva el mapa y la sobrecarga.
+4. **SMI de 2015 a 2023** en `SMI_FICHAS` (reales decretos ya comprobados, `inventario/fuentes.csv`). 2021, decidido (9-nov-2026, pregunta 18): media de las dos cuantías ponderada por meses de vigencia, 955 € × 14 pagas. Cotizaciones del trabajador de cada año, por confirmar en su orden de cotización (propuesta: 6,35 % hasta 2022 y 6,45 % en 2023, con el 0,10 % del MEI).
+5. **Página «Datos»** (la tabla larga en Parquet ya va en el *release*).
+6. **F3:** transistor (pensión de jubilación del INSS), indicadores 4–6 y percentil salarial.
+7. **Nombres del suelo sin sección:** unidades del IGN ya descargadas (`datos/brutos/ign_au/`), que nombran 55 de los 95 huecos y 1.176 de los 1.495 km². Poco valor: al final.
 
 **Hecho cuando** (v0.1, plan §7): la validación pasa, la web se publica en Pages y hay una nota metodológica.

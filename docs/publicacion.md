@@ -46,11 +46,11 @@ Las capas de los portales tampoco entran en git ni se publican (guía, regla 6).
 
 ## Antes de la primera publicación: decisiones del autor
 
-1. **Cuándo se crea el repositorio.** El nombre ya está decidido, `gastiaso/de-renta-en-renta` (plan §6.1; backlog, 7-nov-2026), y da la dirección del sitio: `https://gastiaso.github.io/de-renta-en-renta/`. Si cambia, basta con cambiarlo en los comandos de esta guía: el flujo no lleva el nombre.
-2. **Visibilidad.** Con GitHub Free, **Pages solo funciona en repositorios públicos**: «If the account that owns the repository uses GitHub Free or GitHub Free for organizations, the repository must be public» (*Creating a GitHub Pages site*, consultada el 8-nov-2026). Con GitHub Pro se puede publicar desde un repositorio privado, pero el sitio es público igualmente: los sitios privados exigen una organización con GitHub Enterprise Cloud (*GitHub's plans*). El plan prevé un repositorio público (§6.1).
+1. **Cuándo se crea el repositorio.** Creado el 9-nov-2026. El nombre ya estaba decidido, `gastiaso/de-renta-en-renta` (plan §6.1; backlog, 7-nov-2026), y da la dirección del sitio: `https://gastiaso.github.io/de-renta-en-renta/`. Si cambia, basta con cambiarlo en los comandos de esta guía: el flujo no lleva el nombre.
+2. **Visibilidad.** Con GitHub Free, **Pages solo funciona en repositorios públicos**: «If the account that owns the repository uses GitHub Free or GitHub Free for organizations, the repository must be public» (*Creating a GitHub Pages site*, consultada el 8-nov-2026). Con GitHub Pro se puede publicar desde un repositorio privado, pero el sitio es público igualmente: los sitios privados exigen una organización con GitHub Enterprise Cloud (*GitHub's plans*). El plan prevé un repositorio público (§6.1). Decisión del autor (9-nov-2026): público desde su creación.
    - En un repositorio público, los *releases* (datos, mapa base y tabla larga) también son públicos.
    - En un repositorio público, Actions no cuesta nada. En uno privado, el flujo gasta minutos del plan (pocos por publicación: a medir en la primera).
-3. **Revisión de privacidad** de todo lo versionado antes de hacer público el repositorio: la historia de git se publica entera. Hecha el 9-nov-2026 (31 commits, todos los ficheros de la historia y el paquete del *release*, con los metadatos del PMTiles y del Parquet): sin rutas locales, enlaces privados, secretos, ficheros de datos en bruto ni metadatos de procedencia en los SVG. El correo de autor de cada commit (`git config user.email`) también se publica: GitHub ofrece una dirección `noreply` (*Settings → Emails → Keep my email addresses private*), que vale para los commits nuevos; los ya hechos solo cambian reescribiendo la historia antes de hacer público el repositorio.
+3. **Revisión de privacidad** de todo lo versionado antes de hacer público el repositorio: la historia de git se publica entera. Hecha el 9-nov-2026 (31 commits, todos los ficheros de la historia y el paquete del *release*, con los metadatos del PMTiles y del Parquet): sin rutas locales, enlaces privados, secretos, ficheros de datos en bruto ni metadatos de procedencia en los SVG. El correo de autor de cada commit (`git config user.email`) también se publica: GitHub ofrece una dirección `noreply` (*Settings → Emails → Keep my email addresses private*), que vale para los commits nuevos; los ya hechos solo cambian reescribiendo la historia antes de hacer público el repositorio. Hecho el 9-nov-2026: la historia se reescribió con la dirección `noreply` (`git filter-branch --env-filter`, mismo contenido en cada commit) y se subió a un repositorio recién creado, para que no quedara en GitHub ningún commit con el correo anterior.
 
 ## Paso a paso
 
@@ -58,7 +58,7 @@ Hace falta la línea de comandos de GitHub (`gh`), con la sesión iniciada (`gh 
 
 ### 1. Crear el repositorio y activar Pages
 
-Desde la carpeta del proyecto:
+El repositorio ya existe (9-nov-2026): de este paso solo falta activar Pages. Para crearlo de nuevo, desde la carpeta del proyecto:
 
 ```bash
 gh repo create gastiaso/de-renta-en-renta --public --source . --remote origin
