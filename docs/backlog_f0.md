@@ -135,8 +135,12 @@ Decidido (8-nov-2026, plan v0.26): las preguntas 22–33, todas con la propuesta
 
 18. **Preguntas 34–36 · HECHA (9-nov-2026, plan v0.28).** Serie de sobrecarga de España cortada en 2013, ruptura del atlas que Eurostat no marca (34); compuerta `vut_territorios` exacta con la tabla 59521 del Censo 2021 y ruptura `vut_denominador_2024` (35); empate en el corte de los quintiles, al de arriba (36).
 
+19. **Contratos y margen del alquiler · POR HACER (9-nov-2026, plan v0.29).** Preguntas 12 y 15 ampliadas: número de contratos y margen aproximado de la mediana en la tabla larga, «sin contratos de pisos», contexto y aviso «en el límite» en la ficha, y estado de la barrera sin la calidad del ingreso. Especificación y criterio de hecho: `docs/especificacion_contratos_margen.md`.
+
 **Siguiente:**
-- decisiones del autor: remoto y visibilidad; descargas por preguntar (SMI de 2015 a 2023, `chromote`);
+- contratos y margen del alquiler (tarea 19);
+- remoto creado (9-nov-2026), privado; pasa a público al publicar la v0.0, porque Pages con GitHub Free lo exige;
+- descargas por preguntar (SMI de 2015 a 2023, `chromote`);
 - página «Datos» (la tabla larga en Parquet ya va en el *release*);
 - prueba con `chromote` (la página recalcula una muestra en el navegador y coincide con R).
 

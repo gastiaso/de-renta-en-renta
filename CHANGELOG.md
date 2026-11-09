@@ -4,6 +4,11 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Decidido (9-nov-2026, preguntas abiertas 12 y 15 ampliadas; plan v0.29)
+
+- **Tipología del alquiler** (12): se confirma la colectiva; la ficha distingue «sin contratos de alquiler de pisos registrados» (0 contratos en la fuente: 3.630 secciones en 2024) de «sin dato» y da contexto rotulado sin pintarlo en el mapa.
+- **Estado de los derivados** (15): el ingreso de la ficha solo aporta `ausente`; se añaden contratos, margen aproximado de la mediana, la marca «pocos contratos» y el aviso «en el límite». Especificación: `docs/especificacion_contratos_margen.md` (backlog, tarea 19).
+
 ### Decidido (9-nov-2026, preguntas abiertas 34–36; plan v0.28)
 
 - **Ruptura de 2013 en la serie de sobrecarga** (34): la serie de España se corta en 2013, cuando el INE pasa a obtener los ingresos de la ECV combinando la entrevista con registros administrativos, aunque Eurostat no lo marca. `ecv_ingresos_2013` pasa a `aplicado` en `inventario/rupturas.csv`.
