@@ -1,15 +1,19 @@
 # Registro de cambios
 
-Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.0 (sobrecarga y Europa), v0.1 (núcleo por sección censal), v0.2 a v0.4 (salarios, compraventa, presión y portales), v1.0.
+Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.0 (sobrecarga y Europa), v0.1 (núcleo por sección censal), v0.2 a v0.4 (salarios, compraventa, presión y portales), v1.0. Tras la v0.1 no hay releases intermedios: lo de F3 a F6 se acumula en «Sin publicar» y sale junto en la v1.0; v0.2 a v0.4 quedan como hitos internos (decisión del autor, 9-nov-2026).
 
 ## [Sin publicar]
+
+### Decidido (9-nov-2026, publicación; plan v0.35)
+
+- **Sin releases hasta la v1.0** (decisión del autor): los cambios de F3 a F6 se acumulan y se publican juntos en la v1.0; v0.2 a v0.4 quedan como hitos internos del plan. El sitio sigue con los datos del `v0.1.0`. El paquete que se preparó para un `v0.1.1` (datos del commit `e0d5132`) no se publica.
 
 ### Decidido (9-nov-2026, portada y mapa; plan v0.34)
 
 - **Portada** (tarea 24): el tablero completo en la raíz del sitio y el mapa en `mapa.html`, con redirección de los enlaces ya compartidos; antes de anunciar el sitio. Especificación: `docs/especificacion_portada.md`.
 - **Mapa** (tareas 25 y 26): etiqueta con los nombres del territorio al pasar el ratón, y clic con ficha en las escalas de municipio, provincia y comunidad.
 
-Tareas 20–23 (F3 y página «Datos»), hechas en paralelo el 9-nov-2026 con las decisiones del autor de ese día (plan v0.33). Aún no hay release con estos datos: el sitio publicado sigue con los del `v0.1.0`.
+Tareas 20–23 (F3 y página «Datos»), hechas en paralelo el 9-nov-2026 con las decisiones del autor de ese día (plan v0.33). No habrá release con estos datos hasta la v1.0: el sitio publicado sigue con los del `v0.1.0`.
 
 ### Añadido (9-nov-2026, F3: tartera de 2015 a 2026 y transistor)
 

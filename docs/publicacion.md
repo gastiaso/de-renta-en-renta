@@ -125,7 +125,7 @@ gh release create v0.1.0 publicacion/* --target main --latest --title "v0.1.0" -
 
 En la web: *Releases → Draft a new release*, etiqueta `v0.1.0` sobre `main`, arrastrar los cinco ficheros de `publicacion/`, marcar *Set as the latest release* y publicar.
 
-Las etiquetas siguen la versión del atlas (`v0.1.0`, `v0.1.1`…). Si solo cambian los datos, basta con un release nuevo.
+Las etiquetas siguen la versión del atlas. Tras el `v0.1.0`, el siguiente es el `v1.0.0`: sin releases intermedios (decisión del autor, 9-nov-2026).
 
 ### 5. Publicar y comprobar
 
@@ -161,6 +161,7 @@ Comprobaciones en `https://gastiaso.github.io/de-renta-en-renta/`:
 ## Actualizar
 
 - **Cambia el código de la web:** push a `main`. El flujo vuelve a publicar con los datos del último release.
+- **Hasta la v1.0** (sin releases intermedios, decisión del autor, 9-nov-2026): cada push a `main` monta el código nuevo con los datos del `v0.1.0`. El 9-nov-2026 se comprobó que el código del commit `e0d5132` funciona con ellos: la prueba en el navegador no da errores, y lo que necesita datos nuevos (transistor, mapas 4–6, nombres del IGN, SMI de cada año) no aparece.
 - **Cambian los datos:** `tar_make()`, `empaquetar_publicacion()`, release nuevo (paso 4) y `gh workflow run pages.yml` (paso 5). Crear un release no relanza el flujo: un flujo lanzado por un release correría sobre su etiqueta, y el entorno `github-pages` solo admite publicaciones desde `main`.
 - **Cambian a la vez el formato de los datos y el código que los lee:** primero el release y después el push, para que el sitio nunca junte código nuevo con datos viejos.
 - **Volver a unos datos anteriores:** `gh release edit <etiqueta anterior> --latest` y `gh workflow run pages.yml`.

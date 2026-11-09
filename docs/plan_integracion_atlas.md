@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.34 · 9 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.35 · 9 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.35:** sin releases intermedios: tras la v0.1, lo de F3 a F6 se acumula y se publica junto en la v1.0; v0.2 a v0.4 quedan como hitos internos (decisión del autor, 9-nov-2026; §7, pregunta 42).
 
 **Cambios en la v0.34:** portada con el tablero completo en la raíz del sitio y el mapa en `mapa.html` (§10.2; `docs/especificacion_portada.md`); mejoras del mapa pedidas por el autor: etiqueta con los nombres del territorio y clic con ficha en las escalas de municipio, provincia y comunidad (backlog, tareas 24–26).
 
@@ -487,7 +489,7 @@ Junto a ella, `metadatos.json` con fichas bilingües, rupturas, supuestos por de
 
 ## 7. Fases
 
-Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, con una publicación. El tamaño es relativo (M = mediano, L = grande).
+Sin fechas. Cada fase se cierra con un criterio verificable. F1b y F2 se publicaron juntas en la v0.1 (9-nov-2026); desde entonces no hay releases intermedios: F3, F4 y F5 se cierran sin publicar (v0.2 a v0.4 quedan como hitos internos) y todo sale junto en la v1.0, con F6 (decisión del autor, 9-nov-2026). El tamaño es relativo (M = mediano, L = grande).
 
 ### F0 · Cimientos — M
 
@@ -561,7 +563,7 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
   - Página «Datos» hecha (9-nov-2026, pregunta 37): `datos.html` y `data.html`, generadas con pandoc en el flujo de Pages, con la descarga, el modelo de datos, la cobertura por indicador y el diccionario que genera R desde el inventario.
   - Nombres del suelo sin sección (9-nov-2026): 57 de los 95 huecos y 1.176,5 km², con el nombre y el tipo de la unidad del IGN en la capa y en la ficha (§6.6).
 
-### F3 · Salarios, fichas completas y supuestos → v0.2 — M
+### F3 · Salarios, fichas completas y supuestos → v0.2 (hito interno) — M
 
 - **Contenido:**
   - indicadores 4–7 completos (por edad, forales);
@@ -576,7 +578,7 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
   - Indicadores 4–6 del ADRH, 2015–2024, de la sección a España, con su compuerta y tres mapas en la web; los huecos forales, `ausente`.
   - Falta: indicador 7 completo (por edad, forales), la mochila en cinco pasos y su serie, el percentil salarial, 14 pagas, segundo sueldo y banda SERPAVI–oferta en la ficha, y el módulo de supuestos.
 
-### F4 · Compraventa → v0.3 — M
+### F4 · Compraventa → v0.3 (hito interno) — M
 
 - **Contenido:**
   - indicadores 10–12, 16 y 17;
@@ -584,7 +586,7 @@ Sin fechas. Cada fase se cierra con un criterio verificable y, salvo F0 y F1, co
   - tipo hipotecario medio.
 - **Hecho cuando:** el Notariado y la tasación son coherentes dentro de un umbral razonado y las condiciones de reutilización del Notariado están verificadas.
 
-### F5 · Presión y portales → v0.4 — M
+### F5 · Presión y portales → v0.4 (hito interno) — M
 
 - **Contenido:** indicadores 13 y 20, con la capa desmontable probada (apagar y encender sin romper la web).
 - **Hecho cuando:** el interruptor funciona y la capa privada está etiquetada en todas partes.
@@ -780,6 +782,7 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 39. **Forales en los indicadores 4–6.** Cerrada (9-nov-2026), decisión del autor: `ausente` antes de su entrada en el ADRH (Navarra hasta 2020, Álava hasta 2019, Gipuzkoa en 2015); Eustat y Nastat, descartados porque miden otra cosa.
 40. **Reproyección de los indicadores 4 y 5.** Cerrada (9-nov-2026), retando la propuesta inicial: medias ponderadas (renta bruta; población), validadas con la agregación a municipio; el Gini, con la regla de medianas.
 41. **Indicadores 4–6 en la web.** Cerrada (9-nov-2026): mapas ya, con cortes en `inventario/indicadores.csv` y en el comparador.
+42. **Releases intermedios.** Cerrada (9-nov-2026), decisión del autor: ninguno hasta la v1.0. Los cambios de F3 a F6 se acumulan en `main` y en el CHANGELOG («Sin publicar»); el sitio sigue con los datos del `v0.1.0`. Descartado un `v0.1.1` con los datos de las tareas 20–23, ya empaquetado.
 
 **Por verificar en F0** (no son decisiones, son comprobaciones), hechas el 6-nov-2026:
 - cortes de edad de la AEAT (<18, 18–25, 26–35, 36–45, 46–55, 56–65, >65) y módulo de año completo (desde 2019; ver §3.1);
