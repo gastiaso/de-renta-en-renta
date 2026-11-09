@@ -27,7 +27,6 @@
   "interfaz": {
     "idioma": "Language",
     "navegacion": "Site sections",
-    "proximamente": "Coming soon",
     "ejemplo_nota": "Made-up values to test the site: not data.",
     "error_carga": "The map data could not be loaded.",
     "mapa": {
@@ -84,6 +83,8 @@
       "vivienda_m2": "{superficie} m²",
       "vivienda_llave": "the tract's median home",
       "ingreso_euros": "€{euros} net a month",
+      "ingreso_euros_anio": "€{euros} net a month in {anio} (€{euros_ultimo} in {ultimo})",
+      "nota_transistor": "It answers “if I had to rent today”: 89.1% of people aged over 65 live in a home they own (ECV 2023).",
       "ingreso_provincia": "the income of “{ficha}” in each province",
       "ingreso_llave": "the average household income of the tract, divided by 12",
       "sin_datos": "No tracts with data for this calculation.",
@@ -158,6 +159,7 @@
       "evolucion": "Over time",
       "evolucion_llega": "Rent as a share of income over time",
       "ingreso_fijo": "Today's income in every year: only rent changes.",
+      "ingreso_anio": "With the token's income for each year: both rent and income change.",
       "del_ingreso": "of income goes on rent",
       "alquiler_ingreso": "Rent: €{alquiler} · income: €{ingreso} a month",
       "sin_seccion": "Area without a census section",
@@ -165,6 +167,13 @@
       "provincias": "Provinces",
       "superficie": "Area",
       "km2": "{superficie} km²",
+      "nombre": "Name",
+      "tipo": "Type",
+      "tipo_ign": {
+        "condominio": "Condominium: land held jointly by several municipalities",
+        "territorio": "Territory outside any province"
+      },
+      "fuente_ign": "Name and type: Spanish National Geographic Institute (IGN), administrative units (derived work from BDDAE 2026 CC-BY 4.0 ign.es).",
       "contratos": "Median of {contratos} contracts · approximate margin ±{margen}%",
       "contratos_sin_margen": "Median of {contratos} contracts",
       "contratos_secreto": "{contratos} contracts: with fewer than 10, the source does not publish the median",
@@ -457,23 +466,23 @@
     "peso_salarios": {
       "nombre": "Share of wages in income",
       "unidad": "% of gross income",
-      "definicion": "Share of the tract average gross income that comes from wages.",
-      "calculo": "Published by INE (ADRH, income by source).",
-      "lectura": "Links neighbourhood income to wages: a low share means income depends more on pensions, benefits or other income."
+      "definicion": "Share of the gross income of the tract's residents that comes from wages.",
+      "calculo": "Published by INE (ADRH, income by source: wages, pensions, unemployment benefits, other benefits and other income, adding up to 100). Years published on another tract map are carried to the 2021 tracts as a mean weighted by each tract's gross income (average gross income per person × population); where a tract has to be split, the status becomes «estimated». Municipalities, provinces, regions and Spain use the published figure.",
+      "lectura": "Links neighbourhood income to wages: a low share means income depends more on pensions, benefits or other income. No data for Álava until 2019, Gipuzkoa in 2015 or most of Navarre until 2020."
     },
     "bajo_60_mediana": {
       "nombre": "Population below 60% of median income per consumption unit",
       "unidad": "% of population",
-      "definicion": "Population with income per consumption unit below 60% of the national median.",
-      "calculo": "Published by INE (ADRH); for the Basque Country and Navarre, by Eustat and Nastat.",
-      "lectura": "National threshold, not regional: the same income counts the same everywhere, although living costs differ."
+      "definicion": "Population with income per consumption unit below 60% of the Spanish median (until 2022, the median of the common tax territory, without the Basque Country and Navarre).",
+      "calculo": "Published by INE (ADRH, relative thresholds, both sexes). Years published on another tract map are carried to the 2021 tracts as a population-weighted mean, since the threshold is the same across Spain each year; where a tract has to be split, the status becomes «estimated». Municipalities, provinces, regions and Spain use the published figure.",
+      "lectura": "National threshold, not regional: the same income counts the same everywhere, although living costs differ. Break in 2023: the threshold moves from the median of the common tax territory to that of all of Spain. No data for Álava until 2019, Gipuzkoa in 2015 or Navarre until 2020."
     },
     "gini": {
       "nombre": "Gini index",
       "unidad": "index (0–100)",
       "definicion": "Gini index of income per consumption unit in the tract: 0 if everyone has the same income, 100 if one person holds all of it.",
-      "calculo": "Published by INE (ADRH).",
-      "lectura": "Measures inequality within the neighbourhood, not between neighbourhoods."
+      "calculo": "Published by INE (ADRH), which first replaces the lowest 1.5% and the highest 1.5% of incomes with the nearest value. On other tract maps the value of a single source tract is copied (the same tract or one contributing at least 95% of street numbers); if none dominates, it is left blank. Municipalities, provinces, regions and Spain use the published figure.",
+      "lectura": "Measures inequality within the neighbourhood, not between neighbourhoods. No data for Álava until 2019, Gipuzkoa in 2015 or Navarre until 2020."
     },
     "salario_medio": {
       "nombre": "Average annual wage per employee (total and under 35)",
@@ -535,7 +544,7 @@
       "nombre": "Rental access barrier",
       "unidad": "% of reference income",
       "definicion": "Share of a token’s net monthly income (minimum wage, under-35, pensioner or the user’s own pay) that 50 m² of rent in the tract would take.",
-      "calculo": "Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token; if the income is not from the same year as the rent (this year’s minimum wage against the latest published rent), this is stated.",
+      "calculo": "Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token, with the token’s income from the same year as the rent (each year’s minimum wage and pension); if the token lacks that year (the under-35 one, 2024 only), the latest is used and this is stated.",
       "lectura": "Measures the barrier to moving in with a given income. Read by bands (up to 30%, 30–40% and over 40%), not as an exact figure."
     },
     "anios_salario_compra": {
@@ -632,6 +641,7 @@
     "ine_vut": "Tourist dwellings (experimental statistics)",
     "zonas_tensionadas": "Declarations of stressed residential market zones",
     "ine_seccionado": "Census tract boundaries (annual)",
+    "ign_au": "IGN administrative units (BDDAE): condominiums and territories outside any province",
     "ine_callejero": "Electoral census street directory (street segments by tract)",
     "catastro_inspire": "Cadastre buildings (INSPIRE)",
     "catastro_foral": "Foral cadastre buildings (INSPIRE)",
@@ -688,7 +698,8 @@
     },
     "ficha": {
       "tartera": "Minimum wage",
-      "mochila": "Under-35"
+      "mochila": "Under-35",
+      "transistor": "Pensioner"
     },
     "mes": {
       "M02": "February",

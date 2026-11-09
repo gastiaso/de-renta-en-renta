@@ -1,4 +1,4 @@
-/* De renta en renta · páginas de texto (hoy, «Método»). Se carga después de tokens.css y sitio.css,
+/* De renta en renta · páginas de texto («Método» y «Datos»). Se carga después de tokens.css y sitio.css,
    con la misma cabecera que el mapa; solo usa las variables de tokens.css. */
 
 /* El tablero del mapa ocupa la ventana y no se desplaza; el de un texto crece con él. */
@@ -93,6 +93,9 @@
   text-align: left;
 }
 .documento-texto thead th { background: var(--color-placa); font-family: var(--fuente-tablero); }
+/* «Datos»: los códigos de las tablas (indicadores, niveles, cortes, valores), enteros, sin partirlos;
+   las listas de códigos se parten entre uno y otro */
+.documento-datos .documento-texto td code { overflow-wrap: normal; white-space: nowrap; }
 
 @media (max-width: 760px) {
   .tablero.documento { border-width: 0; border-radius: 0; }

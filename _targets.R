@@ -36,6 +36,8 @@ inventario <- list(
   # Diccionarios ES/EN de la web: las secciones de indicadores, fuentes y vocabulario salen del inventario
   tar_target(ficheros_i18n, exportar_i18n(indicadores, fuentes, vocabulario), format = "file"),
   tar_target(validacion_i18n, validar_referencias(comprobar_i18n(ficheros_i18n), referencias)),
+  # Página «Datos»: valores de las columnas y diccionario de indicadores, en docs/ (ES y EN)
+  tar_target(ficheros_diccionario_datos, exportar_diccionario_datos(indicadores, vocabulario, fuentes), format = "file"),
   # Kit de diseño (tarea 9): tokens.css, tipografías autoalojadas y contrastes
   tar_target(fichero_tokens, "diseno/tokens.json", format = "file"),
   tar_target(tokens, jsonlite::read_json(fichero_tokens)),
@@ -233,6 +235,44 @@ bloque_renta_adrh <- list(
   })
 )
 
+# F3: indicadores 4–6 del ADRH (R/fuente_ine_adrh_distribucion.R): peso de los salarios en la renta,
+# población por debajo del 60 % de la mediana e índice de Gini. Tres tablas de secciones de toda
+# España (2,1 GB; se leen por trozos en unos 30 s) y tres de totales (España, comunidades y
+# provincias). El 4 y el 5 se reproyectan como medias ponderadas (renta bruta; población) y el 6,
+# con la regla de medianas; los huecos forales, «ausente» (decisiones del autor, 9-nov-2026).
+ADRH_FUENTES <- "30825"      # distribución por fuente de ingresos
+ADRH_UMBRALES <- "30829"     # umbrales relativos por sexo
+ADRH_GINI_P80 <- "37677"     # índice de Gini y P80/P20
+ADRH_TOTALES <- c(fuentes = "53687", umbrales = "53694", gini = "53688")
+bloque_adrh_distribucion <- list(
+  tar_target(fichero_adrh_fuentes, descargar_ine_adrh(ADRH_FUENTES), format = "file"),
+  tar_target(fichero_adrh_umbrales, descargar_ine_adrh(ADRH_UMBRALES), format = "file"),
+  tar_target(fichero_adrh_gini, descargar_ine_adrh(ADRH_GINI_P80), format = "file"),
+  tar_target(ficheros_adrh_totales, vapply(ADRH_TOTALES, descargar_ine_adrh, character(1)), format = "file"),
+  tar_target(fuentes_ingreso_adrh, leer_ine_adrh_distribucion(fichero_adrh_fuentes, ADRH_FUENTES_INGRESO, AMBITO)),
+  tar_target(umbrales_adrh, leer_ine_adrh_distribucion(fichero_adrh_umbrales, ADRH_UMBRALES_DEBAJO, AMBITO)),
+  tar_target(gini_adrh, leer_ine_adrh_distribucion(fichero_adrh_gini, ADRH_GINI, AMBITO)),
+  tar_target(totales_adrh_distribucion, bind_rows(
+    leer_ine_adrh_totales(ficheros_adrh_totales[1], ADRH_FUENTES_INGRESO, ccaa, territorios_2021, ambito = AMBITO),
+    leer_ine_adrh_totales(ficheros_adrh_totales[2], ADRH_UMBRALES_DEBAJO, ccaa, territorios_2021, ambito = AMBITO),
+    leer_ine_adrh_totales(ficheros_adrh_totales[3], ADRH_GINI, ccaa, territorios_2021, ambito = AMBITO)
+  )),
+  tar_target(renta_bruta_adrh, leer_ine_adrh(fichero_adrh_renta, "Renta bruta media por persona", AMBITO)),
+  tar_target(pesos_adrh_distribucion_secciones, pesos_adrh_distribucion(pesos_adrh_prueba, renta_bruta_adrh)),
+  tar_target(comprobaciones_adrh_distribucion,
+             comprobar_ine_adrh_distribucion(fuentes_ingreso_adrh, umbrales_adrh, gini_adrh, totales_adrh_distribucion,
+                                             pesos_adrh_distribucion_secciones, ambito = AMBITO)),
+  tar_target(validacion_adrh_distribucion, validar_referencias(comprobaciones_adrh_distribucion, referencias)),
+  tar_target(larga_adrh_distribucion, {
+    validacion_adrh_distribucion; validacion_f1   # las compuertas van antes que la armonización
+    armonizar_ine_adrh_distribucion(seleccionar_adrh_distribucion(fuentes_ingreso_adrh, umbrales_adrh, gini_adrh),
+                                    seleccionar_adrh_distribucion(totales_adrh_distribucion),
+                                    pesos_adrh_distribucion_secciones, tablas_paso_adrh,
+                                    version = version_de(fichero_adrh_fuentes)) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  })
+)
+
 # Indicadores 8 y 9 (SERPAVI, MIVAU): alquiler mensual y por m², mediana y cuartiles por tipología,
 # de la sección a la comunidad. Toda la serie viene en el seccionado de 2021: sin tabla de paso.
 # Fichero manual (descargar_mivau_serpavi() indica dónde bajarlo). Serie desde 2015; País Vasco y
@@ -386,6 +426,41 @@ bloque_mochila <- list(
   )
 )
 
+# Ficha «transistor» (F3; plan §3.1, método decidido por el autor el 9-nov-2026): pensión media de
+# jubilación del INSS por provincia, media de los doce meses de cada año de 2015 a 2024
+# (R/fuente_inss_pensiones.R), neta de la retención de la AEAT de quienes solo cobran pensiones, de
+# su comunidad y año (País Vasco y Navarra, con la de España: «estimado»), repartida en 12
+# (R/ficha_transistor.R). Compuerta: las provincias reproducen las cifras de comunidad y España
+# publicadas en el mismo Excel.
+retenciones_por_anio <- tarchetypes::tar_map(
+  values = list(anio_transistor = ANIOS_TRANSISTOR), names = "anio_transistor",
+  tar_target(paginas_retenciones_transistor, descargar_aeat_mochila("retenciones", anio_transistor), format = "file"),
+  tar_target(retenciones_pensionistas,
+             retenciones_pensiones(leer_aeat_mercado(paginas_retenciones_transistor), anio_transistor, ccaa))
+)
+bloque_transistor <- list(
+  tar_target(fichero_provincias_inss, "inventario/provincias_inss.csv", format = "file"),
+  tar_target(provincias_inss, readr::read_csv(fichero_provincias_inss, col_types = "cccc")),
+  tar_target(excel_inss, unlist(lapply(ANIOS_TRANSISTOR, descargar_inss_pensiones)), format = "file"),
+  tar_target(inss_mensual, armonizar_inss_pensiones(leer_inss_pensiones(excel_inss), provincias_inss)),
+  tar_target(validacion_inss, validar_referencias(comprobar_inss_pensiones(inss_mensual, provincias_inss), referencias)),
+  tar_target(inss_anual, {
+    validacion_inss   # la compuerta va antes que la media anual
+    anual_inss_pensiones(inss_mensual)
+  }),
+  retenciones_por_anio,
+  tarchetypes::tar_combine(retenciones_transistor, retenciones_por_anio[["retenciones_pensionistas"]],
+                           command = dplyr::bind_rows(!!!.x)),
+  tar_target(transistor, calcular_transistor(inss_anual, retenciones_transistor)),
+  tar_target(validacion_transistor, validar_referencias(comprobar_transistor(transistor), referencias)),
+  tar_target(fichero_transistor, {
+    ruta <- "datos/intermedios/transistor/transistor.csv"
+    dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
+    readr::write_csv(mutate(transistor, across(where(is.double), ~ round(.x, 4))), ruta)
+    ruta
+  }, format = "file")
+)
+
 # F1: jerarquía territorial (sección → distrito → municipio → provincia → comunidad) y mapa base
 # del seccionado de referencia (2021) en PMTiles, con GDAL (R/geo_mapa_base.R). La jerarquía va a
 # geo/ (CSV, en git); el PMTiles, a geo/referencia/ (fuera de git). Solo el mapa base:
@@ -400,27 +475,37 @@ mapa_base <- list(
     validacion_jerarquia
     exportar_jerarquia(jerarquia_2021, territorios_2021, sufijo = SUFIJO_AMBITO)
   }, format = "file"),
+  # Unidades administrativas del IGN (condominios; R/fuente_ign_au.R): nombres del suelo sin sección
+  tar_target(ficheros_ign, ficheros_ign_au(), format = "file"),
+  tar_target(unidades_ign, leer_ign_au(ficheros_ign)),
   # Disolución de las capas y suelo sin sección (≈ 4,5 min) y teselas en un solo paso (≈ 7 min en
   # total, 8-nov-2026): las capas no se guardan
   tar_target(fichero_mapa_base, {
     validacion_jerarquia
-    generar_pmtiles(geo_capas_mapa_base(secciones_2021, jerarquia_2021, territorios_2021),
+    generar_pmtiles(geo_capas_mapa_base(secciones_2021, jerarquia_2021, territorios_2021, unidades_ign),
                     sprintf("geo/referencia/mapa_base_2021%s.pmtiles", SUFIJO_AMBITO))
   }, format = "file"),
   tar_target(resumen_mapa_base, pmtiles_resumen(fichero_mapa_base)),
-  tar_target(validacion_mapa_base, validar_referencias(comprobar_mapa_base(fichero_mapa_base, secciones_2021),
-                                                       referencias))
+  tar_target(validacion_mapa_base, validar_referencias(
+    comprobar_mapa_base(fichero_mapa_base, secciones_2021, unidades_ign), referencias))
 )
 
 # Indicadores derivados (R/derivados.R): 14 (esfuerzo de residentes), 21 (sueldo neto necesario,
 # mapa por defecto: 50 m² y umbral del 30 %) y 15 (barrera de acceso: se calcula en la web; aquí,
-# la mochila y la tartera de 2024 como control). Alquiler de vivienda colectiva; estado, el peor de
-# sus términos (plan, preguntas abiertas 12 y 15); numerador y denominador del mismo año (regla 4).
-# `perfiles`: ingreso neto mensual de cada ficha (tartera, mochila y llave), para la web.
+# la tartera de 2015 a 2024, la mochila de 2024 y el transistor de 2015 a 2024, como control).
+# Alquiler de vivienda colectiva; estado, el peor de sus términos (plan, preguntas abiertas 12 y 15);
+# numerador y denominador del mismo año (regla 4).
+# `perfiles`: ingreso neto mensual de cada ficha (tartera, mochila, transistor y llave), para la web.
 bloque_derivados <- list(
   tar_target(fichero_provincias_aeat, "inventario/provincias_aeat.csv", format = "file"),
   tar_target(provincias_aeat, readr::read_csv(fichero_provincias_aeat, col_types = "ccc")),
-  tar_target(perfiles, perfiles_fichas(mochila_neta, provincias_aeat, larga_adrh, anio_mochila = ANIO_AEAT)),
+  # Salario mínimo de la tartera (SMI_FICHAS, 2015–2026) frente a los XML del BOE (2015–2023)
+  tar_target(xml_boe_smi, descargar_boe_smi(), format = "file"),
+  tar_target(validacion_smi, validar_referencias(comprobar_smi_boe(leer_boe_smi(xml_boe_smi)), referencias)),
+  tar_target(perfiles, {
+    validacion_smi; validacion_transistor
+    perfiles_fichas(mochila_neta, provincias_aeat, larga_adrh, anio_mochila = ANIO_AEAT, transistor = transistor)
+  }),
   tar_target(resumen_perfiles_llave, resumen_llave(perfiles)),
   tar_target(derivados, armonizar_derivados(larga_serpavi, larga_adrh, perfiles)),
   tar_target(comprobaciones_derivados,
@@ -439,10 +524,11 @@ bloque_tabla_larga <- list(
     validacion_sobrecarga; validacion_modulo; validacion_fiabilidad
     bind_rows(
       larga_adrh,
+      larga_adrh_distribucion,   # 4–6 (F3): secciones, municipios y totales publicados
       larga_serpavi,      # 8 y 9, contratos y margen: la tipología como corte; sin filas «total»
       larga_censo2021,    # 18
       larga_vut,          # 19: el mes de referencia en corte y grupo
-      larga_derivados,    # 14 y 21 sin desglose; 15 con la ficha (tartera y mochila, 2024) como corte
+      larga_derivados,    # 14 y 21 sin desglose; 15 con la ficha (tartera, mochila y transistor) como corte
       armonizar_sobrecarga_ecv(sobrecarga_ecv, sobrecarga_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)),
       armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa)),
       armonizar_ine_ecv_modulo_cortes(modulo_edad, modulo_tenencia, version = version_de(fichero_modulo_edad))
@@ -493,4 +579,4 @@ bloque_web <- list(
   })
 )
 
-list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_mochila, bloque_derivados, bloque_tabla_larga, bloque_web)
+list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_mochila, bloque_transistor, bloque_derivados, bloque_tabla_larga, bloque_web)

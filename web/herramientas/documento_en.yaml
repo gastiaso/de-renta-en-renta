@@ -1,12 +1,17 @@
-# «Method» page in English (Pages workflow: pandoc with plantilla_documento.html).
-# Texts shared with the site (title, subtitle, menu) come from web/i18n/en.json.
+# Text pages in English (Pages workflow: pandoc with plantilla_documento.html). These are the
+# values of the «Method» page; the «Data» page loads datos_en.yaml afterwards, which changes its
+# own. Texts shared with the site (title, subtitle, menu) come from web/i18n/en.json.
 lang: en
 en: true
 pagetitle: "Method · De renta en renta"
 descripcion: "Methodological note of De renta en renta: sources, constant geography, validation and indicators."
-pagina: method.html
 mapa: "./?idioma=en"
 sobrecarga: "sobrecarga.html?idioma=en"
+datos: data.html
+metodo: method.html
+actual_metodo: true
+pagina_es: metodo.html
+pagina_en: method.html
 otro_idioma: es
 otra_pagina: metodo.html
 texto_indice: "Contents"

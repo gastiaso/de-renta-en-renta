@@ -79,7 +79,8 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_false(m$ejemplo)
   expect_equal(m$mapa_base$capas$secciones$id, "seccion")
   expect_null(m$mapa_base$capas$sin_seccion$id)                          # sin código: no entra en índices
-  expect_equal(unlist(m$mapa_base$capas$sin_seccion$atributos), c("km2", "provincias"))
+  expect_equal(unlist(m$mapa_base$capas$sin_seccion$atributos), c("km2", "provincias", "nombre", "tipo"))
+  expect_equal(m$mapa_base$atribucion, "INE, IGN")
   expect_equal(m$indices$sc, "datos/indices/sc.json")
   expect_equal(unlist(jsonlite::fromJSON(file.path(dir, m$indices$nacional))), "00")
   expect_equal(unlist(jsonlite::fromJSON(file.path(dir, m$indices$municipio))), c("28001", "28002"))

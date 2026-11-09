@@ -1,6 +1,7 @@
-$-- Plantilla de pandoc para las páginas de texto del sitio (hoy, «Método»: la nota metodológica).
-$-- La usa el flujo de Pages (.github/workflows/pages.yml); los textos de cada idioma salen de
-$-- web/herramientas/documento_<idioma>.yaml y de web/i18n/<idioma>.json. Estas líneas no salen.
+$-- Plantilla de pandoc para las páginas de texto del sitio: «Método» (la nota metodológica) y
+$-- «Datos» (descarga y diccionario de la tabla larga). La usa el flujo de Pages
+$-- (.github/workflows/pages.yml); los textos de cada idioma salen de documento_<idioma>.yaml, de
+$-- datos_<idioma>.yaml en la página «Datos» y de web/i18n/<idioma>.json. Estas líneas no salen.
 <!doctype html>
 <html lang="$lang$">
 <head>
@@ -15,7 +16,7 @@ $-- web/herramientas/documento_<idioma>.yaml y de web/i18n/<idioma>.json. Estas 
   <link rel="stylesheet" href="estilo/documento.css">
 </head>
 <body>
-  <div class="tablero documento">
+  <div class="tablero documento$if(actual_datos)$ documento-datos$endif$">
     <header class="cabecera">
       <div class="marca">
         <p class="marca-titulo"><a href="$mapa$">$titulo$</a></p>
@@ -24,11 +25,12 @@ $-- web/herramientas/documento_<idioma>.yaml y de web/i18n/<idioma>.json. Estas 
       <nav class="navegacion" aria-label="$texto_navegacion$">
         <a href="$mapa$">$texto_mapa$</a>
         <a href="$sobrecarga$">$texto_sobrecarga$</a>
-        <a href="$pagina$" aria-current="page">$texto_metodo$</a>
+        <a href="$datos$"$if(actual_datos)$ aria-current="page"$endif$>$texto_datos$</a>
+        <a href="$metodo$"$if(actual_metodo)$ aria-current="page"$endif$>$texto_metodo$</a>
       </nav>
       <div class="idioma" role="group" aria-label="$texto_idioma$">
-        <a href="metodo.html" lang="es" hreflang="es"$if(es)$ aria-current="page"$endif$>ES</a>
-        <a href="method.html" lang="en" hreflang="en"$if(en)$ aria-current="page"$endif$>EN</a>
+        <a href="$pagina_es$" lang="es" hreflang="es"$if(es)$ aria-current="page"$endif$>ES</a>
+        <a href="$pagina_en$" lang="en" hreflang="en"$if(en)$ aria-current="page"$endif$>EN</a>
       </div>
     </header>
     <main class="documento-cuerpo">

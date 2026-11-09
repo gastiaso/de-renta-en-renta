@@ -43,10 +43,16 @@ export function provinciasSinSeccion(codigos, territorios) {
 }
 
 // Ficha del suelo sin sección (capa sin_seccion del mapa base): terreno comunal que no es de
-// ningún término municipal. Sin datos: qué es, las provincias que lo rodean y su superficie.
-export function fichaSinSeccion(contenedor, { t, km2, provincias, territorios, alCerrar }) {
+// ningún término municipal. Sin datos: qué es, las provincias que lo rodean y su superficie. Si el
+// trozo es de una unidad del IGN, su nombre (el literal del IGN) y su tipo, con la fuente al pie.
+export function fichaSinSeccion(contenedor, { t, km2, provincias, nombre = null, tipo = null, territorios, alCerrar }) {
   const nombres = provinciasSinSeccion(provincias, territorios);
   const datos = crear('dl', 'ficha-territorios');
+  if (nombre) {
+    datos.append(crear('dt', null, t('interfaz.ficha.nombre')), crear('dd', null, nombre));
+    const claveTipo = `interfaz.ficha.tipo_ign.${tipo}`;
+    if (tipo) datos.append(crear('dt', null, t('interfaz.ficha.tipo')), crear('dd', null, t.existe(claveTipo) ? t(claveTipo) : tipo));
+  }
   if (nombres.length) {
     const etiqueta = nombres.length === 1 ? 'vocabulario.nivel.provincia' : 'interfaz.ficha.provincias';
     datos.append(crear('dt', null, t(etiqueta)), crear('dd', null, nombres.join(', ')));
@@ -60,6 +66,7 @@ export function fichaSinSeccion(contenedor, { t, km2, provincias, territorios, a
     crear('p', 'ficha-codigo', t('interfaz.ficha.sin_seccion')),
     datos,
     crear('p', 'ficha-estado', t('interfaz.ficha.sin_seccion_texto')),
+    ...(nombre ? [crear('p', 'ficha-estado', t('interfaz.ficha.fuente_ign'))] : []),
   );
 }
 

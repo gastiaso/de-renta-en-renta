@@ -1,0 +1,9 @@
+# Página «Datos» en castellano: se carga después de documento_es.yaml y cambia lo propio de esta
+# página (el texto sale de docs/datos.md con web/herramientas/pagina_datos.mjs).
+pagetitle: "Datos · De renta en renta"
+descripcion: "Descarga de la tabla larga de De renta en renta en Parquet: modelo de datos, diccionario de indicadores, licencias y cita."
+actual_metodo: false
+actual_datos: true
+pagina_es: datos.html
+pagina_en: data.html
+otra_pagina: data.html

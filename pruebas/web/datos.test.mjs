@@ -17,7 +17,7 @@ const raiz = process.cwd();
 const modulo = (ruta) => import(pathToFileURL(join(raiz, ruta)).href);
 const {
   decodificar, periodoPara, rutaValores, codificacionDe, serieDeTipologia, tieneTipologia, tipologiaDe,
-  fueraDeSerie, inicioSerie, atributosSinSeccion,
+  fueraDeSerie, inicioSerie, atributosSinSeccion, elegirSinSeccion,
 } = await modulo('web/js/datos.js');
 const { provinciasSinSeccion } = await modulo('web/js/ficha.js');
 const exportar = await modulo('web/js/exportar.js');
@@ -147,6 +147,25 @@ test('¿te llega?: alquiler sobre ingreso para cada ficha', () => {
   assert.equal(r.ingreso, 3000);
   assert.equal(r.ratio, 0.3);
   assert.equal(llave.calcular('2807901001', x({ alquiler_mes: 900, renta_hogar: 0 })), null);
+});
+
+test('ingreso de la ficha del año del alquiler (regla 4): la tartera de cada año; sin ese año, el último', () => {
+  const P = {
+    ...PERFILES,
+    tartera: { ...PERFILES.tartera, anios: { 2015: { '00': 708.6 }, 2024: { '00': 1237.4 }, 2026: { '00': 1300 } } },
+  };
+  const t15 = sueldo.perfilDelAnio(P.tartera, 2015);
+  assert.equal(t15.anio, 2015);
+  assert.deepEqual(t15.neto_mensual, { '00': 708.6 });
+  assert.equal(sueldo.perfilDelAnio(P.tartera, 2019), P.tartera);   // sin ese año: el último, con aviso
+  assert.equal(sueldo.perfilDelAnio(P.tartera, null), P.tartera);
+  assert.equal(sueldo.perfilDelAnio(P.mochila, 2015), P.mochila);   // sin `anios`
+  const a = sueldo.perfilesDelAnio(P, '2024');
+  assert.equal(a.llave, P.llave);
+  assert.equal(a.tartera.anio, 2024);
+  const tartera = sueldo.calculoLlega({ ficha: 'tartera', perfiles: a, superficie: 50 });
+  assert.equal(tartera.calcular('4802001001', (s) => (s === 'alquiler_m2' ? 10 : null)).ingreso, 1237.4);
+  assert.equal(sueldo.marcasRegla({ perfiles: a, seccion: null }).marcas.find((k) => k.ficha === 'tartera').valor, 1237.4);
 });
 
 // --- Tipología de la vivienda (decisión 12) ----------------------------------------------------
@@ -284,10 +303,23 @@ test('comparador: con un año anterior a la serie, sin dato y desde cuándo (pre
 });
 
 test('suelo sin sección: atributos de la capa y provincias que lo rodean', () => {
-  assert.deepEqual(atributosSinSeccion({ km2: 418.44, provincias: '31 50' }), { km2: 418.44, provincias: ['31', '50'] });
-  assert.deepEqual(atributosSinSeccion({ km2: '0.25', provincias: '28' }), { km2: 0.25, provincias: ['28'] });
-  assert.deepEqual(atributosSinSeccion({}), { km2: null, provincias: [] });
-  assert.deepEqual(atributosSinSeccion({ km2: null, provincias: ' 01  x 20 ' }), { km2: null, provincias: ['01', '20'] });
+  const sinNombre = { nombre: null, tipo: null };
+  assert.deepEqual(atributosSinSeccion({ km2: 418.44, provincias: '31 50', nombre: 'Bardenas Reales', tipo: 'condominio' }),
+    { km2: 418.44, provincias: ['31', '50'], nombre: 'Bardenas Reales', tipo: 'condominio' });
+  assert.deepEqual(atributosSinSeccion({ km2: '0.25', provincias: '28' }), { km2: 0.25, provincias: ['28'], ...sinNombre });
+  assert.deepEqual(atributosSinSeccion({}), { km2: null, provincias: [], ...sinNombre });
+  assert.deepEqual(atributosSinSeccion({ km2: null, provincias: ' 01  x 20 ', nombre: '  ', tipo: 7 }),
+    { km2: null, provincias: ['01', '20'], ...sinNombre });
+  assert.deepEqual(atributosSinSeccion({ nombre: ' Comunidad de 09076 y 09290 ' }).nombre, 'Comunidad de 09076 y 09290');
+  // Bajo el punto, el hueco entero y, encima, el trozo con nombre: manda el trozo
+  const hueco = { km2: 264.03, provincias: '01 31' };
+  const trozo = { km2: 49.11, provincias: '01', nombre: 'Parzoneria de Entzia', tipo: 'condominio' };
+  assert.equal(elegirSinSeccion([hueco, trozo]), trozo);
+  assert.equal(elegirSinSeccion([trozo, hueco]), trozo);
+  assert.equal(elegirSinSeccion([hueco, { ...hueco, nombre: ' ' }]), hueco);
+  assert.equal(elegirSinSeccion([null, hueco]), hueco);
+  assert.equal(elegirSinSeccion([]), null);
+  assert.equal(elegirSinSeccion(undefined), null);
   const territorios = { provincia: { '01': 'Araba/Álava', '31': 'Navarra', '20': 'Gipuzkoa' } };
   assert.deepEqual(provinciasSinSeccion(['31', '01', '20'], territorios), ['Araba/Álava', 'Gipuzkoa', 'Navarra']);
   assert.deepEqual(provinciasSinSeccion(['99'], territorios), ['99']);   // sin nombre, el código
@@ -568,6 +600,10 @@ function comprobarManifiesto(dir, { completo }) {
     const p = perfiles[ficha];
     assert.ok(['nacional', 'provincia'].includes(p.nivel), `${ficha}: nivel`);
     assert.ok(Object.values(p.neto_mensual).every((x) => x > 0 && x < 10000), `${ficha}: neto mensual`);
+    if (p.anios) {
+      assert.ok(Object.values(p.anios).every((a) => Object.values(a).every((x) => x > 0 && x < 10000)), `${ficha}: neto de cada año`);
+      assert.deepEqual(p.anios[String(p.anio)], p.neto_mensual, `${ficha}: el último año`);
+    }
   }
   const territorios = leer('web', m.territorios);
   assert.ok(Object.keys(territorios.ccaa_de_provincia).every((p) => territorios.ccaa[territorios.ccaa_de_provincia[p]]), 'provincia → comunidad');
@@ -687,8 +723,8 @@ test('exportación del pipeline: el PMTiles trae las capas del manifiesto y el s
     const s = capas.sin_seccion;
     assert.ok(s, 'capa sin_seccion');
     assert.deepEqual([s.minzoom, s.maxzoom], [0, 12]);
-    assert.deepEqual(Object.keys(s.fields).sort(), ['km2', 'provincias']);
-    assert.deepEqual(m.mapa_base.capas.sin_seccion.atributos, ['km2', 'provincias']);
+    assert.deepEqual(Object.keys(s.fields).sort(), ['km2', 'nombre', 'provincias', 'tipo']);
+    assert.deepEqual(m.mapa_base.capas.sin_seccion.atributos, ['km2', 'provincias', 'nombre', 'tipo']);
   });
 
 // Plan, §6.5: la página recalcula y coincide con R. El mapa del sueldo necesario (21) se pinta en

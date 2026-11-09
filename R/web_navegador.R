@@ -167,7 +167,10 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
     }
   }
 
-  ingreso_tartera <- perfiles_web(perfiles)$tartera$neto_mensual[["00"]]
+  # La tartera del año que pinta la página (el último alquiler): la web usa el SMI de ese año
+  ultimo <- max(larga$anio[larga$indicador == "sueldo_necesario" & larga$nivel == "sc"])
+  tartera <- perfiles_web(perfiles)$tartera
+  ingreso_tartera <- (tartera$anios[[as.character(ultimo)]] %||% tartera$neto_mensual)[["00"]]
   casos <- casos_ficha_navegador(larga, ingreso_tartera, semilla = semilla)
   filas <- list()
 

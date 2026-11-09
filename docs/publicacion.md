@@ -12,18 +12,35 @@ El sitio se monta en GitHub Actions con el flujo `.github/workflows/pages.yml`. 
 | `datos/` (manifiesto, índices, valores, fichas, perfiles…) | release: `datos_web.tar.gz` | Unos 8.800 ficheros y 92 MB (15,8 MB comprimido); cada actualización los reescribe casi todos y engordaría la historia de git sin aportar nada (pregunta 21) |
 | `teselas/seccionado_2021.pmtiles` | release: `seccionado_2021.pmtiles` | 35,3 MB binarios que se regeneran con el pipeline (pregunta 16) |
 | `descargas/tabla_larga.parquet` | release: `tabla_larga.parquet` | La tabla larga completa (36,9 MB), para la página «Datos» |
-| `descargas/version.json` | release: `version.json` | Fecha, commit, versiones de las fuentes y suma de cada fichero |
+| `descargas/version.json` | release: `version.json` | Fecha, commit, versiones de las fuentes, cobertura de la tabla larga por indicador y suma de cada fichero |
 | `metodo.html`, `method.html` | git: se generan en el flujo desde `docs/metodologia.md` y `docs/methodology.md` | La página «Método» sale siempre de la nota que hay en `main` |
+| `datos.html`, `data.html` | git y release: se generan en el flujo desde `docs/datos.md` y `docs/data.md`, el diccionario de `docs/` y `descargas/version.json` | La página «Datos» describe siempre la tabla larga del release que se publica |
 
 El flujo baja los ficheros del **último release** (el marcado como *Latest*; nunca un borrador ni una versión previa), comprueba sus sumas SHA-256 con `SHA256SUMS`, monta el sitio y lo publica. Las herramientas de desarrollo de `web/` (`LEEME.md`, `servir.mjs`, `herramientas/`) no se publican.
 
 **Página «Método».** El flujo instala pandoc (paquete de Ubuntu; la imagen de GitHub no lo trae) y convierte la nota metodológica en `metodo.html` y `method.html`, con la cabecera de la web (`estilo/documento.css`) y un índice plegable. La plantilla y los textos propios de cada idioma están en `web/herramientas/` (`plantilla_documento.html`, `documento_es.yaml`, `documento_en.yaml`); el título, el subtítulo y los nombres del menú salen de `web/i18n/`. Para verla en local, con pandoc instalado:
 
 ```bash
-pandoc docs/metodologia.md --from gfm --to html5 --standalone --toc --toc-depth 2 --wrap none --template web/herramientas/plantilla_documento.html --metadata-file web/herramientas/documento_es.yaml --metadata titulo="De renta en renta" --metadata subtitulo="Vivienda y sueldos, sección a sección" --metadata texto_mapa=Mapa --metadata texto_sobrecarga=Sobrecarga --metadata texto_metodo=Método --output web/metodo.html
+pandoc docs/metodologia.md --from gfm --to html5 --standalone --toc --toc-depth 2 --wrap none --template web/herramientas/plantilla_documento.html --metadata-file web/herramientas/documento_es.yaml --metadata titulo="De renta en renta" --metadata subtitulo="Vivienda y sueldos, sección a sección" --metadata texto_mapa=Mapa --metadata texto_sobrecarga=Sobrecarga --metadata texto_datos=Datos --metadata texto_metodo=Método --output web/metodo.html
 ```
 
 y abrir <http://localhost:8000/metodo.html> con `node web/servir.mjs`. Ese `web/metodo.html` es una copia local: no se añade a git.
+
+**Página «Datos».** La descarga de la tabla larga, su modelo de datos y su diccionario, las licencias y la cita, y cómo leerla en R y en Python, en `datos.html` y `data.html`. Se monta en el mismo paso que «Método», en dos tiempos:
+
+1. `web/herramientas/pagina_datos.mjs` (Node, sin paquetes; la imagen de GitHub lo trae) parte del texto a mano, `docs/datos.md` o `docs/data.md`, y rellena sus tres marcas: la caja de descarga (tamaño, suma SHA-256, fecha y commit de los datos, y enlace al release) y la cobertura por indicador, desde el `version.json` del release que se publica, y la cita, desde `CITATION.cff`. Le añade al final los valores de las columnas y el diccionario de indicadores, que genera R desde el inventario (`docs/datos_diccionario.md` y `docs/data_dictionary.md`; `exportar_diccionario_datos()`, objetivo `ficheros_diccionario_datos`: no se editan a mano).
+2. pandoc lo convierte con la misma plantilla y `documento_<idioma>.yaml`, más `datos_<idioma>.yaml`, que cambia el título y la entrada activa del menú.
+
+El flujo se detiene si la página no enlaza `descargas/tabla_larga.parquet`. La cobertura por indicador entra en `version.json` desde que `empaquetar_publicacion()` la escribe (después del `v0.1.0`): con un release anterior, la página lo dice y sigue sin ella. Para verla en local (PowerShell, con pandoc instalado; la copia de `web/descargas/` queda fuera de git):
+
+```powershell
+New-Item -ItemType Directory -Force web/descargas | Out-Null
+Copy-Item publicacion/tabla_larga.parquet, publicacion/version.json web/descargas/
+node web/herramientas/pagina_datos.mjs --idioma es --nota docs/datos.md --diccionario docs/datos_diccionario.md --version web/descargas/version.json --cita CITATION.cff --salida "$env:TEMP/datos_es.md"
+pandoc "$env:TEMP/datos_es.md" --from gfm --to html5 --standalone --toc --toc-depth 2 --wrap none --template web/herramientas/plantilla_documento.html --metadata-file web/herramientas/documento_es.yaml --metadata-file web/herramientas/datos_es.yaml --metadata titulo="De renta en renta" --metadata subtitulo="Vivienda y sueldos, sección a sección" --metadata texto_mapa=Mapa --metadata texto_sobrecarga=Sobrecarga --metadata texto_datos=Datos --metadata texto_metodo=Método --output web/datos.html
+```
+
+y abrir <http://localhost:8000/datos.html>. Sin `--etiqueta` ni `--repositorio`, la caja de descarga sale sin enlaces a GitHub; el flujo les pasa los de la ejecución.
 
 - No usa secretos: solo el token que GitHub da a cada ejecución. El trabajo que monta el sitio solo puede leer el repositorio; el que lo publica solo puede escribir en Pages.
 - No lleva el nombre del repositorio: funciona igual con cualquier nombre o cuenta.
@@ -39,6 +56,7 @@ Los ficheros del release los prepara `empaquetar_publicacion()` (`R/publicar.R`)
 | `web/datos/` (salvo la muestra de `web/datos/ejemplo/`) | `targets::tar_make(names = c(ficheros_web, validacion_web))` | Release |
 | `*.pmtiles` (`geo/referencia/`, `web/teselas/`) | `targets::tar_make(names = fichero_mapa_base)` | Release |
 | `publicacion/` | `empaquetar_publicacion()` | Es el release |
+| `web/metodo.html`, `web/method.html`, `web/datos.html`, `web/data.html`, `web/descargas/` | Copias locales para ver las páginas de texto (pandoc y la copia de `publicacion/`) | Las genera el flujo |
 | `_targets/`, `renv/library/` | El pipeline y `renv::restore()` | No se publican |
 | `.Renviron` | A mano | Nunca: credenciales |
 
@@ -89,7 +107,7 @@ empaquetar_publicacion()                  # (tras source("R/publicar.R") si no s
 - el `.tar.gz` no lleva exactamente los ficheros de `web/datos/` (sin la muestra);
 - la exportación de la web y la tabla larga son de pasadas distintas del pipeline (fuentes con otra versión).
 
-Avisa, y lo anota en `version.json`, si hay cambios sin commit.
+Avisa, y lo anota en `version.json`, si hay cambios sin commit. `version.json` lleva también la cobertura de la tabla larga por indicador (filas, primer y último año, niveles y cortes, en el orden de `inventario/indicadores.csv`; `cobertura_publicacion()`), que muestra la página «Datos».
 
 ### 3. Subir el código
 
@@ -138,6 +156,7 @@ Comprobaciones en `https://gastiaso.github.io/de-renta-en-renta/`:
   ```
 
 - `descargas/version.json` dice la fecha y el commit esperados, y `descargas/tabla_larga.parquet` se baja entera.
+- la página «Datos» (`datos.html` y `data.html`), desde el menú del mapa, de la sobrecarga y de «Método», en los dos idiomas: la caja de descarga da el tamaño, la suma, la fecha y el commit de `version.json`, el enlace al release es el de la etiqueta publicada, el enlace del Parquet lo baja y la suma coincide (`Get-FileHash tabla_larga.parquet -Algorithm SHA256`). En el resumen de la ejecución, el paso «Páginas «Método» y «Datos»» no da errores. Con el `v0.1.0`, la sección «Qué trae este release» dice que su `version.json` no trae la cobertura; con un release empaquetado después, lleva una fila por indicador.
 
 ## Actualizar
 
@@ -171,7 +190,8 @@ El límite de diez publicaciones por hora no se aplica a los flujos propios de A
   - «© EuroGeographics para los límites administrativos»;
   - en inglés, «© EuroGeographics for the administrative boundaries».
 
-  Un uso comercial exige una licencia de EuroGeographics. Si las geometrías se publican como fichero (en el sitio o en un release), la página «Datos» debe advertir que no se rigen por CC BY-SA 4.0.
+  Un uso comercial exige una licencia de EuroGeographics. El sitio las publica como ficheros (`datos/sobrecarga/nuts_2021.geojson` y `nuts_2024.geojson`, dentro de `datos_web.tar.gz`), así que la página «Datos» advierte que no se rigen por CC BY-SA 4.0, con el aviso en los dos idiomas.
+- **Cita:** la página «Datos» la toma de `CITATION.cff` al publicar; al cambiar de versión basta con poner al día ese fichero.
 
 ## Si algo falla
 
@@ -183,3 +203,5 @@ El límite de diez publicaciones por hora no se aplica a los flujos propios de A
 | El trabajo «Publicar en Pages» falla al empezar | Pages no está activado o su origen no es «GitHub Actions» (paso 1) |
 | La dirección da 404 justo después de publicar | Esperar uno o dos minutos; si sigue, revisar *Settings → Pages* |
 | El mapa sale con «Datos de ejemplo» | No se encontró `datos/manifiesto.json`: revisar el paso «Montar el sitio» en la ejecución |
+| `pagina_datos.mjs: La nota debe llevar la marca …` | A `docs/datos.md` o `docs/data.md` le falta (o le sobra) una de sus marcas `<!-- descarga -->`, `<!-- cita -->` o `<!-- cobertura -->` |
+| «La página datos.html no enlaza la tabla larga» | La herramienta o pandoc no han montado bien la página «Datos»: revisar el paso «Páginas «Método» y «Datos»» |

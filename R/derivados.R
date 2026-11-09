@@ -23,16 +23,32 @@ UMBRAL_SUELDO <- 0.30
 # Niveles del esfuerzo de residentes: donde el SERPAVI y el ADRH publican los dos términos.
 NIVELES_ESFUERZO <- c("sc", "municipio")
 
-# Salario mínimo (tartera): cuantía mensual en 14 pagas del real decreto de cada año y cotización
-# del trabajador (contingencias comunes 4,70 %, desempleo 1,55 %, formación profesional 0,10 % y MEI:
-# 0,12 % en 2024 y 0,15 % en 2026). Exento de IRPF. Neto prorrateado = mensual × 14 × (1 − cotización) / 12.
-#   2024: RD 145/2024, 1.134 € (la cifra de 2024 que cita el plan, §3.1: ≈ 1.237 € netos);
-#   2026: RD 126/2026, 1.221 € (fuente boe_smi: ≈ 1.332 € netos).
-# El de 2024 sirve para el control del 15 con el alquiler del mismo año; el de 2026 es el que usa la web.
+# Salario mínimo (tartera): cuantía mensual en 14 pagas del real decreto de cada año (fuente boe_smi)
+# y cotización del trabajador del año, con contrato indefinido: contingencias comunes 4,70 %,
+# desempleo 1,55 % y formación profesional 0,10 % (6,35 %), más el MEI desde 2023: 0,10 % en 2023
+# (Ley 21/2021), 0,12 % en 2024, 0,13 % en 2025 y 0,15 % en 2026 (RDL 2/2023). Se cita la orden de
+# cotización de cada año sin bajarla (decisión del autor, 9-nov-2026). Exento de IRPF.
+# Neto prorrateado = mensual × 14 × (1 − cotización) / 12.
+#   2015–2023: cuantías comprobadas en el XML del BOE (`boe`; compuerta smi_boe, R/fuente_boe_smi.R).
+#   2021: dos cuantías, 950 € de enero a agosto (RD 231/2020, prorrogado) y 965 € desde el 1 de
+#     septiembre (RD 817/2021); se usa su media ponderada por meses de vigencia, 955 € (pregunta 18).
+#   2024: RD 145/2024, 1.134 € (≈ 1.237 € netos); 2026: RD 126/2026, 1.221 € (≈ 1.332 € netos).
+# La barrera de la tartera (15) usa el SMI del mismo año que el alquiler (regla 4), y la web, el del
+# año elegido (decisión del autor, 9-nov-2026); 2025 y 2026 no tienen alquiler y quedan como referencia.
 SMI_FICHAS <- tibble::tribble(
-  ~anio, ~mensual, ~pagas, ~cotizacion, ~norma,
-  2024L, 1134,     14L,    0.0647,      "RD 145/2024",
-  2026L, 1221,     14L,    0.0650,      "RD 126/2026"
+  ~anio, ~mensual, ~pagas, ~cotizacion, ~norma,                      ~boe,                                ~norma_cotizacion,
+  2015L,  648.6,   14L,    0.0635,      "RD 1106/2014",              "BOE-A-2014-13518",                  "Orden ESS/86/2015",
+  2016L,  655.2,   14L,    0.0635,      "RD 1171/2015",              "BOE-A-2015-14273",                  "Orden ESS/70/2016",
+  2017L,  707.7,   14L,    0.0635,      "RD 742/2016",               "BOE-A-2016-12598",                  "Orden ESS/106/2017",
+  2018L,  735.9,   14L,    0.0635,      "RD 1077/2017",              "BOE-A-2017-15848",                  "Orden ESS/55/2018",
+  2019L,  900,     14L,    0.0635,      "RD 1462/2018",              "BOE-A-2018-17773",                  "Orden TMS/83/2019",
+  2020L,  950,     14L,    0.0635,      "RD 231/2020",               "BOE-A-2020-1652",                   "Orden TMS/83/2019, prorrogada (RDL 18/2019)",
+  2021L,  955,     14L,    0.0635,      "RD 231/2020 y RD 817/2021", "BOE-A-2020-1652;BOE-A-2021-15770",  "Orden PCM/1353/2021",
+  2022L,  1000,    14L,    0.0635,      "RD 152/2022",               "BOE-A-2022-2851",                   "Orden PCM/244/2022",
+  2023L,  1080,    14L,    0.0645,      "RD 99/2023",                "BOE-A-2023-3982",                   "Orden PCM/74/2023; MEI, Ley 21/2021",
+  2024L,  1134,    14L,    0.0647,      "RD 145/2024",               NA,                                  "MEI, RDL 2/2023",
+  2025L,  1184,    14L,    0.0648,      "RD 87/2025",                "BOE-A-2025-2576",                   "MEI, RDL 2/2023",
+  2026L,  1221,    14L,    0.0650,      "RD 126/2026",               "BOE-A-2026-3815",                   "MEI, RDL 2/2023"
 )
 REFERENCIA_TARTERA_2026 <- 1332   # referencias_validacion.csv, smi_neto
 
@@ -114,10 +130,11 @@ calcular_sueldo_necesario <- function(larga_serpavi, superficie = SUPERFICIE_FIC
 #   mochila: mochila_neta (método B, neto) de cada provincia, año de la AEAT, como «estimado» (el
 #     método B es una estimación; pregunta 15 ampliada); sin dato en los territorios forales, Ceuta
 #     y Melilla (ausente). La provincia sale de inventario/provincias_aeat.csv;
-#   llave: renta neta media por hogar / 12 de cada sección y municipio, con el estado del ADRH.
-# El transistor (pensionista) queda para F3.
+#   llave: renta neta media por hogar / 12 de cada sección y municipio, con el estado del ADRH;
+#   transistor: pensión media de jubilación neta de cada provincia y año (calcular_transistor(),
+#     R/ficha_transistor.R), «dato» o, en País Vasco y Navarra, «estimado». Opcional.
 perfiles_fichas <- function(mochila_neta, provincias_aeat, larga_adrh, anio_mochila,
-                            smi = SMI_FICHAS, superficie = SUPERFICIE_FICHA) {
+                            smi = SMI_FICHAS, superficie = SUPERFICIE_FICHA, transistor = NULL) {
   tartera <- smi |>
     transmute(ficha = "tartera", nivel = "nacional", geo_id = "00", anio,
               ingreso = mensual * pagas * (1 - cotizacion) / 12, estado = "dato",
@@ -130,7 +147,12 @@ perfiles_fichas <- function(mochila_neta, provincias_aeat, larga_adrh, anio_moch
   llave <- renta_hogar_adrh(larga_adrh) |>
     transmute(ficha = "llave", nivel, geo_id, anio, ingreso = valor / 12, estado,
               superficie_m2 = NA_real_, fuente = "ine_adrh")
-  bind_rows(tartera, mochila, llave)
+  pensionista <- if (!is.null(transistor)) {
+    transistor |>
+      transmute(ficha = "transistor", nivel = "provincia", geo_id = provincia, anio = as.integer(anio),
+                ingreso = neto_mensual, estado, superficie_m2 = superficie, fuente = "inss_pensiones")
+  }
+  bind_rows(tartera, mochila, llave, pensionista)
 }
 
 # Llave resumida por año (para la regla de la leyenda): percentiles 10, 50 y 90 del ingreso de las
@@ -143,30 +165,34 @@ resumen_llave <- function(perfiles) {
               p90 = stats::quantile(ingreso, 0.90), .groups = "drop")
 }
 
-# Ingreso de la tartera y la mochila tal como lo recibe la web (perfiles.json, redondeado).
+# Fichas con ingreso de provincia (la tartera es nacional; la llave, de cada sección).
+FICHAS_PROVINCIALES <- c("mochila", "transistor")
+
+# Ingreso de la tartera, la mochila y el transistor tal como lo recibe la web (perfiles.json, redondeado).
 ingresos_fichas <- function(perfiles) {
   perfiles |>
-    filter(ficha %in% c("tartera", "mochila")) |>
+    filter(ficha %in% c("tartera", FICHAS_PROVINCIALES)) |>
     transmute(ficha, geo_id, anio, ingreso = termino_publicado(ingreso), estado)
 }
 
 # 15, control en R: alquiler mediano por m² (VC) × superficie / ingreso de la ficha × 100, con el
 # ingreso del mismo año que el alquiler (regla 4): la tartera en los años de SMI_FICHAS con alquiler
-# (2024), la mochila en su año, en las provincias y sus secciones, distritos y municipios. Estado:
-# estado_barrera().
+# (2015–2024), en todos los niveles; la mochila (2024) y el transistor (2015–2024) en sus años, en
+# las provincias y sus secciones, distritos y municipios. Estado: estado_barrera().
 calcular_barrera_acceso <- function(larga_serpavi, perfiles, superficie = SUPERFICIE_FICHA) {
   m2 <- alquiler_vc(larga_serpavi, "alquiler_m2") |> rename(alquiler_m2 = valor, e_alquiler = estado)
   ingresos <- ingresos_fichas(perfiles)
   tartera <- ingresos |> filter(ficha == "tartera") |> select(anio, ingreso, e_ingreso = estado)
-  mochila <- ingresos |> filter(ficha == "mochila") |> select(provincia = geo_id, anio, ingreso, e_ingreso = estado)
+  provinciales <- ingresos |> filter(ficha %in% FICHAS_PROVINCIALES) |>
+    select(grupo = ficha, provincia = geo_id, anio, ingreso, e_ingreso = estado)
   bind_rows(
     m2 |> inner_join(tartera, by = "anio") |> mutate(grupo = "tartera"),
     m2 |>
-      filter(nivel != "ccaa", anio %in% mochila$anio) |>
+      filter(nivel != "ccaa") |>
+      inner_join(distinct(provinciales, grupo, anio), by = "anio", relationship = "many-to-many") |>
       mutate(provincia = substr(geo_id, 1, 2)) |>
-      left_join(mochila, by = c("provincia", "anio")) |>
-      select(-provincia) |>
-      mutate(grupo = "mochila")
+      left_join(provinciales, by = c("grupo", "provincia", "anio")) |>
+      select(-provincia)
   ) |>
     mutate(estado = estado_barrera(e_alquiler, e_ingreso),
            valor = if_else(con_valor(estado), 100 * alquiler_m2 * superficie / ingreso, NA_real_),

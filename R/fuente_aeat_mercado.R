@@ -27,18 +27,35 @@ espacios <- function(x) trimws(gsub("[\\s\\x{00A0}]+", " ", x, perl = TRUE))   #
 
 # Título de la página: «Mercado de trabajo y pensiones: <año>:», la tabla y, después, una
 # línea «Filtro: valor» por cada filtro (separadas por comas sueltas).
+#   Ediciones antiguas (hasta 2017): el título solo trae la estadística; la tabla y los filtros
+#   van en el subtítulo (titulo_noprint), a veces en una sola línea («Dimensión: valor, Otra:
+#   valor»), y los nombres de las comunidades no son los del INE («Región de Murcia»).
 aeat_titulo <- function(html) {
   lineas <- trimws(strsplit(xml2::xml_text(xml2::xml_find_first(html, "//title")), "\n")[[1]])
   lineas <- lineas[nzchar(lineas) & lineas != ","]
+  if (length(lineas) < 2) {
+    h1 <- xml2::xml_text(xml2::xml_find_first(html, "//*[@id='titulo_noprint']"))
+    lineas <- c(lineas, trimws(unlist(strsplit(strsplit(h1, "\n")[[1]], ",\\s*(?=[^,:]+:)", perl = TRUE))))
+    lineas <- lineas[nzchar(lineas) & lineas != ","]
+  }
   filtros <- lineas[-(1:2)]
   list(tabla = espacios(lineas[2]),
        filtros = stats::setNames(espacios(sub("^[^:]*:", "", filtros)), espacios(sub(":.*$", "", filtros))))
 }
 
-# Enlaces de los menús de filtros: dimensión, valor y página.
+# Enlaces de los menús de filtros: dimensión, valor y página. En las ediciones antiguas, menús
+# desplegables (ul#liveMenu1) con la dimensión en el primer enlace de cada elemento.
 aeat_menus <- function(html) {
   menus <- xml2::xml_find_all(html, "//nav[@aria-label='Filtros']//ul[@role='menu']")
   vacio <- tibble::tibble(dimension = character(0), valor = character(0), pagina = character(0))
+  if (length(menus) == 0) {
+    items <- xml2::xml_find_all(html, "//ul[@id='liveMenu1']/li")
+    return(dplyr::bind_rows(vacio, lapply(items, function(li) {
+      a <- xml2::xml_find_all(li, "./ul/li/a")
+      tibble::tibble(dimension = espacios(xml2::xml_text(xml2::xml_find_first(li, "./a"))),
+                     valor = espacios(xml2::xml_text(a)), pagina = xml2::xml_attr(a, "href"))
+    })))
+  }
   dplyr::bind_rows(vacio, lapply(menus, function(m) {
     a <- xml2::xml_find_all(m, ".//a[@role='menuitem']")
     tibble::tibble(dimension = espacios(xml2::xml_attr(m, "aria-label")), valor = espacios(xml2::xml_text(a)),

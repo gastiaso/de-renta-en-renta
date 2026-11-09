@@ -40,6 +40,9 @@ proyecto_falso <- function(raiz = withr::local_tempdir(.local_envir = parent.fra
                           version = c("2026-11-06", "2026-11-06", "2026-11-07"))
   arrow::write_parquet(larga, file.path(raiz, "datos/intermedios/tabla_larga.parquet"))
   escribir("inventario/fuentes.csv", c("id,nombre", "mivau_serpavi,SERPAVI", "ine_adrh,ADRH"))
+  escribir("inventario/indicadores.csv", c("id,codigo", "2,renta_hogar", "9,alquiler_m2"))
+  # Copia local de las descargas para ver la página «Datos» (fuera de git): no cuenta en el sitio
+  escribir("web/descargas/version.json", "{}")
   raiz
 }
 
@@ -49,6 +52,7 @@ empaquetar_falso <- function(raiz, ...) {
                          tabla_larga = file.path(raiz, "datos/intermedios/tabla_larga.parquet"),
                          dir_salida = file.path(raiz, "publicacion"),
                          fuentes = file.path(raiz, "inventario/fuentes.csv"),
+                         indicadores = file.path(raiz, "inventario/indicadores.csv"),
                          commit = COMMIT_FALSO, fecha = "2026-11-08T12:00:00+0100", ...)
 }
 
@@ -107,6 +111,31 @@ test_that("version.json: fecha, commit, web, fuentes con su versión y ficheros 
   expect_true(all(paste0(v$ficheros$sha256, "  ", v$ficheros$nombre) %in% sumas))
 })
 
+test_that("version.json: cobertura por indicador en el orden del inventario, con niveles y cortes", {
+  raiz <- proyecto_falso()
+  suppressMessages(empaquetar_falso(raiz))
+  v <- jsonlite::fromJSON(file.path(raiz, "publicacion", "version.json"), simplifyVector = FALSE)
+  cobertura <- v$indicadores
+  expect_equal(vapply(cobertura, `[[`, "", "indicador"), c("renta_hogar", "alquiler_m2"))
+  alquiler <- cobertura[[2]]
+  expect_equal(alquiler$filas, 2)
+  expect_equal(c(alquiler$anio_desde, alquiler$anio_hasta), c(2024L, 2024L))
+  expect_equal(alquiler$niveles, list("sc"))                         # lista también con un solo nivel
+  expect_equal(alquiler$cortes, list("tipologia"))
+  expect_equal(cobertura[[1]]$niveles, list("municipio"))
+
+  # Sin inventario: por orden alfabético; niveles en el orden de NIVELES y «total» delante
+  dir <- withr::local_tempdir()
+  larga <- tibble::tibble(indicador = c("z", "z", "z", "a"), nivel = c("provincia", "sc", "municipio", "sc"),
+                          anio = c(2015L, 2024L, 2020L, 2021L), corte = c("edad", "total", "edad", "total"))
+  arrow::write_parquet(larga, file.path(dir, "t.parquet"))
+  c2 <- cobertura_publicacion(file.path(dir, "t.parquet"))
+  expect_equal(vapply(c2, `[[`, "", "indicador"), c("a", "z"))
+  expect_equal(as.character(c2[[2]]$niveles), c("sc", "municipio", "provincia"))
+  expect_equal(as.character(c2[[2]]$cortes), c("total", "edad"))
+  expect_equal(c(c2[[2]]$anio_desde, c2[[2]]$anio_hasta, c2[[2]]$filas), c(2015, 2024, 3))
+})
+
 test_that("el sitio montado: web/ sin herramientas ni copias locales, más lo del release", {
   raiz <- proyecto_falso()
   res <- suppressMessages(empaquetar_falso(raiz))
@@ -116,6 +145,7 @@ test_that("el sitio montado: web/ sin herramientas ni copias locales, más lo de
                   %in% rutas))
   expect_false(any(c("LEEME.md", "servir.mjs", "herramientas/generar_ejemplo.R") %in% rutas))
   expect_equal(sum(rutas == "teselas/seccionado_2021.pmtiles"), 1L)
+  expect_equal(sum(rutas == "descargas/version.json"), 1L)           # la del release, no la copia local
   expect_false(anyDuplicated(rutas) > 0)
 })
 
@@ -200,12 +230,18 @@ test_that("el flujo de Pages cuadra con el empaquetado", {
   expect_match(guion, "1000000000", fixed = TRUE)                  # LIMITES_PUBLICACION[["sitio_total"]]
   expect_match(guion, format(LIMITES_PUBLICACION[["sitio_fichero"]], scientific = FALSE), fixed = TRUE)
 
-  # Página «Método»: plantilla, metadatos por idioma y notas que cita el flujo
-  citados <- unique(unlist(regmatches(guion, gregexpr("(web|docs)/[A-Za-z_/]+\\.(html|yaml|md)", guion))))
+  # Páginas «Método» y «Datos»: plantilla, metadatos por idioma, herramienta y textos que cita el flujo
+  citados <- unique(unlist(regmatches(guion, gregexpr("(web|docs)/[A-Za-z_/]+\\.(html|yaml|md|mjs)", guion))))
   idiomas <- c("es", "en")
+  pares <- regmatches(guion, gregexpr('"(es|en)( [a-z_]+\\.(md|html))+"', guion))[[1]]
+  expect_length(pares, 2)
+  ficheros_par <- unlist(lapply(strsplit(gsub('"', "", pares), " "), `[`, -1))
+  expect_true(all(c("datos.html", "data.html", "metodo.html", "method.html") %in% ficheros_par))
   citados <- unique(c(gsub("\\$1", "es", citados), gsub("\\$1", "en", citados),
                       file.path("web/herramientas", paste0("documento_", idiomas, ".yaml")),
-                      file.path("docs", c("metodologia.md", "methodology.md"))))
+                      file.path("web/herramientas", paste0("datos_", idiomas, ".yaml")),
+                      file.path("docs", grep("\\.md$", ficheros_par, value = TRUE)), "CITATION.cff"))
+  expect_true("web/herramientas/pagina_datos.mjs" %in% citados)
   expect_true(all(file.exists(file.path("..", "..", citados))), info = paste(citados, collapse = ", "))
   for (idioma in idiomas) {
     dic <- jsonlite::fromJSON(file.path("..", "..", "web", "i18n", paste0(idioma, ".json")), simplifyVector = FALSE)

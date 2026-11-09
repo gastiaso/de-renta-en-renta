@@ -54,9 +54,14 @@ test_that("el peor estado manda y un término que falta cuenta como ausente", {
 test_that("perfiles: tartera con el SMI de cada año, mochila por provincia y llave por sección", {
   p <- perfiles_fichas(mochila_inventada, provincias_inventadas, adrh_largo(), anio_mochila = 2024L)
   tartera <- filter(p, ficha == "tartera")
-  expect_equal(tartera$anio, c(2024L, 2026L))
-  expect_equal(tartera$ingreso, c(1134 * 14 * (1 - 0.0647) / 12, 1221 * 14 * (1 - 0.065) / 12))
-  expect_equal(round(tartera$ingreso[2]), 1332)
+  expect_equal(tartera$anio, 2015:2026)
+  neto <- function(a) tartera$ingreso[tartera$anio == a]
+  expect_equal(neto(2015L), 648.6 * 14 * (1 - 0.0635) / 12)
+  expect_equal(neto(2021L), (950 * 8 + 965 * 4) / 12 * 14 * (1 - 0.0635) / 12)   # pregunta 18: 955 € ponderados
+  expect_equal(neto(2023L), 1080 * 14 * (1 - 0.0645) / 12)                       # con el MEI (0,10 %)
+  expect_equal(c(neto(2024L), neto(2026L)), c(1134 * 14 * (1 - 0.0647) / 12, 1221 * 14 * (1 - 0.065) / 12))
+  expect_equal(round(neto(2026L)), 1332)
+  expect_true(all(!is.na(SMI_FICHAS$norma) & !is.na(SMI_FICHAS$norma_cotizacion)))
   mochila <- filter(p, ficha == "mochila") |> arrange(geo_id)
   expect_equal(mochila$estado, c("ausente", "estimado", "estimado"))   # Álava: foral, sin mochila; método B, estimación
   expect_equal(mochila$ingreso[mochila$geo_id == "28"], 1500)
@@ -114,15 +119,40 @@ test_that("los derivados parten de los términos redondeados a un decimal, como 
 test_that("15 en R: tartera y mochila con el ingreso del mismo año que el alquiler", {
   p <- perfiles_fichas(mochila_inventada, provincias_inventadas, adrh_largo(), anio_mochila = 2024L)
   b <- calcular_barrera_acceso(serpavi_largo(), p)
-  expect_equal(unique(b$anio), 2024L)   # ni 2023 (sin SMI ni mochila de ese año) ni 2026 (sin alquiler)
+  expect_equal(sort(unique(b$anio)), c(2023L, 2024L))           # 2026 no tiene alquiler
+  expect_equal(unique(b$anio[b$grupo == "mochila"]), 2024L)     # la mochila, solo su año
   tartera <- as.numeric(sprintf("%.1f", 1134 * 14 * (1 - 0.0647) / 12))   # como en perfiles.json
   expect_equal(fila(b, "2800101001", 2024L, "barrera_acceso", "tartera")$valor, 100 * 15 * 50 / tartera)
   expect_equal(fila(b, "13", 2024L, "barrera_acceso", "tartera")$valor, 100 * 12 * 50 / tartera)
+  tartera_2023 <- as.numeric(sprintf("%.1f", 1080 * 14 * (1 - 0.0645) / 12))   # el SMI del mismo año
+  expect_equal(fila(b, "2800101001", 2023L, "barrera_acceso", "tartera")$valor, 100 * 15 * 50 / tartera_2023)
   expect_equal(fila(b, "2800101001", 2024L, "barrera_acceso", "mochila")$valor, 50)
   expect_equal(fila(b, "28001", 2024L, "barrera_acceso", "mochila")$valor, 100 * 14 * 50 / 1500)
   expect_equal(fila(b, "0100101001", 2024L, "barrera_acceso", "mochila")$estado, "ausente")   # foral, sin mochila
   expect_equal(nrow(fila(b, "13", 2024L, "barrera_acceso", "mochila")), 0L)   # la comunidad no tiene una sola provincia
   expect_equal(unique(b$corte), "ficha")
+})
+
+test_that("15 en R: el transistor de cada año y provincia, con su estado, y la compuerta cuadra", {
+  transistor <- tibble::tibble(provincia = c("28", "28", "01"), anio = c(2023L, 2024L, 2024L),
+                               neto_mensual = c(1450.04, 1500.04, 1800), estado = c("dato", "dato", "estimado"))
+  s <- serpavi_largo(); a <- adrh_largo()
+  p <- perfiles_fichas(mochila_inventada, provincias_inventadas, a, anio_mochila = 2024L, transistor = transistor)
+  tr <- filter(p, ficha == "transistor")
+  expect_equal(nrow(tr), 3L)
+  expect_equal(unique(tr$fuente), "inss_pensiones")
+  expect_equal(unique(tr$superficie_m2), 50)
+  b <- calcular_barrera_acceso(s, p)
+  expect_equal(fila(b, "2800101001", 2023L, "barrera_acceso", "transistor")$valor, 100 * 15 * 50 / 1450)
+  expect_equal(fila(b, "28001", 2024L, "barrera_acceso", "transistor")$valor, 100 * 14 * 50 / 1500)
+  expect_equal(fila(b, "0100101001", 2024L, "barrera_acceso", "transistor")$estado, "dato")      # foral estimado: el del alquiler
+  expect_equal(fila(b, "0100101001", 2023L, "barrera_acceso", "transistor")$estado, "ausente")   # sin ingreso ese año
+  expect_equal(nrow(fila(b, "13", 2024L, "barrera_acceso", "transistor")), 0L)
+  d <- armonizar_derivados(s, a, p)
+  comp <- comprobar_derivados(d, s, a, p, provincias_inventadas, mochila_inventada)
+  expect_true(all(comp$calculado[comp$id == "derivados_terminos"] < 1e-9))
+  expect_equal(sum(comp$calculado[comp$id == "derivados_estado"]), 0)
+  expect_true("barrera_acceso transistor" %in% comp$detalle)
 })
 
 test_that("estado del 15: el del alquiler; el ingreso de la ficha solo aporta ausente (pregunta 15 ampliada)", {

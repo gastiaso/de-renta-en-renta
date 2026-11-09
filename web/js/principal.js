@@ -15,7 +15,7 @@ import { fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fic
 import { formulaDe } from './formulas.js';
 import {
   modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega,
-  marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, estadoLlega,
+  marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, estadoLlega, perfilesDelAnio,
 } from './sueldo.js';
 import { seriesFiabilidad, fiabilidadFicha, umbralPocos } from './fiabilidad.js';
 import { crearPanelSueldo } from './panel_sueldo.js';
@@ -58,7 +58,7 @@ let compartir;     // diálogo «Compartir»
 let avisoImagen;   // aviso antes de la imagen de «¿te llega?» con «Tu ficha»
 const columnas = {};            // serie → { valores, estados, periodo, clave } del periodo activo
 let eligiendoComparada = false; // el siguiente clic en el mapa elige la sección con que comparar
-let sinSeccion = null;          // suelo sin sección pulsado: { km2, provincias } (sin sección elegida)
+let sinSeccion = null;          // suelo sin sección pulsado: atributosSinSeccion() (sin sección elegida)
 let turno = 0;                  // descarta cálculos superados por otro más reciente
 let turnoFicha = 0;
 
@@ -81,13 +81,16 @@ function vista() {
   const superficie = superficieDe(estado, sueldo, perfiles);
   const umbral = umbralDe(estado);
   const supuestos = { superficie_m2: superficie ?? m.supuestos.superficie_m2, umbral };
-  const calculo = modo === 'llega' ? calculoLlega({ ficha: estado.ficha, perfiles, sueldo, superficie, serie: serieTipo }) : null;
+  let calculo = modo === 'llega' ? calculoLlega({ ficha: estado.ficha, perfiles, sueldo, superficie, serie: serieTipo }) : null;
   const def = mapaDef();
   const mapaTipo = { ...def, base: serieTipo(def.base) };
   const seriesColor = calculo ? calculo.series : [mapaTipo.base];
   // El periodo lo marca la serie que da color (la primera; en «¿te llega?», el alquiler).
   const periodo = periodoPara(m.indicadores[seriesColor[0]], estado.anio);
   const fuera = fueraDeSerie(m.indicadores[seriesColor[0]], estado.anio);
+  // Ingreso de las fichas del año del alquiler (regla 4): la tartera y el transistor tienen serie.
+  const perfilesAnio = perfilesDelAnio(perfiles, periodo ?? estado.anio);
+  if (calculo) calculo = calculoLlega({ ficha: estado.ficha, perfiles: perfilesAnio, sueldo, superficie, serie: serieTipo });
   // En el sueldo necesario, las fichas de una persona y la llave van en la regla de la leyenda.
   const enSueldo = !calculo && def.formula === 'alquiler_m2_a_sueldo';
   const series = [...seriesColor];
@@ -99,6 +102,7 @@ function vista() {
   return {
     modo, superficie, umbral, supuestos, calculo, mapa: mapaTipo, seriesColor, periodo, fuera, fiabilidad,
     referencia: periodo ?? estado.anio, enSueldo, tipologia: tipologiaDe(m, seriesColor[0]), series: [...new Set(series)],
+    perfiles: perfilesAnio,
   };
 }
 
@@ -153,8 +157,18 @@ function textosLlega(v, { sinCifra = false } = {}) {
   let ingreso;
   if (ficha === 'llave') ingreso = t('interfaz.sueldo.ingreso_llave');
   else if (ficha === 'peon') ingreso = sinCifra ? t('interfaz.exportar.ingreso_peon') : t('interfaz.sueldo.ingreso_euros', { euros: t.numero(ingresoPeon(sueldo)) });
-  else if (perfiles[ficha]?.nivel === 'provincia') ingreso = t('interfaz.sueldo.ingreso_provincia', { ficha: t(`fichas.${ficha}`) });
-  else ingreso = t('interfaz.sueldo.ingreso_euros', { euros: t.numero(perfiles[ficha]?.neto_mensual?.['00'] ?? 0) });
+  else if (v.perfiles[ficha]?.nivel === 'provincia') ingreso = t('interfaz.sueldo.ingreso_provincia', { ficha: t(`fichas.${ficha}`) });
+  else {
+    // Ingreso nacional (la tartera) del año del alquiler y, si no es el último, también el vigente
+    const p = v.perfiles[ficha];
+    const ultimo = perfiles[ficha];
+    ingreso = p && ultimo && p.anio !== ultimo.anio
+      ? t('interfaz.sueldo.ingreso_euros_anio', {
+        euros: t.numero(p.neto_mensual?.['00'] ?? 0), anio: p.anio,
+        ultimo: ultimo.anio, euros_ultimo: t.numero(ultimo.neto_mensual?.['00'] ?? 0),
+      })
+      : t('interfaz.sueldo.ingreso_euros', { euros: t.numero(p?.neto_mensual?.['00'] ?? 0) });
+  }
   return { vivienda, ingreso };
 }
 
@@ -164,7 +178,7 @@ function avisoAnios(v) {
   const alquiler = columnas[v.calculo.series[0]]?.periodo;
   let ingreso = null;
   if (estado.ficha === 'llave') ingreso = columnas[perfiles.llave.ingreso.serie]?.periodo;
-  else if (estado.ficha !== 'peon') ingreso = perfiles[estado.ficha]?.anio;
+  else if (estado.ficha !== 'peon') ingreso = v.perfiles[estado.ficha]?.anio;
   if (!ingreso || !alquiler || String(ingreso) === String(alquiler)) return null;
   return t('interfaz.sueldo.anios_distintos', { ingreso, alquiler });
 }
@@ -218,7 +232,7 @@ async function actualizar() {
   let resumen = null;
   let detalle = null;
   if (v.modo === 'necesario') {
-    if (v.enSueldo) Object.assign(leyenda, marcasRegla({ perfiles, seccion: estado.seccion, rentaHogar: columnas[perfiles.llave?.ingreso.serie]?.valores }));
+    if (v.enSueldo) Object.assign(leyenda, marcasRegla({ perfiles: v.perfiles, seccion: estado.seccion, rentaHogar: columnas[perfiles.llave?.ingreso.serie]?.valores }));
   } else {
     const { vivienda, ingreso } = textosLlega(v);
     leyenda.vivienda = t('interfaz.leyenda.llega_sub', { vivienda, ingreso });
@@ -226,7 +240,8 @@ async function actualizar() {
     resumen = !r.con ? t('interfaz.sueldo.sin_datos') : t(estado.ficha === 'peon' ? 'interfaz.sueldo.resumen_peon' : 'interfaz.sueldo.resumen_ficha', {
       pct: t.porcentaje(r.proporcion), caben: t.numero(r.caben), total: t.numero(r.con), ficha: t(`fichas.${estado.ficha}`),
     });
-    detalle = [t('interfaz.sueldo.detalle', { vivienda, ingreso, umbral: t.porcentaje(v.umbral) }), avisoAnios(v)]
+    detalle = [t('interfaz.sueldo.detalle', { vivienda, ingreso, umbral: t.porcentaje(v.umbral) }), avisoAnios(v),
+      estado.ficha === 'transistor' ? t('interfaz.sueldo.nota_transistor') : null]
       .filter(Boolean).join(' ');
   }
   pintarLeyenda(el.leyenda, t, leyenda);
@@ -363,6 +378,13 @@ function pintarEvolucion(hueco, series, v, codigo) {
     const k = s ? s.anios.findIndex((q) => String(q) === String(p)) : -1;
     return k < 0 ? { valor: null, estado: indiceEstado('ausente') } : { valor: s.valores[k], estado: s.estados[k] };
   };
+  // En «¿te llega?», cada año con el ingreso de la ficha de ese año si lo tiene (la tartera y el
+  // transistor; regla 4); si no (la mochila, «Tu ficha»), con el de hoy.
+  const ficha = estado.ficha;
+  const conSerie = (p) => Boolean(perfiles[ficha]?.anios?.[String(p)]);
+  const calculoDe = (p) => (ficha !== 'llave' && conSerie(p)
+    ? calculoLlega({ ficha, perfiles: perfilesDelAnio(perfiles, p), sueldo, superficie: v.superficie, serie: serieTipo })
+    : v.calculo);
   const filas = periodos.map((p) => {
     const estadoPeor = estadoCifra(v, codigo, (serie) => en(serie, p).valor, (s) => en(s, p).estado);
     let texto = '—';
@@ -370,16 +392,19 @@ function pintarEvolucion(hueco, series, v, codigo) {
       const b = en(base, p).valor;
       if (b !== null) texto = t.numero(formulaDe(v.mapa).calcular(b, v.supuestos), v.mapa.decimales ?? 0);
     } else {
-      const r = v.calculo.calcular(codigo, (serie) => en(serie, p).valor);
+      const r = calculoDe(p).calcular(codigo, (serie) => en(serie, p).valor);
       if (r) texto = t.porcentaje(r.ratio);
     }
     return { periodo: p, texto, estado: estadoPeor };
   });
+  let nota = null;
+  if (v.modo === 'llega' && ficha !== 'llave') {
+    nota = periodos.every(conSerie) ? t('interfaz.ficha.ingreso_anio') : t('interfaz.ficha.ingreso_fijo');
+  }
   fichaSeries(hueco, {
     t, filas, estados: m.codificacion.estados, periodo: columnas[base]?.periodo,
     titulo: v.modo === 'necesario' ? t('interfaz.ficha.evolucion') : t('interfaz.ficha.evolucion_llega'),
-    // Salvo la llave, el ingreso de la ficha es el de hoy: en la evolución solo cambia el alquiler.
-    nota: v.modo === 'llega' && estado.ficha !== 'llave' ? t('interfaz.ficha.ingreso_fijo') : null,
+    nota,
   });
 }
 

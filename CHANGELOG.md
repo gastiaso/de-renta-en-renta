@@ -4,6 +4,51 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+Tareas 20–23 (F3 y página «Datos»), hechas en paralelo el 9-nov-2026 con las decisiones del autor de ese día (plan v0.33). Aún no hay release con estos datos: el sitio publicado sigue con los del `v0.1.0`.
+
+### Añadido (9-nov-2026, F3: tartera de 2015 a 2026 y transistor)
+
+- Tartera con el SMI de cada año: `SMI_FICHAS` (`R/derivados.R`) va de 2015 a 2026, con la norma, el XML del BOE y la orden de cotización de cada año. 2021, media de sus dos cuantías ponderada por meses de vigencia (955 €; pregunta 18). Cotización del trabajador con contrato indefinido: 6,35 % hasta 2022 y, con el MEI, 6,45 % en 2023, 6,47 % en 2024, 6,48 % en 2025 y 6,50 % en 2026, citada de la orden de cotización de cada año sin bajarla (decisión del autor). Neto mensual en 12: de 708,65 € (2015) a 1.237,40 € (2024) y 1.331,91 € (2026). Compuerta `smi_boe` (bloqueo): las cuantías de 2015 a 2023 frente al XML del BOE de cada real decreto (`R/fuente_boe_smi.R`).
+- Barrera de acceso (15) de la tartera con el alquiler del mismo año, de 2015 a 2024, en la tabla larga (antes, solo 2024). Mediana de las secciones: del 36,7 % en 2015 al 29,5 % en 2024.
+- Ficha «transistor» (pensionista): pensión media de jubilación del INSS por provincia (total del sistema, sin Clases Pasivas), media de los 12 meses de cada año ponderada por el número de pensiones, de 2015 a 2024; × 14 pagas, menos la retención de la AEAT de quienes solo cobran pensiones, de su comunidad y año (País Vasco y Navarra, con la de España, como `estimado`), ÷ 12 (`R/fuente_inss_pensiones.R`, `R/ficha_transistor.R`, `inventario/provincias_inss.csv`). En 2024, de 1.198 € (Ourense) a 1.869 € (Bizkaia); media ponderada, 1.574 €. Compuertas de bloqueo `inss_cobertura`, `inss_suma` e `inss_media` (las provincias reproducen las cifras de comunidad y España del mismo Excel), `transistor_cobertura` y `transistor_retencion`. En `perfiles` y en la barrera de la tabla larga (2015–2024).
+- Web: «¿te llega?» usa el ingreso de la ficha del año del alquiler (`perfiles.json`, campo `anios`; decisión del autor): la tartera y el transistor, el de cada año; la mochila, el de 2024, con el aviso de años distintos. La tartera cita el SMI vigente junto al del año, y la evolución de la ficha usa el ingreso de cada año. Ficha «Pensionista», en castellano e inglés, con la nota de vivienda en propiedad de los mayores de 65 años (89,1 %, ECV 2023).
+- Descargas autorizadas por el autor (9-nov-2026): 120 Excel mensuales del INSS de 2015 a 2024 (≈ 9,6 MB) y la tabla de retenciones de la AEAT de 2015 a 2023 (1.458 páginas, ≈ 39 MB).
+
+### Añadido (9-nov-2026, F3: indicadores 4–6 del ADRH)
+
+- Indicadores 4 (peso de los salarios en la renta), 5 (población por debajo del 60 % de la mediana de la renta por unidad de consumo) y 6 (índice de Gini) en la tabla larga, 2015–2024, de la sección a España (`R/fuente_ine_adrh_distribucion.R`, `larga_adrh_distribucion`): 1.331.166 filas. Tablas 30825, 30829 y 37677 del ADRH (por sección, en CSV; 2,1 GB) y, nuevas en la edición de octubre de 2026, 53687, 53694 y 53688 (España, comunidades y provincias, casadas por nombre). El 4 y el 5 se llevan al seccionado de 2021 como medias ponderadas (renta bruta; población) y el 6, con la regla de medianas (decisión del autor). En 2024, la sección mediana tiene el 58,2 % de la renta en salarios, el 19,2 % de la población bajo el 60 % de la mediana y un Gini de 27,9; España, 60,0 %, 20,2 % y 31,9.
+- Compuerta `validacion_adrh_distribucion`: cobertura de las 52 provincias en cada tabla, rango, suma de las cinco fuentes de ingreso, orden de los umbrales, sección = municipio en los municipios de una sola sección, y agregación a municipio y a provincia (siete de bloqueo y una alerta).
+- Rupturas `adrh_umbral_mediana_2023`, `adrh_forales_distribucion` y `adrh_umbrales_secreto_2024`.
+- Web: tres mapas nuevos (4–6), con cortes en `inventario/indicadores.csv`, un decimal y en el comparador; la exportación lleva también los indicadores con mapa que no son del núcleo de la v0.1.
+
+### Añadido (9-nov-2026, página «Datos»; pregunta 37)
+
+- Página «Datos» (`datos.html` y `data.html`), enlazada en el menú del mapa, de la sobrecarga y de «Método»: descarga de la tabla larga en Parquet con su tamaño, su suma SHA-256, la fecha y el commit de los datos y el enlace al release; licencias (CC BY-SA 4.0 y MIT), aviso de las geometrías NUTS de GISCO y cita (de `CITATION.cff`); cómo leerla en R (`arrow`) y en Python (`pandas` y `pyarrow`); modelo de datos; cobertura de cada indicador en el release; valores de las columnas y diccionario de los 23 indicadores y los 3 auxiliares de fiabilidad. Se genera en el flujo de Pages con pandoc, como «Método», desde `docs/datos.md` y `docs/data.md` (`web/herramientas/pagina_datos.mjs`, que rellena la descarga, la cita y la cobertura).
+- Diccionario generado desde el inventario (`exportar_diccionario_datos()`, `R/web_pagina_datos.R`; objetivo `ficheros_diccionario_datos`): `docs/datos_diccionario.md` y `docs/data_dictionary.md`, con una prueba que los compara con el inventario.
+- `version.json` lleva la cobertura de la tabla larga por indicador: filas, primer y último año, niveles y cortes (`cobertura_publicacion()`). Desde el próximo release.
+- Pruebas: `test-pagina-datos.R` (diccionario, paridad de los textos, columnas, clave y tipos, y los ejemplos de R y de Python ejecutados contra una tabla inventada) y `pruebas/web/pagina_datos.test.mjs`.
+
+### Añadido (9-nov-2026, nombres del suelo sin sección)
+
+- Mapa: el suelo sin sección lleva el nombre y el tipo de la unidad administrativa del IGN donde el IGN la dibuja (condominios: facerías, parzonerías, ledanías, comunidades…). Fuente nueva `ign_au` (WFS INSPIRE del IGN, CC BY 4.0), en `R/fuente_ign_au.R`. Cada hueco del seccionado se cruza con las unidades que lo solapan en al menos 0,01 km² (`geo_nombrar_huecos()`): 57 de los 95 huecos y 1.176,5 de los 1.495 km², en 73 trozos. La capa `sin_seccion` lleva los huecos enteros, sin nombre, y encima los trozos con `nombre` y `tipo`, con su superficie y sus provincias. La ficha da el nombre literal del IGN, el tipo («Condominio: territorio de varios municipios») y la fuente, en castellano e inglés; fuera de los trozos sigue el texto genérico. Atribución del mapa base: «INE, IGN».
+- Compuertas `mapa_base_nombres` y `mapa_base_nombres_dobles` (bloqueo); `mapa_base_huecos` (alerta) da también los huecos y los km² con nombre. El PMTiles pasa de 35,3 a 35,4 MB: va en el próximo release.
+
+### Cambiado (9-nov-2026, tareas 20–23)
+
+- `aeat_titulo()` y `aeat_menus()` leen también la maqueta de las ediciones de la AEAT hasta 2017 (filtros en el subtítulo y en menús desplegables, otros nombres de comunidad).
+- `larga_derivados`: de 1.104.793 a 2.149.869 filas (barrera de la tartera de 2015 a 2023 y del transistor de 2015 a 2024).
+- Plantilla de las páginas de texto (`web/herramientas/plantilla_documento.html`) con «Datos» en el menú, la página activa y el botón ES/EN por variables; metadatos de «Datos» en `datos_es.yaml` y `datos_en.yaml`. Flujo de Pages: el paso de las páginas de texto monta «Método» y «Datos» y para si «Datos» no enlaza la tabla larga. `documento.css`: los códigos de la primera columna de las tablas no se parten. Fuera el texto `interfaz.proximamente` de los diccionarios de la web.
+- Nota metodológica (castellano e inglés): §5.5 nueva (distribución de la renta, 4–6), §6.3 rehecha (tabla del SMI de 2015 a 2026), §6.5 nueva (transistor) y al día los apartados de fuentes, estados, mapa base, cifras y volumen.
+- Plan v0.33 (preguntas 37–41; 18, cerrada del todo) y guía.
+
+### Decidido (9-nov-2026, tareas 20–23)
+
+- **Fichas:** la web usa el SMI del año elegido, con el vigente como texto; la cotización de cada año se cita de su orden, sin bajarla; transistor como media anual de 12 meses, neto con la retención de los pensionistas.
+- **Indicadores 4–6:** descargas en CSV (pregunta 38); huecos forales `ausente`, sin Eustat ni Nastat (39); el 4 y el 5, medias ponderadas al reproyectar, y el 6, regla de medianas (40); mapas ya en la web (41).
+- **Página «Datos»** (37): pandoc, como «Método»; diccionario desde el pipeline; cobertura real por indicador en `version.json`.
+- **Suelo sin sección:** nombres por trozos, donde el IGN dibuja la unidad, y no uno por hueco, que ponía un nombre equivocado en parte de 6 huecos; nombres literales del IGN, también los siete de Burgos con identificadores de cinco cifras, que no son códigos de municipio del INE; tipo «condominio», el del mapa político del IGN.
+- `eustat_nastat`, descartada como fuente.
+
 ## [0.1.0] · 9-nov-2026
 
 Primera publicación: release `v0.1.0` (datos de la pasada del commit `573dbf6`) y web en GitHub Pages, https://gastiaso.github.io/de-renta-en-renta/. Lleva el mapa por sección censal y la sección europea de sobrecarga en un solo sitio (no hubo v0.0 aparte). Contra el sitio publicado pasan la prueba en el navegador (`comprobar_web_navegador()`: seis fichas y 300 secciones en los 10 años, sin errores), el mapa base se sirve por rangos y el Parquet de la tabla larga se baja con su suma. La etiqueta `v0.1.0` apunta al commit `573dbf6`; la prueba en el navegador, el paquete y la documentación de la publicación entraron justo después (`38d6870` y `fc7461c`), sin cambiar los datos ni la web.

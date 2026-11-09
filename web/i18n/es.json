@@ -27,7 +27,6 @@
   "interfaz": {
     "idioma": "Idioma",
     "navegacion": "Secciones de la web",
-    "proximamente": "Próximamente",
     "ejemplo_nota": "Valores inventados para probar la web: no son datos.",
     "error_carga": "No se han podido cargar los datos del mapa.",
     "mapa": {
@@ -84,6 +83,8 @@
       "vivienda_m2": "{superficie} m²",
       "vivienda_llave": "la vivienda mediana de la sección",
       "ingreso_euros": "{euros} € netos al mes",
+      "ingreso_euros_anio": "{euros} € netos al mes de {anio} (en {ultimo}, {euros_ultimo} €)",
+      "nota_transistor": "Responde a «si tuviera que alquilar hoy»: el 89,1 % de los mayores de 65 años vive en casa propia (ECV 2023).",
       "ingreso_provincia": "el ingreso de «{ficha}» en cada provincia",
       "ingreso_llave": "la renta media de sus hogares, entre 12",
       "sin_datos": "No hay secciones con dato para este cálculo.",
@@ -158,6 +159,7 @@
       "evolucion": "Evolución",
       "evolucion_llega": "Evolución del alquiler sobre el ingreso",
       "ingreso_fijo": "Con el ingreso de hoy en todos los años: solo cambia el alquiler.",
+      "ingreso_anio": "Con el ingreso de la ficha de cada año: cambian el alquiler y el ingreso.",
       "del_ingreso": "del ingreso se va en alquiler",
       "alquiler_ingreso": "Alquiler: {alquiler} € · ingreso: {ingreso} € al mes",
       "sin_seccion": "Territorio sin sección censal",
@@ -165,6 +167,13 @@
       "provincias": "Provincias",
       "superficie": "Superficie",
       "km2": "{superficie} km²",
+      "nombre": "Nombre",
+      "tipo": "Tipo",
+      "tipo_ign": {
+        "condominio": "Condominio: territorio de varios municipios",
+        "territorio": "Territorio que no es de ninguna provincia"
+      },
+      "fuente_ign": "Nombre y tipo: Instituto Geográfico Nacional, unidades administrativas (obra derivada de BDDAE 2026 CC-BY 4.0 ign.es).",
       "contratos": "Mediana de {contratos} contratos · margen aproximado ±{margen} %",
       "contratos_sin_margen": "Mediana de {contratos} contratos",
       "contratos_secreto": "{contratos} contratos: con menos de 10, la fuente no publica la mediana",
@@ -457,23 +466,23 @@
     "peso_salarios": {
       "nombre": "Peso de los salarios en la renta",
       "unidad": "% de la renta bruta",
-      "definicion": "Parte de la renta bruta media de la sección que procede de salarios.",
-      "calculo": "Cifra publicada por el INE (ADRH, distribución por fuente de ingresos).",
-      "lectura": "Une la renta del barrio con los salarios: con un peso bajo, la renta depende más de pensiones, prestaciones u otras rentas."
+      "definicion": "Parte de la renta bruta de los residentes de la sección que procede de salarios.",
+      "calculo": "Cifra publicada por el INE (ADRH, distribución por fuente de ingresos: salarios, pensiones, prestaciones por desempleo, otras prestaciones y otros ingresos, que suman 100). Los años publicados en otro seccionado se llevan al de 2021 como media ponderada por la renta bruta de cada sección (renta bruta media por persona × población); si hay que repartir alguna sección, el estado pasa a «estimado». Municipios, provincias, comunidades y España, con la cifra publicada.",
+      "lectura": "Une la renta del barrio con los salarios: con un peso bajo, la renta depende más de pensiones, prestaciones u otras rentas. Sin dato en Álava hasta 2019, en Gipuzkoa en 2015 y en casi toda Navarra hasta 2020."
     },
     "bajo_60_mediana": {
       "nombre": "Población por debajo del 60 % de la mediana de renta por unidad de consumo",
       "unidad": "% de la población",
-      "definicion": "Población con ingresos por unidad de consumo por debajo del 60 % de la mediana estatal.",
-      "calculo": "Cifra publicada por el INE (ADRH); en el País Vasco y Navarra, por Eustat y Nastat.",
-      "lectura": "Umbral estatal, no autonómico: un mismo ingreso cuenta igual en todo el territorio aunque el coste de la vida sea distinto."
+      "definicion": "Población con ingresos por unidad de consumo por debajo del 60 % de la mediana de España (hasta 2022, de la del territorio fiscal común, sin el País Vasco ni Navarra).",
+      "calculo": "Cifra publicada por el INE (ADRH, umbrales relativos, ambos sexos). Los años publicados en otro seccionado se llevan al de 2021 como media ponderada por la población, porque el umbral es el mismo en toda España cada año; si hay que repartir alguna sección, el estado pasa a «estimado». Municipios, provincias, comunidades y España, con la cifra publicada.",
+      "lectura": "Umbral estatal, no autonómico: un mismo ingreso cuenta igual en todo el territorio aunque el coste de la vida sea distinto. Ruptura en 2023: el umbral pasa de la mediana del territorio fiscal común a la de toda España. Sin dato en Álava hasta 2019, en Gipuzkoa en 2015 y en Navarra hasta 2020."
     },
     "gini": {
       "nombre": "Índice de Gini",
       "unidad": "índice (0–100)",
       "definicion": "Índice de Gini de la renta por unidad de consumo de la sección: 0 si todos tienen la misma renta, 100 si una sola persona la concentra.",
-      "calculo": "Cifra publicada por el INE (ADRH).",
-      "lectura": "Mide la desigualdad dentro del barrio, no entre barrios."
+      "calculo": "Cifra publicada por el INE (ADRH), que antes de calcularlo sustituye el 1,5 % de las rentas más bajas y el 1,5 % de las más altas por el valor más próximo. En otros seccionados se copia el de una sola sección de origen (la misma o la que aporta al menos el 95 % de los portales); si ninguna domina, queda sin dato. Municipios, provincias, comunidades y España, con la cifra publicada.",
+      "lectura": "Mide la desigualdad dentro del barrio, no entre barrios. Sin dato en Álava hasta 2019, en Gipuzkoa en 2015 y en Navarra hasta 2020."
     },
     "salario_medio": {
       "nombre": "Salario medio anual por asalariado (total y menores de 35)",
@@ -535,7 +544,7 @@
       "nombre": "Barrera de acceso al alquiler",
       "unidad": "% del ingreso de referencia",
       "definicion": "Parte del ingreso neto mensual de una ficha (salario mínimo, joven, pensionista o el sueldo del usuario) que se iría en el alquiler de 50 m² de la sección.",
-      "calculo": "Alquiler mediano por m² de la vivienda colectiva × 50 / ingreso neto mensual de la ficha repartido en 12 pagas, × 100. Se calcula en la web con la ficha elegida; si el ingreso no es del mismo año que el alquiler (el salario mínimo del año en curso frente al último alquiler publicado), se indica.",
+      "calculo": "Alquiler mediano por m² de la vivienda colectiva × 50 / ingreso neto mensual de la ficha repartido en 12 pagas, × 100. Se calcula en la web con la ficha elegida, con el ingreso de la ficha del mismo año que el alquiler (el salario mínimo y la pensión de cada año); si la ficha no tiene ese año (la del joven, solo 2024), se usa el último y se indica.",
       "lectura": "Mide la barrera para entrar con un ingreso dado. Se lee por tramos (hasta el 30 %, del 30 al 40 % y más del 40 %), no como cifra exacta."
     },
     "anios_salario_compra": {
@@ -632,6 +641,7 @@
     "ine_vut": "Viviendas de uso turístico (estadística experimental)",
     "zonas_tensionadas": "Declaraciones de zonas de mercado residencial tensionado",
     "ine_seccionado": "Cartografía de secciones censales (anual)",
+    "ign_au": "Unidades administrativas del IGN (BDDAE): condominios y territorios sin provincia",
     "ine_callejero": "Callejero del censo electoral (tramos de vía por sección)",
     "catastro_inspire": "Edificios del Catastro (INSPIRE)",
     "catastro_foral": "Edificios de los catastros forales (INSPIRE)",
@@ -688,7 +698,8 @@
     },
     "ficha": {
       "tartera": "Salario mínimo",
-      "mochila": "Joven menor de 35"
+      "mochila": "Joven menor de 35",
+      "transistor": "Pensionista"
     },
     "mes": {
       "M02": "Febrero",

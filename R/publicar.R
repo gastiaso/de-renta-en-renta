@@ -9,7 +9,9 @@
 #     teselas/seccionado_2021.pmtiles);
 #   - tabla_larga.parquet: la tabla larga validada, para la descarga de la página «Datos» (el flujo
 #     la deja en descargas/);
-#   - version.json: fecha, commit, versiones de las fuentes y tamaño y suma de cada fichero;
+#   - version.json: fecha, commit, versiones de las fuentes, cobertura de la tabla larga por
+#     indicador (filas, años, niveles y cortes; la muestra la página «Datos») y tamaño y suma de
+#     cada fichero;
 #   - SHA256SUMS: sumas SHA-256 de los cuatro anteriores, en el formato de sha256sum (el flujo las
 #     comprueba con sha256sum --check antes de montar el sitio).
 #
@@ -47,6 +49,7 @@ empaquetar_publicacion <- function(dir_web = "web",
                                    tabla_larga = "datos/intermedios/tabla_larga.parquet",
                                    dir_salida = "publicacion",
                                    fuentes = "inventario/fuentes.csv",
+                                   indicadores = "inventario/indicadores.csv",
                                    commit = commit_publicacion(),
                                    fecha = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
                                    limites = LIMITES_PUBLICACION) {
@@ -89,7 +92,8 @@ empaquetar_publicacion <- function(dir_web = "web",
   sumas <- vapply(release, sha256_fichero, "")
   version <- version_publicacion(manifiesto, tabla_larga, fuentes, commit, fecha,
                                  ficheros = data.frame(nombre = basename(release), bytes = file.size(release),
-                                                       sha256 = unname(sumas), destino = destino_publicacion(release, url_mapa)))
+                                                       sha256 = unname(sumas), destino = destino_publicacion(release, url_mapa)),
+                                 indicadores = indicadores)
   escribir_texto_lf(jsonlite::toJSON(version, auto_unbox = TRUE, pretty = TRUE, digits = NA, na = "null"),
                     salida[["version"]])
   sumas <- c(sumas, version = sha256_fichero(salida[["version"]]))
@@ -162,8 +166,9 @@ commit_publicacion <- function(dir = ".") {
 }
 
 # Contenido de version.json: fecha, commit, exportación de la web, fuentes de la tabla larga (con su
-# versión, que es la fecha del fichero de origen, y su número de filas), mapa base y ficheros.
-version_publicacion <- function(manifiesto, tabla_larga, fuentes, commit, fecha, ficheros) {
+# versión, que es la fecha del fichero de origen, y su número de filas), cobertura por indicador
+# (cobertura_publicacion(), en el orden del inventario `indicadores`), mapa base y ficheros.
+version_publicacion <- function(manifiesto, tabla_larga, fuentes, commit, fecha, ficheros, indicadores = NULL) {
   por_fuente <- arrow::open_dataset(tabla_larga) |>
     dplyr::count(fuente, version, name = "filas") |>
     dplyr::collect() |>
@@ -181,16 +186,44 @@ version_publicacion <- function(manifiesto, tabla_larga, fuentes, commit, fecha,
     mapa_base = list(url = manifiesto$mapa_base$url %||% NA_character_,
                      atribucion = manifiesto$mapa_base$atribucion %||% NA_character_),
     fuentes = por_fuente,
+    indicadores = cobertura_publicacion(tabla_larga, indicadores),
     ficheros = ficheros,
     licencia = list(datos = "CC BY-SA 4.0 (LICENCIA_DATOS.md)", codigo = "MIT (LICENSE)")
   )
 }
 
+# Cobertura de la tabla larga por indicador: filas, primer y último año, niveles (en el orden de
+# NIVELES) y cortes (total delante). En el orden de inventario/indicadores.csv si se da su ruta
+# (`indicadores`); los que no estén en él, al final y por orden alfabético.
+cobertura_publicacion <- function(tabla_larga, indicadores = NULL) {
+  larga <- arrow::open_dataset(tabla_larga)
+  resumen <- larga |>
+    dplyr::group_by(indicador) |>
+    dplyr::summarise(filas = dplyr::n(), anio_desde = min(anio), anio_hasta = max(anio)) |>
+    dplyr::collect()
+  niveles <- larga |> dplyr::distinct(indicador, nivel) |> dplyr::collect()
+  cortes <- larga |> dplyr::distinct(indicador, corte) |> dplyr::collect()
+  orden <- if (!is.null(indicadores) && file.exists(indicadores)) {
+    readr::read_csv(indicadores, col_types = readr::cols(.default = "c"), progress = FALSE)$codigo
+  } else character()
+  resumen <- resumen[order(match(resumen$indicador, orden), resumen$indicador), ]
+  lapply(seq_len(nrow(resumen)), function(k) {
+    i <- resumen$indicador[k]
+    n <- niveles$nivel[niveles$indicador == i]
+    cc <- cortes$corte[cortes$indicador == i]
+    list(indicador = i, filas = as.numeric(resumen$filas[k]),
+         anio_desde = as.integer(resumen$anio_desde[k]), anio_hasta = as.integer(resumen$anio_hasta[k]),
+         niveles = I(n[order(match(n, names(NIVELES)), n)]), cortes = I(cc[order(cc != "total", cc)]))
+  })
+}
+
 # Ficheros del sitio montado, como lo hace el flujo: web/ como queda en git (sin web/datos/ salvo la
-# muestra, sin *.pmtiles y sin las herramientas de desarrollo) más lo del release.
+# muestra, sin *.pmtiles, sin la copia local de descargas/ y sin las herramientas de desarrollo)
+# más lo del release.
 sitio_publicacion <- function(dir_web, datos, salida, url_mapa) {
   web <- list.files(dir_web, recursive = TRUE, all.files = FALSE)
-  fuera_de_git <- (startsWith(web, "datos/") & !startsWith(web, "datos/ejemplo/")) | grepl("\\.pmtiles$", web)
+  fuera_de_git <- (startsWith(web, "datos/") & !startsWith(web, "datos/ejemplo/")) | grepl("\\.pmtiles$", web) |
+    startsWith(web, paste0(DESTINO_DESCARGAS, "/"))
   desarrollo <- web %in% EXCLUIDOS_SITIO | sub("/.*", "", web) %in% EXCLUIDOS_SITIO
   web <- web[!fuera_de_git & !desarrollo]
   descargas <- salida[c("tabla", "version")]

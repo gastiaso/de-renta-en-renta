@@ -201,3 +201,126 @@ test_that("la compuerta del mapa base admite solo los códigos de las secciones"
   expect_equal(c$id, "mapa_base_secciones")
   expect_equal(c$calculado, 1)
 })
+
+# Nombres del IGN en el suelo sin sección (geo_nombrar_huecos), sobre los huecos de
+# secciones_huecos(): el de 2 km² de la 28 (celdas 1-3 × 1-3 sin el enclave 2,2), el de 0,25 km²
+# entre la 05 y la 28 (celda 11,1) y el de 0,25 km² entre la 05 y la 40 (celda 21,1).
+unidades_huecos <- function(dobles = FALSE) {
+  caja <- function(x0, y0, x1, y1) {
+    x <- 440000 + c(x0, x1) * 500
+    y <- 4470000 + c(y0, y1) * 500
+    sf::st_polygon(list(rbind(c(x[1], y[1]), c(x[2], y[1]), c(x[2], y[2]), c(x[1], y[2]), c(x[1], y[1]))))
+  }
+  u <- sf::st_sf(
+    codigo = c("34132853001", "34132853002", "34070553003", "34205454001"),
+    nombre = c("Facería de Prueba", "Comunidad de 09076 y 09290", "Roce", "Territorio de Prueba"),
+    tipo = c("condominio", "condominio", "condominio", "territorio"),
+    geometry = sf::st_sfc(
+      caja(0.8, 1, 2, 3),             # celdas 1,1 y 1,2 (0,5 km²) y un poco de las secciones del anillo
+      caja(2, 1, 4, 4),               # celdas 2-3 × 1-3: 1,25 km² sin el enclave
+      caja(10.9, 0.9, 11.1, 1.1),     # roza el hueco de la 05 y la 28: 0,0025 km², menos del umbral
+      caja(21, 1, 22, 2),             # el hueco de la 05 y la 40, entero
+      crs = 25830)
+  )
+  if (dobles) u <- rbind(u, sf::st_sf(codigo = "34132853004", nombre = "Encima", tipo = "condominio",
+                                      geometry = sf::st_sfc(caja(1, 1, 3, 2), crs = 25830)))
+  u
+}
+
+test_that("los trozos de los huecos que caen en una unidad del IGN llevan su nombre y su tipo", {
+  s <- secciones_huecos()
+  h <- geo_huecos(s)
+  h$provincias <- c("x", "y", "z")[order(-h$km2)]
+  t <- geo_nombrar_huecos(h, unidades_huecos())
+  t <- t[order(t$hueco, t$km2), ]
+  expect_equal(names(t), c("hueco", "km2", "provincias", "nombre", "tipo", "geometry"))
+  expect_equal(nrow(t), 3L)                                           # el roce no nombra; los restos no son trozos
+  expect_equal(sum(t$km2), 0.5 + 1.25 + 0.25)
+  grande <- t[t$hueco == which.max(h$km2), ]
+  expect_equal(grande$nombre, c("Facería de Prueba", "Comunidad de 09076 y 09290"))   # literal
+  expect_equal(grande$km2, c(0.5, 1.25))                              # sin el enclave
+  expect_equal(unique(grande$provincias), "x")                        # columnas del hueco
+  expect_equal(t$tipo[t$nombre %in% "Territorio de Prueba"], "territorio")
+  expect_equal(nrow(geo_nombrar_huecos(h[0, ], unidades_huecos())), 0L)
+  # Con un umbral más bajo que el roce, el roce sí nombra
+  expect_true("Roce" %in% geo_nombrar_huecos(h, unidades_huecos(), umbral_km2 = 0.001)$nombre)
+})
+
+test_that("las unidades del IGN se leen del GeoJSON del WFS con su nombre literal y su tipo", {
+  dir <- tempfile()
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  rasgo <- function(codigo, nombre, x) {
+    list(type = "Feature", id = paste0("AU_ADMINISTRATIVEUNIT_", codigo),
+         geometry = list(type = "MultiPolygon",
+                         coordinates = list(list(list(c(x, 40), c(x + 0.01, 40), c(x + 0.01, 40.01), c(x, 40.01), c(x, 40))))),
+         properties = list(nationalCode = codigo,
+                           nationalLevelName = list(LocalisedCharacterString = "Municipio"),
+                           name = list(GeographicalName = list(
+                             sourceOfName = list(nil = TRUE),
+                             spelling = list(SpellingOfName = list(text = nombre, script = list(nil = TRUE)))))))
+  }
+  escribir <- function(fichero, rasgos) {
+    jsonlite::write_json(list(type = "FeatureCollection", features = rasgos), file.path(dir, fichero),
+                         auto_unbox = TRUE, digits = NA)
+  }
+  escribir("territorios_53.geojson", list(rasgo("34153153070", "Facería de Ayarza", -1.5),
+                                          rasgo("34070953007", "Comunidad de 09076, 09290 y 09578", -3.5)))
+  escribir("territorios_54.geojson", list(rasgo("34205454006", "Gibraltar", -5.35)))
+  rutas <- ficheros_ign_au(dir)
+  expect_equal(basename(rutas), c("territorios_53.geojson", "territorios_54.geojson"))
+  u <- leer_ign_au(rutas)
+  expect_equal(names(u), c("codigo", "nombre", "tipo", "geometry"))
+  expect_equal(u$codigo, c("34070953007", "34153153070", "34205454006"))
+  expect_equal(u$nombre, c("Comunidad de 09076, 09290 y 09578", "Facería de Ayarza", "Gibraltar"))
+  expect_equal(u$tipo, c("condominio", "condominio", "territorio"))
+  expect_equal(sf::st_crs(u)$epsg, 4326L)
+  expect_error(ficheros_ign_au(dir, c("53", "55")), "territorios_55")
+  escribir("territorios_55.geojson", list(rasgo("34205455001", "Raro", 0)))
+  expect_error(leer_ign_au(file.path(dir, "territorios_55.geojson")), "34205455001")
+})
+
+test_that("la capa sin_seccion lleva los nombres y la compuerta los comprueba", {
+  s <- secciones_huecos()
+  j <- geo_jerarquia(s, provincias_huecos)
+  nombres <- tibble::tibble(municipio = c("05001", "28001", "40001"), nombre = c("Uno", "Dos", "Tres"))
+  t <- geo_territorios(j, nombres, provincias_huecos, ccaa_huecos)
+  u <- unidades_huecos()
+  capas <- geo_capas_mapa_base(s, j, t, unidades = u)
+  sn <- sf::st_drop_geometry(capas$sin_seccion)
+  sn <- sn[order(sn$provincias, -is.na(sn$nombre), sn$km2), ]
+  expect_equal(names(sn), c("km2", "provincias", "nombre", "tipo"))
+  # Los tres huecos enteros, sin nombre, y encima los tres trozos con nombre
+  expect_equal(sn$provincias, c("05 28", "05 40", "05 40", "28", "28", "28"))   # las que toca cada uno
+  expect_equal(sn$nombre, c(NA, NA, "Territorio de Prueba", NA, "Facería de Prueba", "Comunidad de 09076 y 09290"))
+  expect_equal(sn$km2, c(0.25, 0.25, 0.25, 2, 0.5, 1.25))
+  # Las provincias y las comunidades no cambian con los nombres
+  sin <- geo_capas_mapa_base(s, j, t)
+  expect_equal(as.numeric(sf::st_area(capas$provincias)), as.numeric(sf::st_area(sin$provincias)))
+  expect_equal(as.numeric(sf::st_area(capas$comunidades)), as.numeric(sf::st_area(sin$comunidades)))
+
+  skip_if_not("PMTiles" %in% sf::st_drivers("vector")$name, "GDAL sin el controlador PMTiles")
+  zooms <- lapply(ZOOMS_MAPA_BASE, function(z) c(min(z[1], 10L), 12L))
+  comprobar <- function(capas, unidades) {
+    ruta <- tempfile(fileext = ".pmtiles")
+    on.exit(unlink(ruta))
+    generar_pmtiles(capas, ruta, zooms = zooms)
+    c <- comprobar_mapa_base(ruta, s, unidades)
+    stats::setNames(c$calculado, paste(c$id, c$detalle))
+  }
+  valor <- function(r, patron) unname(r[grepl(patron, names(r))])
+  r <- comprobar(capas, u)
+  expect_equal(valor(r, "^mapa_base_sin_seccion"), 0)
+  expect_equal(valor(r, "^mapa_base_huecos"), c(3, 2.5, 2, 2))      # 3 huecos; 2 con nombre, 2 km²
+  expect_equal(valor(r, "^mapa_base_nombres "), 0)
+  expect_equal(valor(r, "^mapa_base_nombres_dobles"), 0)
+  # Sin unidades, solo las filas de antes
+  expect_false(any(grepl("nombres", names(comprobar(capas, NULL)))))
+  # Trampas: una capa sin nombres, y dos unidades que se pisan (0,25 km² en dos sitios)
+  r <- comprobar(sin, u)
+  expect_equal(valor(r, "^mapa_base_nombres "), 3)
+  expect_match(names(r)[grepl("^mapa_base_nombres ", names(r))], "de 3\\)")
+  r <- comprobar(capas, unidades_huecos(dobles = TRUE))
+  expect_equal(valor(r, "^mapa_base_nombres_dobles"), 0.5)
+  expect_gt(valor(r, "^mapa_base_nombres "), 0)                       # la capa no lleva «Encima»
+})

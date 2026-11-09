@@ -51,7 +51,7 @@ La segunda familia corrige un sesgo de la primera: los barrios caros parecen ase
 | 8 | Alquiler mensual (mediana) | MIVAU, SERPAVI | Sección (seccionado de 2021) | 2015–2024 | Calculado (`larga_serpavi`) |
 | 9 | Alquiler por m² (mediana) | MIVAU, SERPAVI | Sección (seccionado de 2021) | 2015–2024 | Calculado (`larga_serpavi`) |
 | 14 | Esfuerzo de residentes en alquiler | SERPAVI y ADRH | Sección | 2015–2024 | Calculado (`larga_derivados`) |
-| 15 | Barrera de acceso al alquiler | SERPAVI e ingreso de cada ficha | Sección × ingreso | 2015–2024 | Control en `larga_derivados` (mochila y tartera, 2024); la web la calcula con cada ficha |
+| 15 | Barrera de acceso al alquiler | SERPAVI e ingreso de cada ficha | Sección × ingreso | 2015–2024 | Control en `larga_derivados` (tartera y transistor, 2015–2024; mochila, 2024); la web la calcula con cada ficha |
 | 18 | Hogares en alquiler | INE, Censo 2021 | Sección (seccionado de 2021) | 2021 (2011, en F6) | Calculado (`larga_censo2021`) |
 | 19 | Viviendas de uso turístico | INE, estadística experimental | Sección (seccionado de 2024, llevado al de 2021) | Febrero de 2024 – mayo de 2026, semestral (2020–2023, en F6) | Calculado (`larga_vut`) |
 | 21 | Sueldo neto necesario (mapa por defecto) | SERPAVI | Sección | 2015–2024 | Calculado (`larga_derivados`) |
@@ -72,17 +72,19 @@ El inventario completo, con dirección, acceso, cadencia y notas, está en `inve
 
 | Fuente (`id`) | Organismo | Uso | Licencia (resumen de `fuentes.csv`) |
 |---|---|---|---|
-| `ine_adrh` | INE | Indicadores 1–3; población y hogares de las pruebas de la geografía; nombres de municipio | CC BY 4.0 |
+| `ine_adrh` | INE | Indicadores 1–6; población y hogares de las pruebas de la geografía; nombres de municipio | CC BY 4.0 |
 | `mivau_serpavi` | MIVAU | Indicadores 8, 9, 14, 15 y 21 | Reutilización autorizada por el aviso legal del MIVAU (Ley 37/2007 y RD 1495/2011), citando la fuente y la fecha, sin desnaturalizar la información |
 | `ine_censo2021` | INE | Indicador 18; denominador del 19 | CC BY 4.0 |
 | `ine_vut` | INE | Indicador 19 | CC BY 4.0 |
-| `aeat_mercado_trabajo` | AEAT | Ficha «mochila» (indicador 7) | Reutilización libre, también comercial, citando la fuente y la fecha de última actualización |
-| `boe_smi` | BOE | Ficha «tartera» | Reutilizable |
+| `aeat_mercado_trabajo` | AEAT | Fichas «mochila» (indicador 7) y «transistor» (retención de los pensionistas) | Reutilización libre, también comercial, citando la fuente y la fecha de última actualización |
+| `boe_smi` | BOE | Ficha «tartera» (2015–2026) | Reutilizable |
+| `inss_pensiones` | INSS (Seguridad Social) | Ficha «transistor» | Reutilización citando la fuente y la fecha de última actualización |
 | `ine_ecv` | INE | Control de la mochila; indicador 22 | CC BY 4.0 |
 | `ine_ecv_modulo` | INE | Indicador 23 | CC BY 4.0 |
 | `eurostat_ilc_lvho07`, `eurostat_ilc_lvho07_r` | Eurostat | Compuerta del indicador 22, también por quintil de renta (`ilc_lvho07b`); serie y mapa europeo de la web | CC BY 4.0 |
 | `eurostat_nuts` | Eurostat (GISCO) | Geometrías del mapa europeo | Uso no comercial con el aviso «© EuroGeographics para los límites administrativos». No es CC BY |
 | `ine_seccionado` | INE | Seccionados de 2016 a 2025; jerarquía territorial y mapa base | CC BY 4.0 |
+| `ign_au` | IGN | Nombre y tipo del suelo sin sección en el mapa base (§3.10) | CC BY 4.0 (Orden FOM/2807/2015), con la atribución `Obra derivada de BDDAE 2026 CC-BY 4.0 ign.es` |
 | `ine_callejero` | INE | Tablas de paso, vía (a) | CC BY 4.0 |
 | `catastro_inspire` | D. G. del Catastro | Tablas de paso, vía (b) | Contradictoria: ver abajo |
 | `catastro_foral` | Diputaciones forales de Álava, Bizkaia y Gipuzkoa; Gobierno de Navarra | Vía (b) en País Vasco y Navarra | Distinta en cada territorio: ver abajo |
@@ -334,27 +336,29 @@ Origen: `comparar_vias_paso()`; en `comparacion_vias`, filas con `estimada_a` ve
   | provincias | 3–12 | `provincia`, `nombre` |
   | municipios | 5–12 | `municipio`, `nombre` |
   | secciones | 7–12 | `seccion` |
-  | sin_seccion | 0–12 | `km2`, `provincias` |
+  | sin_seccion | 0–12 | `km2`, `provincias`, `nombre`, `tipo` |
 
 - **Suelo sin sección.** El seccionado del INE de 2021 no cubre el suelo que no pertenece a ningún término municipal: montes y terrenos comunales compartidos, como las Bardenas Reales o las sierras de Urbasa y Andía. Quedan como anillos interiores de la unión de las secciones (`geo_huecos()`). Se cuentan los de al menos 0,01 km² (`UMBRAL_SIN_SECCION_KM2`), sin las secciones que caen dentro (enclaves): 95, que suman 1.495 km²; el mayor, 418,4 km². Por debajo del umbral solo hay rendijas entre secciones vecinas, 1.140 de menos de 1 m² y una de 13 m²; entre 13 m² y 1 ha no hay ningún anillo. Los huecos van en la capa `sin_seccion`, con su superficie y los códigos de las provincias que tocan. Los 77 que tocan una sola provincia se suman a ella, y los 5 que tocan varias provincias de una sola comunidad, a la comunidad (`geo_absorber_huecos()`). Los 13 restantes quedan fuera de esas capas, porque sin la línea límite oficial no se reparte suelo entre provincias. La web los pinta como «sin dato»; al pulsarlos, la ficha dice qué son. No tienen población, sección ni datos. Los huecos que tocan la costa o la frontera no son anillos interiores y no se detectan.
 
+- **Nombres del IGN** (decisión del autor, 9-nov-2026). Las unidades administrativas del IGN (`ign_au`; `leer_ign_au()`, objetivo `unidades_ign`) traen los condominios: montes y terrenos de varios municipios, como facerías, parzonerías, ledanías o comunidades. Cada hueco se parte por las unidades que lo solapan en al menos 0,01 km² (`geo_nombrar_huecos()`), el mismo umbral que los huecos: los solapes menores son de 0,001 km² o menos, roces de bordes, y el siguiente es de 0,012 km². Cada trozo lleva el nombre literal del IGN, su tipo y las provincias que toca. El tipo es «condominio», como los clasifica el mapa político del IGN (el servicio INSPIRE les da el nivel «Municipio»). Quedan nombrados 57 de los 95 huecos y 1.176,5 km², en 73 trozos; 7 huecos tienen dos unidades o más, y uno de Burgos, 10. La capa lleva cada hueco entero, sin nombre, y encima sus trozos con nombre; al pulsar, la web da el del trozo y, fuera de los trozos, el del hueco. Lo que no cubre ninguna unidad se queda así con el texto genérico: 182,2 km² en los huecos con nombre, de ellos 165,1 en el de 264 km² entre Álava y Navarra, donde el IGN solo dibuja la Parzonería de Entzia y el Monte Comunal de las Limitaciones de las Améscoas. El resto son franjas finas en los bordes, donde las líneas del IGN y las del INE no coinciden; como trozos aparte, la cuantización de las teselas las rompía. Los otros 38 huecos (136,3 km²) no tienen unidad del IGN y conservan el texto genérico. Siete nombres de Burgos llevan identificadores de cinco cifras en lugar de nombres («Comunidad de 09076, 09290, 09578, 09606 y 09822»): no son códigos de municipio del INE y se dan tal cual. Ninguna de las 7 unidades del código 54 (territorios que no son de ninguna provincia) toca un hueco. La ficha cita al IGN con la atribución que pide su licencia.
+
 - **Teselas.** Se generan con GDAL desde R, con los controladores PMTiles y MVT (`generar_pmtiles()`), sin tippecanoe (plan §6.2). Cada tesela usa una rejilla de 4.096 unidades por 512 píxeles. La simplificación se mide en unidades de esa rejilla, así que es la misma a los dos lados de un borde compartido.
 - **Simplificación** (plan §11, pregunta 16): 4 unidades (medio píxel) por debajo del zoom 12 y ninguna en el zoom 12. En GDAL, el parámetro del zoom máximo es una tolerancia, no un número de zoom: vale 0 (`simplificacion_zoom_max`).
-- **Tamaño.** El fichero ocupa 35,3 MB (1 MB = 10⁶ bytes), con 13.235 teselas (`resumen_mapa_base`, `pmtiles_resumen()`):
+- **Tamaño.** El fichero ocupa 35,4 MB (1 MB = 10⁶ bytes), con 13.235 teselas (`resumen_mapa_base`, `pmtiles_resumen()`):
 
   | Zoom | Teselas | MB | Mayor tesela (KB) |
   |---|---|---|---|
-  | 0–4 | 13 | 0,03 | 6,6 |
-  | 5 | 5 | 0,34 | 143,2 |
-  | 6 | 10 | 0,46 | 149,2 |
-  | 7 | 24 | 1,67 | 208,3 |
-  | 8 | 71 | 2,27 | 142,4 |
+  | 0–4 | 13 | 0,04 | 9,0 |
+  | 5 | 5 | 0,35 | 146,0 |
+  | 6 | 10 | 0,46 | 149,4 |
+  | 7 | 24 | 1,67 | 208,4 |
+  | 8 | 71 | 2,27 | 142,5 |
   | 9 | 208 | 2,78 | 85,3 |
-  | 10 | 702 | 4,11 | 68,4 |
-  | 11 | 2.548 | 6,49 | 38,4 |
-  | 12 | 9.654 | 17,11 | 58,0 |
+  | 10 | 702 | 4,12 | 68,4 |
+  | 11 | 2.548 | 6,50 | 38,4 |
+  | 12 | 9.654 | 17,13 | 58,0 |
 
-- **Compuerta** (`comprobar_mapa_base()`, `validacion_mapa_base`). Lee con GDAL las teselas del zoom 12. `mapa_base_secciones`: encuentra las 36.333 secciones. `mapa_base_huecos` (alerta): 95 huecos del seccionado y 1.495 km², calculados desde las secciones. `mapa_base_sin_seccion` (bloqueo): con las secciones y la capa `sin_seccion` juntas, ensanchada la capa una unidad de la rejilla (2,4 m en el zoom 12), no queda ningún hueco abierto.
+- **Compuerta** (`comprobar_mapa_base()`, `validacion_mapa_base`). Lee con GDAL las teselas del zoom 12. `mapa_base_secciones`: encuentra las 36.333 secciones. `mapa_base_huecos` (alerta): 95 huecos del seccionado y 1.495 km², calculados desde las secciones. `mapa_base_sin_seccion` (bloqueo): con las secciones y la capa `sin_seccion` juntas, ensanchada la capa una unidad de la rejilla (2,4 m en el zoom 12), no queda ningún hueco abierto. Con las unidades del IGN, `mapa_base_huecos` da también los huecos con nombre (57) y su superficie (1.176,5 km²). `mapa_base_nombres` (bloqueo): los 73 trozos con nombre lo llevan, con su tipo, en la capa del zoom 12, en su punto interior. `mapa_base_nombres_dobles` (bloqueo): ningún suelo tiene dos unidades a la vez (0 km²).
 - **Publicación** (plan §6.6; plan §11, pregunta 16). El PMTiles no entra en la historia de git: se regenera con `targets` y se publica desde un *release* del repositorio, que el flujo de GitHub Pages copia junto a la web. En local se ve con `node geo/visor/servir.mjs` (`geo/visor/`).
 
 **Códigos postales** (plan §6.3; plan §11, pregunta 16). No son una unidad del INE y no hay polígonos oficiales reutilizables. La correspondencia sección ↔ código postal saldrá del callejero del INE (campo CPOS de los tramos): en enero de 2021, el 80,7 % de las secciones tiene un solo código postal (11.051 códigos; 2.262 cruzan municipios). Solo la necesitan los indicadores 11 y 16. Una geometría propia a partir de los portales de CartoCiudad se decide en F4.
@@ -385,6 +389,13 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `id` | Qué compara | Tolerancia | Tipo | Resultado | Objetivo |
 |---|---|---|---|---|---|
 | `adrh_municipio` | Mediana, por año e indicador, de la desviación entre las medias de sección agregadas a municipio y la cifra municipal | ±0,1 % | Bloqueo | 0,0 % en 2015–2024, renta por persona y por hogar | `validacion_adrh` |
+| `adrh_dist_cobertura` | Provincias con municipios en cada tabla de secciones de los indicadores 4–6 (una descarga cortada se queda en una provincia intermedia sin dar error) | Exacto | Bloqueo | 52 en las tres tablas | `validacion_adrh_distribucion` |
+| `adrh_dist_rango` | Cifras de los indicadores 4–6 fuera de 0–100 | Exacto | Bloqueo | 0 en las 30 cifras de año e indicador | `validacion_adrh_distribucion` |
+| `adrh_dist_fuentes_suma` | Máxima desviación, por año, de la suma de las cinco fuentes de ingreso respecto a 100, en los territorios con las cinco publicadas | ±0,25 puntos | Bloqueo | 0,2 puntos como máximo en 2015–2024 | `validacion_adrh_distribucion` |
+| `adrh_dist_umbrales_orden` | Territorios con la población por debajo del 40 % de la mediana mayor que la del 50 %, o esta mayor que la del 60 % | Exacto | Bloqueo | 0 en los 10 años | `validacion_adrh_distribucion` |
+| `adrh_dist_seccion_unica` | Máxima diferencia, por año e indicador, entre la sección y el municipio en los municipios de una sola sección | Exacto | Bloqueo | 0 en las 30 cifras | `validacion_adrh_distribucion` |
+| `adrh_dist_municipio` | Mediana, por año e indicador, de la desviación (puntos) entre las secciones del 4 y el 5 agregadas a municipio como media ponderada (el 4 con la renta bruta y el 5 con la población) y la cifra municipal | ±0,05 puntos | Bloqueo | 0,006 puntos como máximo (indicador 5); 0 en el 4 | `validacion_adrh_distribucion` |
+| `adrh_dist_provincia` | Lo mismo por provincia, con las secciones publicadas, frente a la tabla de totales: comprueba el casado de los nombres | ±0,3 puntos | Bloqueo | 0,16 puntos como máximo | `validacion_adrh_distribucion` |
 | `cierre_poblacional` | Población reproyectada a 2021 frente a la suma de sus orígenes, por municipio o grupo | ±0,5 % | Bloqueo | Pasa en los nueve años (§3.9) | `validacion_f1` |
 | `cobertura_destino` | Secciones de 2021 que no reciben nada | Exacto | Bloqueo | Ninguna, salvo las excepciones | `validacion_f1` |
 | `serpavi_provincia` | Testigos de las secciones sumados a provincia, por año y tipología, frente a la hoja de provincias (las medianas no se agregan) | Exacto | Bloqueo | Pasa en las 1.040 cifras: 52 provincias, 10 años y 2 tipologías | `validacion_serpavi` |
@@ -411,12 +422,20 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `jerarquia_nombres` | Comunidades, provincias y municipios sin nombre | Exacto | Bloqueo | 0 en las 3 cifras | `validacion_jerarquia` |
 | `mapa_base_secciones` | Secciones de 2021 que faltan en las teselas del zoom máximo del PMTiles | Exacto | Bloqueo | 0 | `validacion_mapa_base` |
 | `mapa_base_sin_seccion` | Huecos del seccionado que siguen abiertos con las secciones y la capa `sin_seccion` del zoom máximo juntas | Exacto | Bloqueo | 0 | `validacion_mapa_base` |
+| `mapa_base_nombres` | Trozos del suelo sin sección con nombre del IGN que no lo llevan, con su tipo, en la capa `sin_seccion` del zoom máximo | Exacto | Bloqueo | 0 de 73 | `validacion_mapa_base` |
+| `mapa_base_nombres_dobles` | Superficie de los huecos con dos unidades del IGN a la vez | Exacto | Bloqueo | 0 km² | `validacion_mapa_base` |
 | `smi_neto` | Ingreso neto mensual de la tartera de 2026 (`perfiles`) frente a la cifra del plan: 17.094 € × (1 − 0,065) / 12 ≈ 1.332 € | ±1 € | Bloqueo | 1.331,91 €; diferencia, −0,09 € | `validacion_derivados` |
-| `derivados_terminos` | Desviación máxima, por año e indicador, entre cada cifra derivada y la recalculada con sus términos | ±0,001 % | Bloqueo | 4,3 × 10⁻¹⁴ % como máximo en las 22 cifras | `validacion_derivados` |
-| `derivados_estado` | Cifras derivadas cuyo estado no es el peor de sus términos (en el 15, el del alquiler, o `ausente` sin ingreso de la ficha), o con valor y estado `secreto` o `ausente` (o al revés) | Exacto | Bloqueo | 0 en las 22 cifras | `validacion_derivados` |
-| `derivados_rango` | Cifras derivadas fuera del rango posible: esfuerzo, del 0,1 al 100 %; barrera, del 0,1 al 300 %; sueldo necesario, de 100 a 10.000 € netos al mes | Exacto | Bloqueo | 0 en las 22 cifras | `validacion_derivados` |
+| `derivados_terminos` | Desviación máxima, por año e indicador, entre cada cifra derivada y la recalculada con sus términos | ±0,001 % | Bloqueo | 4,3 × 10⁻¹⁴ % como máximo en las 41 cifras | `validacion_derivados` |
+| `derivados_estado` | Cifras derivadas cuyo estado no es el peor de sus términos (en el 15, el del alquiler, o `ausente` sin ingreso de la ficha), o con valor y estado `secreto` o `ausente` (o al revés) | Exacto | Bloqueo | 0 en las 41 cifras | `validacion_derivados` |
+| `derivados_rango` | Cifras derivadas fuera del rango posible: esfuerzo, del 0,1 al 100 %; barrera, del 0,1 al 300 %; sueldo necesario, de 100 a 10.000 € netos al mes | Exacto | Bloqueo | 0 en las 41 cifras | `validacion_derivados` |
 | `perfiles_mochila` | Provincias de la mochila sin código del INE en `inventario/provincias_aeat.csv`, códigos repetidos y nombres sin mochila | Exacto | Bloqueo | 0 en las 3 cifras | `validacion_derivados` |
-| `web_valores` | Ficheros de valores de `web/datos/` cuyos valores o estados no son los de la tabla larga (con el redondeo de la guía a la precisión de cada serie: una décima; dos en el 19) o cuya longitud no es la del índice; series sin fichero. También los contratos y el margen de cada serie del alquiler | Exacto | Bloqueo | 0 en las 680 cifras | `validacion_web` |
+| `smi_boe` | Cuantía mensual del SMI de cada año en `SMI_FICHAS` frente a la del real decreto en su XML del BOE, y la norma citada; 2021, media ponderada por meses de vigencia | Exacto | Bloqueo | 0 en las 18 cifras (2015–2023) | `validacion_smi` |
+| `inss_cobertura` | Provincias, comunidades de varias provincias y España que faltan o se repiten en algún mes del año (Excel del INSS) | Exacto | Bloqueo | 0 en los 10 años | `validacion_inss` |
+| `inss_suma` | Pensiones de jubilación de las provincias frente al número publicado para su comunidad y para España, cada mes | Exacto | Bloqueo | 0 en los 10 años (132 cifras al mes) | `validacion_inss` |
+| `inss_media` | Pensión media de jubilación de las provincias, ponderada, frente a la publicada para su comunidad y para España, cada mes | ±0,01 € | Bloqueo | 4,5 × 10⁻¹³ € como máximo | `validacion_inss` |
+| `transistor_cobertura` | Provincias sin ingreso neto del transistor en algún año | Exacto | Bloqueo | 0 en los 10 años | `validacion_transistor` |
+| `transistor_retencion` | Retenciones del transistor fuera de [0, 30 %] | Exacto | Bloqueo | 0 en los 10 años | `validacion_transistor` |
+| `web_valores` | Ficheros de valores de `web/datos/` cuyos valores o estados no son los de la tabla larga (con el redondeo de la guía a la precisión de cada serie: una décima; dos en el 19) o cuya longitud no es la del índice; series sin fichero. También los contratos y el margen de cada serie del alquiler | Exacto | Bloqueo | 0 en las 830 cifras | `validacion_web` |
 | `web_fichas` | Por municipio: celdas de las series de su ficha que no reproducen la tabla larga con la precisión de cada serie, y secciones de más o de menos | Exacto | Bloqueo | 0 en los 8.131 municipios | `validacion_web` |
 | `web_sobrecarga_valores` | Sección de sobrecarga de la web: por vista, valor, puesto, bloque, fuente y marca de cada cifra frente a los objetivos del pipeline (con el redondeo de la guía), y territorios de más o de menos; serie de España, desgloses anuales con el quintil, módulo de acceso y cortes del mapa frente a `cortes_web` del indicador 22 | Exacto | Bloqueo | 0 en las 17 cifras | `validacion_web_sobrecarga` |
 | `web_sobrecarga_muestra` | Cifras del INE sin muestra, con una muestra distinta de la del cálculo, con una marca que no es la de EU-SILC o con valor y menos de 20 observaciones; cifras de Eurostat sin su tabla, con muestra o con una marca distinta de la de la fuente | Exacto | Bloqueo | 0 en las 13 cifras | `validacion_web_sobrecarga` |
@@ -426,10 +445,11 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `modulo_acceso_lectura` | Suma de las comunidades frente al total nacional del módulo de la ECV 2025 | ±0,1 % | Bloqueo | Pasa | `validacion_modulo` |
 | `i18n_completo`, `contraste_texto`, `rampa_contorno`, `rampa_daltonismo` | Diccionarios ES/EN, contrastes de la web y rampa de seis pasos distinguible con daltonismo simulado | Exacto | Bloqueo | Pasan | `validacion_i18n`, `validacion_diseno` |
 | `adrh_municipio_detalle` | Desviación de cada municipio entre las medias de sección agregadas y la cifra municipal | ±1 % | Alerta | Avisa en 579 de 146.306 cifras de municipio, año e indicador; 135 pasan del 5 % | `comprobaciones_adrh` |
+| `adrh_dist_municipio_detalle` | Desviación (puntos) de cada municipio entre las secciones del 4 y el 5 agregadas como media ponderada y la cifra municipal | ±1 punto | Alerta | Avisa en 98 de 108.360 cifras de municipio, año e indicador; 33 pasan de 2 puntos y la mayor es de 5,8 | `comprobaciones_adrh_distribucion` |
 | `adrh_suma_secciones` | Población por sección del ADRH sumada por municipio frente al total municipal de la misma tabla | ±0,5 % | Alerta | Avisa en 160 municipios y años, todos de 2015–2019 (38, 34, 30, 29 y 29) | `comprobaciones_f1` |
 | `adrh_seccion_huerfana` | Secciones del ADRH sin código en ningún seccionado de 2016–2025 | Exacto | Alerta | 9 (§3.8) | `huerfanas_adrh` |
 | `cobertura_destino_excepcion` | Secciones de 2021 vacías por un defecto conocido de la fuente | Exacto | Alerta | 2 secciones, 6 años-sección (§3.8) | `comprobaciones_f1` |
-| `mapa_base_huecos` | Huecos del seccionado de 2021 de al menos 0,01 km² (suelo que no es de ninguna sección): número y superficie | Exacto | Alerta | Avisa con 95 huecos y 1.495 km²; el mayor, 418,4 km² (§3.10) | `validacion_mapa_base` |
+| `mapa_base_huecos` | Huecos del seccionado de 2021 de al menos 0,01 km² (suelo que no es de ninguna sección): número y superficie, en total y con nombre del IGN | Exacto | Alerta | Avisa con 95 huecos y 1.495 km² (el mayor, 418,4 km²); con nombre del IGN, 57 y 1.176,5 km² (§3.10) | `validacion_mapa_base` |
 | `serpavi_escalas_detalle` | Cada municipio o distrito, año y tipología que no cuadra con sus secciones | Exacto | Alerta | Avisa en 164 filas, que van como `ausente` (§7.1) | `validacion_serpavi` |
 | `serpavi_forales` | Primer año con testigos de cada provincia foral frente al de la ruptura `serpavi_forales` | Exacto | Alerta | Coinciden los cuatro | `validacion_serpavi` |
 | `serpavi_sin_fila` | Secciones, distritos y municipios del seccionado de 2021 que la base no trae (van como `ausente`) | Exacto | Alerta | Avisa con 40 secciones, 36 distritos y 36 municipios (§7.1) | `validacion_serpavi` |
@@ -543,7 +563,55 @@ Los dos indicadores de media tienen los mismos recuentos por estado.
 
 **Por qué el `secreto` es mayor en 2015–2019.** Esos años el ADRH no publica por sección entre 1.327 y 1.629 códigos que sí están en el callejero, sobre todo de País Vasco y Navarra (`fase_codigos`, columna `callejero_sin_adrh`; plan §6.3).
 
-**Filas en la tabla larga.** 1.303.484 filas del ADRH (§9.1). Nivel municipal: 73.777 filas por cada media y 65.958 de la mediana. La columna `version` lleva la fecha del fichero de la fuente: 7-nov-2026.
+**Filas en la tabla larga.** 1.303.484 filas de la renta (§9.1). Nivel municipal: 73.777 filas por cada media y 65.958 de la mediana. La columna `version` lleva la fecha del fichero de la fuente: 7-nov-2026.
+
+### 5.5 Distribución de la renta (indicadores 4–6)
+
+**Tablas** (`descargar_ine_adrh()`, 9-nov-2026). Tres de toda España por sección, distrito y municipio, y tres de totales:
+- **30825:** distribución por fuente de ingresos, en porcentaje de la renta bruta (`fichero_adrh_fuentes`);
+- **30829:** umbrales relativos por sexo (`fichero_adrh_umbrales`; 1,65 GB);
+- **37677:** índice de Gini y P80/P20 (`fichero_adrh_gini`);
+- **53687, 53694 y 53688:** España, comunidades, provincias e islas (`ficheros_adrh_totales`), con nombres y sin códigos. Las comunidades casan por su nombre del INE y las provincias, por el suyo dentro de su comunidad (`codigos_totales_adrh()`). Las islas no entran.
+
+**Lectura** (`leer_ine_adrh_distribucion()`, por trozos). Se toman el salario de las cinco fuentes de ingreso, la población de ambos sexos por debajo del 40, del 50 y del 60 % de la mediana (el 40 y el 50 %, solo para la compuerta) y el Gini. El CSV usa tres marcas: «.» es secreto estadístico (`secreto`); «..», dato no disponible, y una celda vacía, año sin publicar en ese territorio (las dos, `ausente`).
+
+| # | Código | En el ADRH | Reproyección |
+|---|---|---|---|
+| 4 | `peso_salarios` | Fuente de ingreso: salario (% de la renta bruta) | Media ponderada con la renta bruta de la sección (renta bruta media por persona × población) |
+| 5 | `bajo_60_mediana` | Población con ingresos por unidad de consumo por debajo del 60 % de la mediana | Media ponderada con la población |
+| 6 | `gini` | Índice de Gini | Regla de medianas e índices (§3.6) |
+
+**Por qué el 4 y el 5 se ponderan** (decisión del autor, 9-nov-2026). Son cocientes de sumas: renta de salarios entre renta bruta, y personas por debajo de un umbral que cada año es el mismo en toda España. Agregados a municipio con esos pesos, reproducen la cifra municipal publicada (`adrh_dist_municipio`: mediana de la desviación de 0,006 puntos como máximo). El INE los calcula sobre la población que encuentra en los registros tributarios (más del 98,6 % de la residente), y aquí se pondera con la población del ADRH: la diferencia es la que mide esa compuerta. El Gini no se agrega: sigue la regla de las medianas.
+
+**Estado.** Como en la renta (§5.3), con una diferencia: una sección de 2021 sin valor es `secreto` si alguno de sus orígenes lo es, y `ausente` si ninguno está publicado (`reproyectar_adrh_distribucion()`). Municipios, provincias, comunidades y España llevan la cifra publicada (regla 1 de la guía); de los municipios entran las cifras publicadas y las secretas.
+
+**Compuerta** (`comprobar_ine_adrh_distribucion()`, objetivo `validacion_adrh_distribucion`; §4.1). Comprueba que cada tabla trae las 52 provincias (la primera descarga de la 30829 se cortó en Pontevedra sin dar error), que las cifras están entre 0 y 100, que las cinco fuentes de ingreso suman 100, que los umbrales van en orden, que sección y municipio coinciden en los municipios de una sola sección y que las secciones agregadas reproducen los municipios y las provincias.
+
+**Territorios forales** (ruptura `adrh_forales_distribucion`). Bizkaia está en toda la serie; Gipuzkoa, desde 2016; Álava, desde 2020, y Navarra, desde 2021 (el 4, con unas 80 secciones con dato en 2017–2020 y las demás en secreto). España, desde 2021. Antes, `ausente`: Eustat y Nastat no completan los huecos porque miden otra cosa (decisión del autor, 9-nov-2026; `eustat_nastat` en `inventario/fuentes.csv`).
+
+**Rupturas del indicador 5:**
+- `adrh_umbral_mediana_2023`: el umbral es el 60 % de la mediana del territorio fiscal común hasta la edición ADRH 2022 y el de la mediana de toda España desde la 2023, según la metodología del INE, que no dice si la tabla actual recalcula los años anteriores.
+- `adrh_umbrales_secreto_2024`: desde la edición 2024, el secreto pide 50 hombres y 50 mujeres por territorio en lugar de 500 residentes. En la tabla solo cambia 2024: las secciones en secreto bajan de unas 2.500–3.000 a 989. Cambia cuántas cifras se publican, no las cifras.
+
+**Resultado** (secciones de 2021; `larga_adrh_distribucion`):
+
+| Indicador y año | `dato` | `estimado` | `secreto` | `ausente` |
+|---|---|---|---|---|
+| 4 (2015) | 32.085 | 1.608 | 1.274 | 1.365 |
+| 4 (2020) | 34.410 | 0 | 1.841 | 82 |
+| 4 (2024) | 33.699 | 1.195 | 1.435 | 3 |
+| 5 (2015) | 29.306 | 1.591 | 4.070 | 1.365 |
+| 5 (2020) | 31.563 | 0 | 4.194 | 576 |
+| 5 (2024) | 33.437 | 1.194 | 1.700 | 1 |
+| 6 (2015) | 31.666 | 1.246 | 1.487 | 1.933 |
+| 6 (2020) | 34.349 | 0 | 1.408 | 576 |
+| 6 (2024) | 33.206 | 887 | 1.485 | 754 |
+
+En 2024, la sección mediana tiene el 58,2 % de la renta bruta en salarios, el 19,2 % de la población por debajo del 60 % de la mediana y un Gini de 27,9. España: 60,0 %, 20,2 % y 31,9.
+
+**Filas en la tabla larga.** 1.331.166: sección (1.089.972), municipio (239.034), provincia (1.560), comunidad (570) y España (30). Versión: 9-nov-2026.
+
+**Mapas** (§9.2). Tramos de la columna `cortes_web`: en el 4, 50, 55, 60, 65 y 70 %; en el 5, 10, 15, 20, 25 y 30 %; en el 6, 25, 27, 29, 31 y 33. Llevan la rampa de seis pasos de los demás mapas y un decimal.
 
 ---
 
@@ -559,8 +627,8 @@ Los dos indicadores de media tienen los mismos recuentos por estado.
 |---|---|---|---|---|---|
 | Llave (hogar del barrio) | Renta neta media por hogar ÷ 12 | INE, ADRH (indicador 2) | Sección | Alquiler mediano de su sección, sin superficie fija | Ingreso calculado (`perfiles`); esfuerzo (indicador 14), en `larga_derivados` (§7.4) |
 | Mochila (joven de 26 a 35 años) | Mediana estimada del salario cobrado en el año, neta, ÷ 12 | AEAT; control con la ECV | Provincia | 50 m² | Calculada para 2024 (`mochila_neta`, `perfiles`), como `estimado` |
-| Tartera (salario mínimo) | SMI neto anual ÷ 12 | RD 126/2026 (y RD 145/2024) | Nacional | 50 m² | Calculada con el SMI de 2024 y el de 2026 (`perfiles`) |
-| Transistor (pensionista) | Pensión media de jubilación, neta de IRPF, ÷ 12 | INSS | Provincia | 50 m² | Fase F3: pendiente |
+| Tartera (salario mínimo) | SMI neto anual ÷ 12 | Real decreto de cada año (RD 1106/2014 a RD 126/2026) | Nacional | 50 m² | Calculada de 2015 a 2026 (`perfiles`) |
+| Transistor (pensionista) | Pensión media de jubilación, neta de IRPF, ÷ 12 | INSS; retención de la AEAT | Provincia | 50 m² | Calculada de 2015 a 2024 (`transistor`, `perfiles`); País Vasco y Navarra, como `estimado` |
 | Tu ficha | Neto mensual que escribe quien consulta: 12 o 14 pagas, segundo sueldo opcional | — | — | 50 m² con un sueldo, 70 m² con dos; cambiable a 50, 70 o 90 | Se calcula en el navegador y no se guarda (`js/sueldo.js`) |
 
 ### 6.2 Mochila: método B y paso a neto
@@ -603,9 +671,26 @@ La decisión del autor es del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrad
 
 ### 6.3 Tartera: salario mínimo
 
-**Cálculo** (plan §3.1; `perfiles_fichas()`, `SMI_FICHAS`; objetivo `perfiles`). Ingreso neto mensual = SMI mensual × 14 pagas × (1 − cotización del trabajador) / 12, sin retención de IRPF:
-- 2026: 1.221 € × 14 = 17.094 € brutos anuales (RD 126/2026). Con una cotización del 6,50 % (MEI, 0,15 %), 1.331,91 € netos al mes: es la cifra de la web. La comprobación `smi_neto` la compara con los 1.332 € del plan (§4.1).
-- 2024: 1.134 € × 14 (RD 145/2024). Con una cotización del 6,47 %, 1.237,40 € netos al mes. Sirve para la barrera de 2024, con el alquiler del mismo año (§7.4).
+**Cálculo** (plan §3.1; `perfiles_fichas()`, `SMI_FICHAS`; objetivo `perfiles`). Ingreso neto mensual = SMI mensual × 14 pagas × (1 − cotización del trabajador) / 12, sin retención de IRPF. La cuantía es la del real decreto de cada año (fuente `boe_smi`), y la cotización, la del trabajador de ese año con contrato indefinido: contingencias comunes (4,70 %), desempleo (1,55 %) y formación profesional (0,10 %), más el MEI desde 2023 (0,10 % en 2023, 0,12 % en 2024, 0,13 % en 2025 y 0,15 % en 2026). La orden de cotización de cada año se cita en `SMI_FICHAS` sin bajarla (decisión del autor, 9-nov-2026).
+
+| Año | Norma | SMI mensual (€, 14 pagas) | Cotización (%) | Neto mensual en 12 (€) |
+|---|---|---|---|---|
+| 2015 | RD 1106/2014 | 648,60 | 6,35 | 708,65 |
+| 2016 | RD 1171/2015 | 655,20 | 6,35 | 715,86 |
+| 2017 | RD 742/2016 | 707,70 | 6,35 | 773,22 |
+| 2018 | RD 1077/2017 | 735,90 | 6,35 | 804,03 |
+| 2019 | RD 1462/2018 | 900 | 6,35 | 983,32 |
+| 2020 | RD 231/2020 | 950 | 6,35 | 1.037,95 |
+| 2021 | RD 231/2020 y RD 817/2021 | 955 | 6,35 | 1.043,42 |
+| 2022 | RD 152/2022 | 1.000 | 6,35 | 1.092,58 |
+| 2023 | RD 99/2023 | 1.080 | 6,45 | 1.178,73 |
+| 2024 | RD 145/2024 | 1.134 | 6,47 | 1.237,40 |
+| 2025 | RD 87/2025 | 1.184 | 6,48 | 1.291,82 |
+| 2026 | RD 126/2026 | 1.221 | 6,50 | 1.331,91 |
+
+- **2021.** Tuvo dos cuantías: 950 € de enero a agosto (la de 2020, prorrogada) y 965 € desde el 1 de septiembre (RD 817/2021). Se usa su media ponderada por meses de vigencia, 955 €, coherente con las rentas anuales del ADRH y de la AEAT (plan §11, pregunta 18).
+- **Compuerta.** Las cuantías de 2015 a 2023 se leen del XML del BOE de cada real decreto (`descargar_boe_smi()`, `leer_boe_smi()`, `comprobar_smi_boe()`; `smi_boe`, objetivo `validacion_smi`); las de 2024 a 2026 se citan. `smi_neto` compara la de 2026 con los 1.332 € del plan (§4.1).
+- **Uso.** La barrera de la tabla larga (§7.4) y la web usan el SMI del mismo año que el alquiler (regla 4; decisión del autor, 9-nov-2026): con el alquiler de 2024, 1.237,40 €. Los de 2025 y 2026 no tienen alquiler del mismo año; la web cita el último junto al del año elegido.
 
 **Comparación con la mochila.**
 - La mochila de 2024 (1.330 € netos de media) sale casi igual que la tartera con el SMI de 2026. Son años distintos (regla 4).
@@ -619,6 +704,37 @@ La decisión del autor es del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrad
 **Vivienda:** el alquiler mediano de vivienda colectiva de la propia sección, sin superficie fija. Es la única ficha que varía por los dos lados, el ingreso y el alquiler.
 
 **Esfuerzo:** el cruce con el SERPAVI es el indicador 14 (§7.4).
+
+### 6.5 Transistor: pensionista
+
+**Pregunta.** Responde a «si tuviera que alquilar hoy»: el 89,1 % de los mayores de 65 años vive en casa propia (ECV 2023; plan §3.1), y la web lo dice junto a la ficha.
+
+**Método** (plan §3.1; decisión del autor del 9-nov-2026):
+1. **Pensión de partida.** Pensión media de jubilación del total del sistema por provincia (INSS, *Pensiones contributivas del Sistema de la Seguridad Social*; Excel mensual «Pensiones por CCAA y provincias»; `descargar_inss_pensiones()`, `leer_inss_pensiones()`). No incluye Clases Pasivas. Es la media de una paga ordinaria; la provincia es la de la dirección provincial que gestiona la pensión, no la de residencia, y se cuentan pensiones, no pensionistas.
+2. **Media del año.** Media de las doce cifras mensuales (pensiones en vigor a día 1 de cada mes), ponderada por el número de pensiones (`armonizar_inss_pensiones()`, `anual_inss_pensiones()`; objetivos `inss_mensual` e `inss_anual`). Los nombres de los territorios pasan a códigos con una tabla fija (`inventario/provincias_inss.csv`). El Excel cambia de forma con los años (nombre de la hoja, una hoja por régimen y, desde 2024, el importe): la hoja del total del sistema y la columna de la jubilación se buscan por su texto.
+3. **De bruto a neto** (`calcular_transistor()`): bruto anual = media × 14 pagas; neto mensual = bruto anual × (1 − retención) / 12. Las pensiones no cotizan.
+   - **Retención:** tipo medio de la AEAT de las personas que solo cobran pensiones (*Grupos de población por la naturaleza de sus retribuciones*, bloque de pensiones, columna «Pensionistas»), por comunidad y tramo de renta anual, del mismo año, interpolado como en la mochila (`retenciones_pensiones()`, `tipo_retencion()`; objetivo `retenciones_transistor`). En 2024, del 0,4 % (Ourense) al 10,8 % (Bizkaia).
+   - La AEAT no separa la jubilación de las demás pensiones (viudedad, incapacidad, en parte exenta, y Clases Pasivas): la curva es la de todos los pensionistas con esa renta. Es la retención practicada, no la cuota final del IRPF.
+   - **País Vasco y Navarra:** su IRPF es foral y la AEAT no los cubre; se usa la curva de España y el ingreso queda como `estimado` (decisión del autor). Ceuta y Melilla tienen curva propia, con retenciones más bajas por su bonificación.
+4. **Compuerta** (§4.1; objetivos `validacion_inss` y `validacion_transistor`): cada mes, las provincias reproducen el número y la pensión media publicados para su comunidad y para España en el mismo Excel (`inss_suma`, `inss_media`), sin territorios que falten ni sobren (`inss_cobertura`); el neto cubre las 52 provincias cada año, con retenciones entre el 0 y el 30 % (`transistor_cobertura`, `transistor_retencion`).
+
+**Resultado** (`transistor`; `datos/intermedios/transistor/transistor.csv`), en euros:
+
+| Año | Pensión media de jubilación en España (por paga) | Neto mensual en 12: mínimo (Ourense) | Máximo (Bizkaia) | Media de las provincias ponderada por pensiones |
+|---|---|---|---|---|
+| 2015 | 1.021,19 | 825 | 1.411 | 1.151 |
+| 2016 | 1.042,65 | 839 | 1.436 | 1.173 |
+| 2017 | 1.063,50 | 855 | 1.457 | 1.192 |
+| 2018 | 1.090,70 | 878 | 1.490 | 1.225 |
+| 2019 | 1.137,81 | 923 | 1.542 | 1.281 |
+| 2020 | 1.161,80 | 945 | 1.563 | 1.303 |
+| 2021 | 1.189,65 | 972 | 1.588 | 1.328 |
+| 2022 | 1.254,14 | 1.030 | 1.657 | 1.385 |
+| 2023 | 1.374,58 | 1.136 | 1.796 | 1.503 |
+| 2024 | 1.442,67 | 1.198 | 1.869 | 1.574 |
+
+- En 2024, el transistor (1.574 € de media) queda por encima de la mochila (1.330 €) y de la tartera (1.237 €) del mismo año.
+- Las fuentes, descargadas con permiso del autor (9-nov-2026): los 120 Excel del INSS de 2015 a 2024 (≈ 9,6 MB) y las retenciones de la AEAT de 2015 a 2023 (1.458 páginas, ≈ 39 MB; las de 2024 ya estaban). Las ediciones de la AEAT hasta 2017 tienen otra maqueta y otros nombres de comunidad («Región de Murcia»): `aeat_titulo()` y `aeat_menus()` leen las dos.
 
 ---
 
@@ -807,7 +923,7 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 
 **Términos redondeados** (plan §11, pregunta 19; `termino_publicado()`). El alquiler, la renta por hogar y el ingreso de la ficha entran en el cálculo redondeados a un decimal con `sprintf("%.1f")` (§0), como los recibe la web. Así, la cifra de R y la que la web recalcula en el navegador coinciden exactamente.
 
-**Mismo año** (guía, regla 4). En el esfuerzo, el SERPAVI y el ADRH coinciden en 2015–2024. La barrera de la tabla larga usa ingresos de 2024, el año del último alquiler: la mochila (AEAT de 2024) y la tartera con el SMI de 2024. La web usa la tartera con el SMI de 2026; cuando los años no coinciden, se dice en la ficha y en la web.
+**Mismo año** (guía, regla 4). En el esfuerzo, el SERPAVI y el ADRH coinciden en 2015–2024. La barrera de la tabla larga usa el ingreso de la ficha del mismo año que el alquiler: la tartera, con el SMI de cada año de 2015 a 2024; el transistor, con la pensión de cada año; la mochila, solo en 2024 (AEAT de 2024). La web hace lo mismo con la ficha elegida (decisión del autor, 9-nov-2026); con la mochila y un alquiler de otro año, usa la de 2024 y lo dice.
 
 **Cómo se leen:**
 - El indicador 15 se lee por tramos: hasta el 30 %, del 30 al 40 % y más del 40 %.
@@ -815,11 +931,11 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 - El mapa del 21 se pinta en seis tramos, con cortes nacionales iguales todos los años: 700, 900, 1.100, 1.500 y 2.000 € (plan §11, pregunta 20). La rampa de colores tiene seis pasos que se distinguen también con daltonismo (`rampa_daltonismo`).
 - El 15 y el 21 cambian con el umbral, la superficie y el sueldo de «Tu ficha»: la web los recalcula en el navegador (plan §6.6).
 
-**Cálculo** (`armonizar_derivados()`; objetivo `larga_derivados`, 1.104.793 filas, fuente `calculo_propio`):
+**Cálculo** (`armonizar_derivados()`; objetivo `larga_derivados`, 2.149.869 filas, fuente `calculo_propio`):
 - **14** (`calcular_esfuerzo_residentes()`): en las secciones y los municipios, los niveles en que el SERPAVI y el ADRH publican los dos términos (`NIVELES_ESFUERZO`), y en los años con los dos, 2015–2024. Sin desglose.
 - **21** (`calcular_sueldo_necesario()`): en todos los niveles del SERPAVI, 2015–2024, con 50 m² y el umbral del 30 %. Sin desglose.
-- **15** (`calcular_barrera_acceso()`): corte `ficha`, con los grupos `mochila` y `tartera`, solo en 2024. La mochila, en las provincias y sus secciones, distritos y municipios; la tartera, también en las comunidades. Es un control: la web calcula la barrera con la ficha elegida.
-- **Ingresos de las fichas** (`perfiles_fichas()`; objetivo `perfiles`): la tartera (§6.3); la mochila de cada provincia, con su código del INE en `inventario/provincias_aeat.csv` (46 provincias con dato y 6 `ausente`); la llave (§6.4).
+- **15** (`calcular_barrera_acceso()`): corte `ficha`, con los grupos `tartera` y `transistor` (2015–2024) y `mochila` (2024). La mochila y el transistor, en las provincias y sus secciones, distritos y municipios; la tartera, también en las comunidades. Es un control: la web calcula la barrera con la ficha elegida.
+- **Ingresos de las fichas** (`perfiles_fichas()`; objetivo `perfiles`): la tartera (§6.3); la mochila de cada provincia, con su código del INE en `inventario/provincias_aeat.csv` (46 provincias con dato y 6 `ausente`); la llave (§6.4); el transistor de cada provincia y año (§6.5).
 - **Versión:** la más reciente de sus términos, 7-nov-2026.
 
 **Resultado: esfuerzo de residentes (14) en las secciones** (`larga_derivados`):
@@ -849,10 +965,26 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 | Sueldo neto necesario (€ al mes) | 26.137 | 300 | 700 | 1.217 | 2.117 | 4.283 |
 | Barrera con la mochila (%) | 24.117 | 7,2 | 16,8 | 27,5 | 43,7 | 87,9 |
 | Barrera con la tartera, SMI de 2024 (%) | 26.137 | 7,3 | 17,0 | 29,5 | 51,3 | 103,8 |
+| Barrera con el transistor (%) | 26.137 | 6,2 | 14,3 | 23,3 | 37,9 | 73,2 |
+
+**Barrera con la tartera y el transistor en las secciones, cada año con el ingreso de ese año** (`larga_derivados`; mediana y parte de las secciones con valor por encima del 30 %):
+
+| Año | Tartera: mediana (%) | Tartera: más del 30 % | Transistor: mediana (%) | Transistor: más del 30 % |
+|---|---|---|---|---|
+| 2015 | 36,7 | 69,2 % | 22,7 | 21,3 % |
+| 2016 | 36,3 | 70,8 % | 22,6 | 21,3 % |
+| 2017 | 34,3 | 63,4 % | 22,6 | 22,1 % |
+| 2018 | 34,2 | 61,9 % | 22,7 | 23,1 % |
+| 2019 | 30,0 | 50,1 % | 23,2 | 25,7 % |
+| 2020 | 28,9 | 46,2 % | 23,4 | 26,5 % |
+| 2021 | 29,7 | 49,0 % | 23,7 | 26,9 % |
+| 2022 | 29,7 | 49,7 % | 23,8 | 27,2 % |
+| 2023 | 28,8 | 47,2 % | 23,0 | 24,4 % |
+| 2024 | 29,5 | 48,4 % | 23,3 | 24,1 % |
 
 Con la mochila, 7.616 secciones quedan `ausente` en 2024: todas las de País Vasco, Navarra, Ceuta y Melilla, donde la ficha no tiene ingreso, y las que no tienen alquiler.
 
-**Compuerta** (`comprobar_derivados()`, `validacion_derivados`; §4.1): `derivados_terminos`, `derivados_estado`, `derivados_rango`, `perfiles_mochila` y `smi_neto` (bloqueo), y `derivados_rango_detalle` (alerta).
+**Compuerta** (`comprobar_derivados()`, `validacion_derivados`; §4.1): `derivados_terminos`, `derivados_estado`, `derivados_rango`, `perfiles_mochila` y `smi_neto` (bloqueo), y `derivados_rango_detalle` (alerta). Antes, la tartera pasa por `smi_boe` y el transistor por las del INSS (§6.3 y §6.5).
 
 ### 7.5 Sobrecarga y acceso (indicadores 22 y 23, v0.0)
 
@@ -954,12 +1086,15 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 **Jerarquía y mapa base:**
 - Los distritos no tienen nombre (§3.10).
 - Por debajo del zoom 12, los bordes se simplifican medio píxel; por encima, MapLibre amplía las teselas del zoom 12 (§3.10).
-- **Suelo sin sección** (§3.10): 1.495 km² de terrenos comunales no tienen sección ni datos y se ven como «sin dato». No se reparten entre provincias cuando tocan varias, y los que tocan la costa o la frontera no se detectan.
+- **Suelo sin sección** (§3.10): 1.495 km² de terrenos comunales no tienen sección ni datos y se ven como «sin dato». No se reparten entre provincias cuando tocan varias, y los que tocan la costa o la frontera no se detectan. Los nombres del IGN cubren 1.176,5 km²; en los bordes quedan franjas sin nombre, donde las líneas del IGN y las del INE no coinciden.
 
 **Renta:**
 - **La fuente no cuadra entre escalas.** El ADRH no siempre suma sus secciones al total municipal (`adrh_suma_secciones`, 160 municipios y años en 2015–2019). Sus medias de sección agregadas se separan más de un 5 % de la cifra municipal en 135 cifras (`adrh_municipio_detalle`). El atlas no lo corrige: muestra la cifra publicada en cada escala.
 - **Hogares aproximados.** Salen de un tamaño medio del hogar redondeado a un decimal (§5.1).
 - **País Vasco y Navarra en 2015–2019.** El ADRH no los publica por sección esos años: esas secciones van como `secreto` (§5.4).
+- **Distribución de la renta (4–6), huecos forales.** Navarra hasta 2020, Álava hasta 2019 y Gipuzkoa en 2015 van como `ausente`; España tiene cifra desde 2021 (§5.5).
+- **Umbral del indicador 5.** Cambia en 2023, de la mediana del territorio fiscal común a la de toda España, y en 2024 se publican más secciones (§5.5).
+- **Ponderación aproximada del 4 y el 5.** Se reproyectan con la población del ADRH, no con la que el INE encuentra en los registros; agregadas a municipio, 98 cifras se separan más de 1 punto de la publicada (`adrh_dist_municipio_detalle`).
 
 **Alquiler:**
 - **Parque, no contratos nuevos.** El SERPAVI mide el parque alquilado: quien entra hoy paga más (indicador 8).
@@ -985,7 +1120,7 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 **Derivados:**
 - **Huecos heredados.** Un derivado no tiene valor donde falta alguno de sus términos: en 2024, 10.208 de las 36.333 secciones no tienen esfuerzo (§7.4).
 - **Vulnerabilidad, no acceso.** El esfuerzo divide el alquiler entre la renta media de todos los hogares de la sección, no solo la de los que alquilan (`inventario/indicadores.csv`).
-- **La barrera de la tabla larga es un control.** Solo con la mochila y la tartera de 2024; la web la calcula con la ficha elegida (§7.4).
+- **La barrera de la tabla larga es un control.** Con la tartera y el transistor de 2015 a 2024 y la mochila de 2024; la web la calcula con la ficha elegida (§7.4).
 
 **Mochila:**
 - **Supuestos:**
@@ -996,7 +1131,12 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 - **Cobertura.** Sin País Vasco, Navarra, Ceuta ni Melilla (§6.2).
 - **Lo cobrado en el año.** La ficha usa lo cobrado en el año, que incluye a quien trabajó pocos meses; la ficha lo dice.
 
-**Años distintos entre fichas.** La tartera (SMI de 2026) y la mochila (AEAT de 2024) son de años distintos, y a escala de España dan ingresos casi iguales (§6.3).
+**Transistor:**
+- **Pensiones, no pensionistas.** Quien cobra dos pensiones cuenta dos veces, y la provincia es la de la dirección provincial que gestiona la pensión (§6.5).
+- **Retención de todos los pensionistas.** La AEAT no separa la jubilación; en País Vasco y Navarra, la curva es la de España (`estimado`; §6.5).
+- **Casa propia.** La gran mayoría de los mayores de 65 años no alquila: la ficha responde a «si tuviera que alquilar hoy» (§6.5).
+
+**Años de las fichas.** La tartera y el transistor tienen ingreso de cada año de 2015 a 2024; la mochila, solo de 2024: con el alquiler de otro año, la web usa el de 2024 y lo dice (§7.4).
 
 **Licencias.** El Catastro estatal y los forales de Bizkaia y Gipuzkoa tienen licencias contradictorias y se tratan como datos abiertos por decisión del autor (§2.2).
 
@@ -1012,35 +1152,35 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 
 **Esquema** (plan §6.4): `geo_id`, `nivel`, `anio`, `indicador`, `corte`, `grupo`, `valor`, `estado`, `fuente`, `geo_ref` y `version`. La clave de una fila es `geo_id`, `nivel`, `anio`, `indicador`, `corte` y `grupo`.
 
-**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 8.561.935 filas.
+**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 10.938.177 filas.
 
 | Fuente (`fuente`) | Filas | Niveles | Versión |
 |---|---|---|---|
-| `ine_adrh` | 1.303.484 | Sección (1.089.972) y municipio (213.512) | 7-nov-2026 |
+| `ine_adrh` | 2.634.650 | Sección (2.179.944), municipio (452.546), provincia (1.560), comunidad (570) y España (30) | 7-nov-2026 (1–3) y 9-nov-2026 (4–6) |
 | `mivau_serpavi` | 5.032.640 | Sección (3.419.452), distrito (926.724), municipio (676.872), provincia (7.032), comunidad (2.540) y España (20) | 6-nov-2026 |
 | `ine_censo2021` | 36.405 | Sección (36.333), comunidad (19), provincia (52) y España (1) | 8-nov-2026 |
 | `ine_vut` | 218.430 | Sección (217.998), comunidad (114), provincia (312) y España (6) | 8-nov-2026 |
 | `ine_ecv` | 261 | Comunidad (228) y España (33) | 6-nov-2026 |
 | `ine_ecv_modulo` | 32 | Comunidad (19) y España (13) | 6-nov-2026 |
-| `calculo_propio` | 1.970.683 | Sección (1.419.062), distrito (274.740), municipio (273.392), provincia (2.580) y comunidad (909) | 7-nov-2026 |
+| `calculo_propio` | 3.015.759 | Sección (2.109.389), distrito (473.841), municipio (427.881), provincia (3.568) y comunidad (1.080) | 7-nov-2026 |
 
-**Por estado:** `dato`, 6.487.909 filas; `ausente`, 1.200.946; `secreto`, 842.257; `estimado`, 30.823.
+**Por estado:** `dato`, 8.201.688 filas; `ausente`, 1.533.535; `secreto`, 1.151.583; `estimado`, 51.371.
 
 **Publicación.** La tabla larga se publica en el release `v0.1.0` de GitHub (9-nov-2026), y la web, en `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).
 
 ### 9.2 Datos de la web
 
-La exportación sigue las decisiones del autor del 8-nov-2026 (plan §6.6; plan §11, preguntas 16 y 17). `exportar_web()` (objetivo `ficheros_web`) escribe en `web/datos/`, desde la tabla larga ya validada, los indicadores del núcleo de la v0.1, de la sección a España:
+La exportación sigue las decisiones del autor del 8-nov-2026 (plan §6.6; plan §11, preguntas 16 y 17). `exportar_web()` (objetivo `ficheros_web`) escribe en `web/datos/`, desde la tabla larga ya validada, los indicadores del núcleo de la v0.1 y los que tienen mapa (columna `cortes_web` y cifras de sección: los 4–6 de F3, desde el 9-nov-2026), de la sección a España:
 - **Valores.** Un fichero JSON por serie, nivel y periodo, con los valores × 10 en enteros (× 100 en las viviendas turísticas, con dos decimales, como las publica el INE: columna `escala_web` de `inventario/indicadores.csv`, vacía en los demás; plan §11, pregunta 24), con el redondeo de la guía a esos decimales, y una cadena con el estado de cada territorio, en el orden del índice de su nivel. Comprimido pesa lo mismo que un binario (plan §11, pregunta 17): cada fichero de secciones ocupa de 139 a 291 KB, y de 19 a 98 KB con gzip.
-- **España, comunidades y provincias.** Los indicadores 18 y 19 tienen las cifras publicadas de España, de las 19 comunidades y de las 52 provincias (§7.2 y §7.3); las de España, en siete ficheros. El alquiler (8 y 9) y el sueldo necesario (21) tienen comunidades y provincias, pero no España: el SERPAVI solo publica su recuento de testigos, que va en la serie de contratos (§7.6). La renta (1–3) y el esfuerzo (14) llegan al municipio (§5.3 y §7.4).
+- **España, comunidades y provincias.** Los indicadores 18 y 19 tienen las cifras publicadas de España, de las 19 comunidades y de las 52 provincias (§7.2 y §7.3); las de España, en siete ficheros. El alquiler (8 y 9) y el sueldo necesario (21) tienen comunidades y provincias, pero no España: el SERPAVI solo publica su recuento de testigos, que va en la serie de contratos (§7.6). La renta (1–3) y el esfuerzo (14) llegan al municipio (§5.3 y §7.4). La distribución de la renta (4–6) tiene las cifras publicadas de las comunidades, de las provincias y, desde 2021, de España (§5.5).
 - **Series de la ficha.** Un fichero por municipio (`fichas/<municipio>.json`) con las series de sus secciones y del propio municipio.
 - **Fiabilidad** (§7.6). Los contratos y el margen de la mediana van como series auxiliares de cada serie del alquiler, de su misma tipología (`fiabilidad` en el manifiesto), sin número de indicador ni mapa propio. No van en las fichas por municipio, donde pesarían una cuarta parte más: la ficha los lee de los ficheros del periodo que pinta el mapa.
 - **Qué no se exporta.** Los cuartiles del SERPAVI y la barrera (15), que la web calcula con la ficha elegida. El sueldo necesario (21) se recalcula en el navegador desde el alquiler por m² cuando cambian la superficie o el umbral (`FORMULAS_WEB`).
 - **La web frente a R.** La prueba de la web (`pruebas/web/datos.test.mjs`, en node) recalcula con el módulo de la página, `web/js/formulas.js`, el sueldo necesario desde el alquiler por m² en todas las secciones, distritos, municipios, provincias y comunidades de 2015 a 2024, y lo compara con el que exporta R: 550.140 territorios y años, 294.082 con valor, sin diferencias en el valor, los nulos ni el estado (plan §6.5). Además, `comprobar_web_navegador()` abre la página en Chrome sin ventana (`chromote`): con sus propios módulos, recalcula una muestra de 300 secciones en los 10 años y lee sus contratos y su margen, y abre seis fichas. En local y en el sitio publicado coincide todo con la tabla larga, sin errores (9-nov-2026; `docs/publicacion.md`).
 - **Descargas.** La web descarga la serie del mapa en CSV, en el nivel que se ve (valor con la precisión de la serie, estado y fuente; en las series del alquiler, contratos y margen; en el 21, superficie y umbral), y el mapa en PNG con su leyenda y su fuente. Con «Tu ficha», ninguna de las dos lleva el sueldo escrito: el CSV da el alquiler, no la proporción. Los colores del PNG de «¿te llega?» sí dejan deducirlo de forma aproximada, así que con «Tu ficha» se descarga tras un aviso que se puede cancelar (plan §11, pregunta 23).
 - **Año fuera de la serie** (plan §11, pregunta 32). Con un año anterior a todos los periodos de una serie (2020 en las viviendas turísticas), el mapa, la leyenda, la ficha, el comparador y las dos descargas dan «sin dato» y dicen desde cuándo hay serie; el CSV, con una fila sin valor por territorio y el inicio de la serie en la columna del estado. Con un año posterior se toma el último periodo, y la leyenda lo dice.
-- **Otros ficheros.** Los nombres de los territorios, los rectángulos de los municipios para el buscador (`cajas_municipios`) y los ingresos de las fichas (`perfiles`). El mapa base se copia a `web/teselas/`; al publicar, sale de un *release* (§3.10).
-- **Volumen** (`ficheros_web`, 9-nov-2026): 8.820 ficheros y 127,0 MB, con el PMTiles (35,3 MB). En disco, `web/datos/` suma 9.204 ficheros y 93,0 MB: los 8.819 de `ficheros_web` (91,7 MB; las fichas por municipio, 44,1 MB), los 3 de la sección de sobrecarga (`ficheros_web_sobrecarga`, 1,1 MB) y la muestra versionada de `web/datos/ejemplo/` (382 ficheros, 0,2 MB). Los contratos y el margen (§7.6) añaden unos 17 MB.
+- **Otros ficheros.** Los nombres de los territorios, los rectángulos de los municipios para el buscador (`cajas_municipios`) y los ingresos de las fichas (`perfiles`), de cada año (`anios`), para que la web use el del año del alquiler. El mapa base se copia a `web/teselas/`; al publicar, sale de un *release* (§3.10).
+- **Volumen** (`ficheros_web`, 9-nov-2026): 8.970 ficheros y 147,7 MB, con el PMTiles (35,4 MB). En disco, `web/datos/` suma 9.354 ficheros y 113,6 MB: los 8.969 de `ficheros_web` (112,3 MB; las fichas por municipio, 57,9 MB), los 3 de la sección de sobrecarga (`ficheros_web_sobrecarga`, 1,1 MB) y la muestra versionada de `web/datos/ejemplo/` (382 ficheros, 0,2 MB). Los contratos y el margen (§7.6) añaden unos 17 MB, y la distribución de la renta (§5.5), unos 21 MB, 14 de ellos en las fichas por municipio.
 - **Compuerta** (`comprobar_web()`, `validacion_web`): `web_valores` y `web_fichas` (bloqueo) y `web_fuera_indice` (alerta) (§4.1).
 
 ---
@@ -1061,16 +1201,16 @@ targets::tar_read(validacion_f1)          # una compuerta: columnas calculado, r
 - comparar límites, 21 min;
 - leer los catastros forales, unos 17 min.
 
-El mapa base tarda unos 8 minutos: 6 min 43 s el PMTiles (`fichero_mapa_base`) y 1 min 17 s su compuerta, que calcula los huecos del seccionado (8-nov-2026). Con `PROVINCIA=28` (variable de entorno, antes de `tar_make()`), el cálculo se limita a una provincia, y los ficheros llevan el código en el nombre.
+El mapa base tarda unos 9 minutos: 7 min 29 s el PMTiles (`fichero_mapa_base`) y 1 min 18 s su compuerta, que calcula los huecos del seccionado y sus nombres del IGN (9-nov-2026). Con `PROVINCIA=28` (variable de entorno, antes de `tar_make()`), el cálculo se limita a una provincia, y los ficheros llevan el código en el nombre.
 
 **Objetivos citados en esta nota:**
 - **Geografía:** `secciones_2021`, `tablas_paso_callejero`, `tablas_paso_finales`, `edificios_paso`, `edificios_forales`, `municipios_catastro_sel`, `grupos_municipio`, `huerfanas_adrh`, `fase_codigos`, `cambios_limites`, `comprobaciones_f1`, `diagnostico_f1`, `comparacion_vias`.
-- **Jerarquía y mapa base:** `jerarquia_2021`, `territorios_2021`, `ficheros_jerarquia`, `fichero_mapa_base`, `resumen_mapa_base`.
-- **Renta:** `comprobaciones_adrh`, `tablas_paso_adrh`, `larga_adrh`, `tabla_larga`.
+- **Jerarquía y mapa base:** `jerarquia_2021`, `territorios_2021`, `ficheros_jerarquia`, `unidades_ign`, `fichero_mapa_base`, `resumen_mapa_base`.
+- **Renta:** `comprobaciones_adrh`, `tablas_paso_adrh`, `larga_adrh`, `tabla_larga`, `fichero_adrh_fuentes`, `fichero_adrh_umbrales`, `fichero_adrh_gini`, `ficheros_adrh_totales`, `comprobaciones_adrh_distribucion`, `larga_adrh_distribucion`.
 - **Alquiler:** `serpavi`, `larga_serpavi`, `resumen_larga_serpavi`, `comprobaciones_fiabilidad`, `resumen_fiabilidad`.
 - **Hogares en alquiler y viviendas turísticas:** `censo2021`, `larga_censo2021`, `vut`, `vut_2021`, `larga_vut`.
 - **Mochila:** `mochila_opciones`, `mochila`, `mochila_neta`, `retenciones_mochila`, `ecv_mochila`.
-- **Fichas y derivados:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`.
+- **Fichas y derivados:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`, `inss_mensual`, `inss_anual`, `retenciones_transistor`, `transistor`.
 - **Sobrecarga:** `sobrecarga_agrupada`, `comprobaciones_sobrecarga`, `sobrecarga_quintil`, `eurostat_quintil`.
 - **Web:** `ficheros_web`, `cajas_municipios`, `ficheros_web_sobrecarga`.
-- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.
+- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.

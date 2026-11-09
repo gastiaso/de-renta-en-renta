@@ -16,6 +16,7 @@
 #     municipio, para el buscador) y perfiles.json (ingresos de las fichas).
 #
 # Qué se exporta: los indicadores del núcleo de la v0.1 (inventario/indicadores.csv, nucleo_v01)
+# y los que tienen mapa (cortes_web y cifras de sección, como los 4–6 de F3, desde el 9-nov-2026)
 # que estén en la tabla larga, en los niveles de NIVELES_WEB, y sus auxiliares (columna
 # auxiliar_de: contratos y margen de la mediana del alquiler; preguntas 12 y 15 ampliadas). Cada
 # serie con auxiliares lleva en el manifiesto `fiabilidad` ({"contratos": clave, "margen": clave},
@@ -121,11 +122,12 @@ indices_web <- function(jerarquia, territorios) {
        provincia = de("provincia"), ccaa = de("ccaa"), nacional = "00")
 }
 
-# Decimales con que la web muestra una serie: uno en los porcentajes y en los euros por m²; en
-# el resto de euros, ninguno. Con una escala propia, los suyos (100: dos).
+# Decimales con que la web muestra una serie: uno en los porcentajes, en los índices (Gini) y en
+# los euros por m²; en el resto de euros, ninguno. Con una escala propia, los suyos (100: dos).
 decimales_web <- function(unidad, escala = ESCALA_WEB) {
   escala <- rep_len(escala, length(unidad))
-  ifelse(escala > ESCALA_WEB, decimales_escala(escala), ifelse(grepl("^%", unidad) | grepl("m\u00b2", unidad), 1L, 0L))
+  una <- grepl("^%", unidad) | grepl("m\u00b2", unidad) | grepl("^\u00edndice", unidad)
+  ifelse(escala > ESCALA_WEB, decimales_escala(escala), ifelse(una, 1L, 0L))
 }
 
 # Indicadores auxiliares (columna auxiliar_de de inventario/indicadores.csv: los indicadores a los
@@ -148,7 +150,9 @@ auxiliares_web <- function(indicadores) {
 # Filas de la tabla larga que van a la web, con su clave, su grupo en la web y su periodo: las
 # del núcleo y las de sus auxiliares.
 series_web <- function(larga, indicadores) {
-  nucleo <- indicadores$codigo[indicadores$nucleo_v01 %in% c(TRUE, "TRUE")]
+  con_mapa <- indicadores$codigo[!is.na(indicadores$cortes_web) & nzchar(indicadores$cortes_web)]
+  con_mapa <- intersect(con_mapa, unique(larga$indicador[larga$nivel == "sc"]))
+  nucleo <- union(indicadores$codigo[indicadores$nucleo_v01 %in% c(TRUE, "TRUE")], con_mapa)
   aux <- auxiliares_web(indicadores)
   aux <- aux$codigo[vapply(aux$de, function(d) any(d %in% nucleo), TRUE)]
   x <- larga |>
@@ -288,20 +292,23 @@ cajas_web <- function(secciones, jerarquia) {
 
 # Ingresos de las fichas en el formato de la web, desde la tabla `perfiles` (perfiles_fichas()):
 #   llave: se calcula en la web con la renta por hogar de la sección (÷ 12) y paga su alquiler;
-#   mochila y tartera: neto mensual por territorio del último año (la tartera, el salario mínimo
-#   vigente), con el redondeo de la guía; sin las cifras ausentes.
+#   mochila, tartera y transistor: neto mensual por territorio de cada año (`anios`), para que la
+#   web use el del año del alquiler (regla 4; decisión del autor, 9-nov-2026), y el del último año
+#   (`anio`, `neto_mensual`: la tartera, el salario mínimo vigente), con el redondeo de la guía;
+#   sin las cifras ausentes.
 perfiles_web <- function(perfiles) {
   if (is.null(perfiles)) return(NULL)
   ficha <- function(nombre) {
     p <- perfiles[perfiles$ficha == nombre & !is.na(perfiles$ingreso) & perfiles$estado %in% c("dato", "estimado"), ]
     if (!nrow(p)) return(NULL)
-    p <- p[p$anio == max(p$anio), ]
-    list(anio = max(p$anio), nivel = p$nivel[1],
-         neto_mensual = stats::setNames(as.list(redondeo_guia(p$ingreso)), p$geo_id),
+    neto <- function(x) stats::setNames(as.list(redondeo_guia(x$ingreso)), x$geo_id)
+    ultimo <- p[p$anio == max(p$anio), ]
+    list(anio = max(p$anio), nivel = p$nivel[1], neto_mensual = neto(ultimo),
+         anios = lapply(split(p, p$anio), neto),
          superficie_m2 = unique(p$superficie_m2)[1])
   }
   web <- list(llave = list(ingreso = list(serie = "renta_hogar", divisor = 12L), vivienda = list(serie = "alquiler_mes")),
-              mochila = ficha("mochila"), tartera = ficha("tartera"))
+              mochila = ficha("mochila"), tartera = ficha("tartera"), transistor = ficha("transistor"))
   web[!vapply(web, is.null, TRUE)]
 }
 
@@ -435,11 +442,11 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
   manifiesto <- list(
     version = fecha, ejemplo = FALSE, generado = fecha, seccionado = 2021L,
     # sin_seccion: suelo que no es de ninguna sección (geo_capas_mapa_base), sin código propio:
-    # la web lo pinta como «sin dato» y su ficha lee estos atributos.
-    mapa_base = list(tipo = "pmtiles", url = url_teselas, atribucion = "INE",
+    # la web lo pinta como «sin dato» y su ficha lee estos atributos (nombre y tipo, del IGN).
+    mapa_base = list(tipo = "pmtiles", url = url_teselas, atribucion = "INE, IGN",
                      capas = list(comunidades = list(id = "ccaa"), provincias = list(id = "provincia"),
                                   municipios = list(id = "municipio"), secciones = list(id = "seccion"),
-                                  sin_seccion = list(atributos = I(c("km2", "provincias"))))),
+                                  sin_seccion = list(atributos = I(c("km2", "provincias", "nombre", "tipo"))))),
     secciones = rutas_indices[1],
     indices = stats::setNames(as.list(rutas_indices), names(indices)),
     territorios = "datos/territorios.json",

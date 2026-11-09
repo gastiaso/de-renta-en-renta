@@ -1,0 +1,9 @@
+# «Data» page in English: loaded after documento_en.yaml, it changes what is specific to this page
+# (the text comes from docs/data.md through web/herramientas/pagina_datos.mjs).
+pagetitle: "Data · De renta en renta"
+descripcion: "Download of the De renta en renta long table in Parquet: data model, indicator dictionary, licences and citation."
+actual_metodo: false
+actual_datos: true
+pagina_es: datos.html
+pagina_en: data.html
+otra_pagina: datos.html

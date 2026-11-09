@@ -171,11 +171,22 @@ export function decodificar(datos, n, codificacion) {
 }
 
 // Atributos de un elemento de la capa sin_seccion del mapa base (suelo que no es de ninguna
-// sección): superficie en km² (o null) y códigos de las provincias que lo rodean.
+// sección): superficie en km² (o null), códigos de las provincias que lo rodean y, si el trozo es
+// de una unidad del IGN, su nombre y su tipo (o null).
 export function atributosSinSeccion(p) {
   const km2 = p?.km2 === undefined || p?.km2 === null || p?.km2 === '' ? NaN : Number(p.km2);
+  const texto = (x) => (typeof x === 'string' && x.trim() ? x.trim() : null);
   return {
     km2: Number.isFinite(km2) ? km2 : null,
     provincias: String(p?.provincias ?? '').split(/\s+/).filter((c) => /^\d{2}$/.test(c)),
+    nombre: texto(p?.nombre),
+    tipo: texto(p?.tipo),
   };
+}
+
+// Elementos de la capa sin_seccion bajo un punto (propiedades): el hueco entero y, encima, el trozo
+// de una unidad del IGN si lo hay. Manda el trozo con nombre; si no, el primero.
+export function elegirSinSeccion(lista) {
+  const validas = (lista ?? []).filter(Boolean);
+  return validas.find((p) => typeof p.nombre === 'string' && p.nombre.trim()) ?? validas[0] ?? null;
 }

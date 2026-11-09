@@ -18,7 +18,7 @@
 
 import * as maplibregl from 'maplibre-gl';
 import { paletaDe, paletaContorno, rampaDeCss } from './colores.js';
-import { atributosSinSeccion } from './datos.js';
+import { atributosSinSeccion, elegirSinSeccion } from './datos.js';
 
 const css = (nombre) => getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
 const absoluta = (ruta) => new URL(ruta, document.baseURI).href;
@@ -208,7 +208,7 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
       mapa.on('mouseleave', 'sin-seccion-relleno', () => { mapa.getCanvas().style.cursor = ''; });
       mapa.on('click', 'sin-seccion-relleno', (e) => {
         if (mapa.queryRenderedFeatures(e.point, { layers: ['secciones-relleno'] }).length) return;   // la sección manda
-        const p = e.features?.[0]?.properties;
+        const p = elegirSinSeccion((e.features ?? []).map((f) => f.properties));   // el trozo con nombre, si lo hay
         if (p) alPulsarSinSeccion(atributosSinSeccion(p));
       });
     }

@@ -1,12 +1,17 @@
-# Página «Método» en castellano (flujo de Pages: pandoc con plantilla_documento.html).
-# Los textos compartidos con la web (título, subtítulo, menú) salen de web/i18n/es.json.
+# Páginas de texto en castellano (flujo de Pages: pandoc con plantilla_documento.html). Estos son
+# los valores de la página «Método»; la página «Datos» carga después datos_es.yaml, que cambia los
+# suyos. Los textos compartidos con la web (título, subtítulo, menú) salen de web/i18n/es.json.
 lang: es
 es: true
 pagetitle: "Método · De renta en renta"
 descripcion: "Nota metodológica de De renta en renta: fuentes, geografía constante, validación e indicadores."
-pagina: metodo.html
 mapa: "./"
 sobrecarga: "sobrecarga.html"
+datos: datos.html
+metodo: metodo.html
+actual_metodo: true
+pagina_es: metodo.html
+pagina_en: method.html
 otro_idioma: en
 otra_pagina: method.html
 texto_indice: "Índice"

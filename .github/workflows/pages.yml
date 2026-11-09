@@ -5,7 +5,8 @@
 #   - datos_web.tar.gz   → datos/      (exportación del pipeline, sin la muestra de datos/ejemplo/)
 #   - <mapa base>.pmtiles → teselas/   (la ruta la dice el manifiesto: mapa_base.url)
 #   - tabla_larga.parquet → descargas/ (descarga de la página «Datos»)
-#   - version.json        → descargas/ (fecha, commit y versiones de las fuentes)
+#   - version.json        → descargas/ (fecha, commit, versiones de las fuentes y cobertura por
+#                           indicador; rellena la caja de descarga de la página «Datos»)
 # Los ficheros del release los prepara empaquetar_publicacion() (R/publicar.R), con SHA256SUMS.
 #
 # Sin secretos: usa el token que GitHub da a cada ejecución, con permisos mínimos por trabajo.
@@ -97,28 +98,46 @@ jobs:
           cp "$rel/$(basename "$url")" "$sitio/$url"
           cp "$rel/tabla_larga.parquet" "$rel/version.json" "$sitio/descargas/"
 
-      # Página «Método»: la nota metodológica (docs/), en HTML, con la cabecera de la web. Los
-      # textos compartidos (título, subtítulo, menú) salen de los diccionarios de web/i18n/.
-      - name: Página «Método»
+      # Páginas de texto, en HTML y con la cabecera de la web. «Método»: la nota metodológica (docs/).
+      # «Datos»: docs/datos.md y docs/data.md con la descarga, la cita y la cobertura rellenas desde
+      # descargas/version.json (el del release) y CITATION.cff, más el diccionario que genera R desde
+      # el inventario (web/herramientas/pagina_datos.mjs). Los textos compartidos (título, subtítulo,
+      # menú) salen de los diccionarios de web/i18n/.
+      - name: Páginas «Método» y «Datos»
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends pandoc > /dev/null
           pandoc --version | head -n 1
+          echo "node $(node --version)"
           sitio="$RUNNER_TEMP/sitio"
-          for par in "es metodologia.md metodo.html" "en methodology.md method.html"; do
+          etiqueta=$(cat "$RUNNER_TEMP/etiqueta")
+          for par in "es metodologia.md metodo.html datos.md datos_diccionario.md datos.html" \
+                     "en methodology.md method.html data.md data_dictionary.md data.html"; do
             set -- $par
             dic="web/i18n/$1.json"
-            pandoc "docs/$2" --from gfm --to html5 --standalone --toc --toc-depth 2 --wrap none \
-              --template web/herramientas/plantilla_documento.html \
-              --metadata-file "web/herramientas/documento_$1.yaml" \
-              --metadata titulo="$(jq -r .sitio.titulo "$dic")" \
-              --metadata subtitulo="$(jq -r .sitio.subtitulo "$dic")" \
-              --metadata texto_mapa="$(jq -r .nav.mapa "$dic")" \
-              --metadata texto_sobrecarga="$(jq -r .nav.sobrecarga "$dic")" \
-              --metadata texto_metodo="$(jq -r .nav.metodo "$dic")" \
-              --metadata texto_navegacion="$(jq -r .interfaz.navegacion "$dic")" \
-              --metadata texto_idioma="$(jq -r .interfaz.idioma "$dic")" \
-              --output "$sitio/$3"
+            comunes=(--from gfm --to html5 --standalone --toc --toc-depth 2 --wrap none
+              --template web/herramientas/plantilla_documento.html
+              --metadata-file "web/herramientas/documento_$1.yaml"
+              --metadata titulo="$(jq -r .sitio.titulo "$dic")"
+              --metadata subtitulo="$(jq -r .sitio.subtitulo "$dic")"
+              --metadata texto_mapa="$(jq -r .nav.mapa "$dic")"
+              --metadata texto_sobrecarga="$(jq -r .nav.sobrecarga "$dic")"
+              --metadata texto_datos="$(jq -r .nav.datos "$dic")"
+              --metadata texto_metodo="$(jq -r .nav.metodo "$dic")"
+              --metadata texto_navegacion="$(jq -r .interfaz.navegacion "$dic")"
+              --metadata texto_idioma="$(jq -r .interfaz.idioma "$dic")")
+            pandoc "docs/$2" "${comunes[@]}" --output "$sitio/$3"
+
+            node web/herramientas/pagina_datos.mjs --idioma "$1" --nota "docs/$4" --diccionario "docs/$5" \
+              --version "$sitio/descargas/version.json" --cita CITATION.cff \
+              --etiqueta "$etiqueta" --repositorio "$GITHUB_REPOSITORY" --salida "$RUNNER_TEMP/datos_$1.md"
+            pandoc "$RUNNER_TEMP/datos_$1.md" "${comunes[@]}" \
+              --metadata-file "web/herramientas/datos_$1.yaml" --output "$sitio/$6"
+            grep -q 'descargas/tabla_larga.parquet' "$sitio/$6" \
+              || { echo "::error::La página $6 no enlaza la tabla larga."; exit 1; }
+            # datos_<idioma>.yaml, el último --metadata-file, debe mandar sobre documento_<idioma>.yaml
+            grep -q "href=\"$6\" aria-current=\"page\"" "$sitio/$6" \
+              || { echo "::error::La página $6 no lleva sus metadatos (datos_$1.yaml)."; exit 1; }
           done
 
       - name: Comprobar los límites de Pages

@@ -45,7 +45,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
   - Si el margen aproximado de la mediana deja la proporción a los dos lados del 30 o del 40 %, la ficha dice que está «en el límite entre dos tramos».
 - **Cálculo en el navegador**, sin descargar nada más: los valores van en el estado de cada elemento del mapa (*feature-state*) y el color sale de expresiones de estilo (`js/sueldo.js`).
   - Con poco zoom, donde el PMTiles aún no trae secciones, se pintan los municipios y, más abajo, las provincias, con las cifras publicadas en su nivel.
-  - El suelo que no es de ninguna sección (terrenos comunales fuera de todo municipio) se pinta como «sin dato» en todos los zooms; al pulsarlo, la ficha dice qué es.
+  - El suelo que no es de ninguna sección (terrenos comunales fuera de todo municipio) se pinta como «sin dato» en todos los zooms; al pulsarlo, la ficha dice qué es y, donde el IGN dibuja una unidad (condominios), su nombre y su tipo, con la fuente.
 - **El sueldo no sale del dispositivo.** No entra en la URL ni se guarda. Solo va en un enlace si se pulsa «Compartir» y se elige «Copiar con mi sueldo», con aviso previo, y entonces va tras «#», que el navegador no envía al servidor. Al abrir ese enlace, el sueldo se lee y se quita de la barra de direcciones.
 - **Ficha de sección:**
   - el valor del mapa activo;
@@ -77,8 +77,12 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 | `js/sobrecarga.js`, `js/sobrecarga_datos.js`, `estilo/sobrecarga.css` | Sección «Sobrecarga»: página (DOM y MapLibre) y su lógica sin DOM; datos en `datos/sobrecarga/` (`exportar_web_sobrecarga()`) |
 | `js/panel_sueldo.js`, `js/compartir.js` | Tarjeta «Tu sueldo» y diálogo «Compartir» |
 | `js/comparador.js`, `js/buscador.js` | Comparador entre territorios y buscador |
+| `metodo.html`, `method.html`, `datos.html`, `data.html` | Páginas de texto «Método» y «Datos»: no están en git, las genera el flujo de Pages con pandoc (ver abajo, «Páginas de texto») |
+| `herramientas/plantilla_documento.html`, `herramientas/documento_<idioma>.yaml`, `herramientas/datos_<idioma>.yaml` | Plantilla de pandoc de las páginas de texto (cabecera y menú de la web, índice plegable) y sus textos por idioma |
+| `herramientas/pagina_datos.mjs` | Monta el Markdown de la página «Datos»: rellena la descarga, la cita y la cobertura desde `version.json` y `CITATION.cff` y le añade el diccionario generado en R |
 | `estilo/tokens.css` | Generado por el pipeline desde `diseno/tokens.json`: no se edita a mano |
 | `estilo/sitio.css` | Maquetación; solo usa las variables de `tokens.css` |
+| `estilo/documento.css` | Páginas de texto: cuerpo, índice, tablas y código, con las variables de `tokens.css` |
 | `estilo/fuentes/` | Tipografías autoalojadas, con su licencia |
 | `i18n/es.json`, `i18n/en.json` | Diccionarios (ver abajo) |
 | `vendor/` | Librerías de terceros, con su licencia |
@@ -91,7 +95,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 
 El manifiesto dice:
 
-- `mapa_base`: de qué tipo es (`pmtiles`, un fichero con varias capas, o `geojson`, un fichero por capa), dónde está y cómo se llama la propiedad que identifica cada elemento. Las capas son `comunidades` (`ccaa`), `provincias` (`provincia`), `municipios` (`municipio`) y `secciones` (`seccion`, código de 10 dígitos como texto). En el PMTiles hay una quinta, sin código: `sin_seccion`, el suelo que no es de ninguna sección, con `km2` y `provincias` (`atributos`).
+- `mapa_base`: de qué tipo es (`pmtiles`, un fichero con varias capas, o `geojson`, un fichero por capa), dónde está y cómo se llama la propiedad que identifica cada elemento. Las capas son `comunidades` (`ccaa`), `provincias` (`provincia`), `municipios` (`municipio`) y `secciones` (`seccion`, código de 10 dígitos como texto). En el PMTiles hay una quinta, sin código: `sin_seccion`, el suelo que no es de ninguna sección, con `km2`, `provincias` y, en los trozos de una unidad del IGN, `nombre` y `tipo` (`atributos`). `atribucion`: las fuentes del mapa base («INE, IGN»).
 - `indices`: un fichero por nivel (`sc`, `distrito`, `municipio`, `provincia`, `ccaa`, `nacional`) con los códigos en el orden de los valores. España es `"00"`.
 - `territorios`: nombres por nivel y `ccaa_de_provincia`, porque la comunidad no está en el código de sección.
 - `cajas`: caja de cada municipio, para el buscador.
@@ -164,7 +168,10 @@ Se bajaron de jsDelivr (paquetes de npm, carpeta `dist/`). Para actualizarlas, s
 ```bash
 node --test pruebas/web/datos.test.mjs
 node --test pruebas/web/sobrecarga.test.mjs
+node --test pruebas/web/pagina_datos.test.mjs
 ```
+
+La tercera prueba la página «Datos» (`herramientas/pagina_datos.mjs`): cifras, fechas y enlaces de la caja de descarga en los dos idiomas, con y sin `version.json` y con uno anterior a la cobertura; tabla de cobertura; cita de `CITATION.cff`; marcas de `docs/datos.md` y `docs/data.md`, y la línea de órdenes.
 
 Comprueban, con datos inventados:
 
@@ -178,6 +185,12 @@ Comprueban, con datos inventados:
 Si existe `datos/manifiesto.json`, comprueban también la exportación del pipeline y que **la página recalcula y coincide con R** (plan, §6.5): el sueldo necesario calculado con `js/formulas.js` desde el alquiler por m², en todas las secciones y niveles y en todos los años, redondeado a una décima como en la web, da los mismos enteros, nulos y estados que la serie `sueldo_necesario` que exporta R. Con la exportación del 8-nov-2026: 550.140 territorios y años, 294.082 con valor, ninguna diferencia.
 
 Queda aparte la misma prueba en el navegador con `chromote`, que no está en `renv.lock`.
+
+## Páginas de texto
+
+«Método» (`metodo.html`, `method.html`) y «Datos» (`datos.html`, `data.html`) no son módulos de la web: el flujo de Pages las genera con pandoc desde `docs/` y `herramientas/plantilla_documento.html`, con la misma cabecera y el mismo menú, en un fichero por idioma (el botón ES/EN lleva al otro). Sus copias locales están fuera de git; cómo montarlas: `docs/publicacion.md`.
+
+«Datos» lleva la descarga de la tabla larga (`descargas/tabla_larga.parquet`, con su tamaño, su suma SHA-256, la fecha y el commit de los datos y el enlace al release, de `descargas/version.json`), las licencias y la cita, cómo leerla en R y en Python, el modelo de datos, la cobertura de cada indicador en el release, los valores de las columnas y el diccionario de indicadores. Los textos a mano están en `docs/datos.md` y `docs/data.md`; los valores de las columnas y el diccionario, en `docs/datos_diccionario.md` y `docs/data_dictionary.md`, que genera R desde `inventario/` (`exportar_diccionario_datos()`): no se editan a mano. El menú de `index.html` y `sobrecarga.html` la enlaza con `data-href-es` y `data-href-en`, como «Método».
 
 ## Publicación
 

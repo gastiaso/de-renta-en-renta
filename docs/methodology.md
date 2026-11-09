@@ -51,7 +51,7 @@ The second family corrects a bias in the first: expensive areas look affordable 
 | 8 | Monthly rent (median) | MIVAU, SERPAVI | Tract (2021 tract map) | 2015–2024 | Computed (`larga_serpavi`) |
 | 9 | Rent per m² (median) | MIVAU, SERPAVI | Tract (2021 tract map) | 2015–2024 | Computed (`larga_serpavi`) |
 | 14 | Resident rent burden | SERPAVI and ADRH | Tract | 2015–2024 | Computed (`larga_derivados`) |
-| 15 | Rental access barrier | SERPAVI and the income of each token | Tract × income | 2015–2024 | Check in `larga_derivados` (Under-35 and Minimum wage tokens, 2024); the website computes it with each token |
+| 15 | Rental access barrier | SERPAVI and the income of each token | Tract × income | 2015–2024 | Check in `larga_derivados` (Minimum wage and Pensioner tokens, 2015–2024; Under-35 token, 2024); the website computes it with each token |
 | 18 | Renting households | INE, 2021 Census | Tract (2021 tract map) | 2021 (2011, in F6) | Computed (`larga_censo2021`) |
 | 19 | Tourist dwellings | INE, experimental statistics | Tract (2024 tract map, carried to 2021) | February 2024 – May 2026, twice a year (2020–2023, in F6) | Computed (`larga_vut`) |
 | 21 | Net pay needed (default map) | SERPAVI | Tract | 2015–2024 | Computed (`larga_derivados`) |
@@ -72,17 +72,19 @@ The full inventory, with address, access, frequency and notes, is in `inventario
 
 | Source (`id`) | Body | Use | Licence (summary from `fuentes.csv`) |
 |---|---|---|---|
-| `ine_adrh` | INE | Indicators 1–3; population and households for the geography tests; municipality names | CC BY 4.0 |
+| `ine_adrh` | INE | Indicators 1–6; population and households for the geography tests; municipality names | CC BY 4.0 |
 | `mivau_serpavi` | MIVAU | Indicators 8, 9, 14, 15 and 21 | Reuse authorised by the MIVAU legal notice (Law 37/2007 and RD 1495/2011), citing the source and the date, without distorting the information |
 | `ine_censo2021` | INE | Indicator 18; denominator of 19 | CC BY 4.0 |
 | `ine_vut` | INE | Indicator 19 | CC BY 4.0 |
-| `aeat_mercado_trabajo` | AEAT | «Under-35» token (indicator 7) | Free reuse, including commercial, citing the source and the date of last update |
-| `boe_smi` | BOE | «Minimum wage» token | Reusable |
+| `aeat_mercado_trabajo` | AEAT | «Under-35» token (indicator 7) and «Pensioner» token (pensioners' withholding) | Free reuse, including commercial, citing the source and the date of last update |
+| `boe_smi` | BOE | «Minimum wage» token (2015–2026) | Reusable |
+| `inss_pensiones` | INSS (Social Security) | «Pensioner» token | Reuse citing the source and the date of last update |
 | `ine_ecv` | INE | Check of the Under-35 token; indicator 22 | CC BY 4.0 |
 | `ine_ecv_modulo` | INE | Indicator 23 | CC BY 4.0 |
 | `eurostat_ilc_lvho07`, `eurostat_ilc_lvho07_r` | Eurostat | Gate of indicator 22, also by income quintile (`ilc_lvho07b`); European series and map of the website | CC BY 4.0 |
 | `eurostat_nuts` | Eurostat (GISCO) | Geometries of the European map | Non-commercial use with the notice «© EuroGeographics for the administrative boundaries». Not CC BY |
 | `ine_seccionado` | INE | Tract maps from 2016 to 2025; territorial hierarchy and base map | CC BY 4.0 |
+| `ign_au` | IGN | Name and type of the land without a tract in the base map (§3.10) | CC BY 4.0 (Order FOM/2807/2015), with the attribution `Obra derivada de BDDAE 2026 CC-BY 4.0 ign.es` |
 | `ine_callejero` | INE | Conversion tables, route (a) | CC BY 4.0 |
 | `catastro_inspire` | Directorate General for the Cadastre | Conversion tables, route (b) | Contradictory: see below |
 | `catastro_foral` | Provincial councils of Álava, Bizkaia and Gipuzkoa; Government of Navarre | Route (b) in the Basque Country and Navarre | Different in each territory: see below |
@@ -334,27 +336,29 @@ Origin: `comparar_vias_paso()`; in `comparacion_vias`, rows with `estimada_a` tr
   | provincias | 3–12 | `provincia`, `nombre` |
   | municipios | 5–12 | `municipio`, `nombre` |
   | secciones | 7–12 | `seccion` |
-  | sin_seccion | 0–12 | `km2`, `provincias` |
+  | sin_seccion | 0–12 | `km2`, `provincias`, `nombre`, `tipo` |
 
 - **Land without a tract.** The 2021 INE tract map does not cover land that belongs to no municipality: shared mountains and common land, such as the Bardenas Reales or the Urbasa and Andía ranges. It is left as interior rings of the union of the tracts (`geo_huecos()`). Rings of at least 0.01 km² (`UMBRAL_SIN_SECCION_KM2`) are counted, less any tracts inside them (enclaves): 95, totalling 1,495 km²; the largest, 418.4 km². Below the threshold there are only slivers between neighbouring tracts, 1,140 under 1 m² and one of 13 m²; there is no ring between 13 m² and 1 ha. The gaps go in the `sin_seccion` layer, with their area and the codes of the provinces they touch. The 77 that touch a single province are added to it, and the 5 that touch several provinces of a single region, to the region (`geo_absorber_huecos()`). The other 13 stay out of those layers, because without the official boundary line no land is divided between provinces. The website shows them as «no data»; clicking one, the sheet says what it is. They have no population, no tract and no data. Gaps that touch the coast or the border are not interior rings and are not detected.
 
+- **IGN names** (author's decision, 9 Nov 2026). The IGN administrative units (`ign_au`; `leer_ign_au()`, target `unidades_ign`) include the condominiums: mountains and land shared by several municipalities, such as *facerías*, *parzonerías*, *ledanías* or *comunidades*. Each gap is split by the units that overlap it by at least 0.01 km² (`geo_nombrar_huecos()`), the same threshold as the gaps: the smaller overlaps are 0.001 km² or less, edge contacts, and the next one is 0.012 km². Each piece carries the IGN's literal name, its type and the provinces it touches. The type is «condominio» (condominium), as the IGN's political map classifies them (the INSPIRE service gives them the «Municipio» level). 57 of the 95 gaps and 1,176.5 km² are named, in 73 pieces; 7 gaps have two units or more, and one in Burgos, 10. The layer carries each whole gap, unnamed, with its named pieces on top; on a click, the website gives the piece and, outside the pieces, the gap. What no unit covers thus keeps the generic text: 182.2 km² in the named gaps, 165.1 of them in the 264 km² gap between Álava and Navarre, where the IGN only draws the Parzonería de Entzia and the Monte Comunal de las Limitaciones de las Améscoas. The rest are thin strips along the edges, where the IGN and INE lines do not match; as separate pieces, tile quantization broke them. The other 38 gaps (136.3 km²) have no IGN unit and keep the generic text. Seven names in Burgos carry five-digit identifiers instead of names («Comunidad de 09076, 09290, 09578, 09606 y 09822»): they are not INE municipality codes and are given as they are. None of the 7 units with code 54 (territories outside any province) touches a gap. The sheet credits the IGN with the attribution its licence requires.
+
 - **Tiles.** They are generated with GDAL from R, with the PMTiles and MVT drivers (`generar_pmtiles()`), without tippecanoe (plan §6.2). Each tile uses a grid of 4,096 units per 512 pixels. Simplification is measured in units of that grid, so it is the same on both sides of a shared border.
 - **Simplification** (plan §11, question 16): 4 units (half a pixel) below zoom 12 and none at zoom 12. In GDAL, the maximum-zoom parameter is a tolerance, not a zoom number: it is set to 0 (`simplificacion_zoom_max`).
-- **Size.** The file takes 35.3 MB (1 MB = 10⁶ bytes), with 13,235 tiles (`resumen_mapa_base`, `pmtiles_resumen()`):
+- **Size.** The file takes 35.4 MB (1 MB = 10⁶ bytes), with 13,235 tiles (`resumen_mapa_base`, `pmtiles_resumen()`):
 
   | Zoom | Tiles | MB | Largest tile (KB) |
   |---|---|---|---|
-  | 0–4 | 13 | 0.03 | 6.6 |
-  | 5 | 5 | 0.34 | 143.2 |
-  | 6 | 10 | 0.46 | 149.2 |
-  | 7 | 24 | 1.67 | 208.3 |
-  | 8 | 71 | 2.27 | 142.4 |
+  | 0–4 | 13 | 0.04 | 9.0 |
+  | 5 | 5 | 0.35 | 146.0 |
+  | 6 | 10 | 0.46 | 149.4 |
+  | 7 | 24 | 1.67 | 208.4 |
+  | 8 | 71 | 2.27 | 142.5 |
   | 9 | 208 | 2.78 | 85.3 |
-  | 10 | 702 | 4.11 | 68.4 |
-  | 11 | 2,548 | 6.49 | 38.4 |
-  | 12 | 9,654 | 17.11 | 58.0 |
+  | 10 | 702 | 4.12 | 68.4 |
+  | 11 | 2,548 | 6.50 | 38.4 |
+  | 12 | 9,654 | 17.13 | 58.0 |
 
-- **Gate** (`comprobar_mapa_base()`, `validacion_mapa_base`). It reads the zoom 12 tiles with GDAL. `mapa_base_secciones`: it finds the 36,333 tracts. `mapa_base_huecos` (warning): 95 gaps in the tract map and 1,495 km², computed from the tracts. `mapa_base_sin_seccion` (blocking): with the tracts and the `sin_seccion` layer together, the layer widened by one grid unit (2.4 m at zoom 12), no gap is left open.
+- **Gate** (`comprobar_mapa_base()`, `validacion_mapa_base`). It reads the zoom 12 tiles with GDAL. `mapa_base_secciones`: it finds the 36,333 tracts. `mapa_base_huecos` (warning): 95 gaps in the tract map and 1,495 km², computed from the tracts. `mapa_base_sin_seccion` (blocking): with the tracts and the `sin_seccion` layer together, the layer widened by one grid unit (2.4 m at zoom 12), no gap is left open. With the IGN units, `mapa_base_huecos` also gives the named gaps (57) and their area (1,176.5 km²). `mapa_base_nombres` (blocking): the 73 named pieces carry their name and type in the zoom 12 layer, at their interior point. `mapa_base_nombres_dobles` (blocking): no land has two units at once (0 km²).
 - **Publication** (plan §6.6; plan §11, question 16). The PMTiles file is not in the git history: it is regenerated with `targets` and published from a repository *release*, which the GitHub Pages workflow copies next to the website. Locally it can be viewed with `node geo/visor/servir.mjs` (`geo/visor/`).
 
 **Postcodes** (plan §6.3; plan §11, question 16). They are not an INE unit and there are no reusable official polygons. The tract ↔ postcode correspondence will come from the INE street register (CPOS field of the segments): in January 2021, 80.7% of tracts have a single postcode (11,051 postcodes; 2,262 cross municipalities). Only indicators 11 and 16 need it. A geometry of its own built from the CartoCiudad entrances is decided in F4.
@@ -385,6 +389,13 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `id` | What it compares | Tolerance | Type | Result | Target |
 |---|---|---|---|---|---|
 | `adrh_municipio` | Median, by year and indicator, of the deviation between tract means aggregated to municipality and the municipal figure | ±0.1% | Blocking | 0.0% in 2015–2024, income per person and per household | `validacion_adrh` |
+| `adrh_dist_cobertura` | Provinces with municipalities in each tract table of indicators 4–6 (a truncated download stops at an intermediate province without raising an error) | Exact | Blocking | 52 in the three tables | `validacion_adrh_distribucion` |
+| `adrh_dist_rango` | Figures of indicators 4–6 outside 0–100 | Exact | Blocking | 0 in the 30 figures of year and indicator | `validacion_adrh_distribucion` |
+| `adrh_dist_fuentes_suma` | Maximum deviation, by year, of the sum of the five income sources from 100, in the areas with all five published | ±0.25 points | Blocking | 0.2 points at most in 2015–2024 | `validacion_adrh_distribucion` |
+| `adrh_dist_umbrales_orden` | Areas where the population below 40% of the median exceeds that below 50%, or this exceeds that below 60% | Exact | Blocking | 0 in the 10 years | `validacion_adrh_distribucion` |
+| `adrh_dist_seccion_unica` | Maximum difference, by year and indicator, between the tract and the municipality in single-tract municipalities | Exact | Blocking | 0 in the 30 figures | `validacion_adrh_distribucion` |
+| `adrh_dist_municipio` | Median, by year and indicator, of the deviation (points) between the tracts of indicators 4 and 5 aggregated to municipality as a weighted mean (4 with gross income and 5 with population) and the municipal figure | ±0.05 points | Blocking | 0.006 points at most (indicator 5); 0 for indicator 4 | `validacion_adrh_distribucion` |
+| `adrh_dist_provincia` | The same by province, with the published tracts, against the totals table: checks the name matching | ±0.3 points | Blocking | 0.16 points at most | `validacion_adrh_distribucion` |
 | `cierre_poblacional` | Population reprojected to 2021 against the sum of its sources, by municipality or group | ±0.5% | Blocking | Passes in all nine years (§3.9) | `validacion_f1` |
 | `cobertura_destino` | 2021 tracts that receive nothing | Exact | Blocking | None, except the exceptions | `validacion_f1` |
 | `serpavi_provincia` | Observations of the tracts added up to province, by year and building type, against the provinces sheet (medians are not aggregated) | Exact | Blocking | Passes in all 1,040 figures: 52 provinces, 10 years and 2 building types | `validacion_serpavi` |
@@ -411,12 +422,20 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `jerarquia_nombres` | Regions, provinces and municipalities without a name | Exact | Blocking | 0 in the 3 figures | `validacion_jerarquia` |
 | `mapa_base_secciones` | 2021 tracts missing from the maximum-zoom tiles of the PMTiles file | Exact | Blocking | 0 | `validacion_mapa_base` |
 | `mapa_base_sin_seccion` | Gaps in the tract map still open with the tracts and the maximum-zoom `sin_seccion` layer together | Exact | Blocking | 0 | `validacion_mapa_base` |
+| `mapa_base_nombres` | Pieces of land without a tract named after an IGN unit that do not carry that name and type in the maximum-zoom `sin_seccion` layer | Exact | Blocking | 0 of 73 | `validacion_mapa_base` |
+| `mapa_base_nombres_dobles` | Area of the gaps with two IGN units at once | Exact | Blocking | 0 km² | `validacion_mapa_base` |
 | `smi_neto` | Net monthly income of the 2026 Minimum wage token (`perfiles`) against the plan figure: €17,094 × (1 − 0.065) / 12 ≈ €1,332 | ±€1 | Blocking | €1,331.91; difference, −€0.09 | `validacion_derivados` |
-| `derivados_terminos` | Maximum deviation, by year and indicator, between each derived figure and the one recomputed from its terms | ±0.001% | Blocking | 4.3 × 10⁻¹⁴% at most in the 22 figures | `validacion_derivados` |
-| `derivados_estado` | Derived figures whose status is not the worst of their terms (for 15, that of the rent, or `ausente` with no token income), or with a value and status `secreto` or `ausente` (or the reverse) | Exact | Blocking | 0 in the 22 figures | `validacion_derivados` |
-| `derivados_rango` | Derived figures outside the possible range: burden, from 0.1 to 100%; barrier, from 0.1 to 300%; pay needed, from 100 to 10,000 net € a month | Exact | Blocking | 0 in the 22 figures | `validacion_derivados` |
+| `derivados_terminos` | Maximum deviation, by year and indicator, between each derived figure and the one recomputed from its terms | ±0.001% | Blocking | 4.3 × 10⁻¹⁴% at most in the 41 figures | `validacion_derivados` |
+| `derivados_estado` | Derived figures whose status is not the worst of their terms (for 15, that of the rent, or `ausente` with no token income), or with a value and status `secreto` or `ausente` (or the reverse) | Exact | Blocking | 0 in the 41 figures | `validacion_derivados` |
+| `derivados_rango` | Derived figures outside the possible range: burden, from 0.1 to 100%; barrier, from 0.1 to 300%; pay needed, from 100 to 10,000 net € a month | Exact | Blocking | 0 in the 41 figures | `validacion_derivados` |
 | `perfiles_mochila` | Provinces of the Under-35 token without an INE code in `inventario/provincias_aeat.csv`, repeated codes and names without the token | Exact | Blocking | 0 in the 3 figures | `validacion_derivados` |
-| `web_valores` | Value files in `web/datos/` whose values or states are not those of the long table (with the rounding of the guide to the precision of each series: one decimal; two for indicator 19) or whose length is not that of the index; series without a file. Also the contracts and margin of each rent series | Exact | Blocking | 0 in the 680 figures | `validacion_web` |
+| `smi_boe` | Monthly minimum wage of each year in `SMI_FICHAS` against that of the royal decree in its BOE XML, and the cited rule; 2021, mean weighted by months in force | Exact | Blocking | 0 in the 18 figures (2015–2023) | `validacion_smi` |
+| `inss_cobertura` | Provinces, multi-province regions and Spain missing or repeated in any month of the year (INSS Excel) | Exact | Blocking | 0 in the 10 years | `validacion_inss` |
+| `inss_suma` | Retirement pensions of the provinces against the number published for their region and for Spain, each month | Exact | Blocking | 0 in the 10 years (132 figures a month) | `validacion_inss` |
+| `inss_media` | Average retirement pension of the provinces, weighted, against the one published for their region and for Spain, each month | ±€0.01 | Blocking | €4.5 × 10⁻¹³ at most | `validacion_inss` |
+| `transistor_cobertura` | Provinces without a net Pensioner income in any year | Exact | Blocking | 0 in the 10 years | `validacion_transistor` |
+| `transistor_retencion` | Pensioner withholding outside [0, 30%] | Exact | Blocking | 0 in the 10 years | `validacion_transistor` |
+| `web_valores` | Value files in `web/datos/` whose values or states are not those of the long table (with the rounding of the guide to the precision of each series: one decimal; two for indicator 19) or whose length is not that of the index; series without a file. Also the contracts and margin of each rent series | Exact | Blocking | 0 in the 830 figures | `validacion_web` |
 | `web_fichas` | By municipality: cells of the series of its sheet that do not reproduce the long table with the precision of each series, and tracts in excess or missing | Exact | Blocking | 0 in the 8,131 municipalities | `validacion_web` |
 | `web_sobrecarga_valores` | Website overburden section: by view, value, rank, block, source and flag of each figure against the pipeline targets (with the rounding of the guide), and units in excess or missing; Spain series, annual breakdowns with the quintile, access module and map cut-offs against `cortes_web` of indicator 22 | Exact | Blocking | 0 in the 17 figures | `validacion_web_sobrecarga` |
 | `web_sobrecarga_muestra` | INE figures without a sample size, with a sample different from that of the computation, with a flag other than the EU-SILC one or with a value and fewer than 20 observations; Eurostat figures without their table, with a sample size or with a flag other than that of the source | Exact | Blocking | 0 in the 13 figures | `validacion_web_sobrecarga` |
@@ -426,10 +445,11 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `modulo_acceso_lectura` | Sum of the regions against the national total of the ECV 2025 module | ±0.1% | Blocking | Passes | `validacion_modulo` |
 | `i18n_completo`, `contraste_texto`, `rampa_contorno`, `rampa_daltonismo` | ES/EN dictionaries, website contrasts and a six-step ramp distinguishable under simulated colour blindness | Exact | Blocking | Pass | `validacion_i18n`, `validacion_diseno` |
 | `adrh_municipio_detalle` | Deviation of each municipality between aggregated tract means and the municipal figure | ±1% | Warning | Warns in 579 of 146,306 figures of municipality, year and indicator; 135 exceed 5% | `comprobaciones_adrh` |
+| `adrh_dist_municipio_detalle` | Deviation (points) of each municipality between the tracts of indicators 4 and 5 aggregated as a weighted mean and the municipal figure | ±1 point | Warning | Warns in 98 of 108,360 figures of municipality, year and indicator; 33 exceed 2 points and the largest is 5.8 | `comprobaciones_adrh_distribucion` |
 | `adrh_suma_secciones` | ADRH population by tract added up by municipality against the municipal total of the same table | ±0.5% | Warning | Warns in 160 municipality-years, all in 2015–2019 (38, 34, 30, 29 and 29) | `comprobaciones_f1` |
 | `adrh_seccion_huerfana` | ADRH tracts with no code in any tract map of 2016–2025 | Exact | Warning | 9 (§3.8) | `huerfanas_adrh` |
 | `cobertura_destino_excepcion` | 2021 tracts left empty by a known defect of the source | Exact | Warning | 2 tracts, 6 tract-years (§3.8) | `comprobaciones_f1` |
-| `mapa_base_huecos` | Gaps of at least 0.01 km² in the 2021 tract map (land in no tract): number and area | Exact | Warning | Warns with 95 gaps and 1,495 km²; the largest, 418.4 km² (§3.10) | `validacion_mapa_base` |
+| `mapa_base_huecos` | Gaps of at least 0.01 km² in the 2021 tract map (land in no tract): number and area, in total and named after an IGN unit | Exact | Warning | Warns with 95 gaps and 1,495 km² (the largest, 418.4 km²); named after an IGN unit, 57 and 1,176.5 km² (§3.10) | `validacion_mapa_base` |
 | `serpavi_escalas_detalle` | Each municipality or district, year and building type that does not match its tracts | Exact | Warning | Warns in 164 rows, which go as `ausente` (§7.1) | `validacion_serpavi` |
 | `serpavi_forales` | First year with observations of each foral province against that of the break `serpavi_forales` | Exact | Warning | All four match | `validacion_serpavi` |
 | `serpavi_sin_fila` | Tracts, districts and municipalities of the 2021 tract map that the database does not have (they go as `ausente`) | Exact | Warning | Warns with 40 tracts, 36 districts and 36 municipalities (§7.1) | `validacion_serpavi` |
@@ -543,7 +563,55 @@ The two mean indicators have the same counts by status.
 
 **Why `secreto` is higher in 2015–2019.** In those years ADRH does not publish by tract between 1,327 and 1,629 codes that are in the street register, mostly in the Basque Country and Navarre (`fase_codigos`, column `callejero_sin_adrh`; plan §6.3).
 
-**Rows in the long table.** 1,303,484 ADRH rows (§9.1). Municipal level: 73,777 rows for each mean and 65,958 for the median. The `version` column carries the date of the source file: 7 Nov 2026.
+**Rows in the long table.** 1,303,484 income rows (§9.1). Municipal level: 73,777 rows for each mean and 65,958 for the median. The `version` column carries the date of the source file: 7 Nov 2026.
+
+### 5.5 Income distribution (indicators 4–6)
+
+**Tables** (`descargar_ine_adrh()`, 9 Nov 2026). Three for all of Spain by tract, district and municipality, and three of totals:
+- **30825:** distribution by income source, as a percentage of gross income (`fichero_adrh_fuentes`);
+- **30829:** relative thresholds by sex (`fichero_adrh_umbrales`; 1.65 GB);
+- **37677:** Gini index and P80/P20 (`fichero_adrh_gini`);
+- **53687, 53694 and 53688:** Spain, regions, provinces and islands (`ficheros_adrh_totales`), with names and no codes. Regions are matched by their INE name and provinces by theirs within their region (`codigos_totales_adrh()`). Islands are left out.
+
+**Reading** (`leer_ine_adrh_distribucion()`, in chunks). It takes wages out of the five income sources, the population of both sexes below 40%, 50% and 60% of the median (40% and 50% only for the gate) and the Gini index. The CSV uses three marks: «.» is statistical confidentiality (`secreto`); «..», figure not available, and an empty cell, a year not published for that area (both `ausente`).
+
+| # | Code | In ADRH | Reprojection |
+|---|---|---|---|
+| 4 | `peso_salarios` | Income source: wages (% of gross income) | Mean weighted by the tract's gross income (average gross income per person × population) |
+| 5 | `bajo_60_mediana` | Population with income per consumption unit below 60% of the median | Population-weighted mean |
+| 6 | `gini` | Gini index | Rule for medians and indices (§3.6) |
+
+**Why indicators 4 and 5 are weighted** (author's decision, 9 Nov 2026). They are ratios of sums: wage income over gross income, and people below a threshold that is the same across Spain each year. Aggregated to municipality with those weights, they reproduce the published municipal figure (`adrh_dist_municipio`: median deviation of 0.006 points at most). INE computes them on the population it finds in tax records (over 98.6% of residents), while here the weight is the ADRH population: that gate measures the difference. The Gini index is not aggregated: it follows the rule for medians.
+
+**Status.** As for income (§5.3), with one difference: a 2021 tract without a value is `secreto` if any of its sources is, and `ausente` if none is published (`reproyectar_adrh_distribucion()`). Municipalities, provinces, regions and Spain carry the published figure (rule 1 of the guide); for municipalities, published and confidential figures go in.
+
+**Gate** (`comprobar_ine_adrh_distribucion()`, target `validacion_adrh_distribucion`; §4.1). It checks that each table covers the 52 provinces (the first download of table 30829 was cut off at Pontevedra without raising an error), that figures lie between 0 and 100, that the five income sources add up to 100, that thresholds are in order, that tract and municipality match in single-tract municipalities and that aggregated tracts reproduce municipalities and provinces.
+
+**Foral territories** (break `adrh_forales_distribucion`). Bizkaia is in the whole series; Gipuzkoa, from 2016; Álava, from 2020, and Navarre, from 2021 (indicator 4 with about 80 tracts with data in 2017–2020 and the rest confidential). Spain, from 2021. Before that, `ausente`: Eustat and Nastat do not fill the gaps because they measure something else (author's decision, 9 Nov 2026; `eustat_nastat` in `inventario/fuentes.csv`).
+
+**Breaks in indicator 5:**
+- `adrh_umbral_mediana_2023`: the threshold is 60% of the median of the common tax territory up to the ADRH 2022 edition and of the median of all of Spain from the 2023 edition, according to INE's methodology, which does not say whether the current table recomputes earlier years.
+- `adrh_umbrales_secreto_2024`: from the 2024 edition, confidentiality requires 50 men and 50 women per area instead of 500 residents. In the table only 2024 changes: confidential tracts fall from about 2,500–3,000 to 989. It changes how many figures are published, not the figures.
+
+**Result** (2021 tracts; `larga_adrh_distribucion`):
+
+| Indicator and year | `dato` | `estimado` | `secreto` | `ausente` |
+|---|---|---|---|---|
+| 4 (2015) | 32,085 | 1,608 | 1,274 | 1,365 |
+| 4 (2020) | 34,410 | 0 | 1,841 | 82 |
+| 4 (2024) | 33,699 | 1,195 | 1,435 | 3 |
+| 5 (2015) | 29,306 | 1,591 | 4,070 | 1,365 |
+| 5 (2020) | 31,563 | 0 | 4,194 | 576 |
+| 5 (2024) | 33,437 | 1,194 | 1,700 | 1 |
+| 6 (2015) | 31,666 | 1,246 | 1,487 | 1,933 |
+| 6 (2020) | 34,349 | 0 | 1,408 | 576 |
+| 6 (2024) | 33,206 | 887 | 1,485 | 754 |
+
+In 2024 the median tract has 58.2% of gross income from wages, 19.2% of the population below 60% of the median and a Gini index of 27.9. Spain: 60.0%, 20.2% and 31.9.
+
+**Rows in the long table.** 1,331,166: tract (1,089,972), municipality (239,034), province (1,560), region (570) and Spain (30). Version: 9 Nov 2026.
+
+**Maps** (§9.2). Classes from the `cortes_web` column: for indicator 4, 50, 55, 60, 65 and 70%; for 5, 10, 15, 20, 25 and 30%; for 6, 25, 27, 29, 31 and 33. They use the six-step ramp of the other maps and one decimal.
 
 ---
 
@@ -559,8 +627,8 @@ The two mean indicators have the same counts by status.
 |---|---|---|---|---|---|
 | Neighbourhood household (llave) | Average net income per household ÷ 12 | INE, ADRH (indicator 2) | Tract | Median rent of its tract, no fixed floor area | Income computed (`perfiles`); burden (indicator 14), in `larga_derivados` (§7.4) |
 | Under-35 (mochila; aged 26 to 35) | Estimated median of pay received in the year, net, ÷ 12 | AEAT; check with the ECV | Province | 50 m² | Computed for 2024 (`mochila_neta`, `perfiles`), as `estimado` |
-| Minimum wage (tartera) | Net annual minimum wage (SMI) ÷ 12 | RD 126/2026 (and RD 145/2024) | National | 50 m² | Computed with the 2024 and the 2026 minimum wage (`perfiles`) |
-| Pensioner (transistor) | Average retirement pension, net of income tax, ÷ 12 | INSS | Province | 50 m² | Phase F3: pending |
+| Minimum wage (tartera) | Net annual minimum wage (SMI) ÷ 12 | Royal decree of each year (RD 1106/2014 to RD 126/2026) | National | 50 m² | Computed from 2015 to 2026 (`perfiles`) |
+| Pensioner (transistor) | Average retirement pension, net of income tax, ÷ 12 | INSS; AEAT withholding | Province | 50 m² | Computed from 2015 to 2024 (`transistor`, `perfiles`); Basque Country and Navarre, as `estimado` |
 | Your token | Net monthly pay entered by the user: 12 or 14 instalments, optional second wage | — | — | 50 m² with one wage, 70 m² with two; can be changed to 50, 70 or 90 | Computed in the browser and not stored (`js/sueldo.js`) |
 
 ### 6.2 Under-35 token: method B and gross-to-net step
@@ -603,9 +671,26 @@ The author's decision dates from 7 Nov 2026 (plan §3.1; open question 7, closed
 
 ### 6.3 Minimum wage token
 
-**Computation** (plan §3.1; `perfiles_fichas()`, `SMI_FICHAS`; target `perfiles`). Net monthly income = monthly minimum wage × 14 instalments × (1 − employee contribution) / 12, with no income tax withholding:
-- 2026: €1,221 × 14 = €17,094 gross a year (RD 126/2026). With a contribution of 6.50% (MEI, 0.15%), €1,331.91 net a month: this is the figure used by the website. The `smi_neto` check compares it with the plan's €1,332 (§4.1).
-- 2024: €1,134 × 14 (RD 145/2024). With a contribution of 6.47%, €1,237.40 net a month. It is used for the 2024 barrier, with rent of the same year (§7.4).
+**Computation** (plan §3.1; `perfiles_fichas()`, `SMI_FICHAS`; target `perfiles`). Net monthly income = monthly minimum wage × 14 instalments × (1 − employee contribution) / 12, with no income tax withholding. The amount is that of the royal decree of each year (source `boe_smi`), and the contribution, the employee's of that year with a permanent contract: common contingencies (4.70%), unemployment (1.55%) and vocational training (0.10%), plus the MEI from 2023 (0.10% in 2023, 0.12% in 2024, 0.13% in 2025 and 0.15% in 2026). The contribution order of each year is cited in `SMI_FICHAS` without downloading it (author's decision, 9 Nov 2026).
+
+| Year | Rule | Monthly minimum wage (€, 14 instalments) | Contribution (%) | Net monthly income over 12 (€) |
+|---|---|---|---|---|
+| 2015 | RD 1106/2014 | 648.60 | 6.35 | 708.65 |
+| 2016 | RD 1171/2015 | 655.20 | 6.35 | 715.86 |
+| 2017 | RD 742/2016 | 707.70 | 6.35 | 773.22 |
+| 2018 | RD 1077/2017 | 735.90 | 6.35 | 804.03 |
+| 2019 | RD 1462/2018 | 900 | 6.35 | 983.32 |
+| 2020 | RD 231/2020 | 950 | 6.35 | 1,037.95 |
+| 2021 | RD 231/2020 and RD 817/2021 | 955 | 6.35 | 1,043.42 |
+| 2022 | RD 152/2022 | 1,000 | 6.35 | 1,092.58 |
+| 2023 | RD 99/2023 | 1,080 | 6.45 | 1,178.73 |
+| 2024 | RD 145/2024 | 1,134 | 6.47 | 1,237.40 |
+| 2025 | RD 87/2025 | 1,184 | 6.48 | 1,291.82 |
+| 2026 | RD 126/2026 | 1,221 | 6.50 | 1,331.91 |
+
+- **2021.** It had two amounts: €950 from January to August (the 2020 one, extended) and €965 from 1 September (RD 817/2021). Their mean weighted by months in force, €955, is used, consistent with the annual incomes of ADRH and AEAT (plan §11, question 18).
+- **Gate.** The 2015 to 2023 amounts are read from the BOE XML of each royal decree (`descargar_boe_smi()`, `leer_boe_smi()`, `comprobar_smi_boe()`; `smi_boe`, target `validacion_smi`); those of 2024 to 2026 are cited. `smi_neto` compares the 2026 one with the plan's €1,332 (§4.1).
+- **Use.** The barrier in the long table (§7.4) and the website use the minimum wage of the same year as the rent (rule 4; author's decision, 9 Nov 2026): with 2024 rent, €1,237.40. Those of 2025 and 2026 have no rent of the same year; the website cites the latest next to that of the chosen year.
 
 **Comparison with the Under-35 token.**
 - The 2024 Under-35 token (€1,330 net on average) comes out almost equal to the Minimum wage token with the 2026 minimum wage. They are different years (rule 4).
@@ -619,6 +704,37 @@ The author's decision dates from 7 Nov 2026 (plan §3.1; open question 7, closed
 **Dwelling:** the median apartment rent of the tract itself, no fixed floor area. It is the only token that varies on both sides, income and rent.
 
 **Burden:** the cross with SERPAVI is indicator 14 (§7.4).
+
+### 6.5 Pensioner token
+
+**Question.** It answers “if I had to rent today”: 89.1% of people aged over 65 live in a home they own (ECV 2023; plan §3.1), and the website says so next to the token.
+
+**Method** (plan §3.1; author's decision of 9 Nov 2026):
+1. **Starting pension.** Average retirement pension of the whole system by province (INSS, *Pensiones contributivas del Sistema de la Seguridad Social*; monthly Excel «Pensiones por CCAA y provincias»; `descargar_inss_pensiones()`, `leer_inss_pensiones()`). It excludes Clases Pasivas (civil service pensions). It is the average of one ordinary instalment; the province is that of the provincial office that manages the pension, not of residence, and pensions are counted, not pensioners.
+2. **Average of the year.** Mean of the twelve monthly figures (pensions in payment on the 1st of each month), weighted by the number of pensions (`armonizar_inss_pensiones()`, `anual_inss_pensiones()`; targets `inss_mensual` and `inss_anual`). Unit names are turned into codes with a fixed table (`inventario/provincias_inss.csv`). The Excel changes shape over the years (sheet name, one sheet per scheme and, from 2024, the amount): the whole-system sheet and the retirement column are found by their text.
+3. **From gross to net** (`calcular_transistor()`): gross a year = average × 14 instalments; net a month = gross a year × (1 − withholding) / 12. Pensions pay no contributions.
+   - **Withholding:** AEAT average rate of people who only receive pensions (*Grupos de población por la naturaleza de sus retribuciones*, pensions block, «Pensionistas» column), by region and annual income band, of the same year, interpolated as for the Under-35 token (`retenciones_pensiones()`, `tipo_retencion()`; target `retenciones_transistor`). In 2024, from 0.4% (Ourense) to 10.8% (Bizkaia).
+   - AEAT does not separate retirement from other pensions (survivors', disability, partly exempt, and Clases Pasivas): the curve is that of all pensioners with that income. It is the withholding applied, not the final income tax.
+   - **Basque Country and Navarre:** their income tax is foral and AEAT does not cover them; the Spain curve is used and the income is marked `estimado` (author's decision). Ceuta and Melilla have their own curve, with lower withholding because of their tax rebate.
+4. **Gate** (§4.1; targets `validacion_inss` and `validacion_transistor`): each month, the provinces reproduce the number and the average pension published for their region and for Spain in the same Excel (`inss_suma`, `inss_media`), with no unit missing or repeated (`inss_cobertura`); the net income covers the 52 provinces every year, with withholding between 0 and 30% (`transistor_cobertura`, `transistor_retencion`).
+
+**Result** (`transistor`; `datos/intermedios/transistor/transistor.csv`), in euros:
+
+| Year | Average retirement pension in Spain (per instalment) | Net monthly income over 12: minimum (Ourense) | Maximum (Bizkaia) | Mean of the provinces weighted by pensions |
+|---|---|---|---|---|
+| 2015 | 1,021.19 | 825 | 1,411 | 1,151 |
+| 2016 | 1,042.65 | 839 | 1,436 | 1,173 |
+| 2017 | 1,063.50 | 855 | 1,457 | 1,192 |
+| 2018 | 1,090.70 | 878 | 1,490 | 1,225 |
+| 2019 | 1,137.81 | 923 | 1,542 | 1,281 |
+| 2020 | 1,161.80 | 945 | 1,563 | 1,303 |
+| 2021 | 1,189.65 | 972 | 1,588 | 1,328 |
+| 2022 | 1,254.14 | 1,030 | 1,657 | 1,385 |
+| 2023 | 1,374.58 | 1,136 | 1,796 | 1,503 |
+| 2024 | 1,442.67 | 1,198 | 1,869 | 1,574 |
+
+- In 2024, the Pensioner token (€1,574 on average) lies above the Under-35 token (€1,330) and the Minimum wage token (€1,237) of the same year.
+- Sources, downloaded with the author's permission (9 Nov 2026): the 120 INSS Excel files from 2015 to 2024 (≈ 9.6 MB) and AEAT withholding from 2015 to 2023 (1,458 pages, ≈ 39 MB; 2024 was already there). AEAT editions up to 2017 have another layout and other region names («Región de Murcia»): `aeat_titulo()` and `aeat_menus()` read both.
 
 ---
 
@@ -807,7 +923,7 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 
 **Rounded terms** (plan §11, question 19; `termino_publicado()`). Rent, household income and token income enter the computation rounded to one decimal with `sprintf("%.1f")` (§0), as the website receives them. So the figure from R and the one the website recomputes in the browser match exactly.
 
-**Same year** (guide, rule 4). In the burden, SERPAVI and ADRH match in 2015–2024. The barrier in the long table uses 2024 incomes, the year of the latest rent: the Under-35 token (AEAT 2024) and the Minimum wage token with the 2024 minimum wage. The website uses the Minimum wage token with the 2026 minimum wage; when the years do not match, the indicator sheet and the website say so.
+**Same year** (guide, rule 4). In the burden, SERPAVI and ADRH match in 2015–2024. The barrier in the long table uses the token income of the same year as the rent: the Minimum wage token, with the minimum wage of each year from 2015 to 2024; the Pensioner token, with the pension of each year; the Under-35 token, only in 2024 (AEAT 2024). The website does the same with the chosen token (author's decision, 9 Nov 2026); with the Under-35 token and rent of another year, it uses the 2024 one and says so.
 
 **How to read them:**
 - Indicator 15 is read in bands: up to 30%, 30 to 40% and over 40%.
@@ -815,11 +931,11 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 - The map of indicator 21 is drawn in six bands, with national cut-offs that are the same every year: €700, 900, 1,100, 1,500 and 2,000 (plan §11, question 20). The colour ramp has six steps that can also be told apart with colour blindness (`rampa_daltonismo`).
 - Indicators 15 and 21 change with the threshold, the floor area and the pay of «Your token»: the website recomputes them in the browser (plan §6.6).
 
-**Computation** (`armonizar_derivados()`; target `larga_derivados`, 1,104,793 rows, source `calculo_propio`):
+**Computation** (`armonizar_derivados()`; target `larga_derivados`, 2,149,869 rows, source `calculo_propio`):
 - **14** (`calcular_esfuerzo_residentes()`): in tracts and municipalities, the levels at which SERPAVI and ADRH publish both terms (`NIVELES_ESFUERZO`), and in the years with both, 2015–2024. No breakdown.
 - **21** (`calcular_sueldo_necesario()`): at all SERPAVI levels, 2015–2024, with 50 m² and the 30% threshold. No breakdown.
-- **15** (`calcular_barrera_acceso()`): cut `ficha`, with groups `mochila` and `tartera`, only in 2024. The Under-35 token, in the provinces and their tracts, districts and municipalities; the Minimum wage token, also in the regions. It is a check: the website computes the barrier with the chosen token.
-- **Token incomes** (`perfiles_fichas()`; target `perfiles`): the Minimum wage token (§6.3); the Under-35 token of each province, with its INE code in `inventario/provincias_aeat.csv` (46 provinces with data and 6 `ausente`); the Neighbourhood household token (§6.4).
+- **15** (`calcular_barrera_acceso()`): cut `ficha`, with groups `tartera` and `transistor` (2015–2024) and `mochila` (2024). The Under-35 and Pensioner tokens, in the provinces and their tracts, districts and municipalities; the Minimum wage token, also in the regions. It is a check: the website computes the barrier with the chosen token.
+- **Token incomes** (`perfiles_fichas()`; target `perfiles`): the Minimum wage token (§6.3); the Under-35 token of each province, with its INE code in `inventario/provincias_aeat.csv` (46 provinces with data and 6 `ausente`); the Neighbourhood household token (§6.4); the Pensioner token of each province and year (§6.5).
 - **Version:** the most recent of its terms, 7 Nov 2026.
 
 **Result: resident rent burden (14) in the tracts** (`larga_derivados`):
@@ -849,10 +965,26 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 | Net pay needed (€ a month) | 26,137 | 300 | 700 | 1,217 | 2,117 | 4,283 |
 | Barrier with the Under-35 token (%) | 24,117 | 7.2 | 16.8 | 27.5 | 43.7 | 87.9 |
 | Barrier with the Minimum wage token, 2024 minimum wage (%) | 26,137 | 7.3 | 17.0 | 29.5 | 51.3 | 103.8 |
+| Barrier with the Pensioner token (%) | 26,137 | 6.2 | 14.3 | 23.3 | 37.9 | 73.2 |
+
+**Barrier with the Minimum wage and Pensioner tokens in the tracts, each year with that year's income** (`larga_derivados`; median and share of tracts with a value above 30%):
+
+| Year | Minimum wage: median (%) | Minimum wage: above 30% | Pensioner: median (%) | Pensioner: above 30% |
+|---|---|---|---|---|
+| 2015 | 36.7 | 69.2% | 22.7 | 21.3% |
+| 2016 | 36.3 | 70.8% | 22.6 | 21.3% |
+| 2017 | 34.3 | 63.4% | 22.6 | 22.1% |
+| 2018 | 34.2 | 61.9% | 22.7 | 23.1% |
+| 2019 | 30.0 | 50.1% | 23.2 | 25.7% |
+| 2020 | 28.9 | 46.2% | 23.4 | 26.5% |
+| 2021 | 29.7 | 49.0% | 23.7 | 26.9% |
+| 2022 | 29.7 | 49.7% | 23.8 | 27.2% |
+| 2023 | 28.8 | 47.2% | 23.0 | 24.4% |
+| 2024 | 29.5 | 48.4% | 23.3 | 24.1% |
 
 With the Under-35 token, 7,616 tracts are `ausente` in 2024: all those in the Basque Country, Navarre, Ceuta and Melilla, where the token has no income, and those without rent.
 
-**Gate** (`comprobar_derivados()`, `validacion_derivados`; §4.1): `derivados_terminos`, `derivados_estado`, `derivados_rango`, `perfiles_mochila` and `smi_neto` (blocking), and `derivados_rango_detalle` (warning).
+**Gate** (`comprobar_derivados()`, `validacion_derivados`; §4.1): `derivados_terminos`, `derivados_estado`, `derivados_rango`, `perfiles_mochila` and `smi_neto` (blocking), and `derivados_rango_detalle` (warning). Before that, the Minimum wage token goes through `smi_boe` and the Pensioner token through the INSS ones (§6.3 and §6.5).
 
 ### 7.5 Overburden and access (indicators 22 and 23, v0.0)
 
@@ -954,12 +1086,15 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 **Hierarchy and base map:**
 - Districts have no name (§3.10).
 - Below zoom 12, borders are simplified by half a pixel; above it, MapLibre overzooms the zoom 12 tiles (§3.10).
-- **Land without a tract** (§3.10): 1,495 km² of common land have no tract and no data and show as «no data». They are not divided between provinces when they touch several, and those touching the coast or the border are not detected.
+- **Land without a tract** (§3.10): 1,495 km² of common land have no tract and no data and show as «no data». They are not divided between provinces when they touch several, and those touching the coast or the border are not detected. The IGN names cover 1,176.5 km²; thin unnamed strips remain along the edges, where the IGN and INE lines do not match.
 
 **Income:**
 - **The source does not match across scales.** ADRH does not always add up its tracts to the municipal total (`adrh_suma_secciones`, 160 municipality-years in 2015–2019). Its aggregated tract means move more than 5% away from the municipal figure in 135 figures (`adrh_municipio_detalle`). The atlas does not correct this: it shows the published figure at each scale.
 - **Approximate households.** They come from a mean household size rounded to one decimal (§5.1).
 - **Basque Country and Navarre in 2015–2019.** ADRH does not publish them by tract in those years: those tracts are `secreto` (§5.4).
+- **Income distribution (4–6), foral gaps.** Navarre until 2020, Álava until 2019 and Gipuzkoa in 2015 are `ausente`; Spain has a figure from 2021 (§5.5).
+- **Threshold of indicator 5.** It changes in 2023, from the median of the common tax territory to that of all of Spain, and in 2024 more tracts are published (§5.5).
+- **Approximate weighting of indicators 4 and 5.** They are reprojected with the ADRH population, not the one INE finds in the records; aggregated to municipality, 98 figures move more than 1 point away from the published one (`adrh_dist_municipio_detalle`).
 
 **Rent:**
 - **Stock, not new contracts.** SERPAVI measures the rented stock: newcomers pay more (indicator 8).
@@ -985,7 +1120,7 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 **Derived indicators:**
 - **Inherited gaps.** A derived indicator has no value where any of its terms is missing: in 2024, 10,208 of the 36,333 tracts have no burden (§7.4).
 - **Vulnerability, not access.** The burden divides rent by the average income of all households in the tract, not only of those who rent (`inventario/indicadores.csv`).
-- **The barrier in the long table is a check.** Only with the Under-35 and Minimum wage tokens of 2024; the website computes it with the chosen token (§7.4).
+- **The barrier in the long table is a check.** With the Minimum wage and Pensioner tokens from 2015 to 2024 and the Under-35 token of 2024; the website computes it with the chosen token (§7.4).
 
 **Under-35 token:**
 - **Assumptions:**
@@ -996,7 +1131,12 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 - **Coverage.** No Basque Country, Navarre, Ceuta or Melilla (§6.2).
 - **Pay received in the year.** The token uses pay received in the year, which includes people who worked only a few months; the token says so.
 
-**Different years across tokens.** The Minimum wage token (2026 minimum wage) and the Under-35 token (AEAT 2024) are from different years, and at the scale of Spain give almost equal incomes (§6.3).
+**Pensioner token:**
+- **Pensions, not pensioners.** Someone with two pensions counts twice, and the province is that of the provincial office that manages the pension (§6.5).
+- **Withholding of all pensioners.** AEAT does not separate retirement; in the Basque Country and Navarre, the curve is that of Spain (`estimado`; §6.5).
+- **Own home.** The great majority of people aged over 65 do not rent: the token answers “if I had to rent today” (§6.5).
+
+**Token years.** The Minimum wage and Pensioner tokens have an income for each year from 2015 to 2024; the Under-35 token, only for 2024: with rent of another year, the website uses the 2024 one and says so (§7.4).
 
 **Licences.** The State Cadastre and the foral cadastres of Bizkaia and Gipuzkoa have contradictory licences and are treated as open data by decision of the author (§2.2).
 
@@ -1012,35 +1152,35 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 
 **Schema** (plan §6.4): `geo_id`, `nivel`, `anio`, `indicador`, `corte`, `grupo`, `valor`, `estado`, `fuente`, `geo_ref` and `version`. The key of a row is `geo_id`, `nivel`, `anio`, `indicador`, `corte` and `grupo`.
 
-**Content** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 8,561,935 rows.
+**Content** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 10,938,177 rows.
 
 | Source (`fuente`) | Rows | Levels | Version |
 |---|---|---|---|
-| `ine_adrh` | 1,303,484 | Tract (1,089,972) and municipality (213,512) | 7 Nov 2026 |
+| `ine_adrh` | 2,634,650 | Tract (2,179,944), municipality (452,546), province (1,560), region (570) and Spain (30) | 7 Nov 2026 (1–3) and 9 Nov 2026 (4–6) |
 | `mivau_serpavi` | 5,032,640 | Tract (3,419,452), district (926,724), municipality (676,872), province (7,032), region (2,540) and Spain (20) | 6 Nov 2026 |
 | `ine_censo2021` | 36,405 | Tract (36,333), region (19), province (52) and Spain (1) | 8 Nov 2026 |
 | `ine_vut` | 218,430 | Tract (217,998), region (114), province (312) and Spain (6) | 8 Nov 2026 |
 | `ine_ecv` | 261 | Region (228) and Spain (33) | 6 Nov 2026 |
 | `ine_ecv_modulo` | 32 | Region (19) and Spain (13) | 6 Nov 2026 |
-| `calculo_propio` | 1,970,683 | Tract (1,419,062), district (274,740), municipality (273,392), province (2,580) and region (909) | 7 Nov 2026 |
+| `calculo_propio` | 3,015,759 | Tract (2,109,389), district (473,841), municipality (427,881), province (3,568) and region (1,080) | 7 Nov 2026 |
 
-**By status:** `dato`, 6,487,909 rows; `ausente`, 1,200,946; `secreto`, 842,257; `estimado`, 30,823.
+**By status:** `dato`, 8,201,688 rows; `ausente`, 1,533,535; `secreto`, 1,151,583; `estimado`, 51,371.
 
 **Publication.** The long table is published in the GitHub release `v0.1.0` (9 Nov 2026), and the website at `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).
 
 ### 9.2 Website data
 
-The export follows the author's decisions of 8 Nov 2026 (plan §6.6; plan §11, questions 16 and 17). `exportar_web()` (target `ficheros_web`) writes into `web/datos/`, from the validated long table, the v0.1 core indicators, from tract to Spain:
+The export follows the author's decisions of 8 Nov 2026 (plan §6.6; plan §11, questions 16 and 17). `exportar_web()` (target `ficheros_web`) writes into `web/datos/`, from the validated long table, the v0.1 core indicators and those with a map (`cortes_web` column and tract figures: indicators 4–6 of F3, since 9 Nov 2026), from tract to Spain:
 - **Values.** One JSON file per series, level and period, with values × 10 as integers (× 100 for tourist dwellings, with two decimals, as INE publishes them: column `escala_web` of `inventario/indicadores.csv`, empty for the rest; plan §11, question 24), with the rounding of the guide to those decimals, and a string with the status of each unit, in the order of the index of its level. Compressed, it weighs the same as a binary (plan §11, question 17): each tract file takes 139 to 291 KB, and 19 to 98 KB with gzip.
-- **Spain, regions and provinces.** Indicators 18 and 19 carry the published figures for Spain, the 19 regions and the 52 provinces (§7.2 and §7.3); those for Spain, in seven files. Rent (8 and 9) and pay needed (21) have regions and provinces but not Spain: SERPAVI publishes only its count of observations, which goes in the contracts series (§7.6). Income (1–3) and rent burden (14) go up to the municipality (§5.3 and §7.4).
+- **Spain, regions and provinces.** Indicators 18 and 19 carry the published figures for Spain, the 19 regions and the 52 provinces (§7.2 and §7.3); those for Spain, in seven files. Rent (8 and 9) and pay needed (21) have regions and provinces but not Spain: SERPAVI publishes only its count of observations, which goes in the contracts series (§7.6). Income (1–3) and rent burden (14) go up to the municipality (§5.3 and §7.4). Income distribution (4–6) carries the published figures for regions, provinces and, from 2021, Spain (§5.5).
 - **Sheet series.** One file per municipality (`fichas/<municipality>.json`) with the series of its tracts and of the municipality itself.
 - **Reliability** (§7.6). The contracts and margin of the median go as auxiliary series of each rent series, of its same housing type (`fiabilidad` in the manifest), with no indicator number or map of their own. They are not in the per-municipality files, where they would weigh a quarter more: the tract profile reads them from the files of the period the map shows.
 - **What is not exported.** The SERPAVI quartiles and the barrier (15), which the website computes with the chosen token. Pay needed (21) is recomputed in the browser from rent per m² when the floor area or the threshold change (`FORMULAS_WEB`).
 - **Website against R.** The website test (`pruebas/web/datos.test.mjs`, in node) recomputes with the page's own module, `web/js/formulas.js`, the pay needed from rent per m² in all tracts, districts, municipalities, provinces and regions from 2015 to 2024, and compares it with the one exported by R: 550,140 unit-years, 294,082 with a value, with no difference in value, nulls or status (plan §6.5). In addition, `comprobar_web_navegador()` opens the page in headless Chrome (`chromote`): with its own modules, it recomputes a sample of 300 tracts over the 10 years and reads their contracts and margin, and it opens six tract profiles. Locally and on the published site everything matches the long table, with no errors (9 Nov 2026; `docs/publicacion.md`).
 - **Downloads.** The website downloads the map series as CSV, at the level in view (value with the precision of the series, status and source; for the rent series, contracts and margin; for indicator 21, floor area and threshold), and the map as PNG with its legend and source. With «Your token», neither carries the pay entered: the CSV gives the rent, not the ratio. The colours of the «Can you make rent?» PNG do let it be roughly inferred, so with «Your token» it is downloaded after a warning that can be cancelled (plan §11, question 23).
 - **Year outside the series** (plan §11, question 32). With a year earlier than every period of a series (2020 for tourist dwellings), the map, the legend, the sheet, the comparison panel and both downloads show «no data» and say when the series starts; the CSV, with one row without a value per unit and the start of the series in the status column. With a later year, the last period is taken, and the legend says so.
-- **Other files.** Unit names, municipality bounding boxes for the search box (`cajas_municipios`) and token incomes (`perfiles`). The base map is copied to `web/teselas/`; on publication, it comes from a *release* (§3.10).
-- **Volume** (`ficheros_web`, 9 Nov 2026): 8,820 files and 127.0 MB, including the PMTiles file (35.3 MB). On disk, `web/datos/` holds 9,204 files and 93.0 MB: the 8,819 of `ficheros_web` (91.7 MB; the per-municipality files, 44.1 MB), the 3 of the overburden section (`ficheros_web_sobrecarga`, 1.1 MB) and the versioned sample in `web/datos/ejemplo/` (382 files, 0.2 MB). The contracts and margin (§7.6) add about 17 MB.
+- **Other files.** Unit names, municipality bounding boxes for the search box (`cajas_municipios`) and token incomes (`perfiles`), for each year (`anios`), so that the website uses that of the rent year. The base map is copied to `web/teselas/`; on publication, it comes from a *release* (§3.10).
+- **Volume** (`ficheros_web`, 9 Nov 2026): 8,970 files and 147.7 MB, including the PMTiles file (35.4 MB). On disk, `web/datos/` holds 9,354 files and 113.6 MB: the 8,969 of `ficheros_web` (112.3 MB; the per-municipality files, 57.9 MB), the 3 of the overburden section (`ficheros_web_sobrecarga`, 1.1 MB) and the versioned sample in `web/datos/ejemplo/` (382 files, 0.2 MB). The contracts and margin (§7.6) add about 17 MB, and the income distribution (§5.5) about 21 MB, 14 of them in the per-municipality files.
 - **Gate** (`comprobar_web()`, `validacion_web`): `web_valores` and `web_fichas` (blocking) and `web_fuera_indice` (warning) (§4.1).
 
 ---
@@ -1061,16 +1201,16 @@ targets::tar_read(validacion_f1)          # one gate: columns calculado, referen
 - comparing boundaries, 21 min;
 - reading the foral cadastres, about 17 min.
 
-The base map takes about 8 minutes: 6 min 43 s for the PMTiles file (`fichero_mapa_base`) and 1 min 17 s for its gate, which computes the gaps in the tract map (8 Nov 2026). With `PROVINCIA=28` (environment variable, before `tar_make()`), the computation is limited to one province, and the files carry the code in their name.
+The base map takes about 9 minutes: 7 min 29 s for the PMTiles file (`fichero_mapa_base`) and 1 min 18 s for its gate, which computes the gaps in the tract map and their IGN names (9 Nov 2026). With `PROVINCIA=28` (environment variable, before `tar_make()`), the computation is limited to one province, and the files carry the code in their name.
 
 **Targets cited in this note:**
 - **Geography:** `secciones_2021`, `tablas_paso_callejero`, `tablas_paso_finales`, `edificios_paso`, `edificios_forales`, `municipios_catastro_sel`, `grupos_municipio`, `huerfanas_adrh`, `fase_codigos`, `cambios_limites`, `comprobaciones_f1`, `diagnostico_f1`, `comparacion_vias`.
-- **Hierarchy and base map:** `jerarquia_2021`, `territorios_2021`, `ficheros_jerarquia`, `fichero_mapa_base`, `resumen_mapa_base`.
-- **Income:** `comprobaciones_adrh`, `tablas_paso_adrh`, `larga_adrh`, `tabla_larga`.
+- **Hierarchy and base map:** `jerarquia_2021`, `territorios_2021`, `ficheros_jerarquia`, `unidades_ign`, `fichero_mapa_base`, `resumen_mapa_base`.
+- **Income:** `comprobaciones_adrh`, `tablas_paso_adrh`, `larga_adrh`, `tabla_larga`, `fichero_adrh_fuentes`, `fichero_adrh_umbrales`, `fichero_adrh_gini`, `ficheros_adrh_totales`, `comprobaciones_adrh_distribucion`, `larga_adrh_distribucion`.
 - **Rent:** `serpavi`, `larga_serpavi`, `resumen_larga_serpavi`, `comprobaciones_fiabilidad`, `resumen_fiabilidad`.
 - **Renting households and tourist dwellings:** `censo2021`, `larga_censo2021`, `vut`, `vut_2021`, `larga_vut`.
 - **Under-35 token:** `mochila_opciones`, `mochila`, `mochila_neta`, `retenciones_mochila`, `ecv_mochila`.
-- **Tokens and derived indicators:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`.
+- **Tokens and derived indicators:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`, `inss_mensual`, `inss_anual`, `retenciones_transistor`, `transistor`.
 - **Overburden:** `sobrecarga_agrupada`, `comprobaciones_sobrecarga`, `sobrecarga_quintil`, `eurostat_quintil`.
 - **Website:** `ficheros_web`, `cajas_municipios`, `ficheros_web_sobrecarga`.
-- **Gates:** `validacion_f1`, `validacion_adrh`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.
+- **Gates:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.

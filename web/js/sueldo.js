@@ -57,6 +57,20 @@ export function ingresoPerfil(perfil, seccion) {
   return Number.isFinite(x) && x > 0 ? x : null;
 }
 
+// Perfil de una ficha con el ingreso del año del alquiler (regla 4; decisión del autor, 9-nov-2026):
+// si la ficha tiene ese año (`anios`, por ejemplo la tartera de 2015 a 2026), su ingreso y su
+// año; si no, el último que tiene (`anio`, `neto_mensual`), y la web avisa de que no son del
+// mismo año. La llave no cambia: su ingreso es la renta de la sección del mismo periodo.
+export function perfilDelAnio(perfil, anio) {
+  const delAnio = anio === null || anio === undefined ? null : perfil?.anios?.[String(anio)];
+  return delAnio ? { ...perfil, anio: Number(anio), neto_mensual: delAnio } : perfil;
+}
+
+export function perfilesDelAnio(perfiles, anio) {
+  if (!perfiles) return perfiles;
+  return Object.fromEntries(Object.entries(perfiles).map(([f, p]) => [f, f === 'llave' ? p : perfilDelAnio(p, anio)]));
+}
+
 function expresionIngresoPerfil(perfil, idSeccion) {
   const pares = Object.entries(perfil.neto_mensual ?? {}).filter(([, x]) => x > 0);
   if (perfil.nivel === 'provincia') {

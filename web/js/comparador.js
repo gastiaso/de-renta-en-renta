@@ -8,9 +8,11 @@ import { periodoPara, inicioSerie, valorDe, cargarSeries, tipologiaDe } from './
 import { formulaDe } from './formulas.js';
 import { ordenNatural } from './nombres.js';
 
-// Indicadores de la v0.1 (plan, §7, F2), en el orden de la tabla. El 21 se calcula con el 9.
+// Indicadores de la v0.1 (plan, §7, F2) y los de distribución de la renta de F3 (4–6), en el
+// orden de la tabla. El 21 se calcula con el 9.
 export const INDICADORES_V01 = [
-  'renta_persona', 'renta_hogar', 'renta_uc_mediana', 'alquiler_mes', 'alquiler_m2',
+  'renta_persona', 'renta_hogar', 'renta_uc_mediana', 'peso_salarios', 'bajo_60_mediana', 'gini',
+  'alquiler_mes', 'alquiler_m2',
   'sueldo_necesario', 'esfuerzo_residentes', 'hogares_alquiler', 'viviendas_turisticas',
 ];
 export const NIVELES_COMPARAR = ['distrito', 'municipio', 'provincia', 'ccaa', 'nacional'];
