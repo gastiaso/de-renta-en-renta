@@ -4,6 +4,20 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (10-nov-2026, F5: presión; tarea 29; plan v0.39)
+
+- Indicador 20, zona de mercado residencial tensionado declarada (`R/fuente_zonas_tensionadas.R`): las 10 resoluciones trimestrales del MIVAU en el BOE (Ley 12/2023, art. 18), de marzo de 2024 a noviembre de 2026, en `inventario/zonas_tensionadas.csv` (321 filas, 320 municipios: Cataluña 271, Navarra 21, País Vasco 21, Asturias 5 y Galicia 2; 8 declaraciones de una parte del municipio). Compuerta `validacion_zonas_tensionadas` contra el XML de cada resolución. En la tabla larga, los 8.131 municipios de 2024 a 2026 con la situación a 31 de diciembre (2 todo el municipio, 1 una parte, 0 ninguna): 271, 304 y 320 declarados. Tabla larga: 11.482.839 filas (+24.393).
+- Indicador 13, capa desmontable de precios de oferta de los portales (`R/fuente_portales.R`), sin datos reales: con `PORTALES=TRUE`, CSV manuales de los informes agregados de las salas de prensa en `datos/brutos/portales/` (formato en el fichero), compuerta `portales_*` y corte `oferta_privada`; etiqueta «dato privado de oferta» en el mapa, la leyenda, la ficha, el CSV y el PNG. Apagada (por defecto), la tabla larga y la web quedan como sin capa. Probada en los dos sentidos con datos inventados (`pruebas/datos/`, `test-portales.R`).
+- Web: mapas sin sección (`nivel_minimo` en el manifiesto: los municipios a toda escala y las secciones apagadas), mapas de categorías (`categorias`) y por grupo; ficha del municipio con sus declaraciones de zona tensionada (`datos/zonas_tensionadas.json`, compuerta `web_zonas_tensionadas`). Mapas de F4 conectados (10, 12, 16 y 17), con cortes por revisar.
+- Pruebas: `test-zonas-tensionadas.R`, `test-portales.R`, `pruebas/web/municipal.test.mjs` y `navegador_municipal` en `comprobar_web_navegador()` (39 filas, todas a 0).
+- Código reaprovechado: normalización de nombres de municipio de un script propio anterior de zonas tensionadas (10-nov-2026).
+- Descargas (10-nov-2026, BOE): XML de las 10 resoluciones (138 KB) y sumarios diarios del BOE para localizarlas (unos 362 MB en dos barridos, borrados).
+
+### Decidido (10-nov-2026, F5: presión)
+
+- La fuente del 20 son las resoluciones del MIVAU en el BOE (art. 18.2.d), que recogen las declaraciones de las comunidades con su enlace; vigencia de tres años desde el día siguiente a la publicación.
+- Por revisar (plan §11, pregunta 46): situación a 31 de diciembre; ámbitos parciales pintados en todo el municipio con su categoría; sin solicitudes denegadas; formato de la capa de portales y un mapa por operación y portal; decimales del valor tasado y de los años de salario; cortes de los mapas de F4.
+
 ### Añadido (10-nov-2026, F4: compraventa; tarea 28; plan v0.38)
 
 - Indicador 10, variación anual del alquiler (IPVA del INE; `R/fuente_ine_ipva.R`): la cifra publicada, en total, de 2015 a 2024, de España a los distritos de las capitales (17 comunidades, 48 provincias, 718 municipios y 407 distritos; sin País Vasco ni Navarra). 11.910 filas. Compuerta `validacion_ipva`.

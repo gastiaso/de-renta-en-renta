@@ -228,6 +228,27 @@ body {
 }
 .etiqueta-ejemplo[hidden] { display: none; }
 .aviso-mapa { position: absolute; top: 10px; left: 10px; z-index: 2; box-shadow: var(--sombra-ficha); }
+/* F5: etiqueta «dato privado de oferta» (capa de portales): en el mapa, la leyenda y la ficha. */
+.etiqueta-privado {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 2px 8px;
+  background: var(--color-placa);
+  color: var(--color-tinta);
+  border: 2px dashed var(--color-tinta);
+  border-radius: var(--radio-control);
+  font: 600 0.8rem var(--fuente-tablero);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.etiqueta-privado[hidden] { display: none; }
+.aviso-mapa-privado { margin: 0; }
+.etiqueta-ejemplo:not([hidden]) ~ .aviso-mapa-privado { top: 44px; }
+/* F5: categoría del mapa (indicador 20) y declaraciones de zona tensionada en la ficha */
+.ficha-categoria { font: 700 1.15rem var(--fuente-tablero); }
+.ficha-lista-declaraciones { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.ficha-lista-declaraciones p { margin: 0; }
+.ficha-declaracion-ambito { font-weight: 600; }
 /* Aviso de escala: la serie del mapa no llega al nivel que se ve. */
 .aviso-escala {
   position: absolute;

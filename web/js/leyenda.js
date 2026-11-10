@@ -4,6 +4,8 @@
 //     como un tramo (su renta cambia por sección);
 //   - «¿te llega?»: tres tramos (hasta el 30 %, del 30 al 40 % y más del 40 %).
 // Debajo, las claves de los huecos (sin dato, secreto estadístico) y los supuestos.
+// F5: los mapas de categorías (indicador 20) llevan una lista con el texto de cada categoría en vez de
+// la regla; los de un dato privado (portales, indicador 13), su etiqueta bajo el título.
 // Los colores de cada tramo salen de los mismos pasos de la rampa que el mapa (colores.js).
 
 import { posicionEnRegla } from './sueldo.js';
@@ -71,6 +73,21 @@ function reglaNecesario(t, { mapaDef, marcas = [], llave = null }) {
   return [regla, etiquetas, ...(lista.children.length ? [lista] : [])];
 }
 
+// F5: una muestra por categoría (`categorias`: { vocabulario, valores }), con los pasos de la rampa
+// que les tocan entre los cortes del mapa (como en el mapa: un tramo por categoría).
+export function listaCategorias(t, mapaDef) {
+  const lista = crear('ul', 'leyenda-llega leyenda-categorias');
+  const { vocabulario, valores } = mapaDef.categorias;
+  const clases = clasesTramos(mapaDef.cortes.length + 1, rampaDeCss().length);
+  [...valores].reverse().forEach((valor) => {
+    const tramo = mapaDef.cortes.filter((c) => valor >= c).length;
+    const item = crear('li');
+    item.append(crear('span', `leyenda-muestra ${clases[tramo]}`), crear('span', null, t(`vocabulario.${vocabulario}.${valor}`)));
+    lista.append(item);
+  });
+  return [lista];
+}
+
 function tramosLlega(t) {
   const lista = crear('ul', 'leyenda-llega');
   const clases = clasesTramos(TRAMOS_LLEGA, rampaDeCss().length);
@@ -98,9 +115,13 @@ export function pintarLeyenda(contenedor, t, datos) {
   const detalle = [necesario ? t(`indicadores.${datos.mapaId}.unidad`) : datos.vivienda];
   if (datos.periodo !== undefined && datos.periodo !== null) detalle.push(t.periodo(datos.periodo));
   if (datos.tipologia) detalle.push(t(`vocabulario.tipologia.${datos.tipologia}`));
-  const cuerpo = [crear('p', 'leyenda-unidad', detalle.join(' · '))];
+  if (datos.grupo) detalle.push(datos.grupo);   // F5: operación y portal (indicador 13)
+  const cuerpo = [];
+  if (datos.etiqueta) cuerpo.push(crear('p', 'etiqueta-privado leyenda-etiqueta', datos.etiqueta));   // F5: dato privado
+  cuerpo.push(crear('p', 'leyenda-unidad', detalle.join(' · ')));
   if (datos.fuera) cuerpo.push(crear('p', 'leyenda-fuera', datos.fuera));
-  cuerpo.push(...(necesario ? reglaNecesario(t, datos) : tramosLlega(t)));
+  const categorias = necesario && datos.mapaDef?.categorias;   // F5: mapa de categorías (indicador 20)
+  cuerpo.push(...(categorias ? listaCategorias(t, datos.mapaDef) : necesario ? reglaNecesario(t, datos) : tramosLlega(t)));
   let supuestos = t('interfaz.leyenda.llega_nota');
   if (necesario) {
     supuestos = datos.conSupuestos

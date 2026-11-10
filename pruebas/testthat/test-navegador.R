@@ -20,10 +20,12 @@ test_that("la web en un navegador recalcula una muestra y coincide con R (plan �
                                perfiles = targets::tar_read(perfiles, store = almacen), raiz = raiz, muestra = 100L)
   expect_setequal(unique(r$id), c("navegador_arranque", "navegador_errores", "navegador_sueldo", "navegador_fiabilidad",
                                   "navegador_fichas", "navegador_redireccion", "navegador_portada", "navegador_casillas",
-                                  "navegador_tu_sueldo", "navegador_movil", "navegador_territorio", "navegador_clic"))
+                                  "navegador_tu_sueldo", "navegador_movil", "navegador_territorio", "navegador_clic",
+                                  "navegador_municipal"))   # F5: mapas sin sección y de categorías
   expect_equal(sum(r$id == "navegador_fichas"), 6L)
   expect_equal(sum(r$id == "navegador_redireccion"), 2L)
   expect_equal(sum(r$id == "navegador_territorio"), 4L)
   expect_equal(sum(r$id == "navegador_clic"), 4L)
+  expect_equal(sum(r$id == "navegador_municipal"), 6L)
   expect_equal(r$detalle[r$calculado != r$referencia], character(0))
 })

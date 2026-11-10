@@ -645,6 +645,43 @@ bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL)
   tar_target(resumen_cp, resumen_cp_municipio(cp_municipio))
 )
 
+# F5, indicador 20: zonas de mercado residencial tensionado declaradas (R/fuente_zonas_tensionadas.R).
+# Decisiones en inventario/zonas_tensionadas.csv (una fila por municipio y declaración); el XML de cada
+# resolución trimestral del MIVAU en el BOE, en datos/brutos/zonas_tensionadas/, y la compuerta
+# zonas_tensionadas_* comprueba el CSV contra sus tablas. En la tabla larga, todos los municipios del
+# seccionado de 2021, situación a 31 de diciembre de cada año (2 todo el municipio, 1 una parte, 0
+# ninguna). Con PROVINCIA, el bloque no entra (los códigos se comprueban con toda España).
+bloque_zonas_tensionadas <- if (AMBITO != "") list(tar_target(larga_zonas_tensionadas, NULL), tar_target(zonas_tensionadas, NULL)) else list(
+  tar_target(fichero_zonas_tensionadas, "inventario/zonas_tensionadas.csv", format = "file"),
+  tar_target(zonas_tensionadas, leer_zonas_tensionadas(fichero_zonas_tensionadas)),
+  tar_target(xml_zonas_tensionadas, descargar_zonas_tensionadas(zonas_tensionadas$boe), format = "file"),
+  tar_target(boe_zonas_tensionadas, leer_boe_zonas_tensionadas(xml_zonas_tensionadas)),
+  tar_target(validacion_zonas_tensionadas, validar_referencias(
+    comprobar_zonas_tensionadas(zonas_tensionadas, boe_zonas_tensionadas, territorios_2021), referencias)),
+  tar_target(larga_zonas_tensionadas, {
+    validacion_zonas_tensionadas   # la compuerta va antes que la tabla larga
+    armonizar_zonas_tensionadas(zonas_tensionadas, territorios_2021, version = version_de(fichero_zonas_tensionadas)) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  }),
+  tar_target(resumen_larga_zonas_tensionadas, resumen_zonas_tensionadas(larga_zonas_tensionadas, zonas_tensionadas))
+)
+
+# F5, indicador 13: precios de oferta de los portales (R/fuente_portales.R). Capa desmontable (plan §2.2,
+# regla 6): con PORTALES distinto de TRUE (por defecto), larga_portales es NULL y no se lee nada; la
+# tabla larga y la web quedan como sin capa. Con PORTALES=TRUE, los CSV que el autor copia a mano de
+# los informes agregados de las salas de prensa en datos/brutos/portales/ (formato en el fichero de R),
+# con su compuerta portales_*; en la tabla larga, corte oferta_privada (dato privado de oferta).
+bloque_portales <- if (!PORTALES || AMBITO != "") list(tar_target(larga_portales, NULL)) else list(
+  tar_target(ficheros_portales, buscar_ficheros_portales(), format = "file", cue = tar_cue(mode = "always")),
+  tar_target(portales, leer_portales(ficheros_portales)),
+  tar_target(validacion_portales, validar_referencias(comprobar_portales(portales, territorios_2021), referencias)),
+  tar_target(larga_portales, {
+    validacion_portales   # la compuerta va antes que la tabla larga
+    armonizar_portales(portales, version = version_de(ficheros_portales)) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  })
+)
+
 # Tabla larga única: cada bloque entra después de pasar su compuerta
 bloque_tabla_larga <- list(
   tar_target(tabla_larga, {
@@ -657,6 +694,8 @@ bloque_tabla_larga <- list(
       larga_vut,          # 19: el mes de referencia en corte y grupo
       larga_salarios,     # 7 (F3): el total sin desglose; de 26 a 35 años, con corte de edad
       larga_compraventa,  # 10, 12, 16 y 17 (F4); en PROVINCIA, nada
+      larga_zonas_tensionadas,   # 20 (F5): municipios, situación a 31 de diciembre; en PROVINCIA, nada
+      larga_portales,     # 13 (F5): solo con PORTALES=TRUE; si no, NULL (capa desmontable)
       larga_derivados,    # 14 y 21 sin desglose; 15 con la ficha (tartera, mochila y transistor) como corte
       armonizar_sobrecarga_ecv(sobrecarga_ecv, sobrecarga_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)),
       armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa)),
@@ -679,12 +718,18 @@ bloque_web <- list(
     validacion_jerarquia; validacion_mapa_base; validacion_derivados; validacion_percentil    # con sus compuertas pasadas
     exportar_web(tabla_larga, indicadores, jerarquia_2021, territorios_2021, pmtiles = fichero_mapa_base,
                  perfiles = perfiles, cajas = cajas_municipios, salarios = salarios_web(curvas_salariales_aeat),
-                 dir_web = DIR_WEB)
+                 dir_web = DIR_WEB,
+                 vocabulario = vocabulario, zonas = zonas_tensionadas)   # F5: categorías y declaraciones del 20
   }, format = "file"),
   tar_target(validacion_web, {
     ficheros_web
     validar_referencias(comprobar_web(tabla_larga, indicadores, jerarquia_2021, territorios_2021, DIR_WEB,
                                       perfiles = perfiles), referencias)
+  }),
+  # F5: declaraciones del indicador 20 (datos/zonas_tensionadas.json): ida y vuelta con el inventario
+  if (AMBITO == "") tar_target(validacion_web_zonas_tensionadas, {
+    ficheros_web
+    validar_referencias(comprobar_zonas_web(zonas_tensionadas, DIR_WEB), referencias)
   }),
   # Percentil salarial (datos/salarios.json): ida y vuelta con las curvas del pipeline
   tar_target(validacion_web_salarios, {
@@ -731,4 +776,4 @@ bloque_web <- list(
   })
 )
 
-list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_tabla_larga, bloque_web)
+list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_zonas_tensionadas, bloque_portales, bloque_tabla_larga, bloque_web)

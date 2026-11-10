@@ -140,7 +140,9 @@
         "superficie_m2": "floor_area_m2",
         "umbral": "threshold",
         "contratos": "contracts",
-        "margen_pct": "margin_pct"
+        "margen_pct": "margin_pct",
+        "categoria": "category",
+        "etiqueta": "label"
       },
       "estados": {
         "dato": "data",
@@ -206,7 +208,16 @@
         "12_segundo": "Your income: €{neto} + €{segundo} from the second pay = €{ingreso} a month.",
         "14_segundo": "Your income: (€{neto} + €{segundo} from the second pay) × 14 payments ÷ 12 = €{ingreso} a month."
       },
-      "pagas_nota": "Extra payments are spread over the 12 months: rent is paid twelve times a year."
+      "pagas_nota": "Extra payments are spread over the 12 months: rent is paid twelve times a year.",
+      "zonas": {
+        "titulo": "Stressed-market declarations",
+        "municipio": "Whole municipality",
+        "parcial": "Part of the municipality: {ambito}",
+        "vigencia": "In force from {inicio} to {fin}",
+        "resolucion": "BOE resolution {boe}",
+        "ninguna": "No declarations published in the BOE.",
+        "nota": "List published every quarter in the BOE by the Ministry of Housing and Urban Agenda (Law 12/2023, art. 18): in force for three years from the day after publication. For declarations covering part of a municipality, the map paints the whole municipality with its own category; the exact area is the one in the declaration."
+      }
     },
     "comparador": {
       "titulo": "Compare",
@@ -610,8 +621,8 @@
       "nombre": "Asking price (rent and sale)",
       "unidad": "€ per m² (rent: per m² per month)",
       "definicion": "Average price per square metre in rental and sale listings.",
-      "calculo": "Taken from the portals’ aggregated press reports; never individual listings. A removable layer.",
-      "lectura": "An asking price: not combined with contracts, deeds or appraisals."
+      "calculo": "Taken from the portals’ aggregated press reports, copied by hand into datos/brutos/portales/ (format in R/fuente_portales.R); never individual listings. One value per year, portal and transaction: the annual report’s or, failing that, the last published month’s. A removable layer (PORTALES=FALSE by default).",
+      "lectura": "An asking price, private asking-price data: not combined with contracts, deeds or appraisals, nor one portal with another."
     },
     "esfuerzo_residentes": {
       "nombre": "Resident rent burden",
@@ -657,10 +668,10 @@
     },
     "zona_tensionada": {
       "nombre": "Declared stressed housing market area",
-      "unidad": "category (yes / no)",
-      "definicion": "Municipality or area declared a stressed residential market zone.",
-      "calculo": "Declarations published in official gazettes under Law 12/2023, with their effective date.",
-      "lectura": "A public policy layer, not a market measure."
+      "unidad": "category (2 whole municipality, 1 part of it, 0 none)",
+      "definicion": "Municipality or area declared a stressed residential market zone under Law 12/2023, in force on 31 December of each year.",
+      "calculo": "Quarterly Housing Ministry resolutions in the BOE listing the zones declared by the autonomous communities (art. 18.2.d): in force for three years from the day after publication. 2 if the declaration covers the whole municipality; 1 if it covers part of it (villages, neighbourhoods or districts), painted on the whole municipality with its own category; 0 with no declaration in force.",
+      "lectura": "A public policy layer, not a market measure: it shows where the measures of Law 12/2023 apply (caps on new-contract rents and a local definition of large landlord), not how much housing costs."
     },
     "sueldo_necesario": {
       "nombre": "Net monthly pay needed to stay under the threshold",
@@ -749,7 +760,8 @@
       "tipologia_p25": "Dwelling type, first quartile",
       "tipologia_p75": "Dwelling type, third quartile",
       "mes": "Reference month",
-      "ficha": "Token (reference income)"
+      "ficha": "Token (reference income)",
+      "oferta_privada": "Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE)"
     },
     "edad": {
       "Y_LT18": "Under 18",
@@ -766,6 +778,9 @@
       "estimado": "Estimated: the tract boundaries changed and values had to be split",
       "secreto": "No data (statistical confidentiality)",
       "ausente": "No data"
+    },
+    "etiqueta": {
+      "portales": "Private asking-price data"
     },
     "familia": {
       "A": "Ability to pay",
@@ -799,6 +814,12 @@
       "ccaa": "Autonomous community",
       "nacional": "Spain"
     },
+    "oferta_privada": {
+      "alquiler_idealista": "Rent, Idealista (private asking-price data)",
+      "alquiler_fotocasa": "Rent, Fotocasa (private asking-price data)",
+      "venta_idealista": "Sale, Idealista (private asking-price data)",
+      "venta_fotocasa": "Sale, Fotocasa (private asking-price data)"
+    },
     "sexo": {
       "M": "Men",
       "F": "Women"
@@ -824,6 +845,11 @@
     "tipologia_p75": {
       "VC": "Flat in a multi-dwelling building, third quartile",
       "VU": "Single-family or rural dwelling, third quartile"
+    },
+    "zona_tensionada": {
+      "0": "No declaration in force",
+      "1": "Declared in part of the municipality",
+      "2": "Declared in the whole municipality"
     }
   }
 }

@@ -94,6 +94,8 @@ El inventario completo, con dirección, acceso, cadencia y notas, está en `inve
 | `mivau_transacciones` | MIVAU (escrituras del Notariado) | Compuerta de coherencia de la tasación (§7.7) | Reutilización autorizada por el aviso legal del MIVAU, citando la fuente y la fecha |
 | `ine_hipotecas` | INE | Tipo medio del indicador 17 | CC BY 4.0 |
 | `notariado` | Consejo General del Notariado | No se usa: sus condiciones no permiten reutilizar las cifras (el indicador 11 queda fuera; §7.7) | Solo uso personal; reutilizar exige su autorización expresa |
+| `zonas_tensionadas` | MIVAU, en el BOE (declaraciones de las comunidades autónomas) | Indicador 20 (§7.8) | Reutilizable citando la fuente (condiciones de reutilización del BOE) |
+| `portales` | Idealista y Fotocasa (salas de prensa) | Indicador 13, capa desmontable, apagada por defecto y aún sin datos (§7.8) | Condiciones de uso de cada web y derecho *sui generis*: solo informes agregados, nunca anuncios |
 | `calculo_propio` | De renta en renta | Indicadores derivados 14, 15, 16, 17 y 21, a partir de las fuentes de cada término, y margen aproximado de la mediana del alquiler (§7.6) | CC BY-SA 4.0 |
 
 **Descarga manual del SERPAVI.** La web del MIVAU bloquea las descargas automáticas. Si falta el Excel, `descargar_mivau_serpavi()` detiene el pipeline e indica la página y el nombre con el que guardarlo (`inventario/fuentes.csv`, columna `acceso`).
@@ -495,6 +497,12 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `compraventa_coherencia_provincias` | Provincias y trimestres con la superficie implícita fuera de 50–150 m² | ±5 % | Bloqueo | 1,9 % como máximo (2021) | `validacion_coherencia_compraventa` |
 | `compraventa_terminos` | Años de salario y esfuerzo hipotecario frente a sus términos | ±0,001 % | Bloqueo | Pasa en 2015–2024 | `validacion_derivados_compraventa` |
 | `cp_municipio_reparto` | Pesos de un código postal que no suman 100, o sin un único municipio principal | ±0,001 | Bloqueo | Pasa en los 11.046 códigos postales | `validacion_cp_municipio` |
+| `zonas_tensionadas_resolucion` | Filas del inventario del indicador 20 sin su resolución del BOE descargada, o con otra fecha de publicación | Exacto | Bloqueo | Ninguna de 321 | `validacion_zonas_tensionadas` |
+| `zonas_tensionadas_codigos` | Códigos que no son municipios del seccionado de 2021, con otro nombre del INE o fuera de la comunidad de su fila del BOE | Exacto | Bloqueo | Ninguno | `validacion_zonas_tensionadas` |
+| `zonas_tensionadas_completa` | Municipios o ámbitos de las tablas del BOE que el inventario no recoge | Exacto | Bloqueo | Ninguno en las 31 filas de las 10 resoluciones | `validacion_zonas_tensionadas` |
+| `zonas_tensionadas_fechas` | Fecha de efecto distinta del día siguiente a la publicación y fecha de fin distinta de la que fija el texto | Exacto | Bloqueo | Ninguna de 321 | `validacion_zonas_tensionadas` |
+| `web_zonas_tensionadas` | Declaraciones de la web distintas de las del inventario | Exacto | Bloqueo | Ninguna | `validacion_web_zonas_tensionadas` |
+| `portales_codigos` | Cifras de la capa de portales con códigos que no son municipios ni distritos del seccionado de 2021 | Exacto | Bloqueo | Solo con `PORTALES=TRUE`; probada con datos inventados | (capa apagada) |
 
 **Lectura de los resultados de `adrh_municipio`.** La mediana es 0,0 % porque la mayoría de los municipios tiene una sola sección. La alerta `adrh_municipio_detalle` recoge los casos en que la fuente no cuadra entre escalas con todas las secciones con dato. En Madrid, por ejemplo, Alcobendas y Pozuelo de Alarcón quedan todos los años por encima del 5 % (`inventario/referencias_validacion.csv`).
 
@@ -1192,7 +1200,21 @@ De 2015 a 2024, en España, las comunidades, las provincias y los municipios de 
 
 **Código postal ↔ municipio** (`leer_ine_callejero_cp()`, `geo_tabla_cp_municipio()`; objetivo `fichero_cp_municipio`, en `geo/codigos_postales_2021.csv`). Sale de los tramos de vía del callejero de enero de 2021: 11.046 códigos postales en 14.600 pares, que cubren los 8.131 municipios; 8.784 códigos postales caen en un solo municipio. El peso es la parte de los tramos del código postal en cada municipio. 50 pares tienen un código postal de otra provincia: enclaves como el condado de Treviño, con los de Álava, y erratas del callejero.
 
-**Web.** Los cuatro indicadores están en la tabla larga, pero aún no en el mapa: el mapa pinta desde la sección, y estos indicadores no la tienen.
+**Web.** Desde el 10-nov-2026, los cuatro tienen mapa municipal sin sección (§9.2), con cortes por revisar: 0 · 1 · 2 · 3 · 4 % (10), 1.000 · 1.500 · 2.000 · 2.500 · 3.500 € por m² (12), 3 · 4 · 5 · 7 · 10 años (16) y 15 · 20 · 25 · 30 · 40 % (17).
+
+### 7.8 Presión: zonas tensionadas (indicador 20) y precios de oferta (indicador 13)
+
+**Zonas de mercado residencial tensionado (indicador 20).** La Ley 12/2023, por el derecho a la vivienda, deja la declaración en manos de la comunidad autónoma y obliga al Ministerio de Vivienda y Agenda Urbana a publicar cada trimestre en el BOE una resolución con la relación de zonas declaradas, su periodo de vigencia y el enlace a la declaración de la comunidad (art. 18, apartado 2.d). Esas resoluciones son la fuente del atlas (`zonas_tensionadas`): 10, de la del 15 de marzo de 2024 (`BOE-A-2024-5214`) a la del 3 de noviembre de 2026 (`BOE-A-2026-23088`), localizadas recorriendo los sumarios del BOE desde la entrada en vigor de la ley; una corrección de erratas (`BOE-A-2025-20246`) solo cambia enlaces. Todas fijan la misma vigencia: tres años desde el día siguiente a la publicación de la resolución; el plazo acaba el mismo día del año de vencimiento (Ley 39/2015, art. 30, apartado 4). Ninguna vence antes del 15 de marzo de 2027.
+
+**Inventario y compuerta.** Las decisiones están en `inventario/zonas_tensionadas.csv`: una fila por municipio y declaración, 321 filas y 320 municipios (Llanes tiene dos declaraciones de núcleos distintos), con el nombre literal del BOE, el código y el nombre del INE, el ámbito, las fechas y los enlaces a la resolución y a la declaración de la comunidad. `descargar_zonas_tensionadas()` baja el XML de cada resolución y `leer_boe_zonas_tensionadas()` lee sus tablas; la compuerta (`comprobar_zonas_tensionadas()`, objetivo `validacion_zonas_tensionadas`, toda de bloqueo) exige que cada fila tenga su resolución descargada y su fecha de publicación, un código de municipio del seccionado de 2021 con su nombre del INE y en la comunidad de su fila del BOE, el nombre literal en la tabla de su resolución, que ningún nombre de las tablas quede fuera del inventario, la fecha de efecto el día siguiente a la publicación y la de fin, la que fija el texto. El BOE omite una coma entre Manresa y el Masnou (`BOE-A-2024-5214`) y parte por su coma el nombre de Castell d'Aro, Platja d'Aro i S'Agaró (`BOE-A-2024-20576`): el inventario lleva los nombres como están y la compuerta los encuentra. Para añadir resoluciones, `proponer_zonas_tensionadas()` propone los códigos casando los nombres normalizados (artículos pospuestos, formas bilingües) con los del INE de su comunidad; se revisan a mano.
+
+**Ámbitos que no son un municipio entero.** Ocho declaraciones cubren solo una parte: el distrito 2 de Galdakao, Vitoria-Gasteiz salvo la zona rural de las entidades locales menores, núcleos de Llanes (dos declaraciones) y de Cabrales, los barrios de La Arena y Cimadevilla en Gijón, el de La Magdalena en Avilés y Luanco en Gozón. El BOE no da su geometría, que tampoco coincide con las secciones censales, así que el mapa pinta el municipio entero con una categoría propia, «declarada en parte del municipio», y la ficha da el ámbito literal.
+
+**Tabla larga** (`armonizar_zonas_tensionadas()`; objetivo `larga_zonas_tensionadas`). Los 8.131 municipios del seccionado de 2021, de 2024 a 2026, con la situación a 31 de diciembre de cada año: 2 si está en vigor una declaración de todo el municipio, 1 si solo de una parte, 0 si ninguna, también como `dato`, porque que no haya declaración es un hecho publicado. Sin desglose ni otros niveles: un recuento de municipios no es la cifra de ninguna fuente. Resultado: 271 municipios declarados en 2024, todos de Cataluña; 304 en 2025 (302 enteros y 2 en parte), y 320 en 2026 (313 enteros y 7 en parte): Cataluña 271, Navarra 21, País Vasco 21, Asturias 5 y Galicia 2.
+
+**Web.** Mapa municipal a toda escala con las tres categorías (§9.2). La ficha del municipio lista sus declaraciones (resolución del BOE, ámbito, vigencia y declaración de la comunidad, con sus enlaces; `datos/zonas_tensionadas.json`, compuerta `web_zonas_tensionadas`) y dice que es una capa de política pública, no una medida del mercado.
+
+**Precios de oferta de los portales (indicador 13), capa desmontable** (plan §2.2; guía, regla 6). El pipeline no descarga nada de los portales. Con la variable de entorno `PORTALES=TRUE` (por defecto, apagada), lee los CSV que el autor copia a mano de los informes agregados de las salas de prensa de Idealista y Fotocasa en `datos/brutos/portales/`, fuera de git, con el formato de `R/fuente_portales.R`: portal, operación, nivel, código del INE, nombre, periodo, precio por m², informe y enlace. Compuerta de bloqueo: `portales_formato`, `portales_codigos`, `portales_rango` y `portales_repetidas`. En la tabla larga, el corte `oferta_privada` lleva la etiqueta en su nombre y, en el grupo, la operación y el portal (`alquiler_idealista`…), con un valor por año: el del informe anual o, sin él, el del último mes publicado. Nunca se mezcla un portal con otro ni la oferta con el SERPAVI, la tasación o las escrituras (regla 5). En la web, un mapa municipal por operación y portal, con la etiqueta «dato privado de oferta» sobre el mapa, en la leyenda, la ficha, el CSV y el PNG. Apagada (`larga_portales` vacío), la tabla larga y la web quedan exactamente como sin capa. Probada con una muestra inventada en `pruebas/` (`test-portales.R`): apagada, la exportación de la web es idéntica, fichero a fichero, a la de sin capa; encendida, la capa sale aparte y con su etiqueta. Sin datos reales todavía.
 
 ## 8. Limitaciones conocidas
 
@@ -1272,6 +1294,10 @@ De 2015 a 2024, en España, las comunidades, las provincias y los municipios de 
 
 **Compraventa.** El precio es el de tasación, no el escriturado: el del Notariado no se puede reutilizar (§7.7). El año del valor tasado es una media de trimestres que el Ministerio no publica. Los años de salario y el esfuerzo hipotecario usan el salario bruto individual de la provincia, no la renta del hogar, y no cubren País Vasco ni Navarra; el IPVA tampoco.
 
+**Zonas tensionadas.** Las ocho declaraciones de una parte del municipio se pintan en el municipio entero, con su propia categoría (§7.8). Solo entra lo publicado en el BOE: las declaraciones que una comunidad haya publicado después del 30 de septiembre de 2026 llegarán con la resolución del cuarto trimestre, y las solicitudes denegadas no figuran en ninguna resolución. La tabla larga es una foto a 31 de diciembre; las fechas exactas están en la ficha y en el inventario.
+
+**Precios de oferta.** La capa está montada y probada con datos inventados, pero aún sin cifras: las aportará el autor desde los informes de prensa (§7.8). Es precio de oferta, no de cierre.
+
 **Desfase.** La renta y los salarios van uno o dos años por detrás del año en curso (§1).
 
 ---
@@ -1282,7 +1308,7 @@ De 2015 a 2024, en España, las comunidades, las provincias y los municipios de 
 
 **Esquema** (plan §6.4): `geo_id`, `nivel`, `anio`, `indicador`, `corte`, `grupo`, `valor`, `estado`, `fuente`, `geo_ref` y `version`. La clave de una fila es `geo_id`, `nivel`, `anio`, `indicador`, `corte` y `grupo`.
 
-**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11.458.446 filas.
+**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11.482.839 filas.
 
 | Fuente (`fuente`) | Filas | Niveles | Versión |
 |---|---|---|---|
@@ -1295,9 +1321,10 @@ De 2015 a 2024, en España, las comunidades, las provincias y los municipios de 
 | `aeat_mercado_trabajo` | 2.016 | Provincia (1.456), comunidad (532) y España (28) | 9-nov-2026 |
 | `ine_ipva` | 11.910 | Distrito (4.070), municipio (7.180), provincia (480), comunidad (170) y España (10) | 10-nov-2026 |
 | `mivau_valor_tasado` | 4.048 | Municipio (3.256), provincia (572), comunidad (209) y España (11) | 10-nov-2026 |
+| `zonas_tensionadas` | 24.393 | Municipio (24.393) | 10-nov-2026 |
 | `calculo_propio` | 3.518.054 | Sección (2.436.386), distrito (568.152), municipio (506.960), provincia (5.076), comunidad (1.460) y España (20) | 7-nov-2026 |
 
-**Por estado:** `dato`, 8.482.875 filas; `ausente`, 1.690.991; `secreto`, 1.233.209; `estimado`, 51.371.
+**Por estado:** `dato`, 8.507.268 filas; `ausente`, 1.690.991; `secreto`, 1.233.209; `estimado`, 51.371.
 
 **Publicación.** La tabla larga se publica en el release `v0.1.0` de GitHub (9-nov-2026), y la web, en `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).
 
@@ -1316,6 +1343,7 @@ La exportación sigue las decisiones del autor del 8-nov-2026 (plan §6.6; plan 
 - **Volumen** (`ficheros_web`, 9-nov-2026): 8.970 ficheros y 147,7 MB, con el PMTiles (35,4 MB). En disco, `web/datos/` suma 9.354 ficheros y 113,6 MB: los 8.969 de `ficheros_web` (112,3 MB; las fichas por municipio, 57,9 MB), los 3 de la sección de sobrecarga (`ficheros_web_sobrecarga`, 1,1 MB) y la muestra versionada de `web/datos/ejemplo/` (382 ficheros, 0,2 MB). Los contratos y el margen (§7.6) añaden unos 17 MB, y la distribución de la renta (§5.5), unos 21 MB, 14 de ellos en las fichas por municipio.
 - **Compuerta** (`comprobar_web()`, `validacion_web`): `web_valores` y `web_fichas` (bloqueo) y `web_fuera_indice` (alerta); el percentil, `web_salarios` (`comprobar_salarios_web()`, `validacion_web_salarios`, bloqueo) (§4.1).
 - **Portada** (`exportar_portada()`, objetivo `fichero_portada_web`; 10-nov-2026). Las tres cartas de la portada llevan cifras de la tabla larga, con el redondeo de la guía, en `web/datos/portada.json`: en 2024, la sección mediana de las 26.137 con dato pide 1.216,7 € netos al mes para 50 m² con el umbral del 30 % (percentil 10, 700 €; percentil 90, 2.116,7 €; cuantiles de R de tipo 7); con el salario mínimo de 2024 (1.237,4 € netos al mes), el alquiler de 50 m² pasa del 30 % del ingreso en el 48,4 % de esas secciones y del 40 % en el 24,7 %; en la ECV 2025, la sobrecarga es del 26,8 % en el alquiler a precio de mercado y del 7,2 % en el total. Las casillas salen de `inventario/casillas_portada.csv` (`escribir_casillas_portada()`, objetivo `fichero_portada_html`). Compuertas `portada_valores` y `portada_casillas` (bloqueo, `validacion_portada`; §4.1).
+- **Mapas sin sección y de categorías** (F5, 10-nov-2026). Las series con mapa (columna `cortes_web`) sin secciones, el indicador 20 y los de compraventa 10, 12, 16 y 17, llevan en el manifiesto `nivel_minimo`: la web pinta y deja pulsar los municipios a toda escala y apaga las secciones, y una sección elegida se ve en la ficha de su municipio. El 20 lleva además `categorias`, con el texto de cada valor de `inventario/vocabulario.csv` en los dos idiomas, y `detalle`, sus declaraciones (`datos/zonas_tensionadas.json`, 195 KB). La capa de portales, con `PORTALES=TRUE`, da un mapa por operación y portal (§7.8). Los euros por m² de la compraventa se muestran sin decimales, y los años de salario, con uno.
 - **Ficha por niveles** (backlog, tarea 26). Con poco zoom, el mapa pinta y deja pulsar comunidades, provincias y municipios con la cifra publicada en su nivel, la misma de los ficheros de valores; si alguna serie que da color no llega a ese nivel, la ficha dice «sin dato en este nivel» y no suma secciones (§5.3). En una comunidad, las fichas con ingreso por provincia (mochila y transistor) no tienen cifra.
 
 ---
@@ -1348,5 +1376,6 @@ El mapa base tarda unos 9 minutos: 7 min 29 s el PMTiles (`fichero_mapa_base`) y
 - **Fichas y derivados:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`, `inss_mensual`, `inss_anual`, `retenciones_transistor`, `transistor`.
 - **Sobrecarga:** `sobrecarga_agrupada`, `comprobaciones_sobrecarga`, `sobrecarga_quintil`, `eurostat_quintil`.
 - **Compraventa:** `ipva`, `larga_ipva`, `valor_tasado_trim`, `larga_valor_tasado`, `tipo_hipotecario_anual`, `derivados_compraventa`, `larga_compraventa`, `cp_municipio`, `fichero_cp_municipio`.
+- **Presión:** `zonas_tensionadas`, `boe_zonas_tensionadas`, `larga_zonas_tensionadas`, `resumen_larga_zonas_tensionadas`, `larga_portales`.
 - **Web:** `ficheros_web`, `cajas_municipios`, `ficheros_web_sobrecarga`.
-- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_ipva`, `validacion_hipotecas`, `validacion_valor_tasado`, `validacion_coherencia_compraventa`, `validacion_derivados_compraventa`, `validacion_cp_municipio`.
+- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_ipva`, `validacion_hipotecas`, `validacion_valor_tasado`, `validacion_coherencia_compraventa`, `validacion_derivados_compraventa`, `validacion_cp_municipio`, `validacion_zonas_tensionadas`, `validacion_web_zonas_tensionadas`.

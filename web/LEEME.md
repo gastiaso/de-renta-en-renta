@@ -122,7 +122,11 @@ El manifiesto dice:
 - `indicadores`: las series, con `niveles`, `decimales`, `anios` (o `periodos`, como `"2024-08"`, si no son años) y `ruta` (`{nivel}`, `{anio}` o `{periodo}`).
   - La serie por defecto lleva el código del indicador. Las variantes llevan `indicador`, `corte` y `grupo` (por ejemplo, la vivienda unifamiliar).
   - Tipología: la serie de la vivienda colectiva lleva `variantes` (`{"VU": "alquiler_m2_vu"}`) y la variante, `por_defecto` (`"alquiler_m2"`), con los mismos niveles y periodos. Las variantes no van en las series de la ficha.
-- `mapas`: lo que se pinta. Cada mapa lleva su serie base (la de por defecto, nunca una variante), la fórmula de la web y de uno a cinco cortes (de dos a seis tramos). La leyenda escribe los cortes con los decimales que necesitan, sin pasar de los del mapa. La clave del mapa es la de sus textos en `indicadores` de los diccionarios.
+- `mapas`: lo que se pinta. Cada mapa lleva su serie base (la de por defecto, nunca una variante), la fórmula de la web y de uno a cinco cortes (de dos a seis tramos). La leyenda escribe los cortes con los decimales que necesitan, sin pasar de los del mapa. La clave del mapa es la de sus textos en `indicadores` de los diccionarios. Desde F5 (10-nov-2026), además:
+  - `nivel_minimo` (`"municipio"`): la serie no tiene secciones (el indicador 20 y los de compraventa, 10, 12, 16 y 17). La capa de municipios se pinta y se pulsa a toda escala y las secciones se apagan (`ponerNivelMinimo()` de `js/mapa.js`); una sección de la dirección se ve en la ficha de su municipio, que lleva la lectura del indicador.
+  - `categorias` (`{"vocabulario": "zona_tensionada", "valores": [0, 1, 2]}`): mapa de categorías. Los cortes separan los valores; la leyenda, la ficha, su evolución, el CSV (columna `categoria`) y el PNG dicen el texto de cada una (`vocabulario.<vocabulario>.<valor>` de los diccionarios).
+  - `detalle`: fichero con lo que la ficha del municipio añade (las declaraciones de zona tensionada, `datos/zonas_tensionadas.json`: resolución del BOE, ámbito, vigencia y declaración de la comunidad, con sus enlaces).
+  - Mapas por grupo (capa de portales, indicador 13, solo con `PORTALES=TRUE`): la clave es la de la serie (`precio_oferta_alquiler_idealista`), con `indicador`, `corte` y `grupo`; los textos, los del indicador y el grupo. Toda serie cuya fuente tiene texto en `vocabulario.etiqueta` lleva esa etiqueta («Dato privado de oferta») sobre el mapa (`#aviso-privado`), en la leyenda, la ficha, el CSV (columna `etiqueta`) y el PNG. Con la capa apagada no hay ninguna de esas series ni mapas.
 - `supuestos`: superficie y umbral por defecto.
 - `umbral_pocos_contratos`: por debajo de este número de contratos, la ficha marca «pocos contratos» (`UMBRAL_POCOS_CONTRATOS` del pipeline, 30).
 - Fiabilidad: cada serie del alquiler (y el esfuerzo y el sueldo necesario, que salen de él) lleva `fiabilidad`, `{"contratos": "contratos_alquiler", "margen": "margen_alquiler_m2"}`, con las series auxiliares de su misma tipología: el recuento de contratos del SERPAVI (0 incluido) y el margen aproximado de la mediana en %. Son series como las demás (con `variantes`), sin número de indicador ni mapa propio, y no van en las fichas por municipio: la ficha las lee de los ficheros del periodo que pinta el mapa.
@@ -185,7 +189,10 @@ node --test pruebas/web/datos.test.mjs
 node --test pruebas/web/sobrecarga.test.mjs
 node --test pruebas/web/pagina_datos.test.mjs
 node --test pruebas/web/portada.test.mjs
+node --test pruebas/web/municipal.test.mjs
 ```
+
+La quinta (F5) prueba los mapas sin sección, los de categorías y la capa de portales: las columnas `categoria` y `etiqueta` del CSV, los textos de F5 en los dos idiomas y, con la exportación del pipeline, que cada mapa con `nivel_minimo` tiene su serie sin sección, que las categorías tienen texto, que existe el fichero de las declaraciones y que, con `PORTALES` apagado, no hay series ni mapas de los portales.
 
 La cuarta prueba la portada y lo que cambia con ella en el mapa: la redirección de los enlaces viejos de la raíz (la lista de claves es la de `estado.js`), los destinos de las casillas y de las fichas (claves del mapa, mapas del manifiesto, anclas de las páginas), los menús de todas las páginas y de la plantilla, que el sueldo de la portada va tras «#» y nunca en la consulta, las cartas (sin un término, no salen), el dado, la clave `territorio`, el comparador y «¿te llega?» por niveles, y el desglose de las pagas en la ficha.
 
@@ -202,7 +209,7 @@ Comprueban, con datos inventados:
 
 Si existe `datos/manifiesto.json`, comprueban también la exportación del pipeline y que **la página recalcula y coincide con R** (plan, §6.5): el sueldo necesario calculado con `js/formulas.js` desde el alquiler por m², en todas las secciones y niveles y en todos los años, redondeado a una décima como en la web, da los mismos enteros, nulos y estados que la serie `sueldo_necesario` que exporta R. Con la exportación del 8-nov-2026: 550.140 territorios y años, 294.082 con valor, ninguna diferencia.
 
-Queda aparte la prueba en un navegador de verdad, con `chromote` (que no está en `renv.lock`): `comprobar_web_navegador()` (`R/web_navegador.R`, `pruebas/testthat/test-navegador.R`). Además de la muestra del sueldo necesario y las fichas, comprueba la redirección de los enlaces viejos, la portada en los dos idiomas con sus cartas frente a la tabla larga, los destinos de las casillas, «Tu sueldo» de la portada hasta el mapa, que a 375 px no hay desbordes, la ficha de una comunidad, una provincia y un municipio frente a la tabla larga, y la etiqueta y el clic en cada escala.
+Queda aparte la prueba en un navegador de verdad, con `chromote` (que no está en `renv.lock`): `comprobar_web_navegador()` (`R/web_navegador.R`, `pruebas/testthat/test-navegador.R`). Además de la muestra del sueldo necesario y las fichas, comprueba la redirección de los enlaces viejos, la portada en los dos idiomas con sus cartas frente a la tabla larga, los destinos de las casillas, «Tu sueldo» de la portada hasta el mapa, que a 375 px no hay desbordes, la ficha de una comunidad, una provincia y un municipio frente a la tabla larga, la etiqueta y el clic en cada escala y, desde F5, los mapas sin sección: la ficha del indicador 20 en un municipio declarado entero, uno en parte y uno sin declarar, con sus declaraciones, el clic a escala de sección, que abre la del municipio, y la cifra municipal del valor tasado.
 
 ## Páginas de texto
 

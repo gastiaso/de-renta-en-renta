@@ -11,6 +11,9 @@
 // cada uno entre dos sueldos; con «Tu ficha», de dónde sale su ingreso (F3).
 // Ficha de territorio (municipio, provincia o comunidad, al pulsarlos con poco zoom; tarea 26): la
 // misma cifra con la publicada en su nivel, o «sin dato en este nivel».
+// F5: en los mapas de categorías (indicador 20), el texto de la categoría en vez de la cifra y, en la
+// ficha del municipio, sus declaraciones (fichaDeclaraciones); en los de un dato privado (portales,
+// indicador 13), su etiqueta.
 
 import { ordenNatural } from './nombres.js';
 import { clasesTramos, rampaDeCss, TRAMOS_LLEGA } from './colores.js';
@@ -129,15 +132,24 @@ export function equivalenciasSueldo(valor) {
 // `tipologia`: 'VC' | 'VU' si la serie del mapa la distingue; null si no. `sinNivel`: el nombre
 // del nivel si la serie no tiene cifra en él (ficha de territorio; regla 1). `sueldo`: el de «Tu
 // ficha», para desglosar su ingreso. `notas`: textos de más, al final.
-function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, tipologia = null, fiabilidad = null, intervalo = null, enLimite = false, sinNivel = null, sueldo = null, notas = [] }) {
+// F5: `grupo` (texto de la operación y el portal), `etiqueta` (dato privado de oferta) y, en los
+// mapas de categorías, el texto de la categoría (mapaDef.categorias).
+function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, tipologia = null, fiabilidad = null, intervalo = null, enLimite = false, sinNivel = null, sueldo = null, notas = [], grupo = null, etiqueta = null }) {
   const bloque = crear('section', 'ficha-valor');
   const cifra = crear('p', 'ficha-cifra');
   const sinCifra = sinNivel ? t('interfaz.ficha.sin_dato_nivel') : '—';
   const claseNumero = sinNivel ? 'ficha-numero ficha-sin-nivel' : 'ficha-numero';
   if (modo === 'necesario') {
-    bloque.append(crear('h3', 'ficha-indicador', t(`indicadores.${mapaId}.nombre`)));
-    cifra.append(crear('span', claseNumero, valor === null ? sinCifra : t.numero(valor, mapaDef.decimales ?? 0)));
-    if (!sinNivel) cifra.append(crear('span', 'ficha-unidad', t(`indicadores.${mapaId}.unidad`)));
+    const nombre = t(`indicadores.${mapaId}.nombre`);
+    bloque.append(crear('h3', 'ficha-indicador', grupo ? `${nombre} · ${grupo}` : nombre));
+    if (etiqueta) bloque.append(crear('p', 'etiqueta-privado', etiqueta));
+    const categorias = mapaDef.categorias;
+    if (categorias && valor !== null) {
+      cifra.append(crear('span', 'ficha-categoria', t(`vocabulario.${categorias.vocabulario}.${valor}`)));
+    } else {
+      cifra.append(crear('span', claseNumero, valor === null ? sinCifra : t.numero(valor, mapaDef.decimales ?? 0)));
+      if (!sinNivel && !categorias) cifra.append(crear('span', 'ficha-unidad', t(`indicadores.${mapaId}.unidad`)));
+    }
     bloque.append(cifra);
     if (intervalo) {
       const d = mapaDef.decimales ?? 0;
@@ -255,13 +267,55 @@ export function fichaTerritorio(contenedor, { t, nivel, codigo, territorios, alC
   datos.append(crear('dt', null, t(`vocabulario.nivel.${nivel}`)), crear('dd', null, codigo));   // el código del INE
   for (const { nivel: n, nombre } of superiores) datos.append(crear('dt', null, t(`vocabulario.nivel.${n}`)), crear('dd', null, nombre));
   const bloque = bloqueValor({ t, ...resto, sinNivel: sinNivel ? t(`vocabulario.nivel.${nivel}`).toLowerCase() : null });
+  const huecoDetalle = crear('div', 'ficha-hueco');   // F5: declaraciones de zona tensionada
   const huecoSerie = crear('div', 'ficha-hueco');
   const huecoComparador = crear('div', 'ficha-hueco');
   const titulo = crear('p', 'ficha-codigo', propio.nombre);
   titulo.dataset.nivel = nivel;
   titulo.dataset.codigo = codigo;
-  contenedor.replaceChildren(cabecera(t, alCerrar, t('interfaz.ficha.titulo_territorio')), titulo, datos, bloque, huecoSerie, huecoComparador);
-  return { huecoSerie, huecoComparador };
+  contenedor.replaceChildren(cabecera(t, alCerrar, t('interfaz.ficha.titulo_territorio')), titulo, datos, bloque, huecoDetalle, huecoSerie, huecoComparador);
+  return { huecoSerie, huecoComparador, huecoDetalle };
+}
+
+// F5: declaraciones de zona de mercado residencial tensionado de un municipio (indicador 20), de
+// datos/zonas_tensionadas.json: ámbito (todo el municipio o la parte que fija la declaración), periodo
+// de vigencia, resolución del BOE y declaración de la comunidad, con sus enlaces. `declaraciones`:
+// [{ boe, inicio, fin, ambito, ambito_texto, declaracion, url, url_declaracion }]; `fecha(x)` escribe
+// una fecha «AAAA-MM-DD». Sin declaraciones, lo dice. Al pie, que es política pública.
+export function fichaDeclaraciones(contenedor, { t, declaraciones, fecha }) {
+  const bloque = crear('section', 'ficha-declaraciones');
+  bloque.append(crear('h3', 'ficha-indicador', t('interfaz.ficha.zonas.titulo')));
+  if (!declaraciones?.length) {
+    bloque.append(crear('p', 'ficha-estado', t('interfaz.ficha.zonas.ninguna')));
+  } else {
+    const lista = crear('ul', 'ficha-lista-declaraciones');
+    for (const d of declaraciones) {
+      const item = crear('li');
+      item.append(crear('p', 'ficha-declaracion-ambito', d.ambito === 'parcial'
+        ? t('interfaz.ficha.zonas.parcial', { ambito: d.ambito_texto })
+        : t('interfaz.ficha.zonas.municipio')));
+      item.append(crear('p', 'ficha-estado', t('interfaz.ficha.zonas.vigencia', { inicio: fecha(d.inicio), fin: fecha(d.fin) })));
+      const enlace = (url, texto) => {
+        const a = crear('a', null, texto);
+        a.href = url;
+        a.rel = 'noopener';
+        return a;
+      };
+      const boe = crear('p', 'ficha-estado');
+      boe.append(enlace(d.url, t('interfaz.ficha.zonas.resolucion', { boe: d.boe })));
+      item.append(boe);
+      if (d.declaracion) {
+        const dec = crear('p', 'nota');
+        if (d.url_declaracion) dec.append(enlace(d.url_declaracion, d.declaracion));
+        else dec.textContent = d.declaracion;
+        item.append(dec);
+      }
+      lista.append(item);
+    }
+    bloque.append(lista);
+  }
+  bloque.append(crear('p', 'nota', t('interfaz.ficha.zonas.nota')));
+  contenedor.replaceChildren(bloque);
 }
 
 // Contexto de una sección sin mediana del alquiler de la tipología del mapa: la mediana de la

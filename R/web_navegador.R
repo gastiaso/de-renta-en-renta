@@ -29,7 +29,13 @@
 #   navegador_territorio: la ficha de una comunidad, una provincia y un municipio (?territorio=…)
 #     da la cifra y el estado de la tabla larga en su nivel (tarea 26);
 #   navegador_clic: con el ratón sobre el mapa en cada escala (comunidad, provincia, municipio y
-#     sección), la etiqueta dice el nombre que luego pone la ficha al pulsar (tareas 25 y 26).
+#     sección), la etiqueta dice el nombre que luego pone la ficha al pulsar (tareas 25 y 26);
+#   navegador_municipal (F5): los mapas sin sección (indicador 20 y los de F4): la ficha del 20 en un
+#     municipio declarado entero, uno en parte y uno sin declarar da el texto de su categoría en la
+#     tabla larga, sus declaraciones (inventario/zonas_tensionadas.csv) y la nota de política
+#     pública; la leyenda, una muestra por categoría; a escala de sección, el clic abre la ficha del
+#     municipio; con una sección en la dirección, la ficha es la de su municipio; y la del valor
+#     tasado (12) de un municipio da la cifra de la tabla larga.
 # `larga`: la tabla larga (tar_read(tabla_larga)); `perfiles`: tar_read(perfiles), para el
 # ingreso de la tartera que usa la web. El mapa está en mapa.html; la raíz es la portada.
 
@@ -269,7 +275,8 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
 
   # Front page, map by levels (tasks 24-26) and phone width
   filas <- c(filas, comprobar_portada_navegador(b, evaluar, url, larga, perfiles, espera),
-             comprobar_territorios_navegador(b, evaluar, url, larga, espera))
+             comprobar_territorios_navegador(b, evaluar, url, larga, espera),
+             comprobar_municipales_navegador(b, evaluar, url, larga, raiz, espera))   # F5
 
   # Sample recomputed with the page modules
   sc <- unique(larga$geo_id[larga$nivel == "sc" & larga$indicador == "sueldo_necesario"])
@@ -441,6 +448,69 @@ comprobar_territorios_navegador <- function(b, evaluar, url, larga, espera = 60)
       !identical(f$nivel, escala[2]) || !identical(f$nombre, lineas[1])
     }
     filas[[length(filas) + 1L]] <- fila("navegador_clic", sprintf("zoom %s: %s (%s)", escala[1], escala[2], paste(lineas, collapse = " / ")), mal)
+  }
+  filas
+}
+
+# F5: mapas sin sección (indicador 20, zonas tensionadas, y los de F4) y de categorías (navegador_municipal).
+# Los textos de las categorías, de web/i18n/es.json; las declaraciones, de inventario/zonas_tensionadas.csv.
+comprobar_municipales_navegador <- function(b, evaluar, url, larga, raiz = ".", espera = 60) {
+  filas <- list()
+  fila <- function(detalle, mal) tibble::tibble(id = "navegador_municipal", detalle = detalle, calculado = as.numeric(mal), referencia = 0)
+  textos <- jsonlite::read_json(file.path(raiz, "web", "i18n", "es.json"))$vocabulario$zona_tensionada
+  zonas <- leer_zonas_tensionadas(file.path(raiz, "inventario", "zonas_tensionadas.csv"))
+  zt <- larga |> filter(indicador == "zona_tensionada", nivel == "municipio")
+  if (!nrow(zt)) return(list(fila("sin el indicador 20 en la tabla larga", TRUE)))
+  ultimo <- max(zt$anio)
+  leer <- "JSON.stringify({ codigo: document.querySelector('#ficha .ficha-codigo')?.dataset.codigo ?? null,
+    nivel: document.querySelector('#ficha .ficha-codigo')?.dataset.nivel ?? null,
+    categoria: document.querySelector('#ficha .ficha-categoria')?.textContent ?? null,
+    declaraciones: [...document.querySelectorAll('#ficha .ficha-lista-declaraciones li')].map((li) => li.textContent),
+    notas: [...document.querySelectorAll('#ficha .nota')].map((p) => p.textContent),
+    leyenda: [...document.querySelectorAll('#leyenda .leyenda-categorias li')].map((li) => li.textContent) })"
+  abrir <- function(consulta) {
+    b$Page$navigate(paste0(url, "mapa.html", consulta))
+    ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-codigo[data-nivel]') && document.querySelector('#ficha .ficha-declaraciones')", espera)
+    if (ok) jsonlite::fromJSON(evaluar(leer), simplifyVector = FALSE) else NULL
+  }
+  lectura <- jsonlite::read_json(file.path(raiz, "web", "i18n", "es.json"))$indicadores$zona_tensionada$lectura
+  # Un municipio declarado entero, uno en parte y uno sin declarar, en el ultimo anio
+  casos <- c(entero = "08019", parte = "33024", ninguno = "28079")
+  for (k in names(casos)) {
+    cod <- casos[[k]]
+    f <- abrir(sprintf("?mapa=zona_tensionada&territorio=municipio:%s", cod))
+    v <- zt$valor[zt$geo_id == cod & zt$anio == ultimo]
+    n <- sum(zonas$municipio == cod)
+    mal <- is.null(f) || length(v) != 1 || !identical(f$codigo, cod) || !identical(f$categoria, textos[[as.character(v)]]) ||
+      length(f$declaraciones) != n || !any(unlist(f$notas) == lectura) ||
+      (n > 0 && !all(vapply(zonas$boe[zonas$municipio == cod], function(id) any(grepl(id, unlist(f$declaraciones), fixed = TRUE)), TRUE)))
+    if (k == "entero") mal <- mal || length(f$leyenda) != length(textos)
+    filas[[length(filas) + 1L]] <- fila(sprintf("zona_tensionada %s (%s): %s", cod, k, f$categoria %||% "sin ficha"), mal)
+  }
+  # Con una seccion en la direccion, la ficha es la de su municipio
+  f <- abrir("?mapa=zona_tensionada&seccion=0801901001")
+  filas[[length(filas) + 1L]] <- fila("zona_tensionada con ?seccion=0801901001: ficha de 08019",
+                                      is.null(f) || !identical(f$nivel, "municipio") || !identical(f$codigo, "08019"))
+  # A escala de seccion (zoom 13), el clic en el centro de Madrid abre la ficha del municipio
+  b$Page$navigate(sprintf("%smapa.html?mapa=zona_tensionada&vista=13.00/40.41680/-3.70380", url))
+  ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-vacia') && document.querySelector('.maplibregl-canvas')", espera)
+  Sys.sleep(3)
+  xy <- if (ok) jsonlite::fromJSON(evaluar("(() => { const r = document.getElementById('mapa').getBoundingClientRect(); return JSON.stringify([r.left + r.width / 2, r.top + r.height / 2]); })()")) else c(0, 0)
+  b$Input$dispatchMouseEvent(type = "mousePressed", x = xy[1], y = xy[2], button = "left", clickCount = 1)
+  b$Input$dispatchMouseEvent(type = "mouseReleased", x = xy[1], y = xy[2], button = "left", clickCount = 1)
+  ok <- ok && esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-codigo[data-nivel]')", 20)
+  f <- if (ok) jsonlite::fromJSON(evaluar(leer), simplifyVector = FALSE) else NULL
+  filas[[length(filas) + 1L]] <- fila("zona_tensionada, zoom 13 en Madrid: ficha del municipio 28079",
+                                      is.null(f) || !identical(f$nivel, "municipio") || !identical(f$codigo, "28079"))
+  # Un mapa de F4 sin seccion: la cifra del municipio, la de la tabla larga (sin decimales)
+  vt <- larga |> filter(indicador == "valor_tasado_m2", nivel == "municipio", geo_id == "28079")
+  if (nrow(vt)) {
+    vt <- vt[vt$anio == max(vt$anio), ]
+    b$Page$navigate(paste0(url, "mapa.html?mapa=valor_tasado_m2&territorio=municipio:28079"))
+    ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-codigo[data-nivel]') && document.querySelector('#ficha .ficha-estado')", espera)
+    f <- if (ok) jsonlite::fromJSON(evaluar(JS_FICHA_NAVEGADOR)) else NULL
+    filas[[length(filas) + 1L]] <- fila(sprintf("valor_tasado_m2 28079 (%d)", vt$anio),
+                                        is.null(f) || is.null(f$cifra) || abs(f$cifra - round(vt$valor)) > 1e-9)
   }
   filas
 }

@@ -1,0 +1,9 @@
+portal,operacion,nivel,geo_id,nombre,periodo,valor,informe,url
+idealista,alquiler,municipio,28001,Uno,2024-11,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/2024-11
+idealista,alquiler,municipio,28001,Uno,2024-12,12.2,Informe inventado para pruebas,https://ejemplo.invalid/idealista/2024-12
+idealista,alquiler,municipio,28002,Dos,2024-12,9.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/2024-12
+idealista,alquiler,municipio,28001,Uno,2025,13.3,Informe anual inventado para pruebas,https://ejemplo.invalid/idealista/2025
+idealista,alquiler,municipio,28001,Uno,2025-12,14.4,Informe inventado para pruebas,https://ejemplo.invalid/idealista/2025-12
+idealista,alquiler,distrito,2800101,Uno distrito 01,2025-12,15.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/2025-12
+fotocasa,venta,municipio,28001,Uno,2025-06,2222.2,Informe inventado para pruebas,https://ejemplo.invalid/fotocasa/2025-06
+fotocasa,venta,municipio,28002,Dos,2025-06,1111.1,Informe inventado para pruebas,https://ejemplo.invalid/fotocasa/2025-06

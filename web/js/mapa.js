@@ -117,7 +117,7 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
     { capa: 'municipios', nivel: 'municipio', hasta: 7 },
     { capa: 'secciones', nivel: 'sc', hasta: 24 },
   ].filter((r) => capas[r.capa]?.id)
-    .map((r, i, lista) => ({ ...r, desde: i ? lista[i - 1].hasta : 0 }));
+    .map((r, i, lista) => ({ ...r, desde: i ? lista[i - 1].hasta : 0, franja: r.hasta }));   // franja: el «hasta» propio (F5)
 
   function anadirFuentes() {
     if (base.tipo === 'pmtiles') {
@@ -193,6 +193,12 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
     resalte('secciones-comparada', 'cmp', 3, true);
     resalte('secciones-seleccion', 'sel', 3.5);
   }
+
+  // F5 (indicador 20 y demás mapas sin sección): nivel más fino del mapa activo. Con «municipio», la
+  // capa de municipios se ve y responde a toda escala y las secciones se apagan (ponerNivelMinimo).
+  let nivelMinimo = 'sc';
+  const CAPAS_SECCION = ['secciones-relleno', 'secciones-secreto', 'secciones-contorno', 'secciones-encima-halo', 'secciones-encima',
+    'secciones-comparada-halo', 'secciones-comparada', 'secciones-seleccion-halo', 'secciones-seleccion'];
 
   let seleccionada = null;
   let comparada = null;
@@ -326,6 +332,22 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
     niveles: RELLENOS.map((r) => r.nivel),
     // Capas coloreadas por valores: [{ capa, nivel, id }].
     rellenos: RELLENOS.map((r) => ({ ...r, id: capas[r.capa].id })),
+    // F5: nivel más fino del mapa activo: «municipio» (mapas sin sección, como el 20: los municipios
+    // llegan hasta el zoom máximo y las secciones no se pintan ni responden) o «sc» (lo de siempre).
+    ponerNivelMinimo(nivel) {
+      const municipios = RELLENOS.find((r) => r.capa === 'municipios');
+      const sinSecciones = nivel === 'municipio' && Boolean(municipios);
+      if (sinSecciones === (nivelMinimo === 'municipio')) return;
+      nivelMinimo = sinSecciones ? 'municipio' : 'sc';
+      municipios.hasta = sinSecciones ? 24 : municipios.franja;
+      for (const id of ['municipios-relleno', 'municipios-encima-halo', 'municipios-encima']) {
+        if (mapa.getLayer(id)) mapa.setLayerZoomRange(id, municipios.desde, municipios.hasta);
+      }
+      for (const id of CAPAS_SECCION) {
+        if (mapa.getLayer(id)) mapa.setLayoutProperty(id, 'visibility', sinSecciones ? 'none' : 'visible');
+      }
+    },
+    nivelMinimo: () => nivelMinimo,
     // Nivel que se ve a la escala actual (provincia, municipio o sección).
     nivelVisible() {
       const zoom = mapa.getZoom();

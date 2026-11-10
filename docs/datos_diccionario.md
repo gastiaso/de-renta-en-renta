@@ -40,6 +40,7 @@ Variable del desglose. Sin desglose, `corte` y `grupo` valen `total`.
 | `tipologia_p75` | Tipología de la vivienda, tercer cuartil |
 | `mes` | Mes de referencia |
 | `ficha` | Ficha (ingreso de referencia) |
+| `oferta_privada` | Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE) |
 
 ### `grupo`
 
@@ -79,6 +80,10 @@ Valor del desglose, según el corte.
 | `ficha` | `tartera` | Salario mínimo |
 | `ficha` | `mochila` | Joven menor de 35 |
 | `ficha` | `transistor` | Pensionista |
+| `oferta_privada` | `alquiler_idealista` | Alquiler, Idealista (dato privado de oferta) |
+| `oferta_privada` | `alquiler_fotocasa` | Alquiler, Fotocasa (dato privado de oferta) |
+| `oferta_privada` | `venta_idealista` | Venta, Idealista (dato privado de oferta) |
+| `oferta_privada` | `venta_fotocasa` | Venta, Fotocasa (dato privado de oferta) |
 
 ### `fuente`
 
@@ -131,7 +136,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 | 17 | [`esfuerzo_hipotecario`](#esfuerzo_hipotecario) | Esfuerzo hipotecario teórico | % del ingreso | v0.3 |
 | 18 | [`hogares_alquiler`](#hogares_alquiler) | Hogares en alquiler | % de los hogares | v0.1 |
 | 19 | [`viviendas_turisticas`](#viviendas_turisticas) | Viviendas de uso turístico sobre el total de viviendas | % de las viviendas | v0.1 |
-| 20 | [`zona_tensionada`](#zona_tensionada) | Zona de mercado residencial tensionado declarada | categoría (sí / no) | v0.4 |
+| 20 | [`zona_tensionada`](#zona_tensionada) | Zona de mercado residencial tensionado declarada | categoría (2 todo el municipio, 1 una parte, 0 ninguna) | v0.4 |
 | 21 | [`sueldo_necesario`](#sueldo_necesario) | Sueldo neto necesario para no pasar del umbral | € netos por mes | v0.1 |
 | 22 | [`sobrecarga`](#sobrecarga) | Tasa de sobrecarga por gastos de vivienda (método Eurostat) | % de las personas | v0.1 |
 | 23 | [`busqueda_sin_exito`](#busqueda_sin_exito) | Búsqueda de vivienda sin éxito | % de las personas de 16 o más años | v0.1 |
@@ -292,8 +297,8 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Fuentes:** `portales`
 - **Versión:** v0.4
 - **Definición:** Precio medio por metro cuadrado de los anuncios de alquiler y de venta.
-- **Cálculo:** Cifra de los informes agregados de las salas de prensa de los portales; nunca anuncios individuales. Capa desmontable.
-- **Lectura:** Es precio de oferta: no se mezcla con contratos, escrituras ni tasaciones.
+- **Cálculo:** Cifra de los informes agregados de las salas de prensa de los portales, copiada a mano en datos/brutos/portales/ (formato en R/fuente\_portales.R); nunca anuncios individuales. Un valor por año, portal y operación: el del informe anual o, si no lo hay, el del último mes publicado. Capa desmontable (PORTALES=FALSE por defecto).
+- **Lectura:** Es precio de oferta, un dato privado de oferta: no se mezcla con contratos, escrituras ni tasaciones, ni un portal con otro.
 
 ### `esfuerzo_residentes`
 
@@ -371,13 +376,13 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 
 **20 · Zona de mercado residencial tensionado declarada**
 
-- **Unidad:** categoría (sí / no)
+- **Unidad:** categoría (2 todo el municipio, 1 una parte, 0 ninguna)
 - **Familia:** Estructura y presión
 - **Fuentes:** `zonas_tensionadas`
 - **Versión:** v0.4
-- **Definición:** Municipio o ámbito declarado zona de mercado residencial tensionado.
-- **Cálculo:** Declaraciones publicadas en los diarios oficiales al amparo de la Ley 12/2023, con su fecha de efecto.
-- **Lectura:** Es una capa de política pública, no una medida del mercado.
+- **Definición:** Municipio o ámbito declarado zona de mercado residencial tensionado al amparo de la Ley 12/2023, en vigor a 31 de diciembre de cada año.
+- **Cálculo:** Resoluciones trimestrales del MIVAU en el BOE con la relación de zonas declaradas por las comunidades autónomas (art. 18.2.d): vigencia de tres años desde el día siguiente a la publicación. 2 si la declaración cubre todo el municipio; 1 si cubre una parte (núcleos, barrios o distritos), que se pinta en el municipio entero con su propia categoría; 0 sin declaración en vigor.
+- **Lectura:** Es una capa de política pública, no una medida del mercado: dice dónde rigen las medidas de la Ley 12/2023 (límites a la renta de los nuevos contratos y definición propia de gran tenedor), no cuánto cuesta la vivienda.
 
 ### `sueldo_necesario`
 

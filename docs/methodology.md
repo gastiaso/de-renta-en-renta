@@ -94,6 +94,8 @@ The full inventory, with address, access, frequency and notes, is in `inventario
 | `mivau_transacciones` | MIVAU (notarial deeds) | Coherence gate for appraisals (§7.7) | Reuse authorised by the MIVAU legal notice, citing the source and the date |
 | `ine_hipotecas` | INE | Average rate for indicator 17 | CC BY 4.0 |
 | `notariado` | General Council of Notaries | Not used: its terms do not allow its figures to be reused (indicator 11 is left out; §7.7) | Personal use only; reuse requires its express authorisation |
+| `zonas_tensionadas` | Housing Ministry, in the BOE (declarations by the autonomous communities) | Indicator 20 (§7.8) | Reusable citing the source (BOE reuse conditions) |
+| `portales` | Idealista and Fotocasa (press rooms) | Indicator 13, removable layer, off by default and still without data (§7.8) | Terms of use of each website and *sui generis* right: aggregated reports only, never listings |
 | `calculo_propio` | De renta en renta | Derived indicators 14, 15, 16, 17 and 21, from the sources of each term, and approximate margin of the rent median (§7.6) | CC BY-SA 4.0 |
 
 **Manual download of SERPAVI.** The MIVAU website blocks automated downloads. If the Excel file is missing, `descargar_mivau_serpavi()` stops the pipeline and gives the page and the name under which to save it (`inventario/fuentes.csv`, column `acceso`).
@@ -495,6 +497,12 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `compraventa_coherencia_provincias` | Provinces and quarters with an implied floor area outside 50–150 m² | ±5% | Blocking | 1.9% at most (2021) | `validacion_coherencia_compraventa` |
 | `compraventa_terminos` | Years of wages and mortgage burden against their terms | ±0.001% | Blocking | Passes in 2015–2024 | `validacion_derivados_compraventa` |
 | `cp_municipio_reparto` | Weights of a postcode that do not add up to 100, or with no single main municipality | ±0.001 | Blocking | Passes in all 11,046 postcodes | `validacion_cp_municipio` |
+| `zonas_tensionadas_resolucion` | Rows of the indicator 20 inventory without their BOE resolution downloaded, or with another publication date | Exact | Blocking | None of 321 | `validacion_zonas_tensionadas` |
+| `zonas_tensionadas_codigos` | Codes that are not municipalities of the 2021 tract map, with another INE name or outside the region of their BOE row | Exact | Blocking | None | `validacion_zonas_tensionadas` |
+| `zonas_tensionadas_completa` | Municipalities or areas in the BOE tables missing from the inventory | Exact | Blocking | None in the 31 rows of the 10 resolutions | `validacion_zonas_tensionadas` |
+| `zonas_tensionadas_fechas` | Effective date other than the day after publication and end date other than the one set by the text | Exact | Blocking | None of 321 | `validacion_zonas_tensionadas` |
+| `web_zonas_tensionadas` | Website declarations that differ from those of the inventory | Exact | Blocking | None | `validacion_web_zonas_tensionadas` |
+| `portales_codigos` | Figures of the portals layer with codes that are not municipalities or districts of the 2021 tract map | Exact | Blocking | Only with `PORTALES=TRUE`; tested with made-up data | (layer off) |
 
 **Reading the results of `adrh_municipio`.** The median is 0.0% because most municipalities have a single tract. The warning `adrh_municipio_detalle` collects the cases in which the source does not match across scales with all tracts having data. In Madrid, for example, Alcobendas and Pozuelo de Alarcón stay above 5% every year (`inventario/referencias_validacion.csv`).
 
@@ -1192,7 +1200,21 @@ From 2015 to 2024, for Spain, the regions, the provinces and the municipalities 
 
 **Postcode ↔ municipality** (`leer_ine_callejero_cp()`, `geo_tabla_cp_municipio()`; target `fichero_cp_municipio`, in `geo/codigos_postales_2021.csv`). It comes from the street sections of the January 2021 street directory: 11,046 postcodes in 14,600 pairs, covering all 8,131 municipalities; 8,784 postcodes fall in a single municipality. The weight is the share of the postcode's street sections in each municipality. 50 pairs have a postcode from another province: enclaves such as the County of Treviño, with those of Álava, and typos in the street directory.
 
-**Website.** The four indicators are in the long table, but not yet on the map: the map paints from the tract, and these indicators have none.
+**Website.** Since 10 Nov 2026, the four have a municipal map without tracts (§9.2), with cut-offs to be reviewed: 0 · 1 · 2 · 3 · 4% (10), 1,000 · 1,500 · 2,000 · 2,500 · 3,500 € per m² (12), 3 · 4 · 5 · 7 · 10 years (16) and 15 · 20 · 25 · 30 · 40% (17).
+
+### 7.8 Pressure: stressed areas (indicator 20) and asking prices (indicator 13)
+
+**Stressed residential market zones (indicator 20).** Law 12/2023 on the right to housing leaves the declaration to the autonomous community and requires the Ministry of Housing and Urban Agenda to publish every quarter in the BOE a resolution listing the declared zones, their period in force and the link to the community's declaration (art. 18(2)(d)). Those resolutions are the atlas's source (`zonas_tensionadas`): 10, from the one of 15 March 2024 (`BOE-A-2024-5214`) to the one of 3 November 2026 (`BOE-A-2026-23088`), found by going through the BOE daily summaries since the law came into force; a correction of errata (`BOE-A-2025-20246`) only changes links. All set the same period: three years from the day after the resolution's publication; the period ends on the same day of the expiry year (Law 39/2015, art. 30(4)). None expires before 15 March 2027.
+
+**Inventory and gate.** The decisions are in `inventario/zonas_tensionadas.csv`: one row per municipality and declaration, 321 rows and 320 municipalities (Llanes has two declarations for different villages), with the BOE's literal name, the INE code and name, the area, the dates and the links to the resolution and to the community's declaration. `descargar_zonas_tensionadas()` downloads the XML of each resolution and `leer_boe_zonas_tensionadas()` reads its tables; the gate (`comprobar_zonas_tensionadas()`, target `validacion_zonas_tensionadas`, all blocking) requires each row to have its resolution downloaded and its publication date, a municipality code of the 2021 tract map with its INE name and in the region of its BOE row, the literal name in its resolution's table, that no name in the tables is left out of the inventory, the effective date on the day after publication and the end date set by the text. The BOE omits a comma between Manresa and el Masnou (`BOE-A-2024-5214`) and splits the name of Castell d'Aro, Platja d'Aro i S'Agaró at its comma (`BOE-A-2024-20576`): the inventory keeps the names as they are and the gate finds them. To add resolutions, `proponer_zonas_tensionadas()` proposes the codes by matching the normalised names (postponed articles, bilingual forms) with INE's in their region; they are reviewed by hand.
+
+**Areas that are not a whole municipality.** Eight declarations cover only part of one: district 2 of Galdakao, Vitoria-Gasteiz except the rural area of the minor local entities, villages of Llanes (two declarations) and Cabrales, the neighbourhoods of La Arena and Cimadevilla in Gijón, La Magdalena in Avilés and Luanco in Gozón. The BOE does not give their geometry, which does not match the census tracts either, so the map paints the whole municipality with a category of its own, «declared in part of the municipality», and the profile gives the literal area.
+
+**Long table** (`armonizar_zonas_tensionadas()`; target `larga_zonas_tensionadas`). The 8,131 municipalities of the 2021 tract map, from 2024 to 2026, with the situation on 31 December of each year: 2 if a declaration of the whole municipality is in force, 1 if only of part of it, 0 if none, also as `dato`, because the absence of a declaration is a published fact. No breakdown or other levels: a count of municipalities is no source's figure. Result: 271 municipalities declared in 2024, all in Catalonia; 304 in 2025 (302 whole and 2 in part), and 320 in 2026 (313 whole and 7 in part): Catalonia 271, Navarre 21, Basque Country 21, Asturias 5 and Galicia 2.
+
+**Website.** Municipal map at every scale with the three categories (§9.2). The municipality's profile lists its declarations (BOE resolution, area, period in force and the community's declaration, with their links; `datos/zonas_tensionadas.json`, gate `web_zonas_tensionadas`) and says that it is a public policy layer, not a market measure.
+
+**Portals' asking prices (indicator 13), removable layer** (plan §2.2; guide, rule 6). The pipeline downloads nothing from the portals. With the environment variable `PORTALES=TRUE` (off by default), it reads the CSV files that the author copies by hand from the aggregated reports of the Idealista and Fotocasa press rooms into `datos/brutos/portales/`, outside git, in the format of `R/fuente_portales.R`: portal, transaction, level, INE code, name, period, price per m², report and link. Blocking gate: `portales_formato`, `portales_codigos`, `portales_rango` and `portales_repetidas`. In the long table, the breakdown `oferta_privada` carries the label in its name and, in the group, the transaction and the portal (`alquiler_idealista`…), with one value per year: the annual report's or, failing that, the last published month's. A portal is never mixed with another, nor the asking price with SERPAVI, appraisals or deeds (rule 5). On the website, one municipal map per transaction and portal, with the label «private asking-price data» over the map, in the legend, the profile, the CSV and the PNG. Off (`larga_portales` empty), the long table and the website stay exactly as without the layer. Tested with a made-up sample in `pruebas/` (`test-portales.R`): off, the website export is identical, file by file, to the one without the layer; on, the layer comes out separately and with its label. No real data yet.
 
 ## 8. Known limitations
 
@@ -1272,6 +1294,10 @@ From 2015 to 2024, for Spain, the regions, the provinces and the municipalities 
 
 **Home purchase.** The price is the appraisal, not the deed price: the Notaries' one cannot be reused (§7.7). The year of the appraised value is an average of quarters that the Ministry does not publish. Years of wages and the mortgage burden use the province's individual gross wage, not household income, and do not cover the Basque Country or Navarre; neither does the IPVA.
 
+**Stressed areas.** The eight declarations of part of a municipality are painted on the whole municipality, with a category of their own (§7.8). Only what is published in the BOE comes in: the declarations a community has published after 30 September 2026 will arrive with the fourth-quarter resolution, and refused applications appear in no resolution. The long table is a snapshot on 31 December; the exact dates are in the profile and in the inventory.
+
+**Asking prices.** The layer is built and tested with made-up data, but still without figures: the author will supply them from the press reports (§7.8). It is an asking price, not a closing price.
+
 **Lag.** Income and wages run one or two years behind the current year (§1).
 
 ---
@@ -1282,7 +1308,7 @@ From 2015 to 2024, for Spain, the regions, the provinces and the municipalities 
 
 **Schema** (plan §6.4): `geo_id`, `nivel`, `anio`, `indicador`, `corte`, `grupo`, `valor`, `estado`, `fuente`, `geo_ref` and `version`. The key of a row is `geo_id`, `nivel`, `anio`, `indicador`, `corte` and `grupo`.
 
-**Content** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11,458,446 rows.
+**Content** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11,482,839 rows.
 
 | Source (`fuente`) | Rows | Levels | Version |
 |---|---|---|---|
@@ -1295,9 +1321,10 @@ From 2015 to 2024, for Spain, the regions, the provinces and the municipalities 
 | `aeat_mercado_trabajo` | 2,016 | Province (1,456), region (532) and Spain (28) | 9 Nov 2026 |
 | `ine_ipva` | 11,910 | District (4,070), municipality (7,180), province (480), region (170) and Spain (10) | 10 Nov 2026 |
 | `mivau_valor_tasado` | 4,048 | Municipality (3,256), province (572), region (209) and Spain (11) | 10 Nov 2026 |
+| `zonas_tensionadas` | 24,393 | Municipality (24,393) | 10 Nov 2026 |
 | `calculo_propio` | 3,518,054 | Tract (2,436,386), district (568,152), municipality (506,960), province (5,076), region (1,460) and Spain (20) | 7 Nov 2026 |
 
-**By status:** `dato`, 8,482,875 rows; `ausente`, 1,690,991; `secreto`, 1,233,209; `estimado`, 51,371.
+**By status:** `dato`, 8,507,268 rows; `ausente`, 1,690,991; `secreto`, 1,233,209; `estimado`, 51,371.
 
 **Publication.** The long table is published in the GitHub release `v0.1.0` (9 Nov 2026), and the website at `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).
 
@@ -1316,6 +1343,7 @@ The export follows the author's decisions of 8 Nov 2026 (plan §6.6; plan §11, 
 - **Volume** (`ficheros_web`, 9 Nov 2026): 8,970 files and 147.7 MB, including the PMTiles file (35.4 MB). On disk, `web/datos/` holds 9,354 files and 113.6 MB: the 8,969 of `ficheros_web` (112.3 MB; the per-municipality files, 57.9 MB), the 3 of the overburden section (`ficheros_web_sobrecarga`, 1.1 MB) and the versioned sample in `web/datos/ejemplo/` (382 files, 0.2 MB). The contracts and margin (§7.6) add about 17 MB, and the income distribution (§5.5) about 21 MB, 14 of them in the per-municipality files.
 - **Gate** (`comprobar_web()`, `validacion_web`): `web_valores` and `web_fichas` (blocking) and `web_fuera_indice` (warning); the percentile, `web_salarios` (`comprobar_salarios_web()`, `validacion_web_salarios`, blocking) (§4.1).
 - **Front page** (`exportar_portada()`, target `fichero_portada_web`; 10 Nov 2026). The three front-page cards carry figures from the long table, with the rounding of the guide, in `web/datos/portada.json`: in 2024, the median of the 26,137 tracts with data requires €1,216.7 net a month for 50 m² with the 30 % threshold (10th percentile, €700; 90th percentile, €2,116.7; R quantiles of type 7); with the 2024 minimum wage (€1,237.4 net a month), the rent of 50 m² takes more than 30 % of income in 48.4 % of those tracts and more than 40 % in 24.7 %; in the 2025 ECV, overburden is 26.8 % among tenants at market price and 7.2 % overall. The squares come from `inventario/casillas_portada.csv` (`escribir_casillas_portada()`, target `fichero_portada_html`). Gates `portada_valores` and `portada_casillas` (blocking, `validacion_portada`; §4.1).
+- **Maps without tracts and category maps** (F5, 10 Nov 2026). The mapped series (column `cortes_web`) without tracts, indicator 20 and the home-purchase ones 10, 12, 16 and 17, carry `nivel_minimo` in the manifest: the website paints municipalities and lets users click them at every scale and switches tracts off, and a chosen tract is shown in its municipality's profile. Indicator 20 also carries `categorias`, with the text of each value from `inventario/vocabulario.csv` in both languages, and `detalle`, its declarations (`datos/zonas_tensionadas.json`, 195 KB). The portals layer, with `PORTALES=TRUE`, gives one map per transaction and portal (§7.8). Home-purchase euros per m² are shown without decimals, and years of wages with one.
 - **Profile by level** (backlog, task 26). At low zoom, the map colours and lets users click regions, provinces and municipalities with the figure published at their level, the same as in the value files; if a series that gives the colour does not reach that level, the profile says «no data at this level» and does not add up tracts (§5.3). In a region, the tokens with a provincial income (Under-35 and pensioner) have no figure.
 
 ---
@@ -1348,5 +1376,6 @@ The base map takes about 9 minutes: 7 min 29 s for the PMTiles file (`fichero_ma
 - **Tokens and derived indicators:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`, `inss_mensual`, `inss_anual`, `retenciones_transistor`, `transistor`.
 - **Overburden:** `sobrecarga_agrupada`, `comprobaciones_sobrecarga`, `sobrecarga_quintil`, `eurostat_quintil`.
 - **Home purchase:** `ipva`, `larga_ipva`, `valor_tasado_trim`, `larga_valor_tasado`, `tipo_hipotecario_anual`, `derivados_compraventa`, `larga_compraventa`, `cp_municipio`, `fichero_cp_municipio`.
+- **Pressure:** `zonas_tensionadas`, `boe_zonas_tensionadas`, `larga_zonas_tensionadas`, `resumen_larga_zonas_tensionadas`, `larga_portales`.
 - **Website:** `ficheros_web`, `cajas_municipios`, `ficheros_web_sobrecarga`.
-- **Gates:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_ipva`, `validacion_hipotecas`, `validacion_valor_tasado`, `validacion_coherencia_compraventa`, `validacion_derivados_compraventa`, `validacion_cp_municipio`.
+- **Gates:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_ipva`, `validacion_hipotecas`, `validacion_valor_tasado`, `validacion_coherencia_compraventa`, `validacion_derivados_compraventa`, `validacion_cp_municipio`, `validacion_zonas_tensionadas`, `validacion_web_zonas_tensionadas`.

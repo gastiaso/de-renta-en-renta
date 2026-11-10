@@ -27,6 +27,7 @@ corte,tipologia_p25,"Tipología de la vivienda, primer cuartil","Dwelling type, 
 corte,tipologia_p75,"Tipología de la vivienda, tercer cuartil","Dwelling type, third quartile"
 corte,mes,Mes de referencia,Reference month
 corte,ficha,Ficha (ingreso de referencia),Token (reference income)
+corte,oferta_privada,"Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE)","Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE)"
 tenencia,OWN,Propiedad,Owner
 tenencia,OWN_NL,Propiedad sin hipoteca ni préstamo,Owner with no outstanding mortgage or housing loan
 tenencia,OWN_L,Propiedad con hipoteca o préstamo,Owner with mortgage or loan
@@ -58,3 +59,11 @@ mes,M11,Noviembre,November
 ficha,tartera,Salario mínimo,Minimum wage
 ficha,mochila,Joven menor de 35,Under-35
 ficha,transistor,Pensionista,Pensioner
+oferta_privada,alquiler_idealista,"Alquiler, Idealista (dato privado de oferta)","Rent, Idealista (private asking-price data)"
+oferta_privada,alquiler_fotocasa,"Alquiler, Fotocasa (dato privado de oferta)","Rent, Fotocasa (private asking-price data)"
+oferta_privada,venta_idealista,"Venta, Idealista (dato privado de oferta)","Sale, Idealista (private asking-price data)"
+oferta_privada,venta_fotocasa,"Venta, Fotocasa (dato privado de oferta)","Sale, Fotocasa (private asking-price data)"
+etiqueta,portales,Dato privado de oferta,Private asking-price data
+zona_tensionada,0,Sin declaración en vigor,No declaration in force
+zona_tensionada,1,Declarada en parte del municipio,Declared in part of the municipality
+zona_tensionada,2,Declarada en todo el municipio,Declared in the whole municipality

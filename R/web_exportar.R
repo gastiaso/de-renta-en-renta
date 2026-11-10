@@ -39,7 +39,15 @@ ESCALA_WEB <- 10L                                                # una décima; 
 ESCALAS_WEB <- c(10L, 100L, 1000L)                               # de una a tres cifras decimales
 NIVELES_WEB <- c("sc", "distrito", "municipio", "provincia", "ccaa", "nacional")
 GRUPO_POR_DEFECTO_WEB <- c(tipologia = "VC")                     # pregunta abierta 12
-CORTES_WEB <- c("total", "mes", names(GRUPO_POR_DEFECTO_WEB))
+# F5: cortes cuyos grupos son mapas propios, sin serie por defecto (precios de oferta de los portales,
+# indicador 13: operación y portal, como `alquiler_idealista`; capa desmontable). Clave de cada
+# serie: «indicador_grupo».
+CORTES_POR_GRUPO_WEB <- c("oferta_privada")
+CORTES_WEB <- c("total", "mes", names(GRUPO_POR_DEFECTO_WEB), CORTES_POR_GRUPO_WEB)
+# F5: niveles más finos con que un indicador con cortes_web tiene mapa: la sección y, si no la tiene,
+# el municipio (indicador 20); entonces el mapa lleva `nivel_minimo` y la web pinta los municipios a
+# toda escala, con las secciones apagadas.
+NIVELES_MAPA_WEB <- c("sc", "municipio")
 # Mapas que la web calcula en el navegador a partir de otra serie (web/js/formulas.js), para que
 # cambiar la superficie o el umbral no obligue a bajar nada
 FORMULAS_WEB <- list(sueldo_necesario = list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo"))
@@ -122,11 +130,13 @@ indices_web <- function(jerarquia, territorios) {
        provincia = de("provincia"), ccaa = de("ccaa"), nacional = "00")
 }
 
-# Decimales con que la web muestra una serie: uno en los porcentajes, en los índices (Gini) y en
-# los euros por m²; en el resto de euros, ninguno. Con una escala propia, los suyos (100: dos).
+# Decimales con que la web muestra una serie: uno en los porcentajes, en los índices (Gini), en
+# los euros por m² y mes (alquiler) y en los años (F5: años de salario para comprar); en el resto de
+# euros, ninguno (F5: también en los euros por m² de la compraventa, como el valor tasado). Con una escala propia, los suyos (100: dos).
 decimales_web <- function(unidad, escala = ESCALA_WEB) {
   escala <- rep_len(escala, length(unidad))
-  una <- grepl("^%", unidad) | grepl("m\u00b2", unidad) | grepl("^\u00edndice", unidad)
+  una <- grepl("^%", unidad) | (grepl("m\u00b2", unidad) & grepl("mes", unidad)) | grepl("^\u00edndice", unidad) |
+    grepl("^a\u00f1os", unidad)   # F5: anios de salario (16), con una decimal
   ifelse(escala > ESCALA_WEB, decimales_escala(escala), ifelse(una, 1L, 0L))
 }
 
@@ -151,7 +161,7 @@ auxiliares_web <- function(indicadores) {
 # del núcleo y las de sus auxiliares.
 series_web <- function(larga, indicadores) {
   con_mapa <- indicadores$codigo[!is.na(indicadores$cortes_web) & nzchar(indicadores$cortes_web)]
-  con_mapa <- intersect(con_mapa, unique(larga$indicador[larga$nivel == "sc"]))
+  con_mapa <- intersect(con_mapa, unique(larga$indicador[larga$nivel %in% NIVELES_MAPA_WEB]))   # F5: tambien municipio
   nucleo <- union(indicadores$codigo[indicadores$nucleo_v01 %in% c(TRUE, "TRUE")], con_mapa)
   aux <- auxiliares_web(indicadores)
   aux <- aux$codigo[vapply(aux$de, function(d) any(d %in% nucleo), TRUE)]
@@ -164,7 +174,7 @@ series_web <- function(larga, indicadores) {
     mutate(
       periodo = ifelse(corte == "mes", sprintf("%d-%s", anio, substr(grupo, 2, 3)), as.character(anio)),
       grupo_web = ifelse(sin_grupo, "total", grupo),
-      clave = ifelse(sin_grupo | grupo == por_defecto, indicador, paste0(indicador, "_", tolower(grupo))),
+      clave = ifelse(sin_grupo | (!is.na(por_defecto) & grupo == por_defecto), indicador, paste0(indicador, "_", tolower(grupo))),
       escala = escala_web(indicadores, indicador),
       auxiliar = indicador %in% aux
     )
@@ -328,13 +338,36 @@ cortes_web <- function(texto) {
 
 # Mapas: uno por indicador con cortes_web y valores de sección; el por defecto, el primero. Los
 # de FORMULAS_WEB se calculan en el navegador desde su base.
-mapas_web <- function(catalogo, indicadores) {
-  con_seccion <- catalogo$clave[vapply(catalogo$niveles, function(n) "sc" %in% n, TRUE)]
+# F5 (indicadores 20 y 13):
+#   - sin sección, el municipio como nivel más fino: el mapa lleva `nivel_minimo` («municipio»);
+#   - con `vocabulario` y un grupo del vocabulario con el código del indicador (zona_tensionada), el
+#     mapa es de categorías: `categorias` = {vocabulario, valores}; los cortes separan los valores;
+#   - los cortes de CORTES_POR_GRUPO_WEB dan un mapa por grupo (clave «indicador_grupo», con
+#     `indicador`, `corte` y `grupo`), con los cortes de su grupo en cortes_web («general|grupo=…»).
+mapas_web <- function(catalogo, indicadores, vocabulario = NULL) {
+  con_seccion <- catalogo$clave[vapply(catalogo$niveles, function(n) any(NIVELES_MAPA_WEB %in% n), TRUE)]
+  nivel_minimo <- function(clave) {
+    n <- catalogo$niveles[[match(clave, catalogo$clave)]]
+    NIVELES_MAPA_WEB[NIVELES_MAPA_WEB %in% n][1]
+  }
   filas <- indicadores[!is.na(indicadores$cortes_web) & nzchar(indicadores$cortes_web), ]
   filas <- filas[order(filas$codigo != MAPA_POR_DEFECTO_WEB, filas$id), ]
   mapas <- list()
   for (k in seq_len(nrow(filas))) {
     codigo <- filas$codigo[k]
+    por_grupo <- catalogo[catalogo$indicador == codigo & catalogo$corte %in% CORTES_POR_GRUPO_WEB & catalogo$clave %in% con_seccion, ]
+    if (nrow(por_grupo)) {
+      cortes <- cortes_grupos_web(filas$cortes_web[k])
+      for (j in seq_len(nrow(por_grupo))) {
+        g <- por_grupo[j, ]
+        def <- list(base = g$clave, formula = "directo", indicador = codigo, corte = g$corte, grupo = g$grupo_web,
+                    cortes = I(cortes[[g$grupo_web]] %||% cortes$general),
+                    decimales = decimales_web(filas$unidad_es[k], escala_web(indicadores, codigo)))
+        if (!identical(nivel_minimo(g$clave), "sc")) def$nivel_minimo <- nivel_minimo(g$clave)
+        mapas[[g$clave]] <- def
+      }
+      next
+    }
     f <- FORMULAS_WEB[[codigo]]
     def <- if (!is.null(f) && f$base %in% con_seccion) {
       list(base = f$base, formula = f$formula)
@@ -344,8 +377,69 @@ mapas_web <- function(catalogo, indicadores) {
     if (is.null(def)) next
     mapas[[codigo]] <- c(def, list(cortes = I(cortes_web(filas$cortes_web[k])),
                                    decimales = decimales_web(filas$unidad_es[k], escala_web(indicadores, codigo))))
+    # F5: mapa sin seccion (nivel_minimo) y de categorias
+    if (!identical(nivel_minimo(def$base), "sc")) mapas[[codigo]]$nivel_minimo <- nivel_minimo(def$base)
+    categorias <- categorias_web(vocabulario, codigo)
+    if (!is.null(categorias)) mapas[[codigo]]$categorias <- categorias
   }
   mapas
+}
+
+# F5: declaraciones de zona tensionada por municipio (indicador 20), para la ficha de la web:
+# {"municipio": [{boe, publicacion, inicio, fin, ambito, ambito_texto, nombre_boe, declaracion, url,
+# url_declaracion}]}, por fecha de efecto. Fechas «AAAA-MM-DD»; textos vacíos como "".
+CODIGO_ZONAS_WEB <- "zona_tensionada"
+zonas_web <- function(zonas) {
+  z <- zonas[order(zonas$municipio, zonas$fecha_inicio, zonas$ambito_texto), ]
+  texto <- function(x) ifelse(is.na(x), "", x)
+  filas <- lapply(seq_len(nrow(z)), function(k) list(
+    boe = z$boe[k], publicacion = format(z$fecha_publicacion[k]), inicio = format(z$fecha_inicio[k]),
+    fin = format(z$fecha_fin[k]), ambito = z$ambito[k], ambito_texto = texto(z$ambito_texto[k]),
+    nombre_boe = z$nombre_boe[k], declaracion = texto(z$declaracion[k]), url = z$url[k],
+    url_declaracion = texto(z$url_declaracion[k])))
+  split(filas, z$municipio)
+}
+
+# F5: compuerta web_zonas_tensionadas (bloqueo): las declaraciones de datos/zonas_tensionadas.json
+# reproducen las del inventario (municipio, resolución, ámbito y fechas), y el mapa del indicador 20
+# apunta al fichero.
+comprobar_zonas_web <- function(zonas, dir_web = "web") {
+  ruta <- file.path(dir_web, "datos", "zonas_tensionadas.json")
+  leido <- if (file.exists(ruta)) jsonlite::fromJSON(ruta, simplifyVector = FALSE) else list()
+  plano <- function(x) sort(unlist(lapply(names(x), function(m) vapply(x[[m]], function(d)
+    paste(m, d$boe, d$ambito, d$ambito_texto, d$inicio, d$fin), ""))))
+  esperado <- plano(zonas_web(zonas))
+  manifiesto <- jsonlite::fromJSON(file.path(dir_web, "datos", "manifiesto.json"), simplifyVector = FALSE)
+  tibble::tibble(
+    id = "web_zonas_tensionadas",
+    detalle = c("declaraciones distintas del inventario", "mapa sin la ruta de las declaraciones"),
+    calculado = c(length(union(setdiff(esperado, plano(leido)), setdiff(plano(leido), esperado))),
+                  as.numeric(!identical(manifiesto$mapas[[CODIGO_ZONAS_WEB]]$detalle, "datos/zonas_tensionadas.json"))),
+    referencia = 0
+  )
+}
+
+# F5: cortes de un indicador con un mapa por grupo: los generales y, tras «|», los de un grupo, como
+# «8;10;12;15;20|venta_idealista=1000;1500;2000;3000;4000» (el formato de los de la sobrecarga).
+cortes_grupos_web <- function(texto) {
+  partes <- trimws(strsplit(as.character(texto), "|", fixed = TRUE)[[1]])
+  grupos <- partes[-1]
+  if (length(grupos) && !all(grepl("^[A-Za-z0-9_-]+=", grupos))) {
+    stop("cortes_web: cada grupo va como grupo=c1;c2: ", texto, call. = FALSE)
+  }
+  c(list(general = cortes_web(partes[1])),
+    stats::setNames(lapply(sub("^[^=]+=", "", grupos), cortes_web), sub("=.*$", "", grupos)))
+}
+
+# F5: categorías de un mapa (indicador 20): las claves numéricas del grupo de inventario/vocabulario.csv
+# que se llama como el indicador (sus textos van a web/i18n con exportar_i18n()). Sin ese grupo, NULL.
+categorias_web <- function(vocabulario, codigo) {
+  if (is.null(vocabulario)) return(NULL)
+  claves <- vocabulario$clave[vocabulario$grupo == codigo]
+  if (!length(claves)) return(NULL)
+  valores <- suppressWarnings(as.numeric(claves))
+  if (anyNA(valores)) stop("Las categor\u00edas de ", codigo, " deben ser n\u00fameros: ", paste(claves, collapse = ", "), call. = FALSE)
+  list(vocabulario = codigo, valores = I(sort(valores)))
 }
 
 # Series de fiabilidad de cada serie del catálogo con auxiliares: {"contratos": clave, "margen":
@@ -391,7 +485,7 @@ indicadores_manifiesto_web <- function(catalogo, indicadores) {
     if (c_k$clave == ind) {
       otras <- catalogo[catalogo$indicador == ind & catalogo$clave != ind, ]
       if (nrow(otras)) e$variantes <- stats::setNames(as.list(otras$clave), otras$grupo_web)
-    } else {
+    } else if (!c_k$corte %in% CORTES_POR_GRUPO_WEB) {   # F5: los mapas por grupo no tienen serie por defecto
       e$por_defecto <- ind
     }
     if (!is.null(fiabilidad[[c_k$clave]])) e$fiabilidad <- fiabilidad[[c_k$clave]]
@@ -403,12 +497,16 @@ indicadores_manifiesto_web <- function(catalogo, indicadores) {
 # Exportación completa. `pmtiles`: el mapa base (fichero_mapa_base), que se copia a
 # web/teselas/seccionado_2021.pmtiles (fuera de git). `perfiles`: tabla perfiles (perfiles_fichas()).
 # `cajas`: cajas_web(). Borra antes lo exportado la vez anterior, salvo la muestra (ejemplo/).
+# F5: `vocabulario` (inventario/vocabulario.csv) da las categorías de los mapas que las tienen
+# (categorias_web(), indicador 20); `zonas` (inventario/zonas_tensionadas.csv), las declaraciones de
+# cada municipio para la ficha del indicador 20, en datos/zonas_tensionadas.json (zonas_web()), con
+# su ruta en el mapa (`detalle`).
 exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = NULL, perfiles = NULL, cajas = NULL,
-                         salarios = NULL, dir_web = "web", fecha = format(Sys.Date())) {
+                         salarios = NULL, dir_web = "web", fecha = format(Sys.Date()), vocabulario = NULL, zonas = NULL) {
   datos <- file.path(dir_web, "datos")
   dir.create(datos, recursive = TRUE, showWarnings = FALSE)
   unlink(file.path(datos, c("manifiesto.json", "territorios.json", "cajas.json", "perfiles.json", "salarios.json", "indices", "fichas",
-                            NIVELES_WEB)), recursive = TRUE)
+                            "zonas_tensionadas.json", NIVELES_WEB)), recursive = TRUE)
 
   indices <- indices_web(jerarquia, territorios)
   series <- series_web(larga, indicadores)
@@ -428,7 +526,8 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
   otros <- c(escribir_json(territorios_web(territorios), "territorios.json"),
              if (!is.null(cajas)) escribir_json(cajas, "cajas.json"),
              if (!is.null(perfiles)) escribir_json(perfiles_web(perfiles), "perfiles.json"),
-             if (!is.null(salarios)) escribir_json(salarios, "salarios.json"))   # percentil salarial (salarios_web())
+             if (!is.null(salarios)) escribir_json(salarios, "salarios.json"),   # percentil salarial (salarios_web())
+             if (!is.null(zonas)) escribir_json(zonas_web(zonas), "zonas_tensionadas.json"))   # F5, indicador 20
   valores <- escribir_valores_web(series, catalogo, indices, dir_web)
   fichas <- escribir_fichas_web(series, catalogo, jerarquia, dir_web)
 
@@ -459,9 +558,13 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
     supuestos = SUPUESTOS_WEB,
     umbral_pocos_contratos = UMBRAL_POCOS_CONTRATOS,
     indicadores = indicadores_manifiesto_web(catalogo, indicadores),
-    mapas = mapas_web(catalogo, indicadores),
+    mapas = mapas_web(catalogo, indicadores, vocabulario),
     vista_inicial = list(limites = I(LIMITES_INICIALES_WEB))
   )
+  # F5: declaraciones del indicador 20 para la ficha (ruta en su mapa)
+  if (!is.null(zonas) && !is.null(manifiesto$mapas[[CODIGO_ZONAS_WEB]])) {
+    manifiesto$mapas[[CODIGO_ZONAS_WEB]]$detalle <- "datos/zonas_tensionadas.json"
+  }
   manifiesto <- manifiesto[!vapply(manifiesto, is.null, TRUE)]
   ruta_manifiesto <- file.path(datos, "manifiesto.json")
   jsonlite::write_json(manifiesto, ruta_manifiesto, auto_unbox = TRUE, pretty = TRUE, digits = NA)

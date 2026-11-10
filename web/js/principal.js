@@ -10,12 +10,13 @@ import { cargarIdioma, traducirPagina } from './i18n.js';
 import {
   cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarCajas, cargarSalarios,
   cargarIndice, cargarValores, cargarSeries, valorDe, periodoPara, periodosDe, fueraDeSerie,
-  serieDeTipologia, tipologiaDe, tieneTipologia,
+  serieDeTipologia, tipologiaDe, tieneTipologia, cargarDetalle,
 } from './datos.js';
 import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
 import { pintarLeyenda } from './leyenda.js';
 import {
   fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fichaContexto, fichaTerritorio, nombresTerritorio,
+  fichaDeclaraciones,
 } from './ficha.js';
 import { formulaDe } from './formulas.js';
 import {
@@ -45,6 +46,7 @@ const el = {
   ficha: document.getElementById('ficha'),
   ejemplo: document.getElementById('aviso-ejemplo'),
   escala: document.getElementById('aviso-escala'),
+  privado: document.getElementById('aviso-privado'),   // F5: etiqueta de dato privado de oferta
   periodo: document.getElementById('aviso-periodo'),
   idiomas: [...document.querySelectorAll('[data-idioma]')],
 };
@@ -78,6 +80,22 @@ const usaSupuestos = (def) => (def.formula ?? 'directo') !== 'directo';
 // Serie de la tipología elegida (vivienda colectiva por defecto; decisión 12).
 const serieTipo = (serie) => serieDeTipologia(m, serie, estado.tipologia);
 const nivelesDe = (serie) => m.indicadores[serie]?.niveles ?? ['sc'];
+
+// --- F5: mapas sin sección (indicador 20 y los de F4), de categorías y de datos privados (portales) ---
+// Nivel más fino del mapa activo: «municipio» en los mapas sin sección (nivel_minimo del manifiesto).
+const nivelMinimoDe = (v) => (v.modo === 'necesario' ? v.mapa.nivel_minimo ?? 'sc' : 'sc');
+// Indicador de los textos de un mapa: el suyo, o el `indicador` de los mapas por grupo (portales).
+const idTextos = (id) => m.mapas[id]?.indicador ?? id;
+// Operación y portal de un mapa por grupo (indicador 13), o null.
+const grupoDe = (def) => (def?.corte && def?.grupo ? t(`vocabulario.${def.corte}.${def.grupo}`) : null);
+// Nombre de un mapa en la barra: el del indicador y, en los mapas por grupo, su grupo.
+const nombreMapa = (id) => [t(`indicadores.${idTextos(id)}.nombre`), grupoDe(m.mapas[id])].filter(Boolean).join(' · ');
+// Etiqueta de dato privado de una serie: la de su fuente (vocabulario.etiqueta.<fuente>), o null.
+function etiquetaPrivada(serie) {
+  const fuente = m.indicadores[serie]?.fuente;
+  return fuente && t.existe(`vocabulario.etiqueta.${fuente}`) ? t(`vocabulario.etiqueta.${fuente}`) : null;
+}
+const etiquetaVista = (v) => (v.modo === 'necesario' ? etiquetaPrivada(v.seriesColor[0]) : null);
 
 // Lo que se pinta, a partir del estado: modo, superficie, umbral, cálculo, mapa con la serie de
 // la tipología, series necesarias, periodo activo y tipología. Si el año elegido es anterior a
@@ -194,7 +212,7 @@ function avisoAnios(v) {
 // la serie que da color (y, delante, el año elegido si es anterior a la serie) y tipología.
 function pintarBarra(v) {
   const llega = v.modo === 'llega';
-  const mapas = Object.keys(m.mapas).map((id) => ({ valor: id, texto: t(`indicadores.${id}.nombre`) }));
+  const mapas = Object.keys(m.mapas).map((id) => ({ valor: id, texto: nombreMapa(id) }));   // F5: con el grupo
   if (llega) mapas.unshift({ valor: '', texto: t('interfaz.vista.llega_opcion', { ficha: t(`fichas.${estado.ficha}`) }) });
   const periodos = periodosDe(m.indicadores[v.seriesColor[0]]).map((p) => ({ valor: String(p), texto: t.periodo(p) }));
   if (v.fuera) periodos.unshift({ valor: String(v.fuera.anio), texto: t('interfaz.vista.anio_fuera', { anio: t.periodo(v.fuera.anio) }) });
@@ -220,6 +238,10 @@ async function actualizar() {
   const yo = ++turno;
   const v = vista();
   pintarBarra(v);
+  mapa.ponerNivelMinimo(nivelMinimoDe(v));   // F5: sin sección, los municipios a toda escala
+  const etiqueta = etiquetaVista(v);         // F5: dato privado de oferta, también sobre el mapa
+  el.privado.hidden = !etiqueta;
+  el.privado.textContent = etiqueta ?? '';
   await cargarColumnas(v.series, v.referencia);
   if (yo !== turno) return;
 
@@ -232,7 +254,8 @@ async function actualizar() {
   avisarMapa(v);
 
   const leyenda = {
-    modo: v.modo, mapaId: estado.mapa, mapaDef: v.mapa, superficie: v.supuestos.superficie_m2, umbral: v.umbral,
+    modo: v.modo, mapaId: idTextos(estado.mapa), mapaDef: v.mapa, superficie: v.supuestos.superficie_m2, umbral: v.umbral,
+    grupo: v.modo === 'necesario' ? grupoDe(v.mapa) : null, etiqueta,   // F5
     periodo: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo, tipologia: v.tipologia,
     conSupuestos: usaSupuestos(v.mapa), fuera: v.fuera ? textoFuera(v.fuera) : null,
   };
@@ -292,8 +315,11 @@ function estadoCifra(v, codigo, x, estadoDe) {
 function pintarFicha(v = vista()) {
   const yo = ++turnoFicha;
   const terr = leerTerritorio(estado.territorio);
-  if (!estado.seccion && terr) {
-    pintarFichaTerritorio(v, terr, yo).catch((error) => console.error(error));
+  // F5: en un mapa sin sección, la sección elegida se ve en la ficha de su municipio
+  const porMunicipio = Boolean(estado.seccion) && nivelMinimoDe(v) === 'municipio';
+  if ((!estado.seccion && terr) || porMunicipio) {
+    pintarFichaTerritorio(v, porMunicipio ? { nivel: 'municipio', codigo: estado.seccion.slice(0, 5) } : terr, yo)
+      .catch((error) => console.error(error));
     return;
   }
   if (!estado.seccion) {
@@ -324,7 +350,7 @@ function pintarFicha(v = vista()) {
     enLimite = Boolean(r) && enLimiteLlega(r.ratio, margen);
   }
   const { huecoContexto, huecoSerie, huecoComparador } = fichaSeccion(el.ficha, {
-    t, codigo, territorios, modo: v.modo, mapaId: estado.mapa, mapaDef: v.mapa, ficha: estado.ficha,
+    t, codigo, territorios, modo: v.modo, mapaId: idTextos(estado.mapa), mapaDef: v.mapa, ficha: estado.ficha,
     supuestos: v.supuestos, anio: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo,
     tipologia: v.tipologia, valor, estado: estadoCifra(v, codigo, x, estadoDe), estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirSeccion(null),
@@ -413,7 +439,8 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
     let texto = '—';
     if (v.modo === 'necesario') {
       const b = en(base, p).valor;
-      if (b !== null) texto = t.numero(formulaDe(v.mapa).calcular(b, v.supuestos), v.mapa.decimales ?? 0);
+      const cat = v.mapa.categorias;   // F5: en los mapas de categorías, su texto
+      if (b !== null) texto = cat ? t(`vocabulario.${cat.vocabulario}.${b}`) : t.numero(formulaDe(v.mapa).calcular(b, v.supuestos), v.mapa.decimales ?? 0);
     } else {
       const r = calculoDe(p).calcular(codigo, (serie) => en(serie, p).valor);
       if (r) texto = t.porcentaje(r.ratio);
@@ -553,13 +580,22 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
     : Math.max(...v.seriesColor.map(estadoDe));
   const periodoBase = periodoPara(m.indicadores[base], v.referencia);
   if (tieneNivel) notas.push(...notaPercentil(v, valor, periodoBase ?? v.periodo, nivel, codigo));
-  const { huecoSerie, huecoComparador } = fichaTerritorio(el.ficha, {
-    t, nivel, codigo, territorios, sinNivel: !tieneNivel, modo: v.modo, mapaId: estado.mapa, mapaDef: v.mapa, ficha: estado.ficha,
+  // F5: en los mapas sin sección, cómo se lee el indicador (el 20: política pública, no mercado)
+  if (nivelMinimoDe(v) === 'municipio') notas.push(t(`indicadores.${idTextos(estado.mapa)}.lectura`));
+  const { huecoSerie, huecoComparador, huecoDetalle } = fichaTerritorio(el.ficha, {
+    t, nivel, codigo, territorios, sinNivel: !tieneNivel, modo: v.modo, mapaId: idTextos(estado.mapa), mapaDef: v.mapa, ficha: estado.ficha,
+    grupo: v.modo === 'necesario' ? grupoDe(v.mapa) : null, etiqueta: etiquetaVista(v),   // F5
     supuestos: v.supuestos, anio: v.fuera ? v.fuera.anio : periodoBase ?? v.periodo, tipologia: v.tipologia, valor,
     estado: estadoCifraT, estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirTerritorio(null),
     fiabilidad, intervalo, enLimite, sueldo, notas,
   });
+  // F5: declaraciones de zona tensionada del municipio (indicador 20; datos/zonas_tensionadas.json)
+  if (v.modo === 'necesario' && v.mapa.detalle && nivel === 'municipio') {
+    cargarDetalle(v.mapa.detalle)
+      .then((d) => { if (yo === turnoFicha) fichaDeclaraciones(huecoDetalle, { t, declaraciones: d?.[codigo] ?? [], fecha: fechaLarga }); })
+      .catch((error) => console.error(error));
+  }
   if (tieneNivel) {
     seriesDeTerritorio(nivel, codigo, v)
       .then((s) => { if (yo === turnoFicha) pintarEvolucion(huecoSerie, s, v, codigo, nivel); })
@@ -664,7 +700,10 @@ async function exportarCsv(v) {
   const serie = v.seriesColor[0];
   const def = m.indicadores[serie];
   const derivado = v.modo === 'necesario' && usaSupuestos(v.mapa);
-  const id = v.modo === 'necesario' ? estado.mapa : def.indicador ?? def.por_defecto ?? serie;
+  const idMapa = v.modo === 'necesario' ? estado.mapa : def.indicador ?? def.por_defecto ?? serie;
+  const id = idTextos(idMapa);   // F5: los mapas por grupo toman los textos de su indicador
+  const grupo = v.modo === 'necesario' ? grupoDe(v.mapa) : null;
+  const categorias = v.modo === 'necesario' ? v.mapa.categorias : null;
   const nivel = nivelParaExportar(mapa.nivelVisible(), nivelesDe(serie));
   const periodo = v.fuera ? v.fuera.anio : v.periodo;
   const codigos = await cargarIndice(m, nivel);
@@ -678,7 +717,7 @@ async function exportarCsv(v) {
   const { cabecera, filas } = tablaCsv({
     t, codigos, valores: datos.valores, estados: datos.estados, nombresEstado: m.codificacion.estados,
     nivel, nombreDe: (codigo) => nombreParaExportar(nivel, codigo),
-    indicador: t(`indicadores.${id}.nombre`), unidad: t(`indicadores.${id}.unidad`),
+    indicador: [t(`indicadores.${id}.nombre`), grupo].filter(Boolean).join(' · '), unidad: t(`indicadores.${id}.unidad`),
     tipologia: v.tipologia ? t(`vocabulario.tipologia.${v.tipologia}`) : '', periodo,
     fuente: fuentesDe([serie], derivado),
     transformar: formula ? (x) => formula.calcular(x, v.supuestos) : null,
@@ -686,8 +725,10 @@ async function exportarCsv(v) {
     supuestos: derivado ? v.supuestos : null,
     desde: v.fuera ? v.fuera.desde : null,
     fiabilidad,
+    etiqueta: etiquetaPrivada(serie),   // F5: columna «etiqueta» (dato privado de oferta)
+    categoria: categorias ? (x) => t(`vocabulario.${categorias.vocabulario}.${x}`) : null,   // F5: indicador 20
   });
-  const nombre = nombreFichero({ mapa: id, periodo, tipologia: v.tipologia, nivel, extension: 'csv' });
+  const nombre = nombreFichero({ mapa: idMapa, periodo, tipologia: v.tipologia, nivel, extension: 'csv' });
   descargar(new Blob([textoCsv(cabecera, filas)], { type: 'text/csv;charset=utf-8' }), nombre);
   return nombre;
 }
@@ -698,21 +739,30 @@ async function exportarCsv(v) {
 async function exportarPng(v) {
   const llega = v.modo === 'llega';
   const periodo = v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo;
-  const titulo = llega ? `${t('interfaz.leyenda.llega_titulo')} · ${t(`fichas.${estado.ficha}`)}` : t(`indicadores.${estado.mapa}.nombre`);
-  const partes = [];
+  const titulo = llega ? `${t('interfaz.leyenda.llega_titulo')} · ${t(`fichas.${estado.ficha}`)}` : nombreMapa(estado.mapa);
+  const etiqueta = etiquetaVista(v);   // F5: dato privado de oferta, en el subtítulo y al pie
+  const partes = etiqueta ? [etiqueta] : [];
   if (llega) {
     const { vivienda, ingreso } = textosLlega(v, { sinCifra: true });
     partes.push(t('interfaz.leyenda.llega_sub', { vivienda, ingreso }));
-  } else partes.push(t(`indicadores.${estado.mapa}.unidad`));
+  } else partes.push(t(`indicadores.${idTextos(estado.mapa)}.unidad`));
   partes.push(t.periodo(periodo));
   if (v.fuera) partes.push(t('interfaz.exportar.estados.fuera', { desde: t.periodo(v.fuera.desde) }));
   if (v.tipologia) partes.push(t(`vocabulario.tipologia.${v.tipologia}`));
   if (!llega && usaSupuestos(v.mapa)) partes.push(t('interfaz.leyenda.supuestos', { superficie: t.numero(v.supuestos.superficie_m2), umbral: t.porcentaje(v.umbral) }));
   if (llega) partes.push(t('interfaz.exportar.umbral', { umbral: t.porcentaje(v.umbral) }));
 
+  const tramosColor = (n) => pasosDeRampa(n, colores.rampa.length).map((i) => colores.rampa[i]);
+  const cat = !llega && v.mapa.categorias;   // F5: mapa de categorías (indicador 20)
   const leyenda = llega
     ? { tipo: 'lista', elementos: colores.llega.map((color, i) => ({ color, texto: t(`interfaz.leyenda.llega_${i + 1}`) })) }
-    : {
+    : cat ? {
+      tipo: 'lista',
+      elementos: [...cat.valores].reverse().map((valor) => ({
+        color: tramosColor(v.mapa.cortes.length + 1)[v.mapa.cortes.filter((c) => valor >= c).length],
+        texto: t(`vocabulario.${cat.vocabulario}.${valor}`),
+      })),
+    } : {
       tipo: 'tramos',
       colores: pasosDeRampa(v.mapa.cortes.length + 1, colores.rampa.length).map((i) => colores.rampa[i]),
       etiquetas: v.mapa.cortes.map((corte) => t.numero(corte, decimalesDeCortes(v.mapa.cortes, v.mapa.decimales ?? 0))),
@@ -725,6 +775,7 @@ async function exportarPng(v) {
     leyenda,
     claves: { sinDato: t('interfaz.leyenda.sin_dato'), secreto: t('interfaz.leyenda.secreto') },
     pie: [
+      ...(etiqueta ? [etiqueta] : []),
       t('interfaz.exportar.fuente', { fuente: fuentesDe(v.seriesColor, calculado) }),
       t('interfaz.exportar.pie', { atribucion: m.mapa_base?.atribucion ?? '', fecha: fechaLarga(m.generado) }),
     ],

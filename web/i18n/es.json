@@ -140,7 +140,9 @@
         "superficie_m2": "superficie_m2",
         "umbral": "umbral",
         "contratos": "contratos",
-        "margen_pct": "margen_pct"
+        "margen_pct": "margen_pct",
+        "categoria": "categoria",
+        "etiqueta": "etiqueta"
       },
       "estados": {
         "dato": "dato",
@@ -206,7 +208,16 @@
         "12_segundo": "Tu ingreso: {neto} € + {segundo} € del segundo sueldo = {ingreso} € al mes.",
         "14_segundo": "Tu ingreso: ({neto} € + {segundo} € del segundo sueldo) × 14 pagas ÷ 12 = {ingreso} € al mes."
       },
-      "pagas_nota": "Las pagas extra se reparten en los 12 meses: el alquiler se paga doce veces al año."
+      "pagas_nota": "Las pagas extra se reparten en los 12 meses: el alquiler se paga doce veces al año.",
+      "zonas": {
+        "titulo": "Declaraciones de zona tensionada",
+        "municipio": "Todo el municipio",
+        "parcial": "Parte del municipio: {ambito}",
+        "vigencia": "En vigor del {inicio} al {fin}",
+        "resolucion": "Resolución del BOE {boe}",
+        "ninguna": "Sin declaraciones publicadas en el BOE.",
+        "nota": "Relación que publica el Ministerio de Vivienda y Agenda Urbana en el BOE cada trimestre (Ley 12/2023, art. 18): tres años de vigencia desde el día siguiente a la publicación. En las declaraciones de una parte del municipio, el mapa pinta el municipio entero con su propia categoría; el ámbito exacto es el de la declaración."
+      }
     },
     "comparador": {
       "titulo": "Comparar",
@@ -610,8 +621,8 @@
       "nombre": "Precio de oferta (alquiler y venta)",
       "unidad": "€ por m² (alquiler: por m² y mes)",
       "definicion": "Precio medio por metro cuadrado de los anuncios de alquiler y de venta.",
-      "calculo": "Cifra de los informes agregados de las salas de prensa de los portales; nunca anuncios individuales. Capa desmontable.",
-      "lectura": "Es precio de oferta: no se mezcla con contratos, escrituras ni tasaciones."
+      "calculo": "Cifra de los informes agregados de las salas de prensa de los portales, copiada a mano en datos/brutos/portales/ (formato en R/fuente_portales.R); nunca anuncios individuales. Un valor por año, portal y operación: el del informe anual o, si no lo hay, el del último mes publicado. Capa desmontable (PORTALES=FALSE por defecto).",
+      "lectura": "Es precio de oferta, un dato privado de oferta: no se mezcla con contratos, escrituras ni tasaciones, ni un portal con otro."
     },
     "esfuerzo_residentes": {
       "nombre": "Esfuerzo de residentes en alquiler",
@@ -657,10 +668,10 @@
     },
     "zona_tensionada": {
       "nombre": "Zona de mercado residencial tensionado declarada",
-      "unidad": "categoría (sí / no)",
-      "definicion": "Municipio o ámbito declarado zona de mercado residencial tensionado.",
-      "calculo": "Declaraciones publicadas en los diarios oficiales al amparo de la Ley 12/2023, con su fecha de efecto.",
-      "lectura": "Es una capa de política pública, no una medida del mercado."
+      "unidad": "categoría (2 todo el municipio, 1 una parte, 0 ninguna)",
+      "definicion": "Municipio o ámbito declarado zona de mercado residencial tensionado al amparo de la Ley 12/2023, en vigor a 31 de diciembre de cada año.",
+      "calculo": "Resoluciones trimestrales del MIVAU en el BOE con la relación de zonas declaradas por las comunidades autónomas (art. 18.2.d): vigencia de tres años desde el día siguiente a la publicación. 2 si la declaración cubre todo el municipio; 1 si cubre una parte (núcleos, barrios o distritos), que se pinta en el municipio entero con su propia categoría; 0 sin declaración en vigor.",
+      "lectura": "Es una capa de política pública, no una medida del mercado: dice dónde rigen las medidas de la Ley 12/2023 (límites a la renta de los nuevos contratos y definición propia de gran tenedor), no cuánto cuesta la vivienda."
     },
     "sueldo_necesario": {
       "nombre": "Sueldo neto necesario para no pasar del umbral",
@@ -749,7 +760,8 @@
       "tipologia_p25": "Tipología de la vivienda, primer cuartil",
       "tipologia_p75": "Tipología de la vivienda, tercer cuartil",
       "mes": "Mes de referencia",
-      "ficha": "Ficha (ingreso de referencia)"
+      "ficha": "Ficha (ingreso de referencia)",
+      "oferta_privada": "Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE)"
     },
     "edad": {
       "Y_LT18": "Menos de 18 años",
@@ -766,6 +778,9 @@
       "estimado": "Estimado: la sección cambió de límites y hubo que repartir",
       "secreto": "Sin dato por secreto estadístico",
       "ausente": "Sin dato"
+    },
+    "etiqueta": {
+      "portales": "Dato privado de oferta"
     },
     "familia": {
       "A": "Capacidad de pago",
@@ -799,6 +814,12 @@
       "ccaa": "Comunidad autónoma",
       "nacional": "España"
     },
+    "oferta_privada": {
+      "alquiler_idealista": "Alquiler, Idealista (dato privado de oferta)",
+      "alquiler_fotocasa": "Alquiler, Fotocasa (dato privado de oferta)",
+      "venta_idealista": "Venta, Idealista (dato privado de oferta)",
+      "venta_fotocasa": "Venta, Fotocasa (dato privado de oferta)"
+    },
     "sexo": {
       "M": "Hombres",
       "F": "Mujeres"
@@ -824,6 +845,11 @@
     "tipologia_p75": {
       "VC": "Vivienda colectiva, tercer cuartil",
       "VU": "Vivienda unifamiliar o rural, tercer cuartil"
+    },
+    "zona_tensionada": {
+      "0": "Sin declaración en vigor",
+      "1": "Declarada en parte del municipio",
+      "2": "Declarada en todo el municipio"
     }
   }
 }

@@ -40,6 +40,7 @@ Breakdown variable. Without a breakdown, `corte` and `grupo` are both `total`.
 | `tipologia_p75` | Dwelling type, third quartile |
 | `mes` | Reference month |
 | `ficha` | Token (reference income) |
+| `oferta_privada` | Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE) |
 
 ### `grupo`
 
@@ -79,6 +80,10 @@ Breakdown value, by `corte`.
 | `ficha` | `tartera` | Minimum wage |
 | `ficha` | `mochila` | Under-35 |
 | `ficha` | `transistor` | Pensioner |
+| `oferta_privada` | `alquiler_idealista` | Rent, Idealista (private asking-price data) |
+| `oferta_privada` | `alquiler_fotocasa` | Rent, Fotocasa (private asking-price data) |
+| `oferta_privada` | `venta_idealista` | Sale, Idealista (private asking-price data) |
+| `oferta_privada` | `venta_fotocasa` | Sale, Fotocasa (private asking-price data) |
 
 ### `fuente`
 
@@ -131,7 +136,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 | 17 | [`esfuerzo_hipotecario`](#esfuerzo_hipotecario) | Theoretical mortgage burden | % of income | v0.3 |
 | 18 | [`hogares_alquiler`](#hogares_alquiler) | Renting households | % of households | v0.1 |
 | 19 | [`viviendas_turisticas`](#viviendas_turisticas) | Tourist dwellings as a share of all dwellings | % of dwellings | v0.1 |
-| 20 | [`zona_tensionada`](#zona_tensionada) | Declared stressed housing market area | category (yes / no) | v0.4 |
+| 20 | [`zona_tensionada`](#zona_tensionada) | Declared stressed housing market area | category (2 whole municipality, 1 part of it, 0 none) | v0.4 |
 | 21 | [`sueldo_necesario`](#sueldo_necesario) | Net monthly pay needed to stay under the threshold | net € per month | v0.1 |
 | 22 | [`sobrecarga`](#sobrecarga) | Housing cost overburden rate (Eurostat method) | % of people | v0.1 |
 | 23 | [`busqueda_sin_exito`](#busqueda_sin_exito) | Unsuccessful housing search | % of people aged 16 and over | v0.1 |
@@ -292,8 +297,8 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Sources:** `portales`
 - **Version:** v0.4
 - **Definition:** Average price per square metre in rental and sale listings.
-- **Calculation:** Taken from the portals’ aggregated press reports; never individual listings. A removable layer.
-- **Reading:** An asking price: not combined with contracts, deeds or appraisals.
+- **Calculation:** Taken from the portals’ aggregated press reports, copied by hand into datos/brutos/portales/ (format in R/fuente\_portales.R); never individual listings. One value per year, portal and transaction: the annual report’s or, failing that, the last published month’s. A removable layer (PORTALES=FALSE by default).
+- **Reading:** An asking price, private asking-price data: not combined with contracts, deeds or appraisals, nor one portal with another.
 
 ### `esfuerzo_residentes`
 
@@ -371,13 +376,13 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 
 **20 · Declared stressed housing market area**
 
-- **Unit:** category (yes / no)
+- **Unit:** category (2 whole municipality, 1 part of it, 0 none)
 - **Family:** Structure and pressure
 - **Sources:** `zonas_tensionadas`
 - **Version:** v0.4
-- **Definition:** Municipality or area declared a stressed residential market zone.
-- **Calculation:** Declarations published in official gazettes under Law 12/2023, with their effective date.
-- **Reading:** A public policy layer, not a market measure.
+- **Definition:** Municipality or area declared a stressed residential market zone under Law 12/2023, in force on 31 December of each year.
+- **Calculation:** Quarterly Housing Ministry resolutions in the BOE listing the zones declared by the autonomous communities (art. 18.2.d): in force for three years from the day after publication. 2 if the declaration covers the whole municipality; 1 if it covers part of it (villages, neighbourhoods or districts), painted on the whole municipality with its own category; 0 with no declaration in force.
+- **Reading:** A public policy layer, not a market measure: it shows where the measures of Law 12/2023 apply (caps on new-contract rents and a local definition of large landlord), not how much housing costs.
 
 ### `sueldo_necesario`
 

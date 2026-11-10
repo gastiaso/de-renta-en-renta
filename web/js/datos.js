@@ -54,6 +54,9 @@ export const cargarCajas = (m) => opcional(m.cajas, {});
 export const cargarPerfiles = (m) => opcional(m.perfiles, {});
 // Percentil salarial (F3): { percentiles: [1, …, 99], anios: { '2024': { '00': [...], '09': [...] } } }.
 export const cargarSalarios = (m) => opcional(m.salarios, null);
+// F5: fichero de detalle de un mapa (`detalle` en el manifiesto; las declaraciones del indicador 20,
+// { municipio: [...] }), o null.
+export const cargarDetalle = (ruta) => opcional(ruta, null);
 
 // Periodos de una serie: años (enteros) o, si no son años, etiquetas («2024-08»).
 export const periodosDe = (def) => def?.periodos ?? def?.anios ?? [];
