@@ -4,6 +4,23 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (10-nov-2026, tarea 37: indicadores de «entrar», solo por tramos)
+
+- **Indicadores** (`R/derivados_entrar.R`, nuevo; solo con `PORTALES=TRUE`): superficie típica (alquiler mensual mediano / alquiler por m² mediano del SERPAVI, vivienda colectiva), brecha entre entrar y quedarse (oferta / alquiler por m² del SERPAVI, en comunidades, provincias y municipios, de 2015 a 2024), sueldo para entrar con la superficie típica y con 50 m², y barrera para entrar de la tartera, la mochila y el transistor con el ingreso del mismo año (`entrar_terminos()`, `entrar_calcular()`). Términos como los recibe la web; estado, el peor de sus términos (en la barrera, el de la oferta, o `ausente` sin ingreso); sin informe del portal o sin SERPAVI, `ausente`. Las cifras exactas no salen del pipeline: ni tabla larga, ni descargas, ni *release*.
+- **Solo por tramos** (decisión 18): a la web solo llega el tramo de la brecha, un entero por territorio y año, en `web/datos/portales/entrar/`, dentro de la capa, con la entrada `entrar` de su manifiesto (`entrar_escribir_web()`, desde `portales_exportar_web()`). Seis tramos, con cortes en 1; 1,15; 1,35; 1,6 y 2 y los límites de la compuerta, 0,8 y 2,5, en los extremos (`inventario/entrar_tramos.csv`, nuevo): cada tramo abarca al menos un 15 %. El sueldo para entrar, el de 50 m² y la barrera no tienen tramos propios: con un juego por indicador, cada uno cortaría la oferta por otro sitio y juntos la acotarían mucho más que cualquiera de ellos. Son la brecha por una cifra pública de «quedarse», así que la web los calcula como intervalo desde el tramo (`web/js/entrar.js`, nuevo; en R, `entrar_intervalo()` y `entrar_llega()`), y la barrera se lee con los tramos de «¿te llega?» y «en el límite», también con el sueldo de «Tu ficha».
+- **Compuerta** (con `PORTALES=TRUE`; objetivos `validacion_entrar` y `validacion_web_entrar`): de bloqueo, `entrar_tramos` (ancho mínimo; derivados sin cortes propios), `entrar_rango` (brechas fuera de 0,8–2,5), `entrar_estado`, `entrar_coherencia` (cada cifra exacta, dentro del intervalo de su tramo), `entrar_municipios` (256 en 2015 y 259 en 2024), `entrar_mediana` (cifras de la tarea 37, ±0,01), `entrar_mediana_rango` (2024, entre 1,30 y 1,40), `entrar_superficie` (77 m²) y `web_entrar` (ida y vuelta de los tramos; ningún valor que no sea un tramo); de aviso, `entrar_rango_detalle` (cada brecha de 2 o más: 17 cifras municipales) y `entrar_ipva`, el de la tarea 36 (provincias donde la oferta crece de 2021 a 2024 más del doble que los contratos nuevos del IPVA, con sus variaciones anuales encadenadas: 7 de 47).
+- **Web:** `unirCapas()` pasa la entrada `entrar` de la capa a `m.entrar`. La interfaz es de las tareas 38 y 39.
+- **Pruebas:** `test-entrar.R` y `pruebas/web/entrar.test.mjs`, con los mismos casos inventados (`pruebas/datos/entrar_inventado.json`): R y la página coinciden en el tramo, sus límites, los intervalos y «¿te llega?», y la página lee el fichero de tramos que escribe R.
+- **Documentación:** nota (ES y EN), §1, §4.1 y §7.8; LEEME de `R/`, `inventario/`, `pruebas/` y `web/`; backlog, tarea 37; plan §11, pregunta 54.
+
+### Por revisar (10-nov-2026, tarea 37; plan §11, pregunta 54)
+
+- **Cortes de la brecha y ancho mínimo** (15 %): seis tramos, no siete (decisión 15), y todos los años hay un tramo con más del 35 % de los municipios (tarea 51). Sustituyen a las filas de la brecha de `inventario/cortes_web_niveles.csv`, de 0,05 de ancho, que delatarían la oferta.
+- **Derivados como intervalo**, sin tramos propios ni mapa propio con tramos fijos; «Tu ficha» en «entrar», con el intervalo.
+- **Tolerancia de `entrar_mediana`** (±0,01): la referencia divide por el SERPAVI a la precisión de la fuente; el pipeline, a un decimal, como la web.
+- **Años sin SERPAVI** (2025 y 2026): hay oferta, pero no brecha; en la web, «entrar» llega hasta 2024.
+- **Catálogo:** los tres indicadores no entran, por ahora, en los 23 de `inventario/indicadores.csv`; sus textos para la web, con las tareas 38 y 39.
+
 ## [0.4.0] · 10-nov-2026
 
 Segunda publicación (decisión del autor, 10-nov-2026; plan §11, pregunta 42 revisada): lo hecho de F3 a F6 y las tareas 34 a 36 del backlog integrado, con el sitio descongelado. Sin la oferta de Idealista: su capa sale apagada y la web la anuncia «próximamente» (selector del mapa y familia «entrar» en la portada) hasta que Idealista autorice publicarla (pregunta 52). Los derivados de la oferta saldrán solo por tramos. Las cifras de Idealista ya citadas en la documentación y en la compuerta (una docena) se quedan en el repositorio con su fuente; no entra ninguna más.

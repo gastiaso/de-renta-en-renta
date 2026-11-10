@@ -14,13 +14,18 @@
 #   datos/portales/enlaces/<serie>.json: {nivel: {código: url}}, el informe de cada cifra;
 #   datos/portales/zonas/<serie>.json: {anios, escala, municipios: {municipio: [{zona, nombre, tipo,
 #     url, v, e}]}}: las zonas del portal y las localidades con su municipio, sin geometría (la
-#     ficha del municipio las listará: tarea 38).
+#     ficha del municipio las listará: tarea 38);
+#   datos/portales/entrar/<nivel>/brecha_entrar_quedarse/<año>.json y la entrada `entrar` del
+#     manifiesto (tarea 37; R/derivados_entrar.R, entrar_escribir_web()): solo el tramo de la brecha
+#     entre la oferta y el parque, nunca la cifra exacta (decisión 18).
 DIR_WEB_PORTALES <- file.path("datos", "portales")
 
 # Exportación de la capa encendida. `larga`: armonizar_portales(); `anual`: anualizar_portales();
 # `portales`: la capa mensual (para el último mes). Borra antes lo exportado la vez anterior.
+# `entrar` (entrar_tramos_web()) y `tramos_entrar` (inventario/entrar_tramos.csv): los tramos de
+# «entrar» (tarea 37), si los hay.
 portales_exportar_web <- function(larga, anual, portales, indicadores, jerarquia, territorios, vocabulario = NULL,
-                                  dir_web = "web", fecha = format(Sys.Date())) {
+                                  dir_web = "web", fecha = format(Sys.Date()), entrar = NULL, tramos_entrar = NULL) {
   dir <- file.path(dir_web, DIR_WEB_PORTALES)
   unlink(dir, recursive = TRUE)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
@@ -55,6 +60,12 @@ portales_exportar_web <- function(larga, anual, portales, indicadores, jerarquia
                      indicadores = if (length(entradas)) entradas else structure(list(), names = character()),
                      mapas = mapas_web(catalogo, indicadores, vocabulario))
   if (!length(manifiesto$mapas)) manifiesto$mapas <- structure(list(), names = character())
+  # Tarea 37: tramos de la brecha (solo el tramo; decision 18)
+  if (!is.null(entrar) && !is.null(tramos_entrar) && any(!is.na(entrar$tramo))) {
+    e <- entrar_escribir_web(entrar, tramos_entrar, indices, dir_web)
+    manifiesto$entrar <- e$manifiesto
+    extra <- c(extra, e$rutas)
+  }
   c(escribir(manifiesto, file.path(DIR_WEB_PORTALES, "manifiesto.json"), pretty = TRUE), valores, extra)
 }
 

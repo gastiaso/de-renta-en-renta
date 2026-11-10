@@ -674,6 +674,11 @@ bloque_zonas_tensionadas <- if (AMBITO != "") list(tar_target(larga_zonas_tensio
 # (datos/brutos/portales/idealista/) casada con inventario/portales_idealista_territorios.csv y los CSV
 # manuales de datos/brutos/portales/ (formato en el fichero de R), media anual con 9 meses como mínimo,
 # compuerta portales_* y exportación a web/datos/portales/ con la suya (web_portales). DIR_WEB, más abajo.
+# Tarea 37, indicadores de «entrar» (R/derivados_entrar.R): brecha entre la oferta y el parque, sueldo
+# para entrar (superficie típica y 50 m²) y barrera de las fichas, exactos solo dentro del pipeline,
+# para la compuerta entrar_* (que incluye el aviso de la tarea 36 con el IPVA); a la web, en la
+# carpeta de la capa, solo el tramo de la brecha (inventario/entrar_tramos.csv; decisión 18), con su
+# compuerta web_entrar.
 bloque_portales <- if (!PORTALES || AMBITO != "") list(
   tar_target(larga_portales, NULL),
   tar_target(ficheros_web_portales, portales_apagar_web(dir_web = DIR_WEB), format = "file")
@@ -692,13 +697,32 @@ bloque_portales <- if (!PORTALES || AMBITO != "") list(
       validar_tabla_larga(indicadores, fuentes, vocabulario)
   }),
   tar_target(resumen_portales, portales_resumen(portales_anual)),
+  # Tarea 37: «entrar»
+  tar_target(fichero_tramos_entrar, "inventario/entrar_tramos.csv", format = "file"),
+  tar_target(tramos_entrar, entrar_leer_tramos(fichero_tramos_entrar)),
+  tar_target(terminos_entrar, entrar_terminos(larga_portales, larga_serpavi, perfiles)),
+  tar_target(indicadores_entrar, entrar_calcular(terminos_entrar)),     # cifras exactas: no salen del pipeline
+  tar_target(validacion_entrar, validar_referencias(
+    entrar_comprobar(indicadores_entrar, terminos_entrar, tramos_entrar, larga_portales, larga_ipva, territorios_2021),
+    referencias)),
+  tar_target(tramos_web_entrar, {
+    validacion_entrar   # la compuerta va antes que la exportación
+    entrar_tramos_web(indicadores_entrar, tramos_entrar)
+  }),
+  tar_target(resumen_entrar, entrar_resumen(indicadores_entrar)),
   tar_target(ficheros_web_portales, portales_exportar_web(larga_portales, portales_anual, portales, indicadores,
                                                           jerarquia_2021, territorios_2021, vocabulario = vocabulario,
-                                                          dir_web = DIR_WEB), format = "file"),
+                                                          dir_web = DIR_WEB, entrar = tramos_web_entrar,
+                                                          tramos_entrar = tramos_entrar), format = "file"),
   tar_target(validacion_web_portales, {
     ficheros_web_portales
     validar_referencias(portales_comprobar_web(larga_portales, portales_anual, indicadores, jerarquia_2021,
                                                territorios_2021, dir_web = DIR_WEB), referencias)
+  }),
+  tar_target(validacion_web_entrar, {
+    ficheros_web_portales
+    validar_referencias(entrar_comprobar_web(tramos_web_entrar, tramos_entrar, jerarquia_2021, territorios_2021,
+                                             dir_web = DIR_WEB), referencias)
   })
 )
 

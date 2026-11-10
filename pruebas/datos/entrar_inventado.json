@@ -1,0 +1,28 @@
+{
+  "descripcion": "Casos inventados de la tarea 37, comunes a la prueba de R (pruebas/testthat/test-entrar.R) y a la de la web (pruebas/web/entrar.test.mjs): tramo de la brecha, límites del tramo, intervalos de las cifras derivadas y «¿te llega?». Cifras calculadas a mano; ninguna es de un portal.",
+  "tramos": { "cortes": [1, 1.15, 1.35, 1.6, 2], "limites": [0.8, 2.5], "aviso": 2 },
+  "brechas": [[0.85, 0], [0.999, 0], [1, 1], [1.149, 1], [1.15, 2], [1.349, 2], [1.35, 3], [1.5, 3], [1.6, 4], [1.99, 4], [2, 5], [2.4, 5]],
+  "casos": [
+    { "tramo": 2, "alquiler_m2": 10, "alquiler_mes": 600, "ingreso": 1500, "superficie": 50, "umbral": 0.3,
+      "limites": [1.15, 1.35], "sueldo_entrar": [2300, 2700], "sueldo_entrar_50": [1916.6666666666667, 2250],
+      "barrera_entrar": [0.38333333333333336, 0.45], "llega": [1, 2] },
+    { "tramo": 0, "alquiler_m2": 6, "alquiler_mes": 480, "ingreso": 1200, "superficie": 50, "umbral": 0.3,
+      "limites": [0.8, 1], "sueldo_entrar": [1280, 1600], "sueldo_entrar_50": [800, 1000],
+      "barrera_entrar": [0.2, 0.25], "llega": [0, 0] },
+    { "tramo": 5, "alquiler_m2": 12, "alquiler_mes": 900, "ingreso": 1000, "superficie": 50, "umbral": 0.3,
+      "limites": [2, 2.5], "sueldo_entrar": [6000, 7500], "sueldo_entrar_50": [4000, 5000],
+      "barrera_entrar": [1.2, 1.5], "llega": [2, 2] },
+    { "tramo": 3, "alquiler_m2": 8, "alquiler_mes": 560, "ingreso": 2000, "superficie": 50, "umbral": 0.3,
+      "limites": [1.35, 1.6], "sueldo_entrar": [2520, 2986.6666666666667], "sueldo_entrar_50": [1800, 2133.3333333333333],
+      "barrera_entrar": [0.27, 0.32], "llega": [0, 1] },
+    { "tramo": 1, "alquiler_m2": 10, "alquiler_mes": 700, "ingreso": 2500, "superficie": 70, "umbral": 0.4,
+      "limites": [1, 1.15], "sueldo_entrar": [1750, 2012.5], "sueldo_entrar_50": [1750, 2012.5],
+      "barrera_entrar": [0.28, 0.322], "llega": [0, 1] }
+  ],
+  "fichero": {
+    "indice": ["28001", "28002", "28003", "28004"],
+    "tramos": [2, null, 5, null],
+    "estados": ["dato", "ausente", "dato", "secreto"],
+    "json": "{\"v\":[2,null,5,null],\"e\":\"0302\"}"
+  }
+}

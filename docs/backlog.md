@@ -133,7 +133,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
   - **por revisar — familia:** los contratos nuevos son de «entrar» y `familia_alquiler` va por indicador (el 10 sigue en `quedarse`). Propuesta: `quedarse|nuevo=entrar`, con la sintaxis de `cortes_web`, leída por la web y el diccionario cuando el corte tenga mapa o ficha. Anotada en `notas` del indicador 10 y en el plan (§11, pregunta 53); la web no cambia. La exportación web no lleva el corte, y `validacion_web` pasa;
   - **para la tarea 37:** el aviso de provincias donde la oferta crece más del doble que los contratos nuevos, cuando estén los datos de Idealista (tarea 35).
 
-**37. Indicadores de «Entrar».**
+**37. Indicadores de «Entrar» · HECHA (10-nov-2026).**
 - `sueldo_entrar`: €/m² de oferta × superficie típica del municipio / umbral, y su mínimo de 50 m².
   - Superficie típica: alquiler mensual mediano / alquiler por m² mediano del SERPAVI, a escala de municipio.
   - Aviso en la ficha: los m² de un anuncio y los catastrales del SERPAVI no son la misma medida.
@@ -169,6 +169,15 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
   - En los municipios turísticos la oferta puede incluir alquiler de temporada y vivienda de gama alta, que el SERPAVI no recoge (vivienda habitual). Aviso en la ficha con brecha de 2 o más.
   - El SERPAVI separa vivienda colectiva y unifamiliar y no da total. Propuesta: comparar con la colectiva y decirlo; revisar los municipios donde predomina la unifamiliar.
   - Compuerta propuesta: bloqueo fuera de 0,8–2,5; aviso con 2 o más; mediana de 2024 entre 1,30 y 1,40.
+- **Hecha (10-nov-2026):**
+  - `R/derivados_entrar.R`, solo con `PORTALES=TRUE`: superficie típica, brecha (comunidades, provincias y municipios; España no, porque el SERPAVI no da su mediana), sueldo para entrar (superficie típica y 50 m²) y barrera de la tartera, la mochila y el transistor, con el ingreso del mismo año. Cifras exactas solo dentro del pipeline (`indicadores_entrar`), para la compuerta;
+  - **a la web, solo el tramo de la brecha** (`web/datos/portales/entrar/`, dentro de la capa; entrada `entrar` de su manifiesto), un entero por territorio y año. Con un juego de tramos por indicador, la oferta se reconstruiría cruzándolos: cada indicador es la oferta por una cifra pública distinta en cada territorio (el SERPAVI, la superficie típica, el ingreso de cada ficha), así que cada juego la corta por otro sitio. El sueldo para entrar, el de 50 m² y la barrera son la brecha por una cifra de «quedarse» y la web los da como intervalo desde el tramo (`web/js/entrar.js`), con «¿te llega?» y «en el límite»;
+  - cortes, por revisar, en `inventario/entrar_tramos.csv`: 1; 1,15; 1,35; 1,6 y 2, con los límites de bloqueo (0,8 y 2,5) en los extremos; seis tramos, cada uno de al menos un 15 % (la oferta queda acotada como mucho a ±7 %). Sustituyen a las filas de la brecha de `inventario/cortes_web_niveles.csv`;
+  - «Tu ficha»: el intervalo de la barrera con el sueldo del usuario, sin la oferta exacta en el navegador (`llegaEntrar()`), por revisar;
+  - compuerta (`validacion_entrar`, `validacion_web_entrar`): `entrar_tramos`, `entrar_rango`, `entrar_estado`, `entrar_coherencia`, `entrar_municipios` (256 y 259, iguales), `entrar_mediana` (pasa a ±0,01: con el SERPAVI a un decimal, como la web, y no a la precisión de la fuente, como el cálculo de arriba, la mediana se aleja de la referencia algo más de 0,005; por revisar), `entrar_mediana_rango`, `entrar_superficie` (77 m², igual) y `web_entrar`, de bloqueo; `entrar_rango_detalle` (17 cifras municipales de 2 o más: 2 en 2017, 2 en 2018, 5 en 2023 y 8 en 2024) y `entrar_ipva` (aviso de la tarea 36, con las 47 provincias que tienen las dos series: avisa en 7, Málaga, Illes Balears, Huelva, Alicante, Segovia, Girona y Santa Cruz de Tenerife), de aviso;
+  - prueba de que R y la página coinciden: `test-entrar.R` y `pruebas/web/entrar.test.mjs` comparten los casos inventados de `pruebas/datos/entrar_inventado.json` (tramo, límites, intervalos, «¿te llega?» y fichero de tramos);
+  - comprobado (10-nov-2026): con `PORTALES=TRUE`, el pipeline pasa la compuerta y exporta 30 ficheros de tramos (municipios, provincias y comunidades, de 2015 a 2024), que la prueba de la web lee sin ninguna cifra exacta; con el valor por defecto, la capa vuelve a quedar apagada y `tar_outdated()` sale vacío; las pruebas de R y de la web pasan;
+  - por revisar (plan §11, pregunta 54): el ancho mínimo y los cortes (seis tramos, no siete; más del 35 % de los municipios en un tramo todos los años), los derivados sin tramos propios, «Tu ficha», la tolerancia de la mediana, 2025 y 2026 sin SERPAVI (la web llega a 2024) y si los tres indicadores entran en el catálogo de los 23.
 
 **38. Mapa inicial de «Entrar».**
 - Vista inicial: `brecha_entrar_quedarse` por municipio, último año completo (decisión 9). `sueldo_entrar` y su mínimo de 50 m², en la ficha.

@@ -49,7 +49,8 @@ async function pedirCapa(ruta) {
 
 // Manifiesto general con las series y los mapas de las capas encendidas (`activa`), detrás de los
 // suyos; en `capas`, la cabecera de cada una (versión, fecha). Una clave que ya está en el general
-// no se pisa. Sin capas encendidas, el manifiesto tal cual.
+// no se pisa. Sin capas encendidas, el manifiesto tal cual. Tarea 37: la entrada `entrar` de una
+// capa (tramos de la brecha entre la oferta y el parque; js/entrar.js) pasa tal cual a `m.entrar`.
 export function unirCapas(m, capas) {
   const activas = (capas ?? []).filter((c) => c?.activa);
   if (!activas.length) return m;
@@ -61,7 +62,11 @@ export function unirCapas(m, capas) {
     return out;
   };
   const cabeceras = Object.fromEntries(activas.map((c) => [c.capa, { version: c.version, generado: c.generado }]));
-  return { ...m, indicadores: sumar(m.indicadores, 'indicadores'), mapas: sumar(m.mapas, 'mapas'), capas: cabeceras };
+  const entrar = activas.find((c) => c.entrar)?.entrar;
+  return {
+    ...m, indicadores: sumar(m.indicadores, 'indicadores'), mapas: sumar(m.mapas, 'mapas'), capas: cabeceras,
+    ...(entrar ? { entrar } : {}),
+  };
 }
 
 // Índice de un nivel: códigos en el orden de los valores (sección: texto de 10 dígitos;
