@@ -4,8 +4,8 @@ Atlas web de vivienda y salarios por sección censal, con fichas de perfil («pa
 
 Lectura recomendada antes de tocar nada, en este orden:
 1. Esta guía (reglas).
-2. `docs/backlog_f0.md` (qué toca ahora y cuándo está hecho).
-3. `docs/plan_integracion_atlas.md` (plan v0.41: fuente de verdad de las decisiones).
+2. `docs/backlog.md` (qué toca ahora y cuándo está hecho; `docs/backlog_f0.md` es el histórico de las tareas 0–32).
+3. `docs/plan_integracion_atlas.md` (plan v0.44: fuente de verdad de las decisiones).
 
 ## Estado (9 de noviembre de 2026)
 

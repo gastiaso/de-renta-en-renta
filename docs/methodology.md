@@ -21,7 +21,7 @@ This note describes how the atlas figures are produced: sources, constant geogra
 
 ## 1. Guiding question and scope
 
-**Question.** Where, since when and for whom the link between the cost of living and the ability to pay has broken (plan §1).
+**Question.** Who has any pay left after paying for housing? Where, since when and for whom the link between housing costs and pay has changed (plan §1). For those already on the board and for those just joining the game: the first family of indicators measures those who already rent (the rented stock) and the second, those looking for a home today (asking prices and new tenancies). They are never mixed in a single figure.
 
 **Audience.** Primary: data journalists and analysts in public bodies and organisations. Secondary: a layer for the general public.
 

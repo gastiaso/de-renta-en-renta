@@ -1,5 +1,7 @@
 # Backlog de F0 · cimientos
 
+> **Histórico** (tareas 0–32). Desde el 10-nov-2026, lo que toca está en `docs/backlog.md`; la tarea 32 sigue allí como tarea 46.
+
 Orden propuesto. Cada tarea termina con un criterio verificable. Lo que se decida en cada una se anota en el plan (`docs/plan_integracion_atlas.md`) o en `CHANGELOG.md`. Todo provisional.
 
 ## 0. Entorno y git · HECHA (6-nov-2026)
@@ -164,12 +166,21 @@ Las tareas 20–23 se hicieron en paralelo, cada una en su sesión, con el pipel
 
 31. **F6: CIS y calendario de fuentes · HECHA (10-nov-2026, plan v0.41).** La vivienda como problema en los barómetros del CIS, de enero de 2014 a octubre de 2026, España y personal (126 y 128 meses), con su compuerta frente a las notas de prensa del CIS y `datos/cis_vivienda.json`; se muestra en `historico.html` (bloque «La vivienda como problema (CIS)», 10-nov-2026). Calendario de las 27 fuentes del pipeline con su señal en `targets` (`fuentes_pendientes`; `cis_estudios`) y procedimiento en `docs/actualizacion.md`. Para el autor: microdatos del CIS (dato por comunidad; formulario con condiciones) y los cinco XLSX de 2025 que solo están en PDF. El 10-nov-2026 toca `inss_pensiones` (2025 publicado; hace falta la retención de la AEAT de 2025, que sale el 11-11). Propuestas por revisar: plan §11, pregunta 48.
 
+32. **Revisión de las preguntas 43–48 · POR HACER (10-nov-2026, plan v0.42).** Decisiones del autor, con su porqué en el plan (§11):
+- 43: con dos sueldos, 70 m² por defecto (h); comprobar el nivel de la vista inicial (e).
+- 44: ficha «Joven de 26 a 35» (e); mochila de 2015–2018 como `estimado` y comprobación con la ECV, con alerta a más de 2 puntos de 2019 y corrección solo si salta, validada en 2020–2024 (f); tolerancia de `mochila_ecv` por tamaño de muestra (g).
+- 45: indicador 11 desde Registradores, con fila nueva en `inventario/fuentes.csv` (licencia y nivel comprobados), descarga manual y ODbL en `LICENCIA_DATOS.md` y en el paquete; nunca mezclado con el Notariado (a). Coherencia del valor tasado con Registradores (b). El 17 con la renta por hogar del ADRH (d). Tipo del Banco de España (e).
+- 46: prórrogas de las zonas tensionadas (e).
+- 47: histórico en el paquete de la v1.0 (a); tipo de los préstamos nuevos y euríbor con MIBOR marcado (c); notas de la página sobre el sueldo de la Contabilidad Nacional (d); revisión del Banco de España como alerta (g).
+- 48: CSV con los seis meses del CIS que solo están en PDF (a); criterio de la v1.0, «avisa» (g).
+
 **Siguiente** (revisado el 10-nov-2026, tras las tareas 24–26):
 Sin releases intermedios hasta la v1.0 (decisión del autor, 9-nov-2026): los datos de las tareas 20 en adelante se publican juntos en la v1.0; el sitio sigue con los del `v0.1.0`.
+**Primero:** revisión de las preguntas 43–48 (tarea 32).
 1. **Portada y mapa por niveles** (tareas 24–26) · HECHO (10-nov-2026); queda la imagen para redes (opcional).
 3. **Indicador 7, mochila y percentil salarial** (tarea 27) · HECHO (10-nov-2026); sus propuestas, por decidir (plan §11, pregunta 44).
 4. **F4: compraventa** (tarea 28) · HECHO, con sus mapas (tarea 29; cortes por revisar, pregunta 45).
-4 bis. **F5: presión** (tarea 29) · HECHO. **Portales:** el autor deja los CSV de los informes en `datos/brutos/portales/` (formato en `R/fuente_portales.R`) y lanza el pipeline con `PORTALES=TRUE`.
-5. **Ficha de sección:** banda SERPAVI–oferta, cuando haya datos de portales; **módulo de supuestos**.
+4 bis. **F5: presión** (tarea 29) · HECHO. **Portales: en la v1.1** (decisión del autor, 10-nov-2026; plan §11, pregunta 49). Entonces, el autor deja los CSV de los informes en `datos/brutos/portales/` (formato en `R/fuente_portales.R`) y lanza el pipeline con `PORTALES=TRUE`. La v1.0 sale con la capa apagada.
+5. **Ficha de sección:** **módulo de supuestos**. La banda SERPAVI–oferta, en la v1.1, con los datos de portales (pregunta 49).
 5 bis. **F6, flecos:** decidir si se leen los PDF del CIS para cerrar 2025 (`pdftools`); tabla de paso desde el seccionado de 2011 y primeras historias. 14 pagas y segundo sueldo, hechos (10-nov-2026).
 6. **Preguntas abiertas de las tareas 20–23**, por decidir: renta 1–3 de provincia, comunidad y España (tabla 53689 del ADRH, otra descarga); descargas que llegan cortadas sin error (`descargar_con_cache()`; la tabla 71129 del INE también llegó cortada el 10-nov-2026, y el módulo histórico ya comprueba las suyas con `hist_descargar_entera()`: propuesta, llevarlo a `descargar_con_cache()`); `geo_cobertura_origenes()`, lenta; corte por sexo del indicador 5; el transistor en la barrera de la tabla larga (+549.950 filas); el ejemplo de Python de la página «Datos», que solo se prueba con `pyarrow` instalado; nombres de Urbasa y Andía (otra fuente).

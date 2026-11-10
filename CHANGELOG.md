@@ -4,6 +4,34 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (10-nov-2026, pregunta nueva y oferta de Idealista)
+
+- Pregunta rectora nueva en el plan, la nota (ES y EN), el README y los diccionarios (`sitio.gancho`, `sitio.lema`, `sitio.familias`).
+- `inventario/portales_idealista_territorios.csv`: los 815 territorios de los informes de alquiler de Idealista, con su código del INE (286 municipios, donde vive el 59,3 % de la población).
+- `docs/metodo_corto.md`: borrador del método en dos páginas, con la tabla de licencias.
+- `docs/backlog.md`: tablas del INE con contratos nuevos (59004 y 59005), contraste con la oferta, cifras de referencia de la brecha entre entrar y quedarse, tramos calculados del indicador 14 y lectura de la metodología del SERPAVI de 18-mar-2026.
+
+### Decidido (10-nov-2026, backlog integrado y tramos de color; plan v0.44)
+
+- **Mapa inicial de «Entrar»** (51): la brecha entre oferta y parque; los sueldos para entrar, en la ficha.
+- **Indicador 14**, fuera del selector del mapa; **indicador 15**, «Peso del alquiler en el ingreso».
+- **Tramos de color:** cortes fijos entre años, tres juegos por escala y siete tramos. Propuesta en `inventario/cortes_web_niveles.csv`.
+- **Lectura externa:** dos lectores. **Pensionista:** media con aviso.
+
+### Decidido (10-nov-2026, entrar y quedarse; plan v0.43)
+
+- **Dos familias** (50): «Quedarse» (parque alquilado, SERPAVI) y «Entrar» (oferta de Idealista e IPVA de contratos nuevos), sin mezclarlas; pregunta rectora reformulada; mapa inicial de «Entrar» por municipio.
+- **Sueldo necesario** con dos cifras: alquiler mediano real y mínimo teórico de 50 m².
+- **Idealista**, solo en la web; el alquiler de oferta vuelve a la v1.0 (se revierte la 49).
+- **Backlog integrado** hacia la v1.0: `docs/backlog.md` (tareas 33–61); `docs/backlog_f0.md` queda como histórico.
+
+### Decidido (10-nov-2026, revisión de las preguntas abiertas 43–48; plan v0.42)
+
+- **Indicador 11** (45): Registradores (Estadística Registral Inmobiliaria, ODbL) en lugar del Notariado, a escala de municipio y sin mezclar fuentes.
+- **Mochila de 2015–2018** (44): `estimado`, con comprobación con la ECV.
+- **Resto** (43–48): según el plan, §11; tareas en el backlog (32). Criterio de F6: el calendario «avisa».
+- **Corte de la v1.0** (49): los datos de portales (indicador 13 y banda SERPAVI–oferta) pasan a la v1.1; la v1.0 no depende de datos de terceros.
+
 ### Añadido (10-nov-2026, F6: la vivienda como problema en la máquina del tiempo)
 
 - `historico.html`: bloque «La vivienda como problema (CIS)», tras las series del histórico y en el mismo eje de años desde 1987: España y personal, mensual desde 2014, con la línea cortada en los 15 y 13 meses sin dato (agosto no cuenta: no hay barómetro) y los meses sueltos como punto; globo con el mes, las dos cifras, el estudio y las entrevistas; lectura generada (primer dato, máximo, último y meses sin dato); cita del CIS con su licencia (CC BY 4.0), advertencia «opinión, no registro» y tabla de cifras. Sin `datos/cis_vivienda.json`, el bloque dice que no hay datos.

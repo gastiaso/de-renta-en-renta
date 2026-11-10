@@ -21,7 +21,7 @@ Esta nota describe cómo se obtienen las cifras del atlas: fuentes, geografía c
 
 ## 1. Pregunta rectora y alcance
 
-**Pregunta.** Dónde, desde cuándo y para quién se ha roto la relación entre lo que cuesta vivir y la capacidad de pago (plan §1).
+**Pregunta.** ¿A quién le queda sueldo después de pagar la vivienda? Dónde, desde cuándo y para quién ha cambiado la relación entre lo que cuesta la vivienda y lo que se cobra (plan §1). Para quien ya está en el tablero y para quien entra nuevo en la partida: la primera familia de indicadores mide a quien ya vive de alquiler (el parque alquilado) y la segunda, a quien busca piso hoy (la oferta y los contratos nuevos). No se mezclan en una misma cifra.
 
 **Público.** Principal: periodistas de datos y técnicos de administraciones y entidades. Secundario: capa ciudadana.
 

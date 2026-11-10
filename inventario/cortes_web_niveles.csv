@@ -1,0 +1,39 @@
+indicador,juego,metodo,anio_inicial,anio_ancla,cortes,max_tramo_anio_inicial,max_tramo_anio_ancla,reparto
+renta_persona,seccion,anclado,2015,2024,10000;12000;13500;15000;16500;19500,48,19,seccion 2015: 48-24-11-6-4-4-3 / seccion 2024: 3-13-16-18-15-19-16
+renta_persona,municipio,anclado,2015,2024,10000;12500;14000;15500;16500;18000,53,21,municipio 2015: 53-34-8-3-1-1-0 / municipio 2024: 0-14-17-21-14-16-17
+renta_hogar,seccion,recalibrado,2015,2024,23000;26000;29000;32000;36000;42000,33,29,seccion 2015: 33-19-15-10-9-7-8 / seccion 2024: 1-4-9-13-22-22-29
+renta_hogar,municipio,anclado,2015,2024,23000;28000;31000;33000;36000;42000,49,19,municipio 2015: 49-28-10-5-4-3-2 / municipio 2024: 2-16-17-14-17-19-16
+renta_uc_mediana,seccion,anclado,2015,2024,13500;16000;18000;20000;22000;25500,48,19,seccion 2015: 48-24-11-7-3-4-3 / seccion 2024: 3-14-19-19-10-16-18
+renta_uc_mediana,municipio,anclado,2015,2024,12000;16000;18000;19000;20500;23000,46,23,municipio 2015: 40-46-9-2-2-1-0 / municipio 2024: 0-17-23-8-15-20-17
+peso_salarios,seccion,recalibrado,2015,2024,47;52;56;60;63;68,17,17,seccion 2015: 17-14-14-16-11-13-15 / seccion 2024: 13-13-15-17-13-16-13
+peso_salarios,municipio,recalibrado,2015,2024,41;46;50;54;58;63,23,17,municipio 2015: 23-16-12-12-11-13-13 / municipio 2024: 13-13-14-15-14-17-14
+peso_salarios,provincia_ccaa,recalibrado,2015,2024,55;57;58;60;61;63,22,21,provincia 2015: 22-16-14-18-8-12-8 / provincia 2024: 19-12-21-17-12-8-12 / ccaa 2015: 12-12-12-18-12-18-18 / ccaa 2024: 11-16-16-11-16-16-16
+bajo_60_mediana,seccion,recalibrado,2015,2024,10;14;18;22;26;33,19,16,seccion 2015: 9-12-14-14-13-18-19 / seccion 2024: 14-15-16-15-14-16-10
+bajo_60_mediana,municipio,recalibrado,2015,2024,13;16;20;23;28;33,23,19,municipio 2015: 9-9-17-11-17-14-23 / municipio 2024: 18-13-19-12-18-12-8
+bajo_60_mediana,provincia_ccaa,recalibrado,2015,2024,16;17;19;23;26;29,33,21,provincia 2015: 6-6-16-22-6-10-33 / provincia 2024: 13-15-13-19-21-10-8 / ccaa 2015: 0-0-29-24-0-18-29 / ccaa 2024: 16-16-21-11-21-5-11
+gini,seccion,recalibrado,2015,2024,26;27.5;28.5;30;31.5;34,26,27,seccion 2015: 5-7-8-15-17-23-26 / seccion 2024: 27-17-11-15-11-10-8
+gini,municipio,recalibrado,2015,2024,25.5;27;28;29.5;30.5;32.5,27,22,municipio 2015: 5-8-8-16-13-22-27 / municipio 2024: 22-19-14-17-8-10-9
+gini,provincia_ccaa,anclado,2015,2024,28.75;29;30;30.75;31.5;34,59,32,provincia 2015: 0-0-0-6-8-41-45 / provincia 2024: 19-8-31-15-10-12-6 / ccaa 2015: 0-0-0-0-0-41-59 / ccaa 2024: 5-11-32-11-16-11-16
+alquiler_mes,seccion,recalibrado,2015,2024,325;400;450;500;600;700,23,30,seccion 2015: 23-22-14-11-15-7-7 / seccion 2024: 4-10-9-11-20-16-30
+alquiler_mes,municipio,anclado,2015,2024,300;325;375;400;475;575,37,23,municipio 2015: 37-20-19-5-12-5-2 / municipio 2024: 7-10-18-6-23-18-17
+alquiler_mes,provincia_ccaa,anclado,2015,2024,350;450;475;500;550;650,54,26,provincia 2015: 33-54-2-0-6-4-0 / provincia 2024: 0-23-13-19-13-15-15 / ccaa 2015: 18-53-0-0-18-12-0 / ccaa 2024: 0-5-26-5-16-21-26
+alquiler_m2,seccion,recalibrado,2015,2024,4;4.5;5.5;6.5;8;10,25,24,seccion 2015: 25-11-20-14-13-10-6 / seccion 2024: 8-5-11-15-19-19-24
+alquiler_m2,municipio,recalibrado,2015,2024,3;3.5;4;4.5;5.5;6.5,25,29,municipio 2015: 25-18-15-13-17-8-5 / municipio 2024: 5-8-12-11-19-16-29
+alquiler_m2,provincia_ccaa,anclado,2015,2024,5;5.5;6;6.5;7.5;9,69,32,provincia 2015: 69-17-4-2-2-6-0 / provincia 2024: 12-15-12-17-21-8-15 / ccaa 2015: 41-29-0-6-12-12-0 / ccaa 2024: 5-5-21-5-26-5-32
+var_alquiler,municipio,anclado,2015,2024,0;2.5;3;3.25;3.75;4.25,50,22,municipio 2015: 50-45-2-1-1-0-1 / municipio 2024: 0-13-19-14-22-12-19
+var_alquiler,provincia_ccaa,anclado,2015,2024,-0.25;2.75;3;3.25;3.5;3.75,56,29,provincia 2015: 56-44-0-0-0-0-0 / provincia 2024: 0-15-10-25-15-10-25 / ccaa 2015: 47-53-0-0-0-0-0 / ccaa 2024: 0-18-0-24-29-12-18
+valor_tasado_m2,municipio,anclado_septiles,2015,2025,1000;1400;1600;2100;2500;2900,39,18,municipio 2015: 39-35-13-8-4-0-0 / municipio 2025: 12-18-12-18-13-13-14
+valor_tasado_m2,provincia_ccaa,anclado_septiles,2015,2025,1100;1300;1500;1700;1900;2400,46,27,provincia 2015: 46-27-12-2-2-10-2 / provincia 2025: 27-10-17-12-12-12-12 / ccaa 2015: 21-32-21-5-5-11-5 / ccaa 2025: 11-11-5-16-21-16-21
+anios_salario_compra,municipio,recalibrado,2015,2024,3.5;4;4.5;5.5;6;7.5,28,20,municipio 2015: 12-11-15-28-8-18-7 / municipio 2024: 15-10-10-20-12-15-18
+anios_salario_compra,provincia_ccaa,anclado_septiles,2015,2024,3.5;4;4.5;5;6;6.5,41,24,provincia 2015: 0-6-12-25-25-12-19 / provincia 2024: 21-15-21-8-15-8-12 / ccaa 2015: 0-0-6-12-41-18-24 / ccaa 2024: 0-18-18-12-18-12-24
+esfuerzo_hipotecario,municipio,recalibrado,2015,2024,15;18;21;23;27;33,21,21,municipio 2015: 5-15-18-13-21-16-11 / municipio 2024: 11-9-14-8-18-18-21
+esfuerzo_hipotecario,provincia_ccaa,recalibrado,2015,2024,17;19;21;24;27;30,29,27,provincia 2015: 0-8-10-29-19-6-27 / provincia 2024: 27-10-19-8-12-10-12 / ccaa 2015: 0-0-6-29-24-12-29 / ccaa 2024: 6-12-18-12-12-18-24
+hogares_alquiler,seccion,recalibrado,2021,2021,7;10;12;15;19;24,16,16,seccion 2021: 14-16-11-15-16-13-15
+hogares_alquiler,provincia_ccaa,recalibrado,2021,2021,11;12;13;14;16;21,26,26,provincia 2021: 25-15-10-15-12-10-13 / ccaa 2021: 5-26-5-16-16-11-21
+sueldo_necesario,seccion,recalibrado,2015,2024,650;800;950;1100;1300;1650,22,25,seccion 2015: 22-20-17-12-11-12-7 / seccion 2024: 6-9-11-13-16-20-25
+sueldo_necesario,municipio,recalibrado,2015,2024,500;600;650;750;900;1100,23,28,municipio 2015: 23-21-9-16-16-11-5 / municipio 2024: 5-10-7-14-17-19-28
+sueldo_necesario,provincia_ccaa,anclado,2015,2024,800;900;1000;1100;1200;1500,60,32,provincia 2015: 60-19-10-2-2-6-0 / provincia 2024: 10-13-15-19-13-13-15 / ccaa 2015: 41-24-6-6-12-12-0 / ccaa 2024: 0-5-21-11-16-16-32
+precio_oferta,municipio,anclado,2015,2025,5.5;8;9.5;10.5;12.5;15,50,23,municipio 2015: 50-38-6-2-3-1-0 / municipio 2025: 0-13-23-12-20-14-18
+precio_oferta,provincia_ccaa,anclado,2015,2025,6;8.5;9;10;11.5;14,65,31,provincia 2015: 65-27-0-0-8-0-0 / provincia 2025: 0-31-14-16-16-8-16 / ccaa 2015: 44-39-0-11-6-0-0 / ccaa 2025: 0-11-17-11-22-11-28
+brecha_entrar_quedarse,municipio,anclado,2015,2024,1.15;1.25;1.3;1.35;1.45;1.65,48,20,municipio 2015: 48-30-9-5-5-2-0 / municipio 2024: 4-16-18-11-20-15-16
+brecha_entrar_quedarse,provincia_ccaa,anclado,2015,2024,1.2;1.3;1.35;1.45;1.5;1.6,60,25,provincia 2015: 60-21-11-9-0-0-0 / provincia 2024: 2-25-12-18-18-12-14 / ccaa 2015: 50-31-6-12-0-0-0 / ccaa 2024: 6-6-11-22-17-17-22

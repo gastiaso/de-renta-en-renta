@@ -4,7 +4,7 @@
 
 **Web:** <https://gastiaso.github.io/de-renta-en-renta/> · **Datos:** [release `v0.1.0`](https://github.com/gastiaso/de-renta-en-renta/releases/tag/v0.1.0)
 
-**Pregunta:** dónde, desde cuándo y para quién se ha roto la relación entre lo que cuesta vivir y la capacidad de pago.
+**Pregunta:** ¿A quién le queda sueldo después de pagar la vivienda? Dónde, desde cuándo y para quién ha cambiado la relación entre lo que cuesta la vivienda y lo que se cobra. Para quien ya está en el tablero y para quien entra nuevo en la partida: para quien ya vive de alquiler y para quien busca piso hoy.
 
 Atlas web de vivienda, salarios y otros indicadores sociales para España, por sección censal y desde 2015. Incluye fichas de perfil (hogar del barrio, joven menor de 35, salario mínimo, pensionista y el sueldo de cada usuario) y una sección europea de sobrecarga por gastos de vivienda con el método de Eurostat.
 
@@ -15,7 +15,7 @@ Atlas web de vivienda, salarios y otros indicadores sociales para España, por s
 v0.1 publicada (9-nov-2026): mapa por sección censal de 2015 a 2024 (renta, alquiler, sueldo necesario, esfuerzo, hogares en alquiler y viviendas turísticas), «Tu sueldo» con las fichas de perfil, la sección europea de sobrecarga y la nota metodológica en castellano e inglés. Los datos (tabla larga en Parquet, mapa base y datos de la web) van en el release `v0.1.0`.
 
 - Plan: `docs/plan_integracion_atlas.md`
-- Primeras tareas: `docs/backlog_f0.md`
+- Tareas: `docs/backlog.md` (histórico: `docs/backlog_f0.md`)
 - Reglas de trabajo: `docs/guia_de_trabajo.md`
 - Nota metodológica: `docs/metodologia.md` (en inglés, `docs/methodology.md`)
 
