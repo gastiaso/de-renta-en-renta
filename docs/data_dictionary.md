@@ -300,7 +300,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Sources:** `portales`
 - **Version:** v0.4
 - **Definition:** Average price per square metre in rental and sale listings.
-- **Calculation:** Taken from the portals’ aggregated press reports, copied by hand into datos/brutos/portales/ (format in R/fuente\_portales.R); never individual listings. One value per year, portal and transaction: the annual report’s or, failing that, the last published month’s. A removable layer (PORTALES=FALSE by default).
+- **Calculation:** Monthly figure from each portal’s aggregated press-room reports (Idealista: the author’s extraction, matched to INE codes in inventario/portales\_idealista\_territorios.csv; format in R/fuente\_portales.R); never individual listings. One value per year, portal and transaction: the mean of the published months, with at least 9 (with fewer, no data), or the annual figure if the portal publishes one; at each level, the one the portal publishes for that level. The last month of the year is no longer used (10 Nov 2026). A removable layer (PORTALES=FALSE by default), web only: not in the long table or the downloads.
 - **Reading:** An asking price, private asking-price data: not combined with contracts, deeds or appraisals, nor one portal with another.
 
 ### `esfuerzo_residentes`

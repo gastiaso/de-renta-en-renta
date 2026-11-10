@@ -1,9 +1,34 @@
-portal,operacion,nivel,geo_id,nombre,periodo,valor,informe,url
-idealista,alquiler,municipio,28001,Uno,2024-11,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/2024-11
-idealista,alquiler,municipio,28001,Uno,2024-12,12.2,Informe inventado para pruebas,https://ejemplo.invalid/idealista/2024-12
-idealista,alquiler,municipio,28002,Dos,2024-12,9.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/2024-12
-idealista,alquiler,municipio,28001,Uno,2025,13.3,Informe anual inventado para pruebas,https://ejemplo.invalid/idealista/2025
-idealista,alquiler,municipio,28001,Uno,2025-12,14.4,Informe inventado para pruebas,https://ejemplo.invalid/idealista/2025-12
-idealista,alquiler,distrito,2800101,Uno distrito 01,2025-12,15.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/2025-12
-fotocasa,venta,municipio,28001,Uno,2025-06,2222.2,Informe inventado para pruebas,https://ejemplo.invalid/fotocasa/2025-06
-fotocasa,venta,municipio,28002,Dos,2025-06,1111.1,Informe inventado para pruebas,https://ejemplo.invalid/fotocasa/2025-06
+portal,operacion,nivel,geo_id,zona,nombre,periodo,valor,informe,url
+idealista,alquiler,municipio,28001,,Uno,2024-01,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2024-02,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2024-03,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2024-04,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2024-05,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2024-06,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2024-07,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2024-08,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2024-09,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2024-10,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2024-11,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2024-12,11.1,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28002,,Dos,2024-05,9.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/dos
+idealista,alquiler,municipio,28002,,Dos,2024-06,9.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/dos
+idealista,alquiler,municipio,28002,,Dos,2024-07,9.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/dos
+idealista,alquiler,municipio,28002,,Dos,2024-08,9.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/dos
+idealista,alquiler,municipio,28002,,Dos,2024-09,9.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/dos
+idealista,alquiler,municipio,28002,,Dos,2024-10,9.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/dos
+idealista,alquiler,municipio,28002,,Dos,2024-11,9.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/dos
+idealista,alquiler,municipio,28002,,Dos,2024-12,9.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/dos
+idealista,alquiler,municipio,28001,,Uno,2025,13.3,Informe anual inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,municipio,28001,,Uno,2025-12,14.4,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno
+idealista,alquiler,zona,28001,centro,Centro,2025-01,15.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno/centro
+idealista,alquiler,zona,28001,centro,Centro,2025-02,15.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno/centro
+idealista,alquiler,zona,28001,centro,Centro,2025-03,15.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno/centro
+idealista,alquiler,zona,28001,centro,Centro,2025-04,15.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno/centro
+idealista,alquiler,zona,28001,centro,Centro,2025-05,15.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno/centro
+idealista,alquiler,zona,28001,centro,Centro,2025-06,15.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno/centro
+idealista,alquiler,zona,28001,centro,Centro,2025-07,15.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno/centro
+idealista,alquiler,zona,28001,centro,Centro,2025-08,15.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno/centro
+idealista,alquiler,zona,28001,centro,Centro,2025-09,15.5,Informe inventado para pruebas,https://ejemplo.invalid/idealista/uno/centro
+fotocasa,venta,municipio,28001,,Uno,2025,2222.2,Informe inventado para pruebas,https://ejemplo.invalid/fotocasa/uno
+fotocasa,venta,municipio,28002,,Dos,2025,1111.1,Informe inventado para pruebas,https://ejemplo.invalid/fotocasa/dos

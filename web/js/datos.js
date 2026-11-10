@@ -7,6 +7,11 @@
 // (geometría real, valores inventados; web/herramientas/generar_ejemplo.R).
 
 const MANIFIESTOS = ['datos/manifiesto.json', 'datos/ejemplo/manifiesto.json'];
+// Capas desmontables (guía, regla 6), aparte de la exportación general: cada una con su manifiesto,
+// que el pipeline escribe siempre (apagada, {"capa": …, "activa": false}) y el flujo de Pages también
+// (R/web_portales.R; docs/publicacion.md). Sus series y mapas se suman a los del manifiesto general
+// (unirCapas). La muestra de datos/ejemplo/ no tiene capas.
+const CAPAS = ['datos/portales/manifiesto.json'];
 const memoria = new Map();
 
 async function pedir(ruta) {
@@ -25,9 +30,38 @@ const opcional = (ruta, vacio) => (ruta ? recordar(ruta, () => pedir(ruta)) : Pr
 export async function cargarManifiesto() {
   for (const ruta of MANIFIESTOS) {
     const respuesta = await fetch(ruta, { cache: 'no-cache' });
-    if (respuesta.ok) return { ...(await respuesta.json()), ruta };
+    if (!respuesta.ok) continue;
+    const m = { ...(await respuesta.json()), ruta };
+    return m.ejemplo ? m : unirCapas(m, await Promise.all(CAPAS.map(pedirCapa)));
   }
   throw new Error('No hay manifiesto de datos');
+}
+
+// Manifiesto de una capa, o null si no se puede leer (la web sigue sin ella).
+async function pedirCapa(ruta) {
+  try {
+    const respuesta = await fetch(ruta, { cache: 'no-cache' });
+    return respuesta.ok ? await respuesta.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+// Manifiesto general con las series y los mapas de las capas encendidas (`activa`), detrás de los
+// suyos; en `capas`, la cabecera de cada una (versión, fecha). Una clave que ya está en el general
+// no se pisa. Sin capas encendidas, el manifiesto tal cual.
+export function unirCapas(m, capas) {
+  const activas = (capas ?? []).filter((c) => c?.activa);
+  if (!activas.length) return m;
+  const sumar = (general, campo) => {
+    const out = { ...(general ?? {}) };
+    for (const capa of activas) {
+      for (const [clave, def] of Object.entries(capa[campo] ?? {})) if (!(clave in out)) out[clave] = def;
+    }
+    return out;
+  };
+  const cabeceras = Object.fromEntries(activas.map((c) => [c.capa, { version: c.version, generado: c.generado }]));
+  return { ...m, indicadores: sumar(m.indicadores, 'indicadores'), mapas: sumar(m.mapas, 'mapas'), capas: cabeceras };
 }
 
 // Índice de un nivel: códigos en el orden de los valores (sección: texto de 10 dígitos;

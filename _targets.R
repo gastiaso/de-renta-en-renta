@@ -666,19 +666,39 @@ bloque_zonas_tensionadas <- if (AMBITO != "") list(tar_target(larga_zonas_tensio
   tar_target(resumen_larga_zonas_tensionadas, resumen_zonas_tensionadas(larga_zonas_tensionadas, zonas_tensionadas))
 )
 
-# F5, indicador 13: precios de oferta de los portales (R/fuente_portales.R). Capa desmontable (plan §2.2,
-# regla 6): con PORTALES distinto de TRUE (por defecto), larga_portales es NULL y no se lee nada; la
-# tabla larga y la web quedan como sin capa. Con PORTALES=TRUE, los CSV que el autor copia a mano de
-# los informes agregados de las salas de prensa en datos/brutos/portales/ (formato en el fichero de R),
-# con su compuerta portales_*; en la tabla larga, corte oferta_privada (dato privado de oferta).
-bloque_portales <- if (!PORTALES || AMBITO != "") list(tar_target(larga_portales, NULL)) else list(
+# F5 y tarea 35, indicador 13: precios de oferta de los portales (R/fuente_portales.R y R/web_portales.R).
+# Capa desmontable (plan §2.2, regla 6) y solo web (backlog, decisión 3): no entra en la tabla larga,
+# así que encenderla o apagarla no toca tabla_larga ni lo que cuelga de ella. Con PORTALES distinto de
+# TRUE (por defecto), no se lee nada: larga_portales es NULL y la web lleva la capa apagada
+# (datos/portales/manifiesto.json con activa = false). Con PORTALES=TRUE: la extracción de Idealista
+# (datos/brutos/portales/idealista/) casada con inventario/portales_idealista_territorios.csv y los CSV
+# manuales de datos/brutos/portales/ (formato en el fichero de R), media anual con 9 meses como mínimo,
+# compuerta portales_* y exportación a web/datos/portales/ con la suya (web_portales). DIR_WEB, más abajo.
+bloque_portales <- if (!PORTALES || AMBITO != "") list(
+  tar_target(larga_portales, NULL),
+  tar_target(ficheros_web_portales, portales_apagar_web(dir_web = DIR_WEB), format = "file")
+) else list(
   tar_target(ficheros_portales, buscar_ficheros_portales(), format = "file", cue = tar_cue(mode = "always")),
-  tar_target(portales, leer_portales(ficheros_portales)),
-  tar_target(validacion_portales, validar_referencias(comprobar_portales(portales, territorios_2021), referencias)),
+  tar_target(fichero_idealista_territorios, "inventario/portales_idealista_territorios.csv", format = "file"),
+  tar_target(idealista_territorios, idealista_leer_territorios(fichero_idealista_territorios)),
+  tar_target(portales, leer_portales(ficheros_portales, idealista_territorios)),   # mensual, formato de la capa
+  tar_target(portales_anual, anualizar_portales(portales)),
+  tar_target(validacion_portales, validar_referencias(bind_rows(
+    comprobar_portales(portales, territorios_2021),
+    idealista_comprobar(portales, portales_anual, idealista_territorios)), referencias)),
   tar_target(larga_portales, {
-    validacion_portales   # la compuerta va antes que la tabla larga
-    armonizar_portales(portales, version = version_de(ficheros_portales)) |>
+    validacion_portales   # la compuerta va antes
+    armonizar_portales(portales_anual, version = version_de(ficheros_portales)) |>
       validar_tabla_larga(indicadores, fuentes, vocabulario)
+  }),
+  tar_target(resumen_portales, portales_resumen(portales_anual)),
+  tar_target(ficheros_web_portales, portales_exportar_web(larga_portales, portales_anual, portales, indicadores,
+                                                          jerarquia_2021, territorios_2021, vocabulario = vocabulario,
+                                                          dir_web = DIR_WEB), format = "file"),
+  tar_target(validacion_web_portales, {
+    ficheros_web_portales
+    validar_referencias(portales_comprobar_web(larga_portales, portales_anual, indicadores, jerarquia_2021,
+                                               territorios_2021, dir_web = DIR_WEB), referencias)
   })
 )
 
@@ -695,7 +715,7 @@ bloque_tabla_larga <- list(
       larga_salarios,     # 7 (F3): el total sin desglose; de 26 a 35 años, con corte de edad
       larga_compraventa,  # 10, 12, 16 y 17 (F4); en PROVINCIA, nada
       larga_zonas_tensionadas,   # 20 (F5): municipios, situación a 31 de diciembre; en PROVINCIA, nada
-      larga_portales,     # 13 (F5): solo con PORTALES=TRUE; si no, NULL (capa desmontable)
+      # 13 (portales): no entra; solo web (decisión 3), en bloque_portales
       larga_derivados,    # 14 y 21 sin desglose; 15 con la ficha (tartera, mochila y transistor) como corte
       armonizar_sobrecarga_ecv(sobrecarga_ecv, sobrecarga_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)),
       armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa)),

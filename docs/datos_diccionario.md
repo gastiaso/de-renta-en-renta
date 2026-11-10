@@ -300,7 +300,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Fuentes:** `portales`
 - **Versión:** v0.4
 - **Definición:** Precio medio por metro cuadrado de los anuncios de alquiler y de venta.
-- **Cálculo:** Cifra de los informes agregados de las salas de prensa de los portales, copiada a mano en datos/brutos/portales/ (formato en R/fuente\_portales.R); nunca anuncios individuales. Un valor por año, portal y operación: el del informe anual o, si no lo hay, el del último mes publicado. Capa desmontable (PORTALES=FALSE por defecto).
+- **Cálculo:** Cifra mensual de los informes agregados de la sala de prensa de cada portal (Idealista: extracción del autor, casada con los códigos del INE en inventario/portales\_idealista\_territorios.csv; formato en R/fuente\_portales.R); nunca anuncios individuales. Un valor por año, portal y operación: la media de los meses publicados, con 9 como mínimo (con menos, sin dato), o la cifra anual si el portal la publica; en cada nivel, la que publica el portal para ese nivel. El último mes del año ya no se usa (10-nov-2026). Capa desmontable (PORTALES=FALSE por defecto) y solo web: no está en la tabla larga ni en las descargas.
 - **Lectura:** Es precio de oferta, un dato privado de oferta: no se mezcla con contratos, escrituras ni tasaciones, ni un portal con otro.
 
 ### `esfuerzo_residentes`

@@ -64,7 +64,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 
 ## Bloque B · Entrar
 
-**35. Oferta de Idealista en el pipeline.**
+**35. Oferta de Idealista en el pipeline · HECHA (10-nov-2026).**
 - **Datos:** tres CSV del autor, de la sala de prensa (segunda extracción del 10-nov-2026), en `datos/brutos/portales/idealista/`, fuera de git:
   - `alquiler_historico`: 136.816 cifras mensuales de €/m², de enero de 2006 a octubre de 2026;
   - `alquiler_zonas`: 816 territorios (España, 19 comunidades, 51 provincias, 296 municipios y 449 zonas), con su dirección en la sala de prensa;
@@ -85,6 +85,14 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
   - Ceuta: solo página de comunidad (Melilla tiene también provincia y municipio), de octubre de 2011 a noviembre de 2025 y sin 2021: parece discontinuada. Con el mínimo de 9 meses valen 2012–2019 y 2025. En la correspondencia, como comunidad (código 18);
   - barrios: 1.014 filas. Las 146 nuevas son de municipios sin distritos y cada una es el propio municipio, con el precio de su serie. De las 868 de distrito, 449 son el propio distrito; quedan 419 barrios en 129 distritos de 35 municipios, y 30 se llaman como su distrito (en 19, también con el mismo precio): sin el enlace de cada fila no se distinguen;
   - las cifras de referencia de la tarea 37 no cambian.
+- **Hecha (10-nov-2026):**
+  - conversor de la extracción al formato de la capa (`R/fuente_portales.R`), casado por dirección con la correspondencia; el formato admite España, comunidades, provincias, municipios, zonas y localidades, y deja sitio a la venta y Fotocasa (v1.1), sin datos;
+  - valor anual: media de los meses con 9 como mínimo, a dos decimales con los empates hacia arriba; deja de usarse el último mes del año;
+  - con `PORTALES=TRUE`, indicador 13 de alquiler de 2015 a 2026: España (7,58 €/m² en 2015, 13,06 en 2024 y 14,95 en 2026, de enero a octubre), 51 provincias, 18 o 19 comunidades según Ceuta y 262 municipios en 2015, 259 en 2024 y 255 en 2026. Compuerta superada: `portales_*`, `portales_idealista_casados`, `portales_idealista_espana`, `portales_idealista_municipios` (278 de 286) y `web_portales`;
+  - solo web: fuera de la tabla larga (encender o apagar la capa no la invalida) y de las descargas; carpeta propia, `web/datos/portales/`, con enlace al informe de cada cifra y 441 zonas y 7 localidades por municipio, sin interfaz (tarea 38). La web suma la capa al manifiesto general y no ofrece su CSV;
+  - el paquete del *release* no la lleva (comprobación `sin_portales` y prueba); el flujo de Pages monta el sitio con la capa apagada;
+  - condiciones de uso de Idealista, en la fila `portales` de `inventario/fuentes.csv`.
+- **Por revisar** (plan §11, pregunta 52): pedir a Idealista autorización escrita (sus condiciones generales la exigen para incorporar su contenido a otro sitio y para enlazar en profundidad); cómo llega la capa al sitio (propuesta en `docs/publicacion.md`); las localidades (las 8 con municipio, como zonas; La Alcaidesa y La Manga, fuera); dos decimales en la web y estado `dato` con 9 a 11 meses; 2026 como año parcial; si el método de julio de 2026 abre una ruptura.
 
 **36. Índice del INE con contratos nuevos · HECHA (10-nov-2026).**
 - La tabla larga solo tiene el total del IPVA (España: del 0,3 % en 2015 al 3,5 % en 2024). Descargar el desglose entre contratos nuevos y existentes (autorizada).

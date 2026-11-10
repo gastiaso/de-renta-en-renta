@@ -122,6 +122,7 @@
       "preparando": "Preparando la descarga…",
       "hecho": "Descargado: {fichero}",
       "error": "No se ha podido preparar la descarga.",
+      "privado": "Los datos privados de oferta no se descargan: se consultan en el mapa, en la ficha y en el informe de su fuente.",
       "nombre_seccion": "{municipio}, distrito {distrito}, sección {seccion}",
       "nombre_distrito": "{municipio}, distrito {distrito}",
       "ingreso_peon": "el sueldo escrito",
@@ -755,7 +756,7 @@
       "nombre": "Precio de oferta (alquiler y venta)",
       "unidad": "€ por m² (alquiler: por m² y mes)",
       "definicion": "Precio medio por metro cuadrado de los anuncios de alquiler y de venta.",
-      "calculo": "Cifra de los informes agregados de las salas de prensa de los portales, copiada a mano en datos/brutos/portales/ (formato en R/fuente_portales.R); nunca anuncios individuales. Un valor por año, portal y operación: el del informe anual o, si no lo hay, el del último mes publicado. Capa desmontable (PORTALES=FALSE por defecto).",
+      "calculo": "Cifra mensual de los informes agregados de la sala de prensa de cada portal (Idealista: extracción del autor, casada con los códigos del INE en inventario/portales_idealista_territorios.csv; formato en R/fuente_portales.R); nunca anuncios individuales. Un valor por año, portal y operación: la media de los meses publicados, con 9 como mínimo (con menos, sin dato), o la cifra anual si el portal la publica; en cada nivel, la que publica el portal para ese nivel. El último mes del año ya no se usa (10-nov-2026). Capa desmontable (PORTALES=FALSE por defecto) y solo web: no está en la tabla larga ni en las descargas.",
       "lectura": "Es precio de oferta, un dato privado de oferta: no se mezcla con contratos, escrituras ni tasaciones, ni un portal con otro."
     },
     "esfuerzo_residentes": {

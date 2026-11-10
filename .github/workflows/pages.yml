@@ -7,6 +7,8 @@
 #   - tabla_larga.parquet → descargas/ (descarga de la página «Datos»)
 #   - version.json        → descargas/ (fecha, commit, versiones de las fuentes y cobertura por
 #                           indicador; rellena la caja de descarga de la página «Datos»)
+# La capa de portales (indicador 13) no viaja en el release: el sitio la lleva apagada
+# (datos/portales/manifiesto.json).
 # Los ficheros del release los prepara empaquetar_publicacion() (R/publicar.R), con SHA256SUMS.
 #
 # Sin secretos: usa el token que GitHub da a cada ejecución, con permisos mínimos por trabajo.
@@ -83,14 +85,21 @@ jobs:
           # Herramientas de desarrollo: no se publican
           rm -rf "$sitio/LEEME.md" "$sitio/servir.mjs" "$sitio/herramientas"
 
-          # Datos de la web: solo rutas bajo datos/, sin la muestra (va en git) y sin subir de carpeta
+          # Datos de la web: solo rutas bajo datos/, sin la muestra (va en git), sin la capa de portales
+          # (solo web, fuera del paquete) y sin subir de carpeta
           tar -tzf "$rel/datos_web.tar.gz" > "$RUNNER_TEMP/lista_datos.txt"
           if grep -v -E '^datos/' "$RUNNER_TEMP/lista_datos.txt" | grep -q . \
-             || grep -E '^datos/ejemplo/|(^|/)\.\.(/|$)' "$RUNNER_TEMP/lista_datos.txt" | grep -q .; then
-            echo "::error::datos_web.tar.gz lleva rutas fuera de datos/ o la muestra de datos/ejemplo/."
+             || grep -E '^datos/ejemplo/|^datos/portales/|(^|/)\.\.(/|$)' "$RUNNER_TEMP/lista_datos.txt" | grep -q .; then
+            echo "::error::datos_web.tar.gz lleva rutas fuera de datos/, la muestra de datos/ejemplo/ o la capa de portales."
             exit 1
           fi
           tar -xzf "$rel/datos_web.tar.gz" -C "$sitio" --no-same-owner --no-same-permissions
+
+          # Capa de portales (indicador 13): no viaja en el release. Mientras no se decida cómo se
+          # monta (docs/publicacion.md, «Capa de portales»), el sitio la lleva apagada: la web lee
+          # este manifiesto y no pide nada más.
+          mkdir -p "$sitio/datos/portales"
+          printf '%s\n' '{"capa":"portales","activa":false}' > "$sitio/datos/portales/manifiesto.json"
 
           # El manifiesto de la exportación dice dónde va el mapa base
           manifiesto="$sitio/datos/manifiesto.json"

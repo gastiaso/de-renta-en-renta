@@ -27,9 +27,13 @@
 #     también en el sitio);
 #   - manifiesto: exportación real (ejemplo = false) con mapa base PMTiles en teselas/;
 #   - formato: el PMTiles empieza por «PMTiles» y el Parquet empieza y acaba por «PAR1»;
-#   - tar_completo: el .tar.gz lleva todos los ficheros de datos/, y solo esos;
+#   - tar_completo: el .tar.gz lleva todos los ficheros de datos/ (salvo la capa de portales), y solo esos;
 #   - versiones: cada fuente y versión del manifiesto está en la tabla larga (la exportación de la
-#     web y la tabla larga son de la misma pasada del pipeline).
+#     web y la tabla larga son de la misma pasada del pipeline);
+#   - sin_portales (tarea 35; backlog, decisión 3): el paquete no lleva la capa de portales: ni
+#     datos/portales/ en el .tar.gz, ni series de los portales en el manifiesto, ni el corte
+#     oferta_privada o la fuente portales en la tabla larga. La capa sale de web/datos/portales/
+#     y se monta en el sitio por su cuenta (docs/publicacion.md, «Capa de portales»).
 
 LIMITES_PUBLICACION <- c(
   release_fichero = 2 * 1024^3,    # «Each file included in a release must be under 2 GiB»
@@ -119,10 +123,13 @@ empaquetar_publicacion <- function(dir_web = "web",
   invisible(list(ficheros = unname(salida), comprobaciones = comprobaciones, version = version, sitio = sitio))
 }
 
-# Ficheros de web/datos/ que van al release, con la ruta desde web/: todo menos la muestra.
+# Ficheros de web/datos/ que van al release, con la ruta desde web/: todo menos la muestra y la capa
+# de portales (datos/portales/: solo web, decisión 3; R/web_portales.R).
+CARPETAS_FUERA_RELEASE <- c("ejemplo/", "portales/")
 ficheros_datos_publicacion <- function(dir_web = "web") {
   rutas <- list.files(file.path(dir_web, "datos"), recursive = TRUE, all.files = FALSE)
-  rutas <- sort(rutas[!startsWith(rutas, "ejemplo/")])
+  fuera <- Reduce(`|`, lapply(CARPETAS_FUERA_RELEASE, function(c) startsWith(rutas, c)), FALSE)
+  rutas <- sort(rutas[!fuera])
   file.path("datos", rutas)
 }
 
@@ -254,6 +261,16 @@ comprobar_publicacion <- function(manifiesto, salida, datos, sitio, tabla_larga,
   sin_par <- if (is.null(versiones_web)) 0L else
     sum(!paste(versiones_web$fuente, versiones_web$version) %in% paste(versiones_larga$fuente, versiones_larga$version))
 
+  # Tarea 35: la capa de portales no va en el paquete (solo web; decision 3)
+  portales_tar <- sum(startsWith(en_tar, "datos/portales/"))
+  portales_manifiesto <- sum(vapply(manifiesto$indicadores, function(x)
+    identical(x$fuente, "portales") || identical(x$corte, "oferta_privada"), TRUE))
+  portales_larga <- arrow::open_dataset(tabla_larga) |>
+    dplyr::filter(fuente == "portales" | corte == "oferta_privada") |>
+    dplyr::count() |>
+    dplyr::collect()
+  portales_larga <- if (nrow(portales_larga)) as.numeric(portales_larga$n[1]) else 0
+
   rbind(
     fila("release_fichero", basename(release), tam, limites[["release_fichero"]], tam < limites[["release_fichero"]]),
     fila("sitio_total", sprintf("%d ficheros", nrow(sitio)), sum(sitio$bytes), limites[["sitio_total"]],
@@ -268,7 +285,10 @@ comprobar_publicacion <- function(manifiesto, salida, datos, sitio, tabla_larga,
          identical(leer_bytes(salida[["tabla"]], 4L), charToRaw("PAR1")) &&
            identical(leer_bytes(salida[["tabla"]], 4L, desde_el_final = TRUE), charToRaw("PAR1"))),
     fila("tar_completo", basename(salida[["datos"]]), length(en_tar), length(datos), setequal(en_tar, datos)),
-    fila("versiones", "fuente y versión del manifiesto que no están en la tabla larga", sin_par, 0, sin_par == 0L)
+    fila("versiones", "fuente y versión del manifiesto que no están en la tabla larga", sin_par, 0, sin_par == 0L),
+    fila("sin_portales", "ficheros de datos/portales/ en el .tar.gz", portales_tar, 0, portales_tar == 0),
+    fila("sin_portales", "series de los portales en el manifiesto", portales_manifiesto, 0, portales_manifiesto == 0),
+    fila("sin_portales", "filas de los portales en la tabla larga", portales_larga, 0, portales_larga == 0)
   )
 }
 

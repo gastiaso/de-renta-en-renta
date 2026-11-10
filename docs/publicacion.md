@@ -53,14 +53,30 @@ Los ficheros del release los prepara `empaquetar_publicacion()` (`R/publicar.R`)
 | Qué | Dónde se regenera | Cómo se publica |
 |---|---|---|
 | `datos/brutos/`, `datos/intermedios/` (incluida la tabla larga) | `targets::tar_make()` | La tabla larga, en el release |
-| `web/datos/` (salvo la muestra de `web/datos/ejemplo/`) | `targets::tar_make(names = c(ficheros_web, validacion_web))` | Release |
+| `web/datos/` (salvo la muestra de `web/datos/ejemplo/` y la capa de portales) | `targets::tar_make(names = c(ficheros_web, validacion_web))` | Release |
+| `web/datos/portales/` (capa de portales, tarea 35) | `targets::tar_make(names = c(ficheros_web_portales, validacion_web_portales))`, con `PORTALES=TRUE` (apagada, solo el manifiesto vacío) | No va en el release; ver «Capa de portales» |
 | `*.pmtiles` (`geo/referencia/`, `web/teselas/`) | `targets::tar_make(names = fichero_mapa_base)` | Release |
 | `publicacion/` | `empaquetar_publicacion()` | Es el release |
 | `web/metodo.html`, `web/method.html`, `web/datos.html`, `web/data.html`, `web/descargas/` | Copias locales para ver las páginas de texto (pandoc y la copia de `publicacion/`) | Las genera el flujo |
 | `_targets/`, `renv/library/` | El pipeline y `renv::restore()` | No se publican |
 | `.Renviron` | A mano | Nunca: credenciales |
 
-Las capas de los portales tampoco entran en git ni se publican (guía, regla 6).
+Las capas de los portales tampoco entran en git ni en el release (guía, regla 6; backlog, decisión 3).
+
+## Capa de portales (tarea 35): propuesta, por revisar
+
+La capa de precios de oferta (indicador 13, alquiler de Idealista) es solo web: no entra en la tabla larga, ni en las descargas, ni en el release. El pipeline la escribe en su carpeta, `web/datos/portales/` (`R/web_portales.R`): manifiesto propio, valores por nivel y año, enlace al informe de cada cifra y zonas por municipio. La web suma sus series al manifiesto general al cargar (`unirCapas()` de `web/js/datos.js`).
+
+**Lo que ya está (10-nov-2026):**
+- `empaquetar_publicacion()` deja fuera `datos/portales/` del `.tar.gz` y se detiene si el paquete llevara la capa: comprobación `sin_portales` (ningún fichero de `datos/portales/` en el `.tar.gz`, ninguna serie de los portales en el manifiesto, ninguna fila con la fuente `portales` o el corte `oferta_privada` en la tabla larga). Lo prueba `test-publicar.R`.
+- El flujo rechaza un `datos_web.tar.gz` con `datos/portales/` y monta el sitio con la capa apagada: escribe `datos/portales/manifiesto.json` con `{"capa":"portales","activa":false}`, así que la web no pide nada más ni da un error de carga. Con el sitio congelado en la v0.1, ese fichero no lo lee nadie.
+
+**Lo que falta decidir:** cómo llega la capa al sitio. Opciones:
+1. Dentro de `datos_web.tar.gz`. Lo más simple, pero la capa quedaría en un fichero público del release, junto a los datos con licencia CC BY-SA 4.0, y `version.json` la contaría como parte del paquete. Choca con la decisión 3: descartada.
+2. Un fichero aparte, `portales_web.tar.gz`, en el mismo release o en una etiqueta propia, con su suma. El flujo lo bajaría si está y, si no, dejaría la capa apagada. Sigue siendo una descarga pública de toda la capa de una vez.
+3. **Propuesta:** el mismo fichero aparte, en un release en borrador (por ejemplo, `capa-portales`), que no es público: solo lo ven quienes pueden escribir en el repositorio. Para leer un borrador, el token del flujo necesita `contents: write`, así que lo bajaría un trabajo propio con ese permiso, antes del que monta el sitio (que sigue con `contents: read`), y se lo pasaría como artefacto de la ejecución, con un día de vida. Contras: los artefactos de un repositorio público los puede bajar cualquier usuario de GitHub mientras duran, y el flujo gana un trabajo con permiso de escritura. Las cifras se sirven igual en el sitio (cualquiera puede pedir los JSON de `datos/portales/`), pero no quedan en el release público ni en un fichero único.
+
+**Antes de cualquiera de las tres:** las condiciones generales de Idealista (30-abr-2025) piden su autorización escrita para incorporar su contenido a otro sitio web y para enlazar sus páginas en profundidad (fila `portales` de `inventario/fuentes.csv`). Sin esa autorización, ninguna opción resuelve el problema de fondo; con ella, lo que diga decide la forma. Hasta entonces, el sitio de la v1.0 saldría con la capa apagada.
 
 ## Antes de la primera publicación: decisiones del autor
 
@@ -105,7 +121,8 @@ empaquetar_publicacion()                  # (tras source("R/publicar.R") si no s
 - la exportación es la muestra, o el mapa base no es un PMTiles en `teselas/`;
 - el PMTiles o el Parquet no tienen la cabecera de su formato;
 - el `.tar.gz` no lleva exactamente los ficheros de `web/datos/` (sin la muestra);
-- la exportación de la web y la tabla larga son de pasadas distintas del pipeline (fuentes con otra versión).
+- la exportación de la web y la tabla larga son de pasadas distintas del pipeline (fuentes con otra versión);
+- el paquete llevaría la capa de portales (`sin_portales`; ver «Capa de portales»).
 
 Avisa, y lo anota en `version.json`, si hay cambios sin commit. `version.json` lleva también la cobertura de la tabla larga por indicador (filas, primer y último año, niveles y cortes, en el orden de `inventario/indicadores.csv`; `cobertura_publicacion()`), que muestra la página «Datos».
 

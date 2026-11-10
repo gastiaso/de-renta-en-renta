@@ -77,6 +77,11 @@ export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, n
   return { cabecera, filas };
 }
 
+// Decisión 3 del backlog (10-nov-2026): los datos privados de oferta (capa de portales; la serie
+// lleva etiqueta por su fuente) se ven en el mapa y en la ficha, pero no se descargan en CSV. La
+// imagen PNG, sí, con su etiqueta.
+export const descargaPermitida = (formato, etiqueta) => formato !== 'csv' || !etiqueta;
+
 // Nombre del fichero: el mapa, «vu» si es la vivienda unifamiliar, el periodo y, en el CSV, el
 // nivel («de-renta-en-renta_sueldo_necesario_2024_municipio.csv»).
 export function nombreFichero({ mapa, periodo, tipologia, nivel, extension }) {

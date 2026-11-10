@@ -1,0 +1,8 @@
+path,nivel,nombre,ccaa_slug,provincia_slug,municipio_slug,zona_slug,profundidad,url,con_serie
+/sala-de-prensa/informes-precio-vivienda/alquiler/,España,España,NA,NA,NA,NA,0,https://ejemplo.invalid/sala-de-prensa/informes-precio-vivienda/alquiler/,TRUE
+/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/,comunidad,Comunidad inventada,NA,NA,NA,NA,0,https://ejemplo.invalid/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/,TRUE
+/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/,provincia,Provincia inventada,NA,NA,NA,NA,0,https://ejemplo.invalid/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/,TRUE
+/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/uno/,municipio,Uno,NA,NA,NA,NA,0,https://ejemplo.invalid/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/uno/,TRUE
+/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/uno/centro/,distrito/zona,Centro,NA,NA,NA,NA,0,https://ejemplo.invalid/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/uno/centro/,TRUE
+/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/la-urbanizacion/,municipio,La Urbanización,NA,NA,NA,NA,0,https://ejemplo.invalid/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/la-urbanizacion/,TRUE
+/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/entre-dos/,municipio,Entre Dos,NA,NA,NA,NA,0,https://ejemplo.invalid/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/entre-dos/,TRUE

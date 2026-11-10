@@ -32,7 +32,7 @@ import { codigoComparado, nombreTerritorio, filasComparador, pintarComparador, n
 import { crearBuscador, formasDeNombre } from './buscador.js';
 import { ordenNatural } from './nombres.js';
 import { crearBarraVista } from './barra_vista.js';
-import { tablaCsv, textoCsv, nombreFichero, descargar, nivelParaExportar, decimalesDeEscala } from './exportar.js';
+import { tablaCsv, textoCsv, nombreFichero, descargar, nivelParaExportar, decimalesDeEscala, descargaPermitida } from './exportar.js';
 import { imagenMapa } from './imagen.js';
 import { pasosDeRampa, decimalesDeCortes } from './colores.js';
 import { crearAvisoImagen } from './aviso_imagen.js';
@@ -800,6 +800,11 @@ async function exportar(formato) {
     }
   }
   const v = vista();
+  // Decisión 3: los datos privados de oferta (capa de portales) no se descargan en CSV
+  if (!descargaPermitida(formato, etiquetaPrivada(v.seriesColor[0]))) {
+    barra.avisar(t('interfaz.exportar.privado'), true);
+    return;
+  }
   barra.ocupado(formato, true);
   barra.avisar(t('interfaz.exportar.preparando'));
   try {

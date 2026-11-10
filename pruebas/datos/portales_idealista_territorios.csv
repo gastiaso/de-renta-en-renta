@@ -1,0 +1,8 @@
+"path","nivel_idealista","nombre_idealista","nivel","geo_id","nombre_ine","metodo","nota"
+"/sala-de-prensa/informes-precio-vivienda/alquiler/","España","España","nacional","00","España","manual",""
+"/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/","comunidad","Comunidad inventada","ccaa","13","Madrid, Comunidad de","manual",""
+"/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/","provincia","Provincia inventada","provincia","28","Madrid","manual",""
+"/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/uno/","municipio","Uno","municipio","28001","Uno","manual",""
+"/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/uno/centro/","distrito/zona","Centro","zona","28001","Uno","manual",""
+"/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/la-urbanizacion/","municipio","La Urbanización","localidad","28002","Dos","manual","Núcleo de Dos"
+"/sala-de-prensa/informes-precio-vivienda/alquiler/madrid-comunidad/madrid-provincia/entre-dos/","municipio","Entre Dos","localidad","","","manual","Entre dos municipios: sin municipio único"

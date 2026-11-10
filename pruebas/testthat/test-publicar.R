@@ -92,6 +92,47 @@ test_that("el .tar.gz lleva web/datos/ sin la muestra, con las rutas desde web/"
                unname(tools::md5sum(file.path(raiz, "web/datos/sc/alquiler_m2/2024.json"))))
 })
 
+test_that("tarea 35: el paquete no lleva la capa de portales, que es solo web (decisión 3)", {
+  raiz <- proyecto_falso()
+  escribir <- function(ruta, texto) {
+    dir.create(dirname(file.path(raiz, ruta)), recursive = TRUE, showWarnings = FALSE)
+    writeLines(texto, file.path(raiz, ruta), useBytes = TRUE)
+  }
+  # La exportación de la capa encendida (R/web_portales.R), con cifras inventadas
+  escribir("web/datos/portales/manifiesto.json",
+           '{"capa":"portales","activa":true,"indicadores":{"precio_oferta_alquiler_idealista":{"corte":"oferta_privada","fuente":"portales"}}}')
+  escribir("web/datos/portales/nacional/precio_oferta_alquiler_idealista/2024.json", '{"v":[999],"e":"0"}')
+  escribir("web/datos/portales/enlaces/precio_oferta_alquiler_idealista.json", '{"nacional":{"00":"https://ejemplo.invalid/idealista/"}}')
+  res <- suppressMessages(empaquetar_falso(raiz))
+  expect_true(all(res$comprobaciones$correcto))
+  expect_equal(res$comprobaciones$valor[res$comprobaciones$id == "sin_portales"], c(0, 0, 0))
+  tar <- file.path(raiz, "publicacion", "datos_web.tar.gz")
+  dentro <- utils::untar(tar, list = TRUE, tar = "internal")
+  expect_false(any(startsWith(dentro, "datos/portales")))
+  # Ningún fichero del paquete nombra el corte, la fuente ni el portal
+  destino <- withr::local_tempdir()
+  utils::untar(tar, exdir = destino, tar = "internal")
+  textos <- c(unlist(lapply(list.files(destino, recursive = TRUE, full.names = TRUE), readLines, warn = FALSE)),
+              readLines(file.path(raiz, "publicacion", "version.json"), warn = FALSE))
+  expect_false(any(grepl("oferta_privada|idealista|portales", textos, ignore.case = TRUE)))
+  # El sitio montado tampoco la toma de web/ (está fuera de git)
+  expect_false(any(startsWith(res$sitio$ruta, "datos/portales")))
+
+  # Si la tabla larga o el manifiesto general la llevaran, no empaqueta
+  # (en otro fichero: Windows no deja reescribir un Parquet que arrow tiene abierto)
+  larga <- arrow::read_parquet(file.path(raiz, "datos/intermedios/tabla_larga.parquet"))
+  capa <- tibble::tibble(geo_id = "00", nivel = "nacional", anio = 2024L, indicador = "precio_oferta", corte = "oferta_privada",
+                         grupo = "alquiler_idealista", valor = 9.99, estado = "dato", fuente = "portales", geo_ref = "2021",
+                         version = "2026-11-06")
+  con_capa <- file.path(raiz, "datos/intermedios/tabla_larga_con_portales.parquet")
+  arrow::write_parquet(dplyr::bind_rows(larga, capa), con_capa)
+  expect_error(suppressMessages(capture.output(
+    empaquetar_publicacion(dir_web = file.path(raiz, "web"), pmtiles = file.path(raiz, "geo/referencia/mapa_base_2021.pmtiles"),
+                           tabla_larga = con_capa, dir_salida = file.path(raiz, "publicacion"),
+                           fuentes = file.path(raiz, "inventario/fuentes.csv"), indicadores = file.path(raiz, "inventario/indicadores.csv"),
+                           commit = COMMIT_FALSO, fecha = "2026-11-08T12:00:00+0100"))), "sin_portales")
+})
+
 test_that("version.json: fecha, commit, web, fuentes con su versión y ficheros con su suma", {
   raiz <- proyecto_falso()
   suppressMessages(empaquetar_falso(raiz))

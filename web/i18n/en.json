@@ -122,6 +122,7 @@
       "preparando": "Preparing the download…",
       "hecho": "Downloaded: {fichero}",
       "error": "The download could not be prepared.",
+      "privado": "Private asking-price data cannot be downloaded: it can be viewed on the map, in the profile and in the source's report.",
       "nombre_seccion": "{municipio}, district {distrito}, tract {seccion}",
       "nombre_distrito": "{municipio}, district {distrito}",
       "ingreso_peon": "the pay typed in",
@@ -755,7 +756,7 @@
       "nombre": "Asking price (rent and sale)",
       "unidad": "€ per m² (rent: per m² per month)",
       "definicion": "Average price per square metre in rental and sale listings.",
-      "calculo": "Taken from the portals’ aggregated press reports, copied by hand into datos/brutos/portales/ (format in R/fuente_portales.R); never individual listings. One value per year, portal and transaction: the annual report’s or, failing that, the last published month’s. A removable layer (PORTALES=FALSE by default).",
+      "calculo": "Monthly figure from each portal’s aggregated press-room reports (Idealista: the author’s extraction, matched to INE codes in inventario/portales_idealista_territorios.csv; format in R/fuente_portales.R); never individual listings. One value per year, portal and transaction: the mean of the published months, with at least 9 (with fewer, no data), or the annual figure if the portal publishes one; at each level, the one the portal publishes for that level. The last month of the year is no longer used (10 Nov 2026). A removable layer (PORTALES=FALSE by default), web only: not in the long table or the downloads.",
       "lectura": "An asking price, private asking-price data: not combined with contracts, deeds or appraisals, nor one portal with another."
     },
     "esfuerzo_residentes": {

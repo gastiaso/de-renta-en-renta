@@ -3,8 +3,8 @@
 //   - el CSV lleva la columna de la categoría y la de la etiqueta solo cuando hacen falta;
 //   - con la exportación del pipeline (web/datos/manifiesto.json), cada mapa con `nivel_minimo` tiene
 //     su serie sin sección y con ese nivel; las categorías tienen su texto en los dos idiomas; el
-//     detalle de las declaraciones existe; y con la capa de portales apagada (PORTALES distinto de
-//     TRUE) no hay ninguna serie ni mapa de los portales;
+//     detalle de las declaraciones existe; y no hay ninguna serie ni mapa de los portales, que van
+//     aparte, en datos/portales/ (tarea 35; pruebas/web/portales.test.mjs);
 //   - los textos de la interfaz de F5 están en los dos idiomas.
 // Se ejecutan desde la raíz del proyecto, sin paquetes:
 //   node --test pruebas/web/municipal.test.mjs
@@ -84,8 +84,7 @@ test('exportación del pipeline: mapas sin sección, categorías y capa de porta
   const declaraciones = leerJson('web', ...z.detalle.split('/'));
   assert.ok(Object.keys(declaraciones).length > 300);
   assert.ok(declaraciones['08019'].every((d) => /^BOE-A-\d{4}-\d+$/.test(d.boe) && d.inicio < d.fin));
-  if (String(process.env.PORTALES ?? '').trim().toUpperCase() !== 'TRUE') {
-    assert.deepEqual(Object.entries(m.indicadores).filter(([, d]) => d.fuente === 'portales').map(([k]) => k), []);
-    assert.deepEqual(Object.entries(m.mapas).filter(([, d]) => d.indicador === 'precio_oferta').map(([k]) => k), []);
-  }
+  // Tarea 35: la capa de portales nunca va en la exportación general (va en datos/portales/; portales.test.mjs)
+  assert.deepEqual(Object.entries(m.indicadores).filter(([, d]) => d.fuente === 'portales').map(([k]) => k), []);
+  assert.deepEqual(Object.entries(m.mapas).filter(([, d]) => d.indicador === 'precio_oferta').map(([k]) => k), []);
 });
