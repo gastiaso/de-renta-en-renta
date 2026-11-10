@@ -535,10 +535,10 @@
   },
   "historico": {
     "titulo_pagina": "Máquina del tiempo · De renta en renta",
-    "descripcion": "Series de España desde 1987: años de renta y esfuerzo para comprar vivienda, tipos de interés hipotecarios, valor tasado y sueldo medio",
+    "descripcion": "Series de España desde 1987: años de renta y esfuerzo para comprar vivienda, tipos de interés hipotecarios, valor tasado, sueldo medio y la vivienda como problema (CIS)",
     "antetitulo": "España, desde 1987",
     "titulo": "Máquina del tiempo",
-    "entradilla": "Cuántos años de renta costaba una vivienda, qué parte de la renta se llevaban las cuotas de la hipoteca, a qué tipo de interés, cuánto valía el metro cuadrado tasado y cuánto cobraba de media un asalariado, periodo a periodo. Series del Banco de España, el MIVAU y el INE, con el mismo eje de años; el valor tasado, también por comunidad.",
+    "entradilla": "Cuántos años de renta costaba una vivienda, qué parte de la renta se llevaban las cuotas de la hipoteca, a qué tipo de interés, cuánto valía el metro cuadrado tasado y cuánto cobraba de media un asalariado, periodo a periodo. Series del Banco de España, el MIVAU y el INE, con el mismo eje de años; el valor tasado, también por comunidad. Al final, la vivienda como problema en los barómetros del CIS, desde 2014.",
     "distintivo": "Series nacionales",
     "carga": "Cargando los datos…",
     "error_carga": "No se han podido cargar los datos de la página (datos/historico/). Se generan con targets::tar_make(names = ficheros_web_historico).",
@@ -611,13 +611,28 @@
     "fechas": {
       "ruptura": "Ruptura de serie"
     },
-    "grafico": "Gráfico de {serie}, de {desde} a {hasta}",
+    "grafico": "Gráfico de {serie}, de {desde} a {hasta}. Con el gráfico seleccionado, las flechas recorren los periodos.",
     "tabla": "Ver todas las cifras",
     "periodo_col": "Periodo",
     "espana": "España",
     "ccaa": "Comunidad",
     "ccaa_ninguna": "Solo España",
     "sin_dato": "sin dato",
+    "cis_corto": "Vivienda como problema",
+    "cis_titulo": "La vivienda como problema (CIS)",
+    "cis_subtitulo": "Porcentaje de entrevistados que nombra la vivienda entre los tres principales problemas de España y entre los tres que más le afectan personalmente, con respuesta espontánea. Mensual, desde 2014; sin barómetro en agosto.",
+    "cis_espana": "Problemas de España",
+    "cis_personal": "Problemas personales",
+    "cis_huecos": "Meses sin dato, en los que la línea se corta: {n}.",
+    "cis_estudio": "Estudio {estudio}",
+    "cis_entrevistas": "{n} entrevistas",
+    "cis_estudio_col": "Estudio",
+    "cis_entrevistas_col": "Entrevistas",
+    "cis_aviso": "Opinión, no registro: la serie mide cuánta gente nombra la vivienda como problema, no su precio ni lo que cuesta pagarla.",
+    "cis_fuente": "Fuente: elaboración propia con datos del Centro de Investigaciones Sociológicas (CIS, www.cis.es), barómetros mensuales, con licencia CC BY 4.0. Cambios: cifras redondeadas a un decimal; los meses sin resultados abiertos no van. El CIS no participa en este atlas ni lo patrocina.",
+    "cis_fecha": "Barómetros publicados hasta el {fecha}.",
+    "cis_sin_datos": "No hay datos del CIS en esta copia de la web (datos/cis_vivienda.json). Se generan con targets::tar_make(names = ficheros_web_cis).",
+    "cis_metodo": "La vivienda como problema (CIS): en el barómetro mensual, porcentaje de entrevistados que nombra la vivienda, sin lista de respuestas, entre los tres principales problemas de España o entre los tres que más le afectan personalmente. Es una encuesta de opinión, no un registro. Desde enero de 2014; sin barómetro en agosto, y los meses sin resultados abiertos quedan como hueco. Compuerta: la serie reproduce las cifras que el CIS da en sus notas de prensa.",
     "metodo": {
       "titulo": "Cómo se leen estas series",
       "renta": "Años de renta (Banco de España): precio medio de una vivienda libre tipo (93,75 m² hasta 2004; después, la superficie media de las compraventas registradas) entre la renta bruta anual estimada del hogar mediano, que sale de la Encuesta Financiera de las Familias, la Contabilidad Nacional y la EPA.",
@@ -629,7 +644,7 @@
       "compuerta": "Compuerta: las series reproducen las cifras que el Banco de España publica en su tabla en PDF y el tipo de referencia publicado en el BOE; el valor tasado del MIVAU coincide con el que reproduce el Banco de España en todos los trimestres desde 1995."
     },
     "pie": {
-      "fuentes": "Fuentes: Banco de España (Síntesis de indicadores, tabla 1.5; Boletín Estadístico, tabla 19.1), MIVAU (Valor tasado de la vivienda libre) e INE (Contabilidad Nacional Anual de España).",
+      "fuentes": "Fuentes: Banco de España (Síntesis de indicadores, tabla 1.5; Boletín Estadístico, tabla 19.1), MIVAU (Valor tasado de la vivienda libre), INE (Contabilidad Nacional Anual de España) y CIS (barómetros mensuales).",
       "bde": "Fuente de las series del Banco de España: elaboración propia con datos extraídos del sitio web del Banco de España (www.bde.es). El Banco de España no participa en este atlas ni lo patrocina.",
       "licencia": "Datos y textos: CC BY-SA 4.0."
     }

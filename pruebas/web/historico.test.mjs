@@ -1,5 +1,6 @@
 // Pruebas de la página «Máquina del tiempo» (F6) sin navegador (web/js/historico_datos.js), con datos
-// inventados; si el pipeline ya ha exportado web/datos/historico/, se comprueba también su contrato.
+// inventados; si el pipeline ya ha exportado web/datos/historico/ y web/datos/cis_vivienda.json, se
+// comprueba también su contrato.
 // Se ejecutan desde la raíz del proyecto, sin paquetes:
 //   node --test pruebas/web/historico.test.mjs
 
@@ -195,4 +196,134 @@ test('datos exportados por el pipeline: contrato de historico.json', { skip: !ex
   assert.equal(anios.maximo.clave, '2007-T3');
   assert.equal(anios.maximo.v, 9.46);
   assert.equal(H.extremos(H.puntosDe(d, 'esfuerzo_teorico')).maximo.v, 72.47);
+});
+
+// --- La vivienda como problema (CIS) ------------------------------------------------------------
+
+// Como datos/cis_vivienda.json: solo los meses con dato, sin agosto; aquí, desordenados y con un
+// periodo mal escrito, que no cuenta.
+const CIS = {
+  fuente: 'CIS', actualizado: '2014-12-12',
+  series: {
+    espana: { periodo: ['2014-02', '2014-01', '2014-04', '2014-07', '2014-09', '2014-11', '2014-1'],
+      valor: [2.0, 1.5, 3.5, 2.5, 4.0, 3.0, 9.9], estudio: ['3013', '3011', '3020', '3030', '3035', '3041', 'x'],
+      n: [2474, 2480, 2470, 2490, 2468, 2475, 1] },
+    personal: { periodo: ['2014-01', '2014-02', '2014-04', '2014-07', '2014-09', '2014-10', '2014-11'],
+      valor: [1.6, 1.6, 2.0, 2.2, 2.1, 2.2, 1.9], estudio: ['3011', '3013', '3020', '3030', '3035', '3038', '3041'],
+      n: [2480, 2474, 2470, 2490, 2468, 2471, 2475] },
+  },
+};
+
+test('CIS: rejilla mensual del primer mes al último, con huecos y sin agosto', () => {
+  const p = H.puntosCis(CIS, 'espana');
+  assert.deepEqual(p.map((x) => x.clave),
+    ['2014-01', '2014-02', '2014-03', '2014-04', '2014-05', '2014-06', '2014-07', '2014-09', '2014-10', '2014-11']);
+  assert.deepEqual(p.filter((x) => x.v === null).map((x) => x.clave), ['2014-03', '2014-05', '2014-06', '2014-10']);
+  assert.equal(H.huecosCis(p), 4);
+  assert.equal(p[0].t, 2014 + 0.5 / 12);
+  assert.deepEqual([p[6].v, p[6].estudio, p[6].n], [2.5, '3030', 2490]);
+  assert.deepEqual([p[2].estudio, p[2].n], [null, null]);
+  // La línea se corta en cada hueco (julio y septiembre se unen: agosto no es un hueco) y los
+  // meses sueltos, que no forman línea, van como punto
+  const x = (v) => v;
+  assert.equal((H.trazado(p, x, x).match(/M/g) ?? []).length, 4);
+  assert.deepEqual(H.aislados(p).map((q) => q.clave), ['2014-04', '2014-11']);
+  // Un agosto con dato sí entra
+  const conAgosto = { series: { espana: { periodo: ['2015-07', '2015-08', '2015-09'], valor: [1, 2, 3] } } };
+  assert.deepEqual(H.puntosCis(conAgosto, 'espana').map((q) => [q.clave, q.v, q.estudio]),
+    [['2015-07', 1, null], ['2015-08', 2, null], ['2015-09', 3, null]]);
+  // Sin JSON, sin la pregunta o sin meses válidos: null
+  assert.equal(H.puntosCis(null, 'espana'), null);
+  assert.equal(H.puntosCis(CIS, 'no_existe'), null);
+  assert.equal(H.puntosCis({ series: { espana: { periodo: ['2014'], valor: [1] } } }, 'espana'), null);
+  assert.equal(H.puntosCis({ series: { espana: { periodo: ['2014-01'], valor: [null] } } }, 'espana'), null);
+});
+
+test('CIS: máximo, último, mes cercano (también en un hueco) y lectura en los dos idiomas', () => {
+  const p = H.puntosCis(CIS, 'espana');
+  const e = H.extremos(p);
+  assert.deepEqual([e.primero.clave, e.maximo.clave, e.maximo.v, e.ultimo.clave, e.ultimo.v],
+    ['2014-01', '2014-09', 4, '2014-11', 3]);
+  // Empate en el máximo: el primero
+  const empate = H.extremos(H.puntosCis(CIS, 'personal'));
+  assert.deepEqual([empate.maximo.clave, empate.ultimo.clave], ['2014-07', '2014-11']);
+  // Ratón sobre marzo (sin dato): el globo dice «sin dato», no salta a febrero ni a abril
+  const marzo = H.mesCercano(p, 2014 + 2.4 / 12);
+  assert.deepEqual([marzo.clave, marzo.v], ['2014-03', null]);
+  assert.equal(H.mesCercano(p, 2014 + 7.5 / 12).clave, '2014-07');  // agosto: el mes vecino
+  assert.equal(H.mesCercano(p, 2010), null);
+  assert.equal(H.lecturaCis(CIS, 'espana', traductor('es')),
+    'Primer dato, 2014-01: 1,5 %. Máximo de la serie, 2014-09: 4,0 %. Último dato, 2014-11: 3,0 %. '
+    + 'Meses sin dato, en los que la línea se corta: 4.');
+  assert.equal(H.lecturaCis(CIS, 'personal', traductor('en')),
+    'First figure, 2014-01: 1.6%. Series high, 2014-07: 2.2%. Latest figure, 2014-11: 1.9%. '
+    + 'Months without a figure, where the line breaks: 3.');
+  assert.equal(H.lecturaCis(null, 'espana', traductor('es')), '');
+  assert.equal(H.textoCis(null, traductor('es')), 'sin dato');
+  assert.equal(H.textoCis(55.7, traductor('es')), '55,7 %');
+});
+
+test('CIS: estudio y entrevistas del globo, pasos del teclado y eje común', () => {
+  const es = traductor('es');
+  const p = H.puntosCis(CIS, 'espana');
+  const q = H.puntosCis(CIS, 'personal');
+  assert.equal(H.textoEstudio([p[0], q[0]], es), 'Estudio 3011 · 2.480 entrevistas');
+  assert.equal(H.textoEstudio([p[8], q[8]], traductor('en')), 'Study 3038 · 2,471 interviews');  // octubre: solo la personal
+  assert.equal(H.textoEstudio([p[2], q[2]], es), '');                                           // marzo: ninguna
+  const sinEstudio = H.puntosCis({ series: { espana: { periodo: ['2014-01'], valor: [1] } } }, 'espana');
+  assert.equal(H.textoEstudio(sinEstudio, es), '');
+  // El teclado pasa también por los meses sin dato del CIS; en las demás series, solo por los que tienen cifra
+  assert.equal(H.pasosTeclado([p, q], true).length, 10);
+  assert.equal(H.pasosTeclado([p]).length, 6);
+  assert.equal(H.pasosTeclado([H.puntosDe(DATOS, 'anios_renta')]).length, 7);
+  // El eje común llega al último mes del CIS si va más allá que el histórico (DATOS acaba en 1997)
+  assert.deepEqual(H.rangoAnios(DATOS, [p, q]), { desde: 1987, hasta: 2015 });
+  const pronto = H.puntosCis({ series: { espana: { periodo: ['1990-03'], valor: [1] } } }, 'espana');
+  assert.deepEqual(H.rangoAnios(DATOS, [pronto, null]), { desde: 1987, hasta: 1998 });
+});
+
+test('CIS: bloque con su ancla, entrada del índice y textos cis_* en los dos idiomas', () => {
+  const html = leerTexto('web', 'historico.html');
+  assert.match(html, new RegExp(`<section id="${H.CIS_ID}" class="tarjeta hi-bloque" data-bloque="${H.CIS_ID}"`));
+  assert.match(html, new RegExp(`<a href="#${H.CIS_ID}" data-i18n="historico\\.cis_corto">`));
+  // El bloque del CIS va tras los del histórico, antes de la caja de método
+  assert.ok(html.indexOf('id="hist-sueldo"') < html.indexOf(`id="${H.CIS_ID}"`));
+  assert.ok(html.indexOf(`id="${H.CIS_ID}"`) < html.indexOf('id="hi-metodo-titulo"'));
+  const claves = (idioma) => Object.keys(leerJson('web', 'i18n', `${idioma}.json`).historico).filter((k) => k.startsWith('cis_')).sort();
+  assert.deepEqual(claves('es'), claves('en'));
+  for (const idioma of ['es', 'en']) {
+    const t = traductor(idioma);
+    for (const k of ['corto', 'titulo', 'subtitulo', 'espana', 'personal', 'huecos', 'estudio', 'entrevistas', 'estudio_col',
+      'entrevistas_col', 'aviso', 'fuente', 'fecha', 'sin_datos', 'metodo']) assert.ok(t(`historico.cis_${k}`), `${k} (${idioma})`);
+    assert.match(t('historico.cis_fuente'), /CIS/);
+    assert.match(t('historico.cis_fuente'), /CC BY 4\.0/);
+    assert.match(t('historico.cis_fecha', { fecha: '2026-10-20' }), /2026-10-20/);
+  }
+  assert.match(traductor('es')('historico.cis_aviso'), /^Opinión, no registro/);
+  assert.match(traductor('en')('historico.cis_aviso'), /^Opinion, not a register/);
+});
+
+const RUTA_CIS_REAL = join(raiz, 'web', 'datos', 'cis_vivienda.json');
+test('datos exportados por el pipeline: contrato de cis_vivienda.json', { skip: !existsSync(RUTA_CIS_REAL) && 'sin datos exportados' }, () => {
+  const d = JSON.parse(readFileSync(RUTA_CIS_REAL, 'utf8'));
+  assert.equal(H.RUTA_CIS, 'datos/cis_vivienda.json');
+  assert.match(d.actualizado, /^\d{4}-\d{2}-\d{2}$/);
+  for (const pregunta of H.CIS_SERIES) {
+    const s = d.series[pregunta];
+    const n = s.periodo.length;
+    for (const campo of ['valor', 'estudio', 'n']) assert.equal(s[campo].length, n, `${pregunta}.${campo}`);
+    assert.ok(s.periodo.every((p, k) => /^\d{4}-\d{2}$/.test(p) && (k === 0 || p > s.periodo[k - 1])), pregunta);
+    assert.ok(s.valor.every((v) => v >= 0 && v <= 100 && Math.abs(v * 10 - Math.round(v * 10)) < 1e-9), pregunta);
+    assert.ok(s.n.every((x) => Number.isInteger(x) && x >= 1000), pregunta);
+    assert.ok(!s.periodo.some((p) => p.endsWith('-08')), `${pregunta}: agosto`);
+    // La rejilla de la página tiene todos los meses del JSON, con sus cifras
+    assert.equal(H.puntosCis(d, pregunta).filter((p) => p.v !== null).length, n);
+  }
+  // Las cifras que cita la nota metodológica (§7.10)
+  const espana = H.extremos(H.puntosCis(d, 'espana'));
+  assert.deepEqual([espana.primero.clave, espana.primero.v], ['2014-01', 1.5]);
+  assert.equal(espana.maximo.v, 55.7);
+  assert.equal(H.extremos(H.puntosCis(d, 'personal')).primero.v, 1.6);
+  assert.equal(H.huecosCis(H.puntosCis(d, 'espana')), 15);
+  assert.equal(H.huecosCis(H.puntosCis(d, 'personal')), 13);
 });

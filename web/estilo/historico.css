@@ -97,6 +97,17 @@ html, body { height: auto; min-height: 100%; }
 .hi-trazo.serie-b { border-top-color: var(--color-rojo); }
 .hi-leyenda { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 0; padding: 0; list-style: none; font-size: 0.85rem; }
 .hi-leyenda li { display: inline-flex; align-items: center; gap: 6px; }
+.hi-grafico .punto-aislado { stroke: none; }
+.hi-grafico .punto-aislado.serie-a { fill: var(--color-tinta); }
+.hi-grafico .punto-aislado.serie-b { fill: var(--color-rojo); }
+
+/* La vivienda como problema (CIS): meses sueltos, con la línea cortada a la vista en los huecos */
+.hi-grafico .linea-meses { stroke-width: 2; stroke-linecap: butt; }
+.hi-globo-periodo { font-weight: 600; }
+.hi-globo-serie { color: var(--color-tenue); font-size: 0.8rem; }
+.hi-aviso { margin: 8px 0 0; max-width: 80ch; padding-left: 10px; border-left: 3px solid var(--color-rojo); font-size: 0.9rem; }
+.hi-sin-datos { margin: 0; }
+.hi-fuente[hidden], .hi-plegable[hidden] { display: none; }
 
 .hi-lectura { margin: 10px 0 0; max-width: 80ch; }
 .hi-lectura-serie { display: block; }

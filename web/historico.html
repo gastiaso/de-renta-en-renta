@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Máquina del tiempo · De renta en renta</title>
-  <meta name="description" content="Series de España desde 1987: años de renta y esfuerzo para comprar vivienda, tipos hipotecarios, valor tasado y sueldo medio">
+  <meta name="description" content="Series de España desde 1987: años de renta y esfuerzo para comprar vivienda, tipos hipotecarios, valor tasado, sueldo medio y la vivienda como problema (CIS)">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="estilo/tokens.css">
   <link rel="stylesheet" href="estilo/sitio.css">
@@ -48,6 +48,7 @@
         <a href="#hist-tipos" data-i18n="historico.bloques.hist-tipos.corto"></a>
         <a href="#hist-tasado" data-i18n="historico.bloques.hist-tasado.corto"></a>
         <a href="#hist-sueldo" data-i18n="historico.bloques.hist-sueldo.corto"></a>
+        <a href="#hist-cis" data-i18n="historico.cis_corto"></a>
       </nav>
 
       <p id="hi-estado" class="hi-estado" role="status" data-i18n="historico.carga">Cargando los datos…</p>
@@ -107,6 +108,17 @@
           <details class="hi-plegable"><summary data-i18n="historico.tabla"></summary><div class="hi-tabla-marco"></div></details>
         </section>
 
+        <!-- La vivienda como problema: barómetros del CIS (datos/cis_vivienda.json, que puede faltar) -->
+        <section id="hist-cis" class="tarjeta hi-bloque" data-bloque="hist-cis" aria-labelledby="hist-cis-titulo">
+          <h2 id="hist-cis-titulo" class="hi-h2" data-i18n="historico.cis_titulo"></h2>
+          <p class="nota" data-i18n="historico.cis_subtitulo"></p>
+          <div class="hi-grafico"></div>
+          <p class="hi-lectura"></p>
+          <p class="hi-aviso" data-i18n="historico.cis_aviso"></p>
+          <p class="nota hi-fuente"></p>
+          <details class="hi-plegable"><summary data-i18n="historico.tabla"></summary><div class="hi-tabla-marco"></div></details>
+        </section>
+
         <section class="tarjeta hi-caja" aria-labelledby="hi-metodo-titulo">
           <h2 id="hi-metodo-titulo" class="hi-caja-banda" data-i18n="historico.metodo.titulo"></h2>
           <ul class="hi-lista">
@@ -115,6 +127,7 @@
             <li data-i18n="historico.metodo.tipos"></li>
             <li data-i18n="historico.metodo.tasado"></li>
             <li data-i18n="historico.metodo.sueldo"></li>
+            <li data-i18n="historico.cis_metodo"></li>
             <li data-i18n="historico.metodo.mezcla"></li>
             <li data-i18n="historico.metodo.compuerta"></li>
           </ul>

@@ -535,10 +535,10 @@
   },
   "historico": {
     "titulo_pagina": "Time machine · De renta en renta",
-    "descripcion": "Spanish series since 1987: years of income and burden of buying a home, mortgage interest rates, appraised value and average wage",
+    "descripcion": "Spanish series since 1987: years of income and burden of buying a home, mortgage interest rates, appraised value, average wage and housing as a problem (CIS)",
     "antetitulo": "Spain, since 1987",
     "titulo": "Time machine",
-    "entradilla": "How many years of income a home cost, what share of income the first-year mortgage payments took, at what interest rate, what a square metre was appraised at and what an employee earned on average, period by period. Series from the Banco de España, the Ministry of Housing (MIVAU) and INE on the same time axis; the appraised value, also by region.",
+    "entradilla": "How many years of income a home cost, what share of income the first-year mortgage payments took, at what interest rate, what a square metre was appraised at and what an employee earned on average, period by period. Series from the Banco de España, the Ministry of Housing (MIVAU) and INE on the same time axis; the appraised value, also by region. At the end, housing as a problem in the CIS barometers, since 2014.",
     "distintivo": "National series",
     "carga": "Loading data…",
     "error_carga": "The page data could not be loaded (datos/historico/). They are generated with targets::tar_make(names = ficheros_web_historico).",
@@ -611,13 +611,28 @@
     "fechas": {
       "ruptura": "Series break"
     },
-    "grafico": "Chart of {serie}, from {desde} to {hasta}",
+    "grafico": "Chart of {serie}, from {desde} to {hasta}. With the chart selected, the arrow keys step through the periods.",
     "tabla": "Show all figures",
     "periodo_col": "Period",
     "espana": "Spain",
     "ccaa": "Region",
     "ccaa_ninguna": "Spain only",
     "sin_dato": "no data",
+    "cis_corto": "Housing as a problem",
+    "cis_titulo": "Housing as a problem (CIS)",
+    "cis_subtitulo": "Share of respondents who name housing among Spain’s three main problems and among the three that affect them most personally, with spontaneous answers. Monthly, since 2014; no barometer in August.",
+    "cis_espana": "Spain’s problems",
+    "cis_personal": "Personal problems",
+    "cis_huecos": "Months without a figure, where the line breaks: {n}.",
+    "cis_estudio": "Study {estudio}",
+    "cis_entrevistas": "{n} interviews",
+    "cis_estudio_col": "Study",
+    "cis_entrevistas_col": "Interviews",
+    "cis_aviso": "Opinion, not a register: the series measures how many people name housing as a problem, not its price or what it costs to pay for it.",
+    "cis_fuente": "Source: own elaboration with data from the Centro de Investigaciones Sociológicas (CIS, www.cis.es), monthly barometers, under a CC BY 4.0 licence. Changes: figures rounded to one decimal; months without open results are left out. The CIS neither takes part in nor sponsors this atlas.",
+    "cis_fecha": "Barometers published up to {fecha}.",
+    "cis_sin_datos": "There are no CIS data in this copy of the website (datos/cis_vivienda.json). They are generated with targets::tar_make(names = ficheros_web_cis).",
+    "cis_metodo": "Housing as a problem (CIS): in the monthly barometer, share of respondents who name housing, without a list of answers, among Spain’s three main problems or among the three that affect them most personally. It is an opinion survey, not a register. Since January 2014; no barometer in August, and months without open results are left as gaps. Validation: the series reproduces the figures the CIS gives in its press releases.",
     "metodo": {
       "titulo": "How to read these series",
       "renta": "Years of income (Banco de España): average price of a standard open-market home (93.75 m² until 2004; afterwards, the average floor area of registered sales) divided by the estimated gross annual income of the median household, based on the Survey of Household Finances, the National Accounts and the Labour Force Survey.",
@@ -629,7 +644,7 @@
       "compuerta": "Validation: the series reproduce the figures the Banco de España publishes in its PDF table and the reference rate published in the Official State Gazette; the MIVAU appraised value matches the one reproduced by the Banco de España in every quarter since 1995."
     },
     "pie": {
-      "fuentes": "Sources: Banco de España (Summary indicators, table 1.5; Statistical Bulletin, table 19.1), MIVAU (Appraised value of open-market housing) and INE (Annual Spanish National Accounts).",
+      "fuentes": "Sources: Banco de España (Summary indicators, table 1.5; Statistical Bulletin, table 19.1), MIVAU (Appraised value of open-market housing), INE (Annual Spanish National Accounts) and CIS (monthly barometers).",
       "bde": "Source of the Banco de España series: own elaboration with data extracted from the Banco de España website (www.bde.es). The Banco de España neither takes part in nor sponsors this atlas.",
       "licencia": "Data and texts: CC BY-SA 4.0."
     }

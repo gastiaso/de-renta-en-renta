@@ -4,9 +4,16 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (10-nov-2026, F6: la vivienda como problema en la máquina del tiempo)
+
+- `historico.html`: bloque «La vivienda como problema (CIS)», tras las series del histórico y en el mismo eje de años desde 1987: España y personal, mensual desde 2014, con la línea cortada en los 15 y 13 meses sin dato (agosto no cuenta: no hay barómetro) y los meses sueltos como punto; globo con el mes, las dos cifras, el estudio y las entrevistas; lectura generada (primer dato, máximo, último y meses sin dato); cita del CIS con su licencia (CC BY 4.0), advertencia «opinión, no registro» y tabla de cifras. Sin `datos/cis_vivienda.json`, el bloque dice que no hay datos.
+- Los seis gráficos de la página se leen también con el teclado (Tab, flechas, Inicio, Fin y Escape).
+- La compuerta `cis_vivienda_web` comprueba también el estudio y las entrevistas de cada mes.
+- Nota metodológica, §7.10: la página ya muestra la serie; el máximo de octubre de 2026 es 55,7 % (no 55,6).
+
 ### Añadido (10-nov-2026, F6: CIS y calendario de fuentes; tarea 31; plan v0.41)
 
-- La vivienda como problema (CIS): % de entrevistados que cita la vivienda entre los tres principales problemas de España y entre los que más le afectan personalmente, por barómetro mensual, de enero de 2014 a octubre de 2026 (126 y 128 meses; del 1,5 al 55,6 % en España). Fuente abierta y sin registro: tabulaciones en XLSX (desde febrero de 2025) y resultados en HTML (2014–enero de 2025) de cada barómetro (`R/fuente_cis_barometros.R`). Tabla propia, fuera de la tabla larga, y `datos/cis_vivienda.json` para la página del histórico (aún sin mostrar). Compuerta `validacion_cis` con las notas de prensa del CIS (cinco cifras exactas) y `validacion_web_cis`.
+- La vivienda como problema (CIS): % de entrevistados que cita la vivienda entre los tres principales problemas de España y entre los que más le afectan personalmente, por barómetro mensual, de enero de 2014 a octubre de 2026 (126 y 128 meses; del 1,5 al 55,7 % en España). Fuente abierta y sin registro: tabulaciones en XLSX (desde febrero de 2025) y resultados en HTML (2014–enero de 2025) de cada barómetro (`R/fuente_cis_barometros.R`). Tabla propia, fuera de la tabla larga, y `datos/cis_vivienda.json` para la página del histórico, que la muestra. Compuerta `validacion_cis` con las notas de prensa del CIS (cinco cifras exactas) y `validacion_web_cis`.
 - Calendario de fuentes (`inventario/calendario_fuentes.csv`, 27 fuentes; `R/calendario_fuentes.R`): qué fuentes tocan a una fecha, objetivo `fuentes_pendientes`, que avisa cuando cambia ese conjunto, renovación con `cal_actualizar()` y `cal_restaurar()` (reversibles; nada se renueva solo ni en el repositorio remoto) y compuerta `validacion_calendario`. Procedimiento en `docs/actualizacion.md`. El objetivo del CIS (`cis_estudios`) se vuelve a ejecutar solo cuando toca un barómetro nuevo.
 - Nota metodológica: §7.10 (CIS) y §9.3 (calendario), en castellano e inglés.
 - Descargas (10-nov-2026, CIS): páginas de los barómetros de 2008 a 2026 (solo su JSON-LD, 5,9 MB) y resultados de 2014 a 2026 (59 MB), con pausas entre peticiones y respetando `robots.txt`.

@@ -145,8 +145,20 @@ test_that("cis_exportar_vivienda y cis_comprobar_web: ida y vuelta con un decima
   expect_equal(x$series$espana$periodo, c("2026-01", "2026-07", "2026-09"))
   expect_equal(x$series$espana$valor, c(42.6, 43.0, 37.5))
   expect_equal(sum(cis_comprobar_web(serie, ruta)$calculado), 0)
+  expect_equal(x$series$espana$estudio[1], serie$estudio[serie$pregunta == "espana"][1])
+  expect_type(x$series$espana$n, "integer")
   serie$total[1] <- 50
   expect_equal(sum(cis_comprobar_web(serie, ruta)$calculado), 1)
+  # el estudio y las entrevistas que ensena el globo de la pagina, tambien de ida y vuelta
+  serie <- cis_serie_vivienda(barometros_inventados())
+  serie$estudio[1] <- "9999"
+  serie$n[2] <- serie$n[2] + 1
+  expect_equal(sum(cis_comprobar_web(serie, ruta)$calculado), 2)
+  # un JSON sin las entrevistas no pasa
+  sin_n <- jsonlite::read_json(ruta)
+  sin_n$series$espana$n <- NULL
+  jsonlite::write_json(sin_n, ruta, auto_unbox = TRUE, digits = NA)
+  expect_equal(cis_comprobar_web(cis_serie_vivienda(barometros_inventados()), ruta)$calculado[1], Inf)
 })
 
 test_that("cis_comprobacion_acceso reconoce la página con la que el CIS frena a los robots", {

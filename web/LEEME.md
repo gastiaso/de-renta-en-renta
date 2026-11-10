@@ -74,7 +74,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 | `mapa.html` | Mapa: cabecera con buscador e idioma, barra de la vista, mapa, leyenda, etiqueta, «Tu sueldo», ficha y diálogo «Compartir» |
 | `js/portada.js`, `js/redireccion.js`, `estilo/portada.css`, `estilo/fichas/` | Portada: idioma, fichas, cartas, «Tu sueldo», buscador, dado y pie; redirección de los enlaces viejos de la raíz a `mapa.html`; maquetación; iconos de las fichas |
 | `sobrecarga.html` | Sección «Sobrecarga» (v0.0): mapa de Europa, escalera, serie de España y de la UE-27 desde el primer año publicado (cortada en las rupturas de Eurostat y en las del atlas, como la de 2013 en España, que Eurostat no marca; las cifras de Eurostat llevan sus marcas), desgloses de España por tenencia, edad y quintil de renta, y módulo de acceso |
-| `historico.html` | «Máquina del tiempo» (F6): series de España desde 1987 (años de renta y esfuerzo teórico del Banco de España, tipos oficiales de referencia del mercado hipotecario, valor tasado del MIVAU, también por comunidad, y sueldo bruto medio por asalariado del INE), un gráfico por bloque con el mismo eje de años, fechas clave, lectura y tabla; sin mapa |
+| `historico.html` | «Máquina del tiempo» (F6): series de España desde 1987 (años de renta y esfuerzo teórico del Banco de España, tipos oficiales de referencia del mercado hipotecario, valor tasado del MIVAU, también por comunidad, y sueldo bruto medio por asalariado del INE) y, al final, la vivienda como problema en los barómetros del CIS (mensual, desde 2014); un gráfico por bloque con el mismo eje de años, que se lee con el ratón o con el teclado, fechas clave, lectura y tabla; sin mapa |
 | `js/principal.js` | Arranque del mapa y coordinación de todo lo demás |
 | `js/estado.js` | Estado de la vista en la URL (`idioma`, `mapa`, `anio`, que puede ser un periodo como `2025-05`, `tipologia`, `ficha`, `superficie`, `umbral`, `seccion`, `comparar`, `vista`, `territorio`) y enlace para compartir |
 | `js/barra_vista.js` | Barra de la vista: selectores de mapa, año y tipología, y botones de descarga |
@@ -89,7 +89,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 | `js/mapa.js` | MapLibre: mapa base (PMTiles o GeoJSON), capas coloreadas por niveles, etiqueta, selección, comparación y encuadre |
 | `js/leyenda.js`, `js/ficha.js` | Leyenda y fichas de sección y de territorio |
 | `js/sobrecarga.js`, `js/sobrecarga_datos.js`, `estilo/sobrecarga.css` | Sección «Sobrecarga»: página (DOM y MapLibre) y su lógica sin DOM; datos en `datos/sobrecarga/` (`exportar_web_sobrecarga()`) |
-| `js/historico.js`, `js/historico_datos.js`, `estilo/historico.css` | «Máquina del tiempo»: página (DOM y SVG) y su lógica sin DOM; datos en `datos/historico/` (`hist_exportar_web()`, `R/web_historico.R`) |
+| `js/historico.js`, `js/historico_datos.js`, `estilo/historico.css` | «Máquina del tiempo»: página (DOM y SVG) y su lógica sin DOM; datos en `datos/historico/` (`hist_exportar_web()`, `R/web_historico.R`) y `datos/cis_vivienda.json` (`cis_exportar_vivienda()`, `R/fuente_cis_barometros.R`; si falta, el bloque del CIS dice que no hay datos) |
 | `js/panel_sueldo.js`, `js/compartir.js` | Tarjeta «Tu sueldo» y diálogo «Compartir» |
 | `js/comparador.js`, `js/buscador.js` | Comparador entre territorios y buscador |
 | `metodo.html`, `method.html`, `datos.html`, `data.html` | Páginas de texto «Método» y «Datos»: no están en git, las genera el flujo de Pages con pandoc (ver abajo, «Páginas de texto») |

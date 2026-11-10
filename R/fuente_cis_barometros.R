@@ -479,14 +479,20 @@ cis_exportar_vivienda <- function(serie, dir_web = "web") {
   ruta
 }
 
-# Ida y vuelta del JSON (cis_vivienda_web, bloqueo): cifras distintas de la serie redondeada.
+# Ida y vuelta del JSON (cis_vivienda_web, bloqueo): cifras distintas de la serie redondeada, y
+# estudios o entrevistas distintos de los de la tabla (la pagina del historico los ensena al pasar
+# el raton; F6, 10-nov-2026). Periodos de mas o de menos, o listas de otra longitud: Inf.
 cis_comprobar_web <- function(serie, ruta) {
   x <- jsonlite::read_json(ruta, simplifyVector = TRUE)
+  distintos <- function(a, b) sum(xor(is.na(a), is.na(b)) | (!is.na(a) & !is.na(b) & a != b))
   dif <- vapply(c("espana", "personal"), function(p) {
     s <- dplyr::filter(serie, pregunta == p) |> dplyr::arrange(periodo)
     w <- x$series[[p]]
     if (length(w$periodo) != nrow(s) || !identical(as.character(w$periodo), s$periodo)) return(Inf)
-    sum(abs(w$valor - as.numeric(sprintf("%.1f", s$total))) > 1e-9)
+    if (length(w$estudio) != nrow(s) || length(w$n) != nrow(s)) return(Inf)
+    sum(abs(w$valor - as.numeric(sprintf("%.1f", s$total))) > 1e-9) +
+      distintos(as.character(w$estudio), as.character(s$estudio)) +
+      distintos(as.integer(w$n), as.integer(round(s$n)))
   }, numeric(1))
   tibble::tibble(id = "cis_vivienda_web", anio = NA_integer_, detalle = names(dif),
                  calculado = as.numeric(dif), referencia = 0)

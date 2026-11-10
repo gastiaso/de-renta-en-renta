@@ -616,7 +616,7 @@ Sin fechas. Cada fase se cierra con un criterio verificable. F1b y F2 se publica
   - enlace con *barómetros* (el problema de la vivienda en el CIS frente a los datos, por comunidad);
   - automatización de las actualizaciones.
 - **Hecho cuando:** el calendario de fuentes dispara las actualizaciones y el CHANGELOG está al día.
-- **Avance (10-nov-2026):** enlace con *barómetros*, nacional: la vivienda como problema del CIS (España y personal), 2014–2026, con compuerta y JSON para el histórico (falta mostrarlo en la página); por comunidad, solo con los microdatos (formulario con condiciones): pendiente del autor. Calendario de fuentes (`inventario/calendario_fuentes.csv`) con su señal en `targets` (`fuentes_pendientes`, `cis_estudios`) y procedimiento (`docs/actualizacion.md`): el calendario dispara las actualizaciones en local; nada se ejecuta en el remoto. Faltan la tabla de paso desde el seccionado de 2011 y las primeras historias.
+- **Avance (10-nov-2026):** enlace con *barómetros*, nacional: la vivienda como problema del CIS (España y personal), 2014–2026, con compuerta, en la página del histórico (bloque «La vivienda como problema (CIS)»); por comunidad, solo con los microdatos (formulario con condiciones): pendiente del autor. Calendario de fuentes (`inventario/calendario_fuentes.csv`) con su señal en `targets` (`fuentes_pendientes`, `cis_estudios`) y procedimiento (`docs/actualizacion.md`): el calendario dispara las actualizaciones en local; nada se ejecuta en el remoto. Faltan la tabla de paso desde el seccionado de 2011 y las primeras historias.
 
 ---
 
