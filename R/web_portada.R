@@ -44,7 +44,7 @@ destino_ingles <- function(destino, destino_en = "") {
     if (!nzchar(d)) return("")
     partes <- regmatches(d, regexec("^([^?#]*)(\\?[^#]*)?(#.*)?$", d))[[1]]
     pagina <- partes[2]; consulta <- partes[3]; ancla <- partes[4]
-    if (pagina %in% c("mapa.html", "sobrecarga.html", "", "./", "index.html")) {
+    if (pagina %in% c("mapa.html", "sobrecarga.html", "historico.html", "", "./", "index.html")) {   # F6, historico
       consulta <- if (nzchar(consulta)) paste0(consulta, "&idioma=en") else "?idioma=en"
       return(paste0(pagina, consulta, ancla))
     }
@@ -176,7 +176,8 @@ comprobar_casillas_portada <- function(casillas, mapas = NULL, anclas = NULL, cl
   con_destino <- nzchar(casillas$destino)
   destinos <- c(casillas$destino[activa], destino_ingles(casillas$destino[activa], casillas$destino_en[activa]))
   partes <- lapply(destinos, partes_destino)
-  paginas_conocidas <- c("mapa.html", "sobrecarga.html", "metodo.html", "method.html", "datos.html", "data.html")
+  paginas_conocidas <- c("mapa.html", "sobrecarga.html", "metodo.html", "method.html", "datos.html", "data.html",
+                         "historico.html")   # F6, historico
   mapa_mal <- if (is.null(mapas)) 0 else sum(vapply(partes, function(p) {
     !is.null(p$parametros$mapa) && !p$parametros$mapa %in% mapas
   }, TRUE))

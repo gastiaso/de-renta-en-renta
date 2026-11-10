@@ -1,0 +1,12 @@
+id,serie,geo_id,periodo,tipo,texto_es,texto_en,fuente
+minimo_anios_renta,anios_renta,00,1987-T1,minimo,Mínimo de la serie (primer trimestre publicado),Series low (first quarter published),bde_accesibilidad
+maximo_anios_renta,anios_renta,00,2007-T3,maximo,Máximo de la serie,Series high,bde_accesibilidad
+maximo_esfuerzo,esfuerzo_teorico,00,1990-T2,maximo,Máximo de la serie,Series high,bde_accesibilidad
+minimo_esfuerzo,esfuerzo_teorico,00,1999-T3,minimo,Mínimo de la serie,Series low,bde_accesibilidad
+bde_tipo_circular_2003,esfuerzo_teorico,00,2003-T1,ruptura,El tipo de interés de los préstamos nuevos con que se calcula pasa de la Circular 8/1990 a la Circular 4/2002 del Banco de España,The new-loan interest rate used in the calculation moves from Banco de España Circular 8/1990 to Circular 4/2002,bde_accesibilidad
+fin_deduccion_2012,esfuerzo_teorico,00,2012-T4,evento,"Fin de la deducción por adquisición de vivienda habitual (diciembre de 2012); la serie se calcula sin deducciones en todo el periodo","End of the tax deduction for buying a main residence (December 2012); the series is computed without deductions throughout",bde_accesibilidad
+maximo_tipo_hipotecas,tipo_hipotecas,00,1991-01,maximo,Máximo de la serie,Series high,bde_tipos_referencia
+minimo_tipo_hipotecas,tipo_hipotecas,00,2021-11,minimo,Mínimo de la serie,Series low,bde_tipos_referencia
+maximo_mibor_euribor,mibor_euribor,00,1987-05,maximo,Máximo desde 1987,High since 1987,bde_tipos_referencia
+bde_mibor_euribor_1999,mibor_euribor,00,1999-01,ruptura,"Comienza el euríbor; el MIBOR a un año lo sigue, con diferencias de centésimas hasta julio de 2013, y coincide con él desde entonces","The Euribor starts; the one-year MIBOR follows it, differing by hundredths of a point until July 2013, and matches it since",bde_tipos_referencia
+minimo_mibor_euribor,mibor_euribor,00,2021-01,minimo,Mínimo de la serie (tipo negativo),Series low (negative rate),bde_tipos_referencia

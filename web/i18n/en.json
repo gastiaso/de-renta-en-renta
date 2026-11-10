@@ -10,7 +10,8 @@
     "tu_sueldo": "Your pay",
     "sobrecarga": "Overburden",
     "datos": "Data",
-    "metodo": "Method"
+    "metodo": "Method",
+    "historico": "Time machine"
   },
   "fichas": {
     "llave": "Neighbourhood household",
@@ -532,6 +533,107 @@
       "EU27_2020": "EU-27"
     }
   },
+  "historico": {
+    "titulo_pagina": "Time machine · De renta en renta",
+    "descripcion": "Spanish series since 1987: years of income and burden of buying a home, mortgage interest rates, appraised value and average wage",
+    "antetitulo": "Spain, since 1987",
+    "titulo": "Time machine",
+    "entradilla": "How many years of income a home cost, what share of income the first-year mortgage payments took, at what interest rate, what a square metre was appraised at and what an employee earned on average, period by period. Series from the Banco de España, the Ministry of Housing (MIVAU) and INE on the same time axis; the appraised value, also by region.",
+    "distintivo": "National series",
+    "carga": "Loading data…",
+    "error_carga": "The page data could not be loaded (datos/historico/). They are generated with targets::tar_make(names = ficheros_web_historico).",
+    "indice": "Series on this page",
+    "bloques": {
+      "hist-renta": {
+        "corto": "Years of income",
+        "titulo": "Years of income to buy a home",
+        "subtitulo": "Average price of a standard open-market home divided by the gross annual income of the median household. Quarterly.",
+        "fuente": "Source: own elaboration with data extracted from the Banco de España website (www.bde.es): Summary indicators, table 1.5, series D_TKB57110_IPV. Data downloaded on {version}."
+      },
+      "hist-esfuerzo": {
+        "corto": "Burden",
+        "titulo": "Theoretical first-year burden",
+        "subtitulo": "First-year payments on a loan for 80% of the value of the standard home, as a percentage of the disposable income of the median household, without tax deductions. Quarterly.",
+        "fuente": "Source: own elaboration with data extracted from the Banco de España website (www.bde.es): Summary indicators, table 1.5, series D_TKB57210_IPV. Data downloaded on {version}."
+      },
+      "hist-tipos": {
+        "corto": "Interest rates",
+        "titulo": "Mortgage market reference interest rates",
+        "subtitulo": "Official rates published by the Banco de España, in percent. Monthly.",
+        "fuente": "Source: own elaboration with data extracted from the Banco de España website (www.bde.es): Statistical Bulletin, table 19.1, series D_1T9H0000 and D_1E723706.EUR. Data downloaded on {version}."
+      },
+      "hist-tasado": {
+        "corto": "Appraised value",
+        "titulo": "Appraised value of open-market housing",
+        "subtitulo": "Average appraisal value per square metre, not the price paid. Quarterly, since 1995; Spain and each region.",
+        "fuente": "Source: MIVAU, Appraised value of open-market housing (online statistical bulletin, table 35101000). Data downloaded on {version}."
+      },
+      "hist-sueldo": {
+        "corto": "Average wage",
+        "titulo": "Average gross wage per employee",
+        "subtitulo": "Gross wages and salaries of the whole economy divided by the employees of the year. Annual, since 1995.",
+        "fuente": "Source: INE, Annual Spanish National Accounts, base 2020 (tables 71129 and 71133). Data downloaded on {version}."
+      }
+    },
+    "series": {
+      "anios_renta": "Years of income",
+      "esfuerzo_teorico": "Theoretical burden",
+      "tipo_hipotecas": "Average rate on mortgage loans over three years",
+      "mibor_euribor": "One-year MIBOR (follows the Euribor since 1999)",
+      "valor_tasado": "Appraised value",
+      "sueldo_asalariado": "Average gross wage per employee"
+    },
+    "unidades": {
+      "anios": "{x} years",
+      "porcentaje": "{x}%",
+      "euros_m2": "€{x}/m²",
+      "euros_anio": "€{x}"
+    },
+    "ejes": {
+      "anios": "years",
+      "porcentaje": "%",
+      "euros_m2": "€/m²",
+      "euros_anio": "€ a year"
+    },
+    "periodo": {
+      "t1": "Q1 {anio}",
+      "t2": "Q2 {anio}",
+      "t3": "Q3 {anio}",
+      "t4": "Q4 {anio}"
+    },
+    "lectura": {
+      "primero": "first figure",
+      "ultimo": "latest figure",
+      "maximo": "series high",
+      "minimo": "series low",
+      "y": " and "
+    },
+    "fechas": {
+      "ruptura": "Series break"
+    },
+    "grafico": "Chart of {serie}, from {desde} to {hasta}",
+    "tabla": "Show all figures",
+    "periodo_col": "Period",
+    "espana": "Spain",
+    "ccaa": "Region",
+    "ccaa_ninguna": "Spain only",
+    "sin_dato": "no data",
+    "metodo": {
+      "titulo": "How to read these series",
+      "renta": "Years of income (Banco de España): average price of a standard open-market home (93.75 m² until 2004; afterwards, the average floor area of registered sales) divided by the estimated gross annual income of the median household, based on the Survey of Household Finances, the National Accounts and the Labour Force Survey.",
+      "esfuerzo": "Theoretical burden (Banco de España): first-year payments on a loan for 80% of the value of that home, at the average rate on new housing loans and the average mortgage term, as a percentage of the disposable income of the median household. No tax deductions throughout the series.",
+      "tipos": "Rates (Banco de España, also published monthly in the Official State Gazette): average rate on mortgage loans over three years for buying open-market housing from all credit institutions, since November 1990, and one-year MIBOR, which has followed the one-year Euribor since 1999.",
+      "tasado": "Appraised value (MIVAU): average appraisal value of open-market housing per square metre, not the price paid. A year in the Banco de España table is the simple mean of its four quarters.",
+      "sueldo": "Wage (INE, National Accounts): gross wages and salaries of the whole economy divided by the employees of each year, including those who work part of the year or part-time. It is not the AEAT average wage used by the backpack token.",
+      "mezcla": "Each series keeps its source, unit and period (quarter, month or year): they are not combined into an indicator. The charts share the time axis so that they can be read one below the other.",
+      "compuerta": "Validation: the series reproduce the figures the Banco de España publishes in its PDF table and the reference rate published in the Official State Gazette; the MIVAU appraised value matches the one reproduced by the Banco de España in every quarter since 1995."
+    },
+    "pie": {
+      "fuentes": "Sources: Banco de España (Summary indicators, table 1.5; Statistical Bulletin, table 19.1), MIVAU (Appraised value of open-market housing) and INE (Annual Spanish National Accounts).",
+      "bde": "Source of the Banco de España series: own elaboration with data extracted from the Banco de España website (www.bde.es). The Banco de España neither takes part in nor sponsors this atlas.",
+      "licencia": "Data and texts: CC BY-SA 4.0."
+    }
+  },
   "indicadores": {
     "renta_persona": {
       "nombre": "Average net income per person",
@@ -748,7 +850,9 @@
     "ine_epa_deciles": "Wage deciles of the main job (Labour Force Survey)",
     "idescat_e02": "Territorial wage statistics (experimental)",
     "bde_accesibilidad": "Housing affordability indicators (years of income, theoretical burden)",
-    "calculo_propio": "Own calculation from the sources of each term"
+    "calculo_propio": "Own calculation from the sources of each term",
+    "bde_tipos_referencia": "Official mortgage market reference interest rates",
+    "ine_cne": "Annual Spanish National Accounts: aggregates by industry (base 2020)"
   },
   "vocabulario": {
     "corte": {

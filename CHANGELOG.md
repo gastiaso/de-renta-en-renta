@@ -4,6 +4,21 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (10-nov-2026, F6: módulo histórico, «máquina del tiempo»; tarea 30; plan v0.40)
+
+- Módulo histórico en una tabla propia, no en la tabla larga (`historico`, `datos/intermedios/historico.parquet`, 3.704 filas; `R/historico.R`): años de renta y esfuerzo teórico sin deducciones del Banco de España, trimestrales desde el primer trimestre de 1987 (`R/fuente_bde.R`); tipos oficiales de referencia del mercado hipotecario, mensuales (tipo medio de las hipotecas a más de tres años, desde noviembre de 1990, y MIBOR a un año, desde 1987); valor tasado del MIVAU desde 1995, de España y las comunidades (lectura de F4), y sueldo bruto medio por asalariado de la Contabilidad Nacional del INE, 1995–2025 (`R/fuente_ine_cne.R`).
+- Compuerta del módulo: `hist_series`, `hist_publicadas` (tabla en PDF del Banco de España del 5-nov-2026 y BOE de agosto de 2026), `hist_publicadas_enteras`, `hist_prensa`, `hist_fechas`, `hist_valor_tasado_bde` (el valor tasado del MIVAU es igual al que reproduce el Banco de España en 126 trimestres), `hist_valor_tasado_ccaa` (alerta: 15 trimestres de 1995–2013, de la fuente), `hist_salarios_suma` y `web_historico`. Fechas clave y cifras publicadas en `inventario/historico_fechas.csv` e `inventario/historico_referencias.csv`; rupturas `bde_mibor_euribor_1999` y `bde_tipo_circular_2003`.
+- Página «Máquina del tiempo» (`web/historico.html`; datos en `datos/historico/historico.json`, `R/web_historico.R`), en castellano e inglés: cinco gráficos con el mismo eje de años, fechas clave, lectura sin valoraciones, tablas y el valor tasado por comunidad. Entrada al final del menú de todas las páginas; la casilla «Sube el euríbor» de la portada lleva a sus tipos.
+- Descargas comprobadas enteras, con reintento, en los lectores del módulo: la tabla 71129 del INE llegó cortada sin error.
+- Nota metodológica: §7.9 y nueve filas en §4.1, en los dos idiomas.
+- Descargas (10-nov-2026, fuentes oficiales del plan): tablas `si_1_5` y `be1901` del Banco de España (0,45 MB) y tablas 71129 y 71133 de la Contabilidad Nacional del INE (11,5 MB).
+
+### Decidido (10-nov-2026, F6: módulo histórico)
+
+- Reutilización de las estadísticas del Banco de España verificada (términos de uso): permitida sin alterar contenido ni metadatos, citando «Elaboración propia con datos extraídos del sitio web del Banco de España (www.bde.es)» y la fecha de actualización, y sin sugerir su participación.
+- Cifras del Banco de España del plan, contrastadas con la serie: 1987, menos de tres años solo en el primer trimestre (2,90); máximo de 9,46 en el tercer trimestre de 2007 (la prensa daba 9,45); máximo del esfuerzo, 72,47 % en el segundo trimestre de 1990. No coincide la de 7,6 años en 2023: la media de 2023 es 7,1 (7,6 es la de 2025). Corregidas en el plan (§2.5 y §10.2).
+- Por revisar (plan §11, pregunta 47): tabla propia del módulo; solo el esfuerzo sin deducciones; tipos de referencia oficiales; sueldo de la Contabilidad Nacional; valor tasado trimestral; fechas clave; casilla «Sube el euríbor».
+
 ### Añadido (10-nov-2026, F5: presión; tarea 29; plan v0.39)
 
 - Indicador 20, zona de mercado residencial tensionado declarada (`R/fuente_zonas_tensionadas.R`): las 10 resoluciones trimestrales del MIVAU en el BOE (Ley 12/2023, art. 18), de marzo de 2024 a noviembre de 2026, en `inventario/zonas_tensionadas.csv` (321 filas, 320 municipios: Cataluña 271, Navarra 21, País Vasco 21, Asturias 5 y Galicia 2; 8 declaraciones de una parte del municipio). Compuerta `validacion_zonas_tensionadas` contra el XML de cada resolución. En la tabla larga, los 8.131 municipios de 2024 a 2026 con la situación a 31 de diciembre (2 todo el municipio, 1 una parte, 0 ninguna): 271, 304 y 320 declarados. Tabla larga: 11.482.839 filas (+24.393).

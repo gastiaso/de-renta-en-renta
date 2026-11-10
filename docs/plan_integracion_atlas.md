@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.39 · 10 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.40 · 10 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.40:** F6, módulo histórico hecho (10-nov-2026): años de renta y esfuerzo teórico del Banco de España desde 1987, tipos oficiales de referencia, valor tasado desde 1995 y sueldo medio de la Contabilidad Nacional desde 1995, en una tabla propia, con su página «Máquina del tiempo»; cifras de prensa de §2.5 y §10.2 contrastadas con la serie: la de 2023 se corrige (§2.5, §7, §10.2 y pregunta 47).
 
 **Cambios en la v0.39:** F5 (10-nov-2026): indicador 20 con las resoluciones del MIVAU en el BOE, situación municipal a 31 de diciembre y mapa de categorías; capa desmontable de portales (13) con el interruptor probado en los dos sentidos y la etiqueta de dato privado de oferta; mapas municipales sin sección, también los de F4 (§5, §6.6, §7 y pregunta 46).
 
@@ -152,10 +154,10 @@ Aceptado, pero con su coste explícito:
 
 «De cuando podíamos pagar la vivienda» depende de la métrica:
 
-- En **años de renta**, la vivienda costaba menos de tres en 1987, frente a 9,45 en el récord de 2007 y 7,6 en 2023 (Banco de España).
-- Pero el **esfuerzo teórico** (la cuota del primer año sobre la renta) tocó su máximo en **junio de 1990, con un 72 %**, por los tipos de interés. Es justo la época de los 8 bits.
+- En **años de renta**, la vivienda costaba 2,90 en el primer trimestre de 1987 (menos de tres, solo ese trimestre), frente a 9,46 en el récord del tercer trimestre de 2007 y 7,1 de media en 2023; 8,4 en el segundo trimestre de 2026 (Banco de España, serie verificada el 10-nov-2026; la cifra de 7,6 para 2023 que daba la prensa no coincide con la serie actual: 7,6 es la media de 2025).
+- Pero el **esfuerzo teórico** (la cuota del primer año sobre la renta) tocó su máximo en el **segundo trimestre de 1990, con un 72,47 %**, por los tipos de interés. Es justo la época de los 8 bits.
 
-Esto no invalida la estética. La convierte en argumento: el atlas existe para enseñar que «se podía» o «no se podía» según el supuesto. Se propone un módulo histórico (Fase 6) que justifique la identidad con series largas nacionales y autonómicas.
+Esto no invalida la estética. La convierte en argumento: el atlas existe para enseñar que «se podía» o «no se podía» según el supuesto. El módulo histórico (Fase 6, hecho el 10-nov-2026: página «Máquina del tiempo») justifica la identidad con series largas nacionales y, en el valor tasado, autonómicas.
 
 ### 2.6 Preguntas que quedaron cerradas el 6-nov
 
@@ -174,7 +176,7 @@ Esto no invalida la estética. La convierte en argumento: el atlas existe para e
 | Parte de la pregunta | Qué la responde en el atlas |
 |---|---|
 | **Dónde** | Mapa por sección censal, con agregados por distrito, municipio, provincia y comunidad |
-| **Desde cuándo** | Series 2015–último dato en geografía constante; rupturas marcadas. Módulo histórico nacional desde 1987 (F6) |
+| **Desde cuándo** | Series 2015–último dato en geografía constante; rupturas marcadas. Módulo histórico nacional desde 1987 (F6, hecho; valor tasado también por comunidad) |
 | **Para quién** | **Fichas** que cambian el ingreso de referencia (§3.1): hogar del barrio, joven menor de 35, salario mínimo, pensionista y el sueldo que escriba cada usuario |
 | **Se ha roto** | Dos familias de indicadores: **esfuerzo de residentes** (vulnerabilidad de quien ya vive allí) y **barrera de acceso** (lo que cuesta entrar con un ingreso de referencia). La segunda corrige el sesgo de clasificación: los barrios caros parecen asequibles porque los habita gente rica. A escala de comunidad y país, la **sobrecarga** de Eurostat (carga de quien ya tiene casa) frente a la **búsqueda sin éxito** (quien no consigue entrar) reproduce la misma pareja |
 
@@ -607,7 +609,7 @@ Sin fechas. Cada fase se cierra con un criterio verificable. F1b y F2 se publica
 
 - **Contenido:**
   - tabla de paso desde el seccionado de 2011 (callejero y seccionado de 2011, más la vía b), para las viviendas turísticas de 2020–2023 y el Censo 2011 (pregunta abierta 14);
-  - módulo histórico nacional y autonómico desde 1987: esfuerzo del Banco de España, valor tasado, salarios y tipos (es la «máquina del tiempo» que da sentido a la identidad retro);
+  - módulo histórico nacional y autonómico desde 1987: esfuerzo del Banco de España, valor tasado, salarios y tipos (es la «máquina del tiempo» que da sentido a la identidad retro) — hecho (10-nov-2026): años de renta y esfuerzo teórico del Banco de España (sin desglose por comunidad: no lo publica), tipos oficiales de referencia, valor tasado desde 1995 (España y comunidades) y sueldo bruto medio por asalariado de la Contabilidad Nacional desde 1995, en una tabla propia; página `historico.html`;
   - primeras historias;
   - enlace con *barómetros* (el problema de la vivienda en el CIS frente a los datos, por comunidad);
   - automatización de las actualizaciones.
@@ -710,7 +712,7 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 
 ### 10.2 Maquetas de estilo
 
-22 maquetas de estilo: 20 retro, una de cartografía antigua y una de control sobria. Usan el mismo contenido: mapa pixelado ilustrativo y cifras nacionales de referencia del Banco de España (1987, 2007, 2023 y el 72 % de 1990), que hay que verificar en la serie original antes de publicarlas.
+22 maquetas de estilo: 20 retro, una de cartografía antigua y una de control sobria. Usan el mismo contenido: mapa pixelado ilustrativo y cifras nacionales de referencia del Banco de España (1987, 2007, 2023 y el 72 % de 1990), verificadas en la serie original el 10-nov-2026: 2,90 (primer trimestre de 1987), 9,46 (tercer trimestre de 2007), 7,1 (media de 2023; no 7,6) y 72,47 % (segundo trimestre de 1990).
 
 **Finalistas (6-nov-2026):** fósforo ámbar (*¿Me llega?*), recreativa (*Inserte moneda*) y tablero (*Casilla de salida*). Cada uno mantiene su nombre y se descarta la combinación de estilos. Cada finalista se prueba en cuatro pantallas: portada, explorador de mapa, ficha de sección en móvil y hoja de estilo con contrastes calculados. Los puntos débiles detectados son:
 - **Ámbar:** sin variante clara para exportar gráficos a prensa.
@@ -799,6 +801,7 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 44. **Percentil salarial y forales del indicador 7: propuestas por revisar** (10-nov-2026, tarea 27). Abiertas, con la propuesta ya aplicada: (a) distribución del percentil: lo cobrado en el año (tramos de salario de la AEAT, 2015–2024; cuenta a quien trabajó pocos meses y supone densidad lineal dentro de cada tramo) o el SME del módulo de año completo (2019–2024; su percentil 1 es el SMI y la sección mediana queda por debajo del 3); (b) dónde se ve: nota de la ficha en el mapa del sueldo necesario (propuesta) o también la leyenda, con la curva de España; (c) el percentil, como curvas en `datos/salarios.json` y no en la tabla larga (depende de la superficie y el umbral); (d) forales del 7: `ausente` (propuesta) o Gipuzkoa a mano desde sus PDF como `estimado`; (e) nombre del indicador 7: «total y de 26 a 35 años» (hoy, «menores de 35»); (f) mochila de 2015 a 2018 con la relación de 2019 (alternativa: la de la ECV de cada año, o empezar en 2019); (g) tolerancias: `mochila_ecv` ±15 % (avisa en 32 de 160 cifras de las olas de 2016 a 2022) y `percentil_suma` ±10 asalariados.
 45. **F4: propuestas por revisar** (10-nov-2026, tarea 28). Abiertas, con la propuesta ya aplicada: (a) indicador 11 fuera, o pedir autorización al Notariado (la tabla código postal ↔ municipio ya está para llevar sus cifras a municipio); (b) coherencia por superficie implícita con las transacciones del MIVAU, o precio por m² de Registradores (ODbL, descarga manual: su servidor rechaza los clientes que no son un navegador), que compararía €/m² con €/m²; (c) año del valor tasado como media ponderada por tasaciones (`dato`), o media simple, o los trimestres como corte; (d) 16 y 17 con el salario bruto de la AEAT de la provincia, o el 17 con la renta neta por hogar del ADRH (más cerca del indicador del Banco de España, con forales); (e) tipo medio del INE, o el de referencia del Banco de España; (f) pesos de la tabla código postal ↔ municipio por tramos de vía del callejero de 2021, o por portales o viviendas; (g) mapas de F4 con el municipio (y el distrito en el 10) como nivel más fino, cortes 10 → 0; 1; 2; 3; 4 (%), 12 → 1.000; 1.500; 2.000; 2.500; 3.500 (€/m²), 16 → 3; 4; 5; 7; 10 (años) y 17 → 15; 20; 25; 30; 40 (%).
 46. **F5: propuestas por revisar** (10-nov-2026, tarea 29). Abiertas, con la propuesta ya aplicada: (a) fuente del 20: resoluciones del MIVAU en el BOE, o también los diarios autonómicos (declaraciones aún no recogidas en una resolución); (b) valor a 31 de diciembre, o «en vigor algún día del año», o fracción del año; (c) ámbitos parciales pintados en todo el municipio con categoría propia, o trama, o casarlos con secciones; (d) sin solicitudes denegadas (no hay fuente oficial que las liste); (e) fin de vigencia = publicación + 3 años, el mismo día (Ley 39/2015, art. 30.4); (f) solo municipios, sin agregados de provincia ni comunidad; (g) formato del CSV de la capa de portales, valor anual (informe anual o último mes) y un mapa por operación y portal; (h) decimales: el valor tasado sin decimales y los años de salario con uno; (i) encendida sin ficheros, la capa para el pipeline y dice qué dejar.
+47. **F6, módulo histórico: propuestas por revisar** (10-nov-2026, tarea 30). Abiertas, con la propuesta ya aplicada: (a) tabla propia del módulo (no la tabla larga), fuera aún del paquete del release; (b) solo el esfuerzo sin deducciones (la serie con deducciones no está publicada); (c) tipos: el tipo medio de las hipotecas a más de tres años y el MIBOR a un año (alternativas: el tipo de los préstamos nuevos que usa el propio esfuerzo, D_IMVTIPLV, o el euríbor a 12 meses desde 1999); (d) sueldo de la Contabilidad Nacional por persona asalariada (alternativas: por puesto equivalente a tiempo completo; Contabilidad Regional por comunidad, que da remuneración y no sueldos; el indicador 7 de la AEAT desde 2011); (e) valor tasado trimestral sin pasar a años; (f) fechas clave en CSV, con máximos y mínimos comprobados, que obligan a revisar el CSV si un dato nuevo los mueve; (g) referencias fechadas (PDF del Banco de España del 5-nov-2026 y BOE de agosto de 2026), que pararán la compuerta si el Banco de España revisa la serie; (h) casilla «Sube el euríbor» → tipos de la máquina del tiempo; (i) comprobar las descargas enteras en `descargar_con_cache()` para todas las fuentes.
 
 **Por verificar en F0** (no son decisiones, son comprobaciones), hechas el 6-nov-2026:
 - cortes de edad de la AEAT (<18, 18–25, 26–35, 36–45, 46–55, 56–65, >65) y módulo de año completo (desde 2019; ver §3.1);
@@ -823,7 +826,8 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 - P. García Guzmán, [ineAtlas (R)](https://github.com/pablogguz/ineAtlas)
 - Esade EcPol, [Regular el precio de alquiler: un dilema entre eficiencia y equidad](https://www.esade.edu/ecpol/es/publicaciones/regular-el-precio-de-alquiler-un-dilema-entre-eficiencia-y-equidad/)
 - MIVAU / UPM, [Catálogo de Barrios Vulnerables 2021](https://oa.upm.es/91832/3/00_INTRODUCCION_A.pdf)
-- Banco de España, vía prensa: [El Debate (2023)](https://www.eldebate.com/economia/20231004/familias-espanolas-necesitan-mas-7-anos-salario-39-ingresos-adquirir-vivienda_144203_amp.html) · [Bankinter](https://www.bankinter.com/blog/finanzas-personales/esfuerzo-economico-comprar-casa) · [Xataka](https://www.xataka.com/magnet/espana-se-ha-situado-cabeza-europa-algo-esfuerzo-acumulado-anos-80-para-comprarse-vivienda). *Cifras a contrastar con la serie original del Banco de España.*
+- Banco de España, vía prensa: [El Debate (2023)](https://www.eldebate.com/economia/20231004/familias-espanolas-necesitan-mas-7-anos-salario-39-ingresos-adquirir-vivienda_144203_amp.html) · [Bankinter](https://www.bankinter.com/blog/finanzas-personales/esfuerzo-economico-comprar-casa) · [Xataka](https://www.xataka.com/magnet/espana-se-ha-situado-cabeza-europa-algo-esfuerzo-acumulado-anos-80-para-comprarse-vivienda). *Cifras contrastadas con la serie original del Banco de España el 10-nov-2026 (§2.5).*
+- Banco de España: [Síntesis de indicadores, tabla 1.5 (CSV)](https://www.bde.es/webbe/es/estadisticas/compartido/datos/csv/si_1_5.csv) · [nota metodológica](https://www.bde.es/webbe/es/estadisticas/compartido/docs/s15-nm.pdf) · [tipos de referencia oficiales (CSV)](https://www.bde.es/webbe/es/estadisticas/compartido/datos/csv/be1901.csv) · [términos de uso](https://www.bde.es/wbe/es/estadisticas/recursos/terminos/terminos-de-uso.html). INE: [Contabilidad Nacional Anual, tabla 71129](https://www.ine.es/jaxiT3/Tabla.htm?t=71129).
 - Normativa: TRLPI (RDLeg 1/1996), arts. 97.4 y 133 y ss.; Directiva 96/9/CE, art. 7; STJUE C-202/12 (*Innoweb*) y C-30/14 (*Ryanair*).
 - Eurostat, [definición de la tasa de sobrecarga](https://ec.europa.eu/eurostat/web/products-eurostat-news/-/ddn-20210209-1) · EPAH, [ficha del indicador](https://energy-poverty.ec.europa.eu/modules/custom/epah_indicator/pdfs/Housing_cost_overburden_rate.pdf) y [serie por regiones NUTS (`ilc_lvho07_r`)](https://energy-poverty.ec.europa.eu/taxonomy/term/2902)
 - INE, [ECV 2025, resultados definitivos (5-02-2026)](https://ine.es/dyngs/Prensa/ECV2025.pdf) · [Módulo de acceso a la vivienda](https://ine.es/dyngs/Prensa/m3ECV2025.htm)

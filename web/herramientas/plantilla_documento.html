@@ -30,6 +30,9 @@ $endif$
         <a href="$sobrecarga$">$texto_sobrecarga$</a>
         <a href="$datos$"$if(actual_datos)$ aria-current="page"$endif$>$texto_datos$</a>
         <a href="$metodo$"$if(actual_metodo)$ aria-current="page"$endif$>$texto_metodo$</a>
+$if(texto_historico)$
+        <a href="$historico$">$texto_historico$</a>
+$endif$
       </nav>
       <div class="idioma" role="group" aria-label="$texto_idioma$">
         <a href="$pagina_es$" lang="es" hreflang="es"$if(es)$ aria-current="page"$endif$>ES</a>

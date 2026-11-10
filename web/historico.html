@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Máquina del tiempo · De renta en renta</title>
+  <meta name="description" content="Series de España desde 1987: años de renta y esfuerzo para comprar vivienda, tipos hipotecarios, valor tasado y sueldo medio">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="estilo/tokens.css">
+  <link rel="stylesheet" href="estilo/sitio.css">
+  <link rel="stylesheet" href="estilo/historico.css">
+  <script type="module" src="js/historico.js"></script>
+</head>
+<body>
+  <div class="tablero tablero-largo">
+    <header class="cabecera">
+      <div class="marca">
+        <p class="marca-titulo"><a href="./" data-pagina="./" data-enlace="" data-i18n="sitio.titulo">De renta en renta</a></p>
+        <p class="marca-subtitulo" data-i18n="sitio.subtitulo">Vivienda y sueldos, sección a sección</p>
+      </div>
+      <nav class="navegacion" data-i18n-aria="interfaz.navegacion">
+        <a href="mapa.html" data-pagina="mapa.html" data-enlace="" data-i18n="nav.mapa">Mapa</a>
+        <a href="mapa.html#tu-sueldo" data-pagina="mapa.html" data-enlace="#tu-sueldo" data-i18n="nav.tu_sueldo">Tu sueldo</a>
+        <a href="sobrecarga.html" data-pagina="sobrecarga.html" data-enlace="" data-i18n="nav.sobrecarga">Sobrecarga</a>
+        <a href="datos.html" data-href-es="datos.html" data-href-en="data.html" data-i18n="nav.datos">Datos</a>
+        <a href="metodo.html" data-href-es="metodo.html" data-href-en="method.html" data-i18n="nav.metodo">Método</a>
+        <a href="historico.html" aria-current="page" data-i18n="nav.historico">Máquina del tiempo</a>
+      </nav>
+      <div class="idioma" role="group" data-i18n-aria="interfaz.idioma">
+        <button type="button" data-idioma="es" aria-pressed="true" lang="es">ES</button>
+        <button type="button" data-idioma="en" aria-pressed="false" lang="en">EN</button>
+      </div>
+    </header>
+
+    <main class="historico">
+      <section class="hi-intro">
+        <div class="hi-intro-texto">
+          <p class="hi-antetitulo" data-i18n="historico.antetitulo">España, desde 1987</p>
+          <h1 class="hi-titulo" data-i18n="historico.titulo">Máquina del tiempo</h1>
+          <p class="hi-entradilla" data-i18n="historico.entradilla"></p>
+        </div>
+        <p class="hi-distintivo" data-i18n="historico.distintivo"></p>
+      </section>
+
+      <nav class="hi-indice" data-i18n-aria="historico.indice">
+        <a href="#hist-renta" data-i18n="historico.bloques.hist-renta.corto"></a>
+        <a href="#hist-esfuerzo" data-i18n="historico.bloques.hist-esfuerzo.corto"></a>
+        <a href="#hist-tipos" data-i18n="historico.bloques.hist-tipos.corto"></a>
+        <a href="#hist-tasado" data-i18n="historico.bloques.hist-tasado.corto"></a>
+        <a href="#hist-sueldo" data-i18n="historico.bloques.hist-sueldo.corto"></a>
+      </nav>
+
+      <p id="hi-estado" class="hi-estado" role="status" data-i18n="historico.carga">Cargando los datos…</p>
+
+      <div id="hi-contenido" class="hi-contenido" hidden>
+        <section id="hist-renta" class="tarjeta hi-bloque" data-bloque="hist-renta" aria-labelledby="hist-renta-titulo">
+          <h2 id="hist-renta-titulo" class="hi-h2" data-i18n="historico.bloques.hist-renta.titulo"></h2>
+          <p class="nota" data-i18n="historico.bloques.hist-renta.subtitulo"></p>
+          <div class="hi-grafico"></div>
+          <p class="hi-lectura"></p>
+          <ol class="hi-fechas"></ol>
+          <p class="nota hi-fuente"></p>
+          <details class="hi-plegable"><summary data-i18n="historico.tabla"></summary><div class="hi-tabla-marco"></div></details>
+        </section>
+
+        <section id="hist-esfuerzo" class="tarjeta hi-bloque" data-bloque="hist-esfuerzo" aria-labelledby="hist-esfuerzo-titulo">
+          <h2 id="hist-esfuerzo-titulo" class="hi-h2" data-i18n="historico.bloques.hist-esfuerzo.titulo"></h2>
+          <p class="nota" data-i18n="historico.bloques.hist-esfuerzo.subtitulo"></p>
+          <div class="hi-grafico"></div>
+          <p class="hi-lectura"></p>
+          <ol class="hi-fechas"></ol>
+          <p class="nota hi-fuente"></p>
+          <details class="hi-plegable"><summary data-i18n="historico.tabla"></summary><div class="hi-tabla-marco"></div></details>
+        </section>
+
+        <section id="hist-tipos" class="tarjeta hi-bloque" data-bloque="hist-tipos" aria-labelledby="hist-tipos-titulo">
+          <h2 id="hist-tipos-titulo" class="hi-h2" data-i18n="historico.bloques.hist-tipos.titulo"></h2>
+          <p class="nota" data-i18n="historico.bloques.hist-tipos.subtitulo"></p>
+          <div class="hi-grafico"></div>
+          <p class="hi-lectura"></p>
+          <ol class="hi-fechas"></ol>
+          <p class="nota hi-fuente"></p>
+          <details class="hi-plegable"><summary data-i18n="historico.tabla"></summary><div class="hi-tabla-marco"></div></details>
+        </section>
+
+        <section id="hist-tasado" class="tarjeta hi-bloque" data-bloque="hist-tasado" aria-labelledby="hist-tasado-titulo">
+          <h2 id="hist-tasado-titulo" class="hi-h2" data-i18n="historico.bloques.hist-tasado.titulo"></h2>
+          <p class="nota" data-i18n="historico.bloques.hist-tasado.subtitulo"></p>
+          <label class="hi-selector">
+            <span data-i18n="historico.ccaa"></span>
+            <select id="hi-ccaa"></select>
+          </label>
+          <div class="hi-grafico"></div>
+          <p class="hi-lectura"></p>
+          <ol class="hi-fechas"></ol>
+          <p class="nota hi-fuente"></p>
+          <details class="hi-plegable"><summary data-i18n="historico.tabla"></summary><div class="hi-tabla-marco"></div></details>
+        </section>
+
+        <section id="hist-sueldo" class="tarjeta hi-bloque" data-bloque="hist-sueldo" aria-labelledby="hist-sueldo-titulo">
+          <h2 id="hist-sueldo-titulo" class="hi-h2" data-i18n="historico.bloques.hist-sueldo.titulo"></h2>
+          <p class="nota" data-i18n="historico.bloques.hist-sueldo.subtitulo"></p>
+          <div class="hi-grafico"></div>
+          <p class="hi-lectura"></p>
+          <ol class="hi-fechas"></ol>
+          <p class="nota hi-fuente"></p>
+          <details class="hi-plegable"><summary data-i18n="historico.tabla"></summary><div class="hi-tabla-marco"></div></details>
+        </section>
+
+        <section class="tarjeta hi-caja" aria-labelledby="hi-metodo-titulo">
+          <h2 id="hi-metodo-titulo" class="hi-caja-banda" data-i18n="historico.metodo.titulo"></h2>
+          <ul class="hi-lista">
+            <li data-i18n="historico.metodo.renta"></li>
+            <li data-i18n="historico.metodo.esfuerzo"></li>
+            <li data-i18n="historico.metodo.tipos"></li>
+            <li data-i18n="historico.metodo.tasado"></li>
+            <li data-i18n="historico.metodo.sueldo"></li>
+            <li data-i18n="historico.metodo.mezcla"></li>
+            <li data-i18n="historico.metodo.compuerta"></li>
+          </ul>
+        </section>
+      </div>
+    </main>
+
+    <footer class="hi-pie">
+      <p data-i18n="historico.pie.fuentes"></p>
+      <p data-i18n="historico.pie.bde"></p>
+      <p data-i18n="historico.pie.licencia"></p>
+    </footer>
+  </div>
+
+  <noscript>
+    <p class="sin-js">Esta página necesita JavaScript para dibujar las series. · This page needs JavaScript to draw the series.</p>
+  </noscript>
+</body>
+</html>

@@ -11,6 +11,7 @@ tu_sueldo: "mapa.html?idioma=en#tu-sueldo"
 sobrecarga: "sobrecarga.html?idioma=en"
 datos: data.html
 metodo: method.html
+historico: "historico.html?idioma=en"
 actual_metodo: true
 pagina_es: metodo.html
 pagina_en: method.html

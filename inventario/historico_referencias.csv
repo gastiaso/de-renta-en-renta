@@ -1,0 +1,27 @@
+id,serie,geo_id,periodo,valor,comparacion,compuerta,fuente,fecha,nota
+pdf_anios_2023,anios_renta,00,2023,7.1,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,Dato anual: media simple de los cuatro trimestres
+pdf_anios_2024,anios_renta,00,2024,7.1,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_anios_2025,anios_renta,00,2025,7.6,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_anios_2025t3,anios_renta,00,2025-T3,7.7,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_anios_2025t4,anios_renta,00,2025-T4,7.9,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_anios_2026t1,anios_renta,00,2026-T1,8.0,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_anios_2026t2,anios_renta,00,2026-T2,8.4,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_esfuerzo_2023,esfuerzo_teorico,00,2023,36.5,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_esfuerzo_2024,esfuerzo_teorico,00,2024,34.5,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_esfuerzo_2025,esfuerzo_teorico,00,2025,34.3,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_esfuerzo_2025t3,esfuerzo_teorico,00,2025-T3,34.3,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_esfuerzo_2025t4,esfuerzo_teorico,00,2025-T4,35.0,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_esfuerzo_2026t1,esfuerzo_teorico,00,2026-T1,36.1,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_esfuerzo_2026t2,esfuerzo_teorico,00,2026-T2,38.0,igual,hist_publicadas,"Banco de España, Síntesis de indicadores 1.5 (PDF)",2026-11-05,
+pdf_valor_tasado_2023,valor_tasado,00,2023,1809,igual,hist_publicadas_enteras,"Banco de España, Síntesis de indicadores 1.5 (PDF), valor tasado del MIVAU",2026-11-05,Dato anual: media simple de los cuatro trimestres
+pdf_valor_tasado_2024,valor_tasado,00,2024,1914,igual,hist_publicadas_enteras,"Banco de España, Síntesis de indicadores 1.5 (PDF), valor tasado del MIVAU",2026-11-05,
+pdf_valor_tasado_2025,valor_tasado,00,2025,2128,igual,hist_publicadas_enteras,"Banco de España, Síntesis de indicadores 1.5 (PDF), valor tasado del MIVAU",2026-11-05,
+pdf_valor_tasado_2025t3,valor_tasado,00,2025-T3,2153,igual,hist_publicadas_enteras,"Banco de España, Síntesis de indicadores 1.5 (PDF), valor tasado del MIVAU",2026-11-05,
+pdf_valor_tasado_2025t4,valor_tasado,00,2025-T4,2230,igual,hist_publicadas_enteras,"Banco de España, Síntesis de indicadores 1.5 (PDF), valor tasado del MIVAU",2026-11-05,
+pdf_valor_tasado_2026t1,valor_tasado,00,2026-T1,2316,igual,hist_publicadas_enteras,"Banco de España, Síntesis de indicadores 1.5 (PDF), valor tasado del MIVAU",2026-11-05,
+pdf_valor_tasado_2026t2,valor_tasado,00,2026-T2,2355,igual,hist_publicadas_enteras,"Banco de España, Síntesis de indicadores 1.5 (PDF), valor tasado del MIVAU",2026-11-05,
+boe_tipo_hipotecas_2026_08,tipo_hipotecas,00,2026-08,3.134,igual,hist_publicadas,"BOE-A-2026-19481, Resolución del Banco de España de 17 de septiembre de 2026",2026-09-18,Tipo medio de los préstamos hipotecarios a más de tres años para adquisición de vivienda libre (agosto de 2026)
+prensa_anios_1987,anios_renta,00,1987-T1,3,menor,hist_prensa,"Plan, §2.5 y §10.2 (prensa, 2023)",2023-10-04,"«Menos de tres años de renta en 1987»: solo el primer trimestre (2T 1987: 3,00)"
+prensa_anios_2007,anios_renta,00,2007-T3,9.45,maximo,hist_prensa,"Plan, §2.5 y §10.2 (prensa, 2023)",2023-10-04,"«9,45 en el récord de 2007»: la serie actual da 9,46 en el tercer trimestre de 2007"
+prensa_esfuerzo_1990,esfuerzo_teorico,00,1990-T2,72,maximo,hist_prensa,"Plan, §2.5 y §10.2 (prensa, 2023)",2023-10-04,"«72 % en junio de 1990»: 72,47 en el segundo trimestre de 1990"
+prensa_anios_2023,anios_renta,00,2023,7.6,igual,ninguna,"Plan, §2.5 y §10.2 (prensa, 2023)",2023-10-04,"No la confirma la serie actual: 2023 da 7,24, 7,16, 7,11 y 6,97 (media 7,1); 7,6 es la media de 2025"

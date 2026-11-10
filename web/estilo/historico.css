@@ -1,0 +1,129 @@
+/* De renta en renta · «Máquina del tiempo» (historico.html, F6). Sobre tokens.css y sitio.css: solo
+   usa sus variables. Página larga que se desplaza entera, sin mapa. */
+
+html, body { height: auto; min-height: 100%; }
+.tablero-largo { height: auto; min-height: calc(100vh - 24px); overflow: visible; }
+.marca-titulo { margin: 0; }
+
+.historico { display: flex; flex-direction: column; gap: 16px; padding: 16px; min-width: 0; }
+.hi-contenido { display: flex; flex-direction: column; gap: 16px; }
+.hi-contenido[hidden] { display: none; }
+.hi-h2 { margin: 0; font: 800 1.05rem/1.25 var(--fuente-tablero); letter-spacing: 0.02em; text-transform: uppercase; }
+.hi-estado { margin: 0; padding: 12px 14px; border: 2px dashed var(--color-tinta); border-radius: var(--radio-control); }
+.hi-estado[hidden] { display: none; }
+.hi-estado-error { color: var(--color-rojo); border-color: var(--color-rojo); }
+
+/* Cabecera */
+.hi-intro { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 24px; }
+.hi-intro-texto { flex: 1 1 520px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hi-antetitulo { margin: 0; font: 400 0.95rem var(--fuente-escritura); letter-spacing: 0.12em; }
+.hi-titulo { margin: 0; font: 800 clamp(1.4rem, 3vw, 1.75rem)/1.1 var(--fuente-tablero); letter-spacing: 0.02em; text-transform: uppercase; }
+.hi-entradilla { margin: 4px 0 0; max-width: 68ch; font-size: 1.05rem; }
+.hi-distintivo {
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--color-tinta);
+  color: var(--color-crema);
+  font: 700 0.8rem/1.35 var(--fuente-tablero);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Índice de la página */
+.hi-indice { display: flex; flex-wrap: wrap; gap: 6px; }
+.hi-indice a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--objetivo-tactil);
+  padding: 0 12px;
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  background: var(--color-placa);
+  color: var(--color-tinta);
+  font: 600 0.9rem var(--fuente-tablero);
+  text-decoration: none;
+}
+.hi-indice a:hover { background: var(--color-crema); }
+
+/* Bloques con su gráfico */
+.hi-bloque { min-width: 0; scroll-margin-top: 12px; }
+.hi-selector { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; font: 400 0.95rem var(--fuente-escritura); letter-spacing: 0.04em; }
+.hi-selector select {
+  min-height: var(--objetivo-tactil);
+  max-width: 100%;
+  padding: 0 8px;
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  background: var(--color-placa);
+  color: var(--color-tinta);
+  font: 600 0.9rem var(--fuente-tablero);
+}
+.hi-grafico { position: relative; margin-top: 8px; min-width: 0; }
+.hi-grafico svg { display: block; width: 100%; height: auto; overflow: visible; }
+.hi-grafico .eje { stroke: var(--color-tinta); stroke-width: 1; }
+.hi-grafico .rejilla { stroke: var(--color-fuera); stroke-width: 1; }
+.hi-grafico .marca-eje { stroke: var(--color-tinta); stroke-width: 1; }
+.hi-grafico .texto-eje { fill: var(--color-tenue); font: 12px var(--fuente-tablero); font-variant-numeric: tabular-nums; }
+.hi-grafico .linea { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.hi-grafico .linea.serie-a { stroke: var(--color-tinta); }
+.hi-grafico .linea.serie-b { stroke: var(--color-rojo); }
+.hi-grafico .hito { stroke: var(--color-placa); stroke-width: 2; }
+.hi-grafico .hito.serie-a { fill: var(--color-tinta); }
+.hi-grafico .hito.serie-b { fill: var(--color-rojo); }
+.hi-grafico .hito-ruptura { fill: var(--color-placa); stroke-width: 2.5; }
+.hi-grafico .hito-ruptura.serie-a { stroke: var(--color-tinta); }
+.hi-grafico .hito-ruptura.serie-b { stroke: var(--color-rojo); }
+.hi-grafico .hito-numero { fill: var(--color-tinta); font: 700 12px var(--fuente-tablero); paint-order: stroke; stroke: var(--color-placa); stroke-width: 3px; }
+.hi-grafico .ruptura-linea { stroke: var(--color-tenue); stroke-width: 1.5; stroke-dasharray: 2 3; }
+.hi-grafico .guia { stroke: var(--color-tinta); stroke-width: 1; stroke-dasharray: 2 2; }
+.hi-grafico .zona { fill: transparent; cursor: crosshair; touch-action: pan-y; }
+.hi-globo {
+  position: absolute;
+  z-index: 3;
+  max-width: calc(100% - 8px);
+  padding: 6px 10px;
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  background: var(--color-placa);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+.hi-globo[hidden] { display: none; }
+.hi-globo p { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; }
+.hi-globo b { font-family: var(--fuente-tablero); font-variant-numeric: tabular-nums; }
+.hi-globo-nombre { flex-basis: 100%; color: var(--color-tenue); font-size: 0.8rem; }
+.hi-trazo { display: inline-block; width: 22px; height: 0; border-top: 2.5px solid var(--color-tinta); }
+.hi-trazo.serie-b { border-top-color: var(--color-rojo); }
+.hi-leyenda { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 0; padding: 0; list-style: none; font-size: 0.85rem; }
+.hi-leyenda li { display: inline-flex; align-items: center; gap: 6px; }
+
+.hi-lectura { margin: 10px 0 0; max-width: 80ch; }
+.hi-lectura-serie { display: block; }
+.hi-lectura-serie + .hi-lectura-serie { margin-top: 4px; }
+.hi-fechas { margin: 8px 0 0; padding-left: 1.6em; display: grid; gap: 4px; font-size: 0.9rem; }
+.hi-fechas:empty { display: none; }
+.hi-fechas b { font-family: var(--fuente-tablero); font-variant-numeric: tabular-nums; }
+.hi-fecha-ruptura::marker { color: var(--color-tenue); }
+
+/* Tablas plegables */
+.hi-plegable { margin-top: 8px; }
+.hi-plegable summary { min-height: var(--objetivo-tactil); display: flex; align-items: center; font: 600 0.9rem var(--fuente-tablero); cursor: pointer; }
+.hi-tabla-marco { max-height: 60vh; overflow: auto; }
+.hi-tabla { width: 100%; border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.hi-tabla th, .hi-tabla td { padding: 4px 6px; border-bottom: 1px solid var(--color-fuera); text-align: right; white-space: nowrap; }
+.hi-tabla th:first-child { text-align: left; white-space: normal; }
+.hi-tabla thead th { position: sticky; top: 0; background: var(--color-placa); font: 600 0.8rem var(--fuente-tablero); border-bottom: 2px solid var(--color-tinta); }
+
+/* Caja de método */
+.hi-caja { overflow: hidden; padding: 0; }
+.hi-caja-banda { margin: 0; padding: 8px 14px; background: var(--color-rojo); color: #fff; font: 400 0.95rem var(--fuente-escritura); letter-spacing: 0.12em; text-align: center; }
+.hi-lista { margin: 0; padding: 12px 14px 14px 2.2em; display: grid; gap: 6px; }
+
+.hi-pie { padding: 10px 16px 14px; border-top: var(--borde); color: var(--color-tenue); font-size: 0.85rem; }
+.hi-pie p { margin: 0 0 4px; }
+
+@media (max-width: 760px) {
+  .tablero-largo { min-height: 100vh; }
+  .historico { padding: 12px; gap: 12px; }
+}

@@ -776,4 +776,49 @@ bloque_web <- list(
   })
 )
 
-list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_zonas_tensionadas, bloque_portales, bloque_tabla_larga, bloque_web)
+# F6, histórico: «máquina del tiempo» (plan §7; R/fuente_bde.R, R/fuente_ine_cne.R, R/historico.R y
+# R/web_historico.R). Series nacionales y de comunidad desde 1987 en una tabla propia, no en la tabla
+# larga (trimestrales y mensuales): años de renta y esfuerzo teórico del Banco de España, tipos
+# oficiales de referencia del mercado hipotecario, valor tasado del MIVAU desde 1995 (la lectura de
+# F4, valor_tasado_trim) y sueldo bruto medio por asalariado de la Contabilidad Nacional desde 1995.
+# Compuerta con las cifras publicadas (inventario/historico_referencias.csv) y las fechas clave
+# (inventario/historico_fechas.csv). Datos de la página web/historico.html en datos/historico/.
+# Con PROVINCIA, el bloque no entra (el valor tasado sale del bloque de compraventa).
+#   targets::tar_make(names = c(fichero_historico, validacion_web_historico))
+bloque_historico <- if (AMBITO != "") list() else list(
+  tar_target(ficheros_bde, vapply(HIST_TABLAS_BDE, hist_descargar_bde, character(1)), format = "file"),
+  # Los objetivos de tipo fichero no guardan los nombres: se ponen otra vez, en el orden de la lista
+  tar_target(series_bde, hist_leer_bde_tablas(stats::setNames(ficheros_bde, names(HIST_TABLAS_BDE)))),
+  tar_target(ficheros_cne, vapply(HIST_TABLAS_CNE, hist_descargar_ine_cne, character(1)), format = "file"),
+  tar_target(cne_agregados, hist_leer_ine_cne(ficheros_cne[1])),     # HIST_TABLAS_CNE: agregados y empleo
+  tar_target(cne_empleo, hist_leer_ine_cne(ficheros_cne[2])),
+  tar_target(validacion_cne, validar_referencias(hist_comprobar_ine_cne(cne_agregados, cne_empleo), referencias)),
+  tar_target(fichero_historico_fechas, "inventario/historico_fechas.csv", format = "file"),
+  tar_target(historico_fechas, hist_leer_fechas(fichero_historico_fechas)),
+  tar_target(fichero_historico_referencias, "inventario/historico_referencias.csv", format = "file"),
+  tar_target(historico_referencias, hist_leer_referencias(fichero_historico_referencias)),
+  tar_target(historico, {
+    validacion_cne   # la compuerta de la lectura de la CNE va antes
+    hist_armar(series_bde, hist_valor_tasado(valor_tasado_trim), hist_sueldo_asalariado(cne_agregados, cne_empleo),
+               versiones = c(bde_accesibilidad = version_de(ficheros_bde[1]),
+                             bde_tipos_referencia = version_de(ficheros_bde[2]),
+                             mivau_valor_tasado = version_de(ficheros_valor_tasado), ine_cne = version_de(ficheros_cne)))
+  }),
+  tar_target(validacion_historico, validar_referencias(
+    hist_comprobar(historico, series_bde, valor_tasado_trim, territorios_2021, historico_fechas, historico_referencias,
+                   rupturas), referencias)),
+  tar_target(fichero_historico, {
+    validacion_historico   # la compuerta va antes
+    hist_exportar_parquet(historico, file.path("datos", "intermedios", "historico.parquet"))
+  }, format = "file"),
+  tar_target(ficheros_web_historico, {
+    validacion_historico
+    hist_exportar_web(historico, historico_fechas, rupturas, ccaa, dir_web = DIR_WEB)
+  }, format = "file"),
+  tar_target(validacion_web_historico, {
+    ficheros_web_historico
+    validar_referencias(hist_comprobar_web(historico, historico_fechas, rupturas, dir_web = DIR_WEB), referencias)
+  })
+)
+
+list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_zonas_tensionadas, bloque_portales, bloque_tabla_larga, bloque_web, bloque_historico)

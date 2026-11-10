@@ -133,6 +133,7 @@ jobs:
               --metadata texto_sobrecarga="$(jq -r .nav.sobrecarga "$dic")"
               --metadata texto_datos="$(jq -r .nav.datos "$dic")"
               --metadata texto_metodo="$(jq -r .nav.metodo "$dic")"
+              --metadata texto_historico="$(jq -r '.nav.historico // empty' "$dic")"
               --metadata texto_navegacion="$(jq -r .interfaz.navegacion "$dic")"
               --metadata texto_idioma="$(jq -r .interfaz.idioma "$dic")")
             pandoc "docs/$2" "${comunes[@]}" --output "$sitio/$3"

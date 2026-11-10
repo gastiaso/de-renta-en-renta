@@ -96,14 +96,15 @@ test('casillas: 24, en el HTML como lista ordenada, activas con enlace e inactiv
 test('casillas: cada destino existe (claves del mapa, mapas del manifiesto, anclas de las páginas)', () => {
   const real = existsSync(join(raiz, 'web', 'datos', 'manifiesto.json'));
   const m = real ? leerJson('web', 'datos', 'manifiesto.json') : null;
-  const paginas = { 'mapa.html': ids(leerTexto('web', 'mapa.html')), 'sobrecarga.html': ids(leerTexto('web', 'sobrecarga.html')) };
+  const paginas = { 'mapa.html': ids(leerTexto('web', 'mapa.html')), 'sobrecarga.html': ids(leerTexto('web', 'sobrecarga.html')),
+    'historico.html': ids(leerTexto('web', 'historico.html')) };   // F6, histórico
   for (const generada of ['metodo.html', 'method.html', 'datos.html', 'data.html']) {
     if (existsSync(join(raiz, 'web', generada))) paginas[generada] = ids(leerTexto('web', generada));
   }
   for (const c of casillasHtml().filter((x) => x.href)) {
     for (const destino of [c.href, c.hrefEn]) {
       const { pagina, busqueda, ancla } = partes(destino);
-      assert.ok(['mapa.html', 'sobrecarga.html', 'metodo.html', 'method.html', 'datos.html', 'data.html'].includes(pagina), `${c.id}: ${destino}`);
+      assert.ok(['mapa.html', 'sobrecarga.html', 'historico.html', 'metodo.html', 'method.html', 'datos.html', 'data.html'].includes(pagina), `${c.id}: ${destino}`);
       if (pagina === 'mapa.html') {
         const p = new URLSearchParams(busqueda);
         const leido = leerEstado(busqueda);
@@ -112,7 +113,7 @@ test('casillas: cada destino existe (claves del mapa, mapas del manifiesto, ancl
       }
       if (ancla && paginas[pagina]) assert.ok(paginas[pagina].has(ancla), `${c.id}: ancla #${ancla} no está en ${pagina}`);
     }
-    if (partes(c.href).pagina === 'mapa.html' || partes(c.href).pagina === 'sobrecarga.html') {
+    if (['mapa.html', 'sobrecarga.html', 'historico.html'].includes(partes(c.href).pagina)) {
       assert.equal(new URLSearchParams(partes(c.hrefEn).busqueda).get('idioma'), 'en', `${c.id}: el enlace inglés lleva el idioma`);
     }
   }

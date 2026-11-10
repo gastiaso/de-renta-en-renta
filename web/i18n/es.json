@@ -10,7 +10,8 @@
     "tu_sueldo": "Tu sueldo",
     "sobrecarga": "Sobrecarga",
     "datos": "Datos",
-    "metodo": "Método"
+    "metodo": "Método",
+    "historico": "Máquina del tiempo"
   },
   "fichas": {
     "llave": "Hogar del barrio",
@@ -532,6 +533,107 @@
       "EU27_2020": "UE-27"
     }
   },
+  "historico": {
+    "titulo_pagina": "Máquina del tiempo · De renta en renta",
+    "descripcion": "Series de España desde 1987: años de renta y esfuerzo para comprar vivienda, tipos de interés hipotecarios, valor tasado y sueldo medio",
+    "antetitulo": "España, desde 1987",
+    "titulo": "Máquina del tiempo",
+    "entradilla": "Cuántos años de renta costaba una vivienda, qué parte de la renta se llevaban las cuotas de la hipoteca, a qué tipo de interés, cuánto valía el metro cuadrado tasado y cuánto cobraba de media un asalariado, periodo a periodo. Series del Banco de España, el MIVAU y el INE, con el mismo eje de años; el valor tasado, también por comunidad.",
+    "distintivo": "Series nacionales",
+    "carga": "Cargando los datos…",
+    "error_carga": "No se han podido cargar los datos de la página (datos/historico/). Se generan con targets::tar_make(names = ficheros_web_historico).",
+    "indice": "Series de la página",
+    "bloques": {
+      "hist-renta": {
+        "corto": "Años de renta",
+        "titulo": "Años de renta para comprar una vivienda",
+        "subtitulo": "Precio medio de una vivienda libre tipo dividido por la renta bruta anual del hogar mediano. Trimestral.",
+        "fuente": "Fuente: elaboración propia con datos extraídos del sitio web del Banco de España (www.bde.es): Síntesis de indicadores, tabla 1.5, serie D_TKB57110_IPV. Datos descargados el {version}."
+      },
+      "hist-esfuerzo": {
+        "corto": "Esfuerzo",
+        "titulo": "Esfuerzo teórico del primer año",
+        "subtitulo": "Cuotas del primer año de un préstamo por el 80 % del valor de la vivienda tipo, en porcentaje de la renta disponible del hogar mediano, sin deducciones fiscales. Trimestral.",
+        "fuente": "Fuente: elaboración propia con datos extraídos del sitio web del Banco de España (www.bde.es): Síntesis de indicadores, tabla 1.5, serie D_TKB57210_IPV. Datos descargados el {version}."
+      },
+      "hist-tipos": {
+        "corto": "Tipos de interés",
+        "titulo": "Tipos de interés de referencia del mercado hipotecario",
+        "subtitulo": "Tipos oficiales que publica el Banco de España, en porcentaje. Mensual.",
+        "fuente": "Fuente: elaboración propia con datos extraídos del sitio web del Banco de España (www.bde.es): Boletín Estadístico, tabla 19.1, series D_1T9H0000 y D_1E723706.EUR. Datos descargados el {version}."
+      },
+      "hist-tasado": {
+        "corto": "Valor tasado",
+        "titulo": "Valor tasado de la vivienda libre",
+        "subtitulo": "Valor medio de tasación por metro cuadrado, no precio pagado. Trimestral, desde 1995; España y cada comunidad.",
+        "fuente": "Fuente: MIVAU, Valor tasado de la vivienda libre (boletín estadístico en línea, tabla 35101000). Datos descargados el {version}."
+      },
+      "hist-sueldo": {
+        "corto": "Sueldo medio",
+        "titulo": "Sueldo bruto medio por asalariado",
+        "subtitulo": "Sueldos y salarios brutos de toda la economía divididos por las personas asalariadas del año. Anual, desde 1995.",
+        "fuente": "Fuente: INE, Contabilidad Nacional Anual de España, base 2020 (tablas 71129 y 71133). Datos descargados el {version}."
+      }
+    },
+    "series": {
+      "anios_renta": "Años de renta",
+      "esfuerzo_teorico": "Esfuerzo teórico",
+      "tipo_hipotecas": "Tipo medio de los préstamos hipotecarios a más de tres años",
+      "mibor_euribor": "MIBOR a un año (sigue al euríbor desde 1999)",
+      "valor_tasado": "Valor tasado",
+      "sueldo_asalariado": "Sueldo bruto medio por asalariado"
+    },
+    "unidades": {
+      "anios": "{x} años",
+      "porcentaje": "{x} %",
+      "euros_m2": "{x} €/m²",
+      "euros_anio": "{x} €"
+    },
+    "ejes": {
+      "anios": "años",
+      "porcentaje": "%",
+      "euros_m2": "€/m²",
+      "euros_anio": "€ al año"
+    },
+    "periodo": {
+      "t1": "primer trimestre de {anio}",
+      "t2": "segundo trimestre de {anio}",
+      "t3": "tercer trimestre de {anio}",
+      "t4": "cuarto trimestre de {anio}"
+    },
+    "lectura": {
+      "primero": "primer dato",
+      "ultimo": "último dato",
+      "maximo": "máximo de la serie",
+      "minimo": "mínimo de la serie",
+      "y": " y "
+    },
+    "fechas": {
+      "ruptura": "Ruptura de serie"
+    },
+    "grafico": "Gráfico de {serie}, de {desde} a {hasta}",
+    "tabla": "Ver todas las cifras",
+    "periodo_col": "Periodo",
+    "espana": "España",
+    "ccaa": "Comunidad",
+    "ccaa_ninguna": "Solo España",
+    "sin_dato": "sin dato",
+    "metodo": {
+      "titulo": "Cómo se leen estas series",
+      "renta": "Años de renta (Banco de España): precio medio de una vivienda libre tipo (93,75 m² hasta 2004; después, la superficie media de las compraventas registradas) entre la renta bruta anual estimada del hogar mediano, que sale de la Encuesta Financiera de las Familias, la Contabilidad Nacional y la EPA.",
+      "esfuerzo": "Esfuerzo teórico (Banco de España): cuotas del primer año de un préstamo por el 80 % del valor de esa vivienda, con el tipo medio de los préstamos nuevos para vivienda y el plazo medio de las hipotecas, en porcentaje de la renta disponible del hogar mediano. Sin deducciones fiscales en toda la serie.",
+      "tipos": "Tipos (Banco de España, también en el BOE cada mes): tipo medio de los préstamos hipotecarios a más de tres años para adquisición de vivienda libre del conjunto de entidades de crédito, desde noviembre de 1990, y MIBOR a un año, que desde 1999 sigue al euríbor a un año.",
+      "tasado": "Valor tasado (MIVAU): valor medio de tasación de la vivienda libre por metro cuadrado, no el precio pagado. Un año en la tabla del Banco de España es la media simple de sus cuatro trimestres.",
+      "sueldo": "Sueldo (INE, Contabilidad Nacional): sueldos y salarios brutos de toda la economía entre las personas asalariadas de cada año, también las que trabajan parte del año o a tiempo parcial. No es el salario medio de la AEAT que usa la ficha de la mochila.",
+      "mezcla": "Cada serie conserva su fuente, su unidad y su periodo (trimestre, mes o año): no se combinan en un indicador. Los gráficos comparten el eje de años para poder leerlos uno debajo de otro.",
+      "compuerta": "Compuerta: las series reproducen las cifras que el Banco de España publica en su tabla en PDF y el tipo de referencia publicado en el BOE; el valor tasado del MIVAU coincide con el que reproduce el Banco de España en todos los trimestres desde 1995."
+    },
+    "pie": {
+      "fuentes": "Fuentes: Banco de España (Síntesis de indicadores, tabla 1.5; Boletín Estadístico, tabla 19.1), MIVAU (Valor tasado de la vivienda libre) e INE (Contabilidad Nacional Anual de España).",
+      "bde": "Fuente de las series del Banco de España: elaboración propia con datos extraídos del sitio web del Banco de España (www.bde.es). El Banco de España no participa en este atlas ni lo patrocina.",
+      "licencia": "Datos y textos: CC BY-SA 4.0."
+    }
+  },
   "indicadores": {
     "renta_persona": {
       "nombre": "Renta neta media por persona",
@@ -748,7 +850,9 @@
     "ine_epa_deciles": "Decil de salarios del empleo principal (EPA)",
     "idescat_e02": "Estadística territorial de salarios (experimental)",
     "bde_accesibilidad": "Indicadores de accesibilidad a la vivienda (años de renta, esfuerzo teórico)",
-    "calculo_propio": "Cálculo propio a partir de las fuentes de cada término"
+    "calculo_propio": "Cálculo propio a partir de las fuentes de cada término",
+    "bde_tipos_referencia": "Tipos de interés de referencia oficiales del mercado hipotecario",
+    "ine_cne": "Contabilidad Nacional Anual de España: agregados por rama de actividad (base 2020)"
   },
   "vocabulario": {
     "corte": {

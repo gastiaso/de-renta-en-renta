@@ -74,6 +74,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 | `mapa.html` | Mapa: cabecera con buscador e idioma, barra de la vista, mapa, leyenda, etiqueta, «Tu sueldo», ficha y diálogo «Compartir» |
 | `js/portada.js`, `js/redireccion.js`, `estilo/portada.css`, `estilo/fichas/` | Portada: idioma, fichas, cartas, «Tu sueldo», buscador, dado y pie; redirección de los enlaces viejos de la raíz a `mapa.html`; maquetación; iconos de las fichas |
 | `sobrecarga.html` | Sección «Sobrecarga» (v0.0): mapa de Europa, escalera, serie de España y de la UE-27 desde el primer año publicado (cortada en las rupturas de Eurostat y en las del atlas, como la de 2013 en España, que Eurostat no marca; las cifras de Eurostat llevan sus marcas), desgloses de España por tenencia, edad y quintil de renta, y módulo de acceso |
+| `historico.html` | «Máquina del tiempo» (F6): series de España desde 1987 (años de renta y esfuerzo teórico del Banco de España, tipos oficiales de referencia del mercado hipotecario, valor tasado del MIVAU, también por comunidad, y sueldo bruto medio por asalariado del INE), un gráfico por bloque con el mismo eje de años, fechas clave, lectura y tabla; sin mapa |
 | `js/principal.js` | Arranque del mapa y coordinación de todo lo demás |
 | `js/estado.js` | Estado de la vista en la URL (`idioma`, `mapa`, `anio`, que puede ser un periodo como `2025-05`, `tipologia`, `ficha`, `superficie`, `umbral`, `seccion`, `comparar`, `vista`, `territorio`) y enlace para compartir |
 | `js/barra_vista.js` | Barra de la vista: selectores de mapa, año y tipología, y botones de descarga |
@@ -88,6 +89,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 | `js/mapa.js` | MapLibre: mapa base (PMTiles o GeoJSON), capas coloreadas por niveles, etiqueta, selección, comparación y encuadre |
 | `js/leyenda.js`, `js/ficha.js` | Leyenda y fichas de sección y de territorio |
 | `js/sobrecarga.js`, `js/sobrecarga_datos.js`, `estilo/sobrecarga.css` | Sección «Sobrecarga»: página (DOM y MapLibre) y su lógica sin DOM; datos en `datos/sobrecarga/` (`exportar_web_sobrecarga()`) |
+| `js/historico.js`, `js/historico_datos.js`, `estilo/historico.css` | «Máquina del tiempo»: página (DOM y SVG) y su lógica sin DOM; datos en `datos/historico/` (`hist_exportar_web()`, `R/web_historico.R`) |
 | `js/panel_sueldo.js`, `js/compartir.js` | Tarjeta «Tu sueldo» y diálogo «Compartir» |
 | `js/comparador.js`, `js/buscador.js` | Comparador entre territorios y buscador |
 | `metodo.html`, `method.html`, `datos.html`, `data.html` | Páginas de texto «Método» y «Datos»: no están en git, las genera el flujo de Pages con pandoc (ver abajo, «Páginas de texto») |
@@ -163,7 +165,7 @@ Primero se redondea como manda la guía y después se multiplica por 10. `sprint
 
 ## Diccionarios
 
-En `i18n/es.json` e `i18n/en.json`, las secciones `indicadores`, `fuentes` y `vocabulario` las genera el pipeline desde `inventario/` (`exportar_i18n()`) y no se editan a mano. `sitio`, `nav`, `fichas`, `avisos`, `interfaz`, `portada` y `sobrecarga` (los textos de la web) se escriben a mano, y el pipeline las conserva. Los textos de las casillas de la portada no van aquí: salen de `inventario/casillas_portada.csv`. La comprobación `i18n_completo` exige las mismas claves en los dos idiomas y ningún texto vacío.
+En `i18n/es.json` e `i18n/en.json`, las secciones `indicadores`, `fuentes` y `vocabulario` las genera el pipeline desde `inventario/` (`exportar_i18n()`) y no se editan a mano. `sitio`, `nav`, `fichas`, `avisos`, `interfaz`, `portada`, `sobrecarga` e `historico` (los textos de la web) se escriben a mano, y el pipeline las conserva. Los textos de las casillas de la portada no van aquí: salen de `inventario/casillas_portada.csv`. La comprobación `i18n_completo` exige las mismas claves en los dos idiomas y ningún texto vacío.
 
 Los textos de la web son impersonales, salvo los del plan para «Tu sueldo» («Tu ficha», «¿te llega?», «te cabe…»).
 
@@ -187,6 +189,7 @@ Se bajaron de jsDelivr (paquetes de npm, carpeta `dist/`). Para actualizarlas, s
 ```bash
 node --test pruebas/web/datos.test.mjs
 node --test pruebas/web/sobrecarga.test.mjs
+node --test pruebas/web/historico.test.mjs
 node --test pruebas/web/pagina_datos.test.mjs
 node --test pruebas/web/portada.test.mjs
 node --test pruebas/web/municipal.test.mjs
