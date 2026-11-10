@@ -404,10 +404,10 @@ indicadores_manifiesto_web <- function(catalogo, indicadores) {
 # web/teselas/seccionado_2021.pmtiles (fuera de git). `perfiles`: tabla perfiles (perfiles_fichas()).
 # `cajas`: cajas_web(). Borra antes lo exportado la vez anterior, salvo la muestra (ejemplo/).
 exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = NULL, perfiles = NULL, cajas = NULL,
-                         dir_web = "web", fecha = format(Sys.Date())) {
+                         salarios = NULL, dir_web = "web", fecha = format(Sys.Date())) {
   datos <- file.path(dir_web, "datos")
   dir.create(datos, recursive = TRUE, showWarnings = FALSE)
-  unlink(file.path(datos, c("manifiesto.json", "territorios.json", "cajas.json", "perfiles.json", "indices", "fichas",
+  unlink(file.path(datos, c("manifiesto.json", "territorios.json", "cajas.json", "perfiles.json", "salarios.json", "indices", "fichas",
                             NIVELES_WEB)), recursive = TRUE)
 
   indices <- indices_web(jerarquia, territorios)
@@ -427,7 +427,8 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
   }
   otros <- c(escribir_json(territorios_web(territorios), "territorios.json"),
              if (!is.null(cajas)) escribir_json(cajas, "cajas.json"),
-             if (!is.null(perfiles)) escribir_json(perfiles_web(perfiles), "perfiles.json"))
+             if (!is.null(perfiles)) escribir_json(perfiles_web(perfiles), "perfiles.json"),
+             if (!is.null(salarios)) escribir_json(salarios, "salarios.json"))   # percentil salarial (salarios_web())
   valores <- escribir_valores_web(series, catalogo, indices, dir_web)
   fichas <- escribir_fichas_web(series, catalogo, jerarquia, dir_web)
 
@@ -453,6 +454,7 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
     cajas = if (!is.null(cajas)) "datos/cajas.json",
     fichas = "datos/fichas/{municipio}.json",
     perfiles = if (!is.null(perfiles)) "datos/perfiles.json",
+    salarios = if (!is.null(salarios)) "datos/salarios.json",
     codificacion = list(escala = ESCALA_WEB, estados = I(ESTADOS_WEB)),
     supuestos = SUPUESTOS_WEB,
     umbral_pocos_contratos = UMBRAL_POCOS_CONTRATOS,

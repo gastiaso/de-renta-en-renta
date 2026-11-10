@@ -371,63 +371,104 @@ modulo_acceso <- list(
   tar_target(validacion_modulo, validar_referencias(comprobaciones_modulo, referencias))
 )
 
-# Ficha «mochila»: opciones A, B y C con la AEAT; adoptada la B (7-nov-2026, plan §3.1), con el
-# control de la ECV del año siguiente (ingresos del mismo año que la AEAT).
-# Cada tabla de la AEAT es un conjunto de páginas HTML (una por combinación de filtros); sus
-# títulos y filtros están en TABLAS_AEAT_MOCHILA (R/ficha_mochila.R).
+# Indicador 7 (F3): salario medio anual por asalariado, total y de 26 a 35 años, por provincia,
+# comunidad y España, 2011–2024 (AEAT, tabla provincial por edad y sexo; R/fuente_aeat_salarios.R).
+# País Vasco y Navarra, «ausente» (la AEAT no los cubre). Compuerta: lectura, cobertura y suma y
+# media de las provincias frente a su comunidad y España.
+salarios_por_anio <- tarchetypes::tar_map(
+  values = list(anio_salarios = ANIOS_SALARIOS), names = "anio_salarios",
+  tar_target(paginas_salarios, descargar_aeat_salarios(anio_salarios), format = "file"),
+  tar_target(salarios_leidos, leer_aeat_salarios(paginas_salarios, anio_salarios))
+)
+bloque_salarios <- list(
+  salarios_por_anio,
+  tarchetypes::tar_combine(salarios_aeat_leidos, salarios_por_anio[["salarios_leidos"]], command = dplyr::bind_rows(!!!.x)),
+  tar_target(salarios_aeat, codificar_aeat_salarios(salarios_aeat_leidos, provincias_aeat, ccaa)),
+  tar_target(validacion_salarios, validar_referencias(comprobar_aeat_salarios(salarios_aeat), referencias)),
+  tar_target(larga_salarios, {
+    validacion_salarios   # la compuerta va antes que la tabla larga
+    armonizar_aeat_salarios(salarios_aeat, version = version_de(paginas_salarios_2024)) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  })
+)
+
+# Ficha «mochila» (plan §3.1, método en cinco pasos; R/ficha_mochila.R), de 2015 a 2024: salario
+# medio de 26 a 35 años de la provincia (indicador 7) × relación mediana/media del salario medio
+# estimado (SME) de su comunidad y año (módulo de año completo, desde 2019; antes, la de 2019), a neto
+# con la cotización del trabajador y la retención de la AEAT de su comunidad y año. Control con la ECV
+# de cada año (ingresos del mismo año que la AEAT). Método B, adoptado el 7-nov-2026; A y C, como
+# registro (datos/intermedios/mochila/mochila.csv). Las retenciones de los asalariados salen de las
+# mismas páginas que las del transistor (retenciones_por_anio).
 ANIO_AEAT <- 2024L
+modulo_sme_por_anio <- tarchetypes::tar_map(
+  values = list(anio_sme = ANIOS_SME), names = "anio_sme",
+  tar_target(paginas_sme_deciles, descargar_aeat_mochila("deciles", anio_sme), format = "file"),
+  tar_target(paginas_sme_edad, descargar_aeat_mochila("sme_edad", anio_sme), format = "file"),
+  tar_target(paginas_sme_recorrido, descargar_aeat_mochila("recorrido", anio_sme), format = "file"),
+  tar_target(paginas_sme_centiles, descargar_aeat_mochila("centiles", anio_sme), format = "file"),
+  tar_target(modulo_sme, leer_modulo_sme(paginas_sme_deciles, paginas_sme_edad, paginas_sme_recorrido,
+                                         paginas_sme_centiles, anio_sme, ccaa))
+)
+# Control con la ECV: ficheros de hogares (d) y personas (p) de la ola siguiente a cada año de ingresos
+ecv_por_anio <- tarchetypes::tar_map(
+  values = list(anio_ecv = ANIOS_MOCHILA), names = "anio_ecv",
+  tar_target(csv_ecv_asalariados, obtener_csv_ine_ecv(anio_ecv + 1L, c("d", "p")), format = "file"),
+  tar_target(ecv_asalariados, resumir_ecv_asalariados(leer_ecv_asalariados(csv_ecv_asalariados, anio_ecv), anio_ecv))
+)
 bloque_mochila <- list(
-  tarchetypes::tar_map(
-    values = list(tabla = c("provincia", "deciles", "sme_edad", "recorrido", "centiles", "retenciones")), names = "tabla",
-    tar_target(paginas_aeat, descargar_aeat_mochila(tabla, ANIO_AEAT), format = "file"),
-    tar_target(aeat, leer_aeat_mercado(paginas_aeat))
-  ),
-  list(
-    tar_target(comprobaciones_mochila, comprobar_interpolacion_deciles(aeat_deciles, aeat_centiles, aeat_recorrido)),
-    tar_target(validacion_mochila, validar_referencias(comprobaciones_mochila, referencias)),
-    tar_target(mochila_opciones, {
-      validacion_mochila
-      calcular_mochila_opciones(aeat_provincia, aeat_deciles, aeat_sme_edad, aeat_recorrido)
-    }),
-    tar_target(fichero_mochila_opciones, {
-      ruta <- sprintf("datos/intermedios/mochila/opciones_%d.csv", ANIO_AEAT)
-      dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
-      readr::write_csv(mutate(mochila_opciones, across(where(is.double), ~ round(.x, 3))), ruta)
-      ruta
-    }, format = "file"),
-    # Control con la ECV: ficheros de hogares (d) y personas (p) de la ola con ingresos de ANIO_AEAT
-    tar_target(csv_ecv_mochila, obtener_csv_ine_ecv(ANIO_AEAT + 1L, c("d", "p")), format = "file"),
-    tar_target(ecv_mochila, resumir_ecv_asalariados(leer_ecv_asalariados(csv_ecv_mochila, ANIO_AEAT))),
-    tar_target(validacion_mochila_ecv, validar_referencias(comprobar_mochila_ecv(mochila_opciones, ecv_mochila, ccaa),
-                                                           referencias)),
-    tar_target(mochila, {
-      validacion_mochila_ecv
-      calcular_mochila(mochila_opciones)
-    }),
-    tar_target(fichero_mochila, {
-      ruta <- sprintf("datos/intermedios/mochila/mochila_%d.csv", ANIO_AEAT)
-      dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
-      readr::write_csv(mutate(mochila, across(where(is.double), ~ round(.x, 3))), ruta)
-      ruta
-    }, format = "file"),
-    # Paso 3: de bruto anual a neto mensual en 12 (regla 8), con la cotización del trabajador y la
-    # retención de la AEAT por tramo de renta anual de su comunidad; control con el neto de la ECV
-    tar_target(cotizacion_mochila, COTIZACION_TRABAJADOR[[as.character(ANIO_AEAT)]]),
-    tar_target(retenciones_mochila, retenciones_aeat(aeat_retenciones)),
-    tar_target(validacion_mochila_neto_ecv,
-               validar_referencias(comprobar_neto_ecv(retenciones_mochila, ecv_mochila, ccaa, cotizacion_mochila),
-                                   referencias)),
-    tar_target(mochila_neta, {
-      validacion_mochila_neto_ecv
-      calcular_mochila_neta(mochila, retenciones_mochila, cotizacion_mochila)
-    }),
-    tar_target(fichero_mochila_neta, {
-      ruta <- sprintf("datos/intermedios/mochila/mochila_neta_%d.csv", ANIO_AEAT)
-      dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
-      readr::write_csv(mutate(mochila_neta, across(where(is.double), ~ round(.x, 3))), ruta)
-      ruta
-    }, format = "file")
-  )
+  modulo_sme_por_anio,
+  tarchetypes::tar_combine(modulos_sme, modulo_sme_por_anio[["modulo_sme"]], command = combinar_modulos_sme(list(!!!.x))),
+  tar_target(validacion_mochila, validar_referencias(modulos_sme$interpolacion, referencias)),
+  tar_target(formas_mochila, {
+    validacion_mochila
+    formas_sme(modulos_sme)
+  }),
+  tar_target(mochila, {
+    validacion_salarios
+    calcular_mochila_serie(salarios_aeat, formas_mochila)
+  }),
+  tar_target(fichero_mochila, {
+    ruta <- "datos/intermedios/mochila/mochila.csv"
+    dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
+    readr::write_csv(mutate(mochila, across(where(is.double), ~ round(.x, 3))), ruta)
+    ruta
+  }, format = "file"),
+  ecv_por_anio,
+  tarchetypes::tar_combine(ecv_mochila, ecv_por_anio[["ecv_asalariados"]], command = dplyr::bind_rows(!!!.x)),
+  tar_target(validacion_mochila_ecv, validar_referencias(
+    comprobar_mochila_ecv(mochila, ecv_mochila, ccaa, espana = mochila_espana(salarios_aeat, formas_mochila)), referencias)),
+  # Paso 3: de bruto anual a neto mensual en 12 (regla 8); control con el neto de la ECV
+  tar_target(validacion_mochila_neto_ecv,
+             validar_referencias(comprobar_neto_ecv(retenciones_mochila, ecv_mochila, ccaa), referencias)),
+  tar_target(mochila_neta, {
+    validacion_mochila_ecv; validacion_mochila_neto_ecv
+    calcular_mochila_neta(mochila, retenciones_mochila)
+  }),
+  tar_target(validacion_mochila_serie,
+             validar_referencias(comprobar_mochila(mochila_neta, formas_mochila, provincias_aeat), referencias)),
+  tar_target(fichero_mochila_neta, {
+    ruta <- "datos/intermedios/mochila/mochila_neta.csv"
+    dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
+    readr::write_csv(mutate(mochila_neta, across(where(is.double), ~ round(.x, 3))), ruta)
+    ruta
+  }, format = "file")
+)
+
+# Percentil salarial (F3, plan §7; R/percentil_salarial.R): curvas del salario cobrado en el año por
+# los asalariados de cada comunidad y España (AEAT, tabla por comunidad y tramos de salario), netas
+# en 12 con la cotización y la retención de cada año, 2015–2024, para expresar el sueldo necesario
+# como percentil en la web (datos/salarios.json)
+tramos_por_anio <- tarchetypes::tar_map(
+  values = list(anio_tramos = ANIOS_PERCENTIL), names = "anio_tramos",
+  tar_target(paginas_tramos, descargar_aeat_tramos(anio_tramos), format = "file"),
+  tar_target(tramos_salario, leer_aeat_tramos(paginas_tramos, anio_tramos, ccaa))
+)
+bloque_percentil <- list(
+  tramos_por_anio,
+  tarchetypes::tar_combine(tramos_salariales, tramos_por_anio[["tramos_salario"]], command = dplyr::bind_rows(!!!.x)),
+  tar_target(curvas_salariales_aeat, curvas_salariales(tramos_salariales, retenciones_mochila)),
+  tar_target(validacion_percentil,
+             validar_referencias(comprobar_curvas_salariales(curvas_salariales_aeat, tramos_salariales), referencias))
 )
 
 # Ficha «transistor» (F3; plan §3.1, método decidido por el autor el 9-nov-2026): pensión media de
@@ -439,8 +480,9 @@ bloque_mochila <- list(
 retenciones_por_anio <- tarchetypes::tar_map(
   values = list(anio_transistor = ANIOS_TRANSISTOR), names = "anio_transistor",
   tar_target(paginas_retenciones_transistor, descargar_aeat_mochila("retenciones", anio_transistor), format = "file"),
-  tar_target(retenciones_pensionistas,
-             retenciones_pensiones(leer_aeat_mercado(paginas_retenciones_transistor), anio_transistor, ccaa))
+  tar_target(grupos_retribuciones, leer_aeat_mercado(paginas_retenciones_transistor)),
+  tar_target(retenciones_pensionistas, retenciones_pensiones(grupos_retribuciones, anio_transistor, ccaa)),
+  tar_target(retenciones_salariales, retenciones_aeat(grupos_retribuciones, anio_transistor, ccaa))
 )
 bloque_transistor <- list(
   tar_target(fichero_provincias_inss, "inventario/provincias_inss.csv", format = "file"),
@@ -454,6 +496,9 @@ bloque_transistor <- list(
   }),
   retenciones_por_anio,
   tarchetypes::tar_combine(retenciones_transistor, retenciones_por_anio[["retenciones_pensionistas"]],
+                           command = dplyr::bind_rows(!!!.x)),
+  # Retenciones de quien solo cobra salarios, de las mismas páginas: mochila y percentil salarial
+  tarchetypes::tar_combine(retenciones_mochila, retenciones_por_anio[["retenciones_salariales"]],
                            command = dplyr::bind_rows(!!!.x)),
   tar_target(transistor, calcular_transistor(inss_anual, retenciones_transistor)),
   tar_target(validacion_transistor, validar_referencias(comprobar_transistor(transistor), referencias)),
@@ -496,7 +541,7 @@ mapa_base <- list(
 
 # Indicadores derivados (R/derivados.R): 14 (esfuerzo de residentes), 21 (sueldo neto necesario,
 # mapa por defecto: 50 m² y umbral del 30 %) y 15 (barrera de acceso: se calcula en la web; aquí,
-# la tartera de 2015 a 2024, la mochila de 2024 y el transistor de 2015 a 2024, como control).
+# la tartera, la mochila y el transistor de 2015 a 2024, como control).
 # Alquiler de vivienda colectiva; estado, el peor de sus términos (plan, preguntas abiertas 12 y 15);
 # numerador y denominador del mismo año (regla 4).
 # `perfiles`: ingreso neto mensual de cada ficha (tartera, mochila, transistor y llave), para la web.
@@ -507,8 +552,8 @@ bloque_derivados <- list(
   tar_target(xml_boe_smi, descargar_boe_smi(), format = "file"),
   tar_target(validacion_smi, validar_referencias(comprobar_smi_boe(leer_boe_smi(xml_boe_smi)), referencias)),
   tar_target(perfiles, {
-    validacion_smi; validacion_transistor
-    perfiles_fichas(mochila_neta, provincias_aeat, larga_adrh, anio_mochila = ANIO_AEAT, transistor = transistor)
+    validacion_smi; validacion_transistor; validacion_mochila_serie
+    perfiles_fichas(mochila_neta, provincias_aeat, larga_adrh, transistor = transistor)
   }),
   tar_target(resumen_perfiles_llave, resumen_llave(perfiles)),
   tar_target(derivados, armonizar_derivados(larga_serpavi, larga_adrh, perfiles)),
@@ -532,6 +577,7 @@ bloque_tabla_larga <- list(
       larga_serpavi,      # 8 y 9, contratos y margen: la tipología como corte; sin filas «total»
       larga_censo2021,    # 18
       larga_vut,          # 19: el mes de referencia en corte y grupo
+      larga_salarios,     # 7 (F3): el total sin desglose; de 26 a 35 años, con corte de edad
       larga_derivados,    # 14 y 21 sin desglose; 15 con la ficha (tartera, mochila y transistor) como corte
       armonizar_sobrecarga_ecv(sobrecarga_ecv, sobrecarga_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)),
       armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa)),
@@ -551,14 +597,20 @@ DIR_WEB <- if (AMBITO == "") "web" else file.path("datos", "intermedios", paste0
 bloque_web <- list(
   tar_target(cajas_municipios, cajas_web(secciones_2021, jerarquia_2021)),   # buscador de municipios
   tar_target(ficheros_web, {
-    validacion_jerarquia; validacion_mapa_base; validacion_derivados    # lo que va, con sus compuertas pasadas
+    validacion_jerarquia; validacion_mapa_base; validacion_derivados; validacion_percentil    # con sus compuertas pasadas
     exportar_web(tabla_larga, indicadores, jerarquia_2021, territorios_2021, pmtiles = fichero_mapa_base,
-                 perfiles = perfiles, cajas = cajas_municipios, dir_web = DIR_WEB)
+                 perfiles = perfiles, cajas = cajas_municipios, salarios = salarios_web(curvas_salariales_aeat),
+                 dir_web = DIR_WEB)
   }, format = "file"),
   tar_target(validacion_web, {
     ficheros_web
     validar_referencias(comprobar_web(tabla_larga, indicadores, jerarquia_2021, territorios_2021, DIR_WEB,
                                       perfiles = perfiles), referencias)
+  }),
+  # Percentil salarial (datos/salarios.json): ida y vuelta con las curvas del pipeline
+  tar_target(validacion_web_salarios, {
+    ficheros_web
+    validar_referencias(comprobar_salarios_web(curvas_salariales_aeat, DIR_WEB), referencias)
   }),
   # Sección «Sobrecarga» (v0.0; R/web_sobrecarga.R): web/datos/sobrecarga/, desde los objetivos de la
   # sobrecarga, del quintil y del módulo de acceso, las geometrías NUTS de GISCO y los cortes del
@@ -600,4 +652,4 @@ bloque_web <- list(
   })
 )
 
-list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_mochila, bloque_transistor, bloque_derivados, bloque_tabla_larga, bloque_web)
+list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_tabla_larga, bloque_web)

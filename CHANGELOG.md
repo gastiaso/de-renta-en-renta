@@ -4,6 +4,26 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (10-nov-2026, F3: salarios; tarea 27; plan v0.37)
+
+- Indicador 7, salario medio anual por asalariado (AEAT, *Mercado de trabajo y pensiones*), en total y de 26 a 35 años (grupo `Y26-35`), por provincia, comunidad y España, de 2011 a 2024, en la tabla larga (`larga_salarios`, 2.016 filas; `R/fuente_aeat_salarios.R`). País Vasco y Navarra, `ausente`: la AEAT no los cubre y, de las haciendas forales, solo Gipuzkoa publica una cifra comparable, en PDF. Compuerta: `aeat_provincia`, `aeat_salarios_cobertura`, `aeat_salarios_suma` y `aeat_salarios_media` (bloqueo).
+- Mochila de 2015 a 2024 con el método en cinco pasos: salario medio de 26 a 35 años de la provincia × relación mediana/media del SME de su comunidad y año (de 2015 a 2018, la de 2019), a neto con la cotización y la retención de cada año, y control con la ECV de cada año (olas de 2016 a 2025). De 920 € netos al mes (2015) a 1.330 € (2024), media de las provincias; la de 2024 no cambia. Compuertas `mochila_cobertura` (bloqueo) y `mochila_forma` (alerta). Barrera de la mochila (15) de 2015 a 2024 en la tabla larga (+494.955 filas); la web usa la mochila del año del alquiler.
+- Percentil salarial del sueldo necesario: curvas de lo cobrado en el año por los asalariados de cada comunidad y de España (AEAT, tramos de salario por comunidad), netas en 12, de 2015 a 2024 (`R/percentil_salarial.R`, `datos/salarios.json`); la ficha lo da en el mapa del sueldo necesario («Percentil 84 de los salarios (Comunidad de Madrid, 2024; …)»), con la superficie y el umbral elegidos (`web/js/percentil.js`). Compuertas `percentil_cobertura`, `percentil_monotono`, `percentil_suma`, `percentil_limites` y `web_salarios` (bloqueo) y `percentil_media` (alerta).
+- Descargas (10-nov-2026, fuentes oficiales del plan): tablas de la AEAT de 2011 a 2024 (≈ 32,5 MB, 985 páginas) y microdatos de la ECV de 2016 a 2022 (≈ 238 MB).
+
+### Cambiado (10-nov-2026, F3: salarios)
+
+- `leer_aeat_mercado()` lee también las ediciones de 2011 a 2014 (`aeat_sangria()`).
+- `R/ficha_mochila.R`, con códigos del INE y año; las opciones A y C, como columnas de `mochila`. Las retenciones de la AEAT se leen una vez por año para el transistor y la mochila.
+- Nota metodológica (castellano e inglés): §5.6 y §6.6 nuevas, §6.2 rehecha y al día §1, §2.1, §4.1, §4.2, §6.1, §7.4, §8, §9 y §10.
+
+### Decidido (10-nov-2026, F3: salarios; por revisar por el autor, plan §11, pregunta 44)
+
+- Percentil con lo cobrado en el año (tramos de salario de la AEAT, 2015–2024), no con el SME del módulo de año completo (2019–2024, sin quien no llega al SMI).
+- El percentil sale como nota de la ficha, en el mapa del sueldo necesario, no en la leyenda; va en `datos/salarios.json`, no en la tabla larga.
+- Grupo de edad `Y26-35`, el tramo que publica la AEAT; forales del indicador 7, `ausente`.
+- Mochila de 2015 a 2018 con la relación mediana/media de 2019; `mochila_ecv` deja la tolerancia en ±15 % (avisa en 32 de 160 cifras, de olas antiguas); `percentil_suma` con ±10 asalariados.
+
 ### Añadido (10-nov-2026, portada y mapa por niveles; tareas 24–26; plan v0.36)
 
 - **Portada** (`docs/especificacion_portada.md`): la raíz es el tablero y el mapa pasa a `mapa.html`. Los enlaces ya compartidos a la raíz con el estado de la vista o un sueldo se redirigen a `mapa.html` con la misma consulta y el mismo fragmento antes de pintar (`web/js/redireccion.js`); en todos los menús, «Mapa» va a `mapa.html` y el título a la portada (también en «Método» y «Datos», que ganan «Tu sueldo»). Centro con el dicho, «Tu sueldo» (el sueldo va al mapa tras «#», nunca en la consulta), buscador y «Tira el dado»; cinco fichas; 24 casillas desde `inventario/casillas_portada.csv` (13 activas, bandas por familia, nada propio de Monopoly; `escribir_casillas_portada()`); tres cartas con cifras de la tabla larga en `web/datos/portada.json` (`exportar_portada()`): sueldo necesario de la sección mediana en 2024, 1.217 € (de 700 a 2.117 € entre los percentiles 10 y 90); con el salario mínimo de 2024, el piso de 50 m² pasa del 30 % del ingreso en el 48,4 % de las secciones y del 40 % en el 24,7 %; sobrecarga de 2025, 26,8 % en el alquiler a precio de mercado y 7,2 % en total. Compuertas `portada_valores` y `portada_casillas` (bloqueo, `validacion_portada`).

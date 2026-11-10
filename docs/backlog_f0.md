@@ -154,10 +154,11 @@ Las tareas 20–23 se hicieron en paralelo, cada una en su sesión, con el pipel
 
 26. **Mapa: clic en municipios, provincias y comunidades · HECHA (10-nov-2026).** Comunidades con nivel coloreado propio (zoom < 4; provincias 4–5, municipios 5–7); ficha con la cifra publicada en su nivel o «sin dato en este nivel», evolución y comparador; `territorio=` en la URL. Con la ficha de sección, la paga en 14 pagas y entre dos sueldos (F3).
 
+27. **Salarios de F3: indicador 7, mochila 2015–2024 y percentil salarial · HECHA (10-nov-2026, plan v0.37).** Indicador 7 de la AEAT, total y 26–35, 2011–2024, de la provincia a España, con compuerta; País Vasco y Navarra `ausente`. Mochila en cinco pasos de 2015 a 2024 (antes del módulo de año completo, la relación de 2019), con su control con la ECV de cada año y su barrera en la tabla larga. Percentil del sueldo necesario con lo cobrado en el año por comunidad (tramos de salario de la AEAT), en la ficha del mapa del sueldo necesario. Propuestas por revisar: plan §11, pregunta 44.
+
 **Siguiente** (revisado el 10-nov-2026, tras las tareas 24–26):
 Sin releases intermedios hasta la v1.0 (decisión del autor, 9-nov-2026): los datos de las tareas 20 en adelante se publican juntos en la v1.0; el sitio sigue con los del `v0.1.0`.
 1. **Portada y mapa por niveles** (tareas 24–26) · HECHO (10-nov-2026); queda la imagen para redes (opcional).
-3. **Indicador 7 completo** (por edad, forales) y **mochila en cinco pasos**, con su serie de 2015 a 2023 (las retenciones de la AEAT de esos años ya están bajadas para el transistor).
-4. **Percentil salarial** del sueldo necesario.
+3. **Indicador 7, mochila y percentil salarial** (tarea 27) · HECHO (10-nov-2026); sus propuestas, por decidir (plan §11, pregunta 44).
 5. **Ficha de sección:** banda SERPAVI–oferta (necesita los datos de portales que aportará el autor); **módulo de supuestos**. 14 pagas y segundo sueldo, hechos (10-nov-2026).
 6. **Preguntas abiertas de las tareas 20–23**, por decidir: renta 1–3 de provincia, comunidad y España (tabla 53689 del ADRH, otra descarga); descargas que llegan cortadas sin error (`descargar_con_cache()`); `geo_cobertura_origenes()`, lenta; corte por sexo del indicador 5; el transistor en la barrera de la tabla larga (+549.950 filas); el ejemplo de Python de la página «Datos», que solo se prueba con `pyarrow` instalado; nombres de Urbasa y Andía (otra fuente).

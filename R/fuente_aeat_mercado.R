@@ -107,6 +107,16 @@ descargar_aeat_mercado <- function(anio, titulo, fijos = list(), dir = DIR_AEAT_
   sort(guardadas)
 }
 
+# Nivel de sangría de una cabecera de fila: clase depth_div_<n> (ediciones desde 2015) o, en las
+# de 2011 a 2014, el margen del div («margin-left: 2em» → 2). Sin ninguno de los dos, 0.
+aeat_sangria <- function(th) {
+  d <- xml2::xml_find_first(th, ".//div[contains(@class, 'depth_div_')]")
+  if (!inherits(d, "xml_missing")) return(as.integer(sub("^.*depth_div_(\\d+).*$", "\\1", xml2::xml_attr(d, "class"))))
+  estilo <- xml2::xml_attr(xml2::xml_find_first(th, ".//div[contains(@style, 'margin-left')]"), "style")
+  if (is.na(estilo)) return(0L)
+  as.integer(sub("^.*margin-left:\\s*(\\d+)(\\.\\d+)?em.*$", "\\1", estilo))
+}
+
 # Lee páginas de una tabla en formato largo: una fila por celda, con los filtros de la página
 # (una columna por filtro, con nombre_columna()),
 # la etiqueta de la fila (y su nivel de sangría: 0 = comunidad, 1 = provincia) y la columna
@@ -120,18 +130,12 @@ leer_aeat_mercado <- function(rutas) {
     tabla <- xml2::xml_find_first(html, "//table")
     cab <- xml2::xml_find_all(tabla, ".//th[@id]")
     textos <- stats::setNames(espacios(xml2::xml_text(cab)), xml2::xml_attr(cab, "id"))
-    sangria <- stats::setNames(
-      as.integer(sub("^.*depth_div_(\\d+).*$", "\\1",
-                     vapply(cab, function(x) {
-                       d <- xml2::xml_find_first(x, ".//div[contains(@class, 'depth_div_')]")
-                       if (inherits(d, "xml_missing")) "depth_div_0" else xml2::xml_attr(d, "class")
-                     }, ""))),
-      names(textos))
+    sangria <- stats::setNames(vapply(cab, aeat_sangria, 0L), names(textos))
     celdas <- xml2::xml_find_all(tabla, ".//td[@headers]")
     ids <- strsplit(trimws(xml2::xml_attr(celdas, "headers")), "\\s+")
-    fila_ids <- lapply(ids, function(x) x[grepl("_f\\d+$", x)])
+    fila_ids <- lapply(ids, function(x) x[grepl("(^|_)f\\d+$", x)])
     fila_id <- vapply(fila_ids, function(x) x[length(x)], "")
-    col_ids <- lapply(ids, function(x) x[grepl("_c\\d+$", x)])
+    col_ids <- lapply(ids, function(x) x[grepl("(^|_)c\\d+$", x)])
     d <- tibble::tibble(
       tabla = meta$tabla,
       fila = unname(textos[fila_id]),

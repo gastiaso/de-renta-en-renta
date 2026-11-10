@@ -180,6 +180,10 @@
       "pocos_contratos": "few contracts",
       "intervalo": "Between {desde} and {hasta} {unidad}, given the margin of the median",
       "en_limite": "On the edge between two bands: given the margin of the median, it could fall into the next one.",
+      "percentil": "Percentile {percentil} of wages ({ambito}, {anio}; pay received in the year by employees, net and spread over 12 months; Spanish Tax Agency).",
+      "percentil_bajo": "Below the 1st percentile of wages ({ambito}, {anio}; pay received in the year by employees, net and spread over 12 months; Spanish Tax Agency).",
+      "percentil_alto": "Above the 99th percentile of wages ({ambito}, {anio}; pay received in the year by employees, net and spread over 12 months; Spanish Tax Agency).",
+      "percentil_desde": "Wage percentile: from {anio}.",
       "contexto": "Context",
       "contexto_tipologia": "{tipologia} in this tract",
       "contexto_municipio": "{tipologia} in {municipio}",
@@ -564,7 +568,7 @@
       "nombre": "Average annual wage per employee (total and under 35)",
       "unidad": "€ per employee per year (gross)",
       "definicion": "Average gross annual wage of employees with tax residence in the province, overall and aged 26 to 35.",
-      "calculo": "Published by the Spanish Tax Agency (AEAT); the Basque Country and Navarre, from their regional tax authorities.",
+      "calculo": "Published by the Spanish Tax Agency (AEAT, Labour market and pensions in tax sources, table by province, age and sex): wages / employees, overall and for the 26 to 35 age band; regions and Spain, with their published figure. The Basque Country and Navarre are not covered (foral tax residence) and have no data.",
       "lectura": "Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «under-35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region, and then to monthly net pay spread over 12, with the employee's social security contribution and the average AEAT withholding by region and income band (plan §3.1, method B)."
     },
     "alquiler_mes": {
@@ -620,7 +624,7 @@
       "nombre": "Rental access barrier",
       "unidad": "% of reference income",
       "definicion": "Share of a token’s net monthly income (minimum wage, under-35, pensioner or the user’s own pay) that 50 m² of rent in the tract would take.",
-      "calculo": "Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token, with the token’s income from the same year as the rent (each year’s minimum wage and pension); if the token lacks that year (the under-35 one, 2024 only), the latest is used and this is stated.",
+      "calculo": "Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token, with the token’s income from the same year as the rent (each year’s minimum wage, under-35 pay and pension, 2015 to 2024); if the token lacks that year, the latest is used and this is stated.",
       "lectura": "Measures the barrier to moving in with a given income. Read by bands (up to 30%, 30–40% and over 40%), not as an exact figure."
     },
     "anios_salario_compra": {
@@ -752,7 +756,8 @@
       "Y15-29": "15 to 29",
       "Y16-29": "16 to 29",
       "Y30-44": "30 to 44",
-      "Y45-64": "45 to 64"
+      "Y45-64": "45 to 64",
+      "Y26-35": "26 to 35"
     },
     "estado": {
       "dato": "Published or computed value",

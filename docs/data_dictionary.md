@@ -63,6 +63,7 @@ Breakdown value, by `corte`.
 | `edad` | `Y16-29` | 16 to 29 |
 | `edad` | `Y30-44` | 30 to 44 |
 | `edad` | `Y45-64` | 45 to 64 |
+| `edad` | `Y26-35` | 26 to 35 |
 | `sexo` | `M` | Men |
 | `sexo` | `F` | Women |
 | `tipologia` | `VC` | Flat in a multi-dwelling building |
@@ -218,7 +219,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Sources:** `aeat_mercado_trabajo`
 - **Version:** v0.2
 - **Definition:** Average gross annual wage of employees with tax residence in the province, overall and aged 26 to 35.
-- **Calculation:** Published by the Spanish Tax Agency (AEAT); the Basque Country and Navarre, from their regional tax authorities.
+- **Calculation:** Published by the Spanish Tax Agency (AEAT, Labour market and pensions in tax sources, table by province, age and sex): wages / employees, overall and for the 26 to 35 age band; regions and Spain, with their published figure. The Basque Country and Navarre are not covered (foral tax residence) and have no data.
 - **Reading:** Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «under-35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region, and then to monthly net pay spread over 12, with the employee's social security contribution and the average AEAT withholding by region and income band (plan §3.1, method B).
 
 ### `alquiler_mes`
@@ -314,7 +315,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Sources:** `mivau_serpavi`, `aeat_mercado_trabajo`, `boe_smi`, `inss_pensiones`
 - **Version:** v0.1
 - **Definition:** Share of a token’s net monthly income (minimum wage, under-35, pensioner or the user’s own pay) that 50 m² of rent in the tract would take.
-- **Calculation:** Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token, with the token’s income from the same year as the rent (each year’s minimum wage and pension); if the token lacks that year (the under-35 one, 2024 only), the latest is used and this is stated.
+- **Calculation:** Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token, with the token’s income from the same year as the rent (each year’s minimum wage, under-35 pay and pension, 2015 to 2024); if the token lacks that year, the latest is used and this is stated.
 - **Reading:** Measures the barrier to moving in with a given income. Read by bands (up to 30%, 30–40% and over 40%), not as an exact figure.
 
 ### `anios_salario_compra`

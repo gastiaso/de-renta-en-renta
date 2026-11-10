@@ -1,4 +1,4 @@
-# AEAT, «Mercado de trabajo y pensiones» (R/fuente_aeat_mercado.R) y opciones de la mochila
+# AEAT, «Mercado de trabajo y pensiones» (R/fuente_aeat_mercado.R) y serie de la mochila
 # (R/ficha_mochila.R). Páginas y cifras inventadas con la estructura de las de la AEAT.
 
 pagina_aeat <- function(filtros, filas, menus = list()) {
@@ -74,39 +74,59 @@ test_that("la mediana se interpola dentro de los tramos de la curva nacional", {
   expect_equal(cuantil_tramos(rep(1, 100), curva, p = 0.25, ancho = 1), 1250)
 })
 
-test_that("opciones A, B y C: A y B difieren en la relación media SME / media real de la comunidad", {
-  recorrido <- tibble::tibble(fila = rep(as.character(1:100), each = 2),
-                              columna = rep(c("SME inferior", "SME superior"), 100),
-                              valor = as.vector(rbind(1000 + 10 * (0:99), 1000 + 10 * (1:100))))
-  deciles <- tibble::tibble(fila = c("Total", paste("Decil", 1:4), "Decil 5 Mediana", paste("Decil", 6:10)),
-                            columna = "De 26 a 35 años", valor = c(100, rep(10, 10)),
-                            distribucion_geografica = "Aragón", genero = "Total")
-  sme <- tibble::tibble(fila = "De 26 a 35 años", columna = "Total · SME", valor = 2000,
-                        distribucion_geografica = "Aragón")
-  provincia <- tibble::tibble(
-    fila = rep(c("Total", "Aragón", "Huesca", "Zaragoza", "Madrid, Comunidad de"), each = 2),
-    nivel_fila = rep(c(0L, 1L, 2L, 2L, 1L), each = 2),
-    columna = rep(c("Asalariados", "Salario Medio Anual"), 5),
-    valor = c(1000, 1400, 100, 1200, 30, 1100, 70, 1300, 300, 1600),
-    sexo = "Total", tramos_de_edad = "De 26 a 35 años")
-  o <- calcular_mochila_opciones(provincia, deciles, sme, recorrido)
-  expect_equal(o$provincia, c("Huesca", "Zaragoza"))   # Madrid no tiene deciles en la prueba
-  expect_equal(o$C, c(1500, 1500))
-  expect_equal(o$A, 1500 * c(1100, 1300) / 1200)
-  expect_equal(o$B, c(1100, 1300) * 1500 / 2000)
-  expect_equal(o$A_sobre_B, rep(2000 / 1200, 2))
+test_that("las ediciones de 2011 a 2014 se leen: cabeceras sin prefijo y sangría por margen", {
+  ruta <- tempfile(fileext = ".html")
+  writeLines(paste0(
+    "<html><head><title>Mercado de trabajo y pensiones: 2011\nTabla vieja\nSexo: Total\n,\nEdad: Total</title></head><body><table>",
+    '<tr><th class="corner-heading"></th><th id="c1">Asalariados</th><th id="c2">Salario <br/> Medio Anual</th></tr>',
+    '<tr><th id="f1"><div style="margin-left: 0em">Total</div></th><td headers="c1 f1 ">17.788.121</td><td headers="c2 f1 ">19.102</td></tr>',
+    '<tr><th id="f2"><div style="margin-left: 1em">Andaluc&iacute;a</div></th><td headers="c1 f2 ">3.226.262</td><td headers="c2 f2 ">15.375</td></tr>',
+    '<tr><th id="f3"><div style="margin-left: 2em">Almer&iacute;a</div></th><td headers="c1 f3 ">269.927</td><td headers="c2 f3 ">14.033</td></tr>',
+    "</table></body></html>"), ruta, useBytes = TRUE)
+  d <- leer_aeat_mercado(ruta)
+  expect_equal(d$nivel_fila, rep(0:2, each = 2))
+  expect_equal(d$fila[5], "Almería")
+  expect_equal(d$valor, c(17788121, 19102, 3226262, 15375, 269927, 14033))
+  expect_equal(unique(d$columna), c("Asalariados", "Salario Medio Anual"))
 })
 
-test_that("la mediana con pesos y el control de la mochila con la ECV", {
-  expect_equal(mediana_ponderada(c(10, 20, 30), c(1, 1, 1)), 20)
-  expect_equal(mediana_ponderada(c(30, 10, 20), c(5, 1, 1)), 30)
-  op <- tibble::tibble(comunidad = c("Rioja, La", "Rioja, La"), real_ccaa = 20000, forma = 0.9)
-  ecv <- tibble::tibble(nuts2 = c("ES", "ES23"), n = c(500L, 100L), mediana_bruto = c(17000, 18000))
-  ccaa <- tibble::tibble(codigo = "17", nombre_ine = "Rioja, La", nuts2 = "ES23")
-  c <- comprobar_mochila_ecv(op, ecv, ccaa)
-  expect_equal(nrow(c), 1)
-  expect_equal(c$calculado, 0)
-  expect_equal(c$detalle, "Rioja, La (n = 100)")
+# Módulo de año completo inventado: curva nacional lineal (centil k → 1000 + 10 k euros) y una
+# comunidad, Aragón (02), con sus recuentos por decil nacional en dos edades.
+modulo_inventado <- function(anio = 2019L, n_joven = rep(10, 10), media_joven = 2000) {
+  list(curva = tibble::tibble(anio = anio, x = 0:100, y = 1000 + 10 * (0:100)),
+       deciles = tibble::tibble(anio = anio, ccaa = rep(c("02", "00"), each = 20),
+                                edad = rep(rep(c("De 26 a 35 años", "Total"), each = 10), 2),
+                                decil = rep(1:10, 4), n = c(n_joven, rep(10, 10), rep(10, 20))),
+       medias = tibble::tibble(anio = anio, ccaa = c("02", "00"), edad = "De 26 a 35 años", media_sme = media_joven))
+}
+
+test_that("relación mediana/media del SME por comunidad y año (paso 2)", {
+  m <- combinar_modulos_sme(list(modulo_inventado(2019L), modulo_inventado(2020L, n_joven = c(0, 0, 8, rep(0, 7)))))
+  f <- formas_sme(m)
+  expect_equal(f$mediana_sme[f$anio == 2019 & f$ccaa == "02"], 1500)   # reparto como el país: centil 50
+  expect_equal(f$mediana_sme[f$anio == 2020 & f$ccaa == "02"], 1250)   # todo en el decil 3: su centro
+  expect_equal(f$forma[f$anio == 2019 & f$ccaa == "02"], 1500 / 2000)
+})
+
+# Salarios de la AEAT ya con códigos (codificar_aeat_salarios()): Aragón, Huesca y Zaragoza; Madrid,
+# de una provincia (fila de comunidad y de provincia).
+salarios_inventados <- function(anios = 2018:2019) {
+  base <- tibble::tibble(
+    nivel = c("nacional", "ccaa", "provincia", "provincia", "ccaa", "provincia"),
+    geo_id = c("00", "02", "22", "50", "13", "28"), ccaa = c(NA, "02", "02", "02", "13", "13"),
+    asalariados = c(1000, 100, 30, 70, 300, 300), salario_medio = c(1400, 1200, 1100, 1300, 1600, 1600))
+  tidyr::expand_grid(anio = as.integer(anios), edad = c("total", "Y26-35"), base) |>
+    mutate(salarios = asalariados * salario_medio, nombre = geo_id)
+}
+
+test_that("serie de la mochila (pasos 1, 2 y 4): B, y A y C como registro; antes del módulo, su primer año", {
+  f <- formas_sme(combinar_modulos_sme(list(modulo_inventado(2019L))))
+  s <- calcular_mochila_serie(salarios_inventados(), f, anios = 2018:2019)
+  expect_equal(s$provincia, c("22", "50", "22", "50"))    # Madrid, sin deciles en la prueba
+  expect_equal(s$anio_forma, rep(2019L, 4))               # 2018 toma la relación de 2019
+  expect_equal(s$bruto_anual[s$anio == 2019], c(1100, 1300) * 1500 / 2000)
+  expect_equal(s$A[s$anio == 2019], 1500 * c(1100, 1300) / 1200)
+  expect_equal(s$C, rep(1500, 4))
 })
 
 # Grupos de población inventados: tres tramos con salario medio de 5.000, 15.000 y 25.000 € y la
@@ -118,6 +138,8 @@ grupos_aeat <- function(geo, tipos, columna = "Asalariados", bloque = "SALARIOS"
                  columna = columna, valor = c(rep(100, 3), retribuciones, retribuciones * tipos),
                  distribucion_geografica = geo, tramos_de_renta_anual = rep(tramo, 3))
 }
+ccaa_inventadas <- tibble::tibble(codigo = c("04", "13", "17"), nombre_ine = c("Balears, Illes", "Madrid, Comunidad de", "Rioja, La"),
+                                  nuts2 = c("ES53", "ES30", "ES23"))
 
 test_that("retenciones por tramo: salario medio y tipo de quien solo cobra salarios, interpolados", {
   g <- bind_rows(
@@ -126,37 +148,79 @@ test_that("retenciones por tramo: salario medio y tipo de quien solo cobra salar
     grupos_aeat("Total", c(0.5, 0.5, 0.5), bloque = "PENSIONES"),     # otro bloque: fuera
     mutate(grupos_aeat("Total", c(0.5, 0.5, 0.5)), tramos_de_renta_anual = "Total")   # tramo total: fuera
   )
-  r <- retenciones_aeat(g)
+  r <- retenciones_aeat(g, 2024L, ccaa_inventadas)
+  expect_equal(r$ccaa, rep("00", 3))
   expect_equal(r$salario_medio, c(5000, 15000, 25000))
   expect_equal(r$retencion, c(0.01, 0.03, 0.10))
   # Lineal entre los salarios medios; constante fuera de ellos
   expect_equal(tipo_retencion(c(1000, 10000, 20000, 30000), r), c(0.01, 0.02, 0.065, 0.10))
+  # Ediciones con otra columna de comunidad y otro nombre de la misma comunidad
+  g2 <- rename(grupos_aeat("Illes Balears", c(0.02, 0.04, 0.12)), comunidad_autonoma = distribucion_geografica)
+  expect_equal(unique(retenciones_aeat(g2, 2016L, ccaa_inventadas)$ccaa), "04")
 })
 
-test_that("de bruto anual a neto mensual: cotización y retención de la curva de su comunidad", {
-  ret <- retenciones_aeat(bind_rows(grupos_aeat("Total", c(0.01, 0.03, 0.10)),
-                                    grupos_aeat("Balears, Illes", c(0.02, 0.04, 0.12))))
-  mochila <- tibble::tibble(provincia = "Balears,Illes", comunidad = "Balears,Illes", bruto_anual = 10000)
-  m <- calcular_mochila_neta(mochila, ret, cotizacion = 0.065)
-  expect_equal(m$retencion, 0.03)          # entre 0,02 (5.000 €) y 0,04 (15.000 €)
-  expect_equal(m$retencion_espana, 0.02)
-  expect_equal(m$neto_anual, 10000 * (1 - 0.065 - 0.03))
-  expect_equal(m$neto_mensual, 9050 / 12)
-  expect_error(calcular_mochila_neta(mutate(mochila, comunidad = "Rioja, La"), ret, 0.065), "Sin retenciones")
+test_that("cotización del trabajador de cada año, la de la tartera", {
+  expect_equal(cotizacion_trabajador(c(2015, 2023, 2024)), c(0.0635, 0.0645, 0.0647))
+  expect_error(cotizacion_trabajador(2030), "Sin cotizaci")
 })
 
-test_that("control del paso a neto con la ECV: neto calculado sobre la mediana del bruto", {
+test_that("de bruto anual a neto mensual: cotización del año y retención de la curva de su comunidad y año", {
+  ret <- bind_rows(retenciones_aeat(bind_rows(grupos_aeat("Total", c(0.01, 0.03, 0.10)),
+                                              grupos_aeat("Balears, Illes", c(0.02, 0.04, 0.12))), 2024L, ccaa_inventadas),
+                   retenciones_aeat(grupos_aeat("Balears, Illes", c(0.05, 0.05, 0.05)), 2023L, ccaa_inventadas),
+                   retenciones_aeat(grupos_aeat("Total", c(0.05, 0.05, 0.05)), 2023L, ccaa_inventadas))
+  mochila <- tibble::tibble(anio = c(2024L, 2023L), provincia = "07", ccaa = "04", bruto_anual = 10000)
+  m <- calcular_mochila_neta(mochila, ret, cotizacion = function(a) rep(0.065, length(a)))
+  expect_equal(m$retencion, c(0.03, 0.05))          # 2024: entre 0,02 (5.000 €) y 0,04 (15.000 €)
+  expect_equal(m$retencion_espana, c(0.02, 0.05))
+  expect_equal(m$neto_anual[1], 10000 * (1 - 0.065 - 0.03))
+  expect_equal(m$neto_mensual[1], 9050 / 12)
+  expect_equal(calcular_mochila_neta(mochila[1, ], ret)$cotizacion, 0.0647)   # por defecto, la del año
+  expect_error(calcular_mochila_neta(mutate(mochila, ccaa = "17"), ret), "Sin retenciones")
+})
+
+test_that("compuerta de la serie: cobertura por año y relación mediana/media frente a la del primer año", {
+  provincias <- tibble::tibble(provincia = c("01", "22", "50"), nombre_ine = c("Araba/Álava", "Huesca", "Zaragoza"),
+                               nombre_aeat = c(NA, "Huesca", "Zaragoza"))
+  neta <- tibble::tibble(anio = c(2018L, 2018L, 2019L), provincia = c("22", "50", "22"), neto_mensual = 1000)
+  formas <- tibble::tibble(anio = c(2019L, 2020L), ccaa = "02", forma = c(0.80, 0.82))
+  c <- comprobar_mochila(neta, formas, provincias, anios = 2018:2019)
+  expect_equal(c$calculado[c$id == "mochila_cobertura"], c(0, 1))   # en 2019 falta Zaragoza
+  expect_equal(c$calculado[c$id == "mochila_forma"], 100 * (0.82 / 0.80 - 1))
+})
+
+test_that("la mediana con pesos y el control de la mochila con la ECV de cada año", {
+  expect_equal(mediana_ponderada(c(10, 20, 30), c(1, 1, 1)), 20)
+  expect_equal(mediana_ponderada(c(30, 10, 20), c(5, 1, 1)), 30)
+  mochila <- tibble::tibble(anio = c(2023L, 2024L, 2024L), ccaa = "17", real_ccaa = 20000, forma = 0.9)
+  ecv <- tibble::tibble(anio = c(2024L, 2024L, 2023L), nuts2 = c("ES", "ES23", "ES23"), n = c(500L, 100L, 90L),
+                        mediana_bruto = c(17000, 18000, 20000))
+  c <- comprobar_mochila_ecv(mochila, ecv, ccaa_inventadas)
+  expect_equal(nrow(c), 2)
+  salarios <- tibble::tibble(nivel = "nacional", edad = "Y26-35", anio = 2023:2024, salario_medio = 20000)
+  formas <- tibble::tibble(anio = 2024L, ccaa = "00", forma = 0.85)
+  es <- mochila_espana(salarios, formas, anios = 2023:2024)
+  expect_equal(es$forma, c(0.85, 0.85))     # 2023, sin módulo: la del primer año que lo tiene
+  c2 <- comprobar_mochila_ecv(mochila, ecv, ccaa_inventadas, espana = es)
+  expect_equal(c2$calculado[c2$detalle == "España (n = 500)"], 100 * (17000 / 17000 - 1))
+  expect_equal(c$calculado[c$anio == 2024], 0)
+  expect_equal(c$calculado[c$anio == 2023], -10)
+  expect_equal(c$detalle[c$anio == 2024], "Rioja, La (n = 100)")
+})
+
+test_that("control del paso a neto con la ECV: neto calculado sobre la mediana del bruto; sin PY010N, fuera", {
   a <- tibble::tibble(nuts2 = c("ES53", "ES53", "ES30"), peso = 1, bruto = c(10, 20, 30), neto = c(9, 18, 27), meses = 12)
-  e <- resumir_ecv_asalariados(a)
+  e <- resumir_ecv_asalariados(a, 2024L)
   expect_equal(e$mediana_neto[e$nuts2 == "ES"], 18)
+  expect_equal(unique(e$anio), 2024L)
+  expect_true(all(is.na(resumir_ecv_asalariados(mutate(a, neto = NA_real_))$mediana_neto)))
   ret <- retenciones_aeat(bind_rows(grupos_aeat("Total", c(0.01, 0.03, 0.10)),
-                                    grupos_aeat("Balears, Illes", c(0.02, 0.04, 0.12))))
-  ecv <- tibble::tibble(nuts2 = c("ES", "ES53", "ES30"), n = c(500L, 100L, 80L), mediana_bruto = c(15000, 10000, 12000),
-                        mediana_neto = c(15000 * (1 - 0.065 - 0.03), 10000 * (1 - 0.065 - 0.03) / 1.1, 1))
-  ccaa <- tibble::tibble(codigo = c("04", "13"), nombre_ine = c("Balears, Illes", "Madrid, Comunidad de"),
-                         nuts2 = c("ES53", "ES30"))
-  c <- comprobar_neto_ecv(ret, ecv, ccaa, cotizacion = 0.065)
-  expect_equal(c$detalle, c("Total (n = 500)", "Balears, Illes (n = 100)"))   # Madrid, sin curva: fuera
+                                    grupos_aeat("Balears, Illes", c(0.02, 0.04, 0.12))), 2024L, ccaa_inventadas)
+  ecv <- tibble::tibble(anio = 2024L, nuts2 = c("ES", "ES53", "ES30", "ES23"), n = c(500L, 100L, 80L, 50L),
+                        mediana_bruto = c(15000, 10000, 12000, 9000),
+                        mediana_neto = c(15000 * (1 - 0.065 - 0.03), 10000 * (1 - 0.065 - 0.03) / 1.1, 1, NA))
+  c <- comprobar_neto_ecv(ret, ecv, ccaa_inventadas, cotizacion = function(a) rep(0.065, length(a)))
+  expect_equal(c$detalle, c("Total (n = 500)", "Balears, Illes (n = 100)"))   # Madrid, sin curva; La Rioja, sin neto
   expect_equal(c$calculado, c(0, 10))
   expect_equal(unique(c$id), "mochila_neto_ecv")
 })

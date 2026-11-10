@@ -2,7 +2,7 @@
 #   14 esfuerzo_residentes: alquiler mensual mediano × 12 / renta neta media por hogar (ADRH), en %;
 #   21 sueldo_necesario: alquiler mediano por m² × 50 m² / 0,30, en € netos al mes (mapa por defecto);
 #   15 barrera_acceso: alquiler mediano por m² × 50 m² / ingreso neto mensual de la ficha, en %. Se
-#      calcula en el navegador con la ficha elegida; en R, solo la mochila y la tartera, como control.
+#      calcula en el navegador con la ficha elegida; en R, la tartera, la mochila y el transistor, como control.
 # El alquiler es siempre el de la vivienda colectiva (pregunta abierta 12). Estado: el peor de sus
 # términos, en el orden dato < estimado < secreto < ausente; sin algún término, ausente (pregunta
 # abierta 15). En el 15, el del alquiler: el ingreso de la ficha solo aporta «ausente» cuando
@@ -127,21 +127,34 @@ calcular_sueldo_necesario <- function(larga_serpavi, superficie = SUPERFICIE_FIC
 
 # Ingreso neto mensual (12 pagas) de cada ficha:
 #   tartera: salario mínimo de cada año de SMI_FICHAS (nacional);
-#   mochila: mochila_neta (método B, neto) de cada provincia, año de la AEAT, como «estimado» (el
-#     método B es una estimación; pregunta 15 ampliada); sin dato en los territorios forales, Ceuta
-#     y Melilla (ausente). La provincia sale de inventario/provincias_aeat.csv;
+#   mochila: mochila_neta (método B, neto) de cada provincia y año de la AEAT (2015–2024), como
+#     «estimado» (el método B es una estimación; pregunta 15 ampliada); sin dato en los territorios
+#     forales, Ceuta y Melilla (ausente), una fila por provincia de inventario/provincias_aeat.csv
+#     y año (codigos_mochila());
 #   llave: renta neta media por hogar / 12 de cada sección y municipio, con el estado del ADRH;
 #   transistor: pensión media de jubilación neta de cada provincia y año (calcular_transistor(),
 #     R/ficha_transistor.R), «dato» o, en País Vasco y Navarra, «estimado». Opcional.
-perfiles_fichas <- function(mochila_neta, provincias_aeat, larga_adrh, anio_mochila,
+# Año y código del INE de cada fila de la mochila: la serie (calcular_mochila_neta()) trae `anio` y
+# el código en `provincia`; una tabla de un solo año con los nombres de la AEAT (como las de las
+# pruebas) toma `anio_mochila` y el código de inventario/provincias_aeat.csv (NA si no está).
+codigos_mochila <- function(mochila_neta, provincias_aeat, anio_mochila = NA_integer_) {
+  anio <- if ("anio" %in% names(mochila_neta)) mochila_neta$anio else rep(anio_mochila, nrow(mochila_neta))
+  codigo <- if (all(grepl("^[0-9]{2}$", mochila_neta$provincia))) mochila_neta$provincia else
+    provincias_aeat$provincia[match(mochila_neta$provincia, provincias_aeat$nombre_aeat)]
+  tibble::tibble(anio = as.integer(anio), provincia = codigo, nombre = mochila_neta$provincia,
+                 neto_mensual = mochila_neta$neto_mensual)
+}
+
+perfiles_fichas <- function(mochila_neta, provincias_aeat, larga_adrh, anio_mochila = NA_integer_,
                             smi = SMI_FICHAS, superficie = SUPERFICIE_FICHA, transistor = NULL) {
   tartera <- smi |>
     transmute(ficha = "tartera", nivel = "nacional", geo_id = "00", anio,
               ingreso = mensual * pagas * (1 - cotizacion) / 12, estado = "dato",
               superficie_m2 = superficie, fuente = "boe_smi")
-  mochila <- provincias_aeat |>
-    left_join(select(mochila_neta, nombre_aeat = provincia, neto_mensual), by = "nombre_aeat") |>
-    transmute(ficha = "mochila", nivel = "provincia", geo_id = provincia, anio = as.integer(anio_mochila),
+  m <- codigos_mochila(mochila_neta, provincias_aeat, anio_mochila) |> filter(!is.na(provincia))
+  mochila <- tidyr::expand_grid(anio = sort(unique(m$anio)), provincia = provincias_aeat$provincia) |>
+    left_join(select(m, anio, provincia, neto_mensual), by = c("anio", "provincia")) |>
+    transmute(ficha = "mochila", nivel = "provincia", geo_id = provincia, anio = as.integer(anio),
               ingreso = neto_mensual, estado = if_else(is.na(neto_mensual), "ausente", "estimado"),
               superficie_m2 = superficie, fuente = "aeat_mercado_trabajo")
   llave <- renta_hogar_adrh(larga_adrh) |>
@@ -177,7 +190,7 @@ ingresos_fichas <- function(perfiles) {
 
 # 15, control en R: alquiler mediano por m² (VC) × superficie / ingreso de la ficha × 100, con el
 # ingreso del mismo año que el alquiler (regla 4): la tartera en los años de SMI_FICHAS con alquiler
-# (2015–2024), en todos los niveles; la mochila (2024) y el transistor (2015–2024) en sus años, en
+# (2015–2024), en todos los niveles; la mochila y el transistor (2015–2024) en sus años, en
 # las provincias y sus secciones, distritos y municipios. Estado: estado_barrera().
 calcular_barrera_acceso <- function(larga_serpavi, perfiles, superficie = SUPERFICIE_FICHA) {
   m2 <- alquiler_vc(larga_serpavi, "alquiler_m2") |> rename(alquiler_m2 = valor, e_alquiler = estado)
@@ -247,7 +260,9 @@ terminos_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles,
 #   derivados_rango (bloqueo): cifras fuera del rango posible (RANGOS_DERIVADOS);
 #   derivados_rango_detalle (alerta): cada cifra fuera del rango habitual;
 #   smi_neto (bloqueo): ingreso neto de la tartera de 2026 frente a la cifra del plan;
-#   perfiles_mochila (bloqueo): provincias de la mochila sin código del INE, o códigos repetidos.
+#   perfiles_mochila (bloqueo): provincias de la mochila sin código del INE, provincias repetidas en
+#     un año y, sumadas en todos los años, provincias con nombre en la tabla de la AEAT
+#     (inventario/provincias_aeat.csv) sin mochila.
 comprobar_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles, provincias_aeat, mochila_neta,
                                 rangos = RANGOS_DERIVADOS) {
   t <- terminos_derivados(derivados, larga_serpavi, larga_adrh, perfiles)
@@ -281,13 +296,15 @@ comprobar_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles, 
   tartera <- perfiles |> filter(ficha == "tartera", anio == 2026L) |>
     transmute(id = "smi_neto", anio, detalle = "tartera", calculado = ingreso, referencia = REFERENCIA_TARTERA_2026)
 
-  sin_codigo <- setdiff(mochila_neta$provincia, provincias_aeat$nombre_aeat)
-  codigos <- provincias_aeat$provincia[!is.na(provincias_aeat$nombre_aeat)]
+  m <- codigos_mochila(mochila_neta, provincias_aeat)
+  con_codigo <- m[!is.na(m$provincia), ]
+  esperadas <- provincias_aeat$provincia[!is.na(provincias_aeat$nombre_aeat)]
+  sin_mochila <- sum(vapply(unique(m$anio), function(a) length(setdiff(esperadas, con_codigo$provincia[con_codigo$anio %in% a])), 0L))
   mochila <- tibble::tibble(
     id = "perfiles_mochila", anio = NA_integer_,
     detalle = c("provincias de la AEAT sin c\u00f3digo", "c\u00f3digos repetidos", "nombres de la tabla sin mochila"),
-    calculado = c(length(sin_codigo), sum(duplicated(codigos)),
-                  length(setdiff(stats::na.omit(provincias_aeat$nombre_aeat), mochila_neta$provincia))),
+    calculado = c(length(unique(m$nombre[is.na(m$provincia)])), sum(duplicated(con_codigo[c("anio", "provincia")])),
+                  sin_mochila),
     referencia = 0)
 
   bind_rows(terminos, estado, fuera, aviso, tartera, mochila) |>

@@ -63,6 +63,7 @@ Valor del desglose, según el corte.
 | `edad` | `Y16-29` | De 16 a 29 años |
 | `edad` | `Y30-44` | De 30 a 44 años |
 | `edad` | `Y45-64` | De 45 a 64 años |
+| `edad` | `Y26-35` | De 26 a 35 años |
 | `sexo` | `M` | Hombres |
 | `sexo` | `F` | Mujeres |
 | `tipologia` | `VC` | Vivienda colectiva |
@@ -218,7 +219,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Fuentes:** `aeat_mercado_trabajo`
 - **Versión:** v0.2
 - **Definición:** Salario medio anual bruto de los asalariados con domicilio fiscal en la provincia, en total y de 26 a 35 años.
-- **Cálculo:** Cifra publicada por la AEAT (Mercado de trabajo y pensiones en las fuentes tributarias); el País Vasco y Navarra, con las haciendas forales.
+- **Cálculo:** Cifra publicada por la AEAT (Mercado de trabajo y pensiones en las fuentes tributarias, tabla por provincia, edad y sexo): salarios / asalariados, en total y del tramo de 26 a 35 años; la comunidad y España, con su cifra publicada. El País Vasco y Navarra no están en la estadística (domicilio fiscal foral) y van sin dato.
 - **Lectura:** Es salario real del año: incluye a quien trabajó pocos meses. Es una media, no una mediana; la ficha «joven» la pasa a mediana con la relación mediana/media del salario medio estimado de su comunidad y después a neto mensual repartido en 12, con la cotización del trabajador y la retención media de la AEAT por comunidad y tramo de renta (plan §3.1, método B).
 
 ### `alquiler_mes`
@@ -314,7 +315,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Fuentes:** `mivau_serpavi`, `aeat_mercado_trabajo`, `boe_smi`, `inss_pensiones`
 - **Versión:** v0.1
 - **Definición:** Parte del ingreso neto mensual de una ficha (salario mínimo, joven, pensionista o el sueldo del usuario) que se iría en el alquiler de 50 m² de la sección.
-- **Cálculo:** Alquiler mediano por m² de la vivienda colectiva × 50 / ingreso neto mensual de la ficha repartido en 12 pagas, × 100. Se calcula en la web con la ficha elegida, con el ingreso de la ficha del mismo año que el alquiler (el salario mínimo y la pensión de cada año); si la ficha no tiene ese año (la del joven, solo 2024), se usa el último y se indica.
+- **Cálculo:** Alquiler mediano por m² de la vivienda colectiva × 50 / ingreso neto mensual de la ficha repartido en 12 pagas, × 100. Se calcula en la web con la ficha elegida, con el ingreso de la ficha del mismo año que el alquiler (el salario mínimo, el salario del joven y la pensión de cada año, de 2015 a 2024); si la ficha no tiene ese año, se usa el último y se indica.
 - **Lectura:** Mide la barrera para entrar con un ingreso dado. Se lee por tramos (hasta el 30 %, del 30 al 40 % y más del 40 %), no como cifra exacta.
 
 ### `anios_salario_compra`

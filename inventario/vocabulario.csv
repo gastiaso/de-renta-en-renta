@@ -42,6 +42,7 @@ edad,Y15-29,De 15 a 29 años,15 to 29
 edad,Y16-29,De 16 a 29 años,16 to 29
 edad,Y30-44,De 30 a 44 años,30 to 44
 edad,Y45-64,De 45 a 64 años,45 to 64
+edad,Y26-35,De 26 a 35 años,26 to 35
 sexo,M,Hombres,Men
 sexo,F,Mujeres,Women
 tipologia,VC,Vivienda colectiva,Flat in a multi-dwelling building

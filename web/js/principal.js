@@ -8,7 +8,7 @@ import {
 } from './estado.js';
 import { cargarIdioma, traducirPagina } from './i18n.js';
 import {
-  cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarCajas,
+  cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarCajas, cargarSalarios,
   cargarIndice, cargarValores, cargarSeries, valorDe, periodoPara, periodosDe, fueraDeSerie,
   serieDeTipologia, tipologiaDe, tieneTipologia,
 } from './datos.js';
@@ -23,6 +23,7 @@ import {
   marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, estadoLlega, perfilesDelAnio,
 } from './sueldo.js';
 import { seriesFiabilidad, fiabilidadFicha, umbralPocos } from './fiabilidad.js';
+import { percentilSalarial } from './percentil.js';
 import { crearPanelSueldo } from './panel_sueldo.js';
 import { crearCompartir } from './compartir.js';
 import { codigoComparado, nombreTerritorio, filasComparador, pintarComparador, nivelesSuperiores } from './comparador.js';
@@ -54,6 +55,7 @@ let secciones;     // códigos de sección en el orden de los valores
 let indice;        // código → posición
 let territorios;   // nombres por nivel
 let perfiles;      // ingresos de las fichas
+let salarios;      // curvas del percentil salarial (datos/salarios.json)
 let mapa;          // funciones del mapa (mapa.js)
 let colores;       // colores del mapa (tokens.css)
 let contornos;     // colores del contorno de cada tramo
@@ -327,6 +329,7 @@ function pintarFicha(v = vista()) {
     tipologia: v.tipologia, valor, estado: estadoCifra(v, codigo, x, estadoDe), estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirSeccion(null),
     fiabilidad, intervalo, enLimite, sueldo,
+    notas: notaPercentil(v, valor, columnas[v.seriesColor[0]]?.periodo ?? v.periodo, 'sc', codigo),
   });
   if (valor === null && !v.fuera) {
     contextoSinMediana(v, codigo, x)
@@ -393,8 +396,8 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
     const k = s ? s.anios.findIndex((q) => String(q) === String(p)) : -1;
     return k < 0 ? { valor: null, estado: indiceEstado('ausente') } : { valor: s.valores[k], estado: s.estados[k] };
   };
-  // En «¿te llega?», cada año con el ingreso de la ficha de ese año si lo tiene (la tartera y el
-  // transistor; regla 4); si no (la mochila, «Tu ficha»), con el de hoy.
+  // En «¿te llega?», cada año con el ingreso de la ficha de ese año si lo tiene (la tartera, la
+  // mochila y el transistor; regla 4); si no («Tu ficha»), con el de hoy.
   const ficha = estado.ficha;
   const conSerie = (p) => Boolean(perfiles[ficha]?.anios?.[String(p)]);
   const calculoNivel = nivel === 'sc' || !v.calculo
@@ -496,6 +499,20 @@ async function seriesDeTerritorio(nivel, codigo, v) {
   return series;
 }
 
+// Percentil salarial del sueldo necesario (F3; web/js/percentil.js): una nota de la ficha, solo en el
+// mapa del sueldo necesario, con la curva de los salarios de la comunidad del territorio y del año
+// del alquiler (País Vasco y Navarra, que la AEAT no cubre, y España, con la de España).
+function notaPercentil(v, valor, anio, nivel, codigo) {
+  if (v.modo !== 'necesario' || estado.mapa !== 'sueldo_necesario' || v.fuera || !Number.isFinite(valor)) return [];
+  const ccaa = nivel === 'nacional' ? '00' : nivel === 'ccaa' ? codigo : territorios.ccaa_de_provincia?.[codigo.slice(0, 2)];
+  const p = percentilSalarial(salarios, { valor, anio, ccaa });
+  if (!p) return [];
+  if (p.sinCurva) return p.desde ? [t('interfaz.ficha.percentil_desde', { anio: p.desde })] : [];
+  const ambito = p.ambito === '00' ? t('vocabulario.nivel.nacional') : ordenNatural(territorios.ccaa?.[p.ambito] ?? p.ambito);
+  const clave = p.percentil <= 0 ? 'percentil_bajo' : p.percentil >= 100 ? 'percentil_alto' : 'percentil';
+  return [t(`interfaz.ficha.${clave}`, { percentil: t.numero(Math.round(p.percentil)), ambito, anio: p.anio })];
+}
+
 // Ficha de un municipio, una provincia o una comunidad: la cifra del mapa activo publicada en su
 // nivel (regla 1: si alguna serie que da color no llega a él, «sin dato en este nivel»; nunca se
 // suman secciones), su evolución y el comparador con los territorios que lo contienen.
@@ -535,6 +552,7 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
     ? estadoLlega(estadoDe(base), calculo.ingreso(codigo, x), indiceEstado('ausente'))
     : Math.max(...v.seriesColor.map(estadoDe));
   const periodoBase = periodoPara(m.indicadores[base], v.referencia);
+  if (tieneNivel) notas.push(...notaPercentil(v, valor, periodoBase ?? v.periodo, nivel, codigo));
   const { huecoSerie, huecoComparador } = fichaTerritorio(el.ficha, {
     t, nivel, codigo, territorios, sinNivel: !tieneNivel, modo: v.modo, mapaId: estado.mapa, mapaDef: v.mapa, ficha: estado.ficha,
     supuestos: v.supuestos, anio: v.fuera ? v.fuera.anio : periodoBase ?? v.periodo, tipologia: v.tipologia, valor,
@@ -889,6 +907,7 @@ async function iniciar() {
     colores = coloresMapa();
     contornos = coloresContorno();
 
+    const pedirSalarios = cargarSalarios(m).catch((error) => { console.error(error); return null; });
     [secciones, territorios, perfiles, mapa] = await Promise.all([
       cargarSecciones(m),
       cargarTerritorios(m),
@@ -910,6 +929,7 @@ async function iniciar() {
         },
       }),
     ]);
+    salarios = await pedirSalarios;
     indice = new Map(secciones.map((codigo, i) => [codigo, i]));
 
     if (estado.ficha === 'peon' ? !ingresoPeon(sueldo) : estado.ficha && !perfiles[estado.ficha]) estado.ficha = undefined;
