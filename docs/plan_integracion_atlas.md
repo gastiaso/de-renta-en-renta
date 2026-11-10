@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.37 · 10 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.38 · 10 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.38:** F4 hecha salvo los mapas (10-nov-2026): indicadores 10, 12, 16 y 17 en la tabla larga, tipo medio de las hipotecas y tabla de paso código postal ↔ municipio; el Notariado no permite reutilizar sus cifras y el 11 queda fuera; la coherencia entre tasación y escrituras se comprueba con las transacciones inmobiliarias del MIVAU (§5, §7 y pregunta 45).
 
 **Cambios en la v0.37:** salarios de F3 (10-nov-2026): indicador 7 de 2011 a 2024 en la tabla larga (§5); mochila con serie de 2015 a 2024 y su control con la ECV de cada año (§3.1); percentil salarial del sueldo necesario con lo cobrado en el año (§7, F3); propuestas por revisar (§11, pregunta 44).
 
@@ -266,9 +268,9 @@ Las marcas ★ son el núcleo de la v0.1. «A confirmar» indica que hay que ver
 |---|---|---|---|---|---|
 | 8 ★ | Alquiler mensual, mediana (€/mes) | MIVAU, SERPAVI; Gobierno Vasco (estadística de fianzas) | SC | 2015–último | Contratos declarados (parque alquilado), no contratos nuevos |
 | 9 ★ | Alquiler por m² (€/m²/mes) | MIVAU, SERPAVI | SC | 2015–último | Ídem |
-| 10 | Variación anual del alquiler | INE, IPVA | Municipio / distrito de capitales | 2015–2024 | Índice, no nivel; separa contratos nuevos y existentes |
-| 11 | Precio de compraventa (€/m²) | Portal Estadístico del Notariado | Código postal / municipio | A confirmar | Precio escriturado; condiciones de reutilización por verificar |
-| 12 | Valor tasado (€/m²) | MIVAU | Municipios de más de 25.000 habitantes (a confirmar) | Serie larga, trimestral | Contraste con el Notariado |
+| 10 | Variación anual del alquiler | INE, IPVA | España, comunidad, provincia, municipio de más de 10.000 habitantes y distrito de las capitales | 2015–2024 | Índice, no nivel; separa contratos nuevos y existentes. Sin País Vasco ni Navarra. En la tabla larga desde el 10-nov-2026, en total |
+| 11 | Precio de compraventa (€/m²) | Portal Estadístico del Notariado | Código postal / municipio | — | Precio escriturado. **Fuera:** el Notariado no autoriza reutilizar sus cifras (verificado el 10-nov-2026; pregunta 45) |
+| 12 | Valor tasado (€/m²) | MIVAU | España, comunidad, provincia y municipio de más de 25.000 habitantes | 2015–2025 (trimestral desde 1995) | Año: media de los cuatro trimestres ponderada por tasaciones. Coherencia con las escrituras ante notario (transacciones del MIVAU). En la tabla larga desde el 10-nov-2026 |
 | 13 | Precio de oferta (alquiler y venta) | Informes de Idealista y Fotocasa | Municipio / distrito | Mensual | **Capa desmontable** (§2.2) |
 
 ### C. Esfuerzo y acceso (derivados)
@@ -277,8 +279,8 @@ Las marcas ★ son el núcleo de la v0.1. «A confirmar» indica que hay que ver
 |---|---|---|---|---|
 | 14 ★ | Esfuerzo de residentes en alquiler | (alquiler × 12) / renta media por hogar | SC y municipio | Mide vulnerabilidad, no acceso |
 | 15 ★ | Barrera de acceso al alquiler | Alquiler mensual / salario mensual de referencia (perfil elegido) | SC × ficha (en R, mochila y tartera de 2024, como control) | Indicador central de la pregunta rectora |
-| 16 | Años de salario para comprar | €/m² × superficie tipo / salario anual de referencia | Código postal / municipio × provincia | Superficie tipo seleccionable (por defecto 80 m²) |
-| 17 | Esfuerzo hipotecario teórico | Cuota del primer año (80 % de financiación, 25 años, tipo medio) / renta o salario | Municipio | Versión local del indicador del Banco de España |
+| 16 | Años de salario para comprar | Valor tasado por m² × superficie tipo / salario medio anual bruto (AEAT) del mismo año | Municipio (> 25.000 hab.) × provincia, provincia, comunidad y España | Superficie tipo seleccionable (por defecto 80 m²) |
+| 17 | Esfuerzo hipotecario teórico | Cuota del primer año (80 % del valor tasado de 80 m², 25 años, tipo medio del INE) / salario medio anual bruto (AEAT) | Municipio (> 25.000 hab.) × provincia, provincia, comunidad y España | Versión local del indicador del Banco de España |
 | 21 ★ | Sueldo neto necesario | Alquiler (€/m² × superficie) / umbral (30 % o 40 %) | SC (y distrito, municipio, provincia y comunidad) | **Mapa por defecto.** 50 m² (una persona). El 30 % se inspira en el criterio de zona tensionada de la Ley 12/2023 (art. 18), que usa renta del hogar y suministros; no es ese criterio |
 
 ### D. Estructura y presión
@@ -591,6 +593,7 @@ Sin fechas. Cada fase se cierra con un criterio verificable. F1b y F2 se publica
   - tabla de paso CP ↔ municipio;
   - tipo hipotecario medio.
 - **Hecho cuando:** el Notariado y la tasación son coherentes dentro de un umbral razonado y las condiciones de reutilización del Notariado están verificadas.
+- **Avance (10-nov-2026):** hecho salvo los mapas. El Notariado no permite reutilizar sus cifras; las escrituras entran por las transacciones inmobiliarias del MIVAU (censales con los ficheros del Notariado). Coherencia: superficie implícita (valor medio escriturado / valor tasado por m²) de 70 a 110 m² en España y de 50 a 150 m² en provincias y trimestres; España, de 91,8 a 106,1 m² en 2015–2025.
 
 ### F5 · Presión y portales → v0.4 (hito interno) — M
 
@@ -791,6 +794,7 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 42. **Releases intermedios.** Cerrada (9-nov-2026), decisión del autor: ninguno hasta la v1.0. Los cambios de F3 a F6 se acumulan en `main` y en el CHANGELOG («Sin publicar»); el sitio sigue con los datos del `v0.1.0`. Descartado un `v0.1.1` con los datos de las tareas 20–23, ya empaquetado. **Sitio congelado** (decisión del autor, 9-nov-2026): el flujo de Pages deja de lanzarse en cada push y monta a mano una referencia fija, la de la v0.1 (commit `cdd9892`), con los datos del `v0.1.0`; así el sitio no junta código nuevo con datos viejos ni publica una nota que describe datos que aún no sirve. La página «Datos» vuelve con la v1.0.
 43. **Portada y mapa por niveles: propuestas por revisar** (10-nov-2026, tareas 24–26). Abiertas, con la propuesta ya aplicada: (a) `?idioma=en` solo abre la portada en inglés y no redirige al mapa; `#tu-sueldo` en la raíz sí redirige; (b) columna `destino_en` en `casillas_portada.csv` para las anclas de «Método» y «Datos», que cambian con el idioma (alternativa: deducirlas por la posición del título); (c) destinos que se apartan de la especificación: «Compartir piso» → sueldo necesario de 70 m², «Vuelve a casa de tus padres» → acceso en «Sobrecarga», «Cobra la pensión» activa, «Mudanza» → comparador con el municipio; (d) colores de las familias de casillas desde `tokens.css` y texto horizontal; (e) franjas de zoom fijas (comunidades < 4, provincias 4–5, municipios 5–7, secciones ≥ 7) en vez de selector de nivel; (f) con poco zoom, el suelo sin sección abre la provincia o la comunidad que lo incluye; (g) el comparador de la ficha de territorio, solo con los niveles que lo contienen; (h) 14 pagas y dos sueldos con la misma superficie del mapa (no los 70 m² de «Tu ficha» con dos sueldos); (i) el buscador abre la ficha del municipio; (j) portada sin marca en la cabecera; (k) etiqueta solo con ratón, según `pointerType`.
 44. **Percentil salarial y forales del indicador 7: propuestas por revisar** (10-nov-2026, tarea 27). Abiertas, con la propuesta ya aplicada: (a) distribución del percentil: lo cobrado en el año (tramos de salario de la AEAT, 2015–2024; cuenta a quien trabajó pocos meses y supone densidad lineal dentro de cada tramo) o el SME del módulo de año completo (2019–2024; su percentil 1 es el SMI y la sección mediana queda por debajo del 3); (b) dónde se ve: nota de la ficha en el mapa del sueldo necesario (propuesta) o también la leyenda, con la curva de España; (c) el percentil, como curvas en `datos/salarios.json` y no en la tabla larga (depende de la superficie y el umbral); (d) forales del 7: `ausente` (propuesta) o Gipuzkoa a mano desde sus PDF como `estimado`; (e) nombre del indicador 7: «total y de 26 a 35 años» (hoy, «menores de 35»); (f) mochila de 2015 a 2018 con la relación de 2019 (alternativa: la de la ECV de cada año, o empezar en 2019); (g) tolerancias: `mochila_ecv` ±15 % (avisa en 32 de 160 cifras de las olas de 2016 a 2022) y `percentil_suma` ±10 asalariados.
+45. **F4: propuestas por revisar** (10-nov-2026, tarea 28). Abiertas, con la propuesta ya aplicada: (a) indicador 11 fuera, o pedir autorización al Notariado (la tabla código postal ↔ municipio ya está para llevar sus cifras a municipio); (b) coherencia por superficie implícita con las transacciones del MIVAU, o precio por m² de Registradores (ODbL, descarga manual: su servidor rechaza los clientes que no son un navegador), que compararía €/m² con €/m²; (c) año del valor tasado como media ponderada por tasaciones (`dato`), o media simple, o los trimestres como corte; (d) 16 y 17 con el salario bruto de la AEAT de la provincia, o el 17 con la renta neta por hogar del ADRH (más cerca del indicador del Banco de España, con forales); (e) tipo medio del INE, o el de referencia del Banco de España; (f) pesos de la tabla código postal ↔ municipio por tramos de vía del callejero de 2021, o por portales o viviendas; (g) mapas de F4 con el municipio (y el distrito en el 10) como nivel más fino, cortes 10 → 0; 1; 2; 3; 4 (%), 12 → 1.000; 1.500; 2.000; 2.500; 3.500 (€/m²), 16 → 3; 4; 5; 7; 10 (años) y 17 → 15; 20; 25; 30; 40 (%).
 
 **Por verificar en F0** (no son decisiones, son comprobaciones), hechas el 6-nov-2026:
 - cortes de edad de la AEAT (<18, 18–25, 26–35, 36–45, 46–55, 56–65, >65) y módulo de año completo (desde 2019; ver §3.1);
@@ -810,7 +814,8 @@ Límites: un .es sin DNS puede estar registrado sin delegar (confirmar en domini
 - AEAT, [IRPF de los mayores municipios por código postal](https://sede.agenciatributaria.gob.es/Sede/datosabiertos/catalogo/hacienda/Estadistica_del_IRPF_por_codigo_postal.shtml) · [Mercado de trabajo y pensiones 2024](https://sede.agenciatributaria.gob.es/AEAT/Contenidos_Comunes/La_Agencia_Tributaria/Estadisticas/Publicaciones/sites/mercado/2024/mapa.html) · [Viviendas declaradas en el IRPF](https://datos.gob.es/gl/catalogo/ea0028512-estadistica-de-viviendas-declaradas-en-el-irpf)
 - Gobierno Vasco, [Estadística del mercado del alquiler](https://euskadi.eus/contenidos/informacion/ovv_emal_manual_122417/es_ovv_sevi/Consulta-de-la-estadistica-del-mercado-del-alquiler.pdf)
 - Idescat, [E02 Estadística territorial de salarios (experimental)](https://idescat.cat/estad/experimental/e02?lang=en)
-- Portal Estadístico del Notariado: [penotariado.com](https://www.penotariado.com)
+- Portal Estadístico del Notariado: [penotariado.com](https://www.penotariado.com) · [términos y condiciones](https://www.penotariado.com/inmobiliario/terminos-y-condiciones) · [aviso legal](https://www.penotariado.com/inmobiliario/aviso-legal) (consultados el 9 y el 10-nov-2026)
+- MIVAU, [Estadística de transacciones inmobiliarias: metodología (marzo de 2025)](https://www.mivau.gob.es/recursos_mfom/comodin/recursos/metodologia_transacciones_inmobiliarias_compraventas.pdf) · boletín estadístico en línea (valor tasado y transacciones)
 - P. García Guzmán, [ineAtlas (R)](https://github.com/pablogguz/ineAtlas)
 - Esade EcPol, [Regular el precio de alquiler: un dilema entre eficiencia y equidad](https://www.esade.edu/ecpol/es/publicaciones/regular-el-precio-de-alquiler-un-dilema-entre-eficiencia-y-equidad/)
 - MIVAU / UPM, [Catálogo de Barrios Vulnerables 2021](https://oa.upm.es/91832/3/00_INTRODUCCION_A.pdf)

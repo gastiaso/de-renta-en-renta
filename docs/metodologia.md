@@ -89,7 +89,12 @@ El inventario completo, con dirección, acceso, cadencia y notas, está en `inve
 | `catastro_inspire` | D. G. del Catastro | Tablas de paso, vía (b) | Contradictoria: ver abajo |
 | `catastro_foral` | Diputaciones forales de Álava, Bizkaia y Gipuzkoa; Gobierno de Navarra | Vía (b) en País Vasco y Navarra | Distinta en cada territorio: ver abajo |
 | `gv_emal` | Gobierno Vasco | Capa municipal de contexto (fianzas); no se mezcla con el indicador 8 | CC BY 4.0 |
-| `calculo_propio` | De renta en renta | Indicadores derivados 14, 15 y 21, a partir de las fuentes de cada término, y margen aproximado de la mediana del alquiler (§7.6) | CC BY-SA 4.0 |
+| `ine_ipva` | INE | Indicador 10 | CC BY 4.0 |
+| `mivau_valor_tasado` | MIVAU | Indicadores 12, 16 y 17 | Reutilización autorizada por el aviso legal del MIVAU, citando la fuente y la fecha |
+| `mivau_transacciones` | MIVAU (escrituras del Notariado) | Compuerta de coherencia de la tasación (§7.7) | Reutilización autorizada por el aviso legal del MIVAU, citando la fuente y la fecha |
+| `ine_hipotecas` | INE | Tipo medio del indicador 17 | CC BY 4.0 |
+| `notariado` | Consejo General del Notariado | No se usa: sus condiciones no permiten reutilizar las cifras (el indicador 11 queda fuera; §7.7) | Solo uso personal; reutilizar exige su autorización expresa |
+| `calculo_propio` | De renta en renta | Indicadores derivados 14, 15, 16, 17 y 21, a partir de las fuentes de cada término, y margen aproximado de la mediana del alquiler (§7.6) | CC BY-SA 4.0 |
 
 **Descarga manual del SERPAVI.** La web del MIVAU bloquea las descargas automáticas. Si falta el Excel, `descargar_mivau_serpavi()` detiene el pipeline e indica la página y el nombre con el que guardarlo (`inventario/fuentes.csv`, columna `acceso`).
 
@@ -479,6 +484,17 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `sobrecarga_quintil_reparto` | Población con renta (factor RB050) de cada quintil, por ola | ±1 punto sobre el 20 % | Alerta | Pasa: del 19,95 al 20,05 % | `validacion_quintil` |
 | `nuts_geometria` | Regiones con dato sin geometría en su versión NUTS ni, como respaldo, en una posterior | Exacto | Alerta | Avisa: el código agrupado FI19_20 en 2021–2025 | `validacion_nuts` |
 | `contraste_declarado` | Contraste declarado en `tokens.json` frente al recalculado | ±0,05 | Alerta | Pasa; diferencia máxima, 0,003 | `validacion_diseno` |
+| `ipva_variacion` | Variación anual publicada del IPVA frente a la recalculada con los índices | ±0,06 puntos | Bloqueo | Diferencia máxima, 0,051 puntos | `validacion_ipva` |
+| `ipva_nota` | España, Madrid, Barcelona y la Comunitat Valenciana en 2024 frente a la nota de prensa | Exacto | Bloqueo | 3,5; 3,6; 3,3 y 5,0 % | `validacion_ipva` |
+| `hipotecas_tipo_anual` | Tipo medio anual de las hipotecas sobre viviendas frente a la media de sus doce meses | ±0,05 puntos | Bloqueo | Diferencia máxima, 0,024 puntos (2020) | `validacion_hipotecas` |
+| `valor_tasado_nombres` | Nombres del Ministerio sin código del INE | Exacto | Bloqueo | Ninguno: 306 municipios casados | `validacion_valor_tasado` |
+| `valor_tasado_ccaa` | Comunidades y España fuera del intervalo de sus provincias | Exacto | Bloqueo | Ningún trimestre desde 2015 | `validacion_valor_tasado` |
+| `valor_tasado_tasaciones` | Tasaciones de las comunidades y de España frente a la suma de las de sus provincias | Exacto | Bloqueo | Iguales desde 2015 | `validacion_valor_tasado` |
+| `valor_tasado_nota` | España en el primer trimestre de 2026 | Exacto | Bloqueo | 2.315,7 €/m² | `validacion_valor_tasado` |
+| `compraventa_coherencia_espana` | Superficie implícita de España (escrituras entre tasación) fuera de 70–110 m² | Exacto | Bloqueo | Pasa: de 91,8 a 106,1 m² (2015–2025) | `validacion_coherencia_compraventa` |
+| `compraventa_coherencia_provincias` | Provincias y trimestres con la superficie implícita fuera de 50–150 m² | ±5 % | Bloqueo | 1,9 % como máximo (2021) | `validacion_coherencia_compraventa` |
+| `compraventa_terminos` | Años de salario y esfuerzo hipotecario frente a sus términos | ±0,001 % | Bloqueo | Pasa en 2015–2024 | `validacion_derivados_compraventa` |
+| `cp_municipio_reparto` | Pesos de un código postal que no suman 100, o sin un único municipio principal | ±0,001 | Bloqueo | Pasa en los 11.046 códigos postales | `validacion_cp_municipio` |
 
 **Lectura de los resultados de `adrh_municipio`.** La mediana es 0,0 % porque la mayoría de los municipios tiene una sola sección. La alerta `adrh_municipio_detalle` recoge los casos en que la fuente no cuadra entre escalas con todas las secciones con dato. En Madrid, por ejemplo, Alcobendas y Pozuelo de Alarcón quedan todos los años por encima del 5 % (`inventario/referencias_validacion.csv`).
 
@@ -1156,6 +1172,28 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 
 **Compuerta** (`comprobar_fiabilidad_serpavi()`, `validacion_fiabilidad`; §4.1): `contratos_mediana` y `contratos_suma` (bloqueo), y `margen_rango` (alerta). El margen solo se comprueba en las secciones: en los territorios grandes baja de forma natural del 1 % (en las provincias, 0,3 % de mediana).
 
+### 7.7 Compraventa (indicadores 10, 12, 16 y 17)
+
+**Notariado (indicador 11), fuera.** Los términos y condiciones del Portal Estadístico del Notariado (verificados el 10-nov-2026) reservan sus datos al uso personal y exigen la autorización previa y expresa del Consejo General del Notariado para reproducirlos, distribuirlos o transformarlos, aunque se cite la procedencia. El atlas no descarga sus cifras, y el precio escriturado por m² (indicador 11) queda fuera mientras no haya autorización (`inventario/fuentes.csv`, `notariado`). Las escrituras llegan por otra vía: el MIVAU publica, con sus propias condiciones de reutilización, el valor medio de las compraventas de vivienda libre ante notario (`mivau_transacciones`), sin la superficie, y sirve para la compuerta de coherencia.
+
+**Variación anual del alquiler (indicador 10).** Cifra publicada por el IPVA del INE (`leer_ine_ipva()`; objetivo `larga_ipva`) en su nivel nativo: España, 17 comunidades, 48 provincias, 718 municipios de más de 10.000 habitantes y 407 distritos de las capitales, todos en el seccionado de 2021. Sin País Vasco ni Navarra: el IPVA sale del IRPF de régimen común. Las filas «Resto» de cada provincia no entran. Es un índice: no se agrega ni se reproyecta (guía, regla 1). En 2024, España sube un 3,5 %, con una mediana municipal del 3,3 %.
+
+**Valor tasado (indicador 12).** Valor medio de tasación de la vivienda libre por m² del MIVAU, trimestral, de España, las comunidades, las provincias y los municipios de más de 25.000 habitantes (306 desde 2020). El año es la media de sus cuatro trimestres ponderada por el número de tasaciones (`valor_tasado_anual()`); sin los cuatro, `ausente` (de 3 a 9 municipios al año hasta 2020). El Ministerio no publica media anual ni pondera sus comunidades por tasaciones: la comunidad publicada se aparta de la media de sus provincias ponderada así hasta un 3,3 % (`valor_tasado_ccaa_media`), por composición, pero nunca sale del intervalo de sus provincias (`valor_tasado_ccaa`). Los nombres del Ministerio se casan con los códigos del INE por su forma normalizada (`casar_nombres_mivau()`), por un nombre único en España cuando la tabla de municipios arrastra mal la provincia (siete municipios) y por `inventario/nombres_mivau.csv` (erratas y nombres distintos). España: 1.475,6 €/m² en 2015 y 1.913,9 €/m² en 2024.
+
+**Coherencia entre escrituras y tasación** (`comprobar_coherencia_compraventa()`, `validacion_coherencia_compraventa`; el «hecho cuando» de F4). Las dos fuentes no comparten unidad: el valor medio escriturado es por vivienda y el tasado, por m². Su cociente es la superficie que tendría la vivienda media vendida si se pagara al valor tasado: la «superficie implícita». Si las dos miden el mismo mercado, cae cerca de la superficie media de las viviendas vendidas, algo por debajo, porque el precio escriturado suele quedar por debajo de la tasación; un error de lectura, de unidad o de casado la saca de golpe de ese entorno. Umbral: de 70 a 110 m² en España, cada año, y de 50 a 150 m² en provincias y trimestres, con un 5 % fuera como máximo. Resultado: España, de 91,8 a 106,1 m² (2015–2025); en provincias, un 1,9 % fuera como máximo (2021), con Baleares por encima de 150 m² en 2021 y 2022.
+
+**Tipo medio** (`ine_hipotecas`; objetivo `tipo_hipotecario_anual`). Tipo de interés medio al inicio de las hipotecas sobre viviendas del INE, anual: 3,31 % en 2015, 1,92 % en 2021 y 3,26 % en 2024.
+
+**Derivados** (`armonizar_derivados_compraventa()`; objetivo `derivados_compraventa`, fuente `calculo_propio`). Con el valor tasado de 80 m² y el salario medio anual bruto por asalariado de la AEAT (indicador 7) del mismo año; en un municipio, el de su provincia:
+- años de salario para comprar (16): valor tasado × 80 / salario;
+- esfuerzo hipotecario teórico (17): cuota del primer año de un préstamo francés por el 80 % del valor, a 25 años y al tipo medio del año (`cuota_hipoteca()`), × 12 / salario × 100.
+
+De 2015 a 2024, en España, las comunidades, las provincias y los municipios de más de 25.000 habitantes; sin salario de la AEAT (País Vasco y Navarra), `ausente`. Estado: el peor de sus términos. En España, 6,3 años y 29,8 % en 2015, y 6,1 años y 28,7 % en 2024; entre los municipios de 2024, de 2,2 a 17,9 años (mediana, 5,3) y del 10,3 al 83,7 % (mediana, 24,6 %). Compuerta: `compraventa_terminos`, `compraventa_estado` y `compraventa_rango` (bloqueo), y `compraventa_rango_detalle` (alerta).
+
+**Código postal ↔ municipio** (`leer_ine_callejero_cp()`, `geo_tabla_cp_municipio()`; objetivo `fichero_cp_municipio`, en `geo/codigos_postales_2021.csv`). Sale de los tramos de vía del callejero de enero de 2021: 11.046 códigos postales en 14.600 pares, que cubren los 8.131 municipios; 8.784 códigos postales caen en un solo municipio. El peso es la parte de los tramos del código postal en cada municipio. 50 pares tienen un código postal de otra provincia: enclaves como el condado de Treviño, con los de Álava, y erratas del callejero.
+
+**Web.** Los cuatro indicadores están en la tabla larga, pero aún no en el mapa: el mapa pinta desde la sección, y estos indicadores no la tienen.
+
 ## 8. Limitaciones conocidas
 
 **Geografía constante:**
@@ -1232,6 +1270,8 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 
 **Sobrecarga.** Se publica sin intervalos de confianza. El quintil de renta usa HY020 ÷ HX240, no la HX090 de Eurostat, que el INE no publica, y lleva al quintil de arriba la renta igual a un corte, con lo que las 15 cifras coinciden con las de Eurostat a un decimal. La serie de España se corta en 2013, el año en que cambia la forma de obtener los ingresos, aunque Eurostat no lo marca (§7.5).
 
+**Compraventa.** El precio es el de tasación, no el escriturado: el del Notariado no se puede reutilizar (§7.7). El año del valor tasado es una media de trimestres que el Ministerio no publica. Los años de salario y el esfuerzo hipotecario usan el salario bruto individual de la provincia, no la renta del hogar, y no cubren País Vasco ni Navarra; el IPVA tampoco.
+
 **Desfase.** La renta y los salarios van uno o dos años por detrás del año en curso (§1).
 
 ---
@@ -1242,7 +1282,7 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 
 **Esquema** (plan §6.4): `geo_id`, `nivel`, `anio`, `indicador`, `corte`, `grupo`, `valor`, `estado`, `fuente`, `geo_ref` y `version`. La clave de una fila es `geo_id`, `nivel`, `anio`, `indicador`, `corte` y `grupo`.
 
-**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11.435.148 filas.
+**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11.458.446 filas.
 
 | Fuente (`fuente`) | Filas | Niveles | Versión |
 |---|---|---|---|
@@ -1253,9 +1293,11 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 | `ine_ecv` | 261 | Comunidad (228) y España (33) | 6-nov-2026 |
 | `ine_ecv_modulo` | 32 | Comunidad (19) y España (13) | 6-nov-2026 |
 | `aeat_mercado_trabajo` | 2.016 | Provincia (1.456), comunidad (532) y España (28) | 9-nov-2026 |
-| `calculo_propio` | 3.510.714 | Sección (2.436.386), distrito (568.152), municipio (501.060), provincia (4.036) y comunidad (1.080) | 7-nov-2026 |
+| `ine_ipva` | 11.910 | Distrito (4.070), municipio (7.180), provincia (480), comunidad (170) y España (10) | 10-nov-2026 |
+| `mivau_valor_tasado` | 4.048 | Municipio (3.256), provincia (572), comunidad (209) y España (11) | 10-nov-2026 |
+| `calculo_propio` | 3.518.054 | Sección (2.436.386), distrito (568.152), municipio (506.960), provincia (5.076), comunidad (1.460) y España (20) | 7-nov-2026 |
 
-**Por estado:** `dato`, 8.460.622 filas; `ausente`, 1.689.946; `secreto`, 1.233.209; `estimado`, 51.371.
+**Por estado:** `dato`, 8.482.875 filas; `ausente`, 1.690.991; `secreto`, 1.233.209; `estimado`, 51.371.
 
 **Publicación.** La tabla larga se publica en el release `v0.1.0` de GitHub (9-nov-2026), y la web, en `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).
 
@@ -1305,5 +1347,6 @@ El mapa base tarda unos 9 minutos: 7 min 29 s el PMTiles (`fichero_mapa_base`) y
 - **Salarios y mochila:** `salarios_aeat`, `larga_salarios`, `modulos_sme`, `formas_mochila`, `mochila`, `mochila_neta`, `retenciones_mochila`, `ecv_mochila`, `tramos_salariales`, `curvas_salariales_aeat`.
 - **Fichas y derivados:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`, `inss_mensual`, `inss_anual`, `retenciones_transistor`, `transistor`.
 - **Sobrecarga:** `sobrecarga_agrupada`, `comprobaciones_sobrecarga`, `sobrecarga_quintil`, `eurostat_quintil`.
+- **Compraventa:** `ipva`, `larga_ipva`, `valor_tasado_trim`, `larga_valor_tasado`, `tipo_hipotecario_anual`, `derivados_compraventa`, `larga_compraventa`, `cp_municipio`, `fichero_cp_municipio`.
 - **Web:** `ficheros_web`, `cajas_municipios`, `ficheros_web_sobrecarga`.
-- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.
+- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_ipva`, `validacion_hipotecas`, `validacion_valor_tasado`, `validacion_coherencia_compraventa`, `validacion_derivados_compraventa`, `validacion_cp_municipio`.

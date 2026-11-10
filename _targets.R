@@ -567,6 +567,84 @@ bloque_derivados <- list(
   tar_target(resumen_larga_derivados, resumen_derivados(larga_derivados))
 )
 
+# F4, compraventa: indicadores 10 (variación anual del alquiler, IPVA del INE), 12 (valor tasado
+# del MIVAU), 16 y 17 (derivados con el salario medio de la AEAT, indicador 7, y el tipo medio de
+# las hipotecas sobre viviendas del INE), compuerta de coherencia entre la tasación y las
+# escrituras ante notario (transacciones inmobiliarias del MIVAU) y tabla de paso código postal ↔
+# municipio (callejero de enero de 2021, a geo/). El 11 (Notariado) queda fuera: sus condiciones
+# no permiten reutilizar las cifras (inventario/fuentes.csv). Los ficheros del Ministerio salen de
+# su boletín estadístico en línea (R/fuente_mivau_valor_tasado.R). Con PROVINCIA, el bloque no
+# entra (los nombres del Ministerio se casan con toda España).
+#   targets::tar_make(names = c(larga_compraventa, fichero_cp_municipio))
+ANIOS_VALOR_TASADO <- 2015:2025
+bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL)) else list(
+  tar_target(ficheros_ipva, vapply(TABLAS_IPVA, descargar_ine_ipva, character(1)), format = "file"),
+  tar_target(ipva, leer_ine_ipva_tablas(ficheros_ipva)),
+  tar_target(validacion_ipva, validar_referencias(comprobar_ine_ipva(ipva, territorios_2021), referencias)),
+  tar_target(larga_ipva, {
+    validacion_ipva   # la compuerta va antes que la tabla larga
+    armonizar_ine_ipva(ipva, version = version_de(ficheros_ipva)) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  }),
+  tar_target(ficheros_hipotecas, vapply(TABLAS_HIPOTECAS, descargar_ine_hipotecas, character(1)), format = "file"),
+  tar_target(hipotecas_anual, leer_ine_hipotecas(ficheros_hipotecas[1])),
+  tar_target(hipotecas_mensual, leer_ine_hipotecas(ficheros_hipotecas[2])),
+  tar_target(validacion_hipotecas, validar_referencias(
+    comprobar_ine_hipotecas(hipotecas_anual, hipotecas_mensual, ANIOS_VALOR_TASADO), referencias)),
+  tar_target(tipo_hipotecario_anual, {
+    validacion_hipotecas
+    tipo_hipotecario(hipotecas_anual)
+  }),
+  tar_target(ficheros_valor_tasado, vapply(FICHEROS_MIVAU[c("valor_tasado", "tasaciones", "valor_tasado_municipios")],
+                                           descargar_mivau_boletin, character(1)), format = "file"),
+  tar_target(fichero_transacciones, descargar_mivau_boletin(FICHEROS_MIVAU[["transacciones_valor"]],
+                                                            dir = file.path("datos", "brutos", "mivau_transacciones")),
+             format = "file"),
+  tar_target(fichero_nombres_mivau, "inventario/nombres_mivau.csv", format = "file"),
+  tar_target(nombres_mivau, readr::read_csv(fichero_nombres_mivau, col_types = "ccccc")),
+  tar_target(valor_tasado_territorios, leer_mivau_trimestral(ficheros_valor_tasado[1])),
+  tar_target(tasaciones_territorios, leer_mivau_trimestral(ficheros_valor_tasado[2], 0L)),
+  tar_target(valor_tasado_municipios, leer_mivau_valor_tasado_municipios(ficheros_valor_tasado[3])),
+  tar_target(transacciones_territorios, leer_mivau_trimestral(fichero_transacciones)),
+  tar_target(nombres_casados_mivau, casar_nombres_mivau(
+    unique(c(valor_tasado_territorios$nombre, tasaciones_territorios$nombre, transacciones_territorios$nombre)),
+    valor_tasado_municipios, territorios_2021, nombres_mivau)),
+  tar_target(niveles_casados_mivau, niveles_mivau(nombres_casados_mivau, territorios_2021)),
+  tar_target(valor_tasado_trim, valor_tasado_trimestral(valor_tasado_territorios, tasaciones_territorios,
+                                                        valor_tasado_municipios, niveles_casados_mivau)),
+  tar_target(validacion_valor_tasado, validar_referencias(
+    comprobar_mivau_valor_tasado(valor_tasado_trim, nombres_casados_mivau, territorios_2021), referencias)),
+  tar_target(transacciones_trim, codificar_mivau_trimestral(transacciones_territorios, niveles_casados_mivau)),
+  # «Hecho cuando» de F4: la tasación y las escrituras, coherentes (R/derivados_compraventa.R)
+  tar_target(validacion_coherencia_compraventa, validar_referencias(
+    comprobar_coherencia_compraventa(valor_tasado_trim, transacciones_trim), referencias)),
+  tar_target(larga_valor_tasado, {
+    validacion_valor_tasado; validacion_coherencia_compraventa   # las compuertas van antes
+    armonizar_mivau_valor_tasado(valor_tasado_anual(valor_tasado_trim), version = version_de(ficheros_valor_tasado),
+                                 anios = ANIOS_VALOR_TASADO) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  }),
+  tar_target(derivados_compraventa, armonizar_derivados_compraventa(larga_valor_tasado, larga_salarios, tipo_hipotecario_anual)),
+  tar_target(validacion_derivados_compraventa, validar_referencias(
+    comprobar_derivados_compraventa(derivados_compraventa, larga_valor_tasado, larga_salarios, tipo_hipotecario_anual),
+    referencias)),
+  tar_target(larga_compraventa, {
+    validacion_derivados_compraventa   # la compuerta va antes que la tabla larga
+    bind_rows(larga_ipva, larga_valor_tasado, derivados_compraventa) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  }),
+  # Tabla de paso código postal ↔ municipio (R/geo_codigos_postales.R), en git como la jerarquía
+  tar_target(tramos_cp_2021, leer_ine_callejero_cp(zip_callejero_2021)),
+  tar_target(cp_municipio, geo_tabla_cp_municipio(tramos_cp_2021)),
+  tar_target(validacion_cp_municipio, validar_referencias(
+    comprobar_cp_municipio(cp_municipio, tramos_cp_2021, territorios_2021), referencias)),
+  tar_target(fichero_cp_municipio, {
+    validacion_cp_municipio
+    exportar_cp_municipio(cp_municipio)
+  }, format = "file"),
+  tar_target(resumen_cp, resumen_cp_municipio(cp_municipio))
+)
+
 # Tabla larga única: cada bloque entra después de pasar su compuerta
 bloque_tabla_larga <- list(
   tar_target(tabla_larga, {
@@ -578,6 +656,7 @@ bloque_tabla_larga <- list(
       larga_censo2021,    # 18
       larga_vut,          # 19: el mes de referencia en corte y grupo
       larga_salarios,     # 7 (F3): el total sin desglose; de 26 a 35 años, con corte de edad
+      larga_compraventa,  # 10, 12, 16 y 17 (F4); en PROVINCIA, nada
       larga_derivados,    # 14 y 21 sin desglose; 15 con la ficha (tartera, mochila y transistor) como corte
       armonizar_sobrecarga_ecv(sobrecarga_ecv, sobrecarga_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)),
       armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa)),
@@ -652,4 +731,4 @@ bloque_web <- list(
   })
 )
 
-list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_tabla_larga, bloque_web)
+list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_tabla_larga, bloque_web)

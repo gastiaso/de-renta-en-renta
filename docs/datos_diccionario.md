@@ -92,6 +92,7 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 | `ine_ipva` | Índice de Precios de Vivienda en Alquiler (IPVA) |
 | `notariado` | Portal Estadístico del Notariado |
 | `mivau_valor_tasado` | Valor tasado de la vivienda libre |
+| `ine_hipotecas` | Estadística de Hipotecas (H): tipo de interés medio al inicio |
 | `portales` | Informes de precios de oferta (salas de prensa de Idealista y Fotocasa) |
 | `aeat_mercado_trabajo` | Mercado de trabajo y pensiones en las fuentes tributarias |
 | `inss_pensiones` | Pensiones contributivas del Sistema de la Seguridad Social (en vigor) |
@@ -279,7 +280,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Fuentes:** `mivau_valor_tasado`
 - **Versión:** v0.3
 - **Definición:** Valor tasado medio por metro cuadrado de la vivienda libre.
-- **Cálculo:** Cifra publicada por el MIVAU a partir de las tasaciones hipotecarias.
+- **Cálculo:** Cifra trimestral publicada por el MIVAU a partir de las tasaciones hipotecarias; el año es la media de sus cuatro trimestres ponderada por el número de tasaciones.
 - **Lectura:** Valor de tasación, no precio pagado; solo municipios de más de 25.000 habitantes.
 
 ### `precio_oferta`
@@ -324,11 +325,11 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 
 - **Unidad:** años
 - **Familia:** Esfuerzo y acceso
-- **Fuentes:** `notariado`, `mivau_valor_tasado`, `aeat_mercado_trabajo`
+- **Fuentes:** `mivau_valor_tasado`, `aeat_mercado_trabajo`
 - **Versión:** v0.3
 - **Definición:** Años de salario bruto de referencia que costaría comprar una vivienda tipo.
-- **Cálculo:** Precio por m² × superficie tipo (80 m² por defecto) / salario anual de referencia.
-- **Lectura:** No tiene en cuenta la financiación ni la entrada; ver el esfuerzo hipotecario (17).
+- **Cálculo:** Valor tasado por m² × superficie tipo (80 m² por defecto) / salario medio anual bruto por asalariado (AEAT), del mismo año; en un municipio, el salario de su provincia.
+- **Lectura:** Usa el valor de tasación, no el precio escriturado, y no tiene en cuenta la financiación ni la entrada; ver el esfuerzo hipotecario (17). Sin dato en País Vasco y Navarra, sin salario de la AEAT.
 
 ### `esfuerzo_hipotecario`
 
@@ -336,10 +337,10 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 
 - **Unidad:** % del ingreso
 - **Familia:** Esfuerzo y acceso
-- **Fuentes:** `mivau_valor_tasado`, `aeat_mercado_trabajo`
+- **Fuentes:** `mivau_valor_tasado`, `aeat_mercado_trabajo`, `ine_hipotecas`
 - **Versión:** v0.3
 - **Definición:** Parte del ingreso que se iría en la cuota del primer año de una hipoteca sobre una vivienda tipo.
-- **Cálculo:** Cuota anual con el 80 % del valor financiado a 25 años y al tipo medio de interés, dividida entre el ingreso de referencia.
+- **Cálculo:** Cuota anual del primer año de un préstamo francés sobre el 80 % del valor tasado de 80 m², a 25 años y al tipo medio de las hipotecas sobre viviendas del año (INE), dividida entre el salario medio anual bruto por asalariado (AEAT) del mismo año, × 100.
 - **Lectura:** Es un esfuerzo teórico: supone que se tiene el 20 % restante y los gastos de compra.
 
 ### `hogares_alquiler`

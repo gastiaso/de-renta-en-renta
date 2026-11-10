@@ -89,7 +89,12 @@ The full inventory, with address, access, frequency and notes, is in `inventario
 | `catastro_inspire` | Directorate General for the Cadastre | Conversion tables, route (b) | Contradictory: see below |
 | `catastro_foral` | Provincial councils of Álava, Bizkaia and Gipuzkoa; Government of Navarre | Route (b) in the Basque Country and Navarre | Different in each territory: see below |
 | `gv_emal` | Basque Government | Municipal context layer (deposits); not combined with indicator 8 | CC BY 4.0 |
-| `calculo_propio` | De renta en renta | Derived indicators 14, 15 and 21, from the sources of each term, and approximate margin of the rent median (§7.6) | CC BY-SA 4.0 |
+| `ine_ipva` | INE | Indicator 10 | CC BY 4.0 |
+| `mivau_valor_tasado` | MIVAU | Indicators 12, 16 and 17 | Reuse authorised by the MIVAU legal notice, citing the source and the date |
+| `mivau_transacciones` | MIVAU (notarial deeds) | Coherence gate for appraisals (§7.7) | Reuse authorised by the MIVAU legal notice, citing the source and the date |
+| `ine_hipotecas` | INE | Average rate for indicator 17 | CC BY 4.0 |
+| `notariado` | General Council of Notaries | Not used: its terms do not allow its figures to be reused (indicator 11 is left out; §7.7) | Personal use only; reuse requires its express authorisation |
+| `calculo_propio` | De renta en renta | Derived indicators 14, 15, 16, 17 and 21, from the sources of each term, and approximate margin of the rent median (§7.6) | CC BY-SA 4.0 |
 
 **Manual download of SERPAVI.** The MIVAU website blocks automated downloads. If the Excel file is missing, `descargar_mivau_serpavi()` stops the pipeline and gives the page and the name under which to save it (`inventario/fuentes.csv`, column `acceso`).
 
@@ -479,6 +484,17 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `sobrecarga_quintil_reparto` | Population with income (weight RB050) in each quintile, by wave | ±1 point around 20% | Warning | Passes: from 19.95 to 20.05% | `validacion_quintil` |
 | `nuts_geometria` | Regions with data and no geometry in their NUTS version or, as a fallback, in a later one | Exact | Warning | Warns: the grouped code FI19_20 in 2021–2025 | `validacion_nuts` |
 | `contraste_declarado` | Contrast declared in `tokens.json` against the recomputed one | ±0.05 | Warning | Passes; maximum difference, 0.003 | `validacion_diseno` |
+| `ipva_variacion` | Published annual change of the IPVA against the one recomputed from the indices | ±0.06 points | Blocking | Maximum difference, 0.051 points | `validacion_ipva` |
+| `ipva_nota` | Spain, Madrid, Barcelona and the Valencian Community in 2024 against the press release | Exact | Blocking | 3.5; 3.6; 3.3 and 5.0% | `validacion_ipva` |
+| `hipotecas_tipo_anual` | Annual average rate of home mortgages against the mean of its twelve months | ±0.05 points | Blocking | Maximum difference, 0.024 points (2020) | `validacion_hipotecas` |
+| `valor_tasado_nombres` | Ministry names with no INE code | Exact | Blocking | None: 306 municipalities matched | `validacion_valor_tasado` |
+| `valor_tasado_ccaa` | Regions and Spain outside the range of their provinces | Exact | Blocking | No quarter since 2015 | `validacion_valor_tasado` |
+| `valor_tasado_tasaciones` | Appraisals of the regions and of Spain against the sum of those of their provinces | Exact | Blocking | Equal since 2015 | `validacion_valor_tasado` |
+| `valor_tasado_nota` | Spain in the first quarter of 2026 | Exact | Blocking | 2,315.7 €/m² | `validacion_valor_tasado` |
+| `compraventa_coherencia_espana` | Implied floor area for Spain (deeds over appraisal) outside 70–110 m² | Exact | Blocking | Passes: from 91.8 to 106.1 m² (2015–2025) | `validacion_coherencia_compraventa` |
+| `compraventa_coherencia_provincias` | Provinces and quarters with an implied floor area outside 50–150 m² | ±5% | Blocking | 1.9% at most (2021) | `validacion_coherencia_compraventa` |
+| `compraventa_terminos` | Years of wages and mortgage burden against their terms | ±0.001% | Blocking | Passes in 2015–2024 | `validacion_derivados_compraventa` |
+| `cp_municipio_reparto` | Weights of a postcode that do not add up to 100, or with no single main municipality | ±0.001 | Blocking | Passes in all 11,046 postcodes | `validacion_cp_municipio` |
 
 **Reading the results of `adrh_municipio`.** The median is 0.0% because most municipalities have a single tract. The warning `adrh_municipio_detalle` collects the cases in which the source does not match across scales with all tracts having data. In Madrid, for example, Alcobendas and Pozuelo de Alarcón stay above 5% every year (`inventario/referencias_validacion.csv`).
 
@@ -1156,6 +1172,28 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 
 **Gate** (`comprobar_fiabilidad_serpavi()`, `validacion_fiabilidad`; §4.1): `contratos_mediana` and `contratos_suma` (blocking), and `margen_rango` (warning). The margin is only checked in the tracts: in large areas it naturally falls below 1% (in the provinces, a median of 0.3%).
 
+### 7.7 Home purchase (indicators 10, 12, 16 and 17)
+
+**Notaries (indicator 11), left out.** The terms and conditions of the Notaries' Statistical Portal (checked on 10 Nov 2026) restrict its data to personal use and require the prior and express authorisation of the General Council of Notaries to reproduce, distribute or transform them, even when the source is cited. The atlas does not download its figures, and the deed price per m² (indicator 11) is left out until there is an authorisation (`inventario/fuentes.csv`, `notariado`). The deeds arrive another way: the MIVAU publishes, under its own reuse conditions, the average value of open-market home sales signed before a notary (`mivau_transacciones`), without the floor area, and it serves the coherence gate.
+
+**Annual change in rents (indicator 10).** Figure published by INE's IPVA (`leer_ine_ipva()`; target `larga_ipva`) at its native level: Spain, 17 regions, 48 provinces, 718 municipalities above 10,000 inhabitants and 407 districts of the provincial capitals, all in the 2021 tract map. No Basque Country or Navarre: the IPVA comes from the common-regime income tax. The «Resto» (rest of the province) rows are left out. It is an index: it is neither aggregated nor reprojected (guide, rule 1). In 2024, Spain rises by 3.5%, with a municipal median of 3.3%.
+
+**Appraised value (indicator 12).** MIVAU's average appraised value of open-market housing per m², quarterly, for Spain, the regions, the provinces and the municipalities above 25,000 inhabitants (306 since 2020). The year is the average of its four quarters weighted by the number of appraisals (`valor_tasado_anual()`); without all four, `ausente` (3 to 9 municipalities a year up to 2020). The Ministry publishes no annual average and does not weight its regions by appraisals: the published region departs from the average of its provinces weighted that way by up to 3.3% (`valor_tasado_ccaa_media`), through composition, but it never leaves the range of its provinces (`valor_tasado_ccaa`). The Ministry's names are matched to INE codes by their normalised form (`casar_nombres_mivau()`), by a name that is unique in Spain when the municipal table carries the wrong province down (seven municipalities) and by `inventario/nombres_mivau.csv` (typos and different names). Spain: 1,475.6 €/m² in 2015 and 1,913.9 €/m² in 2024.
+
+**Coherence between deeds and appraisals** (`comprobar_coherencia_compraventa()`, `validacion_coherencia_compraventa`; the «done when» of F4). The two sources do not share a unit: the average deed value is per dwelling and the appraised value, per m². Their ratio is the floor area the average dwelling sold would have if it were paid at the appraised value: the «implied floor area». If both measure the same market, it falls close to the average floor area of the dwellings sold, somewhat below, because the deed price tends to sit below the appraisal; an error of reading, unit or matching pushes it abruptly out of that range. Threshold: from 70 to 110 m² for Spain, every year, and from 50 to 150 m² in provinces and quarters, with at most 5% outside. Result: Spain, from 91.8 to 106.1 m² (2015–2025); in provinces, at most 1.9% outside (2021), with the Balearic Islands above 150 m² in 2021 and 2022.
+
+**Average rate** (`ine_hipotecas`; target `tipo_hipotecario_anual`). INE's average initial interest rate of home mortgages, annual: 3.31% in 2015, 1.92% in 2021 and 3.26% in 2024.
+
+**Derived indicators** (`armonizar_derivados_compraventa()`; target `derivados_compraventa`, source `calculo_propio`). With the appraised value of 80 m² and the Tax Agency's average gross annual wage per employee (indicator 7) of the same year; for a municipality, that of its province:
+- years of wages to buy (16): appraised value × 80 / wage;
+- theoretical mortgage burden (17): first-year payment of a French-amortisation loan for 80% of the value, over 25 years at the year's average rate (`cuota_hipoteca()`), × 12 / wage × 100.
+
+From 2015 to 2024, for Spain, the regions, the provinces and the municipalities above 25,000 inhabitants; without a Tax Agency wage (Basque Country and Navarre), `ausente`. Status: the worst of its terms. In Spain, 6.3 years and 29.8% in 2015, and 6.1 years and 28.7% in 2024; among the municipalities in 2024, from 2.2 to 17.9 years (median, 5.3) and from 10.3 to 83.7% (median, 24.6%). Gate: `compraventa_terminos`, `compraventa_estado` and `compraventa_rango` (blocking), and `compraventa_rango_detalle` (warning).
+
+**Postcode ↔ municipality** (`leer_ine_callejero_cp()`, `geo_tabla_cp_municipio()`; target `fichero_cp_municipio`, in `geo/codigos_postales_2021.csv`). It comes from the street sections of the January 2021 street directory: 11,046 postcodes in 14,600 pairs, covering all 8,131 municipalities; 8,784 postcodes fall in a single municipality. The weight is the share of the postcode's street sections in each municipality. 50 pairs have a postcode from another province: enclaves such as the County of Treviño, with those of Álava, and typos in the street directory.
+
+**Website.** The four indicators are in the long table, but not yet on the map: the map paints from the tract, and these indicators have none.
+
 ## 8. Known limitations
 
 **Constant geography:**
@@ -1232,6 +1270,8 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 
 **Overburden.** It is published without confidence intervals. The income quintile uses HY020 ÷ HX240, not Eurostat's HX090, which INE does not publish, and puts an income equal to a cut-off in the upper quintile, so that all 15 figures match Eurostat's to one decimal. The Spanish series is broken in 2013, the year in which the way incomes are obtained changes, although Eurostat does not flag it (§7.5).
 
+**Home purchase.** The price is the appraisal, not the deed price: the Notaries' one cannot be reused (§7.7). The year of the appraised value is an average of quarters that the Ministry does not publish. Years of wages and the mortgage burden use the province's individual gross wage, not household income, and do not cover the Basque Country or Navarre; neither does the IPVA.
+
 **Lag.** Income and wages run one or two years behind the current year (§1).
 
 ---
@@ -1242,7 +1282,7 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 
 **Schema** (plan §6.4): `geo_id`, `nivel`, `anio`, `indicador`, `corte`, `grupo`, `valor`, `estado`, `fuente`, `geo_ref` and `version`. The key of a row is `geo_id`, `nivel`, `anio`, `indicador`, `corte` and `grupo`.
 
-**Content** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11,435,148 rows.
+**Content** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11,458,446 rows.
 
 | Source (`fuente`) | Rows | Levels | Version |
 |---|---|---|---|
@@ -1253,9 +1293,11 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 | `ine_ecv` | 261 | Region (228) and Spain (33) | 6 Nov 2026 |
 | `ine_ecv_modulo` | 32 | Region (19) and Spain (13) | 6 Nov 2026 |
 | `aeat_mercado_trabajo` | 2,016 | Province (1,456), region (532) and Spain (28) | 9 Nov 2026 |
-| `calculo_propio` | 3,510,714 | Tract (2,436,386), district (568,152), municipality (501,060), province (4,036) and region (1,080) | 7 Nov 2026 |
+| `ine_ipva` | 11,910 | District (4,070), municipality (7,180), province (480), region (170) and Spain (10) | 10 Nov 2026 |
+| `mivau_valor_tasado` | 4,048 | Municipality (3,256), province (572), region (209) and Spain (11) | 10 Nov 2026 |
+| `calculo_propio` | 3,518,054 | Tract (2,436,386), district (568,152), municipality (506,960), province (5,076), region (1,460) and Spain (20) | 7 Nov 2026 |
 
-**By status:** `dato`, 8,460,622 rows; `ausente`, 1,689,946; `secreto`, 1,233,209; `estimado`, 51,371.
+**By status:** `dato`, 8,482,875 rows; `ausente`, 1,690,991; `secreto`, 1,233,209; `estimado`, 51,371.
 
 **Publication.** The long table is published in the GitHub release `v0.1.0` (9 Nov 2026), and the website at `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).
 
@@ -1305,5 +1347,6 @@ The base map takes about 9 minutes: 7 min 29 s for the PMTiles file (`fichero_ma
 - **Wages and Under-35 token:** `salarios_aeat`, `larga_salarios`, `modulos_sme`, `formas_mochila`, `mochila`, `mochila_neta`, `retenciones_mochila`, `ecv_mochila`, `tramos_salariales`, `curvas_salariales_aeat`.
 - **Tokens and derived indicators:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`, `inss_mensual`, `inss_anual`, `retenciones_transistor`, `transistor`.
 - **Overburden:** `sobrecarga_agrupada`, `comprobaciones_sobrecarga`, `sobrecarga_quintil`, `eurostat_quintil`.
+- **Home purchase:** `ipva`, `larga_ipva`, `valor_tasado_trim`, `larga_valor_tasado`, `tipo_hipotecario_anual`, `derivados_compraventa`, `larga_compraventa`, `cp_municipio`, `fichero_cp_municipio`.
 - **Website:** `ficheros_web`, `cajas_municipios`, `ficheros_web_sobrecarga`.
-- **Gates:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`.
+- **Gates:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_ipva`, `validacion_hipotecas`, `validacion_valor_tasado`, `validacion_coherencia_compraventa`, `validacion_derivados_compraventa`, `validacion_cp_municipio`.

@@ -1,0 +1,15 @@
+nivel_ine,provincia,nombre_mivau,codigo,nota
+ninguno,,Ceuta y Melilla,,Las dos ciudades juntas en las tablas de valor tasado anteriores a su desglose: no es un territorio del atlas
+ccaa,,Comunidad Valenciana,10,Comunitat Valenciana
+provincia,,Córdaba,14,Errata del Ministerio en la columna de provincia de los municipios (2005)
+provincia,,ILLES BALEARS,07,"Balears, Illes"
+provincia,,La Coruña,15,"Coruña, A"
+provincia,,Santa Cruz de,38,El nombre de la provincia ocupa dos filas en la tabla de municipios
+provincia,,Tenerife,38,El nombre de la provincia ocupa dos filas en la tabla de municipios
+provincia,,Valladodid,47,Errata del Ministerio en la columna de provincia de los municipios
+municipio,07,Palma de Mallorca,07040,Palma
+municipio,07,Mahón,07032,Maó
+municipio,07,Santa Eulalia del Río,07054,Santa Eulària des Riu
+municipio,38,San Cristóbal Laguna,38023,San Cristóbal de La Laguna
+municipio,01,Vitoria,01059,Vitoria-Gasteiz
+municipio,08,Santa Coloma Gramanet,08245,Santa Coloma de Gramenet

@@ -92,6 +92,7 @@ Sources cited by the indicator inventory; `calculo_propio` marks derived figures
 | `ine_ipva` | Rental Housing Price Index (IPVA) |
 | `notariado` | Notaries’ Statistical Portal |
 | `mivau_valor_tasado` | Appraised value of open-market housing |
+| `ine_hipotecas` | Mortgage Statistics (H): average initial interest rate |
 | `portales` | Asking-price reports (Idealista and Fotocasa press rooms) |
 | `aeat_mercado_trabajo` | Labour market and pensions in tax sources |
 | `inss_pensiones` | Social Security contributory pensions (in payment) |
@@ -279,7 +280,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Sources:** `mivau_valor_tasado`
 - **Version:** v0.3
 - **Definition:** Average appraised value per square metre of open-market housing.
-- **Calculation:** Published by the Housing Ministry from mortgage appraisals.
+- **Calculation:** Quarterly figure published by the Housing Ministry from mortgage appraisals; the year is the average of its four quarters weighted by the number of appraisals.
 - **Reading:** An appraisal value, not a price paid; only municipalities above 25,000 inhabitants.
 
 ### `precio_oferta`
@@ -324,11 +325,11 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 
 - **Unit:** years
 - **Family:** Burden and access
-- **Sources:** `notariado`, `mivau_valor_tasado`, `aeat_mercado_trabajo`
+- **Sources:** `mivau_valor_tasado`, `aeat_mercado_trabajo`
 - **Version:** v0.3
 - **Definition:** Years of reference gross pay needed to buy a standard dwelling.
-- **Calculation:** Price per m² × standard floor area (80 m² by default) / reference annual pay.
-- **Reading:** Ignores financing and down payment; see the theoretical mortgage burden (17).
+- **Calculation:** Appraised value per m² × standard floor area (80 m² by default) / average gross annual wage per employee (Tax Agency), same year; for a municipality, the wage of its province.
+- **Reading:** Uses the appraised value, not the deed price, and ignores financing and down payment; see the theoretical mortgage burden (17). No data for the Basque Country and Navarre, which lack Tax Agency wages.
 
 ### `esfuerzo_hipotecario`
 
@@ -336,10 +337,10 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 
 - **Unit:** % of income
 - **Family:** Burden and access
-- **Sources:** `mivau_valor_tasado`, `aeat_mercado_trabajo`
+- **Sources:** `mivau_valor_tasado`, `aeat_mercado_trabajo`, `ine_hipotecas`
 - **Version:** v0.3
 - **Definition:** Share of income taken by the first-year payment of a mortgage on a standard dwelling.
-- **Calculation:** Annual payment financing 80% of the value over 25 years at the average interest rate, divided by the reference income.
+- **Calculation:** First-year annual payment of a French-amortisation loan for 80% of the appraised value of 80 m², over 25 years at the year’s average home-mortgage rate (INE), divided by the average gross annual wage per employee (Tax Agency) of the same year, × 100.
 - **Reading:** A theoretical burden: it assumes the remaining 20% and purchase costs are available.
 
 ### `hogares_alquiler`

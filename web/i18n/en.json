@@ -603,7 +603,7 @@
       "nombre": "Appraised value per square metre",
       "unidad": "€ per m²",
       "definicion": "Average appraised value per square metre of open-market housing.",
-      "calculo": "Published by the Housing Ministry from mortgage appraisals.",
+      "calculo": "Quarterly figure published by the Housing Ministry from mortgage appraisals; the year is the average of its four quarters weighted by the number of appraisals.",
       "lectura": "An appraisal value, not a price paid; only municipalities above 25,000 inhabitants."
     },
     "precio_oferta": {
@@ -631,14 +631,14 @@
       "nombre": "Years of wages to buy a home",
       "unidad": "years",
       "definicion": "Years of reference gross pay needed to buy a standard dwelling.",
-      "calculo": "Price per m² × standard floor area (80 m² by default) / reference annual pay.",
-      "lectura": "Ignores financing and down payment; see the theoretical mortgage burden (17)."
+      "calculo": "Appraised value per m² × standard floor area (80 m² by default) / average gross annual wage per employee (Tax Agency), same year; for a municipality, the wage of its province.",
+      "lectura": "Uses the appraised value, not the deed price, and ignores financing and down payment; see the theoretical mortgage burden (17). No data for the Basque Country and Navarre, which lack Tax Agency wages."
     },
     "esfuerzo_hipotecario": {
       "nombre": "Theoretical mortgage burden",
       "unidad": "% of income",
       "definicion": "Share of income taken by the first-year payment of a mortgage on a standard dwelling.",
-      "calculo": "Annual payment financing 80% of the value over 25 years at the average interest rate, divided by the reference income.",
+      "calculo": "First-year annual payment of a French-amortisation loan for 80% of the appraised value of 80 m², over 25 years at the year’s average home-mortgage rate (INE), divided by the average gross annual wage per employee (Tax Agency) of the same year, × 100.",
       "lectura": "A theoretical burden: it assumes the remaining 20% and purchase costs are available."
     },
     "hogares_alquiler": {
@@ -713,6 +713,8 @@
     "ine_ipva": "Rental Housing Price Index (IPVA)",
     "notariado": "Notaries’ Statistical Portal",
     "mivau_valor_tasado": "Appraised value of open-market housing",
+    "mivau_transacciones": "Real estate transactions (sales): average value of open-market housing sales",
+    "ine_hipotecas": "Mortgage Statistics (H): average initial interest rate",
     "portales": "Asking-price reports (Idealista and Fotocasa press rooms)",
     "aeat_mercado_trabajo": "Labour market and pensions in tax sources",
     "inss_pensiones": "Social Security contributory pensions (in payment)",

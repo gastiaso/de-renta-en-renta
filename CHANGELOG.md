@@ -4,6 +4,22 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (10-nov-2026, F4: compraventa; tarea 28; plan v0.38)
+
+- Indicador 10, variación anual del alquiler (IPVA del INE; `R/fuente_ine_ipva.R`): la cifra publicada, en total, de 2015 a 2024, de España a los distritos de las capitales (17 comunidades, 48 provincias, 718 municipios y 407 distritos; sin País Vasco ni Navarra). 11.910 filas. Compuerta `validacion_ipva`.
+- Indicador 12, valor tasado de la vivienda libre (MIVAU; `R/fuente_mivau_valor_tasado.R`), del boletín estadístico en línea del Ministerio: año = media de los cuatro trimestres ponderada por las tasaciones, 2015–2025, de España a los 306 municipios de más de 25.000 habitantes. Nombres del Ministerio casados con el INE (`inventario/nombres_mivau.csv`). 4.048 filas. Compuerta `validacion_valor_tasado`.
+- Indicadores 16 (años de salario para comprar) y 17 (esfuerzo hipotecario teórico), con 80 m², el salario medio de la AEAT del mismo año (indicador 7) y, en el 17, el tipo medio de las hipotecas sobre viviendas del INE (`R/fuente_ine_hipotecas.R`, `R/derivados_compraventa.R`), 2015–2024. España, 2024: 6,1 años y 28,7 %. Compuerta `validacion_derivados_compraventa`.
+- Compuerta de coherencia entre tasación y escrituras ante notario (transacciones inmobiliarias del MIVAU): superficie implícita de España entre 91,8 y 106,1 m² (2015–2025). `validacion_coherencia_compraventa`.
+- Tabla de paso código postal ↔ municipio desde el callejero de enero de 2021: `geo/codigos_postales_2021.csv` (11.046 códigos postales; `R/geo_codigos_postales.R`; compuerta `validacion_cp_municipio`).
+- Tabla larga: 11.458.446 filas (+23.298 de F4).
+- Código reaprovechado: lectura de las hojas del valor tasado de un proyecto propio anterior (10-nov-2026).
+- Descargas (10-nov-2026, fuentes oficiales del plan): tablas del IPVA y de hipotecas del INE (2,2 MB) y cuatro ficheros del boletín del MIVAU (4,6 MB).
+
+### Decidido (10-nov-2026, F4: compraventa)
+
+- El Notariado no permite reutilizar sus cifras (solo uso personal, sin autorización expresa; términos y aviso legal consultados el 9 y el 10-nov-2026): el indicador 11 queda fuera y el atlas no descarga sus datos. Las escrituras entran por la estadística de transacciones del MIVAU, solo para la compuerta de coherencia.
+- Por revisar (plan §11, pregunta 45): año del valor tasado ponderado por tasaciones; 16 y 17 con el salario de la AEAT; tipo medio del INE; pesos de la tabla código postal ↔ municipio; mapas de F4 con el municipio como nivel más fino.
+
 ### Añadido (10-nov-2026, F3: salarios; tarea 27; plan v0.37)
 
 - Indicador 7, salario medio anual por asalariado (AEAT, *Mercado de trabajo y pensiones*), en total y de 26 a 35 años (grupo `Y26-35`), por provincia, comunidad y España, de 2011 a 2024, en la tabla larga (`larga_salarios`, 2.016 filas; `R/fuente_aeat_salarios.R`). País Vasco y Navarra, `ausente`: la AEAT no los cubre y, de las haciendas forales, solo Gipuzkoa publica una cifra comparable, en PDF. Compuerta: `aeat_provincia`, `aeat_salarios_cobertura`, `aeat_salarios_suma` y `aeat_salarios_media` (bloqueo).
