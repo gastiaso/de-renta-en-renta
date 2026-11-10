@@ -88,7 +88,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 | `js/colores.js` | Pasos de la rampa de cada tramo (los mapas con menos tramos toman pasos repartidos; «¿te llega?», el 1, el 4 y el 6), contraste WCAG y color del contorno de las secciones |
 | `js/mapa.js` | MapLibre: mapa base (PMTiles o GeoJSON), capas coloreadas por niveles, etiqueta, selección, comparación y encuadre |
 | `js/leyenda.js`, `js/ficha.js` | Leyenda y fichas de sección y de territorio; en «¿te llega?», los euros que quedan al mes (tarea 34) |
-| `js/familias.js` | Familias de alquiler («quedarse» y «entrar») y su lectura literal, para la leyenda y la portada (tarea 34) |
+| `js/familias.js` | Familias de alquiler («quedarse» y «entrar») y su lectura literal, para la leyenda y la portada (tarea 34); lo que sale «próximamente» mientras no tenga mapa: la familia «entrar» en la portada y la oferta de Idealista en el selector del mapa (v0.4.0) |
 | `js/sobrecarga.js`, `js/sobrecarga_datos.js`, `estilo/sobrecarga.css` | Sección «Sobrecarga»: página (DOM y MapLibre) y su lógica sin DOM; datos en `datos/sobrecarga/` (`exportar_web_sobrecarga()`) |
 | `js/historico.js`, `js/historico_datos.js`, `estilo/historico.css` | «Máquina del tiempo»: página (DOM y SVG) y su lógica sin DOM; datos en `datos/historico/` (`hist_exportar_web()`, `R/web_historico.R`) y `datos/cis_vivienda.json` (`cis_exportar_vivienda()`, `R/fuente_cis_barometros.R`; si falta, el bloque del CIS dice que no hay datos) |
 | `js/panel_sueldo.js`, `js/compartir.js` | Tarjeta «Tu sueldo» y diálogo «Compartir» |

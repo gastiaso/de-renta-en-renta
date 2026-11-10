@@ -5,8 +5,8 @@ type: software
 authors:
   - family-names: "Astiaso Llamazares"
     given-names: "Guillermo"
-version: "0.1.0"
-date-released: "2026-11-09"
+version: "0.4.0"
+date-released: "2026-11-10"
 url: "https://gastiaso.github.io/de-renta-en-renta/"
 repository-code: "https://github.com/gastiaso/de-renta-en-renta"
 license: MIT

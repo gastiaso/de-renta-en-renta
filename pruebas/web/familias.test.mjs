@@ -231,6 +231,21 @@ test('portada: gancho, pregunta y familias en el centro, con su lectura literal;
   const pie = html.split('<footer class="portada-pie">')[1].split('</footer>')[0];
   assert.match(pie, /<p class="portada-dicho" data-i18n="sitio\.dicho">/);
   // Sin JavaScript, la lectura literal en castellano; con él, la de la leyenda en cada idioma
-  assert.match(centro, /<li>Quedarse · quien ya vive de alquiler<\/li>\s*<li>Entrar · quien busca piso hoy<\/li>/);
-  assert.deepEqual(portada.lecturasFamilias(t.en), ['Staying · those already renting', 'Moving in · those looking for a home today']);
+  // «Entrar», próximamente mientras no tenga mapa (FAMILIAS_PROXIMAMENTE; plan §11, pregunta 52)
+  assert.match(centro, /<li>Quedarse · quien ya vive de alquiler<\/li>\s*<li>Entrar · quien busca piso hoy \(próximamente\)<\/li>/);
+  assert.deepEqual(portada.lecturasFamilias(t.en), ['Staying · those already renting', 'Moving in · those looking for a home today (coming soon)']);
+});
+
+// --- La oferta de Idealista, «próximamente» ---------------------------------------------------------
+
+test('selector del mapa: la oferta, desactivada y «próximamente» mientras su capa no esté encendida', () => {
+  const sinCapa = { sueldo_necesario: { base: 'alquiler_m2' }, alquiler_mes: { base: 'alquiler_mes' } };
+  const op = familias.opcionProximamente(t.es, sinCapa);
+  assert.equal(op.desactivada, true);
+  assert.equal(op.valor, 'proximamente:precio_oferta');
+  assert.match(op.texto, / · próximamente$/);
+  assert.match(familias.opcionProximamente(t.en, sinCapa).texto, / · coming soon$/);
+  // Con la capa encendida, el mapa de la oferta ya está: nada que anunciar
+  assert.equal(familias.opcionProximamente(t.es, { ...sinCapa, precio_oferta_alquiler_idealista: { indicador: 'precio_oferta' } }), null);
+  assert.equal(familias.opcionProximamente(t.es, { ...sinCapa, precio_oferta: { base: 'precio_oferta' } }), null);
 });

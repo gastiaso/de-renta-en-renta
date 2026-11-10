@@ -10,6 +10,21 @@
 
 export const FAMILIAS_ALQUILER = ['quedarse', 'entrar'];
 
+// Familias que aún no tienen mapa en el sitio: «entrar» sale «próximamente» mientras Idealista no
+// autorice publicar su oferta (decisión del autor, 10-nov-2026; plan §11, pregunta 52). Se quita
+// cuando la familia tenga su mapa (backlog, tareas 37 y 38).
+export const FAMILIAS_PROXIMAMENTE = ['entrar'];
+
+// Indicador de la oferta de los portales (13): sin su capa encendida, el selector del mapa lo
+// ofrece desactivado y rotulado «próximamente».
+export const INDICADOR_OFERTA = 'precio_oferta';
+export function opcionProximamente(t, mapas, indicador = INDICADOR_OFERTA) {
+  const tiene = Object.entries(mapas ?? {}).some(([id, def]) => (def?.indicador ?? id) === indicador);
+  if (tiene || !t.existe(`indicadores.${indicador}.nombre`)) return null;
+  return { valor: `proximamente:${indicador}`, texto: `${t(`indicadores.${indicador}.nombre`)} · ${t('portada.proximamente')}`,
+    desactivada: true };
+}
+
 // Familia de lo que pinta el mapa. «¿Te llega?» calcula en el navegador el peso del alquiler en el
 // ingreso (indicador 15) con el alquiler del SERPAVI: siempre «quedarse». Un mapa del manifiesto,
 // la suya; sin ella (o con una que no es de las dos), ninguna.

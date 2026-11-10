@@ -1,8 +1,12 @@
 # Registro de cambios
 
-Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.0 (sobrecarga y Europa), v0.1 (núcleo por sección censal), v0.2 a v0.4 (salarios, compraventa, presión y portales), v1.0. Tras la v0.1 no hay releases intermedios: lo de F3 a F6 se acumula en «Sin publicar» y sale junto en la v1.0; v0.2 a v0.4 quedan como hitos internos (decisión del autor, 9-nov-2026).
+Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.0 (sobrecarga y Europa), v0.1 (núcleo por sección censal), v0.2 a v0.4 (salarios, compraventa, presión y portales), v1.0. Tras la v0.1 se decidió no hacer releases intermedios (9-nov-2026); el 10-nov-2026 el autor decidió publicar lo hecho de F3 a F6 como v0.4.0, sin la oferta de Idealista («próximamente»). v0.2 y v0.3 quedan como hitos internos.
 
 ## [Sin publicar]
+
+## [0.4.0] · 10-nov-2026
+
+Segunda publicación (decisión del autor, 10-nov-2026; plan §11, pregunta 42 revisada): lo hecho de F3 a F6 y las tareas 34 a 36 del backlog integrado, con el sitio descongelado. Sin la oferta de Idealista: su capa sale apagada y la web la anuncia «próximamente» (selector del mapa y familia «entrar» en la portada) hasta que Idealista autorice publicarla (pregunta 52). Los derivados de la oferta saldrán solo por tramos. Las cifras de Idealista ya citadas en la documentación y en la compuerta (una docena) se quedan en el repositorio con su fuente; no entra ninguna más.
 
 ### Añadido (10-nov-2026, tarea 35: oferta de Idealista en el pipeline)
 

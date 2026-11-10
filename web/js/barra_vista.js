@@ -13,16 +13,17 @@ const $ = (id) => document.getElementById(id);
 function rellenar(select, opciones, valor) {
   const clave = JSON.stringify(opciones);
   if (select.dataset.opciones !== clave) {
-    select.replaceChildren(...opciones.map(({ valor: v, texto }) => {
+    select.replaceChildren(...opciones.map(({ valor: v, texto, desactivada }) => {
       const opcion = document.createElement('option');
       opcion.value = v;
       opcion.textContent = texto;
+      if (desactivada) opcion.disabled = true;   // «próximamente» (familias.js)
       return opcion;
     }));
     select.dataset.opciones = clave;
   }
   select.value = valor;
-  select.disabled = opciones.length < 2;
+  select.disabled = opciones.filter((o) => !o.desactivada).length < 2;
 }
 
 export function crearBarraVista({ alCambiar, alExportar }) {

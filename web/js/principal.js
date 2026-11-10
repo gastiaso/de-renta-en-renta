@@ -36,6 +36,7 @@ import { tablaCsv, textoCsv, nombreFichero, descargar, nivelParaExportar, decima
 import { imagenMapa } from './imagen.js';
 import { pasosDeRampa, decimalesDeCortes } from './colores.js';
 import { crearAvisoImagen } from './aviso_imagen.js';
+import { opcionProximamente } from './familias.js';
 
 const estado = { idioma: 'es', ...leerEstado() };
 let sueldo = leerSueldoCompartido();   // solo en memoria; en el enlace, solo con «Compartir»
@@ -215,6 +216,8 @@ function pintarBarra(v) {
   const llega = v.modo === 'llega';
   const mapas = Object.keys(m.mapas).map((id) => ({ valor: id, texto: nombreMapa(id) }));   // F5: con el grupo
   if (llega) mapas.unshift({ valor: '', texto: t('interfaz.vista.llega_opcion', { ficha: t(`fichas.${estado.ficha}`) }) });
+  const proximamente = opcionProximamente(t, m.mapas);   // la oferta de Idealista, sin su capa
+  if (proximamente) mapas.push(proximamente);
   const periodos = periodosDe(m.indicadores[v.seriesColor[0]]).map((p) => ({ valor: String(p), texto: t.periodo(p) }));
   if (v.fuera) periodos.unshift({ valor: String(v.fuera.anio), texto: t('interfaz.vista.anio_fuera', { anio: t.periodo(v.fuera.anio) }) });
   barra.pintar({

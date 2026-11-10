@@ -13,13 +13,15 @@ La auditoría contrastó la tabla larga y encontró que el atlas medía el parqu
 | Alquiler por m², SERPAVI (contratos vigentes) | — | +42 % |
 | Alquiler por m², oferta de Idealista (España) | 7,58 € | 13,06 € (+72 %) |
 
+Fuentes: SERPAVI (MIVAU) y Idealista, informes de precios de alquiler de su sala de prensa (cifras citadas; decisión 19).
+
 El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que enseñar las dos.
 
 ## Decisiones del autor (10-nov-2026)
 
 1. **Dos familias, nunca mezcladas en una cifra:** «Quedarse» (SERPAVI, parque alquilado) y «Entrar» (oferta de Idealista e índice del INE de contratos nuevos). La pregunta rectora se reformula sin presuponer la respuesta.
 2. **Mapa inicial: «Entrar», por municipio.** La sección censal (familia «Quedarse») aparece al acercarse.
-3. **Idealista, solo en la web:** mapas y fichas con fuente y enlace al informe. No entra en git, ni en el CSV, ni en la tabla descargable.
+3. **Idealista, solo en la web:** mapas y fichas con fuente y enlace al informe. No entra en git, ni en el CSV, ni en la tabla descargable (salvo las cifras citadas de la decisión 19).
 4. **Sueldo necesario con dos cifras:** la principal, con el alquiler mediano real; al lado, el mínimo teórico de 50 m².
 5. **Sueldo para entrar:** euros por m² de oferta × superficie típica de los pisos alquilados del municipio (SERPAVI), y al lado el mínimo de 50 m².
 6. **Todo en la v1.0:** también la tabla de paso desde el seccionado de 2011 y el módulo de supuestos. Los datos de portales vuelven a la v1.0 (se revierte la pregunta 49) solo con el alquiler de Idealista; venta y otros portales, en la v1.1.
@@ -33,8 +35,13 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 14. **Tres juegos de cortes** por indicador: sección, municipio, y provincia y comunidad. La leyenda cambia al cruzar de escala, con aviso.
 15. **Siete tramos** en todos los mapas: la rampa pasa de seis a siete pasos.
 16. **Barrios de Idealista, fuera de la v1.0:** un solo mes, sin historia, sin geometría ni código, y filas ambiguas. Quedan para la v1.1 (ver al final).
+17. **Publicar ya lo hecho** (10-nov-2026): v0.4.0 con F3 a F6 y las tareas 34–36, sin la oferta de Idealista, que sale «próximamente» hasta que autorice publicarla (plan §11, preguntas 42 y 52).
+18. **Derivados de Idealista, solo por tramos:** la brecha y el sueldo para entrar no se publican con la cifra exacta (con ella se reconstruye la oferta), ni se descargan. Sin autorización, ninguna cifra de Idealista en la web.
+19. **Cifras de Idealista citadas en la documentación** (10-nov-2026): se mantienen las que ya hay en el repositorio (España en 2015, 2024 y 2026, la tabla de ocho ciudades de la tarea 37, el contraste por provincias de la tarea 36 y las referencias de la compuerta), siempre con su fuente, como cita. No entra ninguna más, ni su serie.
 
 ## Bloque 0 · Hoy
+
+**33 bis. Publicar la v0.4.0** (decisión 17). Commit de la publicación, `empaquetar_publicacion()`, release `v0.4.0` y flujo de Pages con `ref` en ese commit. **Hecho cuando:** la prueba en el navegador pasa contra el sitio publicado y la oferta sale «próximamente».
 
 **33. Subir lo pendiente.** `main` va 9 commits por delante del remoto y hay cambios sin commit.
 - **Hecho cuando:** `git status` dice «up to date with 'origin/main'».
@@ -132,6 +139,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
   - Aviso en la ficha: los m² de un anuncio y los catastrales del SERPAVI no son la misma medida.
 - `barrera_entrar` por ficha, con el mismo ingreso del mismo año (regla 4).
 - `brecha_entrar_quedarse`: oferta / SERPAVI, en €/m², por municipio y año. Es una comparación entre dos fuentes rotulada como tal, no una mezcla.
+- **En la web, solo por tramos** (decisión 18): ni la brecha ni el sueldo para entrar salen con la cifra exacta ni se descargan; la tabla larga tampoco los lleva.
 - Estado `ausente` en los municipios sin informe.
 - **De la tarea 36:** compuerta de aviso (no bloqueo) con las provincias donde la oferta crece más del doble que los contratos nuevos en el mismo periodo (`var_alquiler`, corte `contrato`, 48 provincias, 2021–2024), cuando la oferta de Idealista esté en el pipeline (tarea 35).
 - **Hecho cuando:** los tres están en la exportación web, con compuerta de rango y prueba de que R y la página coinciden.
@@ -152,6 +160,8 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
   | Zaragoza | 7,7 | 10,1 | 1,31 (1,17) | 1.833 | 2.402 | 1.686 |
   | Palma | 9,8 | 17,1 | 1,74 (1,37) | 2.667 | 4.628 | 2.846 |
   | Bilbao | 11,5 | 14,7 | 1,28 (sin dato) | 2.667 | 3.415 | 2.457 |
+
+  Fuente de la oferta: Idealista, informes de precios de alquiler de su sala de prensa; el resto, SERPAVI y cálculo propio. Cifras citadas (decisión 19): la web no publica la serie de Idealista ni sus derivados exactos.
 
 - **Advertencias de diseño que salen de las cifras:**
   - `sueldo_entrar` con superficie típica es, por construcción, el sueldo de quedarse multiplicado por la brecha: no añade información a escala de municipio. Lo independiente es la brecha y la cifra de 50 m². Valorar que el mapa inicial enseñe la de 50 m² o la brecha, y que la de superficie típica quede en la ficha.

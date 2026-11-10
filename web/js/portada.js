@@ -10,7 +10,7 @@ import { cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, c
 import { crearBuscador, formasDeNombre } from './buscador.js';
 import { ordenNatural } from './nombres.js';
 import { FICHAS_PERFIL } from './sueldo.js';
-import { FAMILIAS_ALQUILER, textoFamilia } from './familias.js';
+import { FAMILIAS_ALQUILER, FAMILIAS_PROXIMAMENTE, textoFamilia } from './familias.js';
 
 const $ = (id) => document.getElementById(id);
 const estado = { idioma: leerEstado(globalThis.location?.search ?? '').idioma ?? 'es' };
@@ -138,7 +138,11 @@ function pintarCartas() {
 
 // Bajo las familias del centro, su lectura literal con los mismos textos que la leyenda del mapa
 // («Quedarse · quien ya vive de alquiler»). Si falta alguno, la lista no se ve.
-export const lecturasFamilias = (t) => FAMILIAS_ALQUILER.map((f) => textoFamilia(t, f));
+// Las familias aún sin mapa llevan detrás «(próximamente)».
+export const lecturasFamilias = (t) => FAMILIAS_ALQUILER.map((f) => {
+  const texto = textoFamilia(t, f);
+  return texto && FAMILIAS_PROXIMAMENTE.includes(f) ? `${texto} (${t('portada.proximamente')})` : texto;
+});
 
 function pintarLecturas() {
   const lista = $('portada-lecturas');

@@ -4,7 +4,7 @@ Cómo se publica la web (plan §6.6; §11, preguntas abiertas 16 y 21). Comproba
 
 ## Cómo funciona
 
-El sitio se monta en GitHub Actions con el flujo `.github/workflows/pages.yml`. Sitio congelado hasta la v1.0 (decisión del autor, 9-nov-2026): el flujo solo se lanza a mano y monta el código y la nota de la referencia `ref` (por defecto, el commit `cdd9892`, el de la v0.1) con los datos del último release; un push a `main` no publica nada. En la v1.0, `ref` pasa a ser la etiqueta del release y se decide si vuelve a publicar en cada push. Junta dos cosas:
+El sitio se monta en GitHub Actions con el flujo `.github/workflows/pages.yml`. El flujo solo se lanza a mano y monta el código y la nota de la referencia `ref` (por defecto, el commit de la última publicación) con los datos del último release; un push a `main` no publica nada. Del 9 al 10-nov-2026 el sitio estuvo congelado en la v0.1 (commit `cdd9892`); desde la v0.4.0 (decisión del autor, 10-nov-2026), `ref` es el commit de cada publicación. Junta dos cosas:
 
 | Parte del sitio | De dónde sale | Por qué |
 |---|---|---|
@@ -142,7 +142,7 @@ gh release create v0.1.0 publicacion/* --target main --latest --title "v0.1.0" -
 
 En la web: *Releases → Draft a new release*, etiqueta `v0.1.0` sobre `main`, arrastrar los cinco ficheros de `publicacion/`, marcar *Set as the latest release* y publicar.
 
-Las etiquetas siguen la versión del atlas. Tras el `v0.1.0`, el siguiente es el `v1.0.0`: sin releases intermedios (decisión del autor, 9-nov-2026).
+Las etiquetas siguen la versión del atlas: `v0.1.0` (9-nov-2026), `v0.4.0` (10-nov-2026, con F3 a F6 y sin la oferta de Idealista) y `v1.0.0`. La etiqueta va sobre el commit de la publicación, el mismo que se pone como `ref` en el flujo.
 
 ### 5. Publicar y comprobar
 
@@ -177,7 +177,7 @@ Comprobaciones en `https://gastiaso.github.io/de-renta-en-renta/`:
 
 ## Actualizar
 
-- **Hasta la v1.0** (sin releases intermedios, decisión del autor, 9-nov-2026): sitio congelado en la v0.1. Un push a `main` no publica nada; *Actions → Publicar en Pages → Run workflow* vuelve a montar la referencia `ref` (por defecto, `cdd9892`) con los datos del último release (`v0.1.0`). Antes de congelarlo, el sitio llegó a montar el código del commit `e0d5132` con esos datos: la prueba en el navegador no dio errores, y lo que necesita datos nuevos no aparecía.
+- **Publicaciones** (desde la v0.4.0, 10-nov-2026): commit de la publicación, `empaquetar_publicacion()`, etiqueta y release sobre ese commit, y un commit aparte que pone su identificador como `ref` por defecto en `pages.yml` (un commit no puede llevar su propio identificador). Un push a `main` no publica nada; *Actions → Publicar en Pages → Run workflow* monta `ref` con los datos del último release. Del 9 al 10-nov-2026, el sitio estuvo congelado en la v0.1 (`cdd9892`, con los datos del `v0.1.0`). Antes de congelarlo, el sitio llegó a montar el código del commit `e0d5132` con esos datos: la prueba en el navegador no dio errores, y lo que necesita datos nuevos no aparecía.
 - **Cambia el código de la web (desde la v1.0):** se publica la referencia que se pase al flujo (la etiqueta del release).
 - **Cambian los datos:** `tar_make()`, `empaquetar_publicacion()`, release nuevo (paso 4) y `gh workflow run pages.yml` (paso 5). Crear un release no relanza el flujo: un flujo lanzado por un release correría sobre su etiqueta, y el entorno `github-pages` solo admite publicaciones desde `main`.
 - **Cambian a la vez el formato de los datos y el código que los lee:** primero el release y después el push, para que el sitio nunca junte código nuevo con datos viejos.
