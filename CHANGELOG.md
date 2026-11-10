@@ -4,6 +4,21 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (10-nov-2026, portada y mapa por niveles; tareas 24–26; plan v0.36)
+
+- **Portada** (`docs/especificacion_portada.md`): la raíz es el tablero y el mapa pasa a `mapa.html`. Los enlaces ya compartidos a la raíz con el estado de la vista o un sueldo se redirigen a `mapa.html` con la misma consulta y el mismo fragmento antes de pintar (`web/js/redireccion.js`); en todos los menús, «Mapa» va a `mapa.html` y el título a la portada (también en «Método» y «Datos», que ganan «Tu sueldo»). Centro con el dicho, «Tu sueldo» (el sueldo va al mapa tras «#», nunca en la consulta), buscador y «Tira el dado»; cinco fichas; 24 casillas desde `inventario/casillas_portada.csv` (13 activas, bandas por familia, nada propio de Monopoly; `escribir_casillas_portada()`); tres cartas con cifras de la tabla larga en `web/datos/portada.json` (`exportar_portada()`): sueldo necesario de la sección mediana en 2024, 1.217 € (de 700 a 2.117 € entre los percentiles 10 y 90); con el salario mínimo de 2024, el piso de 50 m² pasa del 30 % del ingreso en el 48,4 % de las secciones y del 40 % en el 24,7 %; sobrecarga de 2025, 26,8 % en el alquiler a precio de mercado y 7,2 % en total. Compuertas `portada_valores` y `portada_casillas` (bloqueo, `validacion_portada`).
+- **Mapa por niveles** (tarea 26): comunidades (zoom < 4), provincias (4–5), municipios (5–7) y secciones, cada nivel con sus cifras publicadas y su clic; ficha de territorio con la cifra de su nivel o «sin dato en este nivel» (regla 1), evolución y comparador con los niveles que lo contienen; enlazable (`territorio=municipio:28079`). En comunidades, las fichas con ingreso provincial no tienen cifra. CSV también por comunidad. El buscador abre la ficha del municipio elegido.
+- **Etiqueta al pasar el ratón** (tarea 25): municipio, distrito y código de la sección; nombre del municipio, la provincia o la comunidad y el del territorio superior. No sale con el dedo.
+- **F3: 14 pagas y segundo sueldo en la ficha**: en el sueldo necesario, la paga en 14 pagas y lo de cada uno entre dos sueldos iguales; con «Tu ficha», el desglose de su ingreso.
+- Pruebas: `pruebas/web/portada.test.mjs` y `pruebas/testthat/test-portada.R`; `comprobar_web_navegador()` abre el mapa en `mapa.html` y comprueba además la redirección, la portada en los dos idiomas con sus cartas, los destinos de las casillas, «Tu sueldo» desde la portada, el ancho de 375 px, la ficha de una comunidad, una provincia y un municipio frente a la tabla larga, y la etiqueta y el clic en cada escala (0 de 33 filas mal, en local).
+
+### Decidido (10-nov-2026, portada; por revisar por el autor, plan §11, pregunta 43)
+
+- `?idioma=en` solo no redirige: abre la portada en inglés. `#tu-sueldo` en la raíz sí redirige.
+- `casillas_portada.csv` lleva `destino_en` para las anclas que cambian con el idioma.
+- Casillas: «Compartir piso» abre el sueldo necesario de 70 m²; «Cobra la pensión», activa (el transistor ya tiene datos); «Mudanza» deja elegido el comparador con el municipio para la sección que se pulse.
+- Franjas de zoom del mapa: comunidades < 4, provincias 4–5, municipios 5–7.
+
 ### Decidido (9-nov-2026, publicación; plan v0.35)
 
 - **Sin releases hasta la v1.0** (decisión del autor): los cambios de F3 a F6 se acumulan y se publican juntos en la v1.0; v0.2 a v0.4 quedan como hitos internos del plan. El sitio sigue con los datos del `v0.1.0`. El paquete que se preparó para un `v0.1.1` (datos del commit `e0d5132`) no se publica.

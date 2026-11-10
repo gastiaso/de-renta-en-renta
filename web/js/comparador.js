@@ -24,10 +24,18 @@ const crear = (etiqueta, clase, texto) => {
   return el;
 };
 
-// Código del territorio con el que se compara una sección.
-export function codigoComparado(seccion, comparar, territorios) {
-  if (/^\d{10}$/.test(comparar)) return { nivel: 'sc', codigo: comparar };
-  const provincia = seccion.slice(0, 2);
+// Niveles de menos a más amplio: un territorio se compara con los que lo contienen.
+const ORDEN_NIVELES = ['sc', 'distrito', 'municipio', 'provincia', 'ccaa', 'nacional'];
+
+// Niveles con que se puede comparar un territorio de `nivel` (los que lo contienen).
+export const nivelesSuperiores = (nivel) => NIVELES_COMPARAR.filter((n) => ORDEN_NIVELES.indexOf(n) > ORDEN_NIVELES.indexOf(nivel));
+
+// Código del territorio con el que se compara una sección (o, con `nivel`, un municipio, una
+// provincia o una comunidad: tarea 26). null si `comparar` no contiene al territorio.
+export function codigoComparado(seccion, comparar, territorios, nivel = 'sc') {
+  if (/^\d{10}$/.test(comparar)) return nivel === 'sc' ? { nivel: 'sc', codigo: comparar } : null;
+  if (!nivelesSuperiores(nivel).includes(comparar)) return null;
+  const provincia = nivel === 'ccaa' ? null : seccion.slice(0, 2);
   const codigo = {
     distrito: seccion.slice(0, 7),
     municipio: seccion.slice(0, 5),
@@ -60,10 +68,12 @@ async function valorSeccion(m, series, serie, codigo, periodo) {
 // b: ... }]; `periodo` null y `desde` (primer periodo de la serie) si el año es anterior a la serie.
 // `serieDe(serie)`: la serie de la tipología elegida (los alquileres y el 21 de la vivienda
 // colectiva o de la unifamiliar, sin mezclarlas); por defecto, la misma.
-export async function filasComparador({ m, seccion, comparado, anio, supuestos, seriesA, serieDe = (s) => s }) {
+// `nivelA`: el de la columna A ('sc' por defecto; un municipio, una provincia o una comunidad en la
+// ficha de territorio, con `seccion` como su código).
+export async function filasComparador({ m, seccion, comparado, anio, supuestos, seriesA, serieDe = (s) => s, nivelA = 'sc' }) {
   const seriesB = comparado.nivel === 'sc' ? await cargarSeries(m, comparado.codigo).catch(() => null) : null;
   const valor = (serie, periodo, lado) => lado === 'a'
-    ? valorSeccion(m, seriesA, serie, seccion, periodo)
+    ? (nivelA === 'sc' ? valorSeccion(m, seriesA, serie, seccion, periodo) : valorDe(m, serie, nivelA, seccion, periodo))
     : comparado.nivel === 'sc'
       ? valorSeccion(m, seriesB, serie, comparado.codigo, periodo)
       : valorDe(m, serie, comparado.nivel, comparado.codigo, periodo);

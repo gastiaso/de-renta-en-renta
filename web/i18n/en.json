@@ -187,7 +187,22 @@
       "sin_contratos": {
         "VC": "No registered rental contracts for flats",
         "VU": "No registered rental contracts for single-family homes"
-      }
+      },
+      "titulo_territorio": "Area profile",
+      "vacia_comparar": "Choose a tract on the map: it will be compared with its {nivel}.",
+      "sin_dato_nivel": "No data at this level",
+      "sin_dato_nivel_nota": "The source does not publish this figure for {nivel}, and it is not computed by adding up tracts: that would not be arithmetically valid (rule 1 of the method).",
+      "sin_ingreso_nivel": "The {ficha} token has one income per province: there is no single one for the whole autonomous community.",
+      "paga_14": "In 14 payments a year: €{euros} per payment",
+      "dos_sueldos": "Split between two equal pays: €{euros} each",
+      "tus_terminos": "With your payments",
+      "ingreso_peon": {
+        "12": "Your income: €{neto} a month.",
+        "14": "Your income: €{neto} × 14 payments ÷ 12 = €{ingreso} a month.",
+        "12_segundo": "Your income: €{neto} + €{segundo} from the second pay = €{ingreso} a month.",
+        "14_segundo": "Your income: (€{neto} + €{segundo} from the second pay) × 14 payments ÷ 12 = €{ingreso} a month."
+      },
+      "pagas_nota": "Extra payments are spread over the 12 months: rent is paid twelve times a year."
     },
     "comparador": {
       "titulo": "Compare",
@@ -202,12 +217,73 @@
       "cancelar": "Cancel",
       "indicador": "Indicator",
       "esta_seccion": "This tract",
-      "nota": "e: estimated. —: no data or statistical confidentiality. Each row uses the same year in both columns."
+      "nota": "e: estimated. —: no data or statistical confidentiality. Each row uses the same year in both columns.",
+      "este": {
+        "municipio": "This municipality",
+        "provincia": "This province",
+        "ccaa": "This community"
+      }
     },
     "estado_corto": {
       "estimado": "estimated",
       "secreto": "confidential",
       "ausente": "no data"
+    },
+    "etiqueta": {
+      "distrito": "District {distrito}",
+      "seccion": "Tract {codigo}"
+    }
+  },
+  "portada": {
+    "titulo_pagina": "De renta en renta · Housing costs and wages, tract by tract",
+    "descripcion": "What renting costs in each census tract in Spain and whose pay covers it: map, tokens and housing cost overburden.",
+    "proximamente": "coming soon",
+    "te_llega": "Can you afford it?",
+    "privacidad": "Your pay never leaves this device: it goes to the map after «#», which the browser does not send.",
+    "sueldo_error": "Type a monthly net pay in euros, for example 1500.",
+    "dado": "Roll the die",
+    "dado_nota": "A random tract with published rent in {anio}.",
+    "fichas_titulo": "For whom?",
+    "fichas": {
+      "llave": "Average household income of each tract against its median rent.",
+      "mochila": "Estimated median wage of people aged 26 to 35 in their province.",
+      "tartera": "Net minimum wage of each year.",
+      "transistor": "Average net retirement pension in their province.",
+      "peon": "The pay you type, with 12 or 14 payments a year and a second pay."
+    },
+    "cartas_titulo": "Atlas cards",
+    "cartas": {
+      "fuente": "Source: {fuentes} · {anio}",
+      "sueldo": {
+        "titulo": "Pay needed",
+        "texto": "To rent {superficie} m² without going over {umbral} of pay, the median tract requires €{mediana} net a month in {anio}. One tract in ten requires less than €{p10}; another one in ten, more than €{p90}.",
+        "enlace": "See the map of pay needed"
+      },
+      "smi": {
+        "titulo": "Minimum wage",
+        "texto": "With the {anio} minimum wage (€{neto} net a month, over 12 months), the rent of a {superficie} m² flat takes more than 30 % of pay in {pct30} of the tracts with data, and more than 40 % in {pct40}.",
+        "enlace": "See the map with the minimum wage"
+      },
+      "sobrecarga": {
+        "titulo": "Overburden",
+        "texto": "In {anio}, {mercado} of people renting at market price spend more than 40 % of their disposable income on housing. Across the whole population, {total}.",
+        "enlace": "See overburden in Spain and Europe"
+      }
+    },
+    "casillas_titulo": "Board squares",
+    "familias_titulo": "Square families",
+    "familias": {
+      "ingresos": "Income",
+      "alquiler": "Renting",
+      "compra": "Buying",
+      "barrio": "Neighbourhood"
+    },
+    "pie": {
+      "fuentes": "Sources: {fuentes}.",
+      "fecha": "Data generated on {fecha}.",
+      "licencias": "Data and texts:",
+      "codigo": "Code:",
+      "repositorio": "Repository on GitHub"
     }
   },
   "sobrecarga": {

@@ -7,7 +7,10 @@
 // límite entre dos tramos; sin mediana y con 0 contratos, «sin contratos de alquiler registrados»
 // en lugar de «sin dato» (plan §11, preguntas 12 y 15 ampliadas).
 // Debajo, tres huecos que se rellenan cuando llegan sus datos: el contexto (sin mediana), la
-// evolución por años y el comparador.
+// evolución por años y el comparador. En el sueldo necesario, también la paga en 14 pagas y lo de
+// cada uno entre dos sueldos; con «Tu ficha», de dónde sale su ingreso (F3).
+// Ficha de territorio (municipio, provincia o comunidad, al pulsarlos con poco zoom; tarea 26): la
+// misma cifra con la publicada en su nivel, o «sin dato en este nivel».
 
 import { ordenNatural } from './nombres.js';
 import { clasesTramos, rampaDeCss, TRAMOS_LLEGA } from './colores.js';
@@ -19,9 +22,9 @@ const crear = (etiqueta, clase, texto) => {
   return el;
 };
 
-function cabecera(t, alCerrar) {
+function cabecera(t, alCerrar, titulo = t('interfaz.ficha.titulo')) {
   const caja = crear('header', 'ficha-cabecera');
-  caja.append(crear('h2', 'ficha-titulo', t('interfaz.ficha.titulo')));
+  caja.append(crear('h2', 'ficha-titulo', titulo));
   if (alCerrar) {
     const cerrar = crear('button', 'ficha-cerrar', '×');
     cerrar.type = 'button';
@@ -33,8 +36,14 @@ function cabecera(t, alCerrar) {
   return caja;
 }
 
-export function fichaVacia(contenedor, { t }) {
-  contenedor.replaceChildren(cabecera(t), crear('p', 'ficha-vacia', t('interfaz.ficha.vacia')));
+// Sin nada elegido. Con un nivel con que comparar ya elegido (por ejemplo, desde la casilla
+// «Mudanza» de la portada, ?comparar=municipio), lo dice.
+export function fichaVacia(contenedor, { t, comparar = null }) {
+  const partes = [crear('p', 'ficha-vacia', t('interfaz.ficha.vacia'))];
+  if (comparar) {
+    partes.push(crear('p', 'ficha-vacia ficha-vacia-nota', t('interfaz.ficha.vacia_comparar', { nivel: t(`vocabulario.nivel.${comparar}`).toLowerCase() })));
+  }
+  contenedor.replaceChildren(cabecera(t), ...partes);
 }
 
 // Nombres de las provincias que rodean un trozo de suelo sin sección, en orden alfabético.
@@ -95,29 +104,40 @@ function lineaFiabilidad(t, f) {
   return p;
 }
 
+// Desglose del ingreso de «Tu ficha» (plan §3.1 y F3: 14 pagas y segundo sueldo en la ficha): la
+// paga, el segundo sueldo y las 14 pagas repartidas en 12. `sueldo`: { neto, pagas, segundo }.
+export function textoIngresoPeon(t, sueldo, ingreso) {
+  if (!sueldo?.neto || !ingreso) return null;
+  const clave = `${sueldo.pagas === 14 ? '14' : '12'}${sueldo.segundo > 0 ? '_segundo' : ''}`;
+  return t(`interfaz.ficha.ingreso_peon.${clave}`, {
+    neto: t.numero(sueldo.neto), segundo: t.numero(sueldo.segundo ?? 0), ingreso: t.numero(ingreso),
+  });
+}
+
+// El sueldo necesario en las pagas de quien lo mira (F3): en 14 pagas, la paga (× 12 / 14), y
+// entre dos sueldos iguales, cada uno (÷ 2). Solo en los mapas que dan un sueldo.
+export function equivalenciasSueldo(valor) {
+  if (valor === null || valor === undefined || !Number.isFinite(valor)) return null;
+  return { paga14: (valor * 12) / 14, cadaUno: valor / 2 };
+}
+
+// Bloque de la cifra del mapa activo (ficha de sección y ficha de territorio).
 // `valor`: en el modo «necesario», el sueldo necesario (o null); en «llega», { alquiler,
 // ingreso, ratio, tramo } (o null). `estado`: índice en codificacion.estados.
 // `fiabilidad`: fiabilidadFicha() o null; `intervalo`: { desde, hasta } de la cifra (modo
 // «necesario») o null; `enLimite`: en «llega», si el margen la deja en el límite entre dos tramos.
-// Devuelve los huecos del contexto, de la evolución y del comparador.
-// `tipologia`: 'VC' | 'VU' si la serie del mapa la distingue; null si no.
-export function fichaSeccion(contenedor, { t, codigo, territorios, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, alCerrar, tipologia = null, fiabilidad = null, intervalo = null, enLimite = false }) {
-  const municipio = codigo.slice(0, 5);
-  const provincia = codigo.slice(0, 2);
-  const lineas = [
-    ['vocabulario.nivel.municipio', ordenNatural(territorios.municipio?.[municipio] ?? municipio)],
-    ['vocabulario.nivel.distrito', codigo.slice(5, 7)],
-    ['vocabulario.nivel.provincia', ordenNatural(territorios.provincia?.[provincia] ?? provincia)],
-  ];
-  const datos = crear('dl', 'ficha-territorios');
-  for (const [clave, texto] of lineas) datos.append(crear('dt', null, t(clave)), crear('dd', null, texto));
-
+// `tipologia`: 'VC' | 'VU' si la serie del mapa la distingue; null si no. `sinNivel`: el nombre
+// del nivel si la serie no tiene cifra en él (ficha de territorio; regla 1). `sueldo`: el de «Tu
+// ficha», para desglosar su ingreso. `notas`: textos de más, al final.
+function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, tipologia = null, fiabilidad = null, intervalo = null, enLimite = false, sinNivel = null, sueldo = null, notas = [] }) {
   const bloque = crear('section', 'ficha-valor');
   const cifra = crear('p', 'ficha-cifra');
+  const sinCifra = sinNivel ? t('interfaz.ficha.sin_dato_nivel') : '—';
+  const claseNumero = sinNivel ? 'ficha-numero ficha-sin-nivel' : 'ficha-numero';
   if (modo === 'necesario') {
     bloque.append(crear('h3', 'ficha-indicador', t(`indicadores.${mapaId}.nombre`)));
-    cifra.append(crear('span', 'ficha-numero', valor === null ? '—' : t.numero(valor, mapaDef.decimales ?? 0)));
-    cifra.append(crear('span', 'ficha-unidad', t(`indicadores.${mapaId}.unidad`)));
+    cifra.append(crear('span', claseNumero, valor === null ? sinCifra : t.numero(valor, mapaDef.decimales ?? 0)));
+    if (!sinNivel) cifra.append(crear('span', 'ficha-unidad', t(`indicadores.${mapaId}.unidad`)));
     bloque.append(cifra);
     if (intervalo) {
       const d = mapaDef.decimales ?? 0;
@@ -132,10 +152,20 @@ export function fichaSeccion(contenedor, { t, codigo, territorios, modo, mapaId,
       bloque.append(crear('p', 'ficha-estado',
         t('interfaz.leyenda.supuestos', { superficie: t.numero(supuestos.superficie_m2), umbral: t.porcentaje(supuestos.umbral) })));
     }
+    // El sueldo en 14 pagas y entre dos sueldos (F3), en los mapas que dan un sueldo
+    const eq = mapaDef.formula === 'alquiler_m2_a_sueldo' ? equivalenciasSueldo(valor) : null;
+    if (eq) {
+      const d = mapaDef.decimales ?? 0;
+      const pagas = crear('ul', 'ficha-pagas');
+      pagas.setAttribute('aria-label', t('interfaz.ficha.tus_terminos'));
+      pagas.append(crear('li', null, t('interfaz.ficha.paga_14', { euros: t.numero(eq.paga14, d) })),
+        crear('li', null, t('interfaz.ficha.dos_sueldos', { euros: t.numero(eq.cadaUno, d) })));
+      bloque.append(pagas);
+    }
   } else {
     bloque.append(crear('h3', 'ficha-indicador', `${t('interfaz.leyenda.llega_titulo')} · ${t(`fichas.${ficha}`)}`));
-    cifra.append(crear('span', 'ficha-numero', valor === null ? '—' : t.porcentaje(valor.ratio)));
-    cifra.append(crear('span', 'ficha-unidad', t('interfaz.ficha.del_ingreso')));
+    cifra.append(crear('span', claseNumero, valor === null ? sinCifra : t.porcentaje(valor.ratio)));
+    if (!sinNivel) cifra.append(crear('span', 'ficha-unidad', t('interfaz.ficha.del_ingreso')));
     bloque.append(cifra);
     if (valor !== null) {
       const tramo = crear('p', 'ficha-tramo');
@@ -147,8 +177,20 @@ export function fichaSeccion(contenedor, { t, codigo, territorios, modo, mapaId,
       );
       if (enLimite) bloque.append(crear('p', 'ficha-limite', t('interfaz.ficha.en_limite')));
     }
+    // «Tu ficha»: de dónde sale el ingreso (las 14 pagas y el segundo sueldo; F3)
+    const desglose = ficha === 'peon' ? textoIngresoPeon(t, sueldo, valor?.ingreso ?? null) : null;
+    if (desglose) {
+      bloque.append(crear('p', 'ficha-pagas', desglose));
+      if (sueldo.pagas === 14) bloque.append(crear('p', 'nota', t('interfaz.ficha.pagas_nota')));
+    }
     const lineaF = lineaFiabilidad(t, fiabilidad);
     if (lineaF) bloque.append(lineaF);
+  }
+  if (sinNivel) {
+    bloque.append(crear('p', 'nota', t('interfaz.ficha.sin_dato_nivel_nota', { nivel: sinNivel })));
+    for (const nota of notas) bloque.append(crear('p', 'nota', nota));
+    if (ejemplo) bloque.append(crear('p', 'etiqueta-ejemplo', t('avisos.ejemplo')));
+    return bloque;
   }
   const partes = [t('interfaz.ficha.anio', { anio: t.periodo(anio) })];
   if (tipologia) partes.push(t(`vocabulario.tipologia.${tipologia}`));
@@ -158,7 +200,23 @@ export function fichaSeccion(contenedor, { t, codigo, territorios, modo, mapaId,
     : t(`vocabulario.estado.${estados[estado]}`));
   bloque.append(crear('p', 'ficha-estado', partes.join(' · ')));
   if (aviso) bloque.append(crear('p', 'nota', aviso));
+  for (const nota of notas) bloque.append(crear('p', 'nota', nota));
   if (ejemplo) bloque.append(crear('p', 'etiqueta-ejemplo', t('avisos.ejemplo')));
+  return bloque;
+}
+
+// Ficha de sección. Devuelve los huecos del contexto, de la evolución y del comparador.
+export function fichaSeccion(contenedor, { t, codigo, territorios, alCerrar, ...resto }) {
+  const municipio = codigo.slice(0, 5);
+  const provincia = codigo.slice(0, 2);
+  const lineas = [
+    ['vocabulario.nivel.municipio', ordenNatural(territorios.municipio?.[municipio] ?? municipio)],
+    ['vocabulario.nivel.distrito', codigo.slice(5, 7)],
+    ['vocabulario.nivel.provincia', ordenNatural(territorios.provincia?.[provincia] ?? provincia)],
+  ];
+  const datos = crear('dl', 'ficha-territorios');
+  for (const [clave, texto] of lineas) datos.append(crear('dt', null, t(clave)), crear('dd', null, texto));
+  const bloque = bloqueValor({ t, ...resto });
 
   const huecoContexto = crear('div', 'ficha-hueco');
   const huecoSerie = crear('div', 'ficha-hueco');
@@ -173,6 +231,37 @@ export function fichaSeccion(contenedor, { t, codigo, territorios, modo, mapaId,
     huecoComparador,
   );
   return { huecoContexto, huecoSerie, huecoComparador };
+}
+
+// Nombres de un territorio (municipio, provincia o comunidad) y de los que lo contienen, como los
+// pone la ficha: [{ nivel, nombre }], del propio al más amplio. También para la etiqueta del mapa.
+export function nombresTerritorio(nivel, codigo, territorios) {
+  const nombre = (n, c) => ordenNatural(territorios?.[n]?.[c] ?? c);
+  const lista = [{ nivel, nombre: nombre(nivel, codigo) }];
+  if (nivel === 'ccaa') return lista;
+  const provincia = codigo.slice(0, 2);
+  if (nivel === 'municipio') lista.push({ nivel: 'provincia', nombre: nombre('provincia', provincia) });
+  const ccaa = territorios?.ccaa_de_provincia?.[provincia];
+  if (ccaa) lista.push({ nivel: 'ccaa', nombre: nombre('ccaa', ccaa) });
+  return lista;
+}
+
+// Ficha de un municipio, una provincia o una comunidad (tarea 26): su nombre, los territorios que
+// lo contienen y la cifra del mapa activo publicada en su nivel (regla 1: si la serie no la tiene,
+// «sin dato en este nivel», con `sinNivel`). Devuelve los huecos de la evolución y del comparador.
+export function fichaTerritorio(contenedor, { t, nivel, codigo, territorios, alCerrar, sinNivel = false, ...resto }) {
+  const [propio, ...superiores] = nombresTerritorio(nivel, codigo, territorios);
+  const datos = crear('dl', 'ficha-territorios');
+  datos.append(crear('dt', null, t(`vocabulario.nivel.${nivel}`)), crear('dd', null, codigo));   // el código del INE
+  for (const { nivel: n, nombre } of superiores) datos.append(crear('dt', null, t(`vocabulario.nivel.${n}`)), crear('dd', null, nombre));
+  const bloque = bloqueValor({ t, ...resto, sinNivel: sinNivel ? t(`vocabulario.nivel.${nivel}`).toLowerCase() : null });
+  const huecoSerie = crear('div', 'ficha-hueco');
+  const huecoComparador = crear('div', 'ficha-hueco');
+  const titulo = crear('p', 'ficha-codigo', propio.nombre);
+  titulo.dataset.nivel = nivel;
+  titulo.dataset.codigo = codigo;
+  contenedor.replaceChildren(cabecera(t, alCerrar, t('interfaz.ficha.titulo_territorio')), titulo, datos, bloque, huecoSerie, huecoComparador);
+  return { huecoSerie, huecoComparador };
 }
 
 // Contexto de una sección sin mediana del alquiler de la tipología del mapa: la mediana de la

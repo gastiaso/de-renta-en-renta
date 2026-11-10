@@ -15,6 +15,11 @@
 // Capa opcional sin_seccion: el suelo que el seccionado no cubre (terrenos comunales que no son
 // de ningún municipio). Sin código ni valores: se pinta con el color de «sin dato», en todos los
 // zooms, y al pulsarla avisa con sus atributos (km2 y provincias, códigos separados por espacios).
+//
+// Cada escala pinta un nivel con sus cifras publicadas (RELLENOS): comunidades, provincias,
+// municipios y secciones. Pulsar uno abre su ficha (alPulsar con las secciones; alPulsarTerritorio
+// con los demás: tarea 26). Con ratón, una etiqueta dice el nombre del territorio bajo el cursor
+// (etiquetaDe, del módulo principal: lo mismo que la ficha; tarea 25).
 
 import * as maplibregl from 'maplibre-gl';
 import { paletaDe, paletaContorno, rampaDeCss } from './colores.js';
@@ -67,7 +72,7 @@ function cajaDe(geometrias) {
 }
 
 // Crea el mapa y resuelve, cuando ha cargado, con las funciones para pintarlo y manejarlo.
-export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsarSinSeccion, alMover }) {
+export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsarSinSeccion, alPulsarTerritorio, alMover, etiqueta = null, etiquetaDe = null }) {
   const base = manifiesto.mapa_base;
   const capas = base.capas;
   if (!capas?.secciones) throw new Error('El mapa base no tiene capa de secciones');
@@ -101,14 +106,18 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
     base.tipo === 'pmtiles' ? { source: 'mapa-base', sourceLayer: capa, id: codigo } : { source: `capa-${capa}`, id: codigo };
   const objetivo = (codigo) => objetivoEn('secciones', codigo);
 
-  // Capas que se colorean con valores, con su nivel y el zoom hasta el que se ven (las secciones
-  // del PMTiles empiezan en el zoom 7; por debajo, municipios y, más abajo, provincias, con las
-  // cifras publicadas en su nivel).
+  // Capas que se colorean con valores, con su nivel y el zoom hasta el que se ven, cada una desde
+  // donde acaba la anterior: las secciones del PMTiles empiezan en el zoom 7; por debajo, los
+  // municipios (5–7: la vista de toda España en una pantalla de escritorio), las provincias (4–5)
+  // y, alejando más, las comunidades (menos de 4; en el móvil, toda España), con las cifras
+  // publicadas en su nivel (tarea 26; franjas «por revisar»: también cabía un selector de nivel).
   const RELLENOS = [
+    { capa: 'comunidades', nivel: 'ccaa', hasta: 4 },
     { capa: 'provincias', nivel: 'provincia', hasta: 5 },
     { capa: 'municipios', nivel: 'municipio', hasta: 7 },
     { capa: 'secciones', nivel: 'sc', hasta: 24 },
-  ].filter((r) => capas[r.capa]);
+  ].filter((r) => capas[r.capa]?.id)
+    .map((r, i, lista) => ({ ...r, desde: i ? lista[i - 1].hasta : 0 }));
 
   function anadirFuentes() {
     if (base.tipo === 'pmtiles') {
@@ -136,8 +145,9 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
     const tinta = css('--color-tinta');
     const tierra = capas.comunidades ? 'comunidades' : capas.provincias ? 'provincias' : null;
     if (tierra) mapa.addLayer({ id: 'tierra', type: 'fill', ...fuente(tierra), paint: { 'fill-color': css('--color-placa') } });
-    for (const { capa, hasta } of RELLENOS.filter((r) => r.capa !== 'secciones')) {
-      mapa.addLayer({ id: `${capa}-relleno`, type: 'fill', ...fuente(capa), maxzoom: hasta, paint: { 'fill-color': css('--color-placa') } });
+    // Cada nivel solo en su franja de zoom, para que no se tapen entre sí ni respondan dos al clic
+    for (const { capa, desde, hasta } of RELLENOS.filter((r) => r.capa !== 'secciones')) {
+      mapa.addLayer({ id: `${capa}-relleno`, type: 'fill', ...fuente(capa), minzoom: desde, maxzoom: hasta, paint: { 'fill-color': css('--color-placa') } });
     }
     // El suelo sin sección, encima de la tierra y de las provincias (que pueden incluirlo) y debajo de
     // las secciones, que mandan en sus bordes.
@@ -159,20 +169,26 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
       if (capas[capa]) mapa.addLayer({ id: `${capa}-borde`, type: 'line', ...fuente(capa), paint: { 'line-color': tinta, 'line-width': ancho } });
     }
     // Resaltes: un halo de placa debajo de la línea de tinta, para que se vean sobre cualquier tramo.
-    const resalte = (id, estado, ancho, discontinua) => {
+    // `capa`: la de las secciones o la de un territorio (municipios, provincias y comunidades:
+    // el que está bajo el ratón, en su franja de zoom, y el elegido, a todas las escalas).
+    const resalte = (id, estado, ancho, discontinua, capa = 'secciones', zoom = {}) => {
       const visible = ['case', ['boolean', ['feature-state', estado], false], 1, 0];
       mapa.addLayer({
-        id: `${id}-halo`, type: 'line', ...fuente('secciones'),
+        id: `${id}-halo`, type: 'line', ...fuente(capa), ...zoom,
         paint: { 'line-color': css('--color-placa'), 'line-width': ancho + 3, 'line-opacity': visible },
       });
       mapa.addLayer({
-        id, type: 'line', ...fuente('secciones'),
+        id, type: 'line', ...fuente(capa), ...zoom,
         paint: {
           'line-color': tinta, 'line-width': ancho, 'line-opacity': visible,
           ...(discontinua ? { 'line-dasharray': [1.5, 1] } : {}),
         },
       });
     };
+    for (const { capa, desde, hasta } of RELLENOS.filter((r) => r.capa !== 'secciones')) {
+      resalte(`${capa}-encima`, 'encima', 1.5, false, capa, { minzoom: desde, maxzoom: hasta });
+      resalte(`${capa}-seleccion`, 'sel', 3.5, false, capa);
+    }
     resalte('secciones-encima', 'encima', 1.5);
     resalte('secciones-comparada', 'cmp', 3, true);
     resalte('secciones-seleccion', 'sel', 3.5);
@@ -180,39 +196,104 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
 
   let seleccionada = null;
   let comparada = null;
-  let encima = null;
-  const marcar = (codigo, estado) => codigo && mapa.setFeatureState(objetivo(codigo), estado);
+  let territorio = null;   // { capa, codigo } del territorio elegido
+  let encima = null;       // { capa, codigo } bajo el ratón
+  const marcarEn = (capa, codigo, estado) => codigo && mapa.setFeatureState(objetivoEn(capa, codigo), estado);
+  const marcar = (codigo, estado) => marcarEn('secciones', codigo, estado);
+  const capaDe = (nivel) => RELLENOS.find((r) => r.nivel === nivel)?.capa ?? null;
+
+  // Etiqueta con ratón (no con el dedo, donde la ficha hace ese papel): sigue al cursor dentro del
+  // marco del mapa y cambia de texto al cambiar de territorio. Lo que mueve el puntero lo dice el
+  // propio evento (pointerType), que llega antes que el «mousemove» de MapLibre; tras un toque, el
+  // navegador también emite un «mousemove», que así no saca la etiqueta.
+  let tipoPuntero = null;
+  const anotarPuntero = (ev) => {
+    tipoPuntero = ev.pointerType;
+    if (tipoPuntero !== 'mouse') quitarEtiqueta();
+  };
+  contenedor.addEventListener('pointermove', anotarPuntero, { capture: true, passive: true });
+  contenedor.addEventListener('pointerdown', anotarPuntero, { capture: true, passive: true });
+  const conRaton = () => tipoPuntero === 'mouse';
+  let textoEtiqueta = null;
+  // `datos`: los atributos del suelo sin sección (atributosSinSeccion), que no tiene código.
+  function etiquetar(e, nivel, codigo, datos = null) {
+    if (!etiqueta || !etiquetaDe || !conRaton()) return;
+    const clave = `${nivel}:${codigo}`;
+    if (clave !== textoEtiqueta) {
+      const lineas = codigo ? etiquetaDe(nivel, codigo, datos) : [];
+      etiqueta.replaceChildren(...lineas.map((texto, i) => {
+        const span = document.createElement('span');
+        span.className = i ? 'mapa-etiqueta-linea' : 'mapa-etiqueta-nombre';
+        span.textContent = texto;
+        return span;
+      }));
+      textoEtiqueta = clave;
+      etiqueta.hidden = !lineas.length;
+    }
+    if (etiqueta.hidden) return;
+    const marco = contenedor.getBoundingClientRect();
+    const ancho = etiqueta.offsetWidth;
+    const alto = etiqueta.offsetHeight;
+    const x = e.point.x + 14 + ancho > marco.width ? e.point.x - 14 - ancho : e.point.x + 14;
+    const y = e.point.y + 14 + alto > marco.height ? e.point.y - 14 - alto : e.point.y + 14;
+    etiqueta.style.transform = `translate(${Math.max(0, x)}px, ${Math.max(0, y)}px)`;
+  }
+  function quitarEtiqueta() {
+    if (!etiqueta) return;
+    etiqueta.hidden = true;
+    textoEtiqueta = null;
+  }
+
+  function ponerEncima(capa, codigo) {
+    if (encima && (encima.capa !== capa || encima.codigo !== codigo)) marcarEn(encima.capa, encima.codigo, { encima: false });
+    encima = codigo ? { capa, codigo } : null;
+    if (encima) marcarEn(capa, codigo, { encima: true });
+  }
 
   function interaccion() {
-    const codigoDe = (e) => e.features?.[0]?.properties?.[idSeccion] ?? null;
-    mapa.on('mousemove', 'secciones-relleno', (e) => {
-      const codigo = codigoDe(e);
-      if (codigo !== encima) {
-        marcar(encima, { encima: false });
-        encima = codigo;
-        marcar(encima, { encima: true });
-      }
-      mapa.getCanvas().style.cursor = 'pointer';
-    });
-    mapa.on('mouseleave', 'secciones-relleno', () => {
-      marcar(encima, { encima: false });
-      encima = null;
-      mapa.getCanvas().style.cursor = '';
-    });
-    mapa.on('click', 'secciones-relleno', (e) => {
-      const codigo = codigoDe(e);
-      if (codigo) alPulsar(codigo);
-    });
+    for (const { capa, nivel } of RELLENOS) {
+      const id = capas[capa].id;
+      const capaMapa = `${capa}-relleno`;
+      const codigoDe = (e) => {
+        const x = e.features?.[0]?.properties?.[id];
+        return x === undefined || x === null ? null : String(x);
+      };
+      mapa.on('mousemove', capaMapa, (e) => {
+        const codigo = codigoDe(e);
+        ponerEncima(capa, codigo);
+        mapa.getCanvas().style.cursor = 'pointer';
+        etiquetar(e, nivel, codigo);
+      });
+      mapa.on('mouseleave', capaMapa, () => {
+        ponerEncima(null, null);
+        mapa.getCanvas().style.cursor = '';
+        quitarEtiqueta();
+      });
+      mapa.on('click', capaMapa, (e) => {
+        const codigo = codigoDe(e);
+        if (!codigo) return;
+        if (nivel === 'sc') alPulsar(codigo);
+        else alPulsarTerritorio?.(nivel, codigo);
+      });
+    }
     if (capas.sin_seccion && alPulsarSinSeccion) {
-      mapa.on('mousemove', 'sin-seccion-relleno', () => { mapa.getCanvas().style.cursor = 'pointer'; });
-      mapa.on('mouseleave', 'sin-seccion-relleno', () => { mapa.getCanvas().style.cursor = ''; });
+      const deSinSeccion = (e) => elegirSinSeccion((e.features ?? []).map((f) => f.properties));   // el trozo con nombre, si lo hay
+      const debajo = (e) => mapa.queryRenderedFeatures(e.point, { layers: RELLENOS.map((r) => `${r.capa}-relleno`) }).length > 0;
+      mapa.on('mousemove', 'sin-seccion-relleno', (e) => {
+        mapa.getCanvas().style.cursor = 'pointer';
+        if (debajo(e)) return;   // la sección (o el territorio) manda
+        const p = deSinSeccion(e);
+        etiquetar(e, 'sin_seccion', p ? `${p.nombre ?? ''}|${p.provincias ?? ''}|${p.km2 ?? ''}` : null, p ? atributosSinSeccion(p) : null);
+      });
+      mapa.on('mouseleave', 'sin-seccion-relleno', () => { mapa.getCanvas().style.cursor = ''; quitarEtiqueta(); });
       mapa.on('click', 'sin-seccion-relleno', (e) => {
-        if (mapa.queryRenderedFeatures(e.point, { layers: ['secciones-relleno'] }).length) return;   // la sección manda
-        const p = elegirSinSeccion((e.features ?? []).map((f) => f.properties));   // el trozo con nombre, si lo hay
+        if (debajo(e)) return;   // la sección manda; con poco zoom, la provincia o la comunidad que lo incluye
+        const p = deSinSeccion(e);
         if (p) alPulsarSinSeccion(atributosSinSeccion(p));
       });
     }
     mapa.on('moveend', () => alMover(mapa));
+    mapa.on('movestart', quitarEtiqueta);
   }
 
   // Geometrías de una sección ya cargadas en el mapa (en PMTiles, solo las de las teselas vistas).
@@ -234,6 +315,15 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
       comparada = codigo ?? null;
       marcar(comparada, { cmp: true });
     },
+    // Territorio elegido (municipio, provincia o comunidad: { nivel, codigo }), o null.
+    seleccionarTerritorio(elegido) {
+      if (territorio) marcarEn(territorio.capa, territorio.codigo, { sel: false });
+      const capa = elegido ? capaDe(elegido.nivel) : null;
+      territorio = capa ? { capa, codigo: elegido.codigo } : null;
+      if (territorio) marcarEn(capa, elegido.codigo, { sel: true });
+    },
+    // Niveles que el mapa pinta y pulsa (comunidad, provincia, municipio y sección).
+    niveles: RELLENOS.map((r) => r.nivel),
     // Capas coloreadas por valores: [{ capa, nivel, id }].
     rellenos: RELLENOS.map((r) => ({ ...r, id: capas[r.capa].id })),
     // Nivel que se ve a la escala actual (provincia, municipio o sección).

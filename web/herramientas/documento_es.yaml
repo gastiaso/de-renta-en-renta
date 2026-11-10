@@ -5,7 +5,9 @@ lang: es
 es: true
 pagetitle: "Método · De renta en renta"
 descripcion: "Nota metodológica de De renta en renta: fuentes, geografía constante, validación e indicadores."
-mapa: "./"
+portada: "./"
+mapa: "mapa.html"
+tu_sueldo: "mapa.html#tu-sueldo"
 sobrecarga: "sobrecarga.html"
 datos: datos.html
 metodo: metodo.html

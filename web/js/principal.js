@@ -1,8 +1,11 @@
-// Arranque de la web y coordinación: estado de la vista (URL), idioma, datos, barra de la vista
-// (mapa, año, tipología y descargas), mapa, leyenda, «Tu sueldo», ficha de sección, comparador,
-// buscador y «Compartir».
+// Arranque del mapa (mapa.html) y coordinación: estado de la vista (URL), idioma, datos, barra de
+// la vista (mapa, año, tipología y descargas), mapa, leyenda, «Tu sueldo», ficha de sección o de
+// territorio (municipio, provincia o comunidad; tarea 26), etiqueta al pasar el ratón (tarea 25),
+// comparador, buscador y «Compartir».
 
-import { leerEstado, guardarEstado, vistaATexto, textoAVista, leerSueldoCompartido, enlaceVista } from './estado.js';
+import {
+  leerEstado, guardarEstado, vistaATexto, textoAVista, leerSueldoCompartido, enlaceVista, leerTerritorio, territorioATexto,
+} from './estado.js';
 import { cargarIdioma, traducirPagina } from './i18n.js';
 import {
   cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarCajas,
@@ -11,7 +14,9 @@ import {
 } from './datos.js';
 import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
 import { pintarLeyenda } from './leyenda.js';
-import { fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fichaContexto } from './ficha.js';
+import {
+  fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fichaContexto, fichaTerritorio, nombresTerritorio,
+} from './ficha.js';
 import { formulaDe } from './formulas.js';
 import {
   modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega,
@@ -20,7 +25,7 @@ import {
 import { seriesFiabilidad, fiabilidadFicha, umbralPocos } from './fiabilidad.js';
 import { crearPanelSueldo } from './panel_sueldo.js';
 import { crearCompartir } from './compartir.js';
-import { codigoComparado, nombreTerritorio, filasComparador, pintarComparador } from './comparador.js';
+import { codigoComparado, nombreTerritorio, filasComparador, pintarComparador, nivelesSuperiores } from './comparador.js';
 import { crearBuscador, formasDeNombre } from './buscador.js';
 import { ordenNatural } from './nombres.js';
 import { crearBarraVista } from './barra_vista.js';
@@ -216,10 +221,10 @@ async function actualizar() {
   await cargarColumnas(v.series, v.referencia);
   if (yo !== turno) return;
 
-  for (const { capa, id } of mapa.rellenos) {
+  for (const { capa, id, nivel } of mapa.rellenos) {
     const pintura = (paleta) => (v.modo === 'necesario'
       ? colorNecesario(v.mapa, v.supuestos, paleta)
-      : colorLlega(v.calculo, id, paleta));
+      : colorLlega(v.calculo, id, paleta, nivel));
     mapa.colorear(capa, pintura(colores), pintura(contornos), capa === 'secciones' ? secretos(v.seriesColor) : null);
   }
   avisarMapa(v);
@@ -232,7 +237,10 @@ async function actualizar() {
   let resumen = null;
   let detalle = null;
   if (v.modo === 'necesario') {
-    if (v.enSueldo) Object.assign(leyenda, marcasRegla({ perfiles: v.perfiles, seccion: estado.seccion, rentaHogar: columnas[perfiles.llave?.ingreso.serie]?.valores }));
+    // La provincia de las fichas provinciales: la de la sección o la del municipio o provincia elegidos
+    const terr = leerTerritorio(estado.territorio);
+    const enProvincia = estado.seccion ?? (terr && terr.nivel !== 'ccaa' ? terr.codigo : undefined);
+    if (v.enSueldo) Object.assign(leyenda, marcasRegla({ perfiles: v.perfiles, seccion: enProvincia, rentaHogar: columnas[perfiles.llave?.ingreso.serie]?.valores }));
   } else {
     const { vivienda, ingreso } = textosLlega(v);
     leyenda.vivienda = t('interfaz.leyenda.llega_sub', { vivienda, ingreso });
@@ -281,9 +289,14 @@ function estadoCifra(v, codigo, x, estadoDe) {
 
 function pintarFicha(v = vista()) {
   const yo = ++turnoFicha;
+  const terr = leerTerritorio(estado.territorio);
+  if (!estado.seccion && terr) {
+    pintarFichaTerritorio(v, terr, yo).catch((error) => console.error(error));
+    return;
+  }
   if (!estado.seccion) {
     if (sinSeccion) return fichaSinSeccion(el.ficha, { t, ...sinSeccion, territorios, alCerrar: () => elegirSeccion(null) });
-    return fichaVacia(el.ficha, { t });
+    return fichaVacia(el.ficha, { t, comparar: NIVELES_COMPARAR_VACIA.includes(estado.comparar) ? estado.comparar : null });
   }
   const codigo = estado.seccion;
   const i = indice.get(codigo);
@@ -313,7 +326,7 @@ function pintarFicha(v = vista()) {
     supuestos: v.supuestos, anio: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo,
     tipologia: v.tipologia, valor, estado: estadoCifra(v, codigo, x, estadoDe), estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirSeccion(null),
-    fiabilidad, intervalo, enLimite,
+    fiabilidad, intervalo, enLimite, sueldo,
   });
   if (valor === null && !v.fuera) {
     contextoSinMediana(v, codigo, x)
@@ -368,7 +381,9 @@ async function contextoSinMediana(v, codigo, x) {
   return filas;
 }
 
-function pintarEvolucion(hueco, series, v, codigo) {
+// `nivel`: el del territorio ('sc' en la ficha de sección); en una comunidad, las fichas con ingreso
+// por provincia quedan sin dato (calculoLlega).
+function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
   const base = v.seriesColor[0];
   const periodos = series[base]?.anios;
   if (!periodos) return;
@@ -382,11 +397,16 @@ function pintarEvolucion(hueco, series, v, codigo) {
   // transistor; regla 4); si no (la mochila, «Tu ficha»), con el de hoy.
   const ficha = estado.ficha;
   const conSerie = (p) => Boolean(perfiles[ficha]?.anios?.[String(p)]);
+  const calculoNivel = nivel === 'sc' || !v.calculo
+    ? v.calculo
+    : calculoLlega({ ficha, perfiles: v.perfiles, sueldo, superficie: v.superficie, serie: serieTipo, nivel });
   const calculoDe = (p) => (ficha !== 'llave' && conSerie(p)
-    ? calculoLlega({ ficha, perfiles: perfilesDelAnio(perfiles, p), sueldo, superficie: v.superficie, serie: serieTipo })
-    : v.calculo);
+    ? calculoLlega({ ficha, perfiles: perfilesDelAnio(perfiles, p), sueldo, superficie: v.superficie, serie: serieTipo, nivel })
+    : calculoNivel);
   const filas = periodos.map((p) => {
-    const estadoPeor = estadoCifra(v, codigo, (serie) => en(serie, p).valor, (s) => en(s, p).estado);
+    const estadoPeor = v.modo !== 'llega'
+      ? Math.max(...v.seriesColor.map((s) => en(s, p).estado))
+      : estadoLlega(en(base, p).estado, calculoDe(p).ingreso(codigo, (serie) => en(serie, p).valor), indiceEstado('ausente'));
     let texto = '—';
     if (v.modo === 'necesario') {
       const b = en(base, p).valor;
@@ -444,6 +464,152 @@ async function pintarComparadorFicha(hueco, seriesA, v, codigo, yo) {
       pintarFicha();
     },
   });
+}
+
+// --- Ficha de territorio (tarea 26) ---------------------------------------------------------
+
+// Niveles con que comparar que se pueden dejar elegidos sin sección (la casilla «Mudanza» de la
+// portada abre el mapa con ?comparar=municipio: se aplica a la sección que se pulse).
+const NIVELES_COMPARAR_VACIA = ['distrito', 'municipio', 'provincia', 'ccaa', 'nacional'];
+
+// Valores de unas series en un territorio y su periodo: { serie: { valor, estado } | null }.
+async function lecturasTerritorio(series, nivel, codigo, referencia) {
+  const pares = await Promise.all(series.map(async (serie) => {
+    const periodo = periodoPara(m.indicadores[serie], referencia);
+    return [serie, periodo === null ? null : await valorDe(m, serie, nivel, codigo, periodo)];
+  }));
+  return Object.fromEntries(pares);
+}
+
+// Series de un territorio en todos sus periodos, para la evolución (como las de una sección).
+async function seriesDeTerritorio(nivel, codigo, v) {
+  const series = {};
+  await Promise.all(v.seriesColor.filter((s) => m.indicadores[s] && nivelesDe(s).includes(nivel)).map(async (serie) => {
+    const periodos = periodosDe(m.indicadores[serie]);
+    const valores = await Promise.all(periodos.map((p) => valorDe(m, serie, nivel, codigo, p)));
+    series[serie] = {
+      anios: periodos,
+      valores: valores.map((x) => x?.valor ?? null),
+      estados: Uint8Array.from(valores, (x) => x?.estado ?? indiceEstado('ausente')),
+    };
+  }));
+  return series;
+}
+
+// Ficha de un municipio, una provincia o una comunidad: la cifra del mapa activo publicada en su
+// nivel (regla 1: si alguna serie que da color no llega a él, «sin dato en este nivel»; nunca se
+// suman secciones), su evolución y el comparador con los territorios que lo contienen.
+async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
+  const base = v.seriesColor[0];
+  const tieneNivel = v.seriesColor.every((s) => nivelesDe(s).includes(nivel));
+  const calculo = v.modo === 'llega'
+    ? calculoLlega({ ficha: estado.ficha, perfiles: v.perfiles, sueldo, superficie: v.superficie, serie: serieTipo, nivel })
+    : null;
+  const fia = v.fiabilidad && !v.fuera ? v.fiabilidad : null;
+  const auxiliares = fia ? Object.values(fia).filter((s) => m.indicadores[s] && nivelesDe(s).includes(nivel)) : [];
+  const lecturas = tieneNivel && !v.fuera ? await lecturasTerritorio([...v.seriesColor, ...auxiliares], nivel, codigo, v.referencia) : {};
+  if (yo !== turnoFicha) return;
+  const x = (serie) => lecturas[serie]?.valor ?? null;
+  const estadoDe = (serie) => lecturas[serie]?.estado ?? indiceEstado('ausente');
+  const margen = fia?.margen ? x(fia.margen) : null;
+  const fiabilidad = fia?.contratos && lecturas[fia.contratos]
+    ? fiabilidadFicha({ contratos: x(fia.contratos), margen, estado: m.codificacion.estados[estadoDe(base)], umbral: umbralPocos(m) })
+    : null;
+  let valor = null;
+  let intervalo = null;
+  let enLimite = false;
+  if (tieneNivel && v.modo === 'necesario') {
+    const b = x(v.mapa.base);
+    valor = b === null ? null : formulaDe(v.mapa).calcular(b, v.supuestos);
+    if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen);
+  } else if (tieneNivel) {
+    const r = calculo.calcular(codigo, x);
+    valor = r && { ...r, tramo: tramoLlega(r.ratio) };
+    enLimite = Boolean(r) && enLimiteLlega(r.ratio, margen);
+  }
+  const notas = [];
+  if (calculo && nivel === 'ccaa' && v.perfiles[estado.ficha]?.nivel === 'provincia') {
+    notas.push(t('interfaz.ficha.sin_ingreso_nivel', { ficha: t(`fichas.${estado.ficha}`) }));
+  }
+  const estadoCifraT = calculo
+    ? estadoLlega(estadoDe(base), calculo.ingreso(codigo, x), indiceEstado('ausente'))
+    : Math.max(...v.seriesColor.map(estadoDe));
+  const periodoBase = periodoPara(m.indicadores[base], v.referencia);
+  const { huecoSerie, huecoComparador } = fichaTerritorio(el.ficha, {
+    t, nivel, codigo, territorios, sinNivel: !tieneNivel, modo: v.modo, mapaId: estado.mapa, mapaDef: v.mapa, ficha: estado.ficha,
+    supuestos: v.supuestos, anio: v.fuera ? v.fuera.anio : periodoBase ?? v.periodo, tipologia: v.tipologia, valor,
+    estado: estadoCifraT, estados: m.codificacion.estados, ejemplo: m.ejemplo,
+    aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirTerritorio(null),
+    fiabilidad, intervalo, enLimite, sueldo, notas,
+  });
+  if (tieneNivel) {
+    seriesDeTerritorio(nivel, codigo, v)
+      .then((s) => { if (yo === turnoFicha) pintarEvolucion(huecoSerie, s, v, codigo, nivel); })
+      .catch((error) => console.error(error));
+  }
+  pintarComparadorTerritorio(huecoComparador, nivel, codigo, v, yo).catch((error) => console.error(error));
+}
+
+async function pintarComparadorTerritorio(hueco, nivel, codigo, v, yo) {
+  const provincia = nivel === 'ccaa' ? null : codigo.slice(0, 2);
+  const ccaa = nivel === 'ccaa' ? null : territorios.ccaa_de_provincia?.[provincia];
+  const hay = (n) => Object.values(m.indicadores).some((d) => d.niveles?.includes(n));
+  const superiores = nivelesSuperiores(nivel);
+  const opciones = [
+    superiores.includes('provincia') && hay('provincia') && { valor: 'provincia', texto: t('interfaz.comparador.su_provincia', { nombre: nombreTerritorio(t, 'provincia', provincia, territorios) }) },
+    superiores.includes('ccaa') && hay('ccaa') && ccaa && { valor: 'ccaa', texto: t('interfaz.comparador.su_ccaa', { nombre: nombreTerritorio(t, 'ccaa', ccaa, territorios) }) },
+    superiores.includes('nacional') && hay('nacional') && { valor: 'nacional', texto: t('vocabulario.nivel.nacional') },
+  ].filter(Boolean);
+  const eleccion = opciones.some((o) => o.valor === estado.comparar) ? estado.comparar : '';
+  const comparado = eleccion ? codigoComparado(codigo, eleccion, territorios, nivel) : null;
+  const filas = comparado
+    ? await filasComparador({ m, seccion: codigo, nivelA: nivel, comparado, anio: v.referencia, supuestos: v.supuestos, seriesA: null, serieDe: serieTipo })
+    : null;
+  if (yo !== turnoFicha) return;
+  pintarComparador(hueco, {
+    t, eleccion, opciones, filas, eligiendo: false, supuestos: v.supuestos, estados: m.codificacion.estados,
+    nombreA: t(`interfaz.comparador.este.${nivel}`),
+    nombreB: comparado ? nombreTerritorio(t, comparado.nivel, comparado.codigo, territorios) : '',
+    alElegir: (valor) => {
+      estado.comparar = valor || undefined;
+      pintarFicha();
+      guardarEstado(estado);
+    },
+    alCancelar: () => {},
+  });
+}
+
+// Caja [oeste, sur, este, norte] de un territorio: la de su municipio o la que reúne las de los
+// municipios de su provincia o comunidad (cajas.json solo trae municipios).
+function cajaTerritorio(cajas, { nivel, codigo }) {
+  const todos = cajas?.municipio ?? {};
+  if (nivel === 'municipio') return todos[codigo] ?? null;
+  const dentro = (municipio) => (nivel === 'provincia'
+    ? municipio.startsWith(codigo)
+    : territorios.ccaa_de_provincia?.[municipio.slice(0, 2)] === codigo);
+  const caja = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const [municipio, c] of Object.entries(todos)) {
+    if (!dentro(municipio)) continue;
+    caja[0] = Math.min(caja[0], c[0]); caja[1] = Math.min(caja[1], c[1]);
+    caja[2] = Math.max(caja[2], c[2]); caja[3] = Math.max(caja[3], c[3]);
+  }
+  return Number.isFinite(caja[0]) ? caja : null;
+}
+
+// Etiqueta del mapa al pasar el ratón (tarea 25): lo mismo que dice la ficha. En las secciones, el
+// municipio, el distrito (su número; el INE no publica nombres de distrito) y el código; en los
+// municipios y las provincias, su nombre y el del territorio superior; en las comunidades, su nombre.
+function etiquetaDe(nivel, codigo, datos = null) {
+  if (!t || !territorios) return [];
+  if (nivel === 'sc') {
+    return [
+      ordenNatural(territorios.municipio?.[codigo.slice(0, 5)] ?? codigo.slice(0, 5)),
+      t('interfaz.etiqueta.distrito', { distrito: codigo.slice(5, 7) }),
+      t('interfaz.etiqueta.seccion', { codigo }),
+    ];
+  }
+  if (nivel === 'sin_seccion') return datos?.nombre ? [datos.nombre, t('interfaz.ficha.sin_seccion')] : [t('interfaz.ficha.sin_seccion')];
+  return nombresTerritorio(nivel, codigo, territorios).slice(0, 2).map((x) => x.nombre);
 }
 
 // --- Descargas ------------------------------------------------------------------------------
@@ -581,6 +747,8 @@ async function exportar(formato) {
 function elegirSeccion(codigo, hueco = null) {
   sinSeccion = codigo ? null : hueco;
   estado.seccion = codigo ?? undefined;
+  estado.territorio = undefined;
+  mapa.seleccionarTerritorio(null);
   if (!codigo || estado.comparar === codigo) {
     estado.comparar = undefined;
     eligiendoComparada = false;
@@ -589,6 +757,22 @@ function elegirSeccion(codigo, hueco = null) {
   mapa.comparar(esSeccion(estado.comparar) ? estado.comparar : null);
   actualizar();
 }
+
+// Un municipio, una provincia o una comunidad (tarea 26): su ficha sustituye a la de la sección.
+// Se queda el nivel con que comparar si lo contiene; otra sección o un nivel menor, no.
+function elegirTerritorio(nivel, codigo) {
+  sinSeccion = null;
+  eligiendoComparada = false;
+  estado.seccion = undefined;
+  estado.territorio = codigo ? territorioATexto(nivel, codigo) : undefined;
+  if (!codigo || !nivelesSuperiores(nivel).includes(estado.comparar)) estado.comparar = undefined;
+  mapa.seleccionar(null);
+  mapa.comparar(null);
+  mapa.seleccionarTerritorio(codigo ? { nivel, codigo } : null);
+  actualizar();
+}
+
+const alPulsarTerritorio = (nivel, codigo) => elegirTerritorio(nivel, codigo);
 
 function alPulsar(codigo) {
   if (eligiendoComparada && estado.seccion && codigo !== estado.seccion) {
@@ -655,7 +839,10 @@ function prepararBuscador() {
     alElegir: async (o) => {
       const cajas = await cargarCajas(m).catch(() => ({}));
       const caja = cajas.municipio?.[o.codigo.slice(0, 5)];
-      if (o.tipo === 'municipio') return mapa.irA(caja);
+      if (o.tipo === 'municipio') {
+        elegirTerritorio('municipio', o.codigo);   // su ficha (tarea 26)
+        return mapa.irA(caja);
+      }
       elegirSeccion(o.codigo);
       if (caja) {
         mapa.irA(caja);
@@ -674,6 +861,7 @@ async function cambiarIdioma(idioma) {
   estado.idioma = idioma;
   t = await cargarIdioma(idioma);
   traducirPagina(t);
+  document.title = `${t('nav.mapa')} · ${t('sitio.titulo')}`;
   marcarIdioma();
   if (mapa) {
     mapa.traducir(t);
@@ -682,8 +870,10 @@ async function cambiarIdioma(idioma) {
 }
 
 async function iniciar() {
+  const vistaDelEnlace = Boolean(estado.vista);
   t = await cargarIdioma(estado.idioma);
   traducirPagina(t);
+  document.title = `${t('nav.mapa')} · ${t('sitio.titulo')}`;
   marcarIdioma();
   for (const boton of el.idiomas) boton.addEventListener('click', () => cambiarIdioma(boton.dataset.idioma));
   panel = crearPanelSueldo({ alCambiar: alCambiarSueldo, alCompartir: abrirCompartir });
@@ -710,6 +900,9 @@ async function iniciar() {
         t,
         alPulsar,
         alPulsarSinSeccion,
+        alPulsarTerritorio,
+        etiqueta: document.getElementById('mapa-etiqueta'),
+        etiquetaDe,
         alMover: (mp) => {
           estado.vista = vistaATexto(mp);
           guardarEstado(estado);
@@ -721,11 +914,31 @@ async function iniciar() {
 
     if (estado.ficha === 'peon' ? !ingresoPeon(sueldo) : estado.ficha && !perfiles[estado.ficha]) estado.ficha = undefined;
     if (estado.seccion && !indice.has(estado.seccion)) estado.seccion = undefined;
-    if (!estado.seccion || (esSeccion(estado.comparar) && !indice.has(estado.comparar))) estado.comparar = undefined;
+    // Territorio elegido (tarea 26): solo sin sección, en un nivel que el mapa pinta y con un código de su índice
+    let terr = estado.seccion ? null : leerTerritorio(estado.territorio);
+    if (terr && (!mapa.niveles.includes(terr.nivel) || !(await cargarIndice(m, terr.nivel).catch(() => null))?.includes(terr.codigo))) terr = null;
+    estado.territorio = terr ? territorioATexto(terr.nivel, terr.codigo) : undefined;
+    // Con qué comparar: otra sección, solo con sección; un nivel, el que contiene lo elegido o, sin
+    // nada elegido, el que se aplicará a la sección que se pulse (casilla «Mudanza» de la portada)
+    if (esSeccion(estado.comparar) ? !estado.seccion || !indice.has(estado.comparar)
+      : terr && !nivelesSuperiores(terr.nivel).includes(estado.comparar)) estado.comparar = undefined;
     if (estado.seccion) mapa.seleccionar(estado.seccion);
+    if (terr) mapa.seleccionarTerritorio(terr);
     if (esSeccion(estado.comparar)) mapa.comparar(estado.comparar);
     prepararBuscador();
     await actualizar();
+    // Sin vista en el enlace (desde la portada: el dado o el buscador), el mapa va a lo elegido
+    if (!vistaDelEnlace && (estado.seccion || terr)) {
+      const cajas = await cargarCajas(m).catch(() => ({}));
+      if (estado.seccion) {
+        const caja = cajas.municipio?.[estado.seccion.slice(0, 5)];
+        const codigo = estado.seccion;
+        if (caja) {
+          mapa.irA(caja);
+          mapa.mapa.once('moveend', () => mapa.encuadrarSeccion(codigo));
+        } else mapa.encuadrarSeccion(codigo);
+      } else mapa.irA(cajaTerritorio(cajas, terr));
+    }
   } catch (error) {
     fichaError(el.ficha, { t, error });
   }

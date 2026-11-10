@@ -46,7 +46,11 @@ inventario <- list(
     ficheros_tipografias
     generar_tokens_css(tokens)
   }, format = "file"),
-  tar_target(validacion_diseno, validar_referencias(comprobar_contrastes(tokens, fichero_tokens_css), referencias))
+  tar_target(validacion_diseno, validar_referencias(comprobar_contrastes(tokens, fichero_tokens_css), referencias)),
+  # Portada (tarea 24; R/web_portada.R): las casillas de web/index.html, desde su CSV (regla 7)
+  tar_target(fichero_casillas_portada, "inventario/casillas_portada.csv", format = "file"),
+  tar_target(casillas_portada, leer_casillas_portada(fichero_casillas_portada)),
+  tar_target(fichero_portada_html, escribir_casillas_portada(casillas_portada), format = "file")
 )
 
 version_de <- function(ruta) format(file.mtime(ruta[1]), "%Y-%m-%d")
@@ -576,6 +580,23 @@ bloque_web <- list(
                                                  indicadores, quintil = sobrecarga_quintil,
                                                  rupturas = rupturas_sobrecarga, dir_web = DIR_WEB),
                         referencias)
+  }),
+  # Portada (tarea 24; R/web_portada.R): cifras de las cartas en datos/portada.json, desde la tabla
+  # larga y los perfiles, y compuertas portada_valores y portada_casillas (destinos en el manifiesto,
+  # en estado.js y en las páginas generadas que haya en web/).
+  #   targets::tar_make(names = c(fichero_portada_web, validacion_portada))
+  tar_target(fichero_portada_web, {
+    ficheros_web
+    exportar_portada(tabla_larga, perfiles, dir_web = DIR_WEB)
+  }, format = "file"),
+  tar_target(validacion_portada, {
+    fichero_portada_html
+    mapas <- names(jsonlite::read_json(file.path(DIR_WEB, "datos", "manifiesto.json"))$mapas)
+    validar_referencias(bind_rows(
+      comprobar_portada(tabla_larga, perfiles, dir_web = dirname(dirname(fichero_portada_web))),
+      comprobar_casillas_portada(casillas_portada, mapas = mapas, anclas = anclas_paginas_web(),
+                                 claves_estado = claves_estado_web())
+    ), referencias)
   })
 )
 

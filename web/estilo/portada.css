@@ -1,0 +1,273 @@
+/* De renta en renta · portada (index.html): el tablero completo (docs/especificacion_portada.md, §4).
+   Solo variables de tokens.css. Escritorio: tablero cuadrado de hasta 720 px, con el centro encima
+   de sus casillas, y una columna con las fichas y las cartas. De 700 a 1039 px, todo en una columna.
+   Móvil (menos de 700 px): el centro, las fichas, las cartas y las casillas como recorrido vertical. */
+
+/* Página larga, con desplazamiento (como «Sobrecarga») */
+.tablero-largo { height: auto; min-height: calc(100vh - 24px); overflow: visible; }
+.cabecera-portada { justify-content: space-between; }
+
+.portada {
+  --lado: min(720px, calc(100vw - 440px));    /* lado del tablero */
+  --casilla: calc(var(--lado) / 7);
+  display: grid;
+  grid-template-columns: var(--lado) minmax(280px, 1fr);
+  grid-template-rows: auto auto 1fr;
+  align-items: start;
+  gap: 16px 24px;
+  padding: 16px;
+}
+
+/* El centro ocupa el hueco de 5 × 5 casillas del tablero: misma celda de la rejilla, desplazado
+   una casilla hacia dentro. */
+.portada-tablero { grid-column: 1; grid-row: 1 / span 3; min-width: 0; }
+.portada-centro {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  z-index: 1;
+  box-sizing: border-box;
+  width: calc(var(--casilla) * 5);
+  height: calc(var(--casilla) * 5);
+  margin: var(--casilla) 0 0 var(--casilla);
+  padding: 14px 22px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.portada-fichas { grid-column: 2; grid-row: 1; }
+.portada-cartas { grid-column: 2; grid-row: 2; }
+.portada-cartas[hidden] { display: none; }
+
+/* Centro */
+.portada-titulo {
+  margin: 0;
+  font: 800 clamp(1.7rem, 3.4vw, 2.5rem)/1.05 var(--fuente-tablero);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-rojo);
+}
+.portada-subtitulo { margin: 0; font: 400 1.05rem var(--fuente-escritura); letter-spacing: 0.06em; }
+.portada-dicho { margin: 2px 0; font: 400 max(22px, 1.55rem)/1.15 var(--fuente-cabecera-carta); color: var(--color-mesa); }
+.portada-lema { margin: 0 0 4px; max-width: 34em; color: var(--color-tenue); font-size: 0.95rem; line-height: 1.3; }
+
+.portada-sueldo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: min(100%, 360px);
+  padding: 10px 12px;
+  background: var(--color-placa);
+  border: var(--borde);
+  border-radius: var(--radio-tarjeta);
+  box-shadow: var(--sombra-ficha);
+}
+.portada-sueldo-etiqueta { display: inline-flex; align-items: center; gap: 6px; font: 600 0.95rem var(--fuente-tablero); }
+.portada-sueldo-fila { display: flex; gap: 8px; width: 100%; }
+.portada-sueldo-fila .campo-euros { flex: 1; min-width: 0; }
+.portada-sueldo-fila .campo-euros input {
+  width: 100%;
+  min-height: var(--objetivo-tactil);
+  padding: 0 28px 0 10px;
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  background: var(--color-crema);
+  color: var(--color-tinta);
+  font: 600 1.1rem var(--fuente-tablero);
+}
+.portada-sueldo-fila .boton { flex: none; }
+.portada-error { color: var(--color-rojo); font-size: 0.85rem; }
+.portada-error[hidden] { display: none; }
+.portada-nota { margin: 0; font-size: 0.8rem; line-height: 1.25; }
+
+.portada-acciones { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 10px; width: min(100%, 420px); }
+.portada-acciones[hidden] { display: none; }
+.portada-buscador { flex: 1 1 200px; max-width: none; margin: 0; text-align: left; }
+.portada-dado { display: inline-flex; align-items: center; gap: 8px; }
+.portada-dado .dado { flex: none; }
+.portada-dado.tirando .dado { animation: dado-tirar 0.45s ease-out; }
+@keyframes dado-tirar { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .portada-dado.tirando .dado { animation: none; }
+}
+.portada-acciones .portada-nota { flex: 0 0 100%; }
+
+/* Casillas: lista ordenada colocada en el borde de una rejilla de 7 × 7, en el sentido de las agujas
+   del reloj desde la esquina de arriba a la izquierda (4 esquinas y 5 casillas por lado). */
+.casillas {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+  width: var(--lado);
+  height: var(--lado);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--color-crema);
+  border: var(--borde);
+  border-radius: var(--radio-tarjeta);
+  overflow: hidden;
+}
+.casilla:nth-child(1) { grid-area: 1 / 1; }
+.casilla:nth-child(2) { grid-area: 1 / 2; }
+.casilla:nth-child(3) { grid-area: 1 / 3; }
+.casilla:nth-child(4) { grid-area: 1 / 4; }
+.casilla:nth-child(5) { grid-area: 1 / 5; }
+.casilla:nth-child(6) { grid-area: 1 / 6; }
+.casilla:nth-child(7) { grid-area: 1 / 7; }
+.casilla:nth-child(8) { grid-area: 2 / 7; }
+.casilla:nth-child(9) { grid-area: 3 / 7; }
+.casilla:nth-child(10) { grid-area: 4 / 7; }
+.casilla:nth-child(11) { grid-area: 5 / 7; }
+.casilla:nth-child(12) { grid-area: 6 / 7; }
+.casilla:nth-child(13) { grid-area: 7 / 7; }
+.casilla:nth-child(14) { grid-area: 7 / 6; }
+.casilla:nth-child(15) { grid-area: 7 / 5; }
+.casilla:nth-child(16) { grid-area: 7 / 4; }
+.casilla:nth-child(17) { grid-area: 7 / 3; }
+.casilla:nth-child(18) { grid-area: 7 / 2; }
+.casilla:nth-child(19) { grid-area: 7 / 1; }
+.casilla:nth-child(20) { grid-area: 6 / 1; }
+.casilla:nth-child(21) { grid-area: 5 / 1; }
+.casilla:nth-child(22) { grid-area: 4 / 1; }
+.casilla:nth-child(23) { grid-area: 3 / 1; }
+.casilla:nth-child(24) { grid-area: 2 / 1; }
+
+/* Bandas por familia (contraste ≥ 3:1 sobre la crema: tartera 4,0; rojo 5,2; transistor 4,5; mesa
+   5,5). Cada banda mira al centro del tablero. Las inactivas, rayadas. */
+.casilla-ingresos { --banda: var(--ficha-tartera); }
+.casilla-alquiler { --banda: var(--color-rojo); }
+.casilla-compra { --banda: var(--ficha-transistor); }
+.casilla-barrio { --banda: var(--color-mesa); }
+
+.casilla {
+  --grosor: 12px;
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  background: var(--color-placa);
+  outline: 1px solid var(--color-tinta);
+  font: 500 0.8rem/1.15 var(--fuente-tablero);
+  text-align: center;
+}
+.casilla::before { content: ""; position: absolute; background: var(--banda); }
+.casilla-inactiva::before { background: repeating-linear-gradient(45deg, var(--banda) 0 3px, transparent 3px 6px); }
+.casilla:nth-child(-n+7)::before { left: 0; right: 0; bottom: 0; height: var(--grosor); }
+.casilla:nth-child(n+8):nth-child(-n+12)::before { top: 0; bottom: 0; left: 0; width: var(--grosor); }
+.casilla:nth-child(n+13):nth-child(-n+19)::before { left: 0; right: 0; top: 0; height: var(--grosor); }
+.casilla:nth-child(n+20)::before { top: 0; bottom: 0; right: 0; width: var(--grosor); }
+.casilla:nth-child(-n+7) { padding-bottom: var(--grosor); }
+.casilla:nth-child(n+8):nth-child(-n+12) { padding-left: var(--grosor); }
+.casilla:nth-child(n+13):nth-child(-n+19) { padding-top: var(--grosor); }
+.casilla:nth-child(n+20) { padding-right: var(--grosor); }
+
+.casilla > a, .casilla-cuerpo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px;
+  color: var(--color-tinta);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+.casilla > a:hover { background: var(--color-tinta); color: var(--color-crema); }
+.casilla > a:focus-visible { outline-offset: -3px; }
+.casilla-esquina { font-weight: 700; font-size: 0.85rem; }
+.casilla-inactiva { color: var(--color-tenue); }
+.casilla-inactiva { flex-direction: column; justify-content: center; align-items: center; padding-inline: 4px; }
+.casilla-pronto { display: block; margin-top: 2px; font: italic 400 0.72rem var(--fuente-carta); }
+
+/* Leyenda de las familias */
+.familias { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 0.9rem; }
+.familia { display: inline-flex; align-items: center; gap: 6px; }
+.familia::before { content: ""; width: 22px; height: 12px; background: var(--banda); outline: 1px solid var(--color-tinta); }
+.familia-ingresos { --banda: var(--ficha-tartera); }
+.familia-alquiler { --banda: var(--color-rojo); }
+.familia-compra { --banda: var(--ficha-transistor); }
+.familia-barrio { --banda: var(--color-mesa); }
+
+/* Columna: fichas y cartas */
+.portada-h2 { margin: 0 0 8px; font: 400 1.3rem var(--fuente-escritura); letter-spacing: 0.06em; }
+.fichas-lista { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ficha-enlace {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  align-items: center;
+  min-height: var(--objetivo-tactil);
+  padding: 6px 10px;
+  background: var(--color-placa);
+  border: var(--borde);
+  border-left-width: 8px;
+  border-radius: var(--radio-control);
+  color: var(--color-tinta);
+  text-decoration: none;
+}
+.ficha-enlace .ficha-icono { grid-row: 1 / span 2; }
+.ficha-nombre { font: 600 1rem var(--fuente-tablero); }
+.ficha-desc { color: var(--color-tenue); font-size: 0.85rem; line-height: 1.25; }
+.ficha-desc:empty { display: none; }
+a.ficha-enlace:hover { background: var(--color-crema); }
+.ficha-enlace-llave { border-left-color: var(--ficha-llave); }
+.ficha-enlace-mochila { border-left-color: var(--ficha-mochila); }
+.ficha-enlace-tartera { border-left-color: var(--ficha-tartera); }
+.ficha-enlace-transistor { border-left-color: var(--ficha-transistor); }
+.ficha-enlace-peon { border-left-color: var(--ficha-peon); }
+.ficha-enlace[aria-disabled="true"] { border-style: dashed; color: var(--color-tenue); cursor: not-allowed; }
+.ficha-enlace[aria-disabled="true"] .ficha-icono { opacity: 0.5; }
+
+.cartas-lista { display: grid; gap: 10px; }
+.carta {
+  padding: 10px 14px 12px;
+  background: var(--color-placa);
+  border: var(--borde);
+  border-radius: var(--radio-tarjeta);
+  box-shadow: var(--sombra-ficha);
+}
+.carta-titulo { margin: 0 0 4px; }
+.carta-texto { margin: 0 0 6px; }
+.carta-cifra { font: 700 1.05em var(--fuente-tablero); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.carta-fuente { margin: 0 0 6px; color: var(--color-tenue); font-size: 0.85rem; }
+.carta-enlace { color: var(--color-rojo); font: 600 0.95rem var(--fuente-tablero); }
+
+/* Pie */
+.portada-pie { padding: 10px 16px 14px; border-top: var(--borde); color: var(--color-tenue); font-size: 0.85rem; }
+.portada-pie p { margin: 2px 0; }
+.portada-pie p[hidden] { display: none; }
+.portada-pie a { color: var(--color-tinta); }
+
+/* De 700 a 1039 px: una columna, con el tablero de ancho completo */
+@media (max-width: 1039px) {
+  .portada { --lado: min(720px, calc(100vw - 64px)); grid-template-columns: var(--lado); grid-template-rows: auto auto auto; }
+  .portada-tablero, .portada-centro { grid-row: 1; }
+  .portada-fichas { grid-column: 1; grid-row: 2; }
+  .portada-cartas { grid-column: 1; grid-row: 3; }
+}
+
+/* Móvil: recorrido vertical, sin tablero comprimido */
+@media (max-width: 699px) {
+  .tablero-largo { min-height: 100vh; }
+  .portada { display: flex; flex-direction: column; gap: 18px; padding: 12px; }
+  .portada-centro { width: auto; height: auto; margin: 0; padding: 4px 0; overflow: visible; }
+  .portada-acciones, .portada-sueldo { width: 100%; }
+  .portada-buscador { order: 0; flex-basis: 100%; }   /* sitio.css lo manda al final de la cabecera del mapa */
+  .portada-sueldo-fila .campo-euros input, .portada-buscador input { font-size: 16px; }   /* sin el zoom de iOS */
+  .casillas { display: block; width: auto; height: auto; background: none; border: 0; border-radius: 0; overflow: visible; }
+  .casillas > .casilla:nth-child(n) { margin: 0 0 6px; padding: 0 0 0 var(--grosor); min-height: var(--objetivo-tactil); outline: 0; border: var(--borde); border-radius: var(--radio-control); text-align: left; }
+  .casillas > .casilla:nth-child(n)::before { inset: 0 auto 0 0; width: var(--grosor); height: auto; }
+  .casillas > .casilla:nth-child(n) > a { align-items: flex-start; padding: 8px 10px; }
+  .casillas > .casilla-inactiva:nth-child(n) { justify-content: flex-start; align-items: baseline; padding: 8px 10px 8px calc(var(--grosor) + 10px); }
+  .casilla-inactiva { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
+  .casilla, .casilla-esquina { font-size: 0.95rem; }
+}

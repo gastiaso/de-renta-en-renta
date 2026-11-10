@@ -3,162 +3,163 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Hasta la portada, la raíz era el mapa: los enlaces ya compartidos (con el estado de la vista o
+       un sueldo) van a mapa.html antes de pintar nada. -->
+  <script src="js/redireccion.js"></script>
   <title>De renta en renta</title>
-  <meta name="description" content="Vivienda y sueldos, sección a sección">
+  <meta name="description" content="Vivienda y sueldos, sección a sección: cuánto cuesta alquilar en cada sección censal de España y a quién le llega el sueldo.">
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css">
   <link rel="stylesheet" href="estilo/tokens.css">
   <link rel="stylesheet" href="estilo/sitio.css">
-  <!-- Nombres de las librerías: el código importa «maplibre-gl», como lo haría con un empaquetador. -->
-  <script type="importmap">
-    { "imports": { "maplibre-gl": "./vendor/maplibre-gl/maplibre-gl.mjs" } }
-  </script>
-  <script src="vendor/pmtiles/pmtiles.js" defer></script>
-  <script type="module" src="js/principal.js"></script>
+  <link rel="stylesheet" href="estilo/portada.css">
+  <script type="module" src="js/portada.js"></script>
 </head>
 <body>
-  <div class="tablero">
-    <header class="cabecera">
-      <div class="marca">
-        <h1 class="marca-titulo" data-i18n="sitio.titulo">De renta en renta</h1>
-        <p class="marca-subtitulo" data-i18n="sitio.subtitulo">Vivienda y sueldos, sección a sección</p>
-      </div>
+  <div class="tablero tablero-largo">
+    <header class="cabecera cabecera-portada">
       <nav class="navegacion" data-i18n-aria="interfaz.navegacion">
-        <a href="./" aria-current="page" data-i18n="nav.mapa">Mapa</a>
-        <a href="#tu-sueldo" data-i18n="nav.tu_sueldo">Tu sueldo</a>
+        <a href="mapa.html" data-href-es="mapa.html" data-href-en="mapa.html?idioma=en" data-i18n="nav.mapa">Mapa</a>
+        <a href="mapa.html#tu-sueldo" data-href-es="mapa.html#tu-sueldo" data-href-en="mapa.html?idioma=en#tu-sueldo" data-i18n="nav.tu_sueldo">Tu sueldo</a>
         <a href="sobrecarga.html" data-href-es="sobrecarga.html" data-href-en="sobrecarga.html?idioma=en" data-i18n="nav.sobrecarga">Sobrecarga</a>
         <a href="datos.html" data-href-es="datos.html" data-href-en="data.html" data-i18n="nav.datos">Datos</a>
         <a href="metodo.html" data-href-es="metodo.html" data-href-en="method.html" data-i18n="nav.metodo">Método</a>
       </nav>
-      <div class="buscador" role="search">
-        <label class="oculto" for="buscador-entrada" data-i18n="interfaz.buscador.etiqueta">Buscar municipio o sección</label>
-        <input id="buscador-entrada" type="search" role="combobox" autocomplete="off" spellcheck="false"
-               aria-autocomplete="list" aria-expanded="false" aria-controls="buscador-lista"
-               data-i18n-placeholder="interfaz.buscador.marcador">
-        <ul id="buscador-lista" class="buscador-lista" role="listbox" hidden></ul>
-      </div>
       <div class="idioma" role="group" data-i18n-aria="interfaz.idioma">
         <button type="button" data-idioma="es" aria-pressed="true" lang="es">ES</button>
         <button type="button" data-idioma="en" aria-pressed="false" lang="en">EN</button>
       </div>
     </header>
 
-    <main class="explorador">
-      <div class="mapa-columna">
-        <div class="barra-vista" role="group" data-i18n-aria="interfaz.vista.region">
-          <label class="barra-campo barra-campo-mapa">
-            <span id="vista-mapa-titulo" data-i18n="interfaz.vista.mapa">Mapa</span>
-            <select id="vista-mapa" aria-labelledby="vista-mapa-titulo"></select>
+    <main class="portada">
+      <!-- Centro del tablero: identidad, «Tu sueldo», buscador y dado. En escritorio va encima del
+           centro de las casillas; en el móvil, lo primero. -->
+      <section class="portada-centro" aria-labelledby="portada-titulo">
+        <h1 id="portada-titulo" class="portada-titulo" data-i18n="sitio.titulo">De renta en renta</h1>
+        <p class="portada-subtitulo" data-i18n="sitio.subtitulo">Vivienda y sueldos, sección a sección</p>
+        <p class="portada-dicho" data-i18n="sitio.dicho">De renta en renta, y pago porque me toca</p>
+        <p class="portada-lema" data-i18n="sitio.lema">Dónde, desde cuándo y para quién se ha roto la relación entre lo que cuesta vivir y lo que se cobra</p>
+        <p id="aviso-ejemplo" class="etiqueta-ejemplo" hidden data-i18n="avisos.ejemplo" data-i18n-title="interfaz.ejemplo_nota">Datos de ejemplo</p>
+
+        <!-- Sin «name» en el campo: sin JavaScript, el formulario lleva a «Tu sueldo» del mapa sin el sueldo. -->
+        <form id="portada-sueldo" class="portada-sueldo" action="mapa.html#tu-sueldo" method="get" novalidate>
+          <label class="portada-sueldo-etiqueta" for="portada-neto">
+            <img class="ficha-icono" src="estilo/fichas/peon.svg" alt="" width="28" height="28">
+            <span data-i18n="interfaz.sueldo.neto">Sueldo neto al mes</span>
           </label>
-          <label class="barra-campo">
-            <span id="vista-anio-titulo" data-i18n="interfaz.vista.anio">Año</span>
-            <select id="vista-anio" aria-labelledby="vista-anio-titulo"></select>
-          </label>
-          <div id="vista-tipologia" class="barra-campo" role="group" aria-labelledby="vista-tipologia-titulo" hidden>
-            <span id="vista-tipologia-titulo" data-i18n="interfaz.vista.tipologia">Vivienda</span>
-            <span class="barra-botones">
-              <button type="button" data-tipologia="VC" aria-pressed="true" data-i18n="interfaz.vista.vc" data-i18n-title="vocabulario.tipologia.VC">Colectiva</button>
-              <button type="button" data-tipologia="VU" aria-pressed="false" data-i18n="interfaz.vista.vu" data-i18n-title="vocabulario.tipologia.VU">Unifamiliar</button>
-            </span>
+          <span class="portada-sueldo-fila">
+            <span class="campo-euros"><input id="portada-neto" type="text" inputmode="decimal" autocomplete="off" aria-describedby="portada-sueldo-nota portada-sueldo-error"><span aria-hidden="true">€</span></span>
+            <button type="submit" class="boton boton-principal" data-i18n="portada.te_llega">¿Te llega?</button>
+          </span>
+          <span id="portada-sueldo-error" class="portada-error" role="alert" hidden></span>
+          <span id="portada-sueldo-nota" class="nota portada-nota" data-i18n="portada.privacidad">Tu sueldo no sale de este dispositivo.</span>
+        </form>
+
+        <div class="portada-acciones" data-js hidden>
+          <div class="buscador portada-buscador" role="search">
+            <label class="oculto" for="buscador-entrada" data-i18n="interfaz.buscador.etiqueta">Buscar municipio o sección</label>
+            <input id="buscador-entrada" type="search" role="combobox" autocomplete="off" spellcheck="false"
+                   aria-autocomplete="list" aria-expanded="false" aria-controls="buscador-lista"
+                   data-i18n-placeholder="interfaz.buscador.marcador">
+            <ul id="buscador-lista" class="buscador-lista" role="listbox" hidden></ul>
           </div>
-          <div class="barra-campo barra-descargas" role="group" aria-labelledby="exportar-titulo">
-            <span id="exportar-titulo" data-i18n="interfaz.exportar.titulo">Descargar</span>
-            <span class="barra-botones">
-              <button id="exportar-csv" type="button" data-i18n="interfaz.exportar.csv"
-                      data-i18n-aria="interfaz.exportar.csv_largo" data-i18n-title="interfaz.exportar.csv_largo">Datos (CSV)</button>
-              <button id="exportar-png" type="button" data-i18n="interfaz.exportar.png"
-                      data-i18n-aria="interfaz.exportar.png_largo" data-i18n-title="interfaz.exportar.png_largo">Imagen (PNG)</button>
-            </span>
-          </div>
-          <p id="exportar-estado" class="barra-estado oculto" aria-live="polite"></p>
+          <button id="portada-dado" type="button" class="boton portada-dado" aria-describedby="portada-dado-nota">
+            <svg class="dado" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+              <rect x="2" y="2" width="20" height="20" rx="4" fill="var(--color-placa)" stroke="currentColor" stroke-width="2"/>
+              <circle cx="7.5" cy="7.5" r="1.8" fill="currentColor"/><circle cx="16.5" cy="7.5" r="1.8" fill="currentColor"/>
+              <circle cx="12" cy="12" r="1.8" fill="currentColor"/>
+              <circle cx="7.5" cy="16.5" r="1.8" fill="currentColor"/><circle cx="16.5" cy="16.5" r="1.8" fill="currentColor"/>
+            </svg>
+            <span data-i18n="portada.dado">Tira el dado</span>
+          </button>
+          <span id="portada-dado-nota" class="nota portada-nota"></span>
         </div>
+      </section>
 
-        <section class="mapa-marco" data-i18n-aria="interfaz.mapa.region">
-          <div id="mapa" class="mapa"></div>
-          <p id="aviso-ejemplo" class="etiqueta-ejemplo aviso-mapa" hidden
-             data-i18n="avisos.ejemplo" data-i18n-title="interfaz.ejemplo_nota">Datos de ejemplo</p>
-          <p id="aviso-escala" class="aviso-escala" role="status" hidden data-i18n="interfaz.mapa.sin_dato_escala">Este mapa no tiene datos a esta escala: acerca el mapa.</p>
-          <p id="aviso-periodo" class="aviso-escala" role="status" hidden></p>
-          <div id="leyenda" class="leyenda" hidden></div>
-        </section>
-      </div>
+      <!-- Fichas: para quién. Cada una abre el mapa en «¿te llega?» con su ingreso. -->
+      <section class="portada-fichas" aria-labelledby="portada-fichas-titulo">
+        <h2 id="portada-fichas-titulo" class="portada-h2" data-i18n="portada.fichas_titulo">¿Para quién?</h2>
+        <ul class="fichas-lista">
+          <li><a class="ficha-enlace ficha-enlace-llave" data-ficha="llave" href="mapa.html?ficha=llave" data-href-es="mapa.html?ficha=llave" data-href-en="mapa.html?ficha=llave&amp;idioma=en">
+            <img class="ficha-icono" src="estilo/fichas/llave.svg" alt="" width="40" height="40">
+            <span class="ficha-nombre" data-i18n="fichas.llave">Hogar del barrio</span>
+            <span class="ficha-desc" data-i18n="portada.fichas.llave"></span></a></li>
+          <li><a class="ficha-enlace ficha-enlace-mochila" data-ficha="mochila" href="mapa.html?ficha=mochila" data-href-es="mapa.html?ficha=mochila" data-href-en="mapa.html?ficha=mochila&amp;idioma=en">
+            <img class="ficha-icono" src="estilo/fichas/mochila.svg" alt="" width="40" height="40">
+            <span class="ficha-nombre" data-i18n="fichas.mochila">Joven menor de 35</span>
+            <span class="ficha-desc" data-i18n="portada.fichas.mochila"></span></a></li>
+          <li><a class="ficha-enlace ficha-enlace-tartera" data-ficha="tartera" href="mapa.html?ficha=tartera" data-href-es="mapa.html?ficha=tartera" data-href-en="mapa.html?ficha=tartera&amp;idioma=en">
+            <img class="ficha-icono" src="estilo/fichas/tartera.svg" alt="" width="40" height="40">
+            <span class="ficha-nombre" data-i18n="fichas.tartera">Salario mínimo</span>
+            <span class="ficha-desc" data-i18n="portada.fichas.tartera"></span></a></li>
+          <li><a class="ficha-enlace ficha-enlace-transistor" data-ficha="transistor" href="mapa.html?ficha=transistor" data-href-es="mapa.html?ficha=transistor" data-href-en="mapa.html?ficha=transistor&amp;idioma=en">
+            <img class="ficha-icono" src="estilo/fichas/transistor.svg" alt="" width="40" height="40">
+            <span class="ficha-nombre" data-i18n="fichas.transistor">Pensionista</span>
+            <span class="ficha-desc" data-i18n="portada.fichas.transistor"></span></a></li>
+          <li><a class="ficha-enlace ficha-enlace-peon" data-ficha="peon" href="mapa.html?ficha=peon#tu-sueldo" data-href-es="mapa.html?ficha=peon#tu-sueldo" data-href-en="mapa.html?ficha=peon&amp;idioma=en#tu-sueldo">
+            <img class="ficha-icono" src="estilo/fichas/peon.svg" alt="" width="40" height="40">
+            <span class="ficha-nombre" data-i18n="fichas.peon">Tu ficha</span>
+            <span class="ficha-desc" data-i18n="portada.fichas.peon"></span></a></li>
+        </ul>
+      </section>
 
-      <div class="lateral">
-        <section id="tu-sueldo" class="tarjeta sueldo" aria-labelledby="sueldo-titulo">
-          <header class="tarjeta-cabecera">
-            <h2 id="sueldo-titulo" class="tarjeta-titulo" data-i18n="nav.tu_sueldo">Tu sueldo</h2>
-          </header>
-          <div class="sueldo-cuerpo">
-            <p id="sueldo-intro" class="sueldo-intro"></p>
-            <div class="campos">
-              <label class="campo">
-                <span data-i18n="interfaz.sueldo.neto">Sueldo neto al mes</span>
-                <span class="campo-euros"><input id="sueldo-neto" type="text" inputmode="decimal" autocomplete="off"><span aria-hidden="true">€</span></span>
-              </label>
-              <label class="campo">
-                <span data-i18n="interfaz.sueldo.segundo">Segundo sueldo (opcional)</span>
-                <span class="campo-euros"><input id="sueldo-segundo" type="text" inputmode="decimal" autocomplete="off"><span aria-hidden="true">€</span></span>
-              </label>
-            </div>
-            <div id="sueldo-pagas" class="selector" role="group" aria-labelledby="sueldo-pagas-titulo">
-              <span id="sueldo-pagas-titulo" class="selector-titulo" data-i18n="interfaz.sueldo.pagas">Pagas al año</span>
-              <button type="button" data-pagas="12" aria-pressed="true">12</button>
-              <button type="button" data-pagas="14" aria-pressed="false">14</button>
-            </div>
-            <div id="sueldo-fichas" class="fichas" role="group" aria-labelledby="sueldo-fichas-titulo">
-              <span id="sueldo-fichas-titulo" class="selector-titulo" data-i18n="interfaz.sueldo.fichas">O elige una ficha</span>
-              <div class="fichas-botones"></div>
-            </div>
-            <div id="sueldo-superficie" class="selector" role="group" aria-labelledby="sueldo-superficie-titulo">
-              <span id="sueldo-superficie-titulo" class="selector-titulo" data-i18n="interfaz.sueldo.superficie">Vivienda</span>
-              <button type="button" data-superficie="50" aria-pressed="true">50 m²</button>
-              <button type="button" data-superficie="70" aria-pressed="false">70 m²</button>
-              <button type="button" data-superficie="90" aria-pressed="false">90 m²</button>
-            </div>
-            <p id="sueldo-superficie-nota" class="nota" hidden></p>
-            <div id="sueldo-umbral" class="selector" role="group" aria-labelledby="sueldo-umbral-titulo">
-              <span id="sueldo-umbral-titulo" class="selector-titulo" data-i18n="interfaz.sueldo.umbral">Umbral</span>
-              <button type="button" data-umbral="30" aria-pressed="true">30 %</button>
-              <button type="button" data-umbral="40" aria-pressed="false">40 %</button>
-            </div>
-            <p id="sueldo-resumen" class="sueldo-resumen" aria-live="polite" hidden></p>
-            <p id="sueldo-detalle" class="nota" hidden></p>
-            <div class="acciones">
-              <button id="sueldo-volver" type="button" class="boton" data-i18n="interfaz.sueldo.volver" hidden>Ver el sueldo necesario</button>
-              <button id="sueldo-compartir" type="button" class="boton boton-principal" data-i18n="interfaz.compartir.boton">Compartir</button>
-            </div>
-            <p class="nota" data-i18n="interfaz.sueldo.privacidad">Tu sueldo no sale de este dispositivo.</p>
-          </div>
-        </section>
+      <!-- Cartas: tres cifras reales del pipeline (datos/portada.json). Sin el fichero, no se ven. -->
+      <section id="portada-cartas" class="portada-cartas" aria-labelledby="portada-cartas-titulo" hidden>
+        <h2 id="portada-cartas-titulo" class="portada-h2" data-i18n="portada.cartas_titulo">Cartas del atlas</h2>
+        <div id="portada-cartas-lista" class="cartas-lista"></div>
+      </section>
 
-        <aside id="ficha" class="tarjeta ficha" aria-live="polite"></aside>
-      </div>
+      <!-- Casillas: una lista ordenada en el sentido de las agujas del reloj desde la esquina de
+           arriba a la izquierda, colocada con CSS en el borde de un tablero de 7 × 7. -->
+      <section class="portada-tablero" aria-labelledby="portada-casillas-titulo">
+        <h2 id="portada-casillas-titulo" class="oculto" data-i18n="portada.casillas_titulo">Casillas del tablero</h2>
+        <ol class="casillas">
+          <!-- casillas:inicio (escribir_casillas_portada(), desde inventario/casillas_portada.csv; no editar a mano) -->
+          <li class="casilla casilla-alquiler casilla-esquina" data-casilla="firma_contrato"><a href="mapa.html?mapa=sueldo_necesario" data-href-es="mapa.html?mapa=sueldo_necesario" data-href-en="mapa.html?mapa=sueldo_necesario&amp;idioma=en"><span class="casilla-texto" data-texto-es="Firma el contrato" data-texto-en="Sign the lease">Firma el contrato</span></a></li>
+          <li class="casilla casilla-ingresos" data-casilla="cobra_nomina"><a href="mapa.html#tu-sueldo" data-href-es="mapa.html#tu-sueldo" data-href-en="mapa.html?idioma=en#tu-sueldo"><span class="casilla-texto" data-texto-es="Cobra la nómina" data-texto-en="Get paid">Cobra la nómina</span></a></li>
+          <li class="casilla casilla-alquiler" data-casilla="fianza"><a href="metodo.html#71-alquiler-indicadores-8-y-9" data-href-es="metodo.html#71-alquiler-indicadores-8-y-9" data-href-en="method.html#71-rent-indicators-8-and-9"><span class="casilla-texto" data-texto-es="Fianza: un mes" data-texto-en="Deposit: one month">Fianza: un mes</span></a></li>
+          <li class="casilla casilla-alquiler" data-casilla="paga_alquiler"><a href="mapa.html?mapa=alquiler_mes" data-href-es="mapa.html?mapa=alquiler_mes" data-href-en="mapa.html?mapa=alquiler_mes&amp;idioma=en"><span class="casilla-texto" data-texto-es="Paga el alquiler" data-texto-en="Pay the rent">Paga el alquiler</span></a></li>
+          <li class="casilla casilla-barrio" data-casilla="pisos_turisticos"><a href="mapa.html?mapa=viviendas_turisticas" data-href-es="mapa.html?mapa=viviendas_turisticas" data-href-en="mapa.html?mapa=viviendas_turisticas&amp;idioma=en"><span class="casilla-texto" data-texto-es="Pisos turísticos en el portal" data-texto-en="Tourist flats in the building">Pisos turísticos en el portal</span></a></li>
+          <li class="casilla casilla-barrio casilla-inactiva" data-casilla="zona_tensionada" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Zona tensionada" data-texto-en="Stressed housing market area">Zona tensionada</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-alquiler casilla-esquina" data-casilla="renueva_contrato"><a href="mapa.html?mapa=esfuerzo_residentes" data-href-es="mapa.html?mapa=esfuerzo_residentes" data-href-en="mapa.html?mapa=esfuerzo_residentes&amp;idioma=en"><span class="casilla-texto" data-texto-es="Renueva el contrato" data-texto-en="Renew the lease">Renueva el contrato</span></a></li>
+          <li class="casilla casilla-alquiler casilla-inactiva" data-casilla="actualizacion_renta" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Actualización de la renta" data-texto-en="Rent update">Actualización de la renta</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-barrio" data-casilla="vecinos_alquiler"><a href="mapa.html?mapa=hogares_alquiler" data-href-es="mapa.html?mapa=hogares_alquiler" data-href-en="mapa.html?mapa=hogares_alquiler&amp;idioma=en"><span class="casilla-texto" data-texto-es="Vecinos de alquiler" data-texto-en="Neighbours who rent">Vecinos de alquiler</span></a></li>
+          <li class="casilla casilla-ingresos" data-casilla="compartir_piso"><a href="mapa.html?superficie=70#tu-sueldo" data-href-es="mapa.html?superficie=70#tu-sueldo" data-href-en="mapa.html?superficie=70&amp;idioma=en#tu-sueldo"><span class="casilla-texto" data-texto-es="Compartir piso" data-texto-en="Share a flat">Compartir piso</span></a></li>
+          <li class="casilla casilla-alquiler" data-casilla="mudanza"><a href="mapa.html?comparar=municipio" data-href-es="mapa.html?comparar=municipio" data-href-en="mapa.html?comparar=municipio&amp;idioma=en"><span class="casilla-texto" data-texto-es="Mudanza" data-texto-en="Moving house">Mudanza</span></a></li>
+          <li class="casilla casilla-ingresos" data-casilla="cobra_smi"><a href="mapa.html?ficha=tartera" data-href-es="mapa.html?ficha=tartera" data-href-en="mapa.html?ficha=tartera&amp;idioma=en"><span class="casilla-texto" data-texto-es="Cobra el salario mínimo" data-texto-en="Earn the minimum wage">Cobra el salario mínimo</span></a></li>
+          <li class="casilla casilla-barrio casilla-esquina" data-casilla="casa_padres"><a href="sobrecarga.html#sc-acceso-titulo" data-href-es="sobrecarga.html#sc-acceso-titulo" data-href-en="sobrecarga.html?idioma=en#sc-acceso-titulo"><span class="casilla-texto" data-texto-es="Vuelve a casa de tus padres" data-texto-en="Move back in with your parents">Vuelve a casa de tus padres</span></a></li>
+          <li class="casilla casilla-compra casilla-inactiva" data-casilla="ahorra_entrada" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Ahorra la entrada" data-texto-en="Save for the down payment">Ahorra la entrada</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-compra casilla-inactiva" data-casilla="aval_padres" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Aval de tus padres" data-texto-en="Parents as guarantors">Aval de tus padres</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-compra casilla-inactiva" data-casilla="hipoteca_variable" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Hipoteca variable" data-texto-en="Variable-rate mortgage">Hipoteca variable</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-compra casilla-inactiva" data-casilla="sube_euribor" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Sube el euríbor" data-texto-en="The Euribor goes up">Sube el euríbor</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-barrio casilla-inactiva" data-casilla="derramas" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Comunidad y derramas" data-texto-en="Service charges and levies">Comunidad y derramas</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-compra casilla-esquina casilla-inactiva" data-casilla="tasacion" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Tasación" data-texto-en="Valuation">Tasación</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-compra casilla-inactiva" data-casilla="notaria" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Notaría" data-texto-en="Notary">Notaría</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-barrio casilla-inactiva" data-casilla="sorteo_vpo" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Sorteo de vivienda protegida" data-texto-en="Social housing draw">Sorteo de vivienda protegida</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-compra casilla-inactiva" data-casilla="herencia" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Herencia" data-texto-en="Inheritance">Herencia</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-ingresos" data-casilla="cobra_pension"><a href="mapa.html?ficha=transistor" data-href-es="mapa.html?ficha=transistor" data-href-en="mapa.html?ficha=transistor&amp;idioma=en"><span class="casilla-texto" data-texto-es="Cobra la pensión" data-texto-en="Draw your pension">Cobra la pensión</span></a></li>
+          <li class="casilla casilla-barrio" data-casilla="sobrecarga_europa"><a href="sobrecarga.html" data-href-es="sobrecarga.html" data-href-en="sobrecarga.html?idioma=en"><span class="casilla-texto" data-texto-es="Sobrecarga en Europa" data-texto-en="Overburden in Europe">Sobrecarga en Europa</span></a></li>
+          <!-- casillas:fin -->
+        </ol>
+        <ul class="familias" data-i18n-aria="portada.familias_titulo">
+          <li class="familia familia-ingresos" data-i18n="portada.familias.ingresos">Ingresos</li>
+          <li class="familia familia-alquiler" data-i18n="portada.familias.alquiler">Alquiler</li>
+          <li class="familia familia-compra" data-i18n="portada.familias.compra">Compra</li>
+          <li class="familia familia-barrio" data-i18n="portada.familias.barrio">Barrio</li>
+        </ul>
+      </section>
     </main>
+
+    <footer class="portada-pie">
+      <p id="portada-pie-fuentes" hidden></p>
+      <p id="portada-pie-fecha" hidden></p>
+      <p>
+        <span data-i18n="portada.pie.licencias">Datos y textos:</span>
+        <a href="https://github.com/gastiaso/de-renta-en-renta/blob/main/LICENCIA_DATOS.md">CC BY-SA 4.0</a> ·
+        <span data-i18n="portada.pie.codigo">Código:</span>
+        <a href="https://github.com/gastiaso/de-renta-en-renta/blob/main/LICENSE">MIT</a> ·
+        <a href="https://github.com/gastiaso/de-renta-en-renta" data-i18n="portada.pie.repositorio">Repositorio en GitHub</a>
+      </p>
+    </footer>
   </div>
-
-  <dialog id="compartir" class="dialogo" aria-labelledby="compartir-titulo">
-    <h2 id="compartir-titulo" class="tarjeta-titulo" data-i18n="interfaz.compartir.titulo">Compartir esta vista</h2>
-    <p id="compartir-aviso"></p>
-    <input id="compartir-enlace" class="dialogo-enlace" type="text" readonly data-i18n-aria="interfaz.compartir.enlace">
-    <div class="acciones">
-      <button id="compartir-con" type="button" class="boton" data-i18n="interfaz.compartir.copiar_con">Copiar con mi sueldo</button>
-      <button id="compartir-sin" type="button" class="boton boton-principal" data-i18n="interfaz.compartir.copiar_sin">Copiar sin el sueldo</button>
-      <button id="compartir-cerrar" type="button" class="boton" data-i18n="interfaz.compartir.cerrar">Cerrar</button>
-    </div>
-    <p id="compartir-hecho" class="nota" aria-live="polite"></p>
-  </dialog>
-
-  <dialog id="aviso-imagen" class="dialogo" aria-labelledby="aviso-imagen-titulo" aria-describedby="aviso-imagen-texto">
-    <h2 id="aviso-imagen-titulo" class="tarjeta-titulo" data-i18n="interfaz.exportar.aviso_titulo">Descargar la imagen</h2>
-    <p id="aviso-imagen-texto"></p>
-    <div class="acciones">
-      <button id="aviso-imagen-no" type="button" class="boton boton-principal" data-i18n="interfaz.exportar.aviso_no">Cancelar</button>
-      <button id="aviso-imagen-si" type="button" class="boton" data-i18n="interfaz.exportar.aviso_si">Descargar la imagen</button>
-    </div>
-  </dialog>
-
-  <noscript>
-    <p class="sin-js">Esta web necesita JavaScript para dibujar el mapa. · This site needs JavaScript to draw the map.</p>
-  </noscript>
 </body>
 </html>

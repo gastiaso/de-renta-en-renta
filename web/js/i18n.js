@@ -52,9 +52,12 @@ function crearTraductor(idioma, dic) {
 // Rellena los elementos marcados en el HTML: data-i18n (texto), data-i18n-aria (aria-label),
 // data-i18n-title (title) y data-i18n-placeholder (placeholder). Los enlaces del menú a otras
 // páginas llevan data-href-es y data-href-en (la página «Método» tiene un fichero por idioma).
+// Los textos que no están en los diccionarios porque salen de un CSV del inventario (las casillas
+// de la portada) llevan los dos idiomas en data-texto-es y data-texto-en.
 export function traducirPagina(t, raiz = document) {
   document.documentElement.lang = t.idioma;
   for (const el of raiz.querySelectorAll('[data-href-es]')) el.href = t.idioma === 'en' ? el.dataset.hrefEn : el.dataset.hrefEs;
+  for (const el of raiz.querySelectorAll('[data-texto-es]')) el.textContent = t.idioma === 'en' ? el.dataset.textoEn : el.dataset.textoEs;
   for (const el of raiz.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
   for (const el of raiz.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', t(el.dataset.i18nAria));
   for (const el of raiz.querySelectorAll('[data-i18n-title]')) el.title = t(el.dataset.i18nTitle);

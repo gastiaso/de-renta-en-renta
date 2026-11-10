@@ -103,6 +103,10 @@ async function iniciar() {
   new ResizeObserver(() => {
     if (Math.abs($('sc-serie').clientWidth - anchoSerie) > 24) pintarSerie();
   }).observe($('sc-serie'));
+  // Un ancla del enlace (la casilla de la portada que lleva al módulo de acceso, #sc-acceso-titulo)
+  // apunta a contenido que estaba oculto mientras cargaban los datos: se baja hasta ella ahora.
+  const ancla = location.hash.length > 1 ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+  if (ancla) ancla.scrollIntoView();
 }
 
 function traducir() {
@@ -112,9 +116,9 @@ function traducir() {
   for (const boton of document.querySelectorAll('[data-idioma]')) {
     boton.setAttribute('aria-pressed', String(boton.dataset.idioma === estado.idioma));
   }
-  // Enlaces a las otras páginas con el idioma activo
+  // Enlaces a las otras páginas (la portada y el mapa, mapa.html) con el idioma activo
   for (const enlace of document.querySelectorAll('[data-enlace]')) {
-    enlace.href = `./${estado.idioma === 'en' ? '?idioma=en' : ''}${enlace.dataset.enlace}`;
+    enlace.href = `${enlace.dataset.pagina ?? './'}${estado.idioma === 'en' ? '?idioma=en' : ''}${enlace.dataset.enlace}`;
   }
 }
 

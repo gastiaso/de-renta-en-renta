@@ -1,5 +1,5 @@
 // Tarjeta «Tu sueldo»: sueldo neto (12 o 14 pagas, segundo sueldo opcional), fichas, superficie,
-// umbral, resumen y botones. El marcado está en index.html (textos con data-i18n); aquí se
+// umbral, resumen y botones. El marcado está en mapa.html (textos con data-i18n); aquí se
 // conectan los controles y se actualiza lo que cambia. El sueldo solo vive en memoria.
 
 import { FICHAS_PERFIL, ingresoPeon } from './sueldo.js';

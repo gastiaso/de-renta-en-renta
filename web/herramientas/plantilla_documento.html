@@ -19,11 +19,14 @@ $-- datos_<idioma>.yaml en la página «Datos» y de web/i18n/<idioma>.json. Est
   <div class="tablero documento$if(actual_datos)$ documento-datos$endif$">
     <header class="cabecera">
       <div class="marca">
-        <p class="marca-titulo"><a href="$mapa$">$titulo$</a></p>
+        <p class="marca-titulo"><a href="$portada$">$titulo$</a></p>
         <p class="marca-subtitulo">$subtitulo$</p>
       </div>
       <nav class="navegacion" aria-label="$texto_navegacion$">
         <a href="$mapa$">$texto_mapa$</a>
+$if(texto_tu_sueldo)$
+        <a href="$tu_sueldo$">$texto_tu_sueldo$</a>
+$endif$
         <a href="$sobrecarga$">$texto_sobrecarga$</a>
         <a href="$datos$"$if(actual_datos)$ aria-current="page"$endif$>$texto_datos$</a>
         <a href="$metodo$"$if(actual_metodo)$ aria-current="page"$endif$>$texto_metodo$</a>

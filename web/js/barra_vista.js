@@ -1,5 +1,5 @@
 // Barra de la vista, encima del mapa: qué mapa, qué año (o periodo, «noviembre de 2024»), qué
-// tipología de vivienda y las descargas. El marcado está en index.html; aquí se rellenan las
+// tipología de vivienda y las descargas. El marcado está en mapa.html; aquí se rellenan las
 // opciones y se conectan los controles.
 //
 // Mapa y año son <select> nativos: se manejan con el teclado y, en el móvil, con el selector del

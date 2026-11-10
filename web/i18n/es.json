@@ -187,7 +187,22 @@
       "sin_contratos": {
         "VC": "Sin contratos de alquiler de pisos registrados",
         "VU": "Sin contratos de alquiler de viviendas unifamiliares registrados"
-      }
+      },
+      "titulo_territorio": "Ficha del territorio",
+      "vacia_comparar": "Elige una sección en el mapa: se comparará con su {nivel}.",
+      "sin_dato_nivel": "Sin dato en este nivel",
+      "sin_dato_nivel_nota": "La fuente no publica esta cifra para {nivel}, y no se calcula sumando secciones: no sería aritméticamente válido (regla 1 del método).",
+      "sin_ingreso_nivel": "La ficha {ficha} tiene un ingreso por provincia: no hay uno solo para toda la comunidad.",
+      "paga_14": "En 14 pagas: {euros} € por paga",
+      "dos_sueldos": "Entre dos sueldos iguales: {euros} € cada uno",
+      "tus_terminos": "Con tus pagas",
+      "ingreso_peon": {
+        "12": "Tu ingreso: {neto} € al mes.",
+        "14": "Tu ingreso: {neto} € × 14 pagas ÷ 12 = {ingreso} € al mes.",
+        "12_segundo": "Tu ingreso: {neto} € + {segundo} € del segundo sueldo = {ingreso} € al mes.",
+        "14_segundo": "Tu ingreso: ({neto} € + {segundo} € del segundo sueldo) × 14 pagas ÷ 12 = {ingreso} € al mes."
+      },
+      "pagas_nota": "Las pagas extra se reparten en los 12 meses: el alquiler se paga doce veces al año."
     },
     "comparador": {
       "titulo": "Comparar",
@@ -202,12 +217,73 @@
       "cancelar": "Cancelar",
       "indicador": "Indicador",
       "esta_seccion": "Esta sección",
-      "nota": "e: estimado. —: sin dato o en secreto estadístico. En cada fila, el mismo año en las dos columnas."
+      "nota": "e: estimado. —: sin dato o en secreto estadístico. En cada fila, el mismo año en las dos columnas.",
+      "este": {
+        "municipio": "Este municipio",
+        "provincia": "Esta provincia",
+        "ccaa": "Esta comunidad"
+      }
     },
     "estado_corto": {
       "estimado": "estimado",
       "secreto": "secreto",
       "ausente": "sin dato"
+    },
+    "etiqueta": {
+      "distrito": "Distrito {distrito}",
+      "seccion": "Sección {codigo}"
+    }
+  },
+  "portada": {
+    "titulo_pagina": "De renta en renta · Vivienda y sueldos, sección a sección",
+    "descripcion": "Cuánto cuesta alquilar en cada sección censal de España y a quién le llega el sueldo: mapa, fichas y sobrecarga.",
+    "proximamente": "próximamente",
+    "te_llega": "¿Te llega?",
+    "privacidad": "Tu sueldo no sale de este dispositivo: va al mapa tras «#», que el navegador no envía.",
+    "sueldo_error": "Escribe un sueldo neto al mes en euros, por ejemplo 1500.",
+    "dado": "Tira el dado",
+    "dado_nota": "Una sección al azar, con alquiler publicado en {anio}.",
+    "fichas_titulo": "¿Para quién?",
+    "fichas": {
+      "llave": "Renta media del hogar de cada sección frente a su alquiler mediano.",
+      "mochila": "Salario mediano estimado de 26 a 35 años en su provincia.",
+      "tartera": "Salario mínimo neto de cada año.",
+      "transistor": "Pensión media de jubilación neta en su provincia.",
+      "peon": "El sueldo que escribas, con 12 o 14 pagas y un segundo sueldo."
+    },
+    "cartas_titulo": "Cartas del atlas",
+    "cartas": {
+      "fuente": "Fuente: {fuentes} · {anio}",
+      "sueldo": {
+        "titulo": "Sueldo necesario",
+        "texto": "Para alquilar {superficie} m² sin pasar del {umbral} del sueldo, la sección mediana pide {mediana} € netos al mes en {anio}. Una de cada diez secciones pide menos de {p10} €; otra de cada diez, más de {p90} €.",
+        "enlace": "Ver el mapa del sueldo necesario"
+      },
+      "smi": {
+        "titulo": "Salario mínimo",
+        "texto": "Con el salario mínimo de {anio} ({neto} € netos al mes, en 12 pagas), el alquiler de un piso de {superficie} m² pasa del 30 % del sueldo en el {pct30} de las secciones con dato, y del 40 % en el {pct40}.",
+        "enlace": "Ver el mapa con el salario mínimo"
+      },
+      "sobrecarga": {
+        "titulo": "Sobrecarga",
+        "texto": "En {anio}, el {mercado} de quienes viven de alquiler a precio de mercado dedica a la vivienda más del 40 % de su renta disponible. En toda la población, el {total}.",
+        "enlace": "Ver la sobrecarga en España y Europa"
+      }
+    },
+    "casillas_titulo": "Casillas del tablero",
+    "familias_titulo": "Familias de casillas",
+    "familias": {
+      "ingresos": "Ingresos",
+      "alquiler": "Alquiler",
+      "compra": "Compra",
+      "barrio": "Barrio"
+    },
+    "pie": {
+      "fuentes": "Fuentes: {fuentes}.",
+      "fecha": "Datos generados el {fecha}.",
+      "licencias": "Datos y textos:",
+      "codigo": "Código:",
+      "repositorio": "Repositorio en GitHub"
     }
   },
   "sobrecarga": {

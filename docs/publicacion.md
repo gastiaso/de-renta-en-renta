@@ -138,7 +138,7 @@ En la web: *Actions → Publicar en Pages → Run workflow*. El resumen de la ej
 
 Comprobaciones en `https://gastiaso.github.io/de-renta-en-renta/`:
 
-- la prueba en el navegador contra el sitio publicado (`R/web_navegador.R`; Chrome sin ventana, con `chromote`): la página recalcula una muestra de 300 secciones en todos los años y abre seis fichas, y todo coincide con la tabla larga, sin errores de JavaScript ni de carga. Todas las filas deben dar 0:
+- la prueba en el navegador contra el sitio publicado (`R/web_navegador.R`; Chrome sin ventana, con `chromote`): la página recalcula una muestra de 300 secciones en todos los años y abre seis fichas, y todo coincide con la tabla larga, sin errores de JavaScript ni de carga. Desde la portada (10-nov-2026) abre el mapa en `mapa.html` y comprueba también la portada, la redirección de los enlaces viejos y la ficha por niveles, así que solo vale contra un sitio montado con ese código (la v1.0), no contra el de la v0.1. Todas las filas deben dar 0:
 
   ```r
   comprobar_web_navegador("https://gastiaso.github.io/de-renta-en-renta/",

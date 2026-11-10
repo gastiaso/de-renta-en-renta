@@ -14,7 +14,7 @@ export const redondear = (x, decimales) => Number(x.toFixed(decimales));
 export const decimalesDeEscala = (escala) => Math.max(0, Math.round(Math.log10(escala ?? 10)));
 
 // Niveles que pinta el mapa, de menos a más zoom (mapa.js, RELLENOS).
-const NIVELES_MAPA = ['provincia', 'municipio', 'sc'];
+const NIVELES_MAPA = ['ccaa', 'provincia', 'municipio', 'sc'];
 
 // Nivel del CSV: el que pinta el mapa a su escala o, si la serie no llega a él, el más fino que
 // tenga (una serie solo por sección, con el mapa de toda España, sale por sección).

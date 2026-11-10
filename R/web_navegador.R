@@ -18,8 +18,20 @@
 #     contratos, con pocos, en secreto, con 0 contratos, y «¿te llega?» con el salario mínimo en
 #     el límite entre dos tramos y lejos de él): su cifra, sus contratos y su margen, «pocos
 #     contratos», «sin contratos de pisos» y «en el límite», frente a lo que sale de R.
+#   navegador_redireccion: un enlace viejo a la raíz (con una sección, o con un sueldo tras «#»)
+#     acaba en mapa.html con la misma vista, y el sueldo no queda en la dirección (portada, tarea 24);
+#   navegador_portada: la portada carga, en castellano y en inglés, con sus 24 casillas, sin irse
+#     al mapa, y sus cartas dan las cifras de la tabla larga (cifras_portada());
+#   navegador_casillas: el destino de cada casilla activa, en los dos idiomas, existe (página y ancla);
+#   navegador_tu_sueldo: «¿Te llega?» de la portada abre el mapa en «¿te llega?» con el sueldo, que
+#     no aparece en la consulta;
+#   navegador_movil: a 375 px de ancho, ni la portada ni el mapa desbordan;
+#   navegador_territorio: la ficha de una comunidad, una provincia y un municipio (?territorio=…)
+#     da la cifra y el estado de la tabla larga en su nivel (tarea 26);
+#   navegador_clic: con el ratón sobre el mapa en cada escala (comunidad, provincia, municipio y
+#     sección), la etiqueta dice el nombre que luego pone la ficha al pulsar (tareas 25 y 26).
 # `larga`: la tabla larga (tar_read(tabla_larga)); `perfiles`: tar_read(perfiles), para el
-# ingreso de la tartera que usa la web.
+# ingreso de la tartera que usa la web. El mapa está en mapa.html; la raíz es la portada.
 
 # Programa de la página: recalcula la muestra con los módulos de la web y devuelve JSON.
 JS_MUESTRA_NAVEGADOR <- r"(
@@ -66,8 +78,19 @@ JS_FICHA_NAVEGADOR <- r"(
   const fia = f?.querySelector('.ficha-fiabilidad')?.textContent ?? '';
   const contratos = fia.match(/(\d[\d.]*)/);
   const margen = fia.match(/±\s*([\d.,]+)/);
+  const estados = t.existe('vocabulario.estado.secreto')
+    ? ['secreto', 'estimado', 'dato', 'ausente'].find((e) => texto.includes(t(`vocabulario.estado.${e}`))) ?? null : null;
+  const codigo = f?.querySelector('.ficha-codigo');
   return JSON.stringify({
-    seccion: (f?.querySelector('.ficha-codigo')?.textContent ?? '').replace(/\D/g, ''),
+    ruta: location.pathname,
+    busqueda: location.search,
+    hash: location.hash,
+    seccion: (codigo?.textContent ?? '').replace(/\D/g, ''),
+    nivel: codigo?.dataset.nivel ?? null,
+    codigo: codigo?.dataset.codigo ?? null,
+    nombre: codigo?.textContent ?? '',
+    sin_nivel: Boolean(f?.querySelector('.ficha-sin-nivel')),
+    estado: estados,
     cifra: num(f?.querySelector('.ficha-numero')?.textContent),
     contratos: contratos ? num(contratos[1]) : null,
     margen: margen ? num(margen[1]) : null,
@@ -77,6 +100,35 @@ JS_FICHA_NAVEGADOR <- r"(
     ejemplo: !document.getElementById('aviso-ejemplo')?.hidden,
   });
 })()
+)"
+
+# Lectura de la portada: idioma, título, casillas, destinos de las activas y cartas.
+JS_PORTADA_NAVEGADOR <- r"(
+(() => JSON.stringify({
+  ruta: location.pathname,
+  lang: document.documentElement.lang,
+  titulo: document.getElementById('portada-titulo')?.textContent ?? '',
+  casillas: document.querySelectorAll('.casillas > li').length,
+  primera: document.querySelector('.casillas .casilla-texto')?.textContent ?? '',
+  destinos: [...document.querySelectorAll('.casillas > li > a')].map((a) => a.getAttribute('href')),
+  cartas: [...document.querySelectorAll('#portada-cartas-lista .carta')].map((c) => ({ id: c.dataset.carta, texto: c.textContent })),
+  listo: Boolean(document.getElementById('portada-dado-nota')?.textContent),
+}))()
+)"
+
+# Comprueba en la página que cada destino existe: la página responde y, si lleva ancla, el id está.
+JS_DESTINOS_NAVEGADOR <- r"(
+(async (destinos) => {
+  const r = [];
+  for (const d of destinos) {
+    const u = new URL(d, location.href);
+    const res = await fetch(u, { cache: 'no-cache' });
+    const html = res.ok ? await res.text() : '';
+    const ancla = decodeURIComponent(u.hash.slice(1));
+    r.push([d, res.status, !ancla || html.includes(`id="${ancla}"`)]);
+  }
+  return JSON.stringify(r);
+})
 )"
 
 # Servidor local de la web (node web/servir.mjs) en un puerto libre; devuelve el proceso y la URL.
@@ -153,9 +205,10 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
   })
   evaluar <- function(js) b$Runtime$evaluate(js, awaitPromise = TRUE, returnByValue = TRUE)$result$value
 
-  # Opens the page with a chosen tract and waits until its tract profile is drawn
-  abrir <- function(consulta, seccion) {
-    b$Page$navigate(paste0(url, consulta))
+  # Opens the map page (mapa.html; with pagina = "", the old root link) with a chosen tract and
+  # waits until its tract profile is drawn
+  abrir <- function(consulta, seccion, pagina = "mapa.html") {
+    b$Page$navigate(paste0(url, pagina, consulta))
     t0 <- Sys.time()
     repeat {
       Sys.sleep(0.5)
@@ -200,6 +253,24 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
                                                   calculado = mal, referencia = 0)
   }
 
+  # Old links to the root (the map was there until the front page): same view on mapa.html
+  cs1 <- casos[1, ]
+  f <- abrir(sprintf("?seccion=%s", cs1$seccion), cs1$seccion, pagina = "")
+  filas[[length(filas) + 1L]] <- tibble::tibble(
+    id = "navegador_redireccion", detalle = paste("?seccion=", cs1$seccion),
+    calculado = as.numeric(is.null(f) || !endsWith(f$ruta, "/mapa.html") || !grepl(cs1$seccion, f$busqueda, fixed = TRUE)),
+    referencia = 0)
+  b$Page$navigate(paste0(url, "#sueldo=1500&pagas=14"))
+  ok <- esperar_navegador(evaluar, "location.pathname.endsWith('/mapa.html') && document.getElementById('sueldo-neto')?.value === '1500' && !document.getElementById('sueldo-resumen')?.hidden", espera)
+  dir <- if (ok) jsonlite::fromJSON(evaluar("JSON.stringify([location.search, location.hash])")) else c("?", "?")
+  filas[[length(filas) + 1L]] <- tibble::tibble(
+    id = "navegador_redireccion", detalle = "#sueldo=1500&pagas=14 (sueldo fuera de la direcci\u00f3n)",
+    calculado = as.numeric(!ok || grepl("1500", paste(dir, collapse = "")) || nzchar(dir[2])), referencia = 0)
+
+  # Front page, map by levels (tasks 24-26) and phone width
+  filas <- c(filas, comprobar_portada_navegador(b, evaluar, url, larga, perfiles, espera),
+             comprobar_territorios_navegador(b, evaluar, url, larga, espera))
+
   # Sample recomputed with the page modules
   sc <- unique(larga$geo_id[larga$nivel == "sc" & larga$indicador == "sueldo_necesario"])
   set.seed(semilla)
@@ -237,4 +308,139 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
   filas[[length(filas) + 1L]] <- tibble::tibble(id = "navegador_errores", detalle = paste(utils::head(errores, 5), collapse = " | "),
                                                 calculado = length(errores), referencia = 0)
   bind_rows(filas) |> mutate(calculado = as.numeric(calculado), referencia = as.numeric(referencia))
+}
+
+# Espera (hasta `espera` segundos) a que una condicion de JavaScript sea cierta en la pagina.
+esperar_navegador <- function(evaluar, condicion, espera = 60) {
+  t0 <- Sys.time()
+  repeat {
+    Sys.sleep(0.5)
+    if (isTRUE(tryCatch(evaluar(paste0("Boolean(", condicion, ")")), error = function(e) FALSE))) return(TRUE)
+    if (difftime(Sys.time(), t0, units = "secs") > espera) return(FALSE)
+  }
+}
+
+# Cifras de las cartas como las escribe la pagina en castellano (es-ES: punto de miles y coma
+# decimal; enteros en los euros, un decimal en los porcentajes).
+textos_cartas_navegador <- function(cifras) {
+  euros <- function(x) formatC(round(x), format = "d", big.mark = ".", decimal.mark = ",")
+  pct <- function(x) sub(".", ",", formatC(x, format = "f", digits = 1), fixed = TRUE)
+  list(sueldo = euros(c(cifras$sueldo$mediana, cifras$sueldo$p10, cifras$sueldo$p90)),
+       smi = pct(c(cifras$smi$pct_30, cifras$smi$pct_40)),
+       sobrecarga = if (!is.null(cifras$sobrecarga)) pct(c(cifras$sobrecarga$total, cifras$sobrecarga$alquiler_mercado)))
+}
+
+# Portada (tarea 24): carga en los dos idiomas, sus cartas con las cifras de la tabla larga, los
+# destinos de las casillas, «Tu sueldo» hasta el mapa sin el sueldo en la consulta y el ancho de
+# un movil. Devuelve una lista de filas (tibbles) de comprobaciones.
+comprobar_portada_navegador <- function(b, evaluar, url, larga, perfiles, espera = 60) {
+  filas <- list()
+  fila <- function(id, detalle, mal) tibble::tibble(id = id, detalle = detalle, calculado = as.numeric(mal), referencia = 0)
+  b$Page$navigate(url)
+  esperar_navegador(evaluar, "document.readyState === 'complete'", espera)
+  hay_cartas <- isTRUE(evaluar("fetch('datos/portada.json', { cache: 'no-cache' }).then((r) => r.ok)"))
+  esperados <- textos_cartas_navegador(cifras_portada(larga))
+  for (idioma in c("es", "en")) {
+    b$Page$navigate(paste0(url, if (idioma == "en") "?idioma=en" else ""))
+    listo <- esperar_navegador(evaluar, sprintf(
+      "document.documentElement.lang === '%s' && document.getElementById('portada-dado-nota')?.textContent && (!%s || document.querySelectorAll('#portada-cartas-lista .carta').length > 0)",
+      idioma, tolower(hay_cartas)), espera)
+    p <- if (listo) jsonlite::fromJSON(evaluar(JS_PORTADA_NAVEGADOR), simplifyVector = FALSE) else NULL
+    mal <- is.null(p) || grepl("mapa\\.html$", p$ruta) || p$casillas != 24L || p$titulo != "De renta en renta" ||
+      (idioma == "en" && p$primera != "Sign the lease") || (idioma == "es" && p$primera != "Firma el contrato")
+    filas[[length(filas) + 1L]] <- fila("navegador_portada", paste("portada", idioma), mal)
+    if (!is.null(p) && hay_cartas) {
+      cartas <- stats::setNames(vapply(p$cartas, function(x) x$texto, ""), vapply(p$cartas, function(x) x$id, ""))
+      for (id in names(esperados)) {
+        if (is.null(esperados[[id]])) next
+        texto <- cartas[id]
+        mal <- is.na(texto) || (idioma == "es" && !all(vapply(esperados[[id]], function(e) grepl(e, texto, fixed = TRUE), TRUE)))
+        filas[[length(filas) + 1L]] <- fila("navegador_portada", paste("carta", id, idioma), mal)
+      }
+    }
+    if (!is.null(p)) {
+      d <- jsonlite::fromJSON(evaluar(paste0(JS_DESTINOS_NAVEGADOR, "(", jsonlite::toJSON(unlist(p$destinos)), ")")))
+      mal <- if (is.null(dim(d))) 1 else sum(d[, 2] != "200" | d[, 3] != "TRUE")
+      filas[[length(filas) + 1L]] <- fila("navegador_casillas", sprintf("%d destinos (%s)", length(p$destinos), idioma), mal)
+    }
+  }
+
+  # Te llega?: the typed pay reaches the map after the hash, never in the query
+  b$Page$navigate(url)
+  esperar_navegador(evaluar, "document.getElementById('portada-dado-nota')?.textContent", espera)
+  evaluar("document.getElementById('portada-neto').value = '1.500'; document.getElementById('portada-sueldo').requestSubmit(); true")
+  ok <- esperar_navegador(evaluar, "location.pathname.endsWith('/mapa.html') && document.getElementById('sueldo-neto')?.value === '1500' && !document.getElementById('sueldo-resumen')?.hidden", espera)
+  dir <- if (ok) jsonlite::fromJSON(evaluar("JSON.stringify([location.search, location.hash])")) else c("?", "?")
+  filas[[length(filas) + 1L]] <- fila("navegador_tu_sueldo", "1.500 \u20ac desde la portada",
+                                      !ok || grepl("1500|[?&]sueldo=", dir[1]) || nzchar(dir[2]) || !grepl("ficha=peon", dir[1], fixed = TRUE))
+
+  # Phone width: no horizontal overflow on the front page nor on the map. Afterwards, back to the
+  # size of the session (clearing the override would also drop the size chromote set at the start)
+  restaurar <- function() b$Emulation$setDeviceMetricsOverride(width = 1280, height = 900, deviceScaleFactor = 1, mobile = FALSE)
+  b$Emulation$setDeviceMetricsOverride(width = 375, height = 812, deviceScaleFactor = 1, mobile = TRUE)
+  on.exit(restaurar(), add = TRUE)
+  for (pagina in c("", "mapa.html")) {
+    b$Page$navigate(paste0(url, pagina))
+    cond <- if (pagina == "") "document.getElementById('portada-dado-nota')?.textContent" else "document.querySelector('#ficha .ficha-vacia')"
+    ok <- esperar_navegador(evaluar, cond, espera)
+    Sys.sleep(1)
+    anchos <- if (ok) jsonlite::fromJSON(evaluar("JSON.stringify([document.documentElement.scrollWidth, window.innerWidth])")) else c(1, 0)
+    filas[[length(filas) + 1L]] <- fila("navegador_movil", paste("375 px:", if (pagina == "") "portada" else pagina), anchos[1] > anchos[2])
+  }
+  restaurar()
+  filas
+}
+
+# Territorios (tarea 26) y etiqueta (tarea 25). Una ficha por nivel desde la direccion
+# (?territorio=...) con la cifra y el estado de la tabla larga, un nivel sin la serie («sin dato
+# en este nivel») y, en cada escala, el raton sobre el centro del mapa (Madrid): la etiqueta
+# y la ficha que abre el clic dicen el mismo territorio.
+comprobar_territorios_navegador <- function(b, evaluar, url, larga, espera = 60) {
+  filas <- list()
+  fila <- function(id, detalle, mal) tibble::tibble(id = id, detalle = detalle, calculado = as.numeric(mal), referencia = 0)
+  esperada <- larga |>
+    filter(indicador == "sueldo_necesario", corte == "total", nivel %in% c("ccaa", "provincia", "municipio")) |>
+    group_by(nivel) |> filter(anio == max(anio)) |> ungroup()
+  abrir_ficha <- function(consulta) {
+    b$Page$navigate(paste0(url, "mapa.html", consulta))
+    ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-codigo[data-nivel]') && (document.querySelector('#ficha .ficha-estado') || document.querySelector('#ficha .ficha-sin-nivel'))", espera)
+    if (ok) jsonlite::fromJSON(evaluar(JS_FICHA_NAVEGADOR)) else NULL
+  }
+  for (caso in list(c("ccaa", "13"), c("provincia", "28"), c("municipio", "28079"))) {
+    f <- abrir_ficha(sprintf("?mapa=sueldo_necesario&territorio=%s:%s", caso[1], caso[2]))
+    e <- esperada |> filter(nivel == caso[1], geo_id == caso[2])
+    mal <- is.null(f) || nrow(e) != 1 || !identical(f$nivel, caso[1]) || !identical(f$codigo, caso[2]) ||
+      !identical(f$estado, e$estado) || xor(is.na(e$valor), is.null(f$cifra)) ||
+      (!is.na(e$valor) && !is.null(f$cifra) && abs(f$cifra - round(e$valor)) > 1e-9)
+    filas[[length(filas) + 1L]] <- fila("navegador_territorio", paste(caso, collapse = ":"), mal)
+  }
+  # A map whose series is not published at that level: "no data at this level" (rule 1)
+  f <- abrir_ficha("?mapa=renta_hogar&territorio=provincia:28")
+  filas[[length(filas) + 1L]] <- fila("navegador_territorio", "renta_hogar en provincia:28 (sin dato en este nivel)",
+                                      is.null(f) || !isTRUE(f$sin_nivel))
+
+  # Mouse over the centre of the map at each scale: label first, then the profile of the click
+  centro <- "(() => { const r = document.getElementById('mapa').getBoundingClientRect(); return JSON.stringify([r.left + r.width / 2, r.top + r.height / 2]); })()"
+  etiqueta <- "JSON.stringify([...document.querySelectorAll('#mapa-etiqueta span')].map((s) => s.textContent))"
+  for (escala in list(c("3.50", "ccaa"), c("4.50", "provincia"), c("6.00", "municipio"), c("13.00", "sc"))) {
+    b$Page$navigate(sprintf("%smapa.html?mapa=sueldo_necesario&vista=%s/40.41680/-3.70380", url, escala[1]))
+    ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-vacia') && document.querySelector('.maplibregl-canvas')", espera)
+    Sys.sleep(3)
+    xy <- if (ok) jsonlite::fromJSON(evaluar(centro)) else c(0, 0)
+    b$Input$dispatchMouseEvent(type = "mouseMoved", x = xy[1] - 3, y = xy[2] - 3)
+    b$Input$dispatchMouseEvent(type = "mouseMoved", x = xy[1], y = xy[2])
+    Sys.sleep(0.8)
+    lineas <- jsonlite::fromJSON(evaluar(etiqueta))
+    b$Input$dispatchMouseEvent(type = "mousePressed", x = xy[1], y = xy[2], button = "left", clickCount = 1)
+    b$Input$dispatchMouseEvent(type = "mouseReleased", x = xy[1], y = xy[2], button = "left", clickCount = 1)
+    ok <- ok && esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-codigo')", 20)
+    f <- if (ok) jsonlite::fromJSON(evaluar(JS_FICHA_NAVEGADOR)) else NULL
+    mal <- if (is.null(f) || !length(lineas)) TRUE else if (escala[2] == "sc") {
+      !is.null(f$nivel) || !grepl(f$seccion, lineas[3], fixed = TRUE) || !startsWith(f$seccion, "28079")
+    } else {
+      !identical(f$nivel, escala[2]) || !identical(f$nombre, lineas[1])
+    }
+    filas[[length(filas) + 1L]] <- fila("navegador_clic", sprintf("zoom %s: %s (%s)", escala[1], escala[2], paste(lineas, collapse = " / ")), mal)
+  }
+  filas
 }

@@ -90,8 +90,11 @@ const falta = (serie) => ['==', estadoMapa(serie), null];
 //   series: las que hay que cargar en el mapa (la primera, la del alquiler);
 //   calcular(seccion, x) → { alquiler, ingreso, ratio } o null;
 //   ingreso(seccion, x) → el ingreso de la ficha en la sección, o null si falta (estadoLlega);
-//   expresion(idSeccion) → { valido, ratio }, expresiones de MapLibre.
-export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) => s }) {
+//   expresion(idSeccion, nivel) → { valido, ratio }, expresiones de MapLibre.
+// La «sección» puede ser también un municipio o una provincia (el ingreso provincial sale de sus
+// dos primeras cifras). `nivel`: con 'ccaa', una ficha con ingreso por provincia no tiene uno solo
+// para toda la comunidad, y queda sin dato (tarea 26).
+export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) => s, nivel = null }) {
   if (ficha === 'llave') {
     const { ingreso } = perfiles.llave;
     const vivienda = { serie: serie(perfiles.llave.vivienda.serie) };
@@ -120,7 +123,8 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
   }
   const perfil = ficha === 'peon' ? null : perfiles[ficha];
   const fijo = ficha === 'peon' ? ingresoPeon(sueldo) : null;
-  const ingresoDe = (seccion) => (perfil ? ingresoPerfil(perfil, seccion) : fijo);
+  const sinIngresoEn = (n) => n === 'ccaa' && perfil?.nivel === 'provincia';
+  const ingresoDe = (seccion) => (sinIngresoEn(nivel) ? null : perfil ? ingresoPerfil(perfil, seccion) : fijo);
   const m2Serie = serie('alquiler_m2');
   return {
     ficha,
@@ -133,8 +137,8 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
       const alquiler = m2 * superficie;
       return { alquiler, ingreso, ratio: alquiler / ingreso };
     },
-    expresion(idSeccion) {
-      const ingreso = perfil ? expresionIngresoPerfil(perfil, idSeccion) : fijo;
+    expresion(idSeccion, nivelCapa = nivel) {
+      const ingreso = sinIngresoEn(nivelCapa) ? 0 : perfil ? expresionIngresoPerfil(perfil, idSeccion) : fijo;
       return {
         valido: ['all', ['!', falta(m2Serie)], ['>', ingreso, 0]],
         ratio: ['/', ['*', numero(m2Serie), superficie], ingreso],
@@ -167,8 +171,9 @@ export function enLimiteLlega(ratio, margenPct) {
 // «ausente» (pregunta 15 ampliada: la calidad del ingreso no rebaja cada cifra).
 export const estadoLlega = (estadoAlquiler, ingreso, ausente) => (ingreso === null || ingreso === undefined ? ausente : estadoAlquiler);
 
-export function colorLlega(calculo, idSeccion, colores) {
-  const { valido, ratio } = calculo.expresion(idSeccion);
+// `nivel`: el de la capa que se pinta (en las comunidades, sin ingreso provincial).
+export function colorLlega(calculo, idSeccion, colores, nivel = null) {
+  const { valido, ratio } = calculo.expresion(idSeccion, nivel);
   return ['case', ['!', valido], colores.fuera,
     ['<=', ratio, LIMITES_LLEGA[0]], colores.llega[0],
     ['<=', ratio, LIMITES_LLEGA[1]], colores.llega[1],

@@ -1,0 +1,25 @@
+orden,id,texto_es,texto_en,familia,destino,destino_en,activa
+1,firma_contrato,Firma el contrato,Sign the lease,alquiler,mapa.html?mapa=sueldo_necesario,,TRUE
+2,cobra_nomina,Cobra la nómina,Get paid,ingresos,mapa.html#tu-sueldo,,TRUE
+3,fianza,Fianza: un mes,Deposit: one month,alquiler,metodo.html#71-alquiler-indicadores-8-y-9,method.html#71-rent-indicators-8-and-9,TRUE
+4,paga_alquiler,Paga el alquiler,Pay the rent,alquiler,mapa.html?mapa=alquiler_mes,,TRUE
+5,pisos_turisticos,Pisos turísticos en el portal,Tourist flats in the building,barrio,mapa.html?mapa=viviendas_turisticas,,TRUE
+6,zona_tensionada,Zona tensionada,Stressed housing market area,barrio,,,FALSE
+7,renueva_contrato,Renueva el contrato,Renew the lease,alquiler,mapa.html?mapa=esfuerzo_residentes,,TRUE
+8,actualizacion_renta,Actualización de la renta,Rent update,alquiler,,,FALSE
+9,vecinos_alquiler,Vecinos de alquiler,Neighbours who rent,barrio,mapa.html?mapa=hogares_alquiler,,TRUE
+10,compartir_piso,Compartir piso,Share a flat,ingresos,mapa.html?superficie=70#tu-sueldo,,TRUE
+11,mudanza,Mudanza,Moving house,alquiler,mapa.html?comparar=municipio,,TRUE
+12,cobra_smi,Cobra el salario mínimo,Earn the minimum wage,ingresos,mapa.html?ficha=tartera,,TRUE
+13,casa_padres,Vuelve a casa de tus padres,Move back in with your parents,barrio,sobrecarga.html#sc-acceso-titulo,,TRUE
+14,ahorra_entrada,Ahorra la entrada,Save for the down payment,compra,,,FALSE
+15,aval_padres,Aval de tus padres,Parents as guarantors,compra,,,FALSE
+16,hipoteca_variable,Hipoteca variable,Variable-rate mortgage,compra,,,FALSE
+17,sube_euribor,Sube el euríbor,The Euribor goes up,compra,,,FALSE
+18,derramas,Comunidad y derramas,Service charges and levies,barrio,,,FALSE
+19,tasacion,Tasación,Valuation,compra,,,FALSE
+20,notaria,Notaría,Notary,compra,,,FALSE
+21,sorteo_vpo,Sorteo de vivienda protegida,Social housing draw,barrio,,,FALSE
+22,herencia,Herencia,Inheritance,compra,,,FALSE
+23,cobra_pension,Cobra la pensión,Draw your pension,ingresos,mapa.html?ficha=transistor,,TRUE
+24,sobrecarga_europa,Sobrecarga en Europa,Overburden in Europe,barrio,sobrecarga.html,,TRUE
