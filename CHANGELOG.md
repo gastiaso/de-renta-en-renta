@@ -7,7 +7,7 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 ### Añadido (10-nov-2026, pregunta nueva y oferta de Idealista)
 
 - Pregunta rectora nueva en el plan, la nota (ES y EN), el README y los diccionarios (`sitio.gancho`, `sitio.lema`, `sitio.familias`).
-- `inventario/portales_idealista_territorios.csv`: los 815 territorios de los informes de alquiler de Idealista, con su código del INE (286 municipios, donde vive el 59,3 % de la población).
+- `inventario/portales_idealista_territorios.csv`: los 816 territorios de los informes de alquiler de Idealista, con su código del INE (286 municipios, donde vive el 59,3 % de la población; Ceuta, solo como comunidad).
 - `docs/metodo_corto.md`: borrador del método en dos páginas, con la tabla de licencias.
 - `docs/backlog.md`: tablas del INE con contratos nuevos (59004 y 59005), contraste con la oferta, cifras de referencia de la brecha entre entrar y quedarse, tramos calculados del indicador 14 y lectura de la metodología del SERPAVI de 18-mar-2026.
 
@@ -17,6 +17,7 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 - **Indicador 14**, fuera del selector del mapa; **indicador 15**, «Peso del alquiler en el ingreso».
 - **Tramos de color:** cortes fijos entre años, tres juegos por escala y siete tramos. Propuesta en `inventario/cortes_web_niveles.csv`.
 - **Lectura externa:** dos lectores. **Pensionista:** media con aviso.
+- **Barrios de Idealista**, fuera de la v1.0; las zonas siguen en la ficha del municipio.
 
 ### Decidido (10-nov-2026, entrar y quedarse; plan v0.43)
 

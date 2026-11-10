@@ -472,6 +472,7 @@ path,nivel_idealista,nombre_idealista,nivel,geo_id,nombre_ine,metodo,nota
 /sala-de-prensa/informes-precio-vivienda/alquiler/cataluna/tarragona-provincia/reus/,municipio,Reus,municipio,43123,Reus,nombre,
 /sala-de-prensa/informes-precio-vivienda/alquiler/cataluna/tarragona-provincia/tarragona/,municipio,Tarragona,municipio,43148,Tarragona,nombre,
 /sala-de-prensa/informes-precio-vivienda/alquiler/cataluna/tarragona-provincia/tortosa/,municipio,Tortosa,municipio,43155,Tortosa,nombre,
+/sala-de-prensa/informes-precio-vivienda/alquiler/ceuta/,comunidad,Ceuta,ccaa,18,Ceuta,manual,"solo página de comunidad, sin provincia ni municipio; serie de octubre de 2011 a noviembre de 2025, sin 2021: parece discontinuada (no figura en la portada de la sala de prensa)"
 /sala-de-prensa/informes-precio-vivienda/alquiler/comunitat-valenciana/,comunidad,Comunitat Valenciana,ccaa,10,Comunitat Valenciana,tabla,
 /sala-de-prensa/informes-precio-vivienda/alquiler/comunitat-valenciana/alicante/,provincia,Alicante,provincia,03,Alicante,nombre,
 /sala-de-prensa/informes-precio-vivienda/alquiler/comunitat-valenciana/alicante/alcoy-alcoi/,municipio,Alcoy / Alcoi,municipio,03009,Alcoi/Alcoy,nombre,

@@ -32,6 +32,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 13. **Tramos de color:** cortes fijos entre años. Recalibrados con los cuantiles de toda la serie donde reparten bien; donde la subida de la década lo impide (sobre todo, series en euros), anclados en el último año: sus sextiles y un tramo bajo en la mediana del primer año.
 14. **Tres juegos de cortes** por indicador: sección, municipio, y provincia y comunidad. La leyenda cambia al cruzar de escala, con aviso.
 15. **Siete tramos** en todos los mapas: la rampa pasa de seis a siete pasos.
+16. **Barrios de Idealista, fuera de la v1.0:** un solo mes, sin historia, sin geometría ni código, y filas ambiguas. Quedan para la v1.1 (ver al final).
 
 ## Bloque 0 · Hoy
 
@@ -58,10 +59,10 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 ## Bloque B · Entrar
 
 **35. Oferta de Idealista en el pipeline.**
-- **Datos:** tres CSV del autor, de la sala de prensa (extracción del 10-nov-2026), en `datos/brutos/portales/idealista/`, fuera de git:
-  - `alquiler_historico`: 136.688 cifras mensuales de €/m², de enero de 2006 a octubre de 2026;
-  - `alquiler_zonas`: 815 territorios (España, 18 comunidades, 51 provincias, 296 municipios y 449 zonas), con su dirección en la sala de prensa;
-  - `alquiler_barrios`: 868 barrios, solo octubre de 2026.
+- **Datos:** tres CSV del autor, de la sala de prensa (segunda extracción del 10-nov-2026), en `datos/brutos/portales/idealista/`, fuera de git:
+  - `alquiler_historico`: 136.816 cifras mensuales de €/m², de enero de 2006 a octubre de 2026;
+  - `alquiler_zonas`: 816 territorios (España, 19 comunidades, 51 provincias, 296 municipios y 449 zonas), con su dirección en la sala de prensa;
+  - `alquiler_barrios`: 1.014 filas, solo octubre de 2026; no se usan en la v1.0 (decisión 16).
 - **Conversor** al formato de la capa (`R/fuente_portales.R`). Valor anual: media de los meses del año (hoy la capa toma el último mes; se cambia y se documenta).
 - **Correspondencia** de cada territorio de Idealista con su código del INE, en `inventario/` (regla 7), casada por nombre y revisada a mano. Las zonas de Idealista no son distritos del INE: se guardan con su municipio y sin geometría.
 - **Solo web:** la capa se exporta a un fichero propio de `web/datos/` y no entra en `tabla_larga.parquet` ni en los CSV. Prueba: el paquete del *release* no contiene el corte `oferta_privada`.
@@ -72,6 +73,12 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 - **Condiciones de uso:** anotar en `inventario/fuentes.csv` lo que digan las de la sala de prensa. Cada cifra, con el enlace a su informe.
 - **Hecho cuando:** `PORTALES=TRUE` produce el indicador 13 de alquiler para España, comunidades, provincias y municipios, de 2015 a 2026, y pasa la compuerta.
 - **Avance (10-nov-2026):** los tres CSV están en `datos/brutos/portales/idealista/` y la correspondencia, en `inventario/portales_idealista_territorios.csv` (815 territorios): España, 18 comunidades (sin Ceuta), 51 provincias, 286 municipios, 449 zonas con su municipio y 10 localidades que Idealista lista como municipio y no lo son (Sotogrande, Montequinto, La Moraleja…; 8 con su municipio, y La Alcaidesa y La Manga, que tocan dos, sin él). 743 casados por nombre y 53 a mano, con los códigos comprobados en `geo/territorios_2021.csv`. En los 286 municipios vive el 59,3 % de la población (ADRH 2024). Sin meses duplicados. **Decidido (10-nov-2026):** la media anual exige al menos 9 meses; con menos, `ausente` ese año (en 2024 tienen los 12 meses 245 de los 286 municipios y alguno, 279).
+- **Segunda extracción (10-nov-2026, tarde), con el recorrido completo de provincias y municipios:**
+  - territorios: solo entra Ceuta (816 en total). El recorrido completo no encuentra municipios nuevos: Idealista publica 296 nodos de municipio;
+  - historia: las 136.688 cifras comunes, idénticas (precio y las tres variaciones); se suman los 128 meses de Ceuta;
+  - Ceuta: solo página de comunidad (Melilla tiene también provincia y municipio), de octubre de 2011 a noviembre de 2025 y sin 2021: parece discontinuada. Con el mínimo de 9 meses valen 2012–2019 y 2025. En la correspondencia, como comunidad (código 18);
+  - barrios: 1.014 filas. Las 146 nuevas son de municipios sin distritos y cada una es el propio municipio, con el precio de su serie. De las 868 de distrito, 449 son el propio distrito; quedan 419 barrios en 129 distritos de 35 municipios, y 30 se llaman como su distrito (en 19, también con el mismo precio): sin el enlace de cada fila no se distinguen;
+  - las cifras de referencia de la tarea 37 no cambian.
 
 **36. Índice del INE con contratos nuevos.**
 - La tabla larga solo tiene el total del IPVA (España: del 0,3 % en 2015 al 3,5 % en 2024). Descargar el desglose entre contratos nuevos y existentes (autorizada).
@@ -134,7 +141,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 - Vista inicial: `brecha_entrar_quedarse` por municipio, último año completo (decisión 9). `sueldo_entrar` y su mínimo de 50 m², en la ficha.
 - Medir y publicar la cobertura: qué parte de la población vive en los 296 municipios con dato.
 - Al acercarse aparecen las secciones, que son otra medida (parque). El cambio se ve: rótulo en el mapa, leyenda distinta y aviso al cruzar la escala. Nunca el mismo color para dos medidas.
-- Zonas y barrios de Idealista: sin geometría, solo como lista en la ficha del municipio.
+- Zonas de Idealista: sin geometría, solo como lista en la ficha del municipio, con su serie. Los barrios, fuera de la v1.0 (decisión 16).
 - Provincias y comunidades: la cifra que publica Idealista en ese nivel (regla 1).
 - **Hecho cuando:** la prueba de navegador recorre municipio → sección y comprueba rótulo, leyenda y cifra en cada escala.
 
@@ -316,6 +323,7 @@ Los bloques B y C van antes que la web porque cambian las cifras que la web ense
 - Línea de ingreso residual.
 - Autorización del Notariado, si llega.
 - Geometría de las zonas de Idealista, si hay fuente reutilizable.
+- Barrios de Idealista, si la extracción guarda el enlace de cada fila y hay más de un mes.
 
 ## Por decidir
 
