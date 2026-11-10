@@ -8,12 +8,13 @@ ter_web <- geo_territorios(jer_web, tibble::tibble(municipio = c("28001", "28002
                            tibble::tibble(codigo = "13", nombre_ine = "Madrid, Comunidad de", nuts2 = "ES30"))
 ind_web <- tibble::tibble(
   id = c(1, 9, 15, 19, 21, 22),
-  codigo = c("renta_persona", "alquiler_m2", "barrera_acceso", "viviendas_turisticas", "sueldo_necesario", "sobrecarga"),
+  codigo = c("renta_persona", "alquiler_m2", "peso_alquiler_ingreso", "viviendas_turisticas", "sueldo_necesario", "sobrecarga"),
   unidad_es = c("€ por persona y año", "€ por m² y mes", "% del ingreso", "% de las viviendas",
                 "€ netos por mes", "%"),
   nucleo_v01 = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE),
   cortes_web = c("10;20;30;40", "4;5.5;7;9", NA, "0.5;1;2.5;5", "700;900;1100;1500;2000", NA),
-  escala_web = c(NA, NA, NA, 100, NA, NA)                         # el 19, con dos decimales
+  escala_web = c(NA, NA, NA, 100, NA, NA),                        # el 19, con dos decimales
+  familia_alquiler = c(NA, "quedarse", "quedarse", NA, "quedarse", NA)   # tarea 34
 )
 fila_web <- function(geo_id, nivel, anio, indicador, valor, estado = "dato", corte = "total", grupo = "total",
                      fuente = "prueba") {
@@ -28,7 +29,7 @@ larga_web <- bind_rows(
   fila_web(c("2800101001", "2800201001"), "sc", 2024, "alquiler_m2", c(10.04, 8), corte = "tipologia", grupo = "VC"),
   fila_web("2800101001", "sc", 2024, "alquiler_m2", 12, corte = "tipologia", grupo = "VU"),
   fila_web("2800101001", "sc", 2024, "alquiler_m2", 7, corte = "tipologia_p25", grupo = "VC"),
-  fila_web("2800101001", "sc", 2024, "barrera_acceso", 40, corte = "ficha", grupo = "tartera"),
+  fila_web("2800101001", "sc", 2024, "peso_alquiler_ingreso", 40, corte = "ficha", grupo = "tartera"),
   fila_web(c("2800101001", "2800101002"), "sc", 2024, "viviendas_turisticas", c(1.234, 2), corte = "mes", grupo = "M02"),
   fila_web(c("2800101001", "2800101002"), "sc", 2024, "viviendas_turisticas", c(3, 4.5678), corte = "mes", grupo = "M11"),
   fila_web("13", "ccaa", 2024, "sobrecarga", 7.2)
@@ -111,6 +112,10 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_equal(unlist(m$mapas$alquiler_m2$cortes), c(4, 5.5, 7, 9))
   expect_equal(unlist(m$mapas$sueldo_necesario$cortes), c(700, 900, 1100, 1500, 2000))   # seis tramos
   expect_equal(m$mapas$renta_persona$formula, "directo")
+  # Tarea 34: los mapas de alquiler llevan su familia; los demás, ninguna
+  expect_equal(m$mapas$alquiler_m2$familia, "quedarse")
+  expect_equal(m$mapas$sueldo_necesario$familia, "quedarse")
+  expect_null(m$mapas$renta_persona$familia)
 
   # Valores en el orden del índice; la sección sin fila, null y ausente; el municipio sin 2021, entero ausente
   leer <- function(r) readLines(file.path(dir, "datos", r))

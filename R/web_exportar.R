@@ -344,6 +344,14 @@ cortes_web <- function(texto) {
 #     mapa es de categorías: `categorias` = {vocabulario, valores}; los cortes separan los valores;
 #   - los cortes de CORTES_POR_GRUPO_WEB dan un mapa por grupo (clave «indicador_grupo», con
 #     `indicador`, `corte` y `grupo`), con los cortes de su grupo en cortes_web («general|grupo=…»).
+# Tarea 34: los mapas de alquiler llevan `familia` («quedarse» o «entrar»; columna familia_alquiler
+# de inventario/indicadores.csv), que la leyenda escribe con su lectura literal.
+familia_web <- function(indicadores, codigo) {
+  if (!"familia_alquiler" %in% names(indicadores)) return(NULL)
+  f <- indicadores$familia_alquiler[match(codigo, indicadores$codigo)]
+  if (is.na(f) || !nzchar(f)) NULL else f
+}
+
 mapas_web <- function(catalogo, indicadores, vocabulario = NULL) {
   con_seccion <- catalogo$clave[vapply(catalogo$niveles, function(n) any(NIVELES_MAPA_WEB %in% n), TRUE)]
   nivel_minimo <- function(clave) {
@@ -364,6 +372,7 @@ mapas_web <- function(catalogo, indicadores, vocabulario = NULL) {
                     cortes = I(cortes[[g$grupo_web]] %||% cortes$general),
                     decimales = decimales_web(filas$unidad_es[k], escala_web(indicadores, codigo)))
         if (!identical(nivel_minimo(g$clave), "sc")) def$nivel_minimo <- nivel_minimo(g$clave)
+        def$familia <- familia_web(indicadores, codigo)
         mapas[[g$clave]] <- def
       }
       next
@@ -381,6 +390,7 @@ mapas_web <- function(catalogo, indicadores, vocabulario = NULL) {
     if (!identical(nivel_minimo(def$base), "sc")) mapas[[codigo]]$nivel_minimo <- nivel_minimo(def$base)
     categorias <- categorias_web(vocabulario, codigo)
     if (!is.null(categorias)) mapas[[codigo]]$categorias <- categorias
+    mapas[[codigo]]$familia <- familia_web(indicadores, codigo)
   }
   mapas
 }

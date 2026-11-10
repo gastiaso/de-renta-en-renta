@@ -131,7 +131,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 | 12 | [`valor_tasado_m2`](#valor_tasado_m2) | Appraised value per square metre | € per m² | v0.3 |
 | 13 | [`precio_oferta`](#precio_oferta) | Asking price (rent and sale) | € per m² (rent: per m² per month) | v0.4 |
 | 14 | [`esfuerzo_residentes`](#esfuerzo_residentes) | Resident rent burden | % of household income | v0.1 |
-| 15 | [`barrera_acceso`](#barrera_acceso) | Rental access barrier | % of reference income | v0.1 |
+| 15 | [`peso_alquiler_ingreso`](#peso_alquiler_ingreso) | Rent share of income | % of reference income | v0.1 |
 | 16 | [`anios_salario_compra`](#anios_salario_compra) | Years of wages to buy a home | years | v0.3 |
 | 17 | [`esfuerzo_hipotecario`](#esfuerzo_hipotecario) | Theoretical mortgage burden | % of income | v0.3 |
 | 18 | [`hogares_alquiler`](#hogares_alquiler) | Renting households | % of households | v0.1 |
@@ -233,7 +233,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 **8 · Monthly rent (median)**
 
 - **Unit:** € per month
-- **Family:** Housing cost
+- **Family:** Housing cost · Staying
 - **Sources:** `mivau_serpavi`, `gv_emal`
 - **Version:** v0.1
 - **Definition:** Median monthly rent of current main-residence tenancies in the tract, by building type (apartment and single-family); the first and third quartiles are also published.
@@ -245,7 +245,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 **9 · Rent per square metre**
 
 - **Unit:** € per m² per month
-- **Family:** Housing cost
+- **Family:** Housing cost · Staying
 - **Sources:** `mivau_serpavi`, `gv_emal`
 - **Version:** v0.1
 - **Definition:** Median monthly rent per square metre of current main-residence tenancies in the tract, by building type (apartment and single-family).
@@ -257,7 +257,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 **10 · Annual change in rents**
 
 - **Unit:** annual % change
-- **Family:** Housing cost
+- **Family:** Housing cost · Staying
 - **Sources:** `ine_ipva`
 - **Version:** v0.3
 - **Definition:** Annual change in the Rental Housing Price Index.
@@ -293,7 +293,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 **13 · Asking price (rent and sale)**
 
 - **Unit:** € per m² (rent: per m² per month)
-- **Family:** Housing cost
+- **Family:** Housing cost · Moving in
 - **Sources:** `portales`
 - **Version:** v0.4
 - **Definition:** Average price per square metre in rental and sale listings.
@@ -305,31 +305,31 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 **14 · Resident rent burden**
 
 - **Unit:** % of household income
-- **Family:** Burden and access
+- **Family:** Burden · Staying
 - **Sources:** `mivau_serpavi`, `ine_adrh`
 - **Version:** v0.1
 - **Definition:** Share of the average household’s annual income in the tract that the median rent of that same tract would take.
 - **Calculation:** Median monthly rent of flats × 12 / average net household income, same year, × 100. Census tract and municipality. If either term is confidential or missing, so is the result.
-- **Reading:** Measures the vulnerability of current residents, not access: expensive areas look affordable because higher-income people live there.
+- **Reading:** Measures the vulnerability of current residents, not the cost of moving in: expensive areas look affordable because higher-income people live there.
 
-### `barrera_acceso`
+### `peso_alquiler_ingreso`
 
-**15 · Rental access barrier**
+**15 · Rent share of income**
 
 - **Unit:** % of reference income
-- **Family:** Burden and access
+- **Family:** Burden · Staying
 - **Sources:** `mivau_serpavi`, `aeat_mercado_trabajo`, `boe_smi`, `inss_pensiones`
 - **Version:** v0.1
 - **Definition:** Share of a token’s net monthly income (minimum wage, under-35, pensioner or the user’s own pay) that 50 m² of rent in the tract would take.
 - **Calculation:** Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token, with the token’s income from the same year as the rent (each year’s minimum wage, under-35 pay and pension, 2015 to 2024); if the token lacks that year, the latest is used and this is stated.
-- **Reading:** Measures the barrier to moving in with a given income. Read by bands (up to 30%, 30–40% and over 40%), not as an exact figure.
+- **Reading:** Measures what the rent of current tenancies in the tract (those already renting) would take from a given income; it is not the price of moving in today, which asking rents measure. Read by bands (up to 30%, 30–40% and over 40%), not as an exact figure.
 
 ### `anios_salario_compra`
 
 **16 · Years of wages to buy a home**
 
 - **Unit:** years
-- **Family:** Burden and access
+- **Family:** Burden
 - **Sources:** `mivau_valor_tasado`, `aeat_mercado_trabajo`
 - **Version:** v0.3
 - **Definition:** Years of reference gross pay needed to buy a standard dwelling.
@@ -341,7 +341,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 **17 · Theoretical mortgage burden**
 
 - **Unit:** % of income
-- **Family:** Burden and access
+- **Family:** Burden
 - **Sources:** `mivau_valor_tasado`, `aeat_mercado_trabajo`, `ine_hipotecas`
 - **Version:** v0.3
 - **Definition:** Share of income taken by the first-year payment of a mortgage on a standard dwelling.
@@ -389,7 +389,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 **21 · Net monthly pay needed to stay under the threshold**
 
 - **Unit:** net € per month
-- **Family:** Burden and access
+- **Family:** Burden · Staying
 - **Sources:** `mivau_serpavi`
 - **Version:** v0.1
 - **Definition:** Net monthly pay needed so that 50 m² of rent in the tract does not exceed 30% of pay.
@@ -425,10 +425,10 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 **Auxiliary · Rental contracts behind the median**
 
 - **Unit:** contracts
-- **Family:** Housing cost
+- **Family:** Housing cost · Staying
 - **Sources:** `mivau_serpavi`
 - **Version:** v0.1
-- **Auxiliary of:** [`alquiler_mes`](#alquiler_mes), [`alquiler_m2`](#alquiler_m2), [`esfuerzo_residentes`](#esfuerzo_residentes), [`barrera_acceso`](#barrera_acceso), [`sueldo_necesario`](#sueldo_necesario)
+- **Auxiliary of:** [`alquiler_mes`](#alquiler_mes), [`alquiler_m2`](#alquiler_m2), [`esfuerzo_residentes`](#esfuerzo_residentes), [`peso_alquiler_ingreso`](#peso_alquiler_ingreso), [`sueldo_necesario`](#sueldo_necesario)
 - **Definition:** Number of current main-residence tenancies from which SERPAVI computes the area's median rent, by building type (apartment and single-family).
 - **Calculation:** Count published by the Housing Ministry (SERPAVI). With fewer than 10 tenancies the median is not published; 0 means there are no registered rental contracts, which is not the same as «no data».
 - **Reading:** Shows how many tenancies support the median: with fewer than 30, the tract profile flags «few contracts». It accompanies 8, 9, 14, 15 and 21 and has no map of its own.
@@ -438,7 +438,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 **Auxiliary · Approximate margin of the median monthly rent**
 
 - **Unit:** % of the median
-- **Family:** Housing cost
+- **Family:** Housing cost · Staying
 - **Sources:** `calculo_propio`, `mivau_serpavi`
 - **Version:** v0.1
 - **Auxiliary of:** [`alquiler_mes`](#alquiler_mes), [`esfuerzo_residentes`](#esfuerzo_residentes)
@@ -451,10 +451,10 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 **Auxiliary · Approximate margin of the median rent per m²**
 
 - **Unit:** % of the median
-- **Family:** Housing cost
+- **Family:** Housing cost · Staying
 - **Sources:** `calculo_propio`, `mivau_serpavi`
 - **Version:** v0.1
-- **Auxiliary of:** [`alquiler_m2`](#alquiler_m2), [`barrera_acceso`](#barrera_acceso), [`sueldo_necesario`](#sueldo_necesario)
+- **Auxiliary of:** [`alquiler_m2`](#alquiler_m2), [`peso_alquiler_ingreso`](#peso_alquiler_ingreso), [`sueldo_necesario`](#sueldo_necesario)
 - **Definition:** Approximate standard error of the median rent per square metre (9), as a percentage of the median, by building type.
 - **Calculation:** 0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI rent-per-m² quartiles and tenancies (n); only where the median is published (10 or more tenancies).
 - **Reading:** It also applies to 15 and 21, which are rent per m² in another unit: the profile gives the pay needed with its range and warns when «Can you make rent?» sits on the edge between two bands.

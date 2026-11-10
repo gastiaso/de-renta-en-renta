@@ -7,9 +7,13 @@
 // F5: los mapas de categorías (indicador 20) llevan una lista con el texto de cada categoría en vez de
 // la regla; los de un dato privado (portales, indicador 13), su etiqueta bajo el título.
 // Los colores de cada tramo salen de los mismos pasos de la rampa que el mapa (colores.js).
+// Tarea 34: bajo el título, la familia del mapa de alquiler con su lectura literal («Quedarse ·
+// quien ya vive de alquiler»); en «¿te llega?», siempre «quedarse» (familias.js). Sin familia,
+// nada.
 
 import { posicionEnRegla } from './sueldo.js';
 import { clasesTramos, rampaDeCss, TRAMOS_LLEGA, decimalesDeCortes } from './colores.js';
+import { familiaDe, textoFamilia } from './familias.js';
 
 const crear = (etiqueta, clase, texto) => {
   const el = document.createElement(etiqueta);
@@ -18,7 +22,8 @@ const crear = (etiqueta, clase, texto) => {
   return el;
 };
 
-let abierta = !matchMedia('(max-width: 760px)').matches;
+// Sin `matchMedia` (las pruebas, en node), abierta.
+let abierta = typeof matchMedia === 'function' ? !matchMedia('(max-width: 760px)').matches : true;
 
 function claves(t) {
   const lista = crear('ul', 'leyenda-claves');
@@ -102,7 +107,8 @@ function tramosLlega(t) {
 // `datos`: { modo, mapaId, mapaDef, superficie, umbral, marcas, llave, ficha, vivienda, periodo,
 // tipologia, conSupuestos, fuera }. `conSupuestos`: el mapa usa la superficie y el umbral (el
 // sueldo necesario); `tipologia`: 'VC' | 'VU' si la serie la distingue; `fuera`: con un año
-// anterior a toda la serie, el texto que dice desde cuándo hay datos.
+// anterior a toda la serie, el texto que dice desde cuándo hay datos. La familia del mapa de
+// alquiler sale de `mapaDef.familia` (manifiesto) o, en «¿te llega?», del modo.
 export function pintarLeyenda(contenedor, t, datos) {
   const pliegue = crear('details', 'leyenda-pliegue');
   pliegue.open = abierta;
@@ -117,6 +123,8 @@ export function pintarLeyenda(contenedor, t, datos) {
   if (datos.tipologia) detalle.push(t(`vocabulario.tipologia.${datos.tipologia}`));
   if (datos.grupo) detalle.push(datos.grupo);   // F5: operación y portal (indicador 13)
   const cuerpo = [];
+  const familia = textoFamilia(t, familiaDe(datos));   // tarea 34: «Quedarse · quien ya vive de alquiler»
+  if (familia) cuerpo.push(crear('p', 'leyenda-familia', familia));
   if (datos.etiqueta) cuerpo.push(crear('p', 'etiqueta-privado leyenda-etiqueta', datos.etiqueta));   // F5: dato privado
   cuerpo.push(crear('p', 'leyenda-unidad', detalle.join(' · ')));
   if (datos.fuera) cuerpo.push(crear('p', 'leyenda-fuera', datos.fuera));

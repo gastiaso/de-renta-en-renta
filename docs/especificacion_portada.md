@@ -105,7 +105,7 @@ Fuentes, fecha de los datos (`version.json`), licencias vigentes (`LICENSE`, `LI
 
 - Solo variables de `tokens.css` y las tipografías ya autoalojadas (Jost, Marcellus SC, Archivo Narrow y Yellowtail, con sus licencias en `estilo/fuentes/`).
 - **Escritorio**: tablero cuadrado (hasta unos 720 px) y columna lateral con las fichas y las cartas.
-- **Móvil** (menos de 700 px): primero el centro (título, dicho, «Tu sueldo», buscador), luego las fichas, las cartas y las casillas como recorrido vertical en el mismo orden. Nada de tablero comprimido.
+- **Móvil** (menos de 700 px): primero el centro (título, gancho, pregunta y familias, «Tu sueldo», buscador; el dicho, al pie desde la tarea 34), luego las fichas, las cartas y las casillas como recorrido vertical en el mismo orden. Nada de tablero comprimido.
 - **HTML semántico**: las casillas son una lista ordenada (`<ol>`) colocada con CSS grid, no una imagen. Foco visible, navegable con teclado, contraste ≥ 4,5:1 en el texto.
 - **Sin JavaScript**: se ven el tablero y los enlaces; las cartas, el buscador y «Tira el dado» lo necesitan.
 - **Imagen para redes** (`og:image`, 1200 × 630, generada con `chromote` al empaquetar): segunda tanda, opcional.

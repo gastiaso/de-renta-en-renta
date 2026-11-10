@@ -1,7 +1,8 @@
 // Portada (index.html; docs/especificacion_portada.md): el tablero completo. Las casillas y los
-// enlaces están en el HTML (se ven sin JavaScript); aquí, el idioma, las fichas que tienen datos,
-// las cartas (datos/portada.json, cifras reales del pipeline), «Tu sueldo» (abre el mapa en
-// «¿te llega?» con el sueldo tras «#», como «Compartir»), el buscador, «Tira el dado» y el pie.
+// enlaces están en el HTML (se ven sin JavaScript); aquí, el idioma, la lectura literal de las
+// familias (tarea 34), las fichas que tienen datos, las cartas (datos/portada.json, cifras reales
+// del pipeline), «Tu sueldo» (abre el mapa en «¿te llega?» con el sueldo tras «#», como
+// «Compartir»), el buscador, «Tira el dado» y el pie.
 
 import { cargarIdioma, traducirPagina } from './i18n.js';
 import { leerEstado, fragmentoSueldo } from './estado.js';
@@ -9,6 +10,7 @@ import { cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, c
 import { crearBuscador, formasDeNombre } from './buscador.js';
 import { ordenNatural } from './nombres.js';
 import { FICHAS_PERFIL } from './sueldo.js';
+import { FAMILIAS_ALQUILER, textoFamilia } from './familias.js';
 
 const $ = (id) => document.getElementById(id);
 const estado = { idioma: leerEstado(globalThis.location?.search ?? '').idioma ?? 'es' };
@@ -132,7 +134,18 @@ function pintarCartas() {
   }));
 }
 
-// --- Fichas, dado y pie ---------------------------------------------------------------------
+// --- Familias, fichas, dado y pie -----------------------------------------------------------
+
+// Bajo las familias del centro, su lectura literal con los mismos textos que la leyenda del mapa
+// («Quedarse · quien ya vive de alquiler»). Si falta alguno, la lista no se ve.
+export const lecturasFamilias = (t) => FAMILIAS_ALQUILER.map((f) => textoFamilia(t, f));
+
+function pintarLecturas() {
+  const lista = $('portada-lecturas');
+  const textos = lecturasFamilias(t);
+  lista.hidden = textos.some((x) => !x);
+  if (!lista.hidden) lista.replaceChildren(...textos.map((x) => crear('li', null, x)));
+}
 
 // Las fichas de perfil sin ingreso en perfiles.json quedan desactivadas y rotuladas «próximamente».
 function pintarFichas() {
@@ -222,6 +235,7 @@ function pintar() {
   document.title = t('portada.titulo_pagina');
   document.querySelector('meta[name="description"]')?.setAttribute('content', t('portada.descripcion'));
   for (const b of document.querySelectorAll('[data-idioma]')) b.setAttribute('aria-pressed', String(b.dataset.idioma === t.idioma));
+  pintarLecturas();
   pintarFichas();
   pintarCartas();
   pintarNotaDado();

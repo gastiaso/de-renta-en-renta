@@ -6,7 +6,8 @@
 //     elegida no pase del umbral (indicador 21), en seis tramos con los cortes del manifiesto;
 //   - «llega» («¿te llega?», al escribir un sueldo o elegir una ficha): alquiler / ingreso, en
 //     tres tramos (hasta el 30 %, del 30 al 40 % y más del 40 %), con la proporción de secciones
-//     donde el alquiler cabe por debajo del umbral.
+//     donde el alquiler cabe por debajo del umbral; en la ficha, también los euros que quedan al
+//     mes (ingreso − alquiler; tarea 34).
 // Cada cálculo tiene dos caras que deben coincidir: la expresión de estilo de MapLibre (color
 // del mapa, sin volver a descargar teselas) y la función en JS (ficha, resumen, leyenda).
 
@@ -145,6 +146,18 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
       };
     },
   };
+}
+
+// Euros que quedan al mes (tarea 34): el ingreso mensual de la ficha menos el alquiler mensual, con
+// los mismos términos que el porcentaje (`calcular()`: la misma vivienda y el mismo año). Es una
+// resta, no un umbral de suficiencia. Cada término se redondea al euro, como los escribe la web
+// (t.numero sin decimales), y se restan ya redondeados: la resta cuadra con las dos cifras que
+// enseña la ficha. Negativa si el alquiler pasa del ingreso; null si falta algún término. No
+// depende de la familia: vale también para «entrar», con el alquiler de la oferta.
+export function eurosQueQuedan(terminos) {
+  const { alquiler, ingreso } = terminos ?? {};
+  if (!Number.isFinite(alquiler) || !Number.isFinite(ingreso) || alquiler < 0 || !(ingreso > 0)) return null;
+  return Math.round(ingreso) - Math.round(alquiler);
 }
 
 // Tramo de «¿te llega?»: 0 hasta el 30 %, 1 del 30 al 40 %, 2 más del 40 %.

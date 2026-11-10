@@ -65,7 +65,11 @@
       "llega_1": "Hasta el 30 % del ingreso",
       "llega_2": "Del 30 al 40 %",
       "llega_3": "Más del 40 %",
-      "llega_nota": "Los tramos no cambian con el umbral; el umbral decide cuándo «cabe»."
+      "llega_nota": "Los tramos no cambian con el umbral; el umbral decide cuándo «cabe».",
+      "lectura_familia": {
+        "quedarse": "quien ya vive de alquiler",
+        "entrar": "quien busca piso hoy"
+      }
     },
     "sueldo": {
       "intro_necesario": "Sueldo neto necesario para que el alquiler no pase del umbral. Con un sueldo o una ficha, el mapa pasa a «¿te llega?».",
@@ -220,6 +224,17 @@
         "resolucion": "Resolución del BOE {boe}",
         "ninguna": "Sin declaraciones publicadas en el BOE.",
         "nota": "Relación que publica el Ministerio de Vivienda y Agenda Urbana en el BOE cada trimestre (Ley 12/2023, art. 18): tres años de vigencia desde el día siguiente a la publicación. En las declaraciones de una parte del municipio, el mapa pinta el municipio entero con su propia categoría; el ámbito exacto es el de la declaración."
+      },
+      "resto": {
+        "euros": "{euros} €",
+        "queda": "Quedan {cifra} al mes después del alquiler",
+        "queda_uno": "Queda {cifra} al mes después del alquiler",
+        "falta": "Faltan {cifra} al mes para cubrir el alquiler",
+        "falta_uno": "Falta {cifra} al mes para cubrir el alquiler",
+        "queda_corto": "quedan {cifra}",
+        "queda_corto_uno": "queda {cifra}",
+        "falta_corto": "faltan {cifra}",
+        "falta_corto_uno": "falta {cifra}"
       }
     },
     "comparador": {
@@ -748,14 +763,14 @@
       "unidad": "% de la renta del hogar",
       "definicion": "Parte de la renta anual del hogar medio de la sección que se iría en el alquiler mediano de esa misma sección.",
       "calculo": "Alquiler mensual mediano de la vivienda colectiva × 12 / renta neta media por hogar, del mismo año, × 100. Sección censal y municipio. Si alguno de los dos términos está en secreto o falta, la cifra también.",
-      "lectura": "Mide la vulnerabilidad de quien ya vive allí, no el acceso: los barrios caros parecen asequibles porque los habita gente con más renta."
+      "lectura": "Mide la vulnerabilidad de quien ya vive allí, no lo que cuesta entrar: los barrios caros parecen asequibles porque los habita gente con más renta."
     },
-    "barrera_acceso": {
-      "nombre": "Barrera de acceso al alquiler",
+    "peso_alquiler_ingreso": {
+      "nombre": "Peso del alquiler en el ingreso",
       "unidad": "% del ingreso de referencia",
       "definicion": "Parte del ingreso neto mensual de una ficha (salario mínimo, joven, pensionista o el sueldo del usuario) que se iría en el alquiler de 50 m² de la sección.",
       "calculo": "Alquiler mediano por m² de la vivienda colectiva × 50 / ingreso neto mensual de la ficha repartido en 12 pagas, × 100. Se calcula en la web con la ficha elegida, con el ingreso de la ficha del mismo año que el alquiler (el salario mínimo, el salario del joven y la pensión de cada año, de 2015 a 2024); si la ficha no tiene ese año, se usa el último y se indica.",
-      "lectura": "Mide la barrera para entrar con un ingreso dado. Se lee por tramos (hasta el 30 %, del 30 al 40 % y más del 40 %), no como cifra exacta."
+      "lectura": "Mide lo que se llevaría el alquiler de los contratos vigentes de la sección (quien ya vive de alquiler) con un ingreso dado; no es el precio de entrar hoy, que mide la oferta. Se lee por tramos (hasta el 30 %, del 30 al 40 % y más del 40 %), no como cifra exacta."
     },
     "anios_salario_compra": {
       "nombre": "Años de salario para comprar",
@@ -907,9 +922,13 @@
     "familia": {
       "A": "Capacidad de pago",
       "B": "Coste de la vivienda",
-      "C": "Esfuerzo y acceso",
+      "C": "Esfuerzo",
       "D": "Estructura y presión",
       "E": "Sobrecarga y acceso (encuesta)"
+    },
+    "familia_alquiler": {
+      "quedarse": "Quedarse",
+      "entrar": "Entrar"
     },
     "fiabilidad": {
       "normal": "Muestra suficiente",

@@ -27,18 +27,18 @@ Esta nota describe cómo se obtienen las cifras del atlas: fuentes, geografía c
 
 **Escala y periodo.** Sección censal, de 2015 al último dato disponible. Todas las series se dibujan en el seccionado del Censo 2021 (§3).
 
-**Dos familias de indicadores** (plan §3):
-- **Esfuerzo de residentes:** renta de quien ya vive en la sección frente al alquiler de esa sección.
-- **Barrera de acceso:** alquiler de la sección frente a un ingreso de referencia («fichas», §6).
+**Dos familias de indicadores de alquiler** (plan §1; columna `familia_alquiler` de `inventario/indicadores.csv`):
+- **Quedarse** (quien ya vive de alquiler): el parque alquilado, con los contratos vigentes que declara el SERPAVI. Dentro de ella, el esfuerzo de residentes (renta de quien ya vive en la sección frente al alquiler de esa sección) y el peso del alquiler en el ingreso (alquiler de la sección frente al ingreso de una ficha, §6).
+- **Entrar** (quien busca piso hoy): la oferta de los portales y el índice del INE con contratos nuevos. Se incorpora antes de la v1.0; hasta entonces, el atlas solo mide la primera familia.
 
-La segunda familia corrige un sesgo de la primera: los barrios caros parecen asequibles porque los habita población con más renta.
+Las cifras del SERPAVI miden a quien ya vive de alquiler, no lo que cuesta entrar. El peso del alquiler en el ingreso corrige un sesgo del esfuerzo: los barrios caros parecen asequibles porque los habita población con más renta.
 
 **Escalonado** (plan §2.3):
 
 | Versión | Contenido | Estado del cálculo (8-nov-2026) |
 |---|---|---|
 | v0.0 | Indicadores 22 (sobrecarga por gastos de vivienda, método Eurostat) y 23 (búsqueda de vivienda sin éxito) | En la tabla larga: 261 y 32 filas (`tabla_larga`, fuentes `ine_ecv` e `ine_ecv_modulo`) |
-| v0.1 | Núcleo de 10 indicadores: 1–3, 8, 9, 14, 15, 18, 19 y 21 | Los 10, en la tabla larga; la barrera (15), solo con la mochila y la tartera de 2024 (§7.4) |
+| v0.1 | Núcleo de 10 indicadores: 1–3, 8, 9, 14, 15, 18, 19 y 21 | Los 10, en la tabla larga; el peso del alquiler en el ingreso (15), solo con la mochila y la tartera de 2024 (§7.4) |
 | v1.0 | Los 23 indicadores del catálogo (plan §5) | — |
 
 **Núcleo de la v0.1** (`inventario/indicadores.csv`, columna `nucleo_v01`):
@@ -51,7 +51,7 @@ La segunda familia corrige un sesgo de la primera: los barrios caros parecen ase
 | 8 | Alquiler mensual (mediana) | MIVAU, SERPAVI | Sección (seccionado de 2021) | 2015–2024 | Calculado (`larga_serpavi`) |
 | 9 | Alquiler por m² (mediana) | MIVAU, SERPAVI | Sección (seccionado de 2021) | 2015–2024 | Calculado (`larga_serpavi`) |
 | 14 | Esfuerzo de residentes en alquiler | SERPAVI y ADRH | Sección | 2015–2024 | Calculado (`larga_derivados`) |
-| 15 | Barrera de acceso al alquiler | SERPAVI e ingreso de cada ficha | Sección × ingreso | 2015–2024 | Control en `larga_derivados` (tartera, mochila y transistor, 2015–2024); la web la calcula con cada ficha |
+| 15 | Peso del alquiler en el ingreso | SERPAVI e ingreso de cada ficha | Sección × ingreso | 2015–2024 | Control en `larga_derivados` (tartera, mochila y transistor, 2015–2024); la web la calcula con cada ficha |
 | 18 | Hogares en alquiler | INE, Censo 2021 | Sección (seccionado de 2021) | 2021 (2011, en F6) | Calculado (`larga_censo2021`) |
 | 19 | Viviendas de uso turístico | INE, estadística experimental | Sección (seccionado de 2024, llevado al de 2021) | Febrero de 2024 – mayo de 2026, semestral (2020–2023, en F6) | Calculado (`larga_vut`) |
 | 21 | Sueldo neto necesario (mapa por defecto) | SERPAVI | Sección | 2015–2024 | Calculado (`larga_derivados`) |
@@ -435,7 +435,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `smi_neto` | Ingreso neto mensual de la tartera de 2026 (`perfiles`) frente a la cifra del plan: 17.094 € × (1 − 0,065) / 12 ≈ 1.332 € | ±1 € | Bloqueo | 1.331,91 €; diferencia, −0,09 € | `validacion_derivados` |
 | `derivados_terminos` | Desviación máxima, por año e indicador, entre cada cifra derivada y la recalculada con sus términos | ±0,001 % | Bloqueo | 4,3 × 10⁻¹⁴ % como máximo en las 41 cifras | `validacion_derivados` |
 | `derivados_estado` | Cifras derivadas cuyo estado no es el peor de sus términos (en el 15, el del alquiler, o `ausente` sin ingreso de la ficha), o con valor y estado `secreto` o `ausente` (o al revés) | Exacto | Bloqueo | 0 en las 41 cifras | `validacion_derivados` |
-| `derivados_rango` | Cifras derivadas fuera del rango posible: esfuerzo, del 0,1 al 100 %; barrera, del 0,1 al 300 %; sueldo necesario, de 100 a 10.000 € netos al mes | Exacto | Bloqueo | 0 en las 41 cifras | `validacion_derivados` |
+| `derivados_rango` | Cifras derivadas fuera del rango posible: esfuerzo, del 0,1 al 100 %; peso del alquiler en el ingreso, del 0,1 al 300 %; sueldo necesario, de 100 a 10.000 € netos al mes | Exacto | Bloqueo | 0 en las 41 cifras | `validacion_derivados` |
 | `perfiles_mochila` | Provincias de la mochila sin código del INE en `inventario/provincias_aeat.csv`, provincias repetidas en un año y provincias de la tabla sin mochila (en los 10 años) | Exacto | Bloqueo | 0 en las 3 cifras | `validacion_derivados` |
 | `smi_boe` | Cuantía mensual del SMI de cada año en `SMI_FICHAS` frente a la del real decreto en su XML del BOE, y la norma citada; 2021, media ponderada por meses de vigencia | Exacto | Bloqueo | 0 en las 18 cifras (2015–2023) | `validacion_smi` |
 | `inss_cobertura` | Provincias, comunidades de varias provincias y España que faltan o se repiten en algún mes del año (Excel del INSS) | Exacto | Bloqueo | 0 en los 10 años | `validacion_inss` |
@@ -475,7 +475,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `serpavi_sin_fila` | Secciones, distritos y municipios del seccionado de 2021 que la base no trae (van como `ausente`) | Exacto | Alerta | Avisa con 40 secciones, 36 distritos y 36 municipios (§7.1) | `validacion_serpavi` |
 | `margen_rango` | Secciones con el margen aproximado de la mediana fuera del 1–40 %, por año, indicador y tipología | Exacto | Alerta | Avisa en las 40 cifras: 2.414 secciones y años en 2015–2024, 2.242 de vivienda unifamiliar; en 2024, 16 de colectiva y 268 de unifamiliar (§7.6) | `validacion_fiabilidad` |
 | `vut_denominador_detalle` | Las secciones de `vut_denominador`, una a una (solo las que se apartan más de 0,001 puntos) | ±0,1 puntos | Alerta | Pasa: 839 secciones y periodos, todos desde noviembre de 2024; diferencia máxima, 0,091 puntos | `validacion_vut` |
-| `derivados_rango_detalle` | Cada cifra derivada fuera del rango habitual: esfuerzo, por debajo del 3 % o por encima del 60 %; barrera, del 3 % o del 150 %; sueldo necesario, de 200 € o de 4.000 € | Exacto | Alerta | Avisa en 23 cifras: tres esfuerzos de más del 60 % (2019 y 2022), 18 sueldos necesarios por debajo de 200 € en 2015–2018 y dos por encima de 4.000 € (dos secciones de Madrid, 2024) | `validacion_derivados` |
+| `derivados_rango_detalle` | Cada cifra derivada fuera del rango habitual: esfuerzo, por debajo del 3 % o por encima del 60 %; peso del alquiler en el ingreso, del 3 % o del 150 %; sueldo necesario, de 200 € o de 4.000 € | Exacto | Alerta | Avisa en 23 cifras: tres esfuerzos de más del 60 % (2019 y 2022), 18 sueldos necesarios por debajo de 200 € en 2015–2018 y dos por encima de 4.000 € (dos secciones de Madrid, 2024) | `validacion_derivados` |
 | `web_fuera_indice` | Filas de la tabla larga que van a la web sin hueco en el índice de su nivel | Exacto | Alerta | Avisa en 16 filas de municipio; en los demás niveles, 0 | `validacion_web` |
 | `web_sobrecarga_geometria` | Territorios de una vista del mapa de la sobrecarga sin geometría en su versión NUTS ni en la de respaldo | Exacto | Alerta | Pasa: 0 en las 12 vistas (§7.5) | `validacion_web_sobrecarga` |
 | `aeat_mediana_deciles` | Mediana del SME por comunidad interpolada desde deciles frente a centiles | ±0,5 % | Alerta | Entre −0,19 y +0,45 % (2019–2024) | `validacion_mochila` |
@@ -713,6 +713,8 @@ En 2024, por provincia, de 17.792 € (Jaén) a 31.911 € (Madrid) en total, y 
 | Transistor (pensionista) | Pensión media de jubilación, neta de IRPF, ÷ 12 | INSS; retención de la AEAT | Provincia | 50 m² | Calculada de 2015 a 2024 (`transistor`, `perfiles`); País Vasco y Navarra, como `estimado` |
 | Tu ficha | Neto mensual que escribe quien consulta: 12 o 14 pagas, segundo sueldo opcional | — | — | 50 m² con un sueldo, 70 m² con dos; cambiable a 50, 70 o 90 | Se calcula en el navegador y no se guarda (`js/sueldo.js`) |
 
+**Euros que quedan** (tarea 34 del backlog). En «¿te llega?», junto al peso del alquiler en el ingreso (15), la ficha da los euros que quedan al mes: el ingreso neto mensual de la ficha menos el alquiler mensual de la misma vivienda y del mismo año, los dos términos del porcentaje, redondeados al euro antes de restar (`web/js/sueldo.js`). Si el alquiler pasa del ingreso, la diferencia se da como lo que falta. Los euros que quedan son una resta, no un umbral de suficiencia: no dicen si ese resto cubre los demás gastos de un hogar.
+
 ### 6.2 Mochila: método B, paso a neto y serie
 
 La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrada). La serie va de 2015 a 2024 (10-nov-2026): cada año, con la AEAT de ese año y con la ola de la ECV del año siguiente, que trae sus ingresos.
@@ -787,7 +789,7 @@ La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abie
 
 - **2021.** Tuvo dos cuantías: 950 € de enero a agosto (la de 2020, prorrogada) y 965 € desde el 1 de septiembre (RD 817/2021). Se usa su media ponderada por meses de vigencia, 955 €, coherente con las rentas anuales del ADRH y de la AEAT (plan §11, pregunta 18).
 - **Compuerta.** Las cuantías de 2015 a 2023 se leen del XML del BOE de cada real decreto (`descargar_boe_smi()`, `leer_boe_smi()`, `comprobar_smi_boe()`; `smi_boe`, objetivo `validacion_smi`); las de 2024 a 2026 se citan. `smi_neto` compara la de 2026 con los 1.332 € del plan (§4.1).
-- **Uso.** La barrera de la tabla larga (§7.4) y la web usan el SMI del mismo año que el alquiler (regla 4; decisión del autor, 9-nov-2026): con el alquiler de 2024, 1.237,40 €. Los de 2025 y 2026 no tienen alquiler del mismo año; la web cita el último junto al del año elegido.
+- **Uso.** El peso del alquiler en el ingreso de la tabla larga (§7.4) y la web usan el SMI del mismo año que el alquiler (regla 4; decisión del autor, 9-nov-2026): con el alquiler de 2024, 1.237,40 €. Los de 2025 y 2026 no tienen alquiler del mismo año; la web cita el último junto al del año elegido.
 
 **Comparación con la mochila.**
 - La mochila de 2024 (1.330 € netos de media) sale casi igual que la tartera con el SMI de 2026. Son años distintos (regla 4).
@@ -1034,7 +1036,7 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 | # | Indicador | Fórmula | Unidad | Términos |
 |---|---|---|---|---|
 | 14 | Esfuerzo de residentes | Alquiler mediano mensual × 12 / renta neta media por hogar, del mismo año | % de la renta del hogar | Indicadores 8 y 2 |
-| 15 | Barrera de acceso | Alquiler mediano por m² × 50 / ingreso neto mensual de la ficha | % del ingreso de la ficha | Indicador 9 e ingreso de la ficha (§6) |
+| 15 | Peso del alquiler en el ingreso | Alquiler mediano por m² × 50 / ingreso neto mensual de la ficha | % del ingreso de la ficha | Indicador 9 e ingreso de la ficha (§6) |
 | 21 | Sueldo neto necesario (mapa por defecto) | Alquiler mediano por m² × 50 / 0,30 (umbral cambiable al 40 %) | € netos al mes | Indicador 9 |
 
 **Tipología** (plan §11, pregunta 12): el alquiler de los tres es el de la vivienda colectiva (`grupo = VC`).
@@ -1042,13 +1044,13 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 **Estado** (plan §11, pregunta 15; `peor_estado()`): el peor de sus términos, en el orden `dato` < `estimado` < `secreto` < `ausente`.
 - Una sección con el alquiler en secreto queda en `secreto`.
 - Con el alquiler `dato` y la renta `estimado`, el esfuerzo queda `estimado`.
-- Si falta algún término, `ausente`. Es el caso de la barrera con la mochila en País Vasco, Navarra, Ceuta y Melilla, donde la ficha no tiene ingreso (§6.2).
-- En el 15, el ingreso de la ficha no cuenta como término (`estado_barrera()`; plan §11, pregunta 15 ampliada): la barrera lleva el estado del alquiler, y es `ausente` si la ficha no tiene ingreso. La mochila va como `estimado` (es una estimación, §6.2), y eso se explica una vez, en su método, no en cada sección.
+- Si falta algún término, `ausente`. Es el caso del peso del alquiler con la mochila en País Vasco, Navarra, Ceuta y Melilla, donde la ficha no tiene ingreso (§6.2).
+- En el 15, el ingreso de la ficha no cuenta como término (`estado_peso_alquiler()`; plan §11, pregunta 15 ampliada): el 15 lleva el estado del alquiler, y es `ausente` si la ficha no tiene ingreso. La mochila va como `estimado` (es una estimación, §6.2), y eso se explica una vez, en su método, no en cada sección.
 - El 21 tiene un solo término: lleva el estado del indicador 9.
 
 **Términos redondeados** (plan §11, pregunta 19; `termino_publicado()`). El alquiler, la renta por hogar y el ingreso de la ficha entran en el cálculo redondeados a un decimal con `sprintf("%.1f")` (§0), como los recibe la web. Así, la cifra de R y la que la web recalcula en el navegador coinciden exactamente.
 
-**Mismo año** (guía, regla 4). En el esfuerzo, el SERPAVI y el ADRH coinciden en 2015–2024. La barrera de la tabla larga usa el ingreso de la ficha del mismo año que el alquiler: la tartera, con el SMI de cada año de 2015 a 2024; el transistor, con la pensión de cada año; la mochila, con la AEAT de cada año. La web hace lo mismo con la ficha elegida (decisión del autor, 9-nov-2026).
+**Mismo año** (guía, regla 4). En el esfuerzo, el SERPAVI y el ADRH coinciden en 2015–2024. El peso del alquiler de la tabla larga usa el ingreso de la ficha del mismo año que el alquiler: la tartera, con el SMI de cada año de 2015 a 2024; el transistor, con la pensión de cada año; la mochila, con la AEAT de cada año. La web hace lo mismo con la ficha elegida (decisión del autor, 9-nov-2026).
 
 **Cómo se leen:**
 - El indicador 15 se lee por tramos: hasta el 30 %, del 30 al 40 % y más del 40 %.
@@ -1059,7 +1061,7 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 **Cálculo** (`armonizar_derivados()`; objetivo `larga_derivados`, 2.644.824 filas, fuente `calculo_propio`):
 - **14** (`calcular_esfuerzo_residentes()`): en las secciones y los municipios, los niveles en que el SERPAVI y el ADRH publican los dos términos (`NIVELES_ESFUERZO`), y en los años con los dos, 2015–2024. Sin desglose.
 - **21** (`calcular_sueldo_necesario()`): en todos los niveles del SERPAVI, 2015–2024, con 50 m² y el umbral del 30 %. Sin desglose.
-- **15** (`calcular_barrera_acceso()`): corte `ficha`, con los grupos `tartera`, `mochila` y `transistor` (2015–2024). La mochila y el transistor, en las provincias y sus secciones, distritos y municipios; la tartera, también en las comunidades. Es un control: la web calcula la barrera con la ficha elegida.
+- **15** (`calcular_peso_alquiler_ingreso()`): corte `ficha`, con los grupos `tartera`, `mochila` y `transistor` (2015–2024). La mochila y el transistor, en las provincias y sus secciones, distritos y municipios; la tartera, también en las comunidades. Es un control: la web calcula el peso del alquiler con la ficha elegida.
 - **Ingresos de las fichas** (`perfiles_fichas()`; objetivo `perfiles`): la tartera (§6.3); la mochila de cada provincia y año, de 2015 a 2024 (§6.2; 46 provincias con dato y 6 `ausente` cada año); la llave (§6.4); el transistor de cada provincia y año (§6.5).
 - **Versión:** la más reciente de sus términos, 7-nov-2026.
 
@@ -1088,11 +1090,11 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 |---|---|---|---|---|---|---|
 | Esfuerzo de residentes (%) | 26.125 | 6,2 | 12,6 | 17,6 | 24,0 | 51,3 |
 | Sueldo neto necesario (€ al mes) | 26.137 | 300 | 700 | 1.217 | 2.117 | 4.283 |
-| Barrera con la mochila (%) | 24.117 | 7,2 | 16,8 | 27,5 | 43,7 | 87,9 |
-| Barrera con la tartera, SMI de 2024 (%) | 26.137 | 7,3 | 17,0 | 29,5 | 51,3 | 103,8 |
-| Barrera con el transistor (%) | 26.137 | 6,2 | 14,3 | 23,3 | 37,9 | 73,2 |
+| Peso del alquiler con la mochila (%) | 24.117 | 7,2 | 16,8 | 27,5 | 43,7 | 87,9 |
+| Peso del alquiler con la tartera, SMI de 2024 (%) | 26.137 | 7,3 | 17,0 | 29,5 | 51,3 | 103,8 |
+| Peso del alquiler con el transistor (%) | 26.137 | 6,2 | 14,3 | 23,3 | 37,9 | 73,2 |
 
-**Barrera con la tartera, la mochila y el transistor en las secciones, cada año con el ingreso de ese año** (`larga_derivados`; mediana y parte de las secciones con valor por encima del 30 %):
+**Peso del alquiler con la tartera, la mochila y el transistor en las secciones, cada año con el ingreso de ese año** (`larga_derivados`; mediana y parte de las secciones con valor por encima del 30 %):
 
 | Año | Tartera: mediana (%) | Tartera: más del 30 % | Mochila: mediana (%) | Mochila: más del 30 % | Transistor: mediana (%) | Transistor: más del 30 % |
 |---|---|---|---|---|---|---|
@@ -1325,8 +1327,8 @@ La serie con la deducción por vivienda habitual (vigente hasta diciembre de 201
 
 **Derivados:**
 - **Huecos heredados.** Un derivado no tiene valor donde falta alguno de sus términos: en 2024, 10.208 de las 36.333 secciones no tienen esfuerzo (§7.4).
-- **Vulnerabilidad, no acceso.** El esfuerzo divide el alquiler entre la renta media de todos los hogares de la sección, no solo la de los que alquilan (`inventario/indicadores.csv`).
-- **La barrera de la tabla larga es un control.** Con la tartera, la mochila y el transistor de 2015 a 2024; la web la calcula con la ficha elegida (§7.4).
+- **Vulnerabilidad, no entrada.** El esfuerzo divide el alquiler entre la renta media de todos los hogares de la sección, no solo la de los que alquilan (`inventario/indicadores.csv`).
+- **El peso del alquiler de la tabla larga es un control.** Con la tartera, la mochila y el transistor de 2015 a 2024; la web la calcula con la ficha elegida (§7.4).
 
 **Salarios (indicador 7):**
 - **Sin País Vasco ni Navarra.** La AEAT no los cubre, y de las haciendas forales solo Gipuzkoa publica una cifra comparable (§5.6).
@@ -1399,7 +1401,7 @@ La exportación sigue las decisiones del autor del 8-nov-2026 (plan §6.6; plan 
 - **España, comunidades y provincias.** Los indicadores 18 y 19 tienen las cifras publicadas de España, de las 19 comunidades y de las 52 provincias (§7.2 y §7.3); las de España, en siete ficheros. El alquiler (8 y 9) y el sueldo necesario (21) tienen comunidades y provincias, pero no España: el SERPAVI solo publica su recuento de testigos, que va en la serie de contratos (§7.6). La renta (1–3) y el esfuerzo (14) llegan al municipio (§5.3 y §7.4). La distribución de la renta (4–6) tiene las cifras publicadas de las comunidades, de las provincias y, desde 2021, de España (§5.5).
 - **Series de la ficha.** Un fichero por municipio (`fichas/<municipio>.json`) con las series de sus secciones y del propio municipio.
 - **Fiabilidad** (§7.6). Los contratos y el margen de la mediana van como series auxiliares de cada serie del alquiler, de su misma tipología (`fiabilidad` en el manifiesto), sin número de indicador ni mapa propio. No van en las fichas por municipio, donde pesarían una cuarta parte más: la ficha los lee de los ficheros del periodo que pinta el mapa.
-- **Qué no se exporta.** Los cuartiles del SERPAVI y la barrera (15), que la web calcula con la ficha elegida. El sueldo necesario (21) se recalcula en el navegador desde el alquiler por m² cuando cambian la superficie o el umbral (`FORMULAS_WEB`).
+- **Qué no se exporta.** Los cuartiles del SERPAVI y el peso del alquiler en el ingreso (15), que la web calcula con la ficha elegida. El sueldo necesario (21) se recalcula en el navegador desde el alquiler por m² cuando cambian la superficie o el umbral (`FORMULAS_WEB`).
 - **La web frente a R.** La prueba de la web (`pruebas/web/datos.test.mjs`, en node) recalcula con el módulo de la página, `web/js/formulas.js`, el sueldo necesario desde el alquiler por m² en todas las secciones, distritos, municipios, provincias y comunidades de 2015 a 2024, y lo compara con el que exporta R: 550.140 territorios y años, 294.082 con valor, sin diferencias en el valor, los nulos ni el estado (plan §6.5). Además, `comprobar_web_navegador()` abre la página en Chrome sin ventana (`chromote`): con sus propios módulos, recalcula una muestra de 300 secciones en los 10 años y lee sus contratos y su margen, y abre seis fichas. En local y en el sitio publicado coincide todo con la tabla larga, sin errores (9-nov-2026; `docs/publicacion.md`).
 - **Descargas.** La web descarga la serie del mapa en CSV, en el nivel que se ve (valor con la precisión de la serie, estado y fuente; en las series del alquiler, contratos y margen; en el 21, superficie y umbral), y el mapa en PNG con su leyenda y su fuente. Con «Tu ficha», ninguna de las dos lleva el sueldo escrito: el CSV da el alquiler, no la proporción. Los colores del PNG de «¿te llega?» sí dejan deducirlo de forma aproximada, así que con «Tu ficha» se descarga tras un aviso que se puede cancelar (plan §11, pregunta 23).
 - **Año fuera de la serie** (plan §11, pregunta 32). Con un año anterior a todos los periodos de una serie (2020 en las viviendas turísticas), el mapa, la leyenda, la ficha, el comparador y las dos descargas dan «sin dato» y dicen desde cuándo hay serie; el CSV, con una fila sin valor por territorio y el inicio de la serie en la columna del estado. Con un año posterior se toma el último periodo, y la leyenda lo dice.

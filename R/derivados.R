@@ -1,12 +1,12 @@
 # Indicadores derivados de F2 y perfiles de las fichas (plan §3.1, §5 C y §6.6):
 #   14 esfuerzo_residentes: alquiler mensual mediano × 12 / renta neta media por hogar (ADRH), en %;
 #   21 sueldo_necesario: alquiler mediano por m² × 50 m² / 0,30, en € netos al mes (mapa por defecto);
-#   15 barrera_acceso: alquiler mediano por m² × 50 m² / ingreso neto mensual de la ficha, en %. Se
+#   15 peso_alquiler_ingreso: alquiler mediano por m² × 50 m² / ingreso neto mensual de la ficha, en %. Se
 #      calcula en el navegador con la ficha elegida; en R, la tartera, la mochila y el transistor, como control.
 # El alquiler es siempre el de la vivienda colectiva (pregunta abierta 12). Estado: el peor de sus
 # términos, en el orden dato < estimado < secreto < ausente; sin algún término, ausente (pregunta
 # abierta 15). En el 15, el del alquiler: el ingreso de la ficha solo aporta «ausente» cuando
-# falta (pregunta 15 ampliada, 9-nov-2026; estado_barrera()). Numerador y denominador, del mismo
+# falta (pregunta 15 ampliada, 9-nov-2026; estado_peso_alquiler()). Numerador y denominador, del mismo
 # año (regla 4).
 # Términos tal como se publican: el alquiler, la renta y el ingreso de la ficha entran redondeados a
 # un decimal con el redondeo de la guía, como los recibe la web, para que la página y R den la misma
@@ -33,7 +33,7 @@ NIVELES_ESFUERZO <- c("sc", "municipio")
 #   2021: dos cuantías, 950 € de enero a agosto (RD 231/2020, prorrogado) y 965 € desde el 1 de
 #     septiembre (RD 817/2021); se usa su media ponderada por meses de vigencia, 955 € (pregunta 18).
 #   2024: RD 145/2024, 1.134 € (≈ 1.237 € netos); 2026: RD 126/2026, 1.221 € (≈ 1.332 € netos).
-# La barrera de la tartera (15) usa el SMI del mismo año que el alquiler (regla 4), y la web, el del
+# El peso del alquiler con la tartera (15) usa el SMI del mismo año que el alquiler (regla 4), y la web, el del
 # año elegido (decisión del autor, 9-nov-2026); 2025 y 2026 no tienen alquiler y quedan como referencia.
 SMI_FICHAS <- tibble::tribble(
   ~anio, ~mensual, ~pagas, ~cotizacion, ~norma,                      ~boe,                                ~norma_cotizacion,
@@ -58,7 +58,7 @@ RANGOS_DERIVADOS <- tibble::tribble(
   ~indicador,            ~minimo, ~maximo, ~aviso_min, ~aviso_max,
   "esfuerzo_residentes",  0.1,     100,     3,          60,
   "sueldo_necesario",     100,     10000,   200,        4000,
-  "barrera_acceso",       0.1,     300,     3,          150
+  "peso_alquiler_ingreso",       0.1,     300,     3,          150
 )
 
 # Peor estado de varios términos, fila a fila; un término que falta (NA) cuenta como «ausente».
@@ -74,10 +74,10 @@ peor_estado <- function(...) {
 
 con_valor <- function(estado) estado %in% c("dato", "estimado")
 
-# Estado de la barrera (15): el del alquiler; si el ingreso de la ficha no tiene valor (la mochila
+# Estado del peso del alquiler (15): el del alquiler; si el ingreso de la ficha no tiene valor (la mochila
 # en los territorios forales, Ceuta y Melilla), «ausente». La calidad del ingreso (la mochila es
 # una estimación) se explica una vez, en el método de la ficha, y no rebaja cada cifra.
-estado_barrera <- function(e_alquiler, e_ingreso) {
+estado_peso_alquiler <- function(e_alquiler, e_ingreso) {
   ifelse(con_valor(e_ingreso), ifelse(is.na(e_alquiler), "ausente", e_alquiler), "ausente")
 }
 
@@ -191,8 +191,8 @@ ingresos_fichas <- function(perfiles) {
 # 15, control en R: alquiler mediano por m² (VC) × superficie / ingreso de la ficha × 100, con el
 # ingreso del mismo año que el alquiler (regla 4): la tartera en los años de SMI_FICHAS con alquiler
 # (2015–2024), en todos los niveles; la mochila y el transistor (2015–2024) en sus años, en
-# las provincias y sus secciones, distritos y municipios. Estado: estado_barrera().
-calcular_barrera_acceso <- function(larga_serpavi, perfiles, superficie = SUPERFICIE_FICHA) {
+# las provincias y sus secciones, distritos y municipios. Estado: estado_peso_alquiler().
+calcular_peso_alquiler_ingreso <- function(larga_serpavi, perfiles, superficie = SUPERFICIE_FICHA) {
   m2 <- alquiler_vc(larga_serpavi, "alquiler_m2") |> rename(alquiler_m2 = valor, e_alquiler = estado)
   ingresos <- ingresos_fichas(perfiles)
   tartera <- ingresos |> filter(ficha == "tartera") |> select(anio, ingreso, e_ingreso = estado)
@@ -207,9 +207,9 @@ calcular_barrera_acceso <- function(larga_serpavi, perfiles, superficie = SUPERF
       left_join(provinciales, by = c("grupo", "provincia", "anio")) |>
       select(-provincia)
   ) |>
-    mutate(estado = estado_barrera(e_alquiler, e_ingreso),
+    mutate(estado = estado_peso_alquiler(e_alquiler, e_ingreso),
            valor = if_else(con_valor(estado), 100 * alquiler_m2 * superficie / ingreso, NA_real_),
-           indicador = "barrera_acceso", corte = "ficha") |>
+           indicador = "peso_alquiler_ingreso", corte = "ficha") |>
     select(geo_id, nivel, anio, indicador, corte, grupo, valor, estado)
 }
 
@@ -221,7 +221,7 @@ armonizar_derivados <- function(larga_serpavi, larga_adrh, perfiles,
   bind_rows(
     calcular_esfuerzo_residentes(larga_serpavi, larga_adrh),
     calcular_sueldo_necesario(larga_serpavi, superficie, umbral),
-    calcular_barrera_acceso(larga_serpavi, perfiles, superficie)
+    calcular_peso_alquiler_ingreso(larga_serpavi, perfiles, superficie)
   ) |>
     mutate(fuente = "calculo_propio", geo_ref = "2021", version = version) |>
     select(all_of(COLUMNAS_TABLA_LARGA))
@@ -243,19 +243,19 @@ terminos_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles,
     mutate(den = umbral, e_den = "dato", num = num * superficie, recalculado = num / den)
   ingresos <- ingresos_fichas(perfiles) |>
     transmute(grupo = ficha, provincia = if_else(ficha == "tartera", NA_character_, geo_id), anio, den = ingreso, e_den = estado)
-  barrera <- derivados |> filter(indicador == "barrera_acceso") |>
+  peso <- derivados |> filter(indicador == "peso_alquiler_ingreso") |>
     left_join(m2, by = clave) |>
     mutate(provincia = if_else(grupo == "tartera", NA_character_, substr(geo_id, 1, 2))) |>
     left_join(ingresos, by = c("grupo", "provincia", "anio")) |>
     select(-provincia) |>
     mutate(num = num * superficie, recalculado = 100 * num / den)
-  bind_rows(esfuerzo, sueldo, barrera)
+  bind_rows(esfuerzo, sueldo, peso)
 }
 
 # Compuerta de los derivados (inventario/referencias_validacion.csv):
 #   derivados_terminos (bloqueo): desviación máxima (%) entre cada cifra y la recalculada con sus términos;
 #   derivados_estado (bloqueo): cifras cuyo estado no es el peor de sus términos (en el 15, el
-#     del alquiler, o «ausente» sin ingreso: estado_barrera()), o con valor y estado secreto o
+#     del alquiler, o «ausente» sin ingreso: estado_peso_alquiler()), o con valor y estado secreto o
 #     ausente (o al revés);
 #   derivados_rango (bloqueo): cifras fuera del rango posible (RANGOS_DERIVADOS);
 #   derivados_rango_detalle (alerta): cada cifra fuera del rango habitual;
@@ -268,10 +268,10 @@ comprobar_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles, 
   t <- terminos_derivados(derivados, larga_serpavi, larga_adrh, perfiles)
   rango <- c(dato = 1L, estimado = 2L, secreto = 3L, ausente = 4L)
   t <- t |>
-    mutate(esperado = if_else(indicador == "barrera_acceso", estado_barrera(e_num, e_den),
+    mutate(esperado = if_else(indicador == "peso_alquiler_ingreso", estado_peso_alquiler(e_num, e_den),
                               names(rango)[pmax(coalesce(rango[e_num], 4L), coalesce(rango[e_den], 4L))]),
            desviacion = 100 * abs(valor - recalculado) / abs(recalculado))
-  etiqueta_derivado <- function(x) if_else(x$indicador == "barrera_acceso", paste(x$indicador, x$grupo), x$indicador)
+  etiqueta_derivado <- function(x) if_else(x$indicador == "peso_alquiler_ingreso", paste(x$indicador, x$grupo), x$indicador)
 
   terminos <- t |> filter(!is.na(valor)) |> mutate(detalle = etiqueta_derivado(pick(everything()))) |>
     group_by(anio, detalle) |>

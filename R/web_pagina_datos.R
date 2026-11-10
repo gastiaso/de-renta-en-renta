@@ -155,6 +155,12 @@ indicadores_md <- function(indicadores, vocabulario, idioma, tx) {
   enlace <- paste0("[", codigo_md(indicadores$codigo), "](#", indicadores$codigo, ")")
   familias <- vocabulario_de(vocabulario, "familia", idioma)
   familia <- unname(familias[sub("^([A-Z]+).*$", "\\1", indicadores$familia)])
+  # Tarea 34: los indicadores de alquiler llevan, tras su familia, la de alquiler (quedarse o entrar)
+  if ("familia_alquiler" %in% names(indicadores)) {
+    de_alquiler <- vocabulario_de(vocabulario, "familia_alquiler", idioma)[indicadores$familia_alquiler]
+    con_alquiler <- !is.na(de_alquiler)
+    familia[con_alquiler] <- paste0(familia[con_alquiler], " · ", de_alquiler[con_alquiler])
+  }
 
   intro <- sub("{m}", sum(auxiliar), sub("{n}", sum(!auxiliar), tx$diccionario_intro, fixed = TRUE), fixed = TRUE)
   resumen <- tabla_md(c(tx$numero, tx$codigo, tx$nombre, tx$unidad, tx$version),

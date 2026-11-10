@@ -16,12 +16,13 @@ import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
 import { pintarLeyenda } from './leyenda.js';
 import {
   fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fichaContexto, fichaTerritorio, nombresTerritorio,
-  fichaDeclaraciones,
+  fichaDeclaraciones, textoResto,
 } from './ficha.js';
 import { formulaDe } from './formulas.js';
 import {
   modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega,
   marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, estadoLlega, perfilesDelAnio,
+  eurosQueQuedan,
 } from './sueldo.js';
 import { seriesFiabilidad, fiabilidadFicha, umbralPocos } from './fiabilidad.js';
 import { percentilSalarial } from './percentil.js';
@@ -437,6 +438,7 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
       ? Math.max(...v.seriesColor.map((s) => en(s, p).estado))
       : estadoLlega(en(base, p).estado, calculoDe(p).ingreso(codigo, (serie) => en(serie, p).valor), indiceEstado('ausente'));
     let texto = '—';
+    let resto = null;
     if (v.modo === 'necesario') {
       const b = en(base, p).valor;
       const cat = v.mapa.categorias;   // F5: en los mapas de categorías, su texto
@@ -444,8 +446,9 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
     } else {
       const r = calculoDe(p).calcular(codigo, (serie) => en(serie, p).valor);
       if (r) texto = t.porcentaje(r.ratio);
+      resto = textoResto(t, eurosQueQuedan(r), { corto: true })?.texto ?? null;   // tarea 34
     }
-    return { periodo: p, texto, estado: estadoPeor };
+    return { periodo: p, texto, estado: estadoPeor, resto };
   });
   let nota = null;
   if (v.modo === 'llega' && ficha !== 'llave') {

@@ -14,7 +14,7 @@ larga_portada <- function() {
   alquiler <- base |> mutate(indicador = "alquiler_m2", corte = "tipologia", grupo = "VC", valor = m2)
   sueldo <- base |> mutate(indicador = "sueldo_necesario", corte = "total", grupo = "total",
                            valor = termino_publicado(m2) * 50 / 0.3)
-  barrera <- base |> mutate(indicador = "barrera_acceso", corte = "ficha", grupo = "tartera",
+  barrera <- base |> mutate(indicador = "peso_alquiler_ingreso", corte = "ficha", grupo = "tartera",
                             valor = 100 * termino_publicado(m2) * 50 / 1000)
   sobrecarga <- tibble::tibble(geo_id = "00", nivel = "nacional", anio = c(2024L, 2025L, 2025L),
                                indicador = "sobrecarga", corte = c("total", "total", "tenencia"),

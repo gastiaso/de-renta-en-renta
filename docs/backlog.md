@@ -41,7 +41,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 
 ## Bloque A · Marco: dos familias
 
-**34. Pregunta rectora y vocabulario.**
+**34. Pregunta rectora y vocabulario · HECHA (10-nov-2026, plan v0.45).**
 - Textos decididos por el autor (10-nov-2026):
   - gancho: «¿A quién le queda sueldo después de pagar la vivienda?»;
   - pregunta: «Dónde, desde cuándo y para quién ha cambiado la relación entre lo que cuesta la vivienda y lo que se cobra»;
@@ -55,6 +55,12 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 - La «barrera de acceso» calculada con el SERPAVI pasa a llamarse por lo que mide (propuesta: «alquiler del parque sobre el ingreso de la ficha»). «Acceso» y «entrar» quedan para la oferta.
 - **Hecho cuando:** ningún texto de la web ni de la nota llama «acceso» a una cifra del SERPAVI (prueba que lo busque).
 - **Avance (10-nov-2026):** textos nuevos en el plan (§1), la nota (ES y EN), el README y los diccionarios (`sitio.gancho`, `sitio.lema`, `sitio.familias`); las 96 pruebas de la web pasan. Falta: portada (gancho y familias en el centro, dicho al pie), vocabulario de familias, nombre nuevo de la «barrera», euros que quedan, y ejecutar las pruebas de R, que no se han pasado tras el cambio.
+- **Hecha (10-nov-2026):**
+  - indicador 15, «Peso del alquiler en el ingreso», con código `peso_alquiler_ingreso` (decisión del autor: también el código); familia C, «Esfuerzo»;
+  - `familia_alquiler` en el inventario y en el manifiesto; la leyenda la escribe con su lectura literal;
+  - portada con el gancho en el centro y el dicho al pie;
+  - euros que quedan (o que faltan) en «¿te llega?», en la ficha y en su evolución; no en el panel «Tu sueldo» (resumen de todo el mapa), en las filas de contexto ni en el PNG;
+  - prueba de «acceso» y «barrera» (`test-familias-alquiler.R`) y 12 pruebas de la web.
 
 ## Bloque B · Entrar
 

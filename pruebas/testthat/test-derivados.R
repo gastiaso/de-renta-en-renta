@@ -109,8 +109,8 @@ test_that("los derivados parten de los términos redondeados a un decimal, como 
   expect_silent(termino_publicado(c(NA_real_, 2)))
   p <- perfiles_fichas(tibble::tibble(provincia = "Madrid, Comunidad de", neto_mensual = 1500.04), provincias_inventadas, a,
                        anio_mochila = 2024L)
-  b <- calcular_barrera_acceso(s, p)
-  expect_equal(fila(b, "28001", 2024L, "barrera_acceso", "mochila")$valor, 100 * 14 * 50 / 1500)
+  b <- calcular_peso_alquiler_ingreso(s, p)
+  expect_equal(fila(b, "28001", 2024L, "peso_alquiler_ingreso", "mochila")$valor, 100 * 14 * 50 / 1500)
   comp <- comprobar_derivados(armonizar_derivados(s, a, p), s, a, p, provincias_inventadas,
                               tibble::tibble(provincia = "Madrid, Comunidad de", neto_mensual = 1500.04))
   expect_true(all(comp$calculado[comp$id == "derivados_terminos"] < 1e-9))
@@ -118,18 +118,18 @@ test_that("los derivados parten de los términos redondeados a un decimal, como 
 
 test_that("15 en R: tartera y mochila con el ingreso del mismo año que el alquiler", {
   p <- perfiles_fichas(mochila_inventada, provincias_inventadas, adrh_largo(), anio_mochila = 2024L)
-  b <- calcular_barrera_acceso(serpavi_largo(), p)
+  b <- calcular_peso_alquiler_ingreso(serpavi_largo(), p)
   expect_equal(sort(unique(b$anio)), c(2023L, 2024L))           # 2026 no tiene alquiler
   expect_equal(unique(b$anio[b$grupo == "mochila"]), 2024L)     # la mochila, solo su año
   tartera <- as.numeric(sprintf("%.1f", 1134 * 14 * (1 - 0.0647) / 12))   # como en perfiles.json
-  expect_equal(fila(b, "2800101001", 2024L, "barrera_acceso", "tartera")$valor, 100 * 15 * 50 / tartera)
-  expect_equal(fila(b, "13", 2024L, "barrera_acceso", "tartera")$valor, 100 * 12 * 50 / tartera)
+  expect_equal(fila(b, "2800101001", 2024L, "peso_alquiler_ingreso", "tartera")$valor, 100 * 15 * 50 / tartera)
+  expect_equal(fila(b, "13", 2024L, "peso_alquiler_ingreso", "tartera")$valor, 100 * 12 * 50 / tartera)
   tartera_2023 <- as.numeric(sprintf("%.1f", 1080 * 14 * (1 - 0.0645) / 12))   # el SMI del mismo año
-  expect_equal(fila(b, "2800101001", 2023L, "barrera_acceso", "tartera")$valor, 100 * 15 * 50 / tartera_2023)
-  expect_equal(fila(b, "2800101001", 2024L, "barrera_acceso", "mochila")$valor, 50)
-  expect_equal(fila(b, "28001", 2024L, "barrera_acceso", "mochila")$valor, 100 * 14 * 50 / 1500)
-  expect_equal(fila(b, "0100101001", 2024L, "barrera_acceso", "mochila")$estado, "ausente")   # foral, sin mochila
-  expect_equal(nrow(fila(b, "13", 2024L, "barrera_acceso", "mochila")), 0L)   # la comunidad no tiene una sola provincia
+  expect_equal(fila(b, "2800101001", 2023L, "peso_alquiler_ingreso", "tartera")$valor, 100 * 15 * 50 / tartera_2023)
+  expect_equal(fila(b, "2800101001", 2024L, "peso_alquiler_ingreso", "mochila")$valor, 50)
+  expect_equal(fila(b, "28001", 2024L, "peso_alquiler_ingreso", "mochila")$valor, 100 * 14 * 50 / 1500)
+  expect_equal(fila(b, "0100101001", 2024L, "peso_alquiler_ingreso", "mochila")$estado, "ausente")   # foral, sin mochila
+  expect_equal(nrow(fila(b, "13", 2024L, "peso_alquiler_ingreso", "mochila")), 0L)   # la comunidad no tiene una sola provincia
   expect_equal(unique(b$corte), "ficha")
 })
 
@@ -142,38 +142,38 @@ test_that("15 en R: el transistor de cada año y provincia, con su estado, y la 
   expect_equal(nrow(tr), 3L)
   expect_equal(unique(tr$fuente), "inss_pensiones")
   expect_equal(unique(tr$superficie_m2), 50)
-  b <- calcular_barrera_acceso(s, p)
-  expect_equal(fila(b, "2800101001", 2023L, "barrera_acceso", "transistor")$valor, 100 * 15 * 50 / 1450)
-  expect_equal(fila(b, "28001", 2024L, "barrera_acceso", "transistor")$valor, 100 * 14 * 50 / 1500)
-  expect_equal(fila(b, "0100101001", 2024L, "barrera_acceso", "transistor")$estado, "dato")      # foral estimado: el del alquiler
-  expect_equal(fila(b, "0100101001", 2023L, "barrera_acceso", "transistor")$estado, "ausente")   # sin ingreso ese año
-  expect_equal(nrow(fila(b, "13", 2024L, "barrera_acceso", "transistor")), 0L)
+  b <- calcular_peso_alquiler_ingreso(s, p)
+  expect_equal(fila(b, "2800101001", 2023L, "peso_alquiler_ingreso", "transistor")$valor, 100 * 15 * 50 / 1450)
+  expect_equal(fila(b, "28001", 2024L, "peso_alquiler_ingreso", "transistor")$valor, 100 * 14 * 50 / 1500)
+  expect_equal(fila(b, "0100101001", 2024L, "peso_alquiler_ingreso", "transistor")$estado, "dato")      # foral estimado: el del alquiler
+  expect_equal(fila(b, "0100101001", 2023L, "peso_alquiler_ingreso", "transistor")$estado, "ausente")   # sin ingreso ese año
+  expect_equal(nrow(fila(b, "13", 2024L, "peso_alquiler_ingreso", "transistor")), 0L)
   d <- armonizar_derivados(s, a, p)
   comp <- comprobar_derivados(d, s, a, p, provincias_inventadas, mochila_inventada)
   expect_true(all(comp$calculado[comp$id == "derivados_terminos"] < 1e-9))
   expect_equal(sum(comp$calculado[comp$id == "derivados_estado"]), 0)
-  expect_true("barrera_acceso transistor" %in% comp$detalle)
+  expect_true("peso_alquiler_ingreso transistor" %in% comp$detalle)
 })
 
 test_that("estado del 15: el del alquiler; el ingreso de la ficha solo aporta ausente (pregunta 15 ampliada)", {
   # Mochila «estimado» y alquiler «dato»: la barrera es «dato»
   p <- perfiles_fichas(mochila_inventada, provincias_inventadas, adrh_largo(), anio_mochila = 2024L)
-  b <- calcular_barrera_acceso(serpavi_largo(), p)
-  expect_equal(fila(b, "2800101001", 2024L, "barrera_acceso", "mochila")$estado, "dato")
-  expect_equal(fila(b, "2800101002", 2024L, "barrera_acceso", "mochila")$estado, "secreto")   # el del alquiler
+  b <- calcular_peso_alquiler_ingreso(serpavi_largo(), p)
+  expect_equal(fila(b, "2800101001", 2024L, "peso_alquiler_ingreso", "mochila")$estado, "dato")
+  expect_equal(fila(b, "2800101002", 2024L, "peso_alquiler_ingreso", "mochila")$estado, "secreto")   # el del alquiler
   # Sin ingreso de la ficha: ausente, aunque el alquiler sea dato
-  expect_equal(fila(b, "0100101001", 2024L, "barrera_acceso", "mochila")$estado, "ausente")
-  expect_equal(estado_barrera(c("dato", "estimado", "secreto", "dato", NA), c("estimado", "dato", "estimado", "ausente", "dato")),
+  expect_equal(fila(b, "0100101001", 2024L, "peso_alquiler_ingreso", "mochila")$estado, "ausente")
+  expect_equal(estado_peso_alquiler(c("dato", "estimado", "secreto", "dato", NA), c("estimado", "dato", "estimado", "ausente", "dato")),
                c("dato", "estimado", "secreto", "ausente", "ausente"))
-  expect_equal(estado_barrera("dato", NA_character_), "ausente")
+  expect_equal(estado_peso_alquiler("dato", NA_character_), "ausente")
   # Y la compuerta lo acepta: el estado esperado del 15 sigue la misma regla
   d <- armonizar_derivados(serpavi_largo(), adrh_largo(), p)
   comp <- comprobar_derivados(d, serpavi_largo(), adrh_largo(), p, provincias_inventadas, mochila_inventada)
   expect_equal(sum(comp$calculado[comp$id == "derivados_estado"]), 0)
-  mal <- mutate(d, estado = ifelse(indicador == "barrera_acceso" & grupo == "mochila" & geo_id == "2800101001" & anio == 2024L,
+  mal <- mutate(d, estado = ifelse(indicador == "peso_alquiler_ingreso" & grupo == "mochila" & geo_id == "2800101001" & anio == 2024L,
                                    "estimado", estado))
   c2 <- comprobar_derivados(mal, serpavi_largo(), adrh_largo(), p, provincias_inventadas, mochila_inventada)
-  expect_equal(filter(c2, id == "derivados_estado", detalle == "barrera_acceso mochila")$calculado, 1)
+  expect_equal(filter(c2, id == "derivados_estado", detalle == "peso_alquiler_ingreso mochila")$calculado, 1)
 })
 
 test_that("la tabla larga de los derivados pasa la validación y la compuerta cuadra", {
@@ -209,6 +209,6 @@ test_that("el resumen da estados y percentiles por indicador, nivel y año", {
   p <- perfiles_fichas(mochila_inventada, provincias_inventadas, a, anio_mochila = 2024L)
   r <- resumen_derivados(armonizar_derivados(s, a, p))
   expect_equal(filter(r$estados, indicador == "sueldo_necesario", nivel == "sc", anio == 2024L)$secreto, 1L)
-  expect_true("barrera_acceso tartera" %in% r$rangos$indicador)
+  expect_true("peso_alquiler_ingreso tartera" %in% r$rangos$indicador)
   expect_equal(resumen_llave(p)$p50[resumen_llave(p)$anio == 2024L], 3000)
 })

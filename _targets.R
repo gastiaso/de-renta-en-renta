@@ -540,7 +540,7 @@ mapa_base <- list(
 )
 
 # Indicadores derivados (R/derivados.R): 14 (esfuerzo de residentes), 21 (sueldo neto necesario,
-# mapa por defecto: 50 m² y umbral del 30 %) y 15 (barrera de acceso: se calcula en la web; aquí,
+# mapa por defecto: 50 m² y umbral del 30 %) y 15 (peso del alquiler en el ingreso: se calcula en la web; aquí,
 # la tartera, la mochila y el transistor de 2015 a 2024, como control).
 # Alquiler de vivienda colectiva; estado, el peor de sus términos (plan, preguntas abiertas 12 y 15);
 # numerador y denominador del mismo año (regla 4).

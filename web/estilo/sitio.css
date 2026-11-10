@@ -384,6 +384,8 @@ body {
 .leyenda-titulo { font: 600 0.95rem/1.25 var(--fuente-tablero); cursor: pointer; }
 .leyenda-pliegue[open] > .leyenda-titulo { margin-bottom: 2px; }
 .leyenda-unidad { margin: 0 0 6px; color: var(--color-tenue); }
+/* Familia del mapa de alquiler y su lectura literal (tarea 34), bajo el título */
+.leyenda-familia { margin: 0 0 2px; font: 500 1em/1.25 var(--fuente-tablero); }
 .leyenda-regla {
   position: relative;
   display: grid;
@@ -480,6 +482,9 @@ body {
 .ficha-unidad { color: var(--color-tenue); }
 .ficha-estado { margin: 4px 0 8px; color: var(--color-tenue); }
 .ficha-tramo { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font: 600 0.9rem var(--fuente-tablero); }
+/* Euros que quedan al mes (tarea 34), al lado del porcentaje: misma tinta en los dos signos */
+.ficha-resto { margin: 2px 0 0; font: 500 1rem/1.3 var(--fuente-tablero); }
+.ficha-resto-cifra { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* Fiabilidad de la mediana del alquiler: contratos, margen, intervalo y «en el límite» */
 .ficha-fiabilidad, .ficha-intervalo { margin: 2px 0 4px; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
 .ficha-intervalo { color: var(--color-tenue); }
@@ -503,6 +508,7 @@ body {
 .ficha-tabla th, .ficha-tabla td { padding: 2px 12px 2px 0; text-align: left; font-weight: 400; }
 .ficha-tabla th { font-family: var(--fuente-tablero); }
 .ficha-tabla-cifra { text-align: right; font-family: var(--fuente-tablero); }
+.ficha-tabla-resto { text-align: right; font-family: var(--fuente-tablero); white-space: nowrap; }
 .ficha-tabla-estado { color: var(--color-tenue); }
 .ficha-tabla-activa th, .ficha-tabla-activa td { font-weight: 700; }
 

@@ -11,7 +11,7 @@
 # Las cartas solo llevan cifras reales del pipeline:
 #   - sueldo: sueldo necesario (21) de las secciones con dato del último año: percentiles 10, 50 y
 #     90 (quantile() de R, tipo 7), con la superficie y el umbral del mapa por defecto;
-#   - smi: barrera de acceso (15) de la tartera en las secciones con dato del último año que la
+#   - smi: peso del alquiler en el ingreso (15) de la tartera en las secciones con dato del último año que la
 #     tiene: porcentaje de secciones donde el alquiler de 50 m2 pasa del 30 y del 40 % del SMI neto;
 #   - sobrecarga: tasa de sobrecarga (22) de España del último año de la ECV, total y de quienes
 #     viven de alquiler a precio de mercado.
@@ -126,9 +126,9 @@ cifras_portada <- function(larga, superficie = SUPERFICIE_FICHA, umbral = UMBRAL
   s <- sueldo$valor[sueldo$anio == anio_s]
   q <- stats::quantile(s, c(0.1, 0.5, 0.9), names = FALSE, type = 7)
 
-  barrera <- larga |> filter(indicador == "barrera_acceso", nivel == "sc", corte == "ficha", grupo == "tartera", !is.na(valor))
-  anio_b <- max(barrera$anio)
-  b <- barrera$valor[barrera$anio == anio_b]
+  peso <- larga |> filter(indicador == "peso_alquiler_ingreso", nivel == "sc", corte == "ficha", grupo == "tartera", !is.na(valor))
+  anio_b <- max(peso$anio)
+  b <- peso$valor[peso$anio == anio_b]
 
   sc <- larga |> filter(indicador == "sobrecarga", nivel == "nacional", geo_id == "00", !is.na(valor))
   anio_c <- max(sc$anio)

@@ -27,18 +27,18 @@ This note describes how the atlas figures are produced: sources, constant geogra
 
 **Scale and period.** Census tract, from 2015 to the latest data available. All series are drawn on the 2021 Census tract map (§3).
 
-**Two families of indicators** (plan §3):
-- **Resident burden:** income of those who already live in the tract against rent in that tract.
-- **Access barrier:** rent in the tract against a reference income («tokens», §6).
+**Two families of rent indicators** (plan §1; `familia_alquiler` column of `inventario/indicadores.csv`):
+- **Staying** (those already renting): the rented stock, with the tenancies in force declared to SERPAVI. It includes the resident burden (income of those who already live in the tract against rent in that tract) and the rent share of income (rent in the tract against the income of a token, §6).
+- **Moving in** (those looking for a home today): asking rents from property portals and the INE index for new tenancies. It is added before v1.0; until then, the atlas only measures the first family.
 
-The second family corrects a bias in the first: expensive areas look affordable because higher-income people live there.
+SERPAVI figures measure those already renting, not the cost of moving in. The rent share of income corrects a bias in the burden: expensive areas look affordable because higher-income people live there.
 
 **Staging** (plan §2.3):
 
 | Version | Content | Computation status (8 Nov 2026) |
 |---|---|---|
 | v0.0 | Indicators 22 (housing cost overburden, Eurostat method) and 23 (unsuccessful housing search) | In the long table: 261 and 32 rows (`tabla_larga`, sources `ine_ecv` and `ine_ecv_modulo`) |
-| v0.1 | Core of 10 indicators: 1–3, 8, 9, 14, 15, 18, 19 and 21 | All 10, in the long table; the barrier (15), only with the Under-35 and Minimum wage tokens of 2024 (§7.4) |
+| v0.1 | Core of 10 indicators: 1–3, 8, 9, 14, 15, 18, 19 and 21 | All 10, in the long table; the rent share of income (15), only with the Under-35 and Minimum wage tokens of 2024 (§7.4) |
 | v1.0 | The 23 indicators of the catalogue (plan §5) | — |
 
 **v0.1 core** (`inventario/indicadores.csv`, column `nucleo_v01`):
@@ -51,7 +51,7 @@ The second family corrects a bias in the first: expensive areas look affordable 
 | 8 | Monthly rent (median) | MIVAU, SERPAVI | Tract (2021 tract map) | 2015–2024 | Computed (`larga_serpavi`) |
 | 9 | Rent per m² (median) | MIVAU, SERPAVI | Tract (2021 tract map) | 2015–2024 | Computed (`larga_serpavi`) |
 | 14 | Resident rent burden | SERPAVI and ADRH | Tract | 2015–2024 | Computed (`larga_derivados`) |
-| 15 | Rental access barrier | SERPAVI and the income of each token | Tract × income | 2015–2024 | Check in `larga_derivados` (Minimum wage, Under-35 and Pensioner tokens, 2015–2024); the website computes it with each token |
+| 15 | Rent share of income | SERPAVI and the income of each token | Tract × income | 2015–2024 | Check in `larga_derivados` (Minimum wage, Under-35 and Pensioner tokens, 2015–2024); the website computes it with each token |
 | 18 | Renting households | INE, 2021 Census | Tract (2021 tract map) | 2021 (2011, in F6) | Computed (`larga_censo2021`) |
 | 19 | Tourist dwellings | INE, experimental statistics | Tract (2024 tract map, carried to 2021) | February 2024 – May 2026, twice a year (2020–2023, in F6) | Computed (`larga_vut`) |
 | 21 | Net pay needed (default map) | SERPAVI | Tract | 2015–2024 | Computed (`larga_derivados`) |
@@ -435,7 +435,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `smi_neto` | Net monthly income of the 2026 Minimum wage token (`perfiles`) against the plan figure: €17,094 × (1 − 0.065) / 12 ≈ €1,332 | ±€1 | Blocking | €1,331.91; difference, −€0.09 | `validacion_derivados` |
 | `derivados_terminos` | Maximum deviation, by year and indicator, between each derived figure and the one recomputed from its terms | ±0.001% | Blocking | 4.3 × 10⁻¹⁴% at most in the 41 figures | `validacion_derivados` |
 | `derivados_estado` | Derived figures whose status is not the worst of their terms (for 15, that of the rent, or `ausente` with no token income), or with a value and status `secreto` or `ausente` (or the reverse) | Exact | Blocking | 0 in the 41 figures | `validacion_derivados` |
-| `derivados_rango` | Derived figures outside the possible range: burden, from 0.1 to 100%; barrier, from 0.1 to 300%; pay needed, from 100 to 10,000 net € a month | Exact | Blocking | 0 in the 41 figures | `validacion_derivados` |
+| `derivados_rango` | Derived figures outside the possible range: burden, from 0.1 to 100%; rent share of income, from 0.1 to 300%; pay needed, from 100 to 10,000 net € a month | Exact | Blocking | 0 in the 41 figures | `validacion_derivados` |
 | `perfiles_mochila` | Provinces of the Under-35 token without an INE code in `inventario/provincias_aeat.csv`, provinces repeated in a year and provinces of the table without the token (over the 10 years) | Exact | Blocking | 0 in the 3 figures | `validacion_derivados` |
 | `smi_boe` | Monthly minimum wage of each year in `SMI_FICHAS` against that of the royal decree in its BOE XML, and the cited rule; 2021, mean weighted by months in force | Exact | Blocking | 0 in the 18 figures (2015–2023) | `validacion_smi` |
 | `inss_cobertura` | Provinces, multi-province regions and Spain missing or repeated in any month of the year (INSS Excel) | Exact | Blocking | 0 in the 10 years | `validacion_inss` |
@@ -475,7 +475,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `serpavi_sin_fila` | Tracts, districts and municipalities of the 2021 tract map that the database does not have (they go as `ausente`) | Exact | Warning | Warns with 40 tracts, 36 districts and 36 municipalities (§7.1) | `validacion_serpavi` |
 | `margen_rango` | Tracts with the approximate margin of the median outside 1–40%, by year, indicator and housing type | Exact | Warning | Warns in the 40 figures: 2,414 tracts and years in 2015–2024, 2,242 of them single-family; in 2024, 16 apartment and 268 single-family (§7.6) | `validacion_fiabilidad` |
 | `vut_denominador_detalle` | The tracts of `vut_denominador`, one by one (only those more than 0.001 points apart) | ±0.1 points | Warning | Passes: 839 tract-periods, all since November 2024; maximum difference, 0.091 points | `validacion_vut` |
-| `derivados_rango_detalle` | Each derived figure outside the usual range: burden, below 3% or above 60%; barrier, 3% or 150%; pay needed, €200 or €4,000 | Exact | Warning | Warns in 23 figures: three burdens above 60% (2019 and 2022), 18 pay-needed figures below €200 in 2015–2018 and two above €4,000 (two tracts in Madrid, 2024) | `validacion_derivados` |
+| `derivados_rango_detalle` | Each derived figure outside the usual range: burden, below 3% or above 60%; rent share of income, 3% or 150%; pay needed, €200 or €4,000 | Exact | Warning | Warns in 23 figures: three burdens above 60% (2019 and 2022), 18 pay-needed figures below €200 in 2015–2018 and two above €4,000 (two tracts in Madrid, 2024) | `validacion_derivados` |
 | `web_fuera_indice` | Long-table rows going to the website with no slot in the index of their level | Exact | Warning | Warns in 16 municipality rows; at the other levels, 0 | `validacion_web` |
 | `web_sobrecarga_geometria` | Units of a view of the overburden map with no geometry in their NUTS version or in the fallback one | Exact | Warning | Passes: 0 in the 12 views (§7.5) | `validacion_web_sobrecarga` |
 | `aeat_mediana_deciles` | SME median by region interpolated from deciles against centiles | ±0.5% | Warning | Between −0.19 and +0.45% (2019–2024) | `validacion_mochila` |
@@ -713,6 +713,8 @@ In 2024, by province, from €17,792 (Jaén) to €31,911 (Madrid) overall, and 
 | Pensioner (transistor) | Average retirement pension, net of income tax, ÷ 12 | INSS; AEAT withholding | Province | 50 m² | Computed from 2015 to 2024 (`transistor`, `perfiles`); Basque Country and Navarre, as `estimado` |
 | Your token | Net monthly pay entered by the user: 12 or 14 instalments, optional second wage | — | — | 50 m² with one wage, 70 m² with two; can be changed to 50, 70 or 90 | Computed in the browser and not stored (`js/sueldo.js`) |
 
+**Money left** (backlog task 34). In «Can you make rent?», next to the rent share of income (15), the profile shows the euros left each month: the token's net monthly income minus the monthly rent of the same dwelling and year, the two terms of the percentage, each rounded to the euro before subtracting (`web/js/sueldo.js`). If rent exceeds income, the difference is shown as the amount short. The euros left are a subtraction, not a sufficiency threshold: they do not say whether that remainder covers a household's other expenses.
+
 ### 6.2 Under-35 token: method B, gross-to-net step and series
 
 The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7, closed). The series runs from 2015 to 2024 (10 Nov 2026): each year, with AEAT data for that year and the ECV wave of the following year, which carries its income.
@@ -787,7 +789,7 @@ The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7
 
 - **2021.** It had two amounts: €950 from January to August (the 2020 one, extended) and €965 from 1 September (RD 817/2021). Their mean weighted by months in force, €955, is used, consistent with the annual incomes of ADRH and AEAT (plan §11, question 18).
 - **Gate.** The 2015 to 2023 amounts are read from the BOE XML of each royal decree (`descargar_boe_smi()`, `leer_boe_smi()`, `comprobar_smi_boe()`; `smi_boe`, target `validacion_smi`); those of 2024 to 2026 are cited. `smi_neto` compares the 2026 one with the plan's €1,332 (§4.1).
-- **Use.** The barrier in the long table (§7.4) and the website use the minimum wage of the same year as the rent (rule 4; author's decision, 9 Nov 2026): with 2024 rent, €1,237.40. Those of 2025 and 2026 have no rent of the same year; the website cites the latest next to that of the chosen year.
+- **Use.** The rent share of income in the long table (§7.4) and the website use the minimum wage of the same year as the rent (rule 4; author's decision, 9 Nov 2026): with 2024 rent, €1,237.40. Those of 2025 and 2026 have no rent of the same year; the website cites the latest next to that of the chosen year.
 
 **Comparison with the Under-35 token.**
 - The 2024 Under-35 token (€1,330 net on average) comes out almost equal to the Minimum wage token with the 2026 minimum wage. They are different years (rule 4).
@@ -1034,7 +1036,7 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 | # | Indicator | Formula | Unit | Terms |
 |---|---|---|---|---|
 | 14 | Resident rent burden | Median monthly rent × 12 / average net income per household, same year | % of household income | Indicators 8 and 2 |
-| 15 | Access barrier | Median rent per m² × 50 / net monthly income of the token | % of the token's income | Indicator 9 and the token's income (§6) |
+| 15 | Rent share of income | Median rent per m² × 50 / net monthly income of the token | % of the token's income | Indicator 9 and the token's income (§6) |
 | 21 | Net pay needed (default map) | Median rent per m² × 50 / 0.30 (threshold can be changed to 40%) | Net € a month | Indicator 9 |
 
 **Building type** (plan §11, question 12): the rent of all three is apartment rent (`grupo = VC`).
@@ -1042,13 +1044,13 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 **Status** (plan §11, question 15; `peor_estado()`): the worst of its terms, in the order `dato` < `estimado` < `secreto` < `ausente`.
 - A tract with confidential rent is `secreto`.
 - With rent `dato` and income `estimado`, the burden is `estimado`.
-- If any term is missing, `ausente`. That is the case of the barrier with the Under-35 token in the Basque Country, Navarre, Ceuta and Melilla, where the token has no income (§6.2).
-- For 15, the token income does not count as a term (`estado_barrera()`; plan §11, question 15 extended): the barrier takes the status of the rent, and is `ausente` if the token has no income. The Under-35 token goes as `estimado` (it is an estimate, §6.2), and that is explained once, in its method, not in each tract.
+- If any term is missing, `ausente`. That is the case of the rent share with the Under-35 token in the Basque Country, Navarre, Ceuta and Melilla, where the token has no income (§6.2).
+- For 15, the token income does not count as a term (`estado_peso_alquiler()`; plan §11, question 15 extended): indicator 15 takes the status of the rent, and is `ausente` if the token has no income. The Under-35 token goes as `estimado` (it is an estimate, §6.2), and that is explained once, in its method, not in each tract.
 - Indicator 21 has a single term: it takes the status of indicator 9.
 
 **Rounded terms** (plan §11, question 19; `termino_publicado()`). Rent, household income and token income enter the computation rounded to one decimal with `sprintf("%.1f")` (§0), as the website receives them. So the figure from R and the one the website recomputes in the browser match exactly.
 
-**Same year** (guide, rule 4). In the burden, SERPAVI and ADRH match in 2015–2024. The barrier in the long table uses the token income of the same year as the rent: the Minimum wage token, with the minimum wage of each year from 2015 to 2024; the Pensioner token, with the pension of each year; the Under-35 token, with AEAT data for each year. The website does the same with the chosen token (author's decision, 9 Nov 2026).
+**Same year** (guide, rule 4). In the burden, SERPAVI and ADRH match in 2015–2024. The rent share in the long table uses the token income of the same year as the rent: the Minimum wage token, with the minimum wage of each year from 2015 to 2024; the Pensioner token, with the pension of each year; the Under-35 token, with AEAT data for each year. The website does the same with the chosen token (author's decision, 9 Nov 2026).
 
 **How to read them:**
 - Indicator 15 is read in bands: up to 30%, 30 to 40% and over 40%.
@@ -1059,7 +1061,7 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 **Computation** (`armonizar_derivados()`; target `larga_derivados`, 2,644,824 rows, source `calculo_propio`):
 - **14** (`calcular_esfuerzo_residentes()`): in tracts and municipalities, the levels at which SERPAVI and ADRH publish both terms (`NIVELES_ESFUERZO`), and in the years with both, 2015–2024. No breakdown.
 - **21** (`calcular_sueldo_necesario()`): at all SERPAVI levels, 2015–2024, with 50 m² and the 30% threshold. No breakdown.
-- **15** (`calcular_barrera_acceso()`): cut `ficha`, with groups `tartera`, `mochila` and `transistor` (2015–2024). The Under-35 and Pensioner tokens, in the provinces and their tracts, districts and municipalities; the Minimum wage token, also in the regions. It is a check: the website computes the barrier with the chosen token.
+- **15** (`calcular_peso_alquiler_ingreso()`): cut `ficha`, with groups `tartera`, `mochila` and `transistor` (2015–2024). The Under-35 and Pensioner tokens, in the provinces and their tracts, districts and municipalities; the Minimum wage token, also in the regions. It is a check: the website computes the rent share with the chosen token.
 - **Token incomes** (`perfiles_fichas()`; target `perfiles`): the Minimum wage token (§6.3); the Under-35 token of each province and year, from 2015 to 2024 (§6.2; 46 provinces with data and 6 `ausente` each year); the Neighbourhood household token (§6.4); the Pensioner token of each province and year (§6.5).
 - **Version:** the most recent of its terms, 7 Nov 2026.
 
@@ -1088,11 +1090,11 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 |---|---|---|---|---|---|---|
 | Resident rent burden (%) | 26,125 | 6.2 | 12.6 | 17.6 | 24.0 | 51.3 |
 | Net pay needed (€ a month) | 26,137 | 300 | 700 | 1,217 | 2,117 | 4,283 |
-| Barrier with the Under-35 token (%) | 24,117 | 7.2 | 16.8 | 27.5 | 43.7 | 87.9 |
-| Barrier with the Minimum wage token, 2024 minimum wage (%) | 26,137 | 7.3 | 17.0 | 29.5 | 51.3 | 103.8 |
-| Barrier with the Pensioner token (%) | 26,137 | 6.2 | 14.3 | 23.3 | 37.9 | 73.2 |
+| Rent share with the Under-35 token (%) | 24,117 | 7.2 | 16.8 | 27.5 | 43.7 | 87.9 |
+| Rent share with the Minimum wage token, 2024 minimum wage (%) | 26,137 | 7.3 | 17.0 | 29.5 | 51.3 | 103.8 |
+| Rent share with the Pensioner token (%) | 26,137 | 6.2 | 14.3 | 23.3 | 37.9 | 73.2 |
 
-**Barrier with the Minimum wage, Under-35 and Pensioner tokens in the tracts, each year with that year's income** (`larga_derivados`; median and share of tracts with a value above 30%):
+**Rent share with the Minimum wage, Under-35 and Pensioner tokens in the tracts, each year with that year's income** (`larga_derivados`; median and share of tracts with a value above 30%):
 
 | Year | Minimum wage: median (%) | Minimum wage: above 30% | Under-35: median (%) | Under-35: above 30% | Pensioner: median (%) | Pensioner: above 30% |
 |---|---|---|---|---|---|---|
@@ -1325,8 +1327,8 @@ The series with the main-residence tax deduction (in force until December 2012),
 
 **Derived indicators:**
 - **Inherited gaps.** A derived indicator has no value where any of its terms is missing: in 2024, 10,208 of the 36,333 tracts have no burden (§7.4).
-- **Vulnerability, not access.** The burden divides rent by the average income of all households in the tract, not only of those who rent (`inventario/indicadores.csv`).
-- **The barrier in the long table is a check.** With the Minimum wage, Under-35 and Pensioner tokens from 2015 to 2024; the website computes it with the chosen token (§7.4).
+- **Vulnerability, not moving in.** The burden divides rent by the average income of all households in the tract, not only of those who rent (`inventario/indicadores.csv`).
+- **The rent share in the long table is a check.** With the Minimum wage, Under-35 and Pensioner tokens from 2015 to 2024; the website computes it with the chosen token (§7.4).
 
 **Wages (indicator 7):**
 - **No Basque Country or Navarre.** AEAT does not cover them, and of the foral tax authorities only Gipuzkoa publishes a comparable figure (§5.6).
@@ -1399,7 +1401,7 @@ The export follows the author's decisions of 8 Nov 2026 (plan §6.6; plan §11, 
 - **Spain, regions and provinces.** Indicators 18 and 19 carry the published figures for Spain, the 19 regions and the 52 provinces (§7.2 and §7.3); those for Spain, in seven files. Rent (8 and 9) and pay needed (21) have regions and provinces but not Spain: SERPAVI publishes only its count of observations, which goes in the contracts series (§7.6). Income (1–3) and rent burden (14) go up to the municipality (§5.3 and §7.4). Income distribution (4–6) carries the published figures for regions, provinces and, from 2021, Spain (§5.5).
 - **Sheet series.** One file per municipality (`fichas/<municipality>.json`) with the series of its tracts and of the municipality itself.
 - **Reliability** (§7.6). The contracts and margin of the median go as auxiliary series of each rent series, of its same housing type (`fiabilidad` in the manifest), with no indicator number or map of their own. They are not in the per-municipality files, where they would weigh a quarter more: the tract profile reads them from the files of the period the map shows.
-- **What is not exported.** The SERPAVI quartiles and the barrier (15), which the website computes with the chosen token. Pay needed (21) is recomputed in the browser from rent per m² when the floor area or the threshold change (`FORMULAS_WEB`).
+- **What is not exported.** The SERPAVI quartiles and the rent share of income (15), which the website computes with the chosen token. Pay needed (21) is recomputed in the browser from rent per m² when the floor area or the threshold change (`FORMULAS_WEB`).
 - **Website against R.** The website test (`pruebas/web/datos.test.mjs`, in node) recomputes with the page's own module, `web/js/formulas.js`, the pay needed from rent per m² in all tracts, districts, municipalities, provinces and regions from 2015 to 2024, and compares it with the one exported by R: 550,140 unit-years, 294,082 with a value, with no difference in value, nulls or status (plan §6.5). In addition, `comprobar_web_navegador()` opens the page in headless Chrome (`chromote`): with its own modules, it recomputes a sample of 300 tracts over the 10 years and reads their contracts and margin, and it opens six tract profiles. Locally and on the published site everything matches the long table, with no errors (9 Nov 2026; `docs/publicacion.md`).
 - **Downloads.** The website downloads the map series as CSV, at the level in view (value with the precision of the series, status and source; for the rent series, contracts and margin; for indicator 21, floor area and threshold), and the map as PNG with its legend and source. With «Your token», neither carries the pay entered: the CSV gives the rent, not the ratio. The colours of the «Can you make rent?» PNG do let it be roughly inferred, so with «Your token» it is downloaded after a warning that can be cancelled (plan §11, question 23).
 - **Year outside the series** (plan §11, question 32). With a year earlier than every period of a series (2020 for tourist dwellings), the map, the legend, the sheet, the comparison panel and both downloads show «no data» and say when the series starts; the CSV, with one row without a value per unit and the start of the series in the status column. With a later year, the last period is taken, and the legend says so.

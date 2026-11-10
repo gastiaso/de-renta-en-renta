@@ -65,7 +65,11 @@
       "llega_1": "Up to 30% of income",
       "llega_2": "30 to 40%",
       "llega_3": "Over 40%",
-      "llega_nota": "Bands do not change with the threshold; the threshold decides what “fits”."
+      "llega_nota": "Bands do not change with the threshold; the threshold decides what “fits”.",
+      "lectura_familia": {
+        "quedarse": "those already renting",
+        "entrar": "those looking for a home today"
+      }
     },
     "sueldo": {
       "intro_necesario": "Net pay needed so that rent stays under the threshold. With a pay figure or a token, the map switches to “Can you make rent?”.",
@@ -220,6 +224,17 @@
         "resolucion": "BOE resolution {boe}",
         "ninguna": "No declarations published in the BOE.",
         "nota": "List published every quarter in the BOE by the Ministry of Housing and Urban Agenda (Law 12/2023, art. 18): in force for three years from the day after publication. For declarations covering part of a municipality, the map paints the whole municipality with its own category; the exact area is the one in the declaration."
+      },
+      "resto": {
+        "euros": "€{euros}",
+        "queda": "{cifra} left each month after rent",
+        "queda_uno": "{cifra} left each month after rent",
+        "falta": "{cifra} short of the rent each month",
+        "falta_uno": "{cifra} short of the rent each month",
+        "queda_corto": "{cifra} left",
+        "queda_corto_uno": "{cifra} left",
+        "falta_corto": "{cifra} short",
+        "falta_corto_uno": "{cifra} short"
       }
     },
     "comparador": {
@@ -748,14 +763,14 @@
       "unidad": "% of household income",
       "definicion": "Share of the average household’s annual income in the tract that the median rent of that same tract would take.",
       "calculo": "Median monthly rent of flats × 12 / average net household income, same year, × 100. Census tract and municipality. If either term is confidential or missing, so is the result.",
-      "lectura": "Measures the vulnerability of current residents, not access: expensive areas look affordable because higher-income people live there."
+      "lectura": "Measures the vulnerability of current residents, not the cost of moving in: expensive areas look affordable because higher-income people live there."
     },
-    "barrera_acceso": {
-      "nombre": "Rental access barrier",
+    "peso_alquiler_ingreso": {
+      "nombre": "Rent share of income",
       "unidad": "% of reference income",
       "definicion": "Share of a token’s net monthly income (minimum wage, under-35, pensioner or the user’s own pay) that 50 m² of rent in the tract would take.",
       "calculo": "Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token, with the token’s income from the same year as the rent (each year’s minimum wage, under-35 pay and pension, 2015 to 2024); if the token lacks that year, the latest is used and this is stated.",
-      "lectura": "Measures the barrier to moving in with a given income. Read by bands (up to 30%, 30–40% and over 40%), not as an exact figure."
+      "lectura": "Measures what the rent of current tenancies in the tract (those already renting) would take from a given income; it is not the price of moving in today, which asking rents measure. Read by bands (up to 30%, 30–40% and over 40%), not as an exact figure."
     },
     "anios_salario_compra": {
       "nombre": "Years of wages to buy a home",
@@ -907,9 +922,13 @@
     "familia": {
       "A": "Ability to pay",
       "B": "Housing cost",
-      "C": "Burden and access",
+      "C": "Burden",
       "D": "Structure and pressure",
       "E": "Overburden and access (survey)"
+    },
+    "familia_alquiler": {
+      "quedarse": "Staying",
+      "entrar": "Moving in"
     },
     "fiabilidad": {
       "normal": "Sufficient sample",

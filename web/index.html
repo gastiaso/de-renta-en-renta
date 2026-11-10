@@ -32,13 +32,20 @@
     </header>
 
     <main class="portada">
-      <!-- Centro del tablero: identidad, «Tu sueldo», buscador y dado. En escritorio va encima del
-           centro de las casillas; en el móvil, lo primero. -->
+      <!-- Centro del tablero: identidad, gancho, pregunta y familias (con su lectura literal, tarea 34),
+           «Tu sueldo», buscador y dado. En escritorio va encima del centro de las casillas; en el
+           móvil, lo primero. El dicho va al pie. -->
       <section class="portada-centro" aria-labelledby="portada-titulo">
         <h1 id="portada-titulo" class="portada-titulo" data-i18n="sitio.titulo">De renta en renta</h1>
         <p class="portada-subtitulo" data-i18n="sitio.subtitulo">Vivienda y sueldos, sección a sección</p>
-        <p class="portada-dicho" data-i18n="sitio.dicho">De renta en renta, y pago porque me toca</p>
+        <p class="portada-gancho" data-i18n="sitio.gancho">¿A quién le queda sueldo después de pagar la vivienda?</p>
         <p class="portada-lema" data-i18n="sitio.lema">Dónde, desde cuándo y para quién ha cambiado la relación entre lo que cuesta la vivienda y lo que se cobra</p>
+        <p class="portada-familias" data-i18n="sitio.familias">Para quien ya está en el tablero y para quien entra nuevo en la partida</p>
+        <!-- Lectura literal de las familias, como en la leyenda del mapa (familias.js) -->
+        <ul id="portada-lecturas" class="portada-lecturas">
+          <li>Quedarse · quien ya vive de alquiler</li>
+          <li>Entrar · quien busca piso hoy</li>
+        </ul>
         <p id="aviso-ejemplo" class="etiqueta-ejemplo" hidden data-i18n="avisos.ejemplo" data-i18n-title="interfaz.ejemplo_nota">Datos de ejemplo</p>
 
         <!-- Sin «name» en el campo: sin JavaScript, el formulario lleva a «Tu sueldo» del mapa sin el sueldo. -->
@@ -151,6 +158,7 @@
     </main>
 
     <footer class="portada-pie">
+      <p class="portada-dicho" data-i18n="sitio.dicho">De renta en renta, y pago porque me toca</p>
       <p id="portada-pie-fuentes" hidden></p>
       <p id="portada-pie-fecha" hidden></p>
       <p>

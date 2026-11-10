@@ -4,6 +4,17 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Cambiado (10-nov-2026, tarea 34: pregunta rectora y dos familias; plan v0.45)
+
+- **Indicador 15:** «Peso del alquiler en el ingreso» («Rent share of income»), con el código `peso_alquiler_ingreso` en lugar de `barrera_acceso` en la tabla larga, el R, la web y los diccionarios (decisión del autor, 10-nov-2026). Mide el alquiler de los contratos vigentes, no el precio de entrar hoy. Quien use la tabla larga del `v0.1.0` encuentra allí el código antiguo.
+- **Familia C:** «Esfuerzo» («Burden»), sin «acceso». El indicador 14 dice que mide la vulnerabilidad de quien ya vive allí, «no lo que cuesta entrar».
+- **Familias de alquiler:** columna `familia_alquiler` en `inventario/indicadores.csv` (`quedarse` en los indicadores del SERPAVI y el IPVA; `entrar` en el 13) y grupo `familia_alquiler` en `inventario/vocabulario.csv` («Quedarse» / «Staying», «Entrar» / «Moving in»). El manifiesto de la web lleva `familia` en cada mapa de alquiler, y el diccionario de la página «Datos», la familia de alquiler tras la familia.
+- **Portada:** el gancho («¿A quién le queda sueldo después de pagar la vivienda?») en el centro del tablero, con la pregunta, las familias y su lectura literal («quien ya vive de alquiler», «quien busca piso hoy») debajo; el dicho, al pie. El tablero pasa a una columna por debajo de 1.160 px (antes, 1.040), porque el centro ya no cabía; arreglado también el orden del buscador entre 700 y 760 px.
+- **Leyenda:** bajo el título, la familia del mapa y su lectura literal («Quedarse · quien ya vive de alquiler»); en «¿te llega?», siempre «quedarse».
+- **Euros que quedan:** en «¿te llega?», la ficha de sección y la de territorio dan, bajo el porcentaje, los euros que quedan al mes (ingreso de la ficha menos alquiler, los dos redondeados al euro), o los que faltan; también en la tabla de evolución. Es una resta, no un umbral de suficiencia: la nota lo dice (§6.1).
+- **Nota metodológica (ES y EN):** §1 con las dos familias; el 15, «peso del alquiler en el ingreso» en todas sus tablas y textos.
+- **Prueba:** `test-familias-alquiler.R` comprueba que ningún texto del inventario, de los diccionarios, de las páginas de la web ni de la nota llama «acceso» o «barrera» a una cifra del SERPAVI; `pruebas/web/familias.test.mjs` (12 pruebas), la resta, la leyenda y la portada.
+
 ### Añadido (10-nov-2026, pregunta nueva y oferta de Idealista)
 
 - Pregunta rectora nueva en el plan, la nota (ES y EN), el README y los diccionarios (`sitio.gancho`, `sitio.lema`, `sitio.familias`).

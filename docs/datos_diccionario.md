@@ -131,7 +131,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 | 12 | [`valor_tasado_m2`](#valor_tasado_m2) | Valor tasado por metro cuadrado | € por m² | v0.3 |
 | 13 | [`precio_oferta`](#precio_oferta) | Precio de oferta (alquiler y venta) | € por m² (alquiler: por m² y mes) | v0.4 |
 | 14 | [`esfuerzo_residentes`](#esfuerzo_residentes) | Esfuerzo de residentes en alquiler | % de la renta del hogar | v0.1 |
-| 15 | [`barrera_acceso`](#barrera_acceso) | Barrera de acceso al alquiler | % del ingreso de referencia | v0.1 |
+| 15 | [`peso_alquiler_ingreso`](#peso_alquiler_ingreso) | Peso del alquiler en el ingreso | % del ingreso de referencia | v0.1 |
 | 16 | [`anios_salario_compra`](#anios_salario_compra) | Años de salario para comprar | años | v0.3 |
 | 17 | [`esfuerzo_hipotecario`](#esfuerzo_hipotecario) | Esfuerzo hipotecario teórico | % del ingreso | v0.3 |
 | 18 | [`hogares_alquiler`](#hogares_alquiler) | Hogares en alquiler | % de los hogares | v0.1 |
@@ -233,7 +233,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 **8 · Alquiler mensual (mediana)**
 
 - **Unidad:** € por mes
-- **Familia:** Coste de la vivienda
+- **Familia:** Coste de la vivienda · Quedarse
 - **Fuentes:** `mivau_serpavi`, `gv_emal`
 - **Versión:** v0.1
 - **Definición:** Mediana del alquiler mensual de los contratos de vivienda habitual vigentes en la sección, por tipología (colectiva y unifamiliar); se publican también el primer y el tercer cuartil.
@@ -245,7 +245,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 **9 · Alquiler por metro cuadrado**
 
 - **Unidad:** € por m² y mes
-- **Familia:** Coste de la vivienda
+- **Familia:** Coste de la vivienda · Quedarse
 - **Fuentes:** `mivau_serpavi`, `gv_emal`
 - **Versión:** v0.1
 - **Definición:** Mediana del alquiler mensual por metro cuadrado de los contratos de vivienda habitual vigentes en la sección, por tipología (colectiva y unifamiliar).
@@ -257,7 +257,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 **10 · Variación anual del alquiler**
 
 - **Unidad:** % de variación anual
-- **Familia:** Coste de la vivienda
+- **Familia:** Coste de la vivienda · Quedarse
 - **Fuentes:** `ine_ipva`
 - **Versión:** v0.3
 - **Definición:** Variación anual del Índice de Precios de Vivienda en Alquiler.
@@ -293,7 +293,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 **13 · Precio de oferta (alquiler y venta)**
 
 - **Unidad:** € por m² (alquiler: por m² y mes)
-- **Familia:** Coste de la vivienda
+- **Familia:** Coste de la vivienda · Entrar
 - **Fuentes:** `portales`
 - **Versión:** v0.4
 - **Definición:** Precio medio por metro cuadrado de los anuncios de alquiler y de venta.
@@ -305,31 +305,31 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 **14 · Esfuerzo de residentes en alquiler**
 
 - **Unidad:** % de la renta del hogar
-- **Familia:** Esfuerzo y acceso
+- **Familia:** Esfuerzo · Quedarse
 - **Fuentes:** `mivau_serpavi`, `ine_adrh`
 - **Versión:** v0.1
 - **Definición:** Parte de la renta anual del hogar medio de la sección que se iría en el alquiler mediano de esa misma sección.
 - **Cálculo:** Alquiler mensual mediano de la vivienda colectiva × 12 / renta neta media por hogar, del mismo año, × 100. Sección censal y municipio. Si alguno de los dos términos está en secreto o falta, la cifra también.
-- **Lectura:** Mide la vulnerabilidad de quien ya vive allí, no el acceso: los barrios caros parecen asequibles porque los habita gente con más renta.
+- **Lectura:** Mide la vulnerabilidad de quien ya vive allí, no lo que cuesta entrar: los barrios caros parecen asequibles porque los habita gente con más renta.
 
-### `barrera_acceso`
+### `peso_alquiler_ingreso`
 
-**15 · Barrera de acceso al alquiler**
+**15 · Peso del alquiler en el ingreso**
 
 - **Unidad:** % del ingreso de referencia
-- **Familia:** Esfuerzo y acceso
+- **Familia:** Esfuerzo · Quedarse
 - **Fuentes:** `mivau_serpavi`, `aeat_mercado_trabajo`, `boe_smi`, `inss_pensiones`
 - **Versión:** v0.1
 - **Definición:** Parte del ingreso neto mensual de una ficha (salario mínimo, joven, pensionista o el sueldo del usuario) que se iría en el alquiler de 50 m² de la sección.
 - **Cálculo:** Alquiler mediano por m² de la vivienda colectiva × 50 / ingreso neto mensual de la ficha repartido en 12 pagas, × 100. Se calcula en la web con la ficha elegida, con el ingreso de la ficha del mismo año que el alquiler (el salario mínimo, el salario del joven y la pensión de cada año, de 2015 a 2024); si la ficha no tiene ese año, se usa el último y se indica.
-- **Lectura:** Mide la barrera para entrar con un ingreso dado. Se lee por tramos (hasta el 30 %, del 30 al 40 % y más del 40 %), no como cifra exacta.
+- **Lectura:** Mide lo que se llevaría el alquiler de los contratos vigentes de la sección (quien ya vive de alquiler) con un ingreso dado; no es el precio de entrar hoy, que mide la oferta. Se lee por tramos (hasta el 30 %, del 30 al 40 % y más del 40 %), no como cifra exacta.
 
 ### `anios_salario_compra`
 
 **16 · Años de salario para comprar**
 
 - **Unidad:** años
-- **Familia:** Esfuerzo y acceso
+- **Familia:** Esfuerzo
 - **Fuentes:** `mivau_valor_tasado`, `aeat_mercado_trabajo`
 - **Versión:** v0.3
 - **Definición:** Años de salario bruto de referencia que costaría comprar una vivienda tipo.
@@ -341,7 +341,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 **17 · Esfuerzo hipotecario teórico**
 
 - **Unidad:** % del ingreso
-- **Familia:** Esfuerzo y acceso
+- **Familia:** Esfuerzo
 - **Fuentes:** `mivau_valor_tasado`, `aeat_mercado_trabajo`, `ine_hipotecas`
 - **Versión:** v0.3
 - **Definición:** Parte del ingreso que se iría en la cuota del primer año de una hipoteca sobre una vivienda tipo.
@@ -389,7 +389,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 **21 · Sueldo neto necesario para no pasar del umbral**
 
 - **Unidad:** € netos por mes
-- **Familia:** Esfuerzo y acceso
+- **Familia:** Esfuerzo · Quedarse
 - **Fuentes:** `mivau_serpavi`
 - **Versión:** v0.1
 - **Definición:** Sueldo neto mensual necesario para que el alquiler de 50 m² en la sección no pase del 30 % del sueldo.
@@ -425,10 +425,10 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 **Auxiliar · Contratos de alquiler de la mediana**
 
 - **Unidad:** contratos
-- **Familia:** Coste de la vivienda
+- **Familia:** Coste de la vivienda · Quedarse
 - **Fuentes:** `mivau_serpavi`
 - **Versión:** v0.1
-- **Auxiliar de:** [`alquiler_mes`](#alquiler_mes), [`alquiler_m2`](#alquiler_m2), [`esfuerzo_residentes`](#esfuerzo_residentes), [`barrera_acceso`](#barrera_acceso), [`sueldo_necesario`](#sueldo_necesario)
+- **Auxiliar de:** [`alquiler_mes`](#alquiler_mes), [`alquiler_m2`](#alquiler_m2), [`esfuerzo_residentes`](#esfuerzo_residentes), [`peso_alquiler_ingreso`](#peso_alquiler_ingreso), [`sueldo_necesario`](#sueldo_necesario)
 - **Definición:** Número de contratos de vivienda habitual vigentes con que el SERPAVI calcula la mediana del alquiler del territorio, por tipología (colectiva y unifamiliar).
 - **Cálculo:** Recuento publicado por el MIVAU (SERPAVI). Con menos de 10 contratos no se publica la mediana; con 0, no hay contratos de alquiler registrados, que no es lo mismo que «sin dato».
 - **Lectura:** Dice cuántos contratos sostienen la mediana: con menos de 30, la ficha marca «pocos contratos». Acompaña al 8, el 9, el 14, el 15 y el 21; no tiene mapa propio.
@@ -438,7 +438,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 **Auxiliar · Margen aproximado de la mediana del alquiler mensual**
 
 - **Unidad:** % de la mediana
-- **Familia:** Coste de la vivienda
+- **Familia:** Coste de la vivienda · Quedarse
 - **Fuentes:** `calculo_propio`, `mivau_serpavi`
 - **Versión:** v0.1
 - **Auxiliar de:** [`alquiler_mes`](#alquiler_mes), [`esfuerzo_residentes`](#esfuerzo_residentes)
@@ -451,10 +451,10 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 **Auxiliar · Margen aproximado de la mediana del alquiler por m²**
 
 - **Unidad:** % de la mediana
-- **Familia:** Coste de la vivienda
+- **Familia:** Coste de la vivienda · Quedarse
 - **Fuentes:** `calculo_propio`, `mivau_serpavi`
 - **Versión:** v0.1
-- **Auxiliar de:** [`alquiler_m2`](#alquiler_m2), [`barrera_acceso`](#barrera_acceso), [`sueldo_necesario`](#sueldo_necesario)
+- **Auxiliar de:** [`alquiler_m2`](#alquiler_m2), [`peso_alquiler_ingreso`](#peso_alquiler_ingreso), [`sueldo_necesario`](#sueldo_necesario)
 - **Definición:** Error típico aproximado de la mediana del alquiler por metro cuadrado (9), en porcentaje de la mediana, por tipología.
 - **Cálculo:** 0,929 × (P75 − P25) / (P50 × √n), con los cuartiles del alquiler por m² y los contratos (n) del SERPAVI; solo donde se publica la mediana (10 o más contratos).
 - **Lectura:** Vale también para el 15 y el 21, que son el alquiler por m² en otra unidad: la ficha da el sueldo necesario con su intervalo y avisa cuando «¿te llega?» queda en el límite entre dos tramos.

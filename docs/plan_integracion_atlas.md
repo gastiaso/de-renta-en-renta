@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.44 · 10 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.45 · 10 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.45:** tarea 34 del backlog (decisiones del autor, 10-nov-2026): el indicador 15 pasa a llamarse «Peso del alquiler en el ingreso» y su código, de `barrera_acceso` a `peso_alquiler_ingreso`; la familia C, «Esfuerzo»; columna `familia_alquiler` («quedarse» o «entrar») en `inventario/indicadores.csv` (§3 y §5 C).
 
 **Cambios en la v0.44:** decisiones del autor sobre el backlog integrado (§11, pregunta 51): la brecha entre oferta y parque como mapa inicial de «Entrar»; el indicador 14, fuera del selector del mapa; el indicador 15 pasa a llamarse «Peso del alquiler en el ingreso»; tramos de color con cortes fijos, tres juegos por escala y siete tramos (propuesta en `inventario/cortes_web_niveles.csv`); dos lectores externos; los barrios de Idealista, fuera de la v1.0. El índice del INE de contratos nuevos solo llega a provincia y empieza en 2021: sirve de contraste de la oferta.
 
@@ -46,7 +48,7 @@
 
 **Cambios en la v0.23:** decisiones del autor sobre las preguntas abiertas 18, 19 y 21, con la propuesta: SMI de 2015 a 2023 para la tartera en F3; los derivados (14, 15 y 21), desde sus términos redondeados a un decimal, para que la página y R coincidan; datos de la web fuera de git y publicados desde un *release* (§7, §11). La 20 (sexto tramo en el mapa del sueldo necesario) sigue abierta: un sexto tramo exige un sexto color, y la rampa del kit de diseño tiene cinco pasos (§10.2, criterio 2).
 
-**Cambios en la v0.22:** derivados en el pipeline: 14 (esfuerzo de residentes; sección y municipio, 2015–2024), 21 (sueldo neto necesario; todas las escalas del SERPAVI, 2015–2024) y 15 (barrera de acceso: mochila y tartera de 2024, como control de la web), con el alquiler de vivienda colectiva y el estado del peor de sus términos; tabla de perfiles con el ingreso de cada ficha (§3.1, §5 C, §6.4, §6.5). Exportación de los datos de la web desde la tabla larga, con compuerta de ida y vuelta, fuera de git (§6.6). «Tu sueldo», comparador y buscador en la web (§6.6). Nota metodológica al día y en inglés (`docs/methodology.md`), con una prueba de paridad entre las dos versiones (§7). Preguntas abiertas 18–21 (§11).
+**Cambios en la v0.22:** derivados en el pipeline: 14 (esfuerzo de residentes; sección y municipio, 2015–2024), 21 (sueldo neto necesario; todas las escalas del SERPAVI, 2015–2024) y 15 (peso del alquiler en el ingreso: mochila y tartera de 2024, como control de la web), con el alquiler de vivienda colectiva y el estado del peor de sus términos; tabla de perfiles con el ingreso de cada ficha (§3.1, §5 C, §6.4, §6.5). Exportación de los datos de la web desde la tabla larga, con compuerta de ida y vuelta, fuera de git (§6.6). «Tu sueldo», comparador y buscador en la web (§6.6). Nota metodológica al día y en inglés (`docs/methodology.md`), con una prueba de paridad entre las dos versiones (§7). Preguntas abiertas 18–21 (§11).
 
 **Cambios en la v0.21:** decisiones del autor sobre las preguntas abiertas 12–17, todas con la propuesta: vivienda colectiva por defecto en el alquiler y sus derivados; errores del SERPAVI como `ausente`; viviendas turísticas desde febrero de 2024 y tabla de paso 2011 → 2021 en F6; estado de los derivados, el peor de sus términos; mapa base desde un *release*; datos de la web en JSON (§6.6, §7, §11).
 
@@ -186,7 +188,7 @@ Esto no invalida la estética. La convierte en argumento: el atlas existe para e
 | **Dónde** | Mapa por sección censal, con agregados por distrito, municipio, provincia y comunidad |
 | **Desde cuándo** | Series 2015–último dato en geografía constante; rupturas marcadas. Módulo histórico nacional desde 1987 (F6, hecho; valor tasado también por comunidad) |
 | **Para quién** | **Fichas** que cambian el ingreso de referencia (§3.1): hogar del barrio, joven menor de 35, salario mínimo, pensionista y el sueldo que escriba cada usuario |
-| **Se ha roto** | Dos familias de indicadores: **esfuerzo de residentes** (vulnerabilidad de quien ya vive allí) y **barrera de acceso** (lo que cuesta entrar con un ingreso de referencia). La segunda corrige el sesgo de clasificación: los barrios caros parecen asequibles porque los habita gente rica. A escala de comunidad y país, la **sobrecarga** de Eurostat (carga de quien ya tiene casa) frente a la **búsqueda sin éxito** (quien no consigue entrar) reproduce la misma pareja |
+| **Ha cambiado** | Dos familias de indicadores de alquiler que no se mezclan en una cifra (pregunta 50): **quedarse** (quien ya vive de alquiler: el parque del SERPAVI, con el esfuerzo de residentes y el peso del alquiler en el ingreso de una ficha) y **entrar** (quien busca piso hoy: la oferta y el índice del INE con contratos nuevos). Dentro de «quedarse», el peso del alquiler en el ingreso de una ficha corrige el sesgo de clasificación del esfuerzo: los barrios caros parecen asequibles porque los habita gente rica. A escala de comunidad y país, la **sobrecarga** de Eurostat (carga de quien ya tiene casa) frente a la **búsqueda sin éxito** (quien no consigue entrar) reproduce la misma pareja |
 
 ### 3.1 Fichas: de dónde sale cada ingreso
 
@@ -272,7 +274,7 @@ Las marcas ★ son el núcleo de la v0.1. «A confirmar» indica que hay que ver
 | 4 | Peso de los salarios en la renta | INE, ADRH (fuente de ingresos) | SC | 2015–2024 | Puente entre renta y salarios. En la tabla larga y en la web desde el 9-nov-2026 |
 | 5 | Población con ingresos por unidad de consumo por debajo del 60 % de la mediana | INE, ADRH | SC | 2015–2024 | Sin dato en Navarra hasta 2020, Álava hasta 2019 y Gipuzkoa en 2015; no se completa con Eustat ni Nastat (pregunta 39). Umbral: mediana del territorio fiscal común hasta 2022 y de España desde 2023. En la tabla larga y en la web desde el 9-nov-2026 |
 | 6 | Índice de Gini | INE, ADRH | SC | 2015–2024 | Desigualdad interna del barrio. En la tabla larga y en la web desde el 9-nov-2026 |
-| 7 | Salario medio anual por asalariado (total y menores de 35) | AEAT, *Mercado de trabajo y pensiones*; equivalentes forales | Provincia | 2011–2024 (la web de la AEAT no tiene ediciones anteriores) | Denominador de la barrera de acceso. En la tabla larga desde el 10-nov-2026: total y 26–35 (`Y26-35`), de la provincia a España; País Vasco y Navarra `ausente` (solo Gipuzkoa publica una cifra comparable, en PDF) |
+| 7 | Salario medio anual por asalariado (total y menores de 35) | AEAT, *Mercado de trabajo y pensiones*; equivalentes forales | Provincia | 2011–2024 (la web de la AEAT no tiene ediciones anteriores) | Denominador del peso del alquiler en el ingreso (15). En la tabla larga desde el 10-nov-2026: total y 26–35 (`Y26-35`), de la provincia a España; País Vasco y Navarra `ausente` (solo Gipuzkoa publica una cifra comparable, en PDF) |
 
 ### B. Coste de la vivienda
 
@@ -285,12 +287,12 @@ Las marcas ★ son el núcleo de la v0.1. «A confirmar» indica que hay que ver
 | 12 | Valor tasado (€/m²) | MIVAU | España, comunidad, provincia y municipio de más de 25.000 habitantes | 2015–2025 (trimestral desde 1995) | Año: media de los cuatro trimestres ponderada por tasaciones. Coherencia con las escrituras ante notario (transacciones del MIVAU). En la tabla larga desde el 10-nov-2026 |
 | 13 | Precio de oferta (alquiler y venta) | Informes de Idealista y Fotocasa | Municipio / distrito | Mensual | **Capa desmontable** (§2.2); sin datos hasta que el autor los aporte; un valor por año (informe anual o último mes) |
 
-### C. Esfuerzo y acceso (derivados)
+### C. Esfuerzo (derivados)
 
 | # | Indicador | Construcción | Nivel | Notas |
 |---|---|---|---|---|
-| 14 ★ | Esfuerzo de residentes en alquiler | (alquiler × 12) / renta media por hogar | SC y municipio | Mide vulnerabilidad, no acceso |
-| 15 ★ | Barrera de acceso al alquiler | Alquiler mensual / salario mensual de referencia (perfil elegido) | SC × ficha (en R, mochila y tartera de 2024, como control) | Indicador central de la pregunta rectora |
+| 14 ★ | Esfuerzo de residentes en alquiler | (alquiler × 12) / renta media por hogar | SC y municipio | Mide vulnerabilidad, no entrada |
+| 15 ★ | Peso del alquiler en el ingreso (`peso_alquiler_ingreso`; hasta el 10-nov-2026, «barrera de acceso al alquiler») | Alquiler mensual / salario mensual de referencia (perfil elegido) | SC × ficha (en R, mochila y tartera de 2024, como control) | Indicador central de la pregunta rectora |
 | 16 | Años de salario para comprar | Valor tasado por m² × superficie tipo / salario medio anual bruto (AEAT) del mismo año | Municipio (> 25.000 hab.) × provincia, provincia, comunidad y España | Superficie tipo seleccionable (por defecto 80 m²) |
 | 17 | Esfuerzo hipotecario teórico | Cuota del primer año (80 % del valor tasado de 80 m², 25 años, tipo medio del INE) / salario medio anual bruto (AEAT) | Municipio (> 25.000 hab.) × provincia, provincia, comunidad y España | Versión local del indicador del Banco de España |
 | 21 ★ | Sueldo neto necesario | Alquiler (€/m² × superficie) / umbral (30 % o 40 %) | SC (y distrito, municipio, provincia y comunidad) | **Mapa por defecto.** 50 m² (una persona). El 30 % se inspira en el criterio de zona tensionada de la Ley 12/2023 (art. 18), que usa renta del hogar y suministros; no es ese criterio |

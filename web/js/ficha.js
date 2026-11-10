@@ -1,7 +1,8 @@
 // Ficha de sección (panel lateral). Sin sección elegida, una invitación a elegirla; con sección,
 // su código, sus territorios y el valor del mapa activo:
 //   - sueldo necesario: la cifra en euros, con la superficie y el umbral;
-//   - «¿te llega?»: el alquiler sobre el ingreso de la ficha, con las dos cantidades.
+//   - «¿te llega?»: el alquiler sobre el ingreso de la ficha, al lado los euros que quedan al mes
+//     (ingreso − alquiler, o lo que falta si sale negativa; tarea 34) y debajo las dos cantidades.
 // Bajo la cifra, la fiabilidad de la mediana del alquiler (fiabilidad.js): sus contratos y su
 // margen aproximado, «pocos contratos», el intervalo de la cifra y, en «¿te llega?», si queda en el
 // límite entre dos tramos; sin mediana y con 0 contratos, «sin contratos de alquiler registrados»
@@ -17,6 +18,7 @@
 
 import { ordenNatural } from './nombres.js';
 import { clasesTramos, rampaDeCss, TRAMOS_LLEGA } from './colores.js';
+import { eurosQueQuedan } from './sueldo.js';
 
 const crear = (etiqueta, clase, texto) => {
   const el = document.createElement(etiqueta);
@@ -117,6 +119,29 @@ export function textoIngresoPeon(t, sueldo, ingreso) {
   });
 }
 
+// Euros que quedan al mes (tarea 34; la resta, eurosQueQuedan() de sueldo.js): «Quedan 673 € al mes
+// después del alquiler». Si la resta sale negativa, lo que falta, en positivo: «Faltan 85 € al mes
+// para cubrir el alquiler». Con 1 €, en singular. `corto`: «quedan 673 €», para la tabla de la
+// evolución. Solo dice la resta: ningún texto dice si con eso llega o no. Devuelve la clave, la
+// cifra ya escrita (para resaltarla) y el texto entero; null sin resta.
+export function textoResto(t, euros, { corto = false } = {}) {
+  if (euros === null || euros === undefined || !Number.isFinite(euros)) return null;
+  const n = Math.abs(euros);
+  const clave = `interfaz.ficha.resto.${euros < 0 ? 'falta' : 'queda'}${corto ? '_corto' : ''}${n === 1 ? '_uno' : ''}`;
+  const cifra = t('interfaz.ficha.resto.euros', { euros: t.numero(n) });
+  return { clave, cifra, texto: t(clave, { cifra }) };
+}
+
+// Línea de los euros que quedan, con la cifra resaltada.
+function lineaResto(t, resto) {
+  const p = crear('p', 'ficha-resto');
+  t(resto.clave).split('{cifra}').forEach((parte, i) => {
+    if (i > 0) p.append(crear('span', 'ficha-resto-cifra', resto.cifra));
+    if (parte) p.append(parte);
+  });
+  return p;
+}
+
 // El sueldo necesario en las pagas de quien lo mira (F3): en 14 pagas, la paga (× 12 / 14), y
 // entre dos sueldos iguales, cada uno (÷ 2). Solo en los mapas que dan un sueldo.
 export function equivalenciasSueldo(valor) {
@@ -180,6 +205,9 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
     if (!sinNivel) cifra.append(crear('span', 'ficha-unidad', t('interfaz.ficha.del_ingreso')));
     bloque.append(cifra);
     if (valor !== null) {
+      // Al lado del porcentaje, los euros que quedan al mes con los mismos términos (tarea 34)
+      const resto = textoResto(t, eurosQueQuedan(valor));
+      if (resto) bloque.append(lineaResto(t, resto));
       const tramo = crear('p', 'ficha-tramo');
       const clase = clasesTramos(TRAMOS_LLEGA, rampaDeCss().length)[valor.tramo];
       tramo.append(crear('span', `leyenda-muestra ${clase}`), crear('span', null, t(TEXTOS_LLEGA[valor.tramo])));
@@ -333,9 +361,11 @@ export function fichaContexto(contenedor, { t, filas }) {
 }
 
 // Evolución del mapa activo en la sección: una fila por periodo, con el texto ya formateado y,
-// si no es «dato», su estado. `filas`: [{ periodo, texto, estado }].
+// si no es «dato», su estado. `filas`: [{ periodo, texto, estado, resto }]; `resto`, en «¿te
+// llega?», los euros que quedan al mes («quedan 673 €»; tarea 34), en una columna al lado.
 export function fichaSeries(contenedor, { t, titulo, nota, filas, estados, periodo }) {
   const cuerpo = crear('tbody');
+  const conResto = filas.some((f) => f.resto);
   for (const fila of filas) {
     const tr = crear('tr', String(fila.periodo) === String(periodo) ? 'ficha-tabla-activa' : undefined);
     const th = crear('th', null, t.periodo(fila.periodo));
@@ -344,6 +374,7 @@ export function fichaSeries(contenedor, { t, titulo, nota, filas, estados, perio
     tr.append(
       th,
       crear('td', 'ficha-tabla-cifra', fila.texto),
+      ...(conResto ? [crear('td', 'ficha-tabla-resto', fila.resto ?? '')] : []),
       crear('td', 'ficha-tabla-estado', nombre === 'dato' ? '' : t(`interfaz.estado_corto.${nombre}`)),
     );
     cuerpo.append(tr);

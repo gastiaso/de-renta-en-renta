@@ -1,9 +1,11 @@
 grupo,clave,es,en
 familia,A,Capacidad de pago,Ability to pay
 familia,B,Coste de la vivienda,Housing cost
-familia,C,Esfuerzo y acceso,Burden and access
+familia,C,Esfuerzo,Burden
 familia,D,Estructura y presión,Structure and pressure
 familia,E,Sobrecarga y acceso (encuesta),Overburden and access (survey)
+familia_alquiler,quedarse,Quedarse,Staying
+familia_alquiler,entrar,Entrar,Moving in
 nivel,sc,Sección censal,Census tract
 nivel,distrito,Distrito,District
 nivel,municipio,Municipio,Municipality
