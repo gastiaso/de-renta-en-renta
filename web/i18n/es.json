@@ -888,6 +888,10 @@
     "cis_barometros": "Barómetros mensuales del CIS: la vivienda entre los principales problemas"
   },
   "vocabulario": {
+    "contrato": {
+      "nuevo": "Contrato nuevo (firmado en el año de referencia)",
+      "existente": "Contrato existente (firmado antes del año de referencia)"
+    },
     "corte": {
       "total": "Total",
       "tenencia": "Régimen de tenencia",
@@ -898,7 +902,8 @@
       "tipologia_p75": "Tipología de la vivienda, tercer cuartil",
       "mes": "Mes de referencia",
       "ficha": "Ficha (ingreso de referencia)",
-      "oferta_privada": "Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE)"
+      "oferta_privada": "Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE)",
+      "contrato": "Antigüedad del contrato de alquiler (IPVA)"
     },
     "edad": {
       "Y_LT18": "Menos de 18 años",

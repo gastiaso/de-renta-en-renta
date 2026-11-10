@@ -888,6 +888,10 @@
     "cis_barometros": "CIS monthly barometers: housing among the main problems"
   },
   "vocabulario": {
+    "contrato": {
+      "nuevo": "New contract (signed in the reference year)",
+      "existente": "Existing contract (signed before the reference year)"
+    },
     "corte": {
       "total": "Total",
       "tenencia": "Tenure status",
@@ -898,7 +902,8 @@
       "tipologia_p75": "Dwelling type, third quartile",
       "mes": "Reference month",
       "ficha": "Token (reference income)",
-      "oferta_privada": "Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE)"
+      "oferta_privada": "Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE)",
+      "contrato": "Age of the rental contract (IPVA)"
     },
     "edad": {
       "Y_LT18": "Under 18",

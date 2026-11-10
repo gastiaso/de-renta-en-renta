@@ -30,6 +30,7 @@ corte,tipologia_p75,"Tipología de la vivienda, tercer cuartil","Dwelling type, 
 corte,mes,Mes de referencia,Reference month
 corte,ficha,Ficha (ingreso de referencia),Token (reference income)
 corte,oferta_privada,"Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE)","Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE)"
+corte,contrato,Antigüedad del contrato de alquiler (IPVA),Age of the rental contract (IPVA)
 tenencia,OWN,Propiedad,Owner
 tenencia,OWN_NL,Propiedad sin hipoteca ni préstamo,Owner with no outstanding mortgage or housing loan
 tenencia,OWN_L,Propiedad con hipoteca o préstamo,Owner with mortgage or loan
@@ -61,6 +62,8 @@ mes,M11,Noviembre,November
 ficha,tartera,Salario mínimo,Minimum wage
 ficha,mochila,Joven menor de 35,Under-35
 ficha,transistor,Pensionista,Pensioner
+contrato,nuevo,Contrato nuevo (firmado en el año de referencia),New contract (signed in the reference year)
+contrato,existente,Contrato existente (firmado antes del año de referencia),Existing contract (signed before the reference year)
 oferta_privada,alquiler_idealista,"Alquiler, Idealista (dato privado de oferta)","Rent, Idealista (private asking-price data)"
 oferta_privada,alquiler_fotocasa,"Alquiler, Fotocasa (dato privado de oferta)","Rent, Fotocasa (private asking-price data)"
 oferta_privada,venta_idealista,"Venta, Idealista (dato privado de oferta)","Sale, Idealista (private asking-price data)"

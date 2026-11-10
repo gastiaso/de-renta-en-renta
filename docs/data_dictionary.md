@@ -41,6 +41,7 @@ Breakdown variable. Without a breakdown, `corte` and `grupo` are both `total`.
 | `mes` | Reference month |
 | `ficha` | Token (reference income) |
 | `oferta_privada` | Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE) |
+| `contrato` | Age of the rental contract (IPVA) |
 
 ### `grupo`
 
@@ -84,6 +85,8 @@ Breakdown value, by `corte`.
 | `oferta_privada` | `alquiler_fotocasa` | Rent, Fotocasa (private asking-price data) |
 | `oferta_privada` | `venta_idealista` | Sale, Idealista (private asking-price data) |
 | `oferta_privada` | `venta_fotocasa` | Sale, Fotocasa (private asking-price data) |
+| `contrato` | `nuevo` | New contract (signed in the reference year) |
+| `contrato` | `existente` | Existing contract (signed before the reference year) |
 
 ### `fuente`
 

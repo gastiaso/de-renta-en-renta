@@ -29,7 +29,7 @@ This note describes how the atlas figures are produced: sources, constant geogra
 
 **Two families of rent indicators** (plan §1; `familia_alquiler` column of `inventario/indicadores.csv`):
 - **Staying** (those already renting): the rented stock, with the tenancies in force declared to SERPAVI. It includes the resident burden (income of those who already live in the tract against rent in that tract) and the rent share of income (rent in the tract against the income of a token, §6).
-- **Moving in** (those looking for a home today): asking rents from property portals and the INE index for new tenancies. It is added before v1.0; until then, the atlas only measures the first family.
+- **Moving in** (those looking for a home today): asking rents from property portals and the INE index for new tenancies. It is added before v1.0; until then, the atlas only measures the first family. The new-tenancy index is already in the long table (indicator 10, `contrato` breakdown; §7.7), with no map.
 
 SERPAVI figures measure those already renting, not the cost of moving in. The rent share of income corrects a bias in the burden: expensive areas look affordable because higher-income people live there.
 
@@ -489,6 +489,8 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `contraste_declarado` | Contrast declared in `tokens.json` against the recomputed one | ±0.05 | Warning | Passes; maximum difference, 0.003 | `validacion_diseno` |
 | `ipva_variacion` | Published annual change of the IPVA against the one recomputed from the indices | ±0.06 points | Blocking | Maximum difference, 0.051 points | `validacion_ipva` |
 | `ipva_nota` | Spain, Madrid, Barcelona and the Valencian Community in 2024 against the press release | Exact | Blocking | 3.5; 3.6; 3.3 and 5.0% | `validacion_ipva` |
+| `ipva_contrato_enlace` | 2021 change of new and existing tenancies against the one recomputed from their index and the general 2020 index | ±0.06 points | Blocking | Maximum difference, 0.049 points | `validacion_ipva` |
+| `ipva_contrato` | Spain by contract age (table 59004): 2021 and 2024 index of new tenancies, existing ones and the total; change of new and existing tenancies in 2021, 2022 and 2024 | Exact | Blocking | Index: 114.871 and 137.041; 112.229 and 120.637; 112.694 and 122.920. Change: 3.5 and 1.2%; 5.3 and 2.1%; 8.8 and 2.8% | `validacion_ipva` |
 | `hipotecas_tipo_anual` | Annual average rate of home mortgages against the mean of its twelve months | ±0.05 points | Blocking | Maximum difference, 0.024 points (2020) | `validacion_hipotecas` |
 | `valor_tasado_nombres` | Ministry names with no INE code | Exact | Blocking | None: 306 municipalities matched | `validacion_valor_tasado` |
 | `valor_tasado_ccaa` | Regions and Spain outside the range of their provinces | Exact | Blocking | No quarter since 2015 | `validacion_valor_tasado` |
@@ -1207,6 +1209,12 @@ The gate (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) read
 
 **Annual change in rents (indicator 10).** Figure published by INE's IPVA (`leer_ine_ipva()`; target `larga_ipva`) at its native level: Spain, 17 regions, 48 provinces, 718 municipalities above 10,000 inhabitants and 407 districts of the provincial capitals, all in the 2021 tract map. No Basque Country or Navarre: the IPVA comes from the common-regime income tax. The «Resto» (rest of the province) rows are left out. It is an index: it is neither aggregated nor reprojected (guide, rule 1). In 2024, Spain rises by 3.5%, with a municipal median of 3.3%.
 
+**New and existing tenancies (indicator 10, `contrato` breakdown; backlog, task 36).** Since the 2021 edition, the IPVA separates new from existing tenancies for Spain and the regions (table 59004) and for the provinces (table 59005), from 2021 to 2024; it does not publish them by municipality or district. `armonizar_ine_ipva()` adds to the long table the published annual change of each group (`nuevo` and `existente`) for Spain, 17 regions and 48 provinces; the total still comes from the general tables. What INE says (IPVA technical project, June 2023):
+- **New tenancy:** one whose contract year is the reference year, using the contract date that the AEAT databases hold since 2019; the rest are existing tenancies. Declared income covers the whole year: if a dwelling had two contracts in the year, its annual price includes both, and the change only captures part of the effect of the new contract.
+- **Base:** the published indices are base 2015 = 100, chaining each year's index onto the previous one. Contract age enters the strata from 2021, and the document does not say how the breakdown is linked to the base. The figures settle it: each group's 2021 index is the general 2020 index times the group's change, for Spain, the 17 regions and the 48 provinces (`ipva_contrato_enlace`, maximum difference of 0.049 points). Before 2021 the breakdown does not exist.
+
+In Spain, from 2021 to 2024, new tenancies rise by 19.3% (index from 114.871 to 137.041) and existing ones by 7.5% (from 112.229 to 120.637), against 9.1% for the total (from 112.694 to 122.920); in 2024, by 8.8 and 2.8%. It is an index, not a price: it does not give the rent paid by newcomers and is not mixed with asking rents (§1). New tenancies belong to the «moving in» family and existing ones to «staying», but the `familia_alquiler` column holds one value per indicator and indicator 10 stays in «staying» (to be reviewed). The website does not export the breakdown: it has no map.
+
 **Appraised value (indicator 12).** MIVAU's average appraised value of open-market housing per m², quarterly, for Spain, the regions, the provinces and the municipalities above 25,000 inhabitants (306 since 2020). The year is the average of its four quarters weighted by the number of appraisals (`valor_tasado_anual()`); without all four, `ausente` (3 to 9 municipalities a year up to 2020). The Ministry publishes no annual average and does not weight its regions by appraisals: the published region departs from the average of its provinces weighted that way by up to 3.3% (`valor_tasado_ccaa_media`), through composition, but it never leaves the range of its provinces (`valor_tasado_ccaa`). The Ministry's names are matched to INE codes by their normalised form (`casar_nombres_mivau()`), by a name that is unique in Spain when the municipal table carries the wrong province down (seven municipalities) and by `inventario/nombres_mivau.csv` (typos and different names). Spain: 1,475.6 €/m² in 2015 and 1,913.9 €/m² in 2024.
 
 **Coherence between deeds and appraisals** (`comprobar_coherencia_compraventa()`, `validacion_coherencia_compraventa`; the «done when» of F4). The two sources do not share a unit: the average deed value is per dwelling and the appraised value, per m². Their ratio is the floor area the average dwelling sold would have if it were paid at the appraised value: the «implied floor area». If both measure the same market, it falls close to the average floor area of the dwellings sold, somewhat below, because the deed price tends to sit below the appraisal; an error of reading, unit or matching pushes it abruptly out of that range. Threshold: from 70 to 110 m² for Spain, every year, and from 50 to 150 m² in provinces and quarters, with at most 5% outside. Result: Spain, from 91.8 to 106.1 m² (2015–2025); in provinces, at most 1.9% outside (2021), with the Balearic Islands above 150 m² in 2021 and 2022.
@@ -1374,7 +1382,7 @@ The series with the main-residence tax deduction (in force until December 2012),
 
 **Schema** (plan §6.4): `geo_id`, `nivel`, `anio`, `indicador`, `corte`, `grupo`, `valor`, `estado`, `fuente`, `geo_ref` and `version`. The key of a row is `geo_id`, `nivel`, `anio`, `indicador`, `corte` and `grupo`.
 
-**Content** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11,482,839 rows.
+**Content** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11,483,367 rows.
 
 | Source (`fuente`) | Rows | Levels | Version |
 |---|---|---|---|
@@ -1385,12 +1393,12 @@ The series with the main-residence tax deduction (in force until December 2012),
 | `ine_ecv` | 261 | Region (228) and Spain (33) | 6 Nov 2026 |
 | `ine_ecv_modulo` | 32 | Region (19) and Spain (13) | 6 Nov 2026 |
 | `aeat_mercado_trabajo` | 2,016 | Province (1,456), region (532) and Spain (28) | 9 Nov 2026 |
-| `ine_ipva` | 11,910 | District (4,070), municipality (7,180), province (480), region (170) and Spain (10) | 10 Nov 2026 |
+| `ine_ipva` | 12,438 | District (4,070), municipality (7,180), province (864), region (306) and Spain (18) | 10 Nov 2026 |
 | `mivau_valor_tasado` | 4,048 | Municipality (3,256), province (572), region (209) and Spain (11) | 10 Nov 2026 |
 | `zonas_tensionadas` | 24,393 | Municipality (24,393) | 10 Nov 2026 |
 | `calculo_propio` | 3,518,054 | Tract (2,436,386), district (568,152), municipality (506,960), province (5,076), region (1,460) and Spain (20) | 7 Nov 2026 |
 
-**By status:** `dato`, 8,507,268 rows; `ausente`, 1,690,991; `secreto`, 1,233,209; `estimado`, 51,371.
+**By status:** `dato`, 8,507,796 rows; `ausente`, 1,690,991; `secreto`, 1,233,209; `estimado`, 51,371.
 
 **Publication.** The long table is published in the GitHub release `v0.1.0` (9 Nov 2026), and the website at `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).
 

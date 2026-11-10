@@ -86,7 +86,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
   - barrios: 1.014 filas. Las 146 nuevas son de municipios sin distritos y cada una es el propio municipio, con el precio de su serie. De las 868 de distrito, 449 son el propio distrito; quedan 419 barrios en 129 distritos de 35 municipios, y 30 se llaman como su distrito (en 19, también con el mismo precio): sin el enlace de cada fila no se distinguen;
   - las cifras de referencia de la tarea 37 no cambian.
 
-**36. Índice del INE con contratos nuevos.**
+**36. Índice del INE con contratos nuevos · HECHA (10-nov-2026).**
 - La tabla larga solo tiene el total del IPVA (España: del 0,3 % en 2015 al 3,5 % en 2024). Descargar el desglose entre contratos nuevos y existentes (autorizada).
 - **Hecho cuando:** `var_alquiler` lleva el corte `contrato` (nuevo, existente) en los niveles que el INE publique, con su compuerta.
 - **Investigado (10-nov-2026):** el INE publica el desglose desde la edición de 2021. Contratos nuevos frente a existentes: 3,5 y 1,2 % en 2021; 5,3 y 2,1 % en 2022; 8,8 y 2,8 % en 2024. Tabla de ponderaciones por antigüedad del contrato: 59008; el resto, en las tablas de resultados de la operación (INEbase, `padre=8306`). El desglose no se publica por municipio.
@@ -109,6 +109,14 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
   - Lectura provisional: las dos fuentes de «Entrar» ordenan las provincias de forma parecida, pero no miden lo mismo. El índice del INE sigue contratos firmados y declarados; Idealista, anuncios, y su media cambia con el tipo de piso que se anuncia. En las provincias turísticas el anuncio se aleja del contrato.
   - Consecuencia: el índice del INE no puede dar un precio de entrada (es un índice, llega solo a provincia y empieza en 2021). Sirve de contraste de la oferta, no de sustituto. La ficha de provincia enseña las dos evoluciones juntas.
   - Compuerta propuesta (aviso, no bloqueo): provincias donde la oferta crece más del doble que los contratos nuevos en el mismo periodo.
+- **Hecha (10-nov-2026):**
+  - tablas 59004 (29.648 bytes) y 59005 (76.407 bytes) descargadas con `descargar_con_cache()`, enteras: ninguna serie cortada ni cifra «..»;
+  - `var_alquiler` con el corte `contrato` (`nuevo` y `existente`) en España, 17 comunidades y 48 provincias, de 2021 a 2024: 528 filas (`ine_ipva`, de 11.910 a 12.438). El total, como estaba. Corte y grupos en `inventario/vocabulario.csv` (ES y EN);
+  - compuerta: `ipva_contrato`, las seis cifras del índice y las seis variaciones de España de arriba, todas iguales a la tabla; `ipva_contrato_enlace`, la variación de 2021 de cada grupo frente a su índice y el índice general de 2020 (0,049 puntos como máximo); `ipva_tablas`, también comunidades, provincias y los contratos de España entre tablas (sin diferencias); `ipva_variacion`, con las dos tablas (0,050 puntos como máximo);
+  - **comprobado en el proyecto técnico del INE (junio de 2023):** contrato nuevo es el que tiene como año de contrato el de referencia (fecha del contrato de las bases de la AEAT, desde 2019); los demás, existentes. Los ingresos son del año completo: con dos contratos en el año, el precio anual mezcla los dos y la variación recoge solo una parte del cambio. Los índices publicados están en base 2015 = 100, encadenados año a año; el documento no dice cómo se enlaza el desglose por contrato, pero el índice de 2021 de cada grupo es, en todos los territorios, el general de 2020 por la variación del grupo (`ipva_contrato_enlace`). Nota (ES y EN), §7.7;
+  - con las 48 provincias, de 2021 a 2024 (mediana provincial del índice): contratos nuevos +17,0 % (de +6,0 % en Melilla a +28,9 % en Valencia/València) y existentes +6,7 %, las mismas medianas que con las 31 del contraste;
+  - **por revisar — familia:** los contratos nuevos son de «entrar» y `familia_alquiler` va por indicador (el 10 sigue en `quedarse`). Propuesta: `quedarse|nuevo=entrar`, con la sintaxis de `cortes_web`, leída por la web y el diccionario cuando el corte tenga mapa o ficha. Anotada en `notas` del indicador 10 y en el plan (§11, pregunta 53); la web no cambia. La exportación web no lleva el corte, y `validacion_web` pasa;
+  - **para la tarea 37:** el aviso de provincias donde la oferta crece más del doble que los contratos nuevos, cuando estén los datos de Idealista (tarea 35).
 
 **37. Indicadores de «Entrar».**
 - `sueldo_entrar`: €/m² de oferta × superficie típica del municipio / umbral, y su mínimo de 50 m².
@@ -117,6 +125,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 - `barrera_entrar` por ficha, con el mismo ingreso del mismo año (regla 4).
 - `brecha_entrar_quedarse`: oferta / SERPAVI, en €/m², por municipio y año. Es una comparación entre dos fuentes rotulada como tal, no una mezcla.
 - Estado `ausente` en los municipios sin informe.
+- **De la tarea 36:** compuerta de aviso (no bloqueo) con las provincias donde la oferta crece más del doble que los contratos nuevos en el mismo periodo (`var_alquiler`, corte `contrato`, 48 provincias, 2021–2024), cuando la oferta de Idealista esté en el pipeline (tarea 35).
 - **Hecho cuando:** los tres están en la exportación web, con compuerta de rango y prueba de que R y la página coinciden.
 - **Cifras de referencia (10-nov-2026; cálculo fuera del pipeline: media anual con 9 meses o más, frente a la mediana del SERPAVI de vivienda colectiva del municipio):**
   - municipios con oferta y SERPAVI el mismo año: 256 en 2015 y 259 en 2024;

@@ -40,6 +40,23 @@ test_that("leer_ine_ipva descarta el resto de la provincia y detecta series cort
   expect_error(leer_ine_ipva(escribir_tmp(lineas[-3])), "cortada")
 })
 
+test_that("leer_ine_ipva lee la antigüedad del contrato (tablas 59004 y 59005)", {
+  lineas <- c("﻿Total Nacional;Comunidades y Ciudades Autónomas;Antigüedad del contrato de arrendamiento;Tipo de dato;Periodo;Total",
+              "Total Nacional;;Total;Índice;2022;115,684", "Total Nacional;;Total;Índice;2021;112,694",
+              "Total Nacional;;Nuevo contrato;Índice;2022;120,958", "Total Nacional;;Nuevo contrato;Índice;2021;114,871",
+              "Total Nacional;;Contrato existente;Índice;2022;114,639", "Total Nacional;;Contrato existente;Índice;2021;112,229",
+              "Total Nacional;13 Madrid, Comunidad de;Nuevo contrato;Índice;2022;121,0",
+              "Total Nacional;13 Madrid, Comunidad de;Nuevo contrato;Índice;2021;115,0")
+  x <- leer_ine_ipva(escribir_tmp(lineas))
+  expect_setequal(unique(x$contrato), c("total", "nuevo", "existente"))
+  expect_setequal(unique(x$geo_id), c("00", "13"))
+  expect_equal(unique(x$nivel[x$geo_id == "13"]), "ccaa")
+  expect_equal(x$valor[x$geo_id == "00" & x$contrato == "nuevo" & x$anio == 2021], 114.871)
+  expect_true(all(x$tipologia == "total"))
+  expect_error(leer_ine_ipva(escribir_tmp(sub("Contrato existente", "Otro", lineas))), "contrato desconocida")
+  expect_error(leer_ine_ipva(escribir_tmp(lineas[-8])), "cortada")
+})
+
 ipva_prueba <- function() {
   base <- tibble::tribble(
     ~nivel,      ~geo_id,   ~anio, ~medida,      ~valor,
@@ -52,9 +69,24 @@ ipva_prueba <- function() {
     "distrito",  "2807901", 2023L, "indice",     100,
     "distrito",  "2807901", 2024L, "indice",     102.04,
     "distrito",  "2807901", 2024L, "variacion",  2.0
-  ) |> dplyr::mutate(tipologia = "total", territorio = "x",
+  ) |> dplyr::mutate(tipologia = "total", contrato = "total", territorio = "x",
                      tabla = c(rep("59056", 3), rep("59060", 3), rep("59061", 3)))
   base
+}
+
+# España en la 59056 de ipva_prueba() y en la 59004, con el desglose por contrato desde 2024,
+# encadenado desde el índice general de 2023 (100); el total de la 59004 repite el de la 59056
+ipva_prueba_contrato <- function() {
+  contrato <- tibble::tribble(
+    ~contrato,   ~anio, ~medida,     ~valor,
+    "total",     2024L, "indice",    103.5,
+    "total",     2024L, "variacion", 3.5,
+    "nuevo",     2024L, "indice",    105.02,
+    "nuevo",     2024L, "variacion", 5.0,
+    "existente", 2024L, "indice",    99.0,
+    "existente", 2024L, "variacion", -1.0
+  ) |> dplyr::mutate(nivel = "nacional", geo_id = "00", tipologia = "total", territorio = "x", tabla = "59004")
+  dplyr::bind_rows(dplyr::filter(ipva_prueba(), tabla == "59056"), contrato)
 }
 
 test_that("comprobar_ine_ipva recalcula la variación y casa los territorios", {
@@ -64,6 +96,33 @@ test_that("comprobar_ine_ipva recalcula la variación y casa los territorios", {
   expect_equal(c0$calculado[c0$id == "ipva_territorios"], c(0, 0))
   nota <- c0[c0$id == "ipva_nota" & c0$detalle %in% c("España", "Madrid"), ]
   expect_equal(nota$calculado, nota$referencia)
+  expect_false("ipva_contrato_enlace" %in% c0$id)   # sin desglose por contrato
+})
+
+test_that("comprobar_ine_ipva encadena el desglose por contrato desde el índice general", {
+  de <- function(c, id) c[c$id == id, ]
+  c0 <- comprobar_ine_ipva(ipva_prueba_contrato(), territorios_prueba)
+  enlace <- de(c0, "ipva_contrato_enlace")
+  expect_equal(enlace$anio, 2024L)
+  # nuevo: 105,02 / 100 da 5,02 frente a 5,0 publicado; existente: 99,0 / 100, -1,0 exacto
+  expect_equal(enlace$calculado, 0.02, tolerance = 1e-6)
+  # una comunidad sin índice general del año anterior: NA, y la compuerta no puede pasar
+  sin_general <- dplyr::bind_rows(ipva_prueba_contrato(), tibble::tibble(
+    nivel = "ccaa", geo_id = "13", tipologia = "total", contrato = "nuevo", anio = 2024L,
+    medida = c("indice", "variacion"), valor = c(105, 5), territorio = "x", tabla = "59004"))
+  e1 <- de(comprobar_ine_ipva(sin_general, territorios_prueba), "ipva_contrato_enlace")
+  expect_true(is.na(e1$calculado[e1$detalle == "59004 ccaa"]))
+  expect_equal(e1$calculado[e1$detalle == "59004 nacional"], 0.02, tolerance = 1e-6)
+  # España repetida en la 59004 y en la 59056, con la misma cifra; si cambia, la compuerta lo ve
+  expect_true(all(de(c0, "ipva_tablas")$calculado == 0))
+  distinta <- ipva_prueba_contrato()
+  distinta$valor[distinta$tabla == "59004" & distinta$contrato == "total" & distinta$medida == "indice"] <- 103.6
+  expect_equal(sum(de(comprobar_ine_ipva(distinta, territorios_prueba), "ipva_tablas")$calculado), 1)
+  # cifras de referencia de España: 2021 y 2022 no están en la prueba (NA)
+  ref <- de(c0, "ipva_contrato")
+  expect_equal(nrow(ref), nrow(REFERENCIAS_IPVA_CONTRATO))
+  expect_true(all(is.na(ref$calculado[ref$anio != 2024L])))
+  expect_equal(ref$calculado[ref$anio == 2024L & grepl("total", ref$detalle)], 103.5)
 })
 
 test_that("armonizar_ine_ipva da el indicador 10 de cada nivel desde su tabla", {
@@ -71,6 +130,16 @@ test_that("armonizar_ine_ipva da el indicador 10 de cada nivel desde su tabla", 
   expect_equal(nrow(l), 3)
   expect_true(all(l$indicador == "var_alquiler" & l$estado == "dato" & l$corte == "total"))
   expect_equal(names(l), COLUMNAS_TABLA_LARGA)
+})
+
+test_that("armonizar_ine_ipva añade el corte contrato desde las tablas por antigüedad", {
+  l <- armonizar_ine_ipva(ipva_prueba_contrato(), version = "2026-05-11", anios = 2024L)
+  contrato <- l[l$corte == "contrato", ]
+  expect_setequal(contrato$grupo, c("nuevo", "existente"))
+  expect_equal(contrato$valor[contrato$grupo == "nuevo"], 5.0)
+  # el total de España sigue saliendo de la tabla general, una sola vez
+  expect_equal(sum(l$nivel == "nacional" & l$corte == "total"), 1)
+  expect_false(any(duplicated(l[CLAVE_TABLA_LARGA])))
 })
 
 test_that("tipo hipotecario: lectura, serie y coherencia anual frente a los meses", {

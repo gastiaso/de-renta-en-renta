@@ -29,7 +29,7 @@ Esta nota describe cómo se obtienen las cifras del atlas: fuentes, geografía c
 
 **Dos familias de indicadores de alquiler** (plan §1; columna `familia_alquiler` de `inventario/indicadores.csv`):
 - **Quedarse** (quien ya vive de alquiler): el parque alquilado, con los contratos vigentes que declara el SERPAVI. Dentro de ella, el esfuerzo de residentes (renta de quien ya vive en la sección frente al alquiler de esa sección) y el peso del alquiler en el ingreso (alquiler de la sección frente al ingreso de una ficha, §6).
-- **Entrar** (quien busca piso hoy): la oferta de los portales y el índice del INE con contratos nuevos. Se incorpora antes de la v1.0; hasta entonces, el atlas solo mide la primera familia.
+- **Entrar** (quien busca piso hoy): la oferta de los portales y el índice del INE con contratos nuevos. Se incorpora antes de la v1.0; hasta entonces, el atlas solo mide la primera familia. El índice de contratos nuevos ya está en la tabla larga (indicador 10, corte `contrato`; §7.7), sin mapa.
 
 Las cifras del SERPAVI miden a quien ya vive de alquiler, no lo que cuesta entrar. El peso del alquiler en el ingreso corrige un sesgo del esfuerzo: los barrios caros parecen asequibles porque los habita población con más renta.
 
@@ -489,6 +489,8 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `contraste_declarado` | Contraste declarado en `tokens.json` frente al recalculado | ±0,05 | Alerta | Pasa; diferencia máxima, 0,003 | `validacion_diseno` |
 | `ipva_variacion` | Variación anual publicada del IPVA frente a la recalculada con los índices | ±0,06 puntos | Bloqueo | Diferencia máxima, 0,051 puntos | `validacion_ipva` |
 | `ipva_nota` | España, Madrid, Barcelona y la Comunitat Valenciana en 2024 frente a la nota de prensa | Exacto | Bloqueo | 3,5; 3,6; 3,3 y 5,0 % | `validacion_ipva` |
+| `ipva_contrato_enlace` | Variación de 2021 de los contratos nuevos y existentes frente a la recalculada con su índice y el índice general de 2020 | ±0,06 puntos | Bloqueo | Diferencia máxima, 0,049 puntos | `validacion_ipva` |
+| `ipva_contrato` | España por antigüedad del contrato (tabla 59004): índice de 2021 y 2024 de los contratos nuevos, los existentes y el total; variación de los nuevos y los existentes en 2021, 2022 y 2024 | Exacto | Bloqueo | Índice: 114,871 y 137,041; 112,229 y 120,637; 112,694 y 122,920. Variación: 3,5 y 1,2 %; 5,3 y 2,1 %; 8,8 y 2,8 % | `validacion_ipva` |
 | `hipotecas_tipo_anual` | Tipo medio anual de las hipotecas sobre viviendas frente a la media de sus doce meses | ±0,05 puntos | Bloqueo | Diferencia máxima, 0,024 puntos (2020) | `validacion_hipotecas` |
 | `valor_tasado_nombres` | Nombres del Ministerio sin código del INE | Exacto | Bloqueo | Ninguno: 306 municipios casados | `validacion_valor_tasado` |
 | `valor_tasado_ccaa` | Comunidades y España fuera del intervalo de sus provincias | Exacto | Bloqueo | Ningún trimestre desde 2015 | `validacion_valor_tasado` |
@@ -1207,6 +1209,12 @@ La compuerta (`comprobar_web_sobrecarga()`, `validacion_web_sobrecarga`; §4.1) 
 
 **Variación anual del alquiler (indicador 10).** Cifra publicada por el IPVA del INE (`leer_ine_ipva()`; objetivo `larga_ipva`) en su nivel nativo: España, 17 comunidades, 48 provincias, 718 municipios de más de 10.000 habitantes y 407 distritos de las capitales, todos en el seccionado de 2021. Sin País Vasco ni Navarra: el IPVA sale del IRPF de régimen común. Las filas «Resto» de cada provincia no entran. Es un índice: no se agrega ni se reproyecta (guía, regla 1). En 2024, España sube un 3,5 %, con una mediana municipal del 3,3 %.
 
+**Contratos nuevos y existentes (indicador 10, corte `contrato`; backlog, tarea 36).** Desde la edición de 2021, el IPVA separa los contratos nuevos de los existentes en España y las comunidades (tabla 59004) y en las provincias (tabla 59005), de 2021 a 2024; no lo publica por municipio ni por distrito. `armonizar_ine_ipva()` añade a la tabla larga la variación anual publicada de cada grupo (`nuevo` y `existente`) en España, 17 comunidades y 48 provincias; el total sigue saliendo de las tablas generales. Lo que dice el INE (proyecto técnico del IPVA, junio de 2023):
+- **Contrato nuevo:** el que tiene como año de contrato el de referencia, con la fecha del contrato que las bases de la AEAT recogen desde 2019; los demás son existentes. Los ingresos declarados son del año completo: si una vivienda tuvo dos contratos en el año, su precio anual incluye los dos, y la variación solo recoge una parte del efecto del cambio de contrato.
+- **Base:** los índices publicados están en base 2015 = 100, encadenando los índices de cada año sobre el anterior. La antigüedad del contrato entra en los estratos desde 2021, y el documento no dice cómo se enlaza el desglose con la base. Las cifras lo aclaran: el índice de 2021 de cada grupo es el índice general de 2020 por la variación del grupo, en España, en las 17 comunidades y en las 48 provincias (`ipva_contrato_enlace`, diferencia máxima de 0,049 puntos). Antes de 2021, el desglose no existe.
+
+En España, de 2021 a 2024, los contratos nuevos suben un 19,3 % (índice de 114,871 a 137,041) y los existentes, un 7,5 % (de 112,229 a 120,637), frente al 9,1 % del total (de 112,694 a 122,920); en 2024, un 8,8 y un 2,8 %. Es un índice, no un precio: no da el alquiler de quien entra y no se mezcla con la oferta (§1). Los contratos nuevos son de la familia «entrar» y los existentes, de «quedarse», pero la columna `familia_alquiler` es una por indicador y el 10 sigue en «quedarse» (por revisar). La web no exporta el corte: no tiene mapa.
+
 **Valor tasado (indicador 12).** Valor medio de tasación de la vivienda libre por m² del MIVAU, trimestral, de España, las comunidades, las provincias y los municipios de más de 25.000 habitantes (306 desde 2020). El año es la media de sus cuatro trimestres ponderada por el número de tasaciones (`valor_tasado_anual()`); sin los cuatro, `ausente` (de 3 a 9 municipios al año hasta 2020). El Ministerio no publica media anual ni pondera sus comunidades por tasaciones: la comunidad publicada se aparta de la media de sus provincias ponderada así hasta un 3,3 % (`valor_tasado_ccaa_media`), por composición, pero nunca sale del intervalo de sus provincias (`valor_tasado_ccaa`). Los nombres del Ministerio se casan con los códigos del INE por su forma normalizada (`casar_nombres_mivau()`), por un nombre único en España cuando la tabla de municipios arrastra mal la provincia (siete municipios) y por `inventario/nombres_mivau.csv` (erratas y nombres distintos). España: 1.475,6 €/m² en 2015 y 1.913,9 €/m² en 2024.
 
 **Coherencia entre escrituras y tasación** (`comprobar_coherencia_compraventa()`, `validacion_coherencia_compraventa`; el «hecho cuando» de F4). Las dos fuentes no comparten unidad: el valor medio escriturado es por vivienda y el tasado, por m². Su cociente es la superficie que tendría la vivienda media vendida si se pagara al valor tasado: la «superficie implícita». Si las dos miden el mismo mercado, cae cerca de la superficie media de las viviendas vendidas, algo por debajo, porque el precio escriturado suele quedar por debajo de la tasación; un error de lectura, de unidad o de casado la saca de golpe de ese entorno. Umbral: de 70 a 110 m² en España, cada año, y de 50 a 150 m² en provincias y trimestres, con un 5 % fuera como máximo. Resultado: España, de 91,8 a 106,1 m² (2015–2025); en provincias, un 1,9 % fuera como máximo (2021), con Baleares por encima de 150 m² en 2021 y 2022.
@@ -1374,7 +1382,7 @@ La serie con la deducción por vivienda habitual (vigente hasta diciembre de 201
 
 **Esquema** (plan §6.4): `geo_id`, `nivel`, `anio`, `indicador`, `corte`, `grupo`, `valor`, `estado`, `fuente`, `geo_ref` y `version`. La clave de una fila es `geo_id`, `nivel`, `anio`, `indicador`, `corte` y `grupo`.
 
-**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11.482.839 filas.
+**Contenido** (`tabla_larga`; `exportar_tabla_larga()`, `datos/intermedios/tabla_larga.parquet`): 11.483.367 filas.
 
 | Fuente (`fuente`) | Filas | Niveles | Versión |
 |---|---|---|---|
@@ -1385,12 +1393,12 @@ La serie con la deducción por vivienda habitual (vigente hasta diciembre de 201
 | `ine_ecv` | 261 | Comunidad (228) y España (33) | 6-nov-2026 |
 | `ine_ecv_modulo` | 32 | Comunidad (19) y España (13) | 6-nov-2026 |
 | `aeat_mercado_trabajo` | 2.016 | Provincia (1.456), comunidad (532) y España (28) | 9-nov-2026 |
-| `ine_ipva` | 11.910 | Distrito (4.070), municipio (7.180), provincia (480), comunidad (170) y España (10) | 10-nov-2026 |
+| `ine_ipva` | 12.438 | Distrito (4.070), municipio (7.180), provincia (864), comunidad (306) y España (18) | 10-nov-2026 |
 | `mivau_valor_tasado` | 4.048 | Municipio (3.256), provincia (572), comunidad (209) y España (11) | 10-nov-2026 |
 | `zonas_tensionadas` | 24.393 | Municipio (24.393) | 10-nov-2026 |
 | `calculo_propio` | 3.518.054 | Sección (2.436.386), distrito (568.152), municipio (506.960), provincia (5.076), comunidad (1.460) y España (20) | 7-nov-2026 |
 
-**Por estado:** `dato`, 8.507.268 filas; `ausente`, 1.690.991; `secreto`, 1.233.209; `estimado`, 51.371.
+**Por estado:** `dato`, 8.507.796 filas; `ausente`, 1.690.991; `secreto`, 1.233.209; `estimado`, 51.371.
 
 **Publicación.** La tabla larga se publica en el release `v0.1.0` de GitHub (9-nov-2026), y la web, en `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).
 

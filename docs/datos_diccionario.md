@@ -41,6 +41,7 @@ Variable del desglose. Sin desglose, `corte` y `grupo` valen `total`.
 | `mes` | Mes de referencia |
 | `ficha` | Ficha (ingreso de referencia) |
 | `oferta_privada` | Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE) |
+| `contrato` | Antigüedad del contrato de alquiler (IPVA) |
 
 ### `grupo`
 
@@ -84,6 +85,8 @@ Valor del desglose, según el corte.
 | `oferta_privada` | `alquiler_fotocasa` | Alquiler, Fotocasa (dato privado de oferta) |
 | `oferta_privada` | `venta_idealista` | Venta, Idealista (dato privado de oferta) |
 | `oferta_privada` | `venta_fotocasa` | Venta, Fotocasa (dato privado de oferta) |
+| `contrato` | `nuevo` | Contrato nuevo (firmado en el año de referencia) |
+| `contrato` | `existente` | Contrato existente (firmado antes del año de referencia) |
 
 ### `fuente`
 
