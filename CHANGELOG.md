@@ -4,6 +4,18 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (10-nov-2026, F6: CIS y calendario de fuentes; tarea 31; plan v0.41)
+
+- La vivienda como problema (CIS): % de entrevistados que cita la vivienda entre los tres principales problemas de España y entre los que más le afectan personalmente, por barómetro mensual, de enero de 2014 a octubre de 2026 (126 y 128 meses; del 1,5 al 55,6 % en España). Fuente abierta y sin registro: tabulaciones en XLSX (desde febrero de 2025) y resultados en HTML (2014–enero de 2025) de cada barómetro (`R/fuente_cis_barometros.R`). Tabla propia, fuera de la tabla larga, y `datos/cis_vivienda.json` para la página del histórico (aún sin mostrar). Compuerta `validacion_cis` con las notas de prensa del CIS (cinco cifras exactas) y `validacion_web_cis`.
+- Calendario de fuentes (`inventario/calendario_fuentes.csv`, 27 fuentes; `R/calendario_fuentes.R`): qué fuentes tocan a una fecha, objetivo `fuentes_pendientes`, que avisa cuando cambia ese conjunto, renovación con `cal_actualizar()` y `cal_restaurar()` (reversibles; nada se renueva solo ni en el repositorio remoto) y compuerta `validacion_calendario`. Procedimiento en `docs/actualizacion.md`. El objetivo del CIS (`cis_estudios`) se vuelve a ejecutar solo cuando toca un barómetro nuevo.
+- Nota metodológica: §7.10 (CIS) y §9.3 (calendario), en castellano e inglés.
+- Descargas (10-nov-2026, CIS): páginas de los barómetros de 2008 a 2026 (solo su JSON-LD, 5,9 MB) y resultados de 2014 a 2026 (59 MB), con pausas entre peticiones y respetando `robots.txt`.
+
+### Decidido (10-nov-2026, F6: CIS y calendario)
+
+- Condiciones del CIS: reutilización libre citando la fuente, sin desnaturalizarla ni atribuirle carácter oficial (Ley 37/2007); CC BY 4.0 en los metadatos de cada estudio (verificado el 10-nov-2026). No se usan el catálogo de series (protegido frente a accesos automatizados) ni los datos que excluye `robots.txt`. Los microdatos, que darían el dato por comunidad, piden un formulario con aceptación de condiciones: quedan para el autor.
+- Por revisar (plan §11, pregunta 48): serie desde 2014 con huecos (julio de 2014 y cinco meses de 2025 solo en PDF); abril y mayo de 2020 fuera (sin la categoría); una nota de prensa sin su mes pasa a la alerta de cobertura; la señal del calendario salta cuando cambia lo que toca; nada se renueva solo.
+
 ### Añadido (10-nov-2026, F6: módulo histórico, «máquina del tiempo»; tarea 30; plan v0.40)
 
 - Módulo histórico en una tabla propia, no en la tabla larga (`historico`, `datos/intermedios/historico.parquet`, 3.704 filas; `R/historico.R`): años de renta y esfuerzo teórico sin deducciones del Banco de España, trimestrales desde el primer trimestre de 1987 (`R/fuente_bde.R`); tipos oficiales de referencia del mercado hipotecario, mensuales (tipo medio de las hipotecas a más de tres años, desde noviembre de 1990, y MIBOR a un año, desde 1987); valor tasado del MIVAU desde 1995, de España y las comunidades (lectura de F4), y sueldo bruto medio por asalariado de la Contabilidad Nacional del INE, 1995–2025 (`R/fuente_ine_cne.R`).

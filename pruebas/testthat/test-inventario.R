@@ -37,7 +37,7 @@ test_that("el núcleo de la v0.1 tiene diez indicadores", {
 test_that("las referencias de validación apuntan a indicadores existentes", {
   indicadores <- leer_inventario("indicadores.csv")
   referencias <- leer_inventario("referencias_validacion.csv")
-  citados <- setdiff(separar(referencias$indicador), c("geo", "web", "historico"))   # F6, histórico: sin indicador
+  citados <- setdiff(separar(referencias$indicador), c("geo", "web", "historico", "calendario"))   # F6, histórico (también el CIS) y calendario: sin indicador
   expect_equal(setdiff(citados, indicadores$id), character(0))
   expect_true(all(referencias$tipo %in% c("bloqueo", "alerta")))
 })

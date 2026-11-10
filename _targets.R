@@ -821,4 +821,48 @@ bloque_historico <- if (AMBITO != "") list() else list(
   })
 )
 
-list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_zonas_tensionadas, bloque_portales, bloque_tabla_larga, bloque_web, bloque_historico)
+# F6, CIS: la vivienda entre los tres principales problemas de España y entre los que más afectan
+# personalmente, por barómetro mensual (R/fuente_cis_barometros.R). Serie nacional en una tabla propia
+# (no va a la tabla larga), desde enero de 2014: los resultados abiertos de cada barómetro (tabulaciones
+# en XLSX o resultados en HTML; sin registro). Compuerta cis_vivienda_* (notas de prensa del CIS, suma de
+# menciones, rango y huecos) y JSON para la página del histórico (datos/cis_vivienda.json, fuera de
+# datos/historico/, que su exportación borra). cis_estudios busca los barómetros nuevos cuando el
+# calendario dice que toca (señal de R/calendario_fuentes.R).
+#   targets::tar_make(names = c(fichero_cis_vivienda, validacion_web_cis))
+CIS_DESDE <- 2014L
+bloque_cis <- list(
+  tar_target(cis_estudios, cis_descargar_estudios(CIS_DESDE), format = "file",
+             cue = tarchetypes::tar_cue_force(cal_toca("cis_barometros"))),
+  tar_target(cis_barometros, cis_leer_barometros(cis_estudios)),
+  tar_target(validacion_cis, validar_referencias(cis_comprobar_vivienda(cis_barometros), referencias)),
+  tar_target(cis_vivienda, {
+    validacion_cis   # la compuerta va antes
+    cis_serie_vivienda(cis_barometros)
+  }),
+  tar_target(fichero_cis_vivienda, {
+    ruta <- file.path("datos", "intermedios", "cis", "cis_vivienda.csv")
+    dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
+    readr::write_csv(cis_vivienda, ruta)
+    ruta
+  }, format = "file"),
+  tar_target(ficheros_web_cis, cis_exportar_vivienda(cis_vivienda, dir_web = DIR_WEB), format = "file"),
+  tar_target(validacion_web_cis, validar_referencias(cis_comprobar_web(cis_vivienda, ficheros_web_cis), referencias))
+)
+
+# F6, calendario de fuentes (R/calendario_fuentes.R; inventario/calendario_fuentes.csv; procedimiento en
+# docs/actualizacion.md). fuentes_pendientes se vuelve a ejecutar cuando cambia el conjunto de fuentes que
+# tocan (edición nueva esperable desde la última descarga, o periodo posterior al último del atlas ya
+# publicable): avisa con la lista y la forma de renovar cada una, y la deja en
+# datos/intermedios/calendario/pendientes.csv. La señal se evalúa al leer este fichero, con la fecha de hoy.
+bloque_calendario <- list(
+  tar_target(fichero_calendario_fuentes, "inventario/calendario_fuentes.csv", format = "file"),
+  tar_target(calendario_fuentes, cal_leer_calendario(fichero_calendario_fuentes)),
+  tar_target(validacion_calendario, validar_referencias(cal_comprobar_calendario(calendario_fuentes, fuentes), referencias)),
+  tar_target(fuentes_pendientes, {
+    validacion_calendario   # la compuerta va antes
+    cal_avisar_pendientes(cal_fuentes_pendientes(calendario_fuentes))
+  }, cue = tarchetypes::tar_cue_force(cal_hay_cambios()))
+)
+
+list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_zonas_tensionadas, bloque_portales, bloque_tabla_larga, bloque_web, bloque_historico,
+     bloque_cis, bloque_calendario)   # F6, CIS y calendario

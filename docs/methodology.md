@@ -96,6 +96,7 @@ The full inventory, with address, access, frequency and notes, is in `inventario
 | `notariado` | General Council of Notaries | Not used: its terms do not allow its figures to be reused (indicator 11 is left out; §7.7) | Personal use only; reuse requires its express authorisation |
 | `zonas_tensionadas` | Housing Ministry, in the BOE (declarations by the autonomous communities) | Indicator 20 (§7.8) | Reusable citing the source (BOE reuse conditions) |
 | `portales` | Idealista and Fotocasa (press rooms) | Indicator 13, removable layer, off by default and still without data (§7.8) | Terms of use of each website and *sui generis* right: aggregated reports only, never listings |
+| `cis_barometros` | CIS | Housing as a problem: national monthly series from the barometers, outside the long table (§7.10) | Free reuse citing the CIS, without distorting the content (Law 37/2007); the metadata of each study state CC BY 4.0 |
 | `calculo_propio` | De renta en renta | Derived indicators 14, 15, 16, 17 and 21, from the sources of each term, and approximate margin of the rent median (§7.6) | CC BY-SA 4.0 |
 
 **Manual download of SERPAVI.** The MIVAU website blocks automated downloads. If the Excel file is missing, `descargar_mivau_serpavi()` stops the pipeline and gives the page and the name under which to save it (`inventario/fuentes.csv`, column `acceso`).
@@ -512,6 +513,15 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `hist_valor_tasado_ccaa` | By year, quarters with a multi-province region outside the range of its provinces, and quarters without a regional figure | Exact | Warning | Warns in 15 quarters (§7.9) | `validacion_historico` |
 | `hist_salarios_suma` | National Accounts: compensation against wages plus contributions, and the total against the sum of the A10 industries (wages and employees) | ±1 | Blocking | 0 in 1995–2025 | `validacion_cne` |
 | `web_historico` | Round trip of `datos/historico/historico.json`: figures, periods, series, territories, key dates and breaks | Exact | Blocking | 0 | `validacion_web_historico` |
+| `cis_vivienda_publicada` | Housing as a problem (CIS), Spain and personal, rounded to one decimal, against the CIS press releases (§7.10) | ±0.1 points | Blocking | All five figures match exactly | `validacion_cis` |
+| `cis_vivienda_suma` | Total mentions against the sum of the first, second and third | ±0.2 points | Blocking | At most 0.1 points in the HTML and 0.045 in the XLSX | `validacion_cis` |
+| `cis_vivienda_rango` | Figures outside 0–100 or missing, barometers with fewer than 1,000 interviews, months with only one of the two questions and repeated studies | Exact | Blocking | None | `validacion_cis` |
+| `cis_vivienda_categoria` | Barometers without the «La vivienda» category in one question (the month is left out of the series) | Exact | Warning | April and May 2020, Spain question | `validacion_cis` |
+| `cis_vivienda_cobertura` | Barometers without open results in XLSX or HTML, or whose download failed | Exact | Warning | Six: July 2014 and February, April, May, June and July 2025 | `validacion_cis` |
+| `cis_vivienda_meses` | Months without a barometer between the first and the last, except August | Exact | Warning | Seven (§7.10) | `validacion_cis` |
+| `cis_vivienda_web` | `datos/cis_vivienda.json` against the `cis_vivienda` table: periods and figures with one decimal | Exact | Blocking | No differences | `validacion_web_cis` |
+| `calendario_fuentes` | `inventario/calendario_fuentes.csv`: sources in the inventory, vocabulary, months, days and periods (§9.3) | Exact | Blocking | None | `validacion_calendario` |
+| `calendario_descargas` | Sources renewed from the calendar without any downloaded file | Exact | Warning | All have files | `validacion_calendario` |
 
 **Reading the results of `adrh_municipio`.** The median is 0.0% because most municipalities have a single tract. The warning `adrh_municipio_detalle` collects the cases in which the source does not match across scales with all tracts having data. In Madrid, for example, Alcobendas and Pozuelo de Alarcón stay above 5% every year (`inventario/referencias_validacion.csv`).
 
@@ -1254,6 +1264,22 @@ The series with the main-residence tax deduction (in force until December 2012),
 
 **Website** (`hist_exportar_web()`, target `ficheros_web_historico`). Page `historico.html`, «Time machine», without a map: one chart per block, all on the same time axis since 1987, with the key dates from `inventario/historico_fechas.csv` (highs and lows, checked against the series; breaks; and the end of the housing tax deduction), a reading without value judgements (first figure, high, low and latest) and the table of figures; the appraised value, also by region. The data go into `datos/historico/historico.json`, each series and territory as integers (× 100 years of income and burden, × 1,000 rates, × 10 appraised value; the wage, in euros). The «The Euribor goes up» square on the front page leads to its rates, and the Banco de España figures carry the citation its terms of use require.
 
+### 7.10 CIS barometers: housing as a problem (F6)
+
+**What is measured.** The monthly barometer of the Centro de Investigaciones Sociológicas (CIS) asks, with spontaneous answers and up to three mentions, «What, in your opinion, is the main problem in Spain today? And the second? And the third?» and «And which problem affects you personally the most?». The series takes the TOTAL column of the «La vivienda» (housing) category, which is different from «La ocupación de viviendas» (squatting): the share of respondents who name it in any of the three mentions. This is the sum of the three columns, because nobody repeats a problem. It is an opinion survey, not a register: it measures how often housing is named, not its price. It is national and monthly, with no barometer in August, and it is not part of the tract-level long table: it has a table of its own (target `cis_vivienda`; `cis_serie_vivienda()`).
+
+**Source and reading** (`cis_descargar_estudios()`, `cis_leer_barometros()`; targets `cis_estudios` and `cis_barometros`). The page of each barometer lists its documents in JSON-LD, under a CC BY 4.0 licence; it is stored in `datos/brutos/cis_barometros/estudios/`. Each study is read from its XLSX tabulations («Resultados y cruces verticales», from February 2025, at full precision) or, without them, from its HTML results (January 2014 to January 2025, with one decimal; `cis_leer_xlsx()`, `cis_leer_html()`). The tables come in two layouts, with the problems in rows or in columns, and with changing headers («Primer problema [recod.]» in 2024): the reader handles all of them. Before 2014 there are only scattered open results (2009, 2011 and 2013) or microdata, so the series starts in January 2014.
+
+**What is not used.** The CIS series catalogue is protected against automated access, and the data of its series pages are served through a path that `robots.txt` excludes. The microdata of each barometer, which would give the figure by autonomous community, require a form with an e-mail address and the acceptance of conditions: they are left out, and the comparison by region is still pending.
+
+**Result** (10 Nov 2026). There are 134 barometers from January 2014 to October 2026: 126 months with a figure for Spain and 128 for the personal question (112 and 114 from the HTML; 14 and 14 from the XLSX). Housing rises from 1.5% in January 2014 to 11.5% in May 2023, 28.3% in January 2025, 48.9% in May 2026 and 55.6% in October 2026, the highest in the series; in the personal question, from 1.6 to 33.8%.
+
+**Gaps.** No readable open results: July 2014 (PDF only) and February, April, May, June and July 2025 (the CIS link to its tabulations fails and there is no HTML; warning `cis_vivienda_cobertura`). April and May 2020 do not include the «La vivienda» category in the Spain question (warning `cis_vivienda_categoria`) and are left out of the series: the category is missing, which is not a measured zero. Seven months have no barometer: July 2016; March, April, October and December 2019, and June and September 2023 (warning `cis_vivienda_meses`).
+
+**Gate** (`cis_comprobar_vivienda()`; target `validacion_cis`). The five figures in the CIS press releases of 28 Jan 2026 and 14 Sep 2026 (January 2026, 42.6 and 28.2%; September, 37.5 and 27.9%; July, 37.5 + 5.5 = 43.0%) match exactly (`cis_vivienda_publicada`, ±0.1 points). The total differs from the sum of the three mentions by at most 0.1 points in the HTML and 0.045 in the XLSX (`cis_vivienda_suma`, ±0.2 points). No figure is out of range and no month has only one question (`cis_vivienda_rango`). If the month of a press release is missing, its figure goes to the coverage warning, and the gate only blocks if none can be checked.
+
+**Website** (`cis_exportar_vivienda()`; target `ficheros_web_cis`). The file `datos/cis_vivienda.json` holds the two series (period, figure with one decimal, study and interviews), the source, the licence and the date of the latest barometer. It sits outside `datos/historico/`, which its own export deletes. Round trip: `cis_vivienda_web` (target `validacion_web_cis`). The historical page does not show it yet.
+
 ## 8. Known limitations
 
 **Constant geography:**
@@ -1384,6 +1410,20 @@ The export follows the author's decisions of 8 Nov 2026 (plan §6.6; plan §11, 
 - **Maps without tracts and category maps** (F5, 10 Nov 2026). The mapped series (column `cortes_web`) without tracts, indicator 20 and the home-purchase ones 10, 12, 16 and 17, carry `nivel_minimo` in the manifest: the website paints municipalities and lets users click them at every scale and switches tracts off, and a chosen tract is shown in its municipality's profile. Indicator 20 also carries `categorias`, with the text of each value from `inventario/vocabulario.csv` in both languages, and `detalle`, its declarations (`datos/zonas_tensionadas.json`, 195 KB). The portals layer, with `PORTALES=TRUE`, gives one map per transaction and portal (§7.8). Home-purchase euros per m² are shown without decimals, and years of wages with one.
 - **Profile by level** (backlog, task 26). At low zoom, the map colours and lets users click regions, provinces and municipalities with the figure published at their level, the same as in the value files; if a series that gives the colour does not reach that level, the profile says «no data at this level» and does not add up tracts (§5.3). In a region, the tokens with a provincial income (Under-35 and pensioner) have no figure.
 
+### 9.3 Source calendar and updates (F6)
+
+`inventario/calendario_fuentes.csv` has one row per pipeline source (27). Each row gives its cadence, the usual publication months and day, the lag between the end of a period and its publication, and the latest period the atlas holds. It also gives its official calendar (INE, Eurostat, Banco de España or CIS), the targets that download it, its files and how it is renewed (`mover`, `invalidar`, `codigo`, `manual` or `fija`).
+
+`cal_fuentes_pendientes()` says which sources are due on a given date:
+- when an expected publication date has passed since the last download;
+- or when a period later than the latest in the atlas should already be published.
+
+The `fuentes_pendientes` target runs again whenever that set of sources changes, and warns with the list and with how to renew each source. Its signal, `cal_hay_cambios()`, is evaluated when `_targets.R` is read: it compares with the list left by the previous run in `datos/intermedios/calendario/pendientes.csv`, outside git. With the calendar up to date it forces nothing, and `tar_outdated()` stays empty. The CIS target, `cis_estudios`, only runs again when it is due (`cal_toca()`).
+
+Nothing runs on its own or in the remote repository. The procedure, with the R commands, is in `docs/actualizacion.md` (`cal_actualizar()`, `cal_restaurar()`).
+
+On 10 Nov 2026 one source is due, `inss_pensiones`: it has already published the whole of 2025 and the atlas reaches 2024. Gate: `calendario_fuentes` (blocking) and `calendario_descargas` (warning), in the `validacion_calendario` target.
+
 ---
 
 ## 10. How to reproduce the figures
@@ -1417,4 +1457,5 @@ The base map takes about 9 minutes: 7 min 29 s for the PMTiles file (`fichero_ma
 - **Pressure:** `zonas_tensionadas`, `boe_zonas_tensionadas`, `larga_zonas_tensionadas`, `resumen_larga_zonas_tensionadas`, `larga_portales`.
 - **Website:** `ficheros_web`, `cajas_municipios`, `ficheros_web_sobrecarga`.
 - **Historical module (F6):** `series_bde`, `cne_agregados`, `cne_empleo`, `historico`, `fichero_historico`, `ficheros_web_historico`.
-- **Gates:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_ipva`, `validacion_hipotecas`, `validacion_valor_tasado`, `validacion_coherencia_compraventa`, `validacion_derivados_compraventa`, `validacion_cp_municipio`, `validacion_zonas_tensionadas`, `validacion_web_zonas_tensionadas`, `validacion_historico`, `validacion_cne`, `validacion_web_historico`.
+- **CIS and calendar (F6):** `cis_estudios`, `cis_barometros`, `cis_vivienda`, `fichero_cis_vivienda`, `ficheros_web_cis`, `calendario_fuentes`, `fuentes_pendientes`.
+- **Gates:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_ipva`, `validacion_hipotecas`, `validacion_valor_tasado`, `validacion_coherencia_compraventa`, `validacion_derivados_compraventa`, `validacion_cp_municipio`, `validacion_zonas_tensionadas`, `validacion_web_zonas_tensionadas`, `validacion_historico`, `validacion_cne`, `validacion_web_historico`, `validacion_cis`, `validacion_web_cis`, `validacion_calendario`.

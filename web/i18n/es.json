@@ -852,7 +852,8 @@
     "bde_accesibilidad": "Indicadores de accesibilidad a la vivienda (años de renta, esfuerzo teórico)",
     "calculo_propio": "Cálculo propio a partir de las fuentes de cada término",
     "bde_tipos_referencia": "Tipos de interés de referencia oficiales del mercado hipotecario",
-    "ine_cne": "Contabilidad Nacional Anual de España: agregados por rama de actividad (base 2020)"
+    "ine_cne": "Contabilidad Nacional Anual de España: agregados por rama de actividad (base 2020)",
+    "cis_barometros": "Barómetros mensuales del CIS: la vivienda entre los principales problemas"
   },
   "vocabulario": {
     "corte": {

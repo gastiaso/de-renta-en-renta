@@ -96,6 +96,7 @@ El inventario completo, con dirección, acceso, cadencia y notas, está en `inve
 | `notariado` | Consejo General del Notariado | No se usa: sus condiciones no permiten reutilizar las cifras (el indicador 11 queda fuera; §7.7) | Solo uso personal; reutilizar exige su autorización expresa |
 | `zonas_tensionadas` | MIVAU, en el BOE (declaraciones de las comunidades autónomas) | Indicador 20 (§7.8) | Reutilizable citando la fuente (condiciones de reutilización del BOE) |
 | `portales` | Idealista y Fotocasa (salas de prensa) | Indicador 13, capa desmontable, apagada por defecto y aún sin datos (§7.8) | Condiciones de uso de cada web y derecho *sui generis*: solo informes agregados, nunca anuncios |
+| `cis_barometros` | CIS | La vivienda como problema: serie nacional y mensual de los barómetros, fuera de la tabla larga (§7.10) | Reutilización libre citando al CIS, sin desnaturalizar el contenido (Ley 37/2007); los metadatos de cada estudio declaran CC BY 4.0 |
 | `calculo_propio` | De renta en renta | Indicadores derivados 14, 15, 16, 17 y 21, a partir de las fuentes de cada término, y margen aproximado de la mediana del alquiler (§7.6) | CC BY-SA 4.0 |
 
 **Descarga manual del SERPAVI.** La web del MIVAU bloquea las descargas automáticas. Si falta el Excel, `descargar_mivau_serpavi()` detiene el pipeline e indica la página y el nombre con el que guardarlo (`inventario/fuentes.csv`, columna `acceso`).
@@ -512,6 +513,15 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `hist_valor_tasado_ccaa` | Por año, trimestres con una comunidad de varias provincias fuera del intervalo de sus provincias, y trimestres sin cifra de las comunidades | Exacto | Alerta | Avisa en 15 trimestres (§7.9) | `validacion_historico` |
 | `hist_salarios_suma` | Contabilidad Nacional: remuneración frente a sueldos más cotizaciones, y total frente a la suma de las ramas A10 (sueldos y personas asalariadas) | ±1 | Bloqueo | 0 en 1995–2025 | `validacion_cne` |
 | `web_historico` | Ida y vuelta de `datos/historico/historico.json`: cifras, periodos, series, territorios, fechas clave y rupturas | Exacto | Bloqueo | 0 | `validacion_web_historico` |
+| `cis_vivienda_publicada` | La vivienda como problema (CIS), España y personal, redondeada a un decimal, frente a las notas de prensa del CIS (§7.10) | ±0,1 puntos | Bloqueo | Pasan las cinco cifras, exactas | `validacion_cis` |
+| `cis_vivienda_suma` | Total de menciones frente a la suma de la primera, la segunda y la tercera | ±0,2 puntos | Bloqueo | Como mucho 0,1 puntos en el HTML y 0,045 en el XLSX | `validacion_cis` |
+| `cis_vivienda_rango` | Cifras fuera de 0–100 o sin valor, barómetros con menos de 1.000 entrevistas, meses con una sola pregunta y estudios repetidos | Exacto | Bloqueo | Ninguno | `validacion_cis` |
+| `cis_vivienda_categoria` | Barómetros sin la categoría «La vivienda» en una pregunta (el mes no entra en la serie) | Exacto | Alerta | Abril y mayo de 2020, pregunta de España | `validacion_cis` |
+| `cis_vivienda_cobertura` | Barómetros sin resultados abiertos en XLSX ni en HTML, o con la descarga fallida | Exacto | Alerta | Seis: julio de 2014 y febrero, abril, mayo, junio y julio de 2025 | `validacion_cis` |
+| `cis_vivienda_meses` | Meses sin barómetro entre el primero y el último, salvo agosto | Exacto | Alerta | Siete (§7.10) | `validacion_cis` |
+| `cis_vivienda_web` | `datos/cis_vivienda.json` frente a la tabla `cis_vivienda`: periodos y cifras con un decimal | Exacto | Bloqueo | Ninguna diferencia | `validacion_web_cis` |
+| `calendario_fuentes` | `inventario/calendario_fuentes.csv`: fuentes del inventario, vocabulario, meses, días y periodos (§9.3) | Exacto | Bloqueo | Ninguno | `validacion_calendario` |
+| `calendario_descargas` | Fuentes que se renuevan desde el calendario sin ningún fichero descargado | Exacto | Alerta | Todas tienen ficheros | `validacion_calendario` |
 
 **Lectura de los resultados de `adrh_municipio`.** La mediana es 0,0 % porque la mayoría de los municipios tiene una sola sección. La alerta `adrh_municipio_detalle` recoge los casos en que la fuente no cuadra entre escalas con todas las secciones con dato. En Madrid, por ejemplo, Alcobendas y Pozuelo de Alarcón quedan todos los años por encima del 5 % (`inventario/referencias_validacion.csv`).
 
@@ -1254,6 +1264,22 @@ La serie con la deducción por vivienda habitual (vigente hasta diciembre de 201
 
 **Web** (`hist_exportar_web()`, objetivo `ficheros_web_historico`). Página `historico.html`, «Máquina del tiempo», sin mapa: un gráfico por bloque, todos con el mismo eje de años desde 1987, con las fechas clave de `inventario/historico_fechas.csv` (los máximos y mínimos, comprobados en la serie; las rupturas, y el fin de la deducción por vivienda), una lectura sin valoraciones (primer dato, máximo, mínimo y último) y la tabla de cifras; el valor tasado, también por comunidad. Los datos van en `datos/historico/historico.json`, cada serie y territorio en enteros (× 100 los años de renta y el esfuerzo, × 1.000 los tipos, × 10 el valor tasado; el sueldo, en euros). La casilla «Sube el euríbor» de la portada lleva a sus tipos, y las cifras del Banco de España llevan la cita que piden sus términos de uso.
 
+### 7.10 Barómetros del CIS: la vivienda como problema (F6)
+
+**Qué se mide.** El barómetro mensual del Centro de Investigaciones Sociológicas pregunta, con respuesta espontánea y hasta tres menciones, «¿Cuál es, a su juicio, el principal problema que existe actualmente en España? ¿Y el segundo? ¿Y el tercero?» y «¿Y cuál es el problema que a Ud., personalmente, le afecta más?». La serie toma la columna TOTAL de la categoría «La vivienda» (distinta de «La ocupación de viviendas»): el porcentaje de entrevistados que la cita en cualquiera de las tres menciones, que es la suma de las tres columnas, porque nadie repite un problema. Es una encuesta de opinión, no un registro: mide cuánto se nombra la vivienda, no su precio. Es nacional y mensual, sin barómetro en agosto, y no entra en la tabla larga por sección: va en una tabla propia (objetivo `cis_vivienda`; `cis_serie_vivienda()`).
+
+**Fuente y lectura** (`cis_descargar_estudios()`, `cis_leer_barometros()`; objetivos `cis_estudios` y `cis_barometros`). La página de cada barómetro declara sus documentos en JSON-LD, con licencia CC BY 4.0; se guarda en `datos/brutos/cis_barometros/estudios/`. De cada estudio se leen las tabulaciones en XLSX («Resultados y cruces verticales», desde febrero de 2025, con toda la precisión) o, si no las hay, los resultados en HTML (de enero de 2014 a enero de 2025, con un decimal; `cis_leer_xlsx()`, `cis_leer_html()`). Las tablas llegan en dos disposiciones, con los problemas en filas o en columnas, y con cabeceras que cambian («Primer problema [recod.]» en 2024): el lector reconoce todas. Antes de 2014 solo hay resultados abiertos sueltos (2009, 2011 y 2013) o en microdatos, así que la serie empieza en enero de 2014.
+
+**Lo que no se usa.** El catálogo de series del CIS está protegido frente a accesos automatizados, y los datos de sus fichas de serie se sirven por una ruta que `robots.txt` excluye. Los microdatos de cada barómetro, que darían la cifra por comunidad autónoma, piden un formulario con correo y la aceptación de unas condiciones: quedan fuera, y el contraste por comunidad sigue pendiente.
+
+**Resultado** (10-nov-2026). Hay 134 barómetros de enero de 2014 a octubre de 2026: 126 meses con dato de España y 128 de la pregunta personal (112 y 114 desde el HTML; 14 y 14 desde el XLSX). La vivienda pasa del 1,5 % de enero de 2014 al 11,5 % de mayo de 2023, el 28,3 % de enero de 2025, el 48,9 % de mayo de 2026 y el 55,6 % de octubre de 2026, el máximo de la serie; en la pregunta personal, del 1,6 al 33,8 %.
+
+**Huecos.** Sin resultados abiertos legibles: julio de 2014 (solo PDF) y febrero, abril, mayo, junio y julio de 2025 (el enlace del CIS a sus tabulaciones da error y no hay HTML; alerta `cis_vivienda_cobertura`). Abril y mayo de 2020 no traen la categoría «La vivienda» en la pregunta de España (alerta `cis_vivienda_categoria`) y no entran en la serie: falta la categoría, no es un cero medido. Siete meses no tienen barómetro: julio de 2016; marzo, abril, octubre y diciembre de 2019, y junio y septiembre de 2023 (alerta `cis_vivienda_meses`).
+
+**Compuerta** (`cis_comprobar_vivienda()`; objetivo `validacion_cis`). Las cinco cifras de las notas de prensa del CIS de 28-ene-2026 y 14-sep-2026 (enero de 2026, 42,6 y 28,2 %; septiembre, 37,5 y 27,9 %; julio, 37,5 + 5,5 = 43,0 %) coinciden exactas (`cis_vivienda_publicada`, ±0,1 puntos). El total se aparta de la suma de las tres menciones como mucho 0,1 puntos en el HTML y 0,045 en el XLSX (`cis_vivienda_suma`, ±0,2 puntos). Ninguna cifra queda fuera de rango ni hay meses con una sola pregunta (`cis_vivienda_rango`). Si falta el mes de una nota, su cifra pasa a la alerta de cobertura, y solo bloquea si no se puede contrastar ninguna.
+
+**Web** (`cis_exportar_vivienda()`; objetivo `ficheros_web_cis`). El fichero `datos/cis_vivienda.json` lleva las dos series (periodo, cifra con un decimal, estudio y entrevistas), la fuente, la licencia y la fecha del último barómetro. Va fuera de `datos/historico/`, que su exportación borra. Ida y vuelta: `cis_vivienda_web` (objetivo `validacion_web_cis`). La página del histórico aún no lo muestra.
+
 ## 8. Limitaciones conocidas
 
 **Geografía constante:**
@@ -1384,6 +1410,20 @@ La exportación sigue las decisiones del autor del 8-nov-2026 (plan §6.6; plan 
 - **Mapas sin sección y de categorías** (F5, 10-nov-2026). Las series con mapa (columna `cortes_web`) sin secciones, el indicador 20 y los de compraventa 10, 12, 16 y 17, llevan en el manifiesto `nivel_minimo`: la web pinta y deja pulsar los municipios a toda escala y apaga las secciones, y una sección elegida se ve en la ficha de su municipio. El 20 lleva además `categorias`, con el texto de cada valor de `inventario/vocabulario.csv` en los dos idiomas, y `detalle`, sus declaraciones (`datos/zonas_tensionadas.json`, 195 KB). La capa de portales, con `PORTALES=TRUE`, da un mapa por operación y portal (§7.8). Los euros por m² de la compraventa se muestran sin decimales, y los años de salario, con uno.
 - **Ficha por niveles** (backlog, tarea 26). Con poco zoom, el mapa pinta y deja pulsar comunidades, provincias y municipios con la cifra publicada en su nivel, la misma de los ficheros de valores; si alguna serie que da color no llega a ese nivel, la ficha dice «sin dato en este nivel» y no suma secciones (§5.3). En una comunidad, las fichas con ingreso por provincia (mochila y transistor) no tienen cifra.
 
+### 9.3 Calendario de fuentes y actualización (F6)
+
+`inventario/calendario_fuentes.csv` tiene una fila por fuente del pipeline (27). Cada una lleva su cadencia, los meses y el día habituales de publicación, el desfase entre el final de un periodo y su publicación y el último periodo que tiene el atlas. Lleva también su calendario oficial (INE, Eurostat, Banco de España o CIS), los objetivos que la descargan, sus ficheros y cómo se renueva (`mover`, `invalidar`, `codigo`, `manual` o `fija`).
+
+`cal_fuentes_pendientes()` dice qué fuentes tocan a una fecha dada:
+- cuando, desde la última descarga, ha pasado una fecha de publicación esperable;
+- o cuando ya debería estar publicado un periodo posterior al último del atlas.
+
+El objetivo `fuentes_pendientes` se vuelve a ejecutar cuando cambia ese conjunto de fuentes, y avisa con la lista y con la forma de renovar cada una. Su señal, `cal_hay_cambios()`, se evalúa al leer `_targets.R`: compara con la lista que dejó la pasada anterior en `datos/intermedios/calendario/pendientes.csv`, fuera de git. Con el calendario al día no fuerza nada, y `tar_outdated()` sale vacío. El objetivo del CIS, `cis_estudios`, se vuelve a ejecutar solo cuando toca (`cal_toca()`).
+
+Nada se ejecuta solo ni en el repositorio remoto. El procedimiento, con las órdenes de R, está en `docs/actualizacion.md` (`cal_actualizar()`, `cal_restaurar()`).
+
+El 10-nov-2026 toca una fuente, `inss_pensiones`: ya ha publicado 2025 entero y el atlas llega a 2024. Compuerta: `calendario_fuentes` (bloqueo) y `calendario_descargas` (alerta), en el objetivo `validacion_calendario`.
+
 ---
 
 ## 10. Cómo reproducir las cifras
@@ -1417,4 +1457,5 @@ El mapa base tarda unos 9 minutos: 7 min 29 s el PMTiles (`fichero_mapa_base`) y
 - **Presión:** `zonas_tensionadas`, `boe_zonas_tensionadas`, `larga_zonas_tensionadas`, `resumen_larga_zonas_tensionadas`, `larga_portales`.
 - **Web:** `ficheros_web`, `cajas_municipios`, `ficheros_web_sobrecarga`.
 - **Histórico (F6):** `series_bde`, `cne_agregados`, `cne_empleo`, `historico`, `fichero_historico`, `ficheros_web_historico`.
-- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_ipva`, `validacion_hipotecas`, `validacion_valor_tasado`, `validacion_coherencia_compraventa`, `validacion_derivados_compraventa`, `validacion_cp_municipio`, `validacion_zonas_tensionadas`, `validacion_web_zonas_tensionadas`, `validacion_historico`, `validacion_cne`, `validacion_web_historico`.
+- **CIS y calendario (F6):** `cis_estudios`, `cis_barometros`, `cis_vivienda`, `fichero_cis_vivienda`, `ficheros_web_cis`, `calendario_fuentes`, `fuentes_pendientes`.
+- **Compuertas:** `validacion_f1`, `validacion_adrh`, `validacion_adrh_distribucion`, `validacion_serpavi`, `validacion_fiabilidad`, `validacion_censo2021`, `validacion_vut`, `validacion_derivados`, `validacion_jerarquia`, `validacion_mapa_base`, `validacion_web`, `validacion_web_sobrecarga`, `validacion_sobrecarga`, `validacion_quintil`, `validacion_modulo`, `validacion_salarios`, `validacion_mochila`, `validacion_mochila_ecv`, `validacion_mochila_neto_ecv`, `validacion_mochila_serie`, `validacion_percentil`, `validacion_web_salarios`, `validacion_smi`, `validacion_inss`, `validacion_transistor`, `validacion_i18n`, `validacion_diseno`, `validacion_nuts`, `validacion_ipva`, `validacion_hipotecas`, `validacion_valor_tasado`, `validacion_coherencia_compraventa`, `validacion_derivados_compraventa`, `validacion_cp_municipio`, `validacion_zonas_tensionadas`, `validacion_web_zonas_tensionadas`, `validacion_historico`, `validacion_cne`, `validacion_web_historico`, `validacion_cis`, `validacion_web_cis`, `validacion_calendario`.

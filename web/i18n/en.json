@@ -852,7 +852,8 @@
     "bde_accesibilidad": "Housing affordability indicators (years of income, theoretical burden)",
     "calculo_propio": "Own calculation from the sources of each term",
     "bde_tipos_referencia": "Official mortgage market reference interest rates",
-    "ine_cne": "Annual Spanish National Accounts: aggregates by industry (base 2020)"
+    "ine_cne": "Annual Spanish National Accounts: aggregates by industry (base 2020)",
+    "cis_barometros": "CIS monthly barometers: housing among the main problems"
   },
   "vocabulario": {
     "corte": {
