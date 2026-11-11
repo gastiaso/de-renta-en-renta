@@ -5,7 +5,7 @@
 // cuándo hay serie (pregunta abierta 32).
 
 import { periodoPara, inicioSerie, valorDe, cargarSeries, tipologiaDe } from './datos.js';
-import { formulaDe } from './formulas.js';
+import { formulaDe, textoSupuestos } from './formulas.js';
 import { ordenNatural } from './nombres.js';
 
 // Indicadores de la v0.1 (plan, §7, F2) y los de distribución de la renta de F3 (4–6), en el
@@ -64,8 +64,9 @@ async function valorSeccion(m, series, serie, codigo, periodo) {
   return valorDe(m, serie, 'sc', codigo, periodo);
 }
 
-// Filas de la tabla: [{ indicador, periodo, desde, decimales, tipologia, a: {valor, estado} | null,
-// b: ... }]; `periodo` null y `desde` (primer periodo de la serie) si el año es anterior a la serie.
+// Filas de la tabla: [{ indicador, periodo, desde, decimales, tipologia, derivado, a: {valor, estado} |
+// null, b: ... }]; `periodo` null y `desde` (primer periodo de la serie) si el año es anterior a la
+// serie; `derivado`, el mapa del manifiesto con que se calcula la fila (el 21) o null.
 // `serieDe(serie)`: la serie de la tipología elegida (los alquileres y el 21 de la vivienda
 // colectiva o de la unifamiliar, sin mezclarlas); por defecto, la misma.
 // `nivelA`: el de la columna A ('sc' por defecto; un municipio, una provincia o una comunidad en la
@@ -94,7 +95,7 @@ export async function filasComparador({ m, seccion, comparado, anio, supuestos, 
       return { ...x, valor: formulaDe(derivado).calcular(x.valor, supuestos) };
     };
     filas.push({
-      indicador, periodo, desde: periodo === null ? inicioSerie(def) : null, derivado: Boolean(derivado), tipologia: tipologiaDe(m, serie),
+      indicador, periodo, desde: periodo === null ? inicioSerie(def) : null, derivado: derivado ?? null, tipologia: tipologiaDe(m, serie),
       decimales: derivado ? derivado.decimales ?? 0 : def.decimales ?? 1,
       a: transformar(a), b: transformar(b),
     });
@@ -155,8 +156,10 @@ export function pintarComparador(contenedor, { t, eleccion, opciones, filas, nom
       const th = crear('th');
       th.scope = 'row';
       th.append(crear('span', 'comparador-nombre', t(`indicadores.${fila.indicador}.nombre`)));
-      const unidad = fila.derivado
-        ? `${t(`indicadores.${fila.indicador}.unidad`)} · ${t('interfaz.leyenda.supuestos', { superficie: t.numero(supuestos.superficie_m2), umbral: t.porcentaje(supuestos.umbral) })}`
+      // Tarea 40: el sueldo necesario del comparador es la cifra principal (alquiler mensual real)
+      const textoS = fila.derivado ? textoSupuestos(t, fila.derivado, supuestos) : null;
+      const unidad = textoS
+        ? `${t(`indicadores.${fila.indicador}.unidad`)} · ${textoS}`
         : t(`indicadores.${fila.indicador}.unidad`);
       const tipologia = fila.tipologia ? ` · ${t(`vocabulario.tipologia.${fila.tipologia}`)}` : '';
       const cuando = fila.periodo === null ? t('interfaz.vista.desde',{ desde: t.periodo(fila.desde) }) : t.periodo(fila.periodo);

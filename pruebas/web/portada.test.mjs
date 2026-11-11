@@ -193,8 +193,8 @@ test('enlaces con idioma', () => {
 test('cartas: solo las que tienen todos sus términos, nunca «—»', () => {
   const datos = {
     cartas: {
-      sueldo: { anio: 2024, secciones: 26137, p10: 700, mediana: 1216.7, p90: 2116.7, superficie_m2: 50, umbral: 30, mapa: 'sueldo_necesario', fuentes: ['mivau_serpavi'] },
-      smi: { anio: 2024, secciones: 26137, pct_30: 48.4, pct_40: 24.7, superficie_m2: 50, ficha: 'tartera', neto_mensual: 1237.4, fuentes: ['mivau_serpavi'] },
+      sueldo: { anio: 2024, secciones: 26137, p10: 1234.7, mediana: 1900, p90: 2976.5, minimo: 1216.7, superficie_m2: 50, umbral: 30, mapa: 'sueldo_necesario', fuentes: ['mivau_serpavi'] },
+      smi: { anio: 2024, secciones: 26137, pct_30: 48.4, pct_40: 24.7, pct_30_real: 85.1, pct_40_real: 60.2, superficie_m2: 50, ficha: 'tartera', neto_mensual: 1237.4, fuentes: ['mivau_serpavi'] },
       sobrecarga: { anio: 2025, total: 7.2, alquiler_mercado: null, fuentes: ['ine_ecv'] },
     },
   };
@@ -204,14 +204,17 @@ test('cartas: solo las que tienen todos sus términos, nunca «—»', () => {
   assert.equal(cartas[1].enlace, 'mapa.html?ficha=tartera&anio=2024');
   assert.deepEqual(portada.cartasDe(null), []);
   assert.deepEqual(portada.cartasDe({ cartas: { smi: { anio: 2024 } } }), []);
+  // Tarea 40: sin la cifra de al lado (el mínimo de 50 m², o el salario mínimo con el alquiler real), la carta no sale
+  const sinMinimo = { cartas: { sueldo: { ...datos.cartas.sueldo, minimo: null }, smi: { ...datos.cartas.smi, pct_40_real: undefined } } };
+  assert.deepEqual(portada.cartasDe(sinMinimo), []);
 });
 
 test('cartas: cada texto tiene sus marcas en los dos idiomas', () => {
   for (const idioma of ['es', 'en']) {
     const dic = leerJson('web', 'i18n', `${idioma}.json`);
     const marcas = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((x) => x[1]).sort();
-    assert.deepEqual(marcas(dic.portada.cartas.sueldo.texto), ['anio', 'mediana', 'p10', 'p90', 'superficie', 'umbral']);
-    assert.deepEqual(marcas(dic.portada.cartas.smi.texto), ['anio', 'neto', 'pct30', 'pct40', 'superficie']);
+    assert.deepEqual(marcas(dic.portada.cartas.sueldo.texto), ['anio', 'mediana', 'minimo', 'p10', 'p90', 'superficie', 'umbral']);
+    assert.deepEqual(marcas(dic.portada.cartas.smi.texto), ['anio', 'neto', 'pct30', 'pct30real', 'pct40', 'pct40real', 'superficie']);
     assert.deepEqual(marcas(dic.portada.cartas.sobrecarga.texto), ['anio', 'mercado', 'total']);
   }
 });
@@ -311,6 +314,18 @@ test('ficha: el ingreso de «Tu ficha» desglosado y el sueldo necesario en 14 p
   assert.equal(eq.paga14, 1200);
   assert.equal(eq.cadaUno, 700);
   assert.equal(equivalenciasSueldo(null), null);
+  // Entre dos sueldos, la vivienda de dos: 70 m² por defecto y cambiable (pregunta 43 h)
+  const dos = equivalenciasSueldo(1400, { base: 1000, superficie: 50 });
+  assert.equal(dos.superficieDos, 70);
+  assert.equal(dos.cadaUno, 700);
+  assert.equal(equivalenciasSueldo(1400, { base: 1000, superficie: 50, superficieDos: 90 }).cadaUno, 900);
+  assert.equal(equivalenciasSueldo(1400, { base: 1000, superficie: 50, superficieDos: 60 }).superficieDos, null);
+  assert.equal(equivalenciasSueldo(1400, { base: 1000, superficie: 50, superficieDos: 60 }).cadaUno, 700);
+  for (const idioma of ['es', 'en']) {
+    const f = leerJson('web', 'i18n', `${idioma}.json`).interfaz.ficha;
+    assert.match(f.dos_sueldos_m2, /\{superficie\}/);
+    assert.ok(f.dos_sueldos_superficie);
+  }
   for (const idioma of ['es', 'en']) {
     const d = leerJson('web', 'i18n', `${idioma}.json`).interfaz.ficha.ingreso_peon;
     assert.deepEqual(Object.keys(d).sort(), ['12', '12_segundo', '14', '14_segundo']);

@@ -98,7 +98,22 @@ test_that("CNE: lectura, sueldo por asalariado y compuerta de sumas", {
   expect_equal(hist_comprobar_ine_cne(ag, em)$calculado[2], 10)
 })
 
-# Tabla del módulo inventada: las seis series de España y una comunidad del valor tasado
+test_that("la referencia de los tipos: MIBOR hasta 1998 y euríbor desde 1999, cada mes con su código (pregunta 47 c)", {
+  m <- function(serie, codigo, anios, v) tibble::tibble(serie = serie, geo_id = "00", nivel = "nacional", frecuencia = "mensual",
+                                                       anio = rep(anios, each = 12), subperiodo = rep(1:12, length(anios)), valor = v,
+                                                       unidad = "porcentaje", fuente = "bde_tipos_referencia", codigo = codigo)
+  x <- dplyr::bind_rows(m("mibor_euribor", "D_1E723706.EUR", 1998:1999, 4), m("euribor", "D_1NBAF472", 1999L, 3))
+  y <- hist_enlazar_mibor_euribor(x)
+  r <- y[y$serie == "mibor_euribor", ]
+  expect_equal(nrow(r), 24L)
+  expect_equal(unique(r$codigo[r$anio == 1998]), "D_1E723706.EUR")
+  expect_equal(unique(r$codigo[r$anio == 1999]), "D_1NBAF472")
+  expect_equal(unique(r$valor[r$anio == 1999]), 3)
+  expect_true("euribor" %in% HIST_SOLO_COMPUERTA)
+  expect_identical(hist_enlazar_mibor_euribor(x[x$serie != "euribor", ]), x[x$serie != "euribor", ])
+})
+
+# Tabla del módulo inventada: las siete series de España y una comunidad del valor tasado
 historico_prueba <- function() {
   trim <- function(serie, valores, desde = 1987L, unidad = "anios", fuente = "bde_accesibilidad", geo = "00", nivel = "nacional") {
     k <- seq_along(valores) - 1L
@@ -113,6 +128,7 @@ historico_prueba <- function() {
   bde <- dplyr::bind_rows(
     trim("anios_renta", c(2.9, 3.0, 3.1, 3.3, 4.0, 4.3, 4.2, 4.1)),
     trim("esfuerzo_teorico", c(42, 45, 48, 52, 60, 72.47, 70, 69), unidad = "porcentaje"),
+    mens("tipo_prestamos", c(14, 15, 17.05, 16, 15, 14)),
     mens("tipo_hipotecas", c(15, 16, 16.9, 16.5, 16, 15)),
     mens("mibor_euribor", c(12, 13, 16.43, 15, 14, 13, 12, 11, 10, 9, 8, 7)),
     trim("valor_tasado_bde", c(670.8, 686, 682.6, 692.7), desde = 1995L, unidad = "euros_m2")

@@ -1,8 +1,12 @@
 // Ficha de sección (panel lateral). Sin sección elegida, una invitación a elegirla; con sección,
 // su código, sus territorios y el valor del mapa activo:
-//   - sueldo necesario: la cifra en euros, con la superficie y el umbral;
-//   - «¿te llega?»: el alquiler sobre el ingreso de la ficha, al lado los euros que quedan al mes
-//     (ingreso − alquiler, o lo que falta si sale negativa; tarea 34) y debajo las dos cantidades.
+//   - sueldo necesario: la cifra en euros con el alquiler mensual real y, al lado, el mínimo teórico
+//     con la superficie elegida (decisión 4; tarea 40), con el umbral;
+//   - «¿te llega?»: qué estadístico usa la ficha y de quién (tarea 44), el alquiler sobre el ingreso
+//     de la ficha, al lado los euros que quedan al mes (ingreso − alquiler, o lo que falta si sale
+//     negativa; tarea 34), la proporción con el alquiler mensual real (tarea 40) y debajo las dos
+//     cantidades.
+// Bajo la cifra, en la sección y el municipio, el indicador 14 con su aviso de lectura (tarea 41).
 // Bajo la cifra, la fiabilidad de la mediana del alquiler (fiabilidad.js): sus contratos y su
 // margen aproximado, «pocos contratos», el intervalo de la cifra y, en «¿te llega?», si queda en el
 // límite entre dos tramos; sin mediana y con 0 contratos, «sin contratos de alquiler registrados»
@@ -18,7 +22,8 @@
 
 import { ordenNatural } from './nombres.js';
 import { clasesTramos, rampaDeCss, TRAMOS_LLEGA } from './colores.js';
-import { eurosQueQuedan } from './sueldo.js';
+import { eurosQueQuedan, SUPERFICIE_DOS_SUELDOS, SUPERFICIES } from './sueldo.js';
+import { daSueldo, textoSupuestos } from './formulas.js';
 
 const crear = (etiqueta, clase, texto) => {
   const el = document.createElement(etiqueta);
@@ -142,11 +147,72 @@ function lineaResto(t, resto) {
   return p;
 }
 
+// Tarea 40 (decisión 4): línea del mínimo teórico del sueldo necesario, al lado de la cifra
+// principal: «Mínimo teórico con un piso de 50 m²: 1.217 € netos al mes», con la cifra resaltada
+// (clase ficha-minimo-cifra). null sin cifra.
+export function lineaMinimo(t, minimo, supuestos) {
+  if (minimo === null || minimo === undefined || !Number.isFinite(minimo)) return null;
+  const p = crear('p', 'ficha-minimo');
+  t('interfaz.ficha.minimo', { superficie: t.numero(supuestos.superficie_m2) }).split('{cifra}').forEach((parte, i) => {
+    if (i > 0) p.append(crear('span', 'ficha-minimo-cifra', t.numero(minimo)));
+    if (parte) p.append(parte);
+  });
+  return p;
+}
+
+// Tarea 44: qué estadístico usa una ficha (media, mediana o mínimo legal) y de quién (hogar o
+// persona), en una línea (fichas_metodo.<ficha> de i18n). null si la ficha no lo tiene.
+export function lineaMetodo(t, ficha) {
+  const clave = `fichas_metodo.${ficha}`;
+  return ficha && t.existe(clave) ? crear('p', 'ficha-metodo', t(clave)) : null;
+}
+
+// Entre dos sueldos, la vivienda de dos: 70 m² por defecto, a la vista y cambiable a 50 o 90 m²
+// (plan §3.1 y §11, pregunta 43 h; decisión del autor, 10-nov-2026), como «Tu ficha» con dos
+// sueldos (SUPERFICIE_DOS_SUELDOS, sueldo.js). Lo que elige quien mira dura mientras no recargue la página.
+let superficieDosElegida = SUPERFICIE_DOS_SUELDOS;
+
 // El sueldo necesario en las pagas de quien lo mira (F3): en 14 pagas, la paga (× 12 / 14), y
-// entre dos sueldos iguales, cada uno (÷ 2). Solo en los mapas que dan un sueldo.
-export function equivalenciasSueldo(valor) {
+// entre dos sueldos iguales, cada uno con la vivienda de dos: `base` (sueldo necesario de
+// `superficie` m², el mínimo teórico) llevado a `superficieDos` m² y ÷ 2. Sin base, la cifra ÷ 2 y
+// `superficieDos` null. Solo en los mapas que dan un sueldo.
+export function equivalenciasSueldo(valor, { base = null, superficie = null, superficieDos = SUPERFICIE_DOS_SUELDOS } = {}) {
   if (valor === null || valor === undefined || !Number.isFinite(valor)) return null;
-  return { paga14: (valor * 12) / 14, cadaUno: valor / 2 };
+  const conBase = Number.isFinite(base) && Number.isFinite(superficie) && superficie > 0 && SUPERFICIES.includes(superficieDos);
+  return {
+    paga14: (valor * 12) / 14,
+    cadaUno: conBase ? (base * superficieDos) / superficie / 2 : valor / 2,
+    superficieDos: conBase ? superficieDos : null,
+  };
+}
+
+// Línea de los dos sueldos, con la superficie a la vista y los botones para cambiarla (50, 70, 90).
+function lineaDosSueldos(t, valor, opciones, decimales) {
+  const li = crear('li', 'ficha-dos-sueldos');
+  const texto = crear('span');
+  const pintar = () => {
+    const eq = equivalenciasSueldo(valor, { ...opciones, superficieDos: superficieDosElegida });
+    texto.textContent = eq.superficieDos
+      ? t('interfaz.ficha.dos_sueldos_m2', { euros: t.numero(eq.cadaUno, decimales), superficie: t.numero(eq.superficieDos) })
+      : t('interfaz.ficha.dos_sueldos', { euros: t.numero(eq.cadaUno, decimales) });
+    for (const b of li.querySelectorAll('button')) b.setAttribute('aria-pressed', String(Number(b.dataset.superficie) === superficieDosElegida));
+  };
+  li.append(texto);
+  if (equivalenciasSueldo(valor, opciones)?.superficieDos) {
+    const grupo = crear('span', 'ficha-dos-superficie');
+    grupo.setAttribute('role', 'group');
+    grupo.setAttribute('aria-label', t('interfaz.ficha.dos_sueldos_superficie'));
+    for (const s of SUPERFICIES) {
+      const b = crear('button', null, `${t.numero(s)} m²`);
+      b.type = 'button';
+      b.dataset.superficie = String(s);
+      b.addEventListener('click', () => { superficieDosElegida = s; pintar(); });
+      grupo.append(b);
+    }
+    li.append(' ', grupo);
+  }
+  pintar();
+  return li;
 }
 
 // Bloque de la cifra del mapa activo (ficha de sección y ficha de territorio).
@@ -159,7 +225,12 @@ export function equivalenciasSueldo(valor) {
 // ficha», para desglosar su ingreso. `notas`: textos de más, al final.
 // F5: `grupo` (texto de la operación y el portal), `etiqueta` (dato privado de oferta) y, en los
 // mapas de categorías, el texto de la categoría (mapaDef.categorias).
-function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, tipologia = null, fiabilidad = null, intervalo = null, enLimite = false, sinNivel = null, sueldo = null, notas = [], grupo = null, etiqueta = null }) {
+// Tarea 40 (decisión 4): `minimo`, en el sueldo necesario, el mínimo teórico con la superficie
+// elegida, al lado de la cifra principal (la del alquiler mensual real); en «¿te llega?», `valor.real`
+// (las fichas de una persona) da la proporción con el alquiler mensual mediano real.
+// Tarea 44: en «¿te llega?», bajo el título, qué estadístico usa la ficha y de quién, en una línea
+// (lineaMetodo). Tarea 41: la llave lleva el aviso de lectura del indicador 14, el mismo cociente.
+function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, tipologia = null, fiabilidad = null, intervalo = null, enLimite = false, sinNivel = null, sueldo = null, notas = [], grupo = null, etiqueta = null, minimo = null }) {
   const bloque = crear('section', 'ficha-valor');
   const cifra = crear('p', 'ficha-cifra');
   const sinCifra = sinNivel ? t('interfaz.ficha.sin_dato_nivel') : '—';
@@ -184,23 +255,30 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
     }
     const lineaF = lineaFiabilidad(t, fiabilidad);
     if (lineaF) bloque.append(lineaF);
+    // Tarea 40: al lado de la cifra principal, el mínimo teórico con la superficie elegida
+    const lineaM = lineaMinimo(t, minimo, supuestos);
+    if (lineaM) bloque.append(lineaM);
     // La superficie y el umbral, solo en los mapas que los usan (el sueldo necesario).
-    if ((mapaDef.formula ?? 'directo') !== 'directo') {
-      bloque.append(crear('p', 'ficha-estado',
-        t('interfaz.leyenda.supuestos', { superficie: t.numero(supuestos.superficie_m2), umbral: t.porcentaje(supuestos.umbral) })));
-    }
+    const textoS = textoSupuestos(t, mapaDef, supuestos);
+    if (textoS) bloque.append(crear('p', 'ficha-estado', textoS));
     // El sueldo en 14 pagas y entre dos sueldos (F3), en los mapas que dan un sueldo
-    const eq = mapaDef.formula === 'alquiler_m2_a_sueldo' ? equivalenciasSueldo(valor) : null;
+    // Entre dos sueldos, con la vivienda de dos (70 m² por defecto; pregunta 43 h): desde el mínimo
+    // teórico o, si no lo hay, desde la cifra cuando la calcula la superficie elegida
+    const baseDos = Number.isFinite(minimo) ? minimo : mapaDef.formula === 'alquiler_m2_a_sueldo' ? valor : null;
+    const opcionesDos = { base: baseDos, superficie: supuestos?.superficie_m2 ?? null };
+    const eq = daSueldo(mapaDef) ? equivalenciasSueldo(valor, opcionesDos) : null;
     if (eq) {
       const d = mapaDef.decimales ?? 0;
       const pagas = crear('ul', 'ficha-pagas');
       pagas.setAttribute('aria-label', t('interfaz.ficha.tus_terminos'));
       pagas.append(crear('li', null, t('interfaz.ficha.paga_14', { euros: t.numero(eq.paga14, d) })),
-        crear('li', null, t('interfaz.ficha.dos_sueldos', { euros: t.numero(eq.cadaUno, d) })));
+        lineaDosSueldos(t, valor, opcionesDos, d));
       bloque.append(pagas);
     }
   } else {
     bloque.append(crear('h3', 'ficha-indicador', `${t('interfaz.leyenda.llega_titulo')} · ${t(`fichas.${ficha}`)}`));
+    const metodo = lineaMetodo(t, ficha);   // tarea 44: estadístico y de quién
+    if (metodo) bloque.append(metodo);
     cifra.append(crear('span', claseNumero, valor === null ? sinCifra : t.porcentaje(valor.ratio)));
     if (!sinNivel) cifra.append(crear('span', 'ficha-unidad', t('interfaz.ficha.del_ingreso')));
     bloque.append(cifra);
@@ -208,6 +286,12 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
       // Al lado del porcentaje, los euros que quedan al mes con los mismos términos (tarea 34)
       const resto = textoResto(t, eurosQueQuedan(valor));
       if (resto) bloque.append(lineaResto(t, resto));
+      // Tarea 40: con el alquiler mensual mediano real de la sección (las fichas de una persona)
+      if (valor.real) {
+        bloque.append(crear('p', 'ficha-real', t('interfaz.ficha.real_llega', {
+          alquiler: t.numero(valor.real.alquiler), pct: t.porcentaje(valor.real.ratio),
+        })));
+      }
       const tramo = crear('p', 'ficha-tramo');
       const clase = clasesTramos(TRAMOS_LLEGA, rampaDeCss().length)[valor.tramo];
       tramo.append(crear('span', `leyenda-muestra ${clase}`), crear('span', null, t(TEXTOS_LLEGA[valor.tramo])));
@@ -225,6 +309,8 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
     }
     const lineaF = lineaFiabilidad(t, fiabilidad);
     if (lineaF) bloque.append(lineaF);
+    // Tarea 41: la llave es el mismo cociente que el indicador 14 y lleva su aviso de lectura
+    if (ficha === 'llave') bloque.append(crear('p', 'nota ficha-aviso-lectura', t('indicadores.esfuerzo_residentes.lectura')));
   }
   if (sinNivel) {
     bloque.append(crear('p', 'nota', t('interfaz.ficha.sin_dato_nivel_nota', { nivel: sinNivel })));
@@ -258,6 +344,7 @@ export function fichaSeccion(contenedor, { t, codigo, territorios, alCerrar, ...
   for (const [clave, texto] of lineas) datos.append(crear('dt', null, t(clave)), crear('dd', null, texto));
   const bloque = bloqueValor({ t, ...resto });
 
+  const huecoResidentes = crear('div', 'ficha-hueco');   // tarea 41: el indicador 14, con su aviso
   const huecoContexto = crear('div', 'ficha-hueco');
   const huecoSerie = crear('div', 'ficha-hueco');
   const huecoComparador = crear('div', 'ficha-hueco');
@@ -266,11 +353,32 @@ export function fichaSeccion(contenedor, { t, codigo, territorios, alCerrar, ...
     crear('p', 'ficha-codigo', t('interfaz.ficha.seccion', { codigo })),
     datos,
     bloque,
+    huecoResidentes,
     huecoContexto,
     huecoSerie,
     huecoComparador,
   );
-  return { huecoContexto, huecoSerie, huecoComparador };
+  return { huecoContexto, huecoSerie, huecoComparador, huecoResidentes };
+}
+
+// Tarea 41 (decisión 10): el indicador 14, «alquiler mediano sobre renta media del barrio», fuera
+// del selector del mapa, en la ficha de la sección y del municipio, con su aviso de lectura (la
+// lectura del inventario): el periodo y, si no es «dato», su estado en corto. Sin cifra, el hueco
+// queda vacío. `valor`: en % (17,6); `estado`: índice en `estados`.
+export function fichaResidentes(contenedor, { t, valor, estado, estados, anio }) {
+  if (valor === null || valor === undefined || !Number.isFinite(valor)) return contenedor.replaceChildren();
+  const bloque = crear('section', 'ficha-residentes');
+  bloque.append(crear('h3', 'ficha-indicador', t('indicadores.esfuerzo_residentes.nombre')));
+  const cifra = crear('p', 'ficha-cifra ficha-cifra-secundaria');
+  cifra.append(crear('span', 'ficha-residentes-cifra', `${t.numero(valor, 1)} %`),
+    crear('span', 'ficha-unidad', t('indicadores.esfuerzo_residentes.unidad')));
+  bloque.append(cifra);
+  const nombre = estados[estado];
+  const partes = [t('interfaz.ficha.anio', { anio: t.periodo(anio) })];
+  if (nombre && nombre !== 'dato' && t.existe(`interfaz.estado_corto.${nombre}`)) partes.push(t(`interfaz.estado_corto.${nombre}`));
+  bloque.append(crear('p', 'ficha-residentes-anio', partes.join(' · ')),
+    crear('p', 'nota ficha-aviso-lectura', t('indicadores.esfuerzo_residentes.lectura')));
+  contenedor.replaceChildren(bloque);
 }
 
 // Nombres de un territorio (municipio, provincia o comunidad) y de los que lo contienen, como los
@@ -295,14 +403,15 @@ export function fichaTerritorio(contenedor, { t, nivel, codigo, territorios, alC
   datos.append(crear('dt', null, t(`vocabulario.nivel.${nivel}`)), crear('dd', null, codigo));   // el código del INE
   for (const { nivel: n, nombre } of superiores) datos.append(crear('dt', null, t(`vocabulario.nivel.${n}`)), crear('dd', null, nombre));
   const bloque = bloqueValor({ t, ...resto, sinNivel: sinNivel ? t(`vocabulario.nivel.${nivel}`).toLowerCase() : null });
+  const huecoResidentes = crear('div', 'ficha-hueco');   // tarea 41: el indicador 14 (municipios)
   const huecoDetalle = crear('div', 'ficha-hueco');   // F5: declaraciones de zona tensionada
   const huecoSerie = crear('div', 'ficha-hueco');
   const huecoComparador = crear('div', 'ficha-hueco');
   const titulo = crear('p', 'ficha-codigo', propio.nombre);
   titulo.dataset.nivel = nivel;
   titulo.dataset.codigo = codigo;
-  contenedor.replaceChildren(cabecera(t, alCerrar, t('interfaz.ficha.titulo_territorio')), titulo, datos, bloque, huecoDetalle, huecoSerie, huecoComparador);
-  return { huecoSerie, huecoComparador, huecoDetalle };
+  contenedor.replaceChildren(cabecera(t, alCerrar, t('interfaz.ficha.titulo_territorio')), titulo, datos, bloque, huecoResidentes, huecoDetalle, huecoSerie, huecoComparador);
+  return { huecoSerie, huecoComparador, huecoDetalle, huecoResidentes };
 }
 
 // F5: declaraciones de zona de mercado residencial tensionado de un municipio (indicador 20), de
@@ -363,9 +472,13 @@ export function fichaContexto(contenedor, { t, filas }) {
 // Evolución del mapa activo en la sección: una fila por periodo, con el texto ya formateado y,
 // si no es «dato», su estado. `filas`: [{ periodo, texto, estado, resto }]; `resto`, en «¿te
 // llega?», los euros que quedan al mes («quedan 673 €»; tarea 34), en una columna al lado.
-export function fichaSeries(contenedor, { t, titulo, nota, filas, estados, periodo }) {
+// Tareas 43 y 45 (evolucion.js): `grafico`, el gráfico con la banda del margen, encima de la tabla;
+// `variacion` de cada fila, en una columna con cabecera (`cabeceras`: { periodo, cifra, variacion });
+// `notas`, al pie (banda, pocos contratos, regla de las variaciones, euros corrientes e IPC).
+export function fichaSeries(contenedor, { t, titulo, nota, filas, estados, periodo, grafico = null, cabeceras = null, notas = [] }) {
   const cuerpo = crear('tbody');
   const conResto = filas.some((f) => f.resto);
+  const conVariacion = filas.some((f) => f.variacion);
   for (const fila of filas) {
     const tr = crear('tr', String(fila.periodo) === String(periodo) ? 'ficha-tabla-activa' : undefined);
     const th = crear('th', null, t.periodo(fila.periodo));
@@ -374,15 +487,28 @@ export function fichaSeries(contenedor, { t, titulo, nota, filas, estados, perio
     tr.append(
       th,
       crear('td', 'ficha-tabla-cifra', fila.texto),
+      ...(conVariacion ? [crear('td', 'ficha-tabla-variacion', fila.variacion ?? '')] : []),
       ...(conResto ? [crear('td', 'ficha-tabla-resto', fila.resto ?? '')] : []),
       crear('td', 'ficha-tabla-estado', nombre === 'dato' ? '' : t(`interfaz.estado_corto.${nombre}`)),
     );
     cuerpo.append(tr);
   }
   const tabla = crear('table', 'ficha-tabla');
+  if (conVariacion && cabeceras) {
+    const fila = crear('tr');
+    for (const [texto, clase] of [[cabeceras.periodo, null], [cabeceras.cifra, 'ficha-tabla-cifra'], [cabeceras.variacion, 'ficha-tabla-variacion'], ['', null]]) {
+      const th = crear('th', clase, texto ?? '');
+      th.scope = 'col';
+      fila.append(th);
+    }
+    const cabeza = crear('thead');
+    cabeza.append(fila);
+    tabla.append(cabeza);
+  }
   tabla.append(cuerpo);
   const bloque = crear('section', 'ficha-serie');
-  bloque.append(crear('h3', 'ficha-indicador', titulo), tabla);
+  bloque.append(crear('h3', 'ficha-indicador', titulo), ...(grafico ? [grafico] : []), tabla);
   if (nota) bloque.append(crear('p', 'nota', nota));
+  for (const n of notas) bloque.append(crear('p', 'nota', n));
   contenedor.replaceChildren(bloque);
 }

@@ -11,9 +11,13 @@ larga_portada <- function() {
   sc <- sprintf("28079%05d", seq_along(m2))
   estado <- ifelse(is.na(m2), "secreto", "dato")
   base <- tibble::tibble(geo_id = sc, nivel = "sc", anio = 2024L, estado = estado)
-  alquiler <- base |> mutate(indicador = "alquiler_m2", corte = "tipologia", grupo = "VC", valor = m2)
-  sueldo <- base |> mutate(indicador = "sueldo_necesario", corte = "total", grupo = "total",
-                           valor = termino_publicado(m2) * 50 / 0.3)
+  mes <- m2 * 70   # tarea 40: el alquiler mensual, de pisos de 70 m²
+  alquiler <- bind_rows(base |> mutate(indicador = "alquiler_m2", corte = "tipologia", grupo = "VC", valor = m2),
+                        base |> mutate(indicador = "alquiler_mes", corte = "tipologia", grupo = "VC", valor = mes))
+  sueldo <- bind_rows(base |> mutate(indicador = "sueldo_necesario", corte = "total", grupo = "total",
+                                     valor = termino_publicado(mes) / 0.3),
+                      base |> mutate(indicador = "sueldo_necesario", corte = "superficie", grupo = "50",
+                                     valor = termino_publicado(m2) * 50 / 0.3))
   barrera <- base |> mutate(indicador = "peso_alquiler_ingreso", corte = "ficha", grupo = "tartera",
                             valor = 100 * termino_publicado(m2) * 50 / 1000)
   sobrecarga <- tibble::tibble(geo_id = "00", nivel = "nacional", anio = c(2024L, 2025L, 2025L),
@@ -103,16 +107,22 @@ test_that("portada.json lleva las cifras de las cartas y la compuerta las reprod
   dir <- tempfile("web_")
   ruta <- exportar_portada(larga, perfiles_portada(), dir_web = dir)
   p <- jsonlite::read_json(ruta)$cartas
-  s <- larga$valor[larga$indicador == "sueldo_necesario" & !is.na(larga$valor)]
+  s <- larga$valor[larga$indicador == "sueldo_necesario" & larga$corte == "total" & !is.na(larga$valor)]
+  minimo <- larga$valor[larga$indicador == "sueldo_necesario" & larga$corte == "superficie" & !is.na(larga$valor)]
   expect_equal(p$sueldo$secciones, 11L)
   expect_equal(p$sueldo$mediana, redondeo_guia(stats::median(s)))
   expect_equal(p$sueldo$p10, redondeo_guia(stats::quantile(s, 0.1, names = FALSE)))
+  expect_equal(p$sueldo$minimo, redondeo_guia(stats::median(minimo)))   # tarea 40: el mínimo de 50 m², al lado
+  expect_gt(p$sueldo$mediana, p$sueldo$minimo)
   expect_equal(p$sueldo$anio, 2024L)
   expect_equal(p$smi$neto_mensual, 1000)
   # Ratio > 30 % con 1.000 €: m² > 6 (de 7,3 a 20: 8 de 11; 6 da el 30 % justo y no pasa);
   # > 40 %: m² > 8 (de 9,1 a 20: 6 de 11; 8 da el 40 % justo)
   expect_equal(p$smi$pct_30, redondeo_guia(100 * 8 / 11))
   expect_equal(p$smi$pct_40, redondeo_guia(100 * 6 / 11))
+  # Con el alquiler mensual real (m² × 70): > 300 € en 10 de 11 y > 400 € en 9 de 11
+  expect_equal(p$smi$pct_30_real, redondeo_guia(100 * 10 / 11))
+  expect_equal(p$smi$pct_40_real, redondeo_guia(100 * 9 / 11))
   expect_equal(p$sobrecarga, list(anio = 2025L, total = 7.2, alquiler_mercado = 26.8, fuentes = list("ine_ecv")))
 
   r <- comprobar_portada(larga, perfiles_portada(), dir_web = dir)
@@ -122,11 +132,12 @@ test_that("portada.json lleva las cifras de las cartas y la compuerta las reprod
   # Una cifra cambiada o una carta que falta no pasan
   j <- jsonlite::read_json(ruta)
   j$cartas$smi$pct_40 <- 50
+  j$cartas$sueldo$minimo <- 1
   j$cartas$sobrecarga <- NULL
   writeLines(jsonlite::toJSON(j, auto_unbox = TRUE, digits = NA), ruta)
   r2 <- comprobar_portada(larga, perfiles_portada(), dir_web = dir)
   mal <- r2$detalle[is.na(r2$calculado) | r2$calculado != r2$referencia]
-  expect_true(all(c("salario mínimo: más del 40 %", "sobrecarga: total") %in% mal))
+  expect_true(all(c("salario mínimo: más del 40 %", "sobrecarga: total", "sueldo: mínimo de 50 m2 (mediana)") %in% mal))
 })
 
 test_that("sin el ingreso de la tartera de ese año, la carta del salario mínimo no se exporta", {

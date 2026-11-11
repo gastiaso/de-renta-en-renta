@@ -41,7 +41,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 
 ## Bloque 0 · Hoy
 
-**33 bis. Publicar la v0.4.0** (decisión 17). Commit de la publicación, `empaquetar_publicacion()`, release `v0.4.0` y flujo de Pages con `ref` en ese commit. **Hecho cuando:** la prueba en el navegador pasa contra el sitio publicado y la oferta sale «próximamente».
+**33 bis. Publicar la v0.4.0** (decisión 17) · HECHA (10-nov-2026): release `v0.4.0` (commit `e04c643`) y sitio montado con esa referencia; la prueba en el navegador contra el sitio publicado da 0 en sus 39 comprobaciones. Commit de la publicación, `empaquetar_publicacion()`, release `v0.4.0` y flujo de Pages con `ref` en ese commit. **Hecho cuando:** la prueba en el navegador pasa contra el sitio publicado y la oferta sale «próximamente».
 
 **33. Subir lo pendiente.** `main` va 9 commits por delante del remoto y hay cambios sin commit.
 - **Hecho cuando:** `git status` dice «up to date with 'origin/main'».
@@ -199,6 +199,9 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 - Motivo: la superficie implícita de las medianas es de 79 m², y solo el 3,4 % de las secciones baja de 55 m².
 - Afecta al mapa, la ficha, «¿te llega?», las cartas de la portada, el CSV y la nota.
 - **Hecho cuando:** ninguna pantalla muestra el mínimo de 50 m² sin la cifra real al lado.
+- **HECHA (11-nov-2026):** el 21 es el alquiler mensual mediano / 0,30 y lleva al lado el mínimo de 50 m², en la tabla larga como corte `superficie`, grupo `50` (`calcular_sueldo_necesario()`); compuerta por cifra y rangos por indicador y corte. Comprobado: superficie implícita mediana de 78,9 m² en 2024 (79,5 en 2015) y 3,4 % de secciones por debajo de 55 m²; en 2024, 1.900 € frente a 1.216,7 € en la sección mediana.
+  - Mapa: la cifra real, con cortes 1.000; 1.300; 1.600; 2.000 y 2.600 €; ficha, leyenda, tarjeta «Tu sueldo», comparador, imagen y CSV (`valor_minimo`), con el mínimo al lado o dicho; cartas de la portada con las dos cifras; «¿te llega?», con 50 m² en el mapa (regla 8) y la cifra real al lado en la ficha y la tarjeta. Nota (ES y EN), §7.4 y siguientes.
+  - **Por revisar** (plan §11, pregunta 55): que el mapa pinte la cifra real; los cortes; los rangos de la compuerta; «¿te llega?» con 50 m² en el mapa y la evolución de «¿te llega?», que aún da solo la de 50 m²; las filas del 21 de `inventario/cortes_web_niveles.csv` (son del mínimo de 50 m²; tarea 51).
 
 **41. Indicador 14: nombre y tramos.**
 - Divide el alquiler de quien alquila entre la renta de todos los hogares, y no discrimina: 18,3 % en el quintil más pobre y 17,5 % en el más rico; el 99,6 % de las secciones cae en dos de cinco tramos.
@@ -209,6 +212,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
   - con los actuales (20; 30; 40; 50): 68,0 %, 31,6 %, 0,4 %, 0 % y 0 %;
   - propuesta con cuatro cortes (15; 17; 19; 22): 27,6 %, 17,0 %, 16,3 %, 19,1 % y 20,0 %;
   - alternativa con cinco cortes (14; 16; 18; 20; 23): 19,6 %, 16,5 %, 17,0 %, 14,9 %, 17,5 % y 14,6 %.
+- **HECHA (11-nov-2026):** «Alquiler mediano sobre renta media del barrio», con el aviso de lectura en `inventario/indicadores.csv` (comprobado: en 2024, mediana del 18,3 % en el quintil de secciones con menos renta por hogar y del 17,5 % en el de más); sin `cortes_web`, fuera del selector del mapa; en la ficha de la sección y del municipio con su aviso (`fichaResidentes()`), y en «¿te llega?» con la llave, el aviso bajo su cifra. La casilla «Renueva el contrato» de la portada pasa a `mapa.html?ficha=llave`. **Por revisar** (pregunta 55): el 14 en todas las fichas, salvo con la llave, y el destino de la casilla.
 - **Objeción:** entre el percentil 5 (11,6 %) y el 95 (25,3 %) hay menos de 14 puntos. Los tramos por cuantiles cumplen el criterio, pero pintan contraste donde hay poca diferencia real y sobre un cociente que ya se sabe que no discrimina. Alternativa a decidir: sacar el indicador 14 del selector del mapa y dejarlo en la ficha con su aviso.
 
 **42. Universo del SERPAVI.**
@@ -225,11 +229,15 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
   - Renta: ingresos íntegros anualizados declarados, por m² de vivienda sin zonas comunes (p. 9). Un contrato de pocos meses se eleva al año.
   - El documento no dice nada de habitaciones, alquiler de temporada ni vivienda protegida, ni fija un mínimo de días arrendados. Tampoco se compara con las versiones anteriores (2024 y dos de 2025).
   - Pendiente: cuantificar el sesgo. Qué parte del parque en alquiler es de personas jurídicas, por municipio (Catastro o Censo 2021), para avisar donde pese más.
+- **HECHA (11-nov-2026):** metodología bajada (`datos/brutos/mivau_serpavi/`, 1.013.585 bytes) y páginas comprobadas a mano: personas físicas, modelo 100 o 109, vivienda habitual, sin parientes, registros atípicos y titulares foráneos fuera (p. 6); no afectos a actividades económicas (p. 8); renta (p. 9); solo IRPF y Catastro (p. 16); criterios de selección, parcela y 10 testigos (p. 17). En la nota (§7.1 y §8, ES y EN), en la `lectura` del 8 y el 9 (`inventario/indicadores.csv`, que llega a la web) y en la fila `mivau_serpavi` de `inventario/fuentes.csv`.
+  - Sesgo: no hay tabla abierta del parque alquilado por tipo de arrendador y municipio. Cifras: Banco de España, 8 % de las viviendas principales en alquiler de mercado de personas jurídicas privadas (España; Informe Anual 2023, cap. 4, p. 240); contraste del SERPAVI con los hogares en alquiler del Censo 2021 (`contraste_serpavi_censo`), 77,6 % en España sin País Vasco, del 36,0 % (Melilla) al 118,9 % (Salamanca), que no aísla a las personas jurídicas.
+  - **Por revisar:** la web no marca municipios. La estadística de titularidad del Catastro por municipio (todo el parque residencial, no el alquilado) no se ha bajado: no cumple la condición de la descarga autorizada.
 
 **43. Ruido de las series por sección.**
 - Con 10–19 contratos, el 16,6 % de las secciones cambia más de un 15 % en un año; con 100 o más, el 0,9 %.
 - Gráfico de evolución con banda del margen; las variaciones de un año, solo con 30 contratos o más en los dos años, o como media de tres años.
 - **Hecho cuando:** la ficha no muestra una variación anual sin su aviso en una sección con pocos contratos.
+- **HECHA (11-nov-2026):** gráfico de la evolución con la banda del margen y puntos huecos por debajo de 30 contratos (`web/js/evolucion.js`), y columna de variación: la de un año solo con 30 contratos o más en los dos años; si no, la media anual de tres años con «†», o ninguna. Prueba `pruebas/web/evolucion.test.mjs`; comprobado en el navegador. **Por revisar:** la media de tres años como variación media anual entre el año y tres antes, y el peso de leer los 20 ficheros de contratos y margen (CHANGELOG).
 
 **44. Fichas comparables.**
 - Pensionista: buscar la pensión mediana de jubilación; si no existe, media con aviso.
@@ -237,19 +245,36 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 - **Hecho cuando:** el método de cada ficha, en la web, lo declara en una línea.
 - **Investigado (10-nov-2026):** no aparece una pensión mediana de jubilación publicada. La Seguridad Social sí publica las pensiones por tramos de cuantía, de donde se puede interpolar una mediana (`estimado`); por provincia, a comprobar. **Decidido (10-nov-2026):** mediana estimada por tramos (`estimado`) solo si los tramos se publican por provincia; si no, la media con aviso en la ficha.
 - **Comprobado (10-nov-2026):** los Excel mensuales por provincia que ya descarga el pipeline (`CA<AAAAMM>.xlsx`) traen número, importe y pensión media por régimen y clase, sin tramos de cuantía. Los tramos del anuario son nacionales, y eSTADISS no se puede automatizar. Según lo decidido, la ficha del pensionista se queda con la media y su aviso. Opción que no exige fuente nueva: añadir en la ficha la pensión media de jubilación de autónomos de la provincia como referencia baja.
+- **HECHA (11-nov-2026):** cada ficha dice en una línea su estadístico y de quién (`fichas_metodo` de `web/i18n/`), en su ficha de «¿te llega?», en la tarjeta «Tu sueldo» y en la portada: llave, media del hogar; mochila, mediana de una persona; tartera, mínimo legal de una persona; transistor, media de una persona, con el aviso de que no se publica la mediana por provincia; «Tu ficha», cifra propia. Nota, §6.1 y §6.5. La referencia baja de autónomos no se ha añadido. **Por revisar:** los textos.
 
 **45. Series nominales y regla del 30 %.**
 - Opción de ver las series en euros constantes (IPC del INE), o aviso fijo de que son nominales.
 - La nota explica el límite de usar la misma proporción para todos los ingresos (enfoque de ingreso residual; Stone, 2006).
 - **Hecho cuando:** el gráfico de evolución dice si está en euros corrientes o constantes.
+- **HECHA (11-nov-2026):** aviso fijo bajo el gráfico de la evolución («En euros corrientes de cada año, sin descontar la inflación»), con la variación del IPC del periodo (INE, tabla 76144, medias anuales; `datos/ipc.json`; de 2015 a 2024, +23,5 %). La nota explica la regla del 30 % y el ingreso residual (Stone, 2006) en §7.4 y §8. **Por revisar:** aviso fijo en lugar de un selector de euros constantes (propuesta; el selector podría añadirse sin datos nuevos).
 
-**46. Revisión de las preguntas 43–48** (antes, tarea 32; plan §11). Sigue igual, con dos cambios:
+**46. Revisión de las preguntas 43–48** (antes, tarea 32; plan §11) · HECHA salvo el fichero de Registradores (11-nov-2026). Sigue igual, con dos cambios:
 - 43 h: dos sueldos con 70 m² se aplica también a «Entrar».
-- 45 a: el indicador 11 sale de Registradores.
+- 45 a: el indicador 11 sale de Registradores. **Nivel: provincia** (decisión del autor, 10-nov-2026, que sustituye al municipio de la pregunta 45): es el único que publica la fuente abierta.
+- **Hecho (11-nov-2026):**
+  - 43 h: entre dos sueldos, piso de 70 m² por defecto, a la vista y cambiable (50, 70, 90) en la ficha; en «entrar», `sueldo_entrar_dos` (intervalo, R y web, con datos inventados).
+  - 43 e: nivel de la vista inicial según la pantalla: 1280 × 720, provincias (zoom 4,96); 1366 × 768 y 1920 × 1080, municipios (5,1 y unos 5,8); móvil de 375 × 812, comunidades (3,9). Por revisar con la tarea 38 (la decisión 2 pide municipios).
+  - 44 e: ficha «Joven de 26 a 35» y el 7, «total y de 26 a 35 años».
+  - 44 f: 2015–2018 con la relación de 2019 (`metodo_forma`), `estimado`; la ECV avisa en 2015 (+2,1 puntos) y 2017 (−3,1), y la corrección no se valida en 2020–2024 (error medio de 4,0 puntos frente a 0,6): no se corrige.
+  - 44 g: `mochila_ecv` con el intervalo de la mediana de la ECV por su muestra: avisa en 20 de 160 cifras (antes, 32).
+  - 45 a y b: `R/fuente_registradores.R` (lector, compuerta, coherencia con el valor tasado provincia frente a provincia), fila en `fuentes.csv`, ODbL en `LICENCIA_DATOS.md` y en `version.json`; probado con un CSV inventado. **Sin conectar** en `_targets.R`.
+  - 45 d y e: el 17 con la renta neta por hogar del ADRH y el tipo D_IMVTIPLV del Banco de España: España, 17,8 % en 2015 y 18,1 % en 2024.
+  - 46 e: prórrogas como resoluciones nuevas (`prorroga_de`), con su compuerta.
+  - 47 a, c, d y g: `historico.parquet` en el paquete; tipos con D_IMVTIPLV y la referencia MIBOR (hasta 1998) y euríbor (desde 1999) como índices distintos; nota del sueldo de la Contabilidad Nacional; la revisión del Banco de España, alerta.
+  - 48 a y g: los seis meses del CIS solo en PDF, transcritos en `inventario/cis_transcripcion_pdf.csv` con su compuerta; criterio de F6, «avisa».
+- **Falta:** el fichero de Registradores. Al dejarlo en `datos/brutos/registradores/RP_ComprvResid_2007-2t2026.csv`, conectar el bloque de la cabecera de `R/fuente_registradores.R` (con `larga_registradores` en la tabla larga y `fichero_registradores` en el calendario) y ejecutar `tar_make()`. Lo demás por revisar: plan §11, pregunta 57.
 
 ## Bloque D · Lo que faltaba de la v1.0
 
-**47. Tabla de paso desde el seccionado de 2011.** Viviendas turísticas de 2020–2023 y Censo 2011 (pregunta 14). Mismas dos vías y compuertas que F1.
+**47. Tabla de paso desde el seccionado de 2011 · HECHA (11-nov-2026).** Viviendas turísticas de 2020–2023 y Censo 2011 (pregunta 14). Mismas dos vías y compuertas que F1.
+- Hecho: dos tablas desde las 35.960 secciones del Censo 2011 (cartografía del propio Censo, 1-nov-2011): callejero de enero de 2012 y edificios del Catastro de F1, construidos hasta 2011 (Censo) y hasta 2020 (viviendas turísticas), sin leer ningún edificio más (`R/paso2011.R`). En la tabla larga, el 18 de 2011 y el 19 de agosto de 2020 a febrero de 2023, de la sección a España, con su estado y su compuerta (`validacion_paso2011`); nota, §3.11.
+- Secciones de 2021 `estimado`: 5.446 (Censo) y 5.497 (viviendas turísticas), frente a 11.043 con solo el callejero. Cierre exacto; 19 excepciones de cobertura y 2 secciones sin paso.
+- Por revisar (CHANGELOG): agosto de 2023 (mezcla seccionados), edificios hasta 2020 en la tabla de las viviendas turísticas, las excepciones de cobertura y las secciones sin paso (leer el Catastro de esos municipios sería otra descarga).
 
 **48. Módulo de supuestos.** Superficie, umbral, pagas y segundo sueldo, documentados y validados en una muestra (plan, F3). Incluye la superficie típica del municipio.
 
@@ -328,19 +353,23 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 ## Bloque F · Ingeniería
 
 **54. Pruebas en cada push.** Flujo de GitHub con las pruebas que no necesitan datos (inventario, utilidades, web con la muestra). El de publicación sigue manual.
+- **Hecha en local (11-nov-2026), falta la primera ejecución en GitHub:** `.github/workflows/pruebas.yml`, con cada push y cada *pull request*: la batería de `testthat` entera con `renv` (caché y paquetes compilados de Posit Package Manager) y `node --test pruebas/web/*.test.mjs`. Las pruebas que piden datos ya se saltaban solas; en una copia limpia del repositorio pasan todas las demás (`pruebas/LEEME.md`).
+- Por revisar tras el primer push: tiempo sin caché, versiones de `renv.lock` en binario, pruebas del mapa base con el GDAL de Ubuntu y uso de las acciones de r-lib (CHANGELOG).
 
 **55. Avisos del pipeline (93).**
 - 56 de geometría sobre coordenadas geográficas: proyectar antes de calcular el punto interior.
 - 6 «NA introducidos por coerción» en el módulo de salarios que alimenta la mochila: explicarlos o corregirlos.
 - **Hecho cuando:** cada aviso que quede está justificado en `docs/actualizacion.md`.
+- **Hecha (11-nov-2026), salvo un cambio preparado:** los 6 de coerción, corregidos (`aeat_sangria()`: sangría en píxeles); los que quedan, justificados en `docs/actualizacion.md` («Avisos de `tar_make()`»). Los 56 de geometría tienen el cambio preparado sin ejecutar (`punto_interior()`): rehace `edificios_foral` y las tablas de paso del Catastro, unos 21 minutos, y hasta 48 si cambia alguna tabla. Lo decide el autor.
 
-**56. Limpieza.**
-- Fichero `0` de la raíz, fuera de git.
-- Textos que aún dicen que el Notariado «no se puede reutilizar».
+**56. Limpieza · HECHA (11-nov-2026).**
+- Fichero `0` de la raíz, fuera de git: borrado (salida de una redirección mal escrita) y `.gitignore` al día. Falta que el autor registre el borrado en git.
+- Textos que aún dicen que el Notariado «no se puede reutilizar»: nota, plan, guía, fila `notariado` de `inventario/fuentes.csv` y comentarios del código. La fila del indicador 11, con la tarea 46.
 - La guía y el README apuntan a este backlog.
 
-**57. Licencias.** Tabla única en la nota (§2): qué fuente, qué licencia, qué obliga. Señala los tres catastros con licencias contradictorias, la ODbL de Registradores, las geometrías europeas de uso no comercial e Idealista (solo web). Plan de retirada por fuente.
+**57. Licencias · HECHA (11-nov-2026).** Tabla única en la nota (§2): qué fuente, qué licencia, qué obliga. Señala los tres catastros con licencias contradictorias, la ODbL de Registradores, las geometrías europeas de uso no comercial e Idealista (solo web). Plan de retirada por fuente.
 - **Avance (10-nov-2026):** tabla resumida en `docs/metodo_corto.md`. Falta Registradores (tarea 46) y el plan de retirada por fuente.
+- **Hecha (11-nov-2026):** tabla única en la nota (ES y EN, §2.2) y plan de retirada (§2.4); `docs/metodo_corto.md`, `LICENCIA_DATOS.md` y la página «Datos», al día. La ODbL en el paquete (`version.json`), con la tarea 46.
 
 **58. Reproducir en limpio.** Ejecutar el pipeline en otra máquina, desde `renv::restore()`, con la lista de descargas manuales. Anotar lo que falle.
 

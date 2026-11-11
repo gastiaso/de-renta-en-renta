@@ -13,8 +13,12 @@
 #      febrero de 2025), con toda la precisión;
 #   2. los resultados en HTML (marginales con un decimal; de enero de 2014 a enero de 2025; antes,
 #      solo algún mes suelto de 2009, 2011 y 2013, por eso la serie empieza en 2014: CIS_DESDE).
-# Los meses que solo publican el PDF de resultados quedan como hueco (sin lector de PDF en el
-# proyecto) y salen en la alerta cis_vivienda_cobertura.
+# Los meses que solo publican el PDF de resultados (julio de 2014 y febrero, abril, mayo, junio y
+# julio de 2025) se transcriben a mano, sin lector de PDF en el proyecto (plan §11, pregunta 48 a
+# revisada): inventario/cis_transcripcion_pdf.csv, con el enlace a cada PDF, su tamaño y su suma
+# SHA-256, la página y la comprobación de cada fila (cis_aplicar_transcripcion(), compuerta
+# cis_vivienda_pdf). Un mes solo en PDF sin transcribir queda como hueco y sale en la alerta
+# cis_vivienda_cobertura.
 # No se usan: el catálogo de series del CIS (protegido frente a accesos automatizados), los datos
 # de sus fichas de serie (se sirven por /ws/, que robots.txt excluye) ni los microdatos, que piden
 # un formulario con correo y la aceptación de condiciones (con ellos saldría el dato por comunidad).
@@ -471,7 +475,8 @@ cis_exportar_vivienda <- function(serie, dir_web = "web") {
     fuente = "CIS, bar\u00f3metros mensuales (resultados y tabulaciones de cada estudio)",
     licencia = "CC BY 4.0; reutilizaci\u00f3n citando al CIS (Ley 37/2007)",
     unidad = "% de entrevistados que cita la vivienda entre los tres principales problemas",
-    nota = "Respuesta espont\u00e1nea, hasta tres problemas. Sin bar\u00f3metro en agosto; los meses con solo PDF de resultados no van.",
+    nota = paste("Respuesta espont\u00e1nea, hasta tres problemas. Sin bar\u00f3metro en agosto. Los meses publicados solo en PDF",
+                 "(julio de 2014 y cinco de 2025) se transcribieron a mano: inventario/cis_transcripcion_pdf.csv."),
     actualizado = format(max(as.Date(serie$publicado), na.rm = TRUE)),
     series = list(espana = pregunta("espana"), personal = pregunta("personal"))
   )
@@ -496,4 +501,64 @@ cis_comprobar_web <- function(serie, ruta) {
   }, numeric(1))
   tibble::tibble(id = "cis_vivienda_web", anio = NA_integer_, detalle = names(dif),
                  calculado = as.numeric(dif), referencia = 0)
+}
+
+# --- Meses publicados solo en PDF (plan §11, pregunta 48 a revisada) ------------------------------
+
+CIS_COLUMNAS_TRANSCRIPCION <- c("anio", "mes", "estudio", "pregunta", "pregunta_cis", "pagina", "total", "primero",
+                                "segundo", "tercero", "n", "url_pdf", "bytes_pdf", "sha256_pdf", "comprobacion")
+
+# Transcripción a mano de los PDF de resultados (inventario/cis_transcripcion_pdf.csv): una fila por
+# mes y pregunta, con la fila «La vivienda» de la tabla del PDF.
+cis_leer_transcripcion <- function(ruta) {
+  x <- readr::read_csv(ruta, col_types = readr::cols(anio = "i", mes = "i", estudio = "c", pregunta = "c", pagina = "i",
+                                                     total = "d", primero = "d", segundo = "d", tercero = "d", n = "d",
+                                                     bytes_pdf = "d", .default = "c"), na = "")
+  falta <- setdiff(CIS_COLUMNAS_TRANSCRIPCION, names(x))
+  if (length(falta)) stop("Faltan columnas en ", ruta, ": ", paste(falta, collapse = ", "), call. = FALSE)
+  x
+}
+
+# Los meses sin resultados abiertos (formato «pdf» o «fallo», sin pregunta) que tienen transcripción
+# pasan a la serie con sus cifras, formato «pdf_transcrito» y la categoría de la vivienda.
+cis_aplicar_transcripcion <- function(barometros, transcripcion) {
+  if (is.null(transcripcion) || !nrow(transcripcion)) return(barometros)
+  clave <- function(d) paste(d$anio, d$mes, d$estudio)
+  huecos <- barometros[is.na(barometros$pregunta) & barometros$formato %in% c("pdf", "fallo"), ]
+  usar <- huecos[clave(huecos) %in% clave(transcripcion), ]
+  if (!nrow(usar)) return(barometros)
+  nuevas <- dplyr::inner_join(dplyr::distinct(usar, anio, mes, estudio, publicado, licencia),
+                              transcripcion[c("anio", "mes", "estudio", "pregunta", "primero", "segundo", "tercero", "total", "n")],
+                              by = c("anio", "mes", "estudio")) |>
+    dplyr::mutate(formato = "pdf_transcrito", categoria = TRUE)
+  quitar <- is.na(barometros$pregunta) & clave(barometros) %in% clave(usar)
+  dplyr::bind_rows(barometros[!quitar, ], nuevas) |>
+    dplyr::arrange(anio, mes, pregunta)
+}
+
+# Compuerta de la transcripción (cis_vivienda_pdf, bloqueo): filas de meses que sí tienen resultados
+# abiertos (XLSX o HTML: no se pisan), estudios que no son el barómetro de su mes, meses sin las dos
+# preguntas o repetidos, totales que se apartan más de 0,2 puntos de la suma de los tres problemas o
+# con menos de 1.000 entrevistas, y enlaces que no son de la web del CIS o no nombran su estudio.
+# `barometros`: los leídos de la web (cis_leer_barometros()), antes de la transcripción.
+cis_comprobar_transcripcion <- function(barometros, transcripcion) {
+  clave <- function(d) paste(d$anio, d$mes)
+  abiertos <- barometros[!is.na(barometros$pregunta) & barometros$formato %in% c("xlsx", "html"), ]
+  del_mes <- dplyr::distinct(barometros, anio, mes, estudio)
+  estudio_mes <- del_mes$estudio[match(clave(transcripcion), clave(del_mes))]
+  por_mes <- dplyr::count(transcripcion, anio, mes, estudio)
+  problemas <- c(
+    "filas de meses con resultados abiertos" = sum(clave(transcripcion) %in% clave(abiertos)),
+    "estudios que no son el bar\u00f3metro de su mes" = sum(is.na(estudio_mes) | estudio_mes != transcripcion$estudio),
+    "meses sin las dos preguntas o repetidos" = sum(por_mes$n != 2L) +
+      sum(duplicated(transcripcion[c("anio", "mes", "pregunta")])) + sum(!transcripcion$pregunta %in% c("espana", "personal")),
+    "totales fuera de la suma (0,2 puntos) o con menos de 1.000 entrevistas" =
+      sum(is.na(transcripcion$total) | abs(transcripcion$total - (transcripcion$primero + transcripcion$segundo + transcripcion$tercero)) > 0.2 + 1e-9 |
+            is.na(transcripcion$n) | transcripcion$n < 1000),
+    "enlaces que no son del CIS o no nombran su estudio" =
+      sum(!startsWith(transcripcion$url_pdf, paste0(CIS_WEB, "/documents/")) |
+            !mapply(grepl, transcripcion$estudio, basename(transcripcion$url_pdf), fixed = TRUE))
+  )
+  tibble::tibble(id = "cis_vivienda_pdf", anio = NA_integer_, detalle = names(problemas),
+                 calculado = as.numeric(problemas), referencia = 0)
 }

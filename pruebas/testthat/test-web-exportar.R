@@ -7,14 +7,15 @@ ter_web <- geo_territorios(jer_web, tibble::tibble(municipio = c("28001", "28002
                            tibble::tibble(provincia = "28", nombre = "Madrid", ccaa = "13"),
                            tibble::tibble(codigo = "13", nombre_ine = "Madrid, Comunidad de", nuts2 = "ES30"))
 ind_web <- tibble::tibble(
-  id = c(1, 9, 15, 19, 21, 22),
-  codigo = c("renta_persona", "alquiler_m2", "peso_alquiler_ingreso", "viviendas_turisticas", "sueldo_necesario", "sobrecarga"),
+  id = c(1, 9, 15, 19, 21, 22, 8),
+  codigo = c("renta_persona", "alquiler_m2", "peso_alquiler_ingreso", "viviendas_turisticas", "sueldo_necesario", "sobrecarga",
+             "alquiler_mes"),
   unidad_es = c("€ por persona y año", "€ por m² y mes", "% del ingreso", "% de las viviendas",
-                "€ netos por mes", "%"),
-  nucleo_v01 = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE),
-  cortes_web = c("10;20;30;40", "4;5.5;7;9", NA, "0.5;1;2.5;5", "700;900;1100;1500;2000", NA),
-  escala_web = c(NA, NA, NA, 100, NA, NA),                        # el 19, con dos decimales
-  familia_alquiler = c(NA, "quedarse", "quedarse", NA, "quedarse", NA)   # tarea 34
+                "€ netos por mes", "%", "€ por mes"),
+  nucleo_v01 = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE),
+  cortes_web = c("10;20;30;40", "4;5.5;7;9", NA, "0.5;1;2.5;5", "1000;1300;1600;2000;2600", NA, "350;425;500;650"),
+  escala_web = c(NA, NA, NA, 100, NA, NA, NA),                    # el 19, con dos decimales
+  familia_alquiler = c(NA, "quedarse", "quedarse", NA, "quedarse", NA, "quedarse")   # tarea 34
 )
 fila_web <- function(geo_id, nivel, anio, indicador, valor, estado = "dato", corte = "total", grupo = "total",
                      fuente = "prueba") {
@@ -27,6 +28,7 @@ larga_web <- bind_rows(
   fila_web(c("2800101001", "2800101002"), "sc", 2021, "renta_persona", c(10, 11)),     # 2800201001: ausente
   fila_web("28001", "municipio", 2020, "renta_persona", 9.96),                          # el municipio, sin 2021
   fila_web(c("2800101001", "2800201001"), "sc", 2024, "alquiler_m2", c(10.04, 8), corte = "tipologia", grupo = "VC"),
+  fila_web(c("2800101001", "2800201001"), "sc", 2024, "alquiler_mes", c(803.2, 640), corte = "tipologia", grupo = "VC"),
   fila_web("2800101001", "sc", 2024, "alquiler_m2", 12, corte = "tipologia", grupo = "VU"),
   fila_web("2800101001", "sc", 2024, "alquiler_m2", 7, corte = "tipologia_p25", grupo = "VC"),
   fila_web("2800101001", "sc", 2024, "peso_alquiler_ingreso", 40, corte = "ficha", grupo = "tartera"),
@@ -54,8 +56,8 @@ test_that("valores × 10 con el redondeo de la guía y estados en cifras", {
 test_that("escala propia (escala_web): dos decimales con escala 100 y el redondeo de la guía", {
   expect_equal(escala_web(ind_web, c("viviendas_turisticas", "alquiler_m2", "no_existe")), c(100L, 10L, 10L))
   expect_equal(escala_web(ind_web[, setdiff(names(ind_web), "escala_web")], "viviendas_turisticas"), 10L)
-  expect_error(escala_web(dplyr::mutate(ind_web, escala_web = c(NA, 50, NA, 100, NA, NA)), "alquiler_m2"), "50")
-  expect_error(escala_web(dplyr::mutate(ind_web, escala_web = c(NA, "cien", NA, 100, NA, NA)), "alquiler_m2"), "cien")
+  expect_error(escala_web(dplyr::mutate(ind_web, escala_web = c(NA, 50, NA, 100, NA, NA, NA)), "alquiler_m2"), "50")
+  expect_error(escala_web(dplyr::mutate(ind_web, escala_web = c(NA, "cien", NA, 100, NA, NA, NA)), "alquiler_m2"), "cien")
   expect_equal(valor_web(c(1.234, 4.5678, NA, 0.15), 100), c(123L, 457L, NA, 15L))
   expect_equal(valor_web(c(1.234, 1.234), c(10, 100)), c(12L, 123L))
   expect_equal(redondeo_guia(c(1.234, 1.234), c(1, 2)), c(1.2, 1.23))
@@ -64,7 +66,7 @@ test_that("escala propia (escala_web): dos decimales con escala 100 y el redonde
 
 test_that("series: grupo por defecto con el código, variantes con «.grupo», meses como periodos y otros cortes fuera", {
   s <- series_web(larga_web, ind_web)
-  expect_setequal(unique(s$clave), c("renta_persona", "alquiler_m2", "alquiler_m2_vu", "viviendas_turisticas"))
+  expect_setequal(unique(s$clave), c("renta_persona", "alquiler_m2", "alquiler_m2_vu", "alquiler_mes", "viviendas_turisticas"))
   expect_false(any(s$corte %in% c("tipologia_p25", "ficha")))
   expect_equal(sort(unique(s$periodo[s$clave == "viviendas_turisticas"])), c("2024-02", "2024-11"))
 })
@@ -85,7 +87,7 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_equal(m$indices$sc, "datos/indices/sc.json")
   expect_equal(unlist(jsonlite::fromJSON(file.path(dir, m$indices$nacional))), "00")
   expect_equal(unlist(jsonlite::fromJSON(file.path(dir, m$indices$municipio))), c("28001", "28002"))
-  expect_setequal(names(m$indicadores), c("renta_persona", "alquiler_m2", "alquiler_m2_vu", "viviendas_turisticas"))
+  expect_setequal(names(m$indicadores), c("renta_persona", "alquiler_m2", "alquiler_m2_vu", "alquiler_mes", "viviendas_turisticas"))
   a <- m$indicadores$alquiler_m2
   expect_equal(c(a$indicador, a$grupo, a$corte, a$ruta), c("alquiler_m2", "VC", "tipologia", "datos/{nivel}/alquiler_m2/{anio}.json"))
   expect_equal(a$variantes$VU, "alquiler_m2_vu")
@@ -108,9 +110,13 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_equal(m$mapas$viviendas_turisticas$decimales, 2L)
   expect_equal(m$mapas$alquiler_m2$decimales, 1L)
   expect_equal(names(m$mapas)[1], "sueldo_necesario")
-  expect_equal(m$mapas$sueldo_necesario[c("base", "formula")], list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo"))
+  # Tarea 40: el sueldo necesario pinta el alquiler mensual real y lleva al lado el mínimo de 50 m²
+  expect_equal(m$mapas$sueldo_necesario[c("base", "formula")], list(base = "alquiler_mes", formula = "alquiler_mes_a_sueldo"))
+  expect_equal(m$mapas$sueldo_necesario$minimo, list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo"))
+  expect_null(m$mapas$alquiler_m2$minimo)
   expect_equal(unlist(m$mapas$alquiler_m2$cortes), c(4, 5.5, 7, 9))
-  expect_equal(unlist(m$mapas$sueldo_necesario$cortes), c(700, 900, 1100, 1500, 2000))   # seis tramos
+  expect_equal(unlist(m$mapas$sueldo_necesario$cortes), c(1000, 1300, 1600, 2000, 2600))   # seis tramos
+  expect_null(m$mapas$peso_alquiler_ingreso)                         # sin cortes_web, sin mapa (tarea 41)
   expect_equal(m$mapas$renta_persona$formula, "directo")
   # Tarea 34: los mapas de alquiler llevan su familia; los demás, ninguna
   expect_equal(m$mapas$alquiler_m2$familia, "quedarse")
@@ -182,7 +188,7 @@ test_that("auxiliares del alquiler: contratos y margen van a la web con su tipol
   )
   larga <- bind_rows(larga_web, aux)
   s <- series_web(larga, ind)
-  expect_setequal(unique(s$clave), c("renta_persona", "alquiler_m2", "alquiler_m2_vu", "viviendas_turisticas",
+  expect_setequal(unique(s$clave), c("renta_persona", "alquiler_m2", "alquiler_m2_vu", "alquiler_mes", "viviendas_turisticas",
                                      "contratos_alquiler", "contratos_alquiler_vu", "margen_alquiler_m2", "margen_alquiler_m2_vu"))
   expect_error(auxiliares_web(dplyr::mutate(ind, codigo = ifelse(codigo == "margen_otro", "raro_otro", codigo))), "raro_otro")
   expect_equal(nrow(auxiliares_web(ind_web)), 0L)                  # sin la columna, ninguno

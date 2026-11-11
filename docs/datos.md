@@ -24,7 +24,7 @@ Get-FileHash tabla_larga.parquet -Algorithm SHA256
 
 - **Datos derivados, textos e inventario:** [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.es) (`LICENCIA_DATOS.md`). Quien los reutilice o los transforme cita la fuente y publica lo que derive de ellos con la misma licencia.
 - **Código:** MIT (`LICENSE`).
-- **Datos de origen:** mantienen las condiciones de cada fuente (`inventario/fuentes.csv`, columna `licencia`), que se cita también.
+- **Datos de origen:** mantienen las condiciones de cada fuente (`inventario/fuentes.csv`, columna `licencia`), que se cita también. Qué obliga cada una y qué se retira si alguna cambia: nota metodológica («Método»), §2.2 y §2.4.
 - **Mapa base:** geometrías de las secciones censales de 2021 del INE.
 - **Geometrías NUTS de Eurostat (GISCO)** del mapa europeo de sobrecarga, que el sitio publica como ficheros (`datos/sobrecarga/nuts_2021.geojson` y `datos/sobrecarga/nuts_2024.geojson`): no se rigen por CC BY-SA 4.0. Su uso es no comercial y lleva el aviso «© EuroGeographics para los límites administrativos»; el uso comercial exige una licencia de EuroGeographics.
 

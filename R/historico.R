@@ -4,7 +4,11 @@
 #   serie | geo_id | nivel | frecuencia | anio | subperiodo | valor | unidad | fuente | codigo | version
 # `subperiodo`: trimestre (1–4), mes (1–12) o 0 en las anuales. Series:
 #   anios_renta, esfuerzo_teorico      Banco de España, trimestrales, España (R/fuente_bde.R);
-#   tipo_hipotecas, mibor_euribor      Banco de España, tipos oficiales de referencia, mensuales;
+#   tipo_prestamos                     Banco de España, tipo de los préstamos nuevos para vivienda
+#                                      (D_IMVTIPLV), mensual: línea principal de los tipos;
+#   tipo_hipotecas, mibor_euribor      Banco de España, tipos oficiales de referencia, mensuales (el
+#                                      primero, solo en la tabla; el segundo, MIBOR hasta 1998 y
+#                                      euríbor desde 1999, como referencia en la página);
 #   valor_tasado                       MIVAU, €/m², trimestral desde 1995, España y comunidades
 #                                      (lectura de F4: objetivo valor_tasado_trim);
 #   sueldo_asalariado                  INE, Contabilidad Nacional, € al año, España (R/fuente_ine_cne.R).
@@ -12,10 +16,11 @@
 # Fechas clave (inventario/historico_fechas.csv) y cifras publicadas para la compuerta
 # (inventario/historico_referencias.csv), en CSV (regla 7). Incorporado el 10-nov-2026.
 
-HIST_SERIES <- c("anios_renta", "esfuerzo_teorico", "tipo_hipotecas", "mibor_euribor", "valor_tasado", "sueldo_asalariado")
+HIST_SERIES <- c("anios_renta", "esfuerzo_teorico", "tipo_prestamos", "tipo_hipotecas", "mibor_euribor", "valor_tasado",
+                 "sueldo_asalariado")
 HIST_COLUMNAS_TABLA <- c(HIST_COLUMNAS, "version")
 # Rango creíble de cada serie: fuera, error de lectura o de la fuente (compuerta hist_series)
-HIST_RANGOS <- list(anios_renta = c(1, 20), esfuerzo_teorico = c(5, 100), tipo_hipotecas = c(-1, 25),
+HIST_RANGOS <- list(anios_renta = c(1, 20), esfuerzo_teorico = c(5, 100), tipo_prestamos = c(-1, 25), tipo_hipotecas = c(-1, 25),
                     mibor_euribor = c(-2, 25), valor_tasado = c(200, 15000), sueldo_asalariado = c(5000, 100000))
 HIST_SUBPERIODOS <- c(trimestral = 4L, mensual = 12L, anual = 1L)
 

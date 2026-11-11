@@ -13,6 +13,14 @@
 # enlaces. Este fichero descarga el XML de cada resolución (datos/brutos/zonas_tensionadas/,
 # fuera de git), lee sus tablas y comprueba el CSV contra ellas (compuerta `zonas_tensionadas_*`).
 #
+# Prórrogas (plan §11, pregunta 46 e revisada): la declaración dura tres años y puede prorrogarse
+# (Ley 12/2023, art. 18.3); la prórroga llega al BOE como una resolución nueva. Va en el CSV como una
+# fila más, con su resolución y, en la columna opcional prorroga_de, la resolución de la declaración
+# que prorroga (del mismo municipio y ámbito). Su periodo empieza el día siguiente a la publicación
+# si el texto lo dice así o, si no, el día siguiente al fin del periodo que prorroga, y dura los años
+# que fije el texto (fin, el mismo día del año de vencimiento). La situación a 31 de diciembre junta
+# todos los periodos de cada municipio, así que una prórroga alarga la declaración sin más.
+#
 # Tabla larga: nivel municipio (todos los del seccionado de 2021), un valor por año, la situación
 # a 31 de diciembre: 2 declarada en todo el municipio, 1 declarada en parte (núcleos, barrios o
 # distritos: el BOE no da su geometría y se pinta el municipio con la categoría «parte»), 0 sin
@@ -39,6 +47,7 @@ leer_zonas_tensionadas <- function(ruta) {
   if (length(falta)) stop("Faltan columnas en ", ruta, ": ", paste(falta, collapse = ", "), call. = FALSE)
   for (col in c("fecha_publicacion", "fecha_inicio", "fecha_fin")) x[[col]] <- as.Date(x[[col]])
   x$ambito_texto[is.na(x$ambito_texto)] <- ""
+  if (!"prorroga_de" %in% names(x)) x$prorroga_de <- NA_character_   # columna opcional (pregunta 46 e)
   x
 }
 
@@ -105,15 +114,20 @@ zt_clave_comunidad <- function(x) {
   vapply(palabras, function(p) paste(sort(setdiff(p, vacias)), collapse = " "), "")
 }
 
-# Periodo de vigencia que fija el texto de la resolución: hoy, siempre «Tres años desde el día
-# siguiente a la publicación de la presente resolución» (art. 18.2.d). Devuelve los años o NA si el
-# texto dice otra cosa (la compuerta lo para: habría que leerlo a mano).
+# Periodo de vigencia que fija el texto de la resolución: hasta hoy, siempre «Tres años desde el día
+# siguiente a la publicación de la presente resolución» (art. 18.2.d); una prórroga puede contar
+# desde el fin del periodo anterior (pregunta 46 e). Devuelve los años o NA si el texto dice otra
+# cosa (la compuerta lo para: habría que leerlo a mano).
 zt_anios_vigencia <- function(vigencia) {
   v <- zt_texto_ascii(vigencia)
-  numeros <- c(uno = 1L, dos = 2L, tres = 3L, cuatro = 4L, cinco = 5L)
-  m <- regmatches(v, regexec("^(uno|dos|tres|cuatro|cinco) anos desde el dia siguiente a la publicacion de la presente resolucion", v))
+  numeros <- c(un = 1L, uno = 1L, dos = 2L, tres = 3L, cuatro = 4L, cinco = 5L)
+  m <- regmatches(v, regexec("^(un|uno|dos|tres|cuatro|cinco) anos? desde el dia siguiente a", v))
   vapply(m, function(z) if (length(z) == 2) numeros[[z[2]]] else NA_integer_, integer(1))
 }
+
+# ¿Cuenta el periodo desde la publicación de la resolución? Si no (una prórroga que cuenta desde el
+# fin del periodo anterior), FALSE.
+zt_desde_publicacion <- function(vigencia) grepl("desde el dia siguiente a la publicacion", zt_texto_ascii(vigencia))
 
 # Fecha de fin de un periodo de `anios` años que empieza el día siguiente a la publicación: el mismo
 # día del año de vencimiento (art. 30.4 de la Ley 39/2015: los plazos en años acaban el mismo día en
@@ -135,8 +149,10 @@ zt_fin_vigencia <- function(publicacion, anios) {
 #     INE que no son los de ese código, o municipios fuera de la comunidad de su fila del BOE;
 #   zonas_tensionadas_nombre: filas cuyo nombre literal no está en la tabla de su resolución;
 #   zonas_tensionadas_completa: filas de las tablas del BOE con algún nombre que el CSV no recoge;
-#   zonas_tensionadas_fechas: efecto distinto del día siguiente a la publicación, fin distinto del
-#     que fija el texto (o texto de vigencia no reconocido), fin anterior al efecto;
+#   zonas_tensionadas_fechas: efecto distinto del día siguiente a la publicación (o, en una prórroga
+#     que cuenta desde el periodo anterior, al fin de ese periodo), fin distinto del que fija el texto
+#     (o texto de vigencia no reconocido), fin anterior al efecto; prórrogas (prorroga_de) sin una
+#     declaración anterior del mismo municipio y ámbito, o publicadas cuando ya había vencido;
 #   zonas_tensionadas_ambito: ámbitos desconocidos, partes sin su texto, municipios enteros con texto,
 #     filas repetidas y enlaces que no son los de la resolución.
 comprobar_zonas_tensionadas <- function(zonas, boe, territorios) {
@@ -181,8 +197,18 @@ comprobar_zonas_tensionadas <- function(zonas, boe, territorios) {
   anios <- zt_anios_vigencia(filas_boe$vigencia)
   clave_fila <- paste(filas_boe$boe, filas_boe$nombre_boe)
   anios_fila <- anios[match(paste(zonas$boe, zonas$nombre_boe), clave_fila)]
-  efecto_mal <- is.na(zonas$fecha_inicio) | is.na(zonas$fecha_publicacion) | zonas$fecha_inicio != zonas$fecha_publicacion + 1
-  fin_esperado <- zt_fin_vigencia(zonas$fecha_publicacion, anios_fila)
+  desde_pub <- zt_desde_publicacion(filas_boe$vigencia)[match(paste(zonas$boe, zonas$nombre_boe), clave_fila)]
+  # Prorrogas: el periodo que prorrogan (mismo municipio y ambito, resolucion de prorroga_de)
+  prorroga_de <- if ("prorroga_de" %in% names(zonas)) zonas$prorroga_de else rep(NA_character_, nrow(zonas))
+  es_prorroga <- !is.na(prorroga_de) & nzchar(prorroga_de)
+  previa <- match(paste(prorroga_de, zonas$municipio, zonas$ambito_texto), paste(zonas$boe, zonas$municipio, zonas$ambito_texto))
+  fin_previo <- zonas$fecha_fin[previa]
+  base <- zonas$fecha_publicacion
+  desde_fin <- es_prorroga & !is.na(fin_previo) & !(desde_pub %in% TRUE)
+  base[desde_fin] <- fin_previo[desde_fin]
+  prorroga_mal <- es_prorroga & (is.na(previa) | is.na(fin_previo) | zonas$fecha_publicacion > fin_previo)
+  efecto_mal <- is.na(zonas$fecha_inicio) | is.na(base) | zonas$fecha_inicio != base + 1
+  fin_esperado <- zt_fin_vigencia(base, anios_fila)
   fin_mal <- is.na(anios_fila) | is.na(zonas$fecha_fin) | is.na(fin_esperado) | zonas$fecha_fin != fin_esperado
   orden_mal <- !is.na(zonas$fecha_fin) & !is.na(zonas$fecha_inicio) & zonas$fecha_fin <= zonas$fecha_inicio
 
@@ -202,9 +228,10 @@ comprobar_zonas_tensionadas <- function(zonas, boe, territorios) {
     fila("zonas_tensionadas_nombre", "nombres literales que no estan en la tabla de su resolucion", sum(!nombre_ok)),
     fila("zonas_tensionadas_completa", if (nrow(restos)) paste(restos$boe, "fila", restos$fila) else "filas del BOE con nombres fuera del CSV",
          if (nrow(restos)) completa[completa > 0] else 0),
-    fila("zonas_tensionadas_fechas", c("efecto distinto del dia siguiente a la publicacion", "fin distinto del que fija el texto",
-                                       "fin anterior al efecto"),
-         c(sum(efecto_mal), sum(fin_mal), sum(orden_mal))),
+    fila("zonas_tensionadas_fechas", c("efecto distinto del dia siguiente a la publicacion (o al fin del periodo prorrogado)",
+                                       "fin distinto del que fija el texto", "fin anterior al efecto",
+                                       "prorrogas sin declaracion anterior del mismo ambito o publicadas ya vencida"),
+         c(sum(efecto_mal), sum(fin_mal), sum(orden_mal), sum(prorroga_mal))),
     fila("zonas_tensionadas_ambito", c("ambitos desconocidos o sin su texto", "filas repetidas", "enlaces distintos del de la resolucion"),
          c(sum(ambito_mal), sum(repetidas), sum(url_mal)))
   )

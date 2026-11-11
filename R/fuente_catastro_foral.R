@@ -91,6 +91,21 @@ anio_construccion_foral <- function(e, columnas = c("beginning", "end", "anyPoin
   anio
 }
 
+# Punto dentro de cada polígono calculado en un sistema proyectado (backlog, tarea 55). Con
+# longitud y latitud, sf::st_point_on_surface() trabaja con los grados como si fueran metros y
+# avisa («st_point_on_surface may not give correct results for longitude/latitude data»): lo hacen
+# los GML de Bizkaia y Navarra, en ETRS89 geográficas (EPSG:4258). Aquí la geometría pasa a
+# ETRS89 / UTM 30N (EPSG:25830, el sistema de las secciones), se toma el punto y vuelve a su
+# sistema. Con un sistema proyectado, es sf::st_point_on_surface() sin más.
+# PREPARADA, SIN USAR: leer_catastro_foral() la usaría en lugar de sf::st_point_on_surface(), pero
+# cambiar esa función rehace edificios_foral y lo que cuelga de ella (docs/actualizacion.md,
+# «Avisos de tar_make()»). Lo decide el autor.
+punto_interior <- function(geometria, crs_plano = 25830) {
+  if (!isTRUE(sf::st_is_longlat(geometria))) return(sf::st_point_on_surface(geometria))
+  crs <- sf::st_crs(geometria)
+  sf::st_transform(sf::st_point_on_surface(sf::st_transform(geometria, crs_plano)), crs)
+}
+
 # Edificios con viviendas de un zip foral, como leer_catastro_edificios() (que no se toca para no
 # releer los zips del Catastro estatal): un punto dentro de cada edificio, viviendas y año de
 # construcción. Lee todos los GML del zip (Álava: uno por municipio).

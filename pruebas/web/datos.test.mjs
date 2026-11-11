@@ -21,7 +21,7 @@ const {
 } = await modulo('web/js/datos.js');
 const { provinciasSinSeccion } = await modulo('web/js/ficha.js');
 const exportar = await modulo('web/js/exportar.js');
-const { FORMULAS, formulaDe } = await modulo('web/js/formulas.js');
+const { FORMULAS, formulaDe, daSueldo, minimoDe, textoSupuestos } = await modulo('web/js/formulas.js');
 const sueldo = await modulo('web/js/sueldo.js');
 const { codigoComparado, filasComparador } = await modulo('web/js/comparador.js');
 const { buscar, formasDeNombre } = await modulo('web/js/buscador.js');
@@ -88,6 +88,26 @@ test('sueldo necesario: alquiler por m² × superficie / umbral', () => {
   assert.throws(() => formulaDe({ formula: 'eval' }), /desconocida/);
 });
 
+test('sueldo necesario con dos cifras (tarea 40): alquiler mensual real / umbral y, al lado, el mínimo de la superficie elegida', () => {
+  const s = { superficie_m2: 50, umbral: 0.3 };
+  assert.equal(FORMULAS.alquiler_mes_a_sueldo.calcular(570, s), 1900);
+  assert.equal(FORMULAS.alquiler_mes_a_sueldo.calcular(570, { superficie_m2: 90, umbral: 0.4 }), 1425);   // sin superficie
+  assert.deepEqual(FORMULAS.alquiler_mes_a_sueldo.expresion('v', s), ['/', 'v', 0.3]);
+  const def = { base: 'alquiler_mes', formula: 'alquiler_mes_a_sueldo', minimo: { base: 'alquiler_m2', formula: 'alquiler_m2_a_sueldo' } };
+  assert.ok(daSueldo(def) && daSueldo({ formula: 'alquiler_m2_a_sueldo' }) && !daSueldo({ formula: 'directo' }) && !daSueldo(null));
+  const x = (valores) => (serie) => valores[serie] ?? null;
+  assert.equal(Math.round(minimoDe(def, x({ alquiler_m2: 7.3 }), s)), 1217);
+  assert.equal(Math.round(minimoDe(def, x({ alquiler_m2: 7.3 }), { superficie_m2: 70, umbral: 0.3 })), 1703);
+  assert.equal(minimoDe(def, x({ alquiler_m2_vu: 9 }), s, (b) => `${b}_vu`), 1500);   // la serie de la tipología elegida
+  assert.equal(minimoDe(def, x({}), s), null);
+  assert.equal(minimoDe({ base: 'alquiler_m2', formula: 'directo' }, x({ alquiler_m2: 7 }), s), null);
+  // Supuestos: con el mínimo al lado, el alquiler real y el umbral; si no, la superficie y el umbral
+  const tt = Object.assign((clave) => clave.split('.').at(-1), { porcentaje: (p) => `${p * 100} %`, numero: (n) => String(n) });
+  assert.equal(textoSupuestos(tt, def, s), 'supuestos_real');
+  assert.equal(textoSupuestos(tt, { formula: 'alquiler_m2_a_sueldo' }, s), 'supuestos');
+  assert.equal(textoSupuestos(tt, { formula: 'directo' }, s), null);
+});
+
 // --- «Tu sueldo» -----------------------------------------------------------------------------
 
 const PERFILES = {
@@ -140,8 +160,19 @@ test('¿te llega?: alquiler sobre ingreso para cada ficha', () => {
 
   const tartera = sueldo.calculoLlega({ ficha: 'tartera', perfiles: PERFILES, superficie: 50 });
   assert.equal(tartera.calcular('4802001001', x({ alquiler_m2: 7.8 })).ratio, 0.3);
+  // Tarea 40: al lado, la proporción con el alquiler mensual real; el mapa sigue con 50 m² (regla 8)
+  assert.equal(tartera.serieReal, 'alquiler_mes');
+  assert.deepEqual(tartera.series, ['alquiler_m2']);
+  const conReal = tartera.calcular('4802001001', x({ alquiler_m2: 7.8, alquiler_mes: 650 }));
+  assert.equal(conReal.ratio, 0.3);
+  assert.deepEqual(conReal.real, { alquiler: 650, ratio: 0.5 });
+  assert.equal(tartera.calcular('4802001001', x({ alquiler_m2: 7.8 })).real, undefined);
+  const secciones = ['4802001001', '4802001002', '4802001003'];
+  const valores = [{ alquiler_m2: 7.8, alquiler_mes: 650 }, { alquiler_m2: 6, alquiler_mes: 390 }, { alquiler_m2: 6 }];
+  assert.deepEqual(sueldo.resumenLlegaReal(tartera, secciones, (s, i) => valores[i][s] ?? null, 0.3), { con: 2, caben: 1, proporcion: 0.5 });
 
   const llave = sueldo.calculoLlega({ ficha: 'llave', perfiles: PERFILES, superficie: null });
+  assert.equal(sueldo.resumenLlegaReal(llave, secciones, () => 1, 0.3), null);   // la llave ya paga el alquiler real
   assert.deepEqual(llave.series, ['alquiler_mes', 'renta_hogar']);
   const r = llave.calcular('2807901001', x({ alquiler_mes: 900, renta_hogar: 36000 }));
   assert.equal(r.ingreso, 3000);
@@ -408,6 +439,26 @@ test('descargas: CSV con BOM, comillas cuando hacen falta, estados y supuestos',
   assert.equal(lineas.length, 5);   // cabecera, tres filas y el salto final
   assert.equal(lineas[1], '2807901001,"Madrid, distrito 01, sección 001",sc,Sueldo neto necesario,Vivienda colectiva,2024,1216.7,€ netos por mes,dato,"SERPAVI; ""cálculo propio""",50,0.3');
   assert.ok(lineas[2].includes(',,€ netos por mes,secreto,'));   // sin valor: campo vacío
+});
+
+test('descargas: el sueldo necesario lleva al lado el mínimo de la superficie elegida (tarea 40)', () => {
+  const s = { superficie_m2: 50, umbral: 0.3 };
+  const { cabecera, filas } = exportar.tablaCsv({
+    t: tPrueba, codigos: ['2807901001', '2807901002', '2807901003'], valores: [570, null, 900],
+    estados: Uint8Array.from([0, 2, 1]), nombresEstado: CODIFICACION.estados, nivel: 'sc', nombreDe: (c) => c,
+    indicador: 'Sueldo neto necesario', unidad: '€ netos por mes', tipologia: 'Vivienda colectiva', periodo: 2024, fuente: 'SERPAVI',
+    transformar: (x) => FORMULAS.alquiler_mes_a_sueldo.calcular(x, s), decimales: 1, supuestos: s,
+    minimo: { valores: [7.3, null, 12], transformar: (x) => FORMULAS.alquiler_m2_a_sueldo.calcular(x, s) },
+  });
+  assert.deepEqual(cabecera.slice(-3), ['superficie_m2', 'umbral', 'valor_minimo']);
+  assert.deepEqual(filas.map((f) => [f[6], f.at(-1)]), [[1900, 1216.7], [null, null], [3000, 2000]]);
+  // Sin la serie del mínimo en ese nivel: la columna, vacía
+  const vacia = exportar.tablaCsv({
+    t: tPrueba, codigos: ['28'], valores: [600], estados: Uint8Array.from([0]), nombresEstado: CODIFICACION.estados, nivel: 'provincia',
+    nombreDe: (c) => c, indicador: 'i', unidad: 'u', periodo: 2024, fuente: 'f', transformar: null, decimales: 1, supuestos: s,
+    minimo: { valores: null, transformar: null },
+  });
+  assert.equal(vacia.filas[0].at(-1), null);
 });
 
 test('descargas: dos decimales con escala 100 y año anterior a la serie (preguntas 24 y 32)', () => {

@@ -40,7 +40,7 @@ test('R y la página coinciden: límites del tramo, intervalos y «¿te llega?»
     const l = entrar.limitesTramo(tramos, c.tramo);
     assert.deepEqual([l.desde, l.hasta], c.limites);
     const terminos = { alquiler_m2: c.alquiler_m2, alquiler_mes: c.alquiler_mes, ingreso: c.ingreso, superficie: c.superficie, umbral: c.umbral };
-    for (const cifra of ['sueldo_entrar', 'sueldo_entrar_50', 'barrera_entrar']) {
+    for (const cifra of ['sueldo_entrar', 'sueldo_entrar_50', 'barrera_entrar', 'sueldo_entrar_dos']) {
       const i = entrar.cifraEntrar(cifra, tramos, c.tramo, terminos);
       cerca(i.desde, c[cifra][0], `${cifra} desde, tramo ${c.tramo}`);
       cerca(i.hasta, c[cifra][1], `${cifra} hasta, tramo ${c.tramo}`);

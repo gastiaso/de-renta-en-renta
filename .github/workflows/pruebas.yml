@@ -1,0 +1,100 @@
+# Pruebas en cada push (backlog, tarea 54): las que no necesitan datos.
+#
+#   - R: la batería de testthat (pruebas/testthat) con los paquetes de renv.lock. Trabaja con datos
+#     inventados, el inventario, la nota y la muestra de web/datos/ejemplo/; las pruebas que piden
+#     datos/, el almacén de targets o la exportación de la web se saltan solas (skip_if_not).
+#   - Web: node --test pruebas/web/*.test.mjs, sin paquetes; las que piden la exportación de la
+#     web también se saltan solas.
+#
+# No publica nada: la publicación (pages.yml) sigue lanzándose a mano.
+# Sin secretos: solo el token que GitHub da a cada ejecución, de lectura.
+# Sin nombre de repositorio fijo.
+# Acciones fijadas por commit, con su versión en el comentario: las oficiales de GitHub y, para
+# instalar R y restaurar renv, las de r-lib, que mantiene Posit.
+
+name: Pruebas
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Un push nuevo a la misma rama cancela las pruebas que sigan en marcha.
+concurrency:
+  group: pruebas-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web (node)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Copiar el repositorio
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Instalar node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Pruebas de la web
+        run: node --test pruebas/web/*.test.mjs
+
+  r:
+    name: R (testthat)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Copiar el repositorio
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0   # para la fecha del último cambio de renv.lock
+
+      - name: Funciones definidas una sola vez en R/
+        run: |
+          dobles=$(grep -h -o -E "^[A-Za-z_.][A-Za-z0-9_.]* *<- *function" R/*.R | sed 's/ *<- *function//' | sort | uniq -d)
+          [ -z "$dobles" ] || { echo "::error::Funciones definidas dos veces en R/ (invalidan objetivos): $dobles"; exit 1; }
+
+      - name: Locale y bibliotecas del sistema (GDAL, GEOS, PROJ, udunits)
+        run: |
+          sudo locale-gen es_ES.UTF-8 > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            libgdal-dev libgeos-dev libproj-dev libudunits2-dev > /dev/null
+          gdal-config --version
+
+      - name: Instalar R (la versión de renv.lock)
+        uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
+        with:
+          r-version: renv
+          use-public-rspm: true
+
+      # Paquetes compilados de Posit Package Manager, en la instantánea del día del último cambio de
+      # renv.lock: las versiones del fichero, sin compilar desde el código fuente.
+      - name: Repositorio de paquetes de la fecha de renv.lock
+        run: |
+          fecha=$(git log -1 --format=%cs -- renv.lock)
+          echo "RENV_CONFIG_REPOS_OVERRIDE=https://packagemanager.posit.co/cran/__linux__/$(lsb_release -cs)/$fecha" >> "$GITHUB_ENV"
+          echo "renv.lock: $fecha"
+
+      - name: Restaurar renv (con caché)
+        uses: r-lib/actions/setup-renv@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
+
+      - name: Pruebas de R
+        shell: Rscript {0}
+        env:
+          # Mensajes de R y orden de los textos como en la máquina del autor
+          LANG: es_ES.UTF-8
+          LC_ALL: es_ES.UTF-8
+        run: |
+          r <- testthat::test_dir("pruebas/testthat", reporter = testthat::ProgressReporter$new(show_praise = FALSE),
+                                  stop_on_failure = TRUE)
+          d <- as.data.frame(r)
+          cat(sprintf("\n%d pruebas, %d saltadas\n", nrow(d), sum(d$skipped)))

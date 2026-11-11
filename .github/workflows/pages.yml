@@ -5,6 +5,8 @@
 #   - datos_web.tar.gz   → datos/      (exportación del pipeline, sin la muestra de datos/ejemplo/)
 #   - <mapa base>.pmtiles → teselas/   (la ruta la dice el manifiesto: mapa_base.url)
 #   - tabla_larga.parquet → descargas/ (descarga de la página «Datos»)
+#   - historico.parquet   → descargas/ (tabla del módulo histórico, desde la v1.0; plan §11,
+#                           pregunta 47 a; si el release no la trae, el sitio sale sin ella)
 #   - version.json        → descargas/ (fecha, commit, versiones de las fuentes y cobertura por
 #                           indicador; rellena la caja de descarga de la página «Datos»)
 # La capa de portales (indicador 13) no viaja en el release: el sitio la lleva apagada
@@ -62,7 +64,7 @@ jobs:
           fi
           gh release download --repo "$GITHUB_REPOSITORY" --dir "$rel" \
             --pattern SHA256SUMS --pattern version.json --pattern datos_web.tar.gz \
-            --pattern tabla_larga.parquet --pattern '*.pmtiles'
+            --pattern tabla_larga.parquet --pattern historico.parquet --pattern '*.pmtiles'
           gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName > "$RUNNER_TEMP/etiqueta"
           ls -l "$rel"
 
@@ -72,7 +74,7 @@ jobs:
           for f in SHA256SUMS version.json datos_web.tar.gz tabla_larga.parquet; do
             [ -f "$f" ] || { echo "::error::Falta $f en el release."; exit 1; }
           done
-          for f in version.json datos_web.tar.gz tabla_larga.parquet *.pmtiles; do
+          for f in version.json datos_web.tar.gz tabla_larga.parquet *.pmtiles $(ls historico.parquet 2> /dev/null); do
             grep -q "  $f\$" SHA256SUMS || { echo "::error::SHA256SUMS no trae la suma de $f."; exit 1; }
           done
           sha256sum --check --strict SHA256SUMS
@@ -114,6 +116,7 @@ jobs:
           mkdir -p "$sitio/teselas" "$sitio/descargas"
           cp "$rel/$(basename "$url")" "$sitio/$url"
           cp "$rel/tabla_larga.parquet" "$rel/version.json" "$sitio/descargas/"
+          if [ -f "$rel/historico.parquet" ]; then cp "$rel/historico.parquet" "$sitio/descargas/"; fi
 
       # Páginas de texto, en HTML y con la cabecera de la web. «Método»: la nota metodológica (docs/).
       # «Datos»: docs/datos.md y docs/data.md con la descarga, la cita y la cobertura rellenas desde

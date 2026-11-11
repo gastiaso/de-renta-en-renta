@@ -50,11 +50,14 @@ const COLUMNAS = ['codigo', 'nombre', 'nivel', 'indicador', 'tipologia', 'period
 //   margen_pct (preguntas 12 y 15 ampliadas). Un territorio sin recuento o sin margen, vacío;
 //   etiqueta: F5, el texto de dato privado de la serie (portales, indicador 13), en una columna más
 //   en todas las filas; categoria(x): F5, el texto de cada valor en los mapas de categorías
-//   (indicador 20), en una columna más.
+//   (indicador 20), en una columna más;
+//   minimo: tarea 40 (decisión 4), en el sueldo necesario, { valores, transformar } del mínimo
+//   teórico con la superficie de `supuestos` (su base, en el mismo nivel y periodo, y su fórmula),
+//   en la columna valor_minimo, al lado de la cifra principal (valor, con el alquiler real).
 // Los textos (cabecera, nivel, indicador…) llegan ya traducidos, salvo los que pide `t`.
-export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, nombreDe, indicador, unidad, tipologia, periodo, fuente, transformar, decimales, supuestos, desde = null, fiabilidad = null, etiqueta = null, categoria = null }) {
+export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, nombreDe, indicador, unidad, tipologia, periodo, fuente, transformar, decimales, supuestos, desde = null, fiabilidad = null, etiqueta = null, categoria = null, minimo = null }) {
   const columnas = [...COLUMNAS, ...(fiabilidad ? ['contratos', 'margen_pct'] : []), ...(supuestos ? ['superficie_m2', 'umbral'] : []),
-    ...(categoria ? ['categoria'] : []), ...(etiqueta ? ['etiqueta'] : [])];   // F5
+    ...(minimo ? ['valor_minimo'] : []), ...(categoria ? ['categoria'] : []), ...(etiqueta ? ['etiqueta'] : [])];   // F5
   const cabecera = columnas.map((c) => t(`interfaz.exportar.columnas.${c}`));
   const textoNivel = t(`vocabulario.nivel.${nivel}`);
   const fuera = desde === null ? null : t('interfaz.exportar.estados.fuera', { desde });
@@ -70,6 +73,10 @@ export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, n
       fila.push(n === null ? null : Math.round(n), margen === null ? null : redondear(margen, 1));
     }
     if (supuestos) fila.push(supuestos.superficie_m2, supuestos.umbral);
+    if (minimo) {   // tarea 40
+      const b = de(minimo.valores, i);
+      fila.push(b === null || !minimo.transformar ? null : redondear(minimo.transformar(b), decimales));
+    }
     if (categoria) fila.push(valor === null ? null : categoria(valor));   // F5
     if (etiqueta) fila.push(etiqueta);                                    // F5
     return fila;

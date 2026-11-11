@@ -59,3 +59,16 @@ test_that("el año de construcción toma la primera parte con valor y no la fech
   # Sin ninguna columna de año
   expect_equal(anio_construccion_foral(data.frame(x = 1:2)), c(NA_integer_, NA_integer_))
 })
+
+test_that("punto_interior(): en grados, el punto se toma proyectado, sin aviso, dentro y en su sistema", {
+  # Una «L» de unos 20 m en Bilbao, en ETRS89 geográficas como los GML de Bizkaia y Navarra
+  ele <- matrix(c(-2.93500, 43.26300, -2.93475, 43.26300, -2.93475, 43.26305, -2.93490, 43.26305,
+                  -2.93490, 43.26318, -2.93500, 43.26318, -2.93500, 43.26300), ncol = 2, byrow = TRUE)
+  g <- sf::st_sfc(sf::st_polygon(list(ele)), crs = 4258)
+  expect_no_warning(p <- punto_interior(g))
+  expect_equal(sf::st_crs(p), sf::st_crs(g))
+  expect_true(as.logical(sf::st_within(sf::st_transform(p, 25830), sf::st_transform(g, 25830), sparse = FALSE)))
+  # Ya proyectado: lo mismo que sf::st_point_on_surface()
+  plano <- sf::st_transform(g, 25830)
+  expect_equal(sf::st_coordinates(punto_interior(plano)), sf::st_coordinates(sf::st_point_on_surface(plano)))
+})

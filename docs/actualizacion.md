@@ -55,6 +55,29 @@ targets::tar_outdated()                           # debe salir vacío
 
 Las compuertas de cada fuente están en `inventario/referencias_validacion.csv`. Una edición nueva puede mover cifras publicadas que sirven de referencia (notas de prensa, totales): se revisan en la fila de la compuerta y, si cambian, en la nota metodológica.
 
+### Avisos de `tar_make()`
+
+`targets` guarda los avisos de cada objetivo en sus metadatos hasta que el objetivo vuelve a ejecutarse; `tar_make()` los resume al final («warnings»). Para verlos:
+
+```r
+m <- targets::tar_meta(fields = warnings, complete_only = TRUE)
+m[!is.na(m$warnings), ]
+```
+
+Revisión de la tarea 55 del backlog (11-nov-2026): 94 objetivos con avisos (93 cuando se abrió la tarea). Los de `modulo_sme_*` se han corregido; cada uno de los que quedan tiene su motivo:
+
+| Objetivos | Aviso | Por qué se queda |
+|---|---|---|
+| `edificios_foral`: 56 ramas, las 33 de Bizkaia y las 23 de Navarra | `st_point_on_surface may not give correct results for longitude/latitude data` | Sus GML vienen en ETRS89 geográficas (EPSG:4258) y el punto dentro de cada edificio se calcula en grados, como si fueran metros. En una huella de edificio, el punto sigue dentro de ella; solo podría cambiar de sección un edificio cortado por un límite de sección. **Cambio preparado, sin ejecutar:** `punto_interior()` (`R/fuente_catastro_foral.R`) proyecta a ETRS89 / UTM 30N antes de tomar el punto; falta usarla en `leer_catastro_foral()`. Eso rehace `edificios_foral` (unos 8 minutos en la última pasada) y `paso_catastro_*` (unos 13); si alguna tabla de paso cambia, también lo que cuelga de ellas: en total, 84 objetivos y unos 48 minutos con los tiempos de la última pasada. No toca el Catastro estatal (`zips_catastro`, `edificios_municipio`). Lo decide el autor |
+| `edificios_foral`: la rama de Gipuzkoa (`ES.GFA.BU.zip`) | `GDAL Error 1: Could not resolve host: b5mdev` (dos veces) | El GML cita un servidor interno de la Diputación Foral (`b5mdev`) que no se resuelve desde fuera; GDAL lee el fichero igual. Quitarlo también rehace `edificios_foral` |
+| `diagnostico_paso_*` y `comparacion_paso_*` (seccionados de 2016, 2017, 2022, 2024 y 2025), `larga_adrh` y `larga_adrh_distribucion` | `N secciones de origen sin tabla de paso: su valor se pierde` | Son las secciones huérfanas del ADRH (nota, §3.8): tienen dato, pero ni el callejero ni el mapa de su año las llevan a 2021. Las cuenta la compuerta |
+| `cis_barometros` | `CIS, estudio …: … responde 404` (cinco estudios de 2025) | El CIS no sirve el fichero de esos barómetros. Sus meses quedan sin dato, con las alertas `cis_vivienda_cobertura` de `validacion_cis`; se vuelven a pedir al renovar el CIS |
+| `ficheros_cne` | `Descarga cortada (…): se repite` | Una descarga cortada que el pipeline repitió con éxito. Se borra en la siguiente ejecución del objetivo |
+| `fuentes_pendientes` | `Calendario de fuentes: tocan N fuentes` | Es el aviso del calendario (apartado 1) |
+| `validacion_*` (16 compuertas) | `Alertas de validación: …` | Comprobaciones de tipo `alerta` de `inventario/referencias_validacion.csv`: avisan sin detener el pipeline, y cada una está explicada en la nota (§4.1) y en la guía («Cómo verificar») |
+
+Corregido: `modulo_sme_2019` a `modulo_sme_2024` daban `NAs introducidos por coerción`. Las cabeceras de grupo de las tablas del recorrido y de los centiles del SME llevan la sangría en píxeles (`margin-left: 10px`) y `aeat_sangria()` solo la leía en em. Ahora devuelve NA sin aviso, como antes pero en silencio: esas filas no usan la sangría y las tablas que salen no cambian.
+
 ## 4. Anotar
 
 - `inventario/calendario_fuentes.csv`: `ultimo_dato` de la fuente renovada (y el día o el mes de publicación, si han cambiado).

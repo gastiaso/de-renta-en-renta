@@ -4,6 +4,8 @@
 // límites del tramo × esa cifra (R/derivados_entrar.R, que hace las mismas cuentas en el mismo orden):
 //   - sueldo para entrar: × alquiler mensual mediano / umbral;
 //   - sueldo para entrar con 50 m²: × alquiler por m² mediano × superficie / umbral;
+//   - entre dos sueldos iguales, cada uno: × alquiler por m² mediano × 70 m² / umbral / 2 (el piso de
+//     dos, 70 m² por defecto y cambiable a 50 o 90; plan §11, pregunta 43 h);
 //   - barrera (proporción del ingreso): × alquiler por m² mediano × superficie / ingreso, leída con los
 //     tramos de «¿te llega?»; si el intervalo cruza un corte, «en el límite». Vale para las fichas y
 //     para el sueldo que escribe el usuario («Tu ficha»), sin la oferta exacta.
@@ -11,7 +13,7 @@
 // casos inventados que la prueba de R (pruebas/datos/entrar_inventado.json).
 
 import { cargarIndice, decodificar } from './datos.js';
-import { tramoLlega } from './sueldo.js';
+import { SUPERFICIE_DOS_SUELDOS, tramoLlega } from './sueldo.js';
 
 // Tramos de la brecha de una entrada `entrar` del manifiesto de la capa: { cortes, limites, aviso }.
 export const tramosDe = (entrar) => entrar?.tramos ?? null;
@@ -28,6 +30,7 @@ export function limitesTramo(tramos, k) {
 export const FACTORES_ENTRAR = {
   sueldo_entrar: ({ alquiler_mes, umbral }) => alquiler_mes / umbral,
   sueldo_entrar_50: ({ alquiler_m2, superficie, umbral }) => (alquiler_m2 * superficie) / umbral,
+  sueldo_entrar_dos: ({ alquiler_m2, superficie_dos = SUPERFICIE_DOS_SUELDOS, umbral }) => (alquiler_m2 * superficie_dos) / umbral / 2,
   barrera_entrar: ({ alquiler_m2, superficie, ingreso }) => (alquiler_m2 * superficie) / ingreso,
 };
 

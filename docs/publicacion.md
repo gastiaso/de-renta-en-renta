@@ -4,7 +4,7 @@ Cómo se publica la web (plan §6.6; §11, preguntas abiertas 16 y 21). Comproba
 
 ## Cómo funciona
 
-El sitio se monta en GitHub Actions con el flujo `.github/workflows/pages.yml`. El flujo solo se lanza a mano y monta el código y la nota de la referencia `ref` (por defecto, el commit de la última publicación) con los datos del último release; un push a `main` no publica nada. Del 9 al 10-nov-2026 el sitio estuvo congelado en la v0.1 (commit `cdd9892`); desde la v0.4.0 (decisión del autor, 10-nov-2026), `ref` es el commit de cada publicación. Junta dos cosas:
+El sitio se monta en GitHub Actions con el flujo `.github/workflows/pages.yml`. Lo único que lanza un push es otro flujo, el de las pruebas que no necesitan datos (`.github/workflows/pruebas.yml`; backlog, tarea 54; `pruebas/LEEME.md`), que no publica nada. El de Pages solo se lanza a mano y monta el código y la nota de la referencia `ref` (por defecto, el commit de la última publicación) con los datos del último release; un push a `main` no publica nada. Del 9 al 10-nov-2026 el sitio estuvo congelado en la v0.1 (commit `cdd9892`); desde la v0.4.0 (decisión del autor, 10-nov-2026), `ref` es el commit de cada publicación. Junta dos cosas:
 
 | Parte del sitio | De dónde sale | Por qué |
 |---|---|---|
@@ -12,6 +12,7 @@ El sitio se monta en GitHub Actions con el flujo `.github/workflows/pages.yml`. 
 | `datos/` (manifiesto, índices, valores, fichas, perfiles…) | release: `datos_web.tar.gz` | Unos 8.800 ficheros y 92 MB (15,8 MB comprimido); cada actualización los reescribe casi todos y engordaría la historia de git sin aportar nada (pregunta 21) |
 | `teselas/seccionado_2021.pmtiles` | release: `seccionado_2021.pmtiles` | 35,3 MB binarios que se regeneran con el pipeline (pregunta 16) |
 | `descargas/tabla_larga.parquet` | release: `tabla_larga.parquet` | La tabla larga completa (36,9 MB), para la página «Datos» |
+| `descargas/historico.parquet` | release: `historico.parquet` | La tabla del módulo histórico (desde la v1.0; plan §11, pregunta 47 a). El flujo la copia si el release la trae |
 | `descargas/version.json` | release: `version.json` | Fecha, commit, versiones de las fuentes, cobertura de la tabla larga por indicador y suma de cada fichero |
 | `metodo.html`, `method.html` | git: se generan en el flujo desde `docs/metodologia.md` y `docs/methodology.md` | La página «Método» sale siempre de la nota que hay en `main` |
 | `datos.html`, `data.html` | git y release: se generan en el flujo desde `docs/datos.md` y `docs/data.md`, el diccionario de `docs/` y `descargas/version.json` | La página «Datos» describe siempre la tabla larga del release que se publica |
@@ -35,7 +36,7 @@ El flujo se detiene si la página no enlaza `descargas/tabla_larga.parquet`. La 
 
 ```powershell
 New-Item -ItemType Directory -Force web/descargas | Out-Null
-Copy-Item publicacion/tabla_larga.parquet, publicacion/version.json web/descargas/
+Copy-Item publicacion/tabla_larga.parquet, publicacion/historico.parquet, publicacion/version.json web/descargas/
 node web/herramientas/pagina_datos.mjs --idioma es --nota docs/datos.md --diccionario docs/datos_diccionario.md --version web/descargas/version.json --cita CITATION.cff --salida "$env:TEMP/datos_es.md"
 pandoc "$env:TEMP/datos_es.md" --from gfm --to html5 --standalone --toc --toc-depth 2 --wrap none --template web/herramientas/plantilla_documento.html --metadata-file web/herramientas/documento_es.yaml --metadata-file web/herramientas/datos_es.yaml --metadata titulo="De renta en renta" --metadata subtitulo="Vivienda y sueldos, sección a sección" --metadata texto_mapa=Mapa --metadata texto_sobrecarga=Sobrecarga --metadata texto_datos=Datos --metadata texto_metodo=Método --output web/datos.html
 ```
@@ -114,7 +115,7 @@ testthat::test_dir("pruebas/testthat")    # pruebas, también la del navegador (
 empaquetar_publicacion()                  # (tras source("R/publicar.R") si no se ha cargado)
 ```
 
-`empaquetar_publicacion()` escribe en `publicacion/` cinco ficheros: `datos_web.tar.gz`, `seccionado_2021.pmtiles`, `tabla_larga.parquet`, `version.json` y `SHA256SUMS`. Se detiene, sin dejar nada a medias, si:
+`empaquetar_publicacion()` escribe en `publicacion/` seis ficheros: `datos_web.tar.gz`, `seccionado_2021.pmtiles`, `tabla_larga.parquet`, `historico.parquet` (tabla del módulo histórico, desde la tarea 46), `version.json` (con las licencias: la general y la ODbL de las filas de Registradores) y `SHA256SUMS`. Se detiene, sin dejar nada a medias, si:
 
 - algún fichero pasa de 2 GiB (límite de GitHub por fichero de un release);
 - el sitio montado pasa de 1 GB (límite de Pages) o tiene algún fichero de más de 100 MiB;

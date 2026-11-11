@@ -8,5 +8,8 @@ fin_deduccion_2012,esfuerzo_teorico,00,2012-T4,evento,"Fin de la deducción por 
 maximo_tipo_hipotecas,tipo_hipotecas,00,1991-01,maximo,Máximo de la serie,Series high,bde_tipos_referencia
 minimo_tipo_hipotecas,tipo_hipotecas,00,2021-11,minimo,Mínimo de la serie,Series low,bde_tipos_referencia
 maximo_mibor_euribor,mibor_euribor,00,1987-05,maximo,Máximo desde 1987,High since 1987,bde_tipos_referencia
-bde_mibor_euribor_1999,mibor_euribor,00,1999-01,ruptura,"Comienza el euríbor; el MIBOR a un año lo sigue, con diferencias de centésimas hasta julio de 2013, y coincide con él desde entonces","The Euribor starts; the one-year MIBOR follows it, differing by hundredths of a point until July 2013, and matches it since",bde_tipos_referencia
+bde_mibor_euribor_1999,mibor_euribor,00,1999-01,ruptura,"Cambia el índice: hasta diciembre de 1998, MIBOR a un año; desde enero de 1999, euríbor a 12 meses. Son índices distintos, aunque el MIBOR siguió al euríbor desde entonces (hasta 0,14 puntos de diferencia hasta julio de 2013)","The index changes: up to December 1998, one-year MIBOR; from January 1999, 12-month Euribor. They are different indices, although the MIBOR followed the Euribor from then on (up to 0.14 points apart until July 2013)",bde_tipos_referencia
+maximo_tipo_prestamos,tipo_prestamos,00,1991-01,maximo,Máximo de la serie,Series high,bde_accesibilidad
+minimo_tipo_prestamos,tipo_prestamos,00,2021-12,minimo,Mínimo de la serie,Series low,bde_accesibilidad
+bde_tipo_prestamos_2003,tipo_prestamos,00,2003-01,ruptura,El tipo de los préstamos nuevos pasa de la Circular 8/1990 a la Circular 4/2002 del Banco de España,The new-loan rate moves from Banco de España Circular 8/1990 to Circular 4/2002,bde_accesibilidad
 minimo_mibor_euribor,mibor_euribor,00,2021-01,minimo,Mínimo de la serie (tipo negativo),Series low (negative rate),bde_tipos_referencia

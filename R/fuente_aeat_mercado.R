@@ -108,13 +108,18 @@ descargar_aeat_mercado <- function(anio, titulo, fijos = list(), dir = DIR_AEAT_
 }
 
 # Nivel de sangría de una cabecera de fila: clase depth_div_<n> (ediciones desde 2015) o, en las
-# de 2011 a 2014, el margen del div («margin-left: 2em» → 2). Sin ninguno de los dos, 0.
+# de 2011 a 2014, el margen del div («margin-left: 2em» → 2). Sin ninguno de los dos, 0. Un margen
+# en otra unidad no es un nivel: NA, sin aviso. Lo llevan las cabeceras de grupo («Decil 1»…) de
+# las tablas del recorrido y de los centiles del SME («margin-left: 10px»), que no usan el nivel;
+# antes daban el aviso «NAs introducidos por coerción» en modulo_sme_<año> (backlog, tarea 55).
 aeat_sangria <- function(th) {
   d <- xml2::xml_find_first(th, ".//div[contains(@class, 'depth_div_')]")
   if (!inherits(d, "xml_missing")) return(as.integer(sub("^.*depth_div_(\\d+).*$", "\\1", xml2::xml_attr(d, "class"))))
   estilo <- xml2::xml_attr(xml2::xml_find_first(th, ".//div[contains(@style, 'margin-left')]"), "style")
   if (is.na(estilo)) return(0L)
-  as.integer(sub("^.*margin-left:\\s*(\\d+)(\\.\\d+)?em.*$", "\\1", estilo))
+  em <- regmatches(estilo, regexec("margin-left:\\s*(\\d+)(\\.\\d+)?em", estilo))[[1]]
+  if (length(em) == 0) return(NA_integer_)
+  as.integer(em[2])
 }
 
 # Lee páginas de una tabla en formato largo: una fila por celda, con los filtros de la página

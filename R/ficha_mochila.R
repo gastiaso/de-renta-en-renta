@@ -5,13 +5,19 @@
 #   2. De media a mediana: × relación mediana/media del salario medio estimado (SME, módulo de
 #      «año completo») de 26 a 35 años de su comunidad, del mismo año (formas_sme). El módulo existe
 #      desde la edición de 2019: de 2015 a 2018 se usa la relación de 2019 (anio_forma), con la
-#      alerta mochila_forma, que mide cuánto se mueve de 2019 a 2024. Sin Ceuta ni Melilla, que no
+#      alerta mochila_forma, que mide cuánto se mueve de 2019 a 2024. Esos años son «estimado» y
+#      llevan su método en metodo_forma (plan §11, pregunta 44 f revisada). Comprobación con la ECV
+#      (ecv_mochila_correccion()): relación mediana/media del salario de quienes trabajaron los doce
+#      meses, de 26 a 35 años, de 2015 a 2024; si algún año de 2015 a 2018 se aparta más de 2
+#      puntos de 2019, avisa, y solo entonces se corrige (la relación de 2019 escalada por el cambio
+#      que mide la ECV), si el método se valida antes en 2020–2024. Sin Ceuta ni Melilla, que no
 #      están en el módulo.
 #   3. De bruto a neto: × (1 − cotización del trabajador del año − retención de la AEAT de quien
 #      solo cobra salarios, interpolada en el tramo de renta anual de su comunidad y año) ÷ 12.
 #   4. Lo cobrado en el año (método B, adoptado el 7-nov-2026): incluye a quien trabajó pocos meses.
 #   5. Control con la ECV de cada año (ingresos del mismo año que la AEAT): alertas mochila_ecv
-#      (bruto) y mochila_neto_ecv (paso a neto).
+#      (bruto; tolerancia: el intervalo de la mediana de la ECV por el tamaño de su muestra,
+#      pregunta 44 g) y mochila_neto_ecv (paso a neto).
 # Sin País Vasco ni Navarra (la AEAT no los cubre). Opciones descartadas (pregunta abierta 7), que
 # se siguen calculando como registro: A, mediana del SME de la comunidad llevada a la provincia con
 # la posición de su salario medio real; C, mediana del SME de la comunidad.
@@ -159,8 +165,11 @@ formas_sme <- function(modulos, edad = EDAD_MOCHILA) {
 
 # Pasos 1, 2 y 4: bruto anual de 26 a 35 años por provincia y año (método B), con las opciones A y
 # C como registro. `salarios`: codificar_aeat_salarios() (tramo «Y26-35»); `formas`: formas_sme().
-# Los años sin módulo de año completo toman la relación del primero que lo tiene (anio_forma).
-calcular_mochila_serie <- function(salarios, formas, anios = ANIOS_MOCHILA) {
+# Los años sin módulo de año completo toman la relación del primero que lo tiene (anio_forma);
+# con `correccion` (factores de ecv_mochila_correccion(): anio y factor), esa relación × el factor
+# del año. metodo_forma: «anio» (la del mismo año), «primer_anio» (la de 2019) o «primer_anio_ecv»
+# (la de 2019 escalada con la ECV).
+calcular_mochila_serie <- function(salarios, formas, anios = ANIOS_MOCHILA, correccion = NULL) {
   joven <- salarios |> filter(edad == "Y26-35", anio %in% anios)
   real_ccaa <- joven |> filter(nivel == "ccaa") |> select(anio, ccaa = geo_id, real_ccaa = salario_medio)
   primero <- min(formas$anio)
@@ -170,6 +179,7 @@ calcular_mochila_serie <- function(salarios, formas, anios = ANIOS_MOCHILA) {
     left_join(real_ccaa, by = c("anio", "ccaa")) |>
     mutate(anio_forma = if_else(anio %in% formas$anio, anio, primero)) |>
     inner_join(select(formas, anio_forma = anio, ccaa, mediana_sme, media_sme, forma), by = c("anio_forma", "ccaa")) |>
+    ecv_mochila_aplicar(correccion) |>
     mutate(bruto_anual = salario_medio * forma,
            A = mediana_sme * salario_medio / real_ccaa,
            C = mediana_sme) |>
@@ -295,12 +305,23 @@ leer_ecv_asalariados <- function(rutas, anio_ingresos, edades = c(26L, 35L)) {
 }
 
 # Medianas del bruto y del neto por comunidad y para España, con el número de observaciones y la
-# parte (con pesos) que trabajó los doce meses.
+# parte (con pesos) que trabajó los doce meses. Con el tamaño de la muestra (pregunta 44 g): n_eff,
+# la muestra efectiva con los pesos (Kish: (suma de pesos)^2 / suma de pesos^2), y el intervalo del
+# 95 % de la mediana del bruto (mediana_lo, mediana_hi: cuantiles ponderados en 0,5 -/+ 1,96 x
+# 0,5 / raiz(n_eff), método de Woodruff). De quienes trabajaron los doce meses (pregunta 44 f):
+# n_12, mediana y media ponderadas del bruto y su relación (relacion_12).
 resumir_ecv_asalariados <- function(asalariados, anio = NA_integer_) {
+  media_12 <- function(x, w, m) if (any(m >= 12)) stats::weighted.mean(x[m >= 12], w[m >= 12]) else NA_real_
+  mediana_12 <- function(x, w, m) if (any(m >= 12)) mediana_ponderada(x[m >= 12], w[m >= 12]) else NA_real_
   bind_rows(mutate(asalariados, nuts2 = "ES"), asalariados) |>
     group_by(nuts2) |>
     summarise(n = n(), mediana_bruto = mediana_ponderada(bruto, peso),
+              n_eff = sum(peso)^2 / sum(peso^2),
+              mediana_lo = cuantil_ponderado(bruto, peso, 0.5 - 1.96 * 0.5 / sqrt(n_eff)),
+              mediana_hi = cuantil_ponderado(bruto, peso, 0.5 + 1.96 * 0.5 / sqrt(n_eff)),
               pct_anio_completo = 100 * sum(peso[meses >= 12]) / sum(peso),
+              n_12 = sum(meses >= 12), mediana_12 = mediana_12(bruto, peso, meses), media_12 = media_12(bruto, peso, meses),
+              relacion_12 = mediana_12 / media_12,
               mediana_neto = if (all(is.na(neto))) NA_real_ else mediana_ponderada(neto[!is.na(neto)], peso[!is.na(neto)]),
               .groups = "drop") |>
     mutate(anio = as.integer(anio), .before = 1)
@@ -308,18 +329,32 @@ resumir_ecv_asalariados <- function(asalariados, anio = NA_integer_) {
 
 # Mochila de España («00») por año: salario medio real de 26 a 35 años de España × su relación
 # mediana/media (la del primer año del módulo antes de él), para el control con la ECV.
-mochila_espana <- function(salarios, formas, anios = ANIOS_MOCHILA) {
+mochila_espana <- function(salarios, formas, anios = ANIOS_MOCHILA, correccion = NULL) {
   primero <- min(formas$anio)
   salarios |>
     filter(nivel == "nacional", edad == "Y26-35", anio %in% anios) |>
     transmute(anio, ccaa = "00", real_ccaa = salario_medio, anio_forma = if_else(anio %in% formas$anio, anio, primero)) |>
     inner_join(select(formas, anio_forma = anio, ccaa, forma), by = c("anio_forma", "ccaa")) |>
+    ecv_mochila_aplicar(correccion) |>
     select(anio, ccaa, real_ccaa, forma)
+}
+
+# Relación mediana/media de los años sin módulo (anio != anio_forma): × el factor de su año si hay
+# corrección; y el método de cada fila (metodo_forma).
+ecv_mochila_aplicar <- function(x, correccion = NULL) {
+  f <- if (is.null(correccion) || !nrow(correccion)) rep(NA_real_, nrow(x)) else correccion$factor[match(x$anio, correccion$anio)]
+  prestada <- x$anio != x$anio_forma
+  x$forma <- ifelse(prestada & !is.na(f), x$forma * f, x$forma)
+  x$metodo_forma <- ifelse(!prestada, "anio", ifelse(is.na(f), "primer_anio", "primer_anio_ecv"))
+  x
 }
 
 # Mochila de cada comunidad y año (salario medio real de 26 a 35 años de la comunidad × su
 # relación mediana/media) y de España (`espana`: mochila_espana()) frente a la mediana de la ECV
-# con ingresos del mismo año. Desviación en %; alerta mochila_ecv.
+# con ingresos del mismo año. Alerta mochila_ecv (pregunta 44 g): la tolerancia sale del tamaño de
+# la muestra de la ECV, no de un ±15 % fijo. calculado: cuánto se sale la mochila (en %) del
+# intervalo del 95 % de la mediana de la ECV (mediana_lo, mediana_hi; resumir_ecv_asalariados());
+# 0 dentro. El detalle da la desviación frente a la mediana, la muestra y el intervalo.
 comprobar_mochila_ecv <- function(mochila, ecv, ccaa, espana = NULL) {
   comunidades <- mochila |>
     distinct(anio, ccaa, real_ccaa, forma) |>
@@ -330,8 +365,58 @@ comprobar_mochila_ecv <- function(mochila, ecv, ccaa, espana = NULL) {
   comunidades |>
     inner_join(territorios, by = "ccaa") |>
     inner_join(ecv, by = c("anio", "nuts2")) |>
-    transmute(id = "mochila_ecv", anio = as.integer(anio), detalle = paste0(nombre_ine, " (n = ", n, ")"),
-              calculado = 100 * (mochila / mediana_bruto - 1), referencia = 0)
+    mutate(fuera = dplyr::case_when(mochila > mediana_hi ~ 100 * (mochila / mediana_hi - 1),
+                                    mochila < mediana_lo ~ 100 * (mochila / mediana_lo - 1),
+                                    TRUE ~ 0)) |>
+    transmute(id = "mochila_ecv", anio = as.integer(anio),
+              detalle = sprintf("%s (n = %d, n efectiva = %.0f; mochila %+.1f %% frente a la mediana, intervalo de -%.1f a +%.1f %%)",
+                                nombre_ine, n, n_eff, 100 * (mochila / mediana_bruto - 1),
+                                100 * (1 - mediana_lo / mediana_bruto), 100 * (mediana_hi / mediana_bruto - 1)),
+              calculado = fuera, referencia = 0)
+}
+
+# Comprobación de la relación mediana/media de 2015 a 2018 con la ECV (pregunta 44 f revisada):
+# relación mediana/media del bruto de quienes trabajaron los doce meses, de 26 a 35 años, en España
+# (relacion_12 de `ecv`, ecv_mochila), cada año de ingresos frente a `base` (2019).
+#   mochila_relacion_ecv (alerta, +-2 puntos): por año de `prestados`, 100 x (relación del año -
+#     relación de `base`);
+#   mochila_relacion_correccion (alerta): 1 si la anterior avisa en algún año. Entonces se corrige
+#     solo si el método se valida en `validacion`: la relación de la AEAT de `base` de cada comunidad
+#     (`formas`) escalada por el cambio de la ECV (relación del año / la de `base`) se acerca más a
+#     la de la AEAT de ese año que la de `base` sin escalar (error medio absoluto, en puntos). El
+#     detalle dice si se corrige y los dos errores.
+# Devuelve la lista: comprobaciones, factores (anio y factor de los años `prestados`; vacía si no se
+# corrige) y resumen (relación de la ECV por año y errores de la validación).
+ecv_mochila_correccion <- function(ecv, formas, umbral = 2, base = 2019L, prestados = 2015:2018, validacion = 2020:2024) {
+  r <- ecv[ecv$nuts2 == "ES" & !is.na(ecv$relacion_12), c("anio", "n_12", "relacion_12")]
+  r_base <- r$relacion_12[r$anio == base]
+  if (length(r_base) != 1L) stop("ECV: sin relaci\u00f3n mediana/media de ", base, call. = FALSE)
+  dif <- r[r$anio %in% prestados, ]
+  dif$puntos <- 100 * (dif$relacion_12 - r_base)
+  avisa <- any(abs(dif$puntos) > umbral)
+  f_base <- formas[formas$anio == base, c("ccaa", "forma")]
+  v <- formas[formas$anio %in% validacion, c("anio", "ccaa", "forma")]
+  v$forma_base <- f_base$forma[match(v$ccaa, f_base$ccaa)]
+  v$escala <- r$relacion_12[match(v$anio, r$anio)] / r_base
+  v <- v[!is.na(v$forma_base) & !is.na(v$escala), ]
+  error_escalada <- mean(abs(100 * (v$forma_base * v$escala - v$forma)))
+  error_fija <- mean(abs(100 * (v$forma_base - v$forma)))
+  valida <- nrow(v) > 0 && error_escalada < error_fija
+  corrige <- avisa && valida
+  factores <- if (corrige) tibble::tibble(anio = as.integer(dif$anio), factor = dif$relacion_12 / r_base) else
+    tibble::tibble(anio = integer(), factor = numeric())
+  detalle <- sprintf("%s: en %d\u2013%d, error medio de la relaci\u00f3n de %d escalada con la ECV, %.2f puntos; sin escalar, %.2f",
+                     if (!avisa) "sin aviso, no se corrige" else if (corrige) "avisa y se corrige" else "avisa y no se corrige: el m\u00e9todo no se valida",
+                     min(validacion), max(validacion), base, error_escalada, error_fija)
+  comprobaciones <- dplyr::bind_rows(
+    tibble::tibble(id = "mochila_relacion_ecv", anio = as.integer(dif$anio),
+                   detalle = sprintf("Espa\u00f1a: %.3f frente a %.3f en %d (n = %d con los doce meses)", dif$relacion_12, r_base, base, dif$n_12),
+                   calculado = dif$puntos, referencia = 0),
+    tibble::tibble(id = "mochila_relacion_correccion", anio = NA_integer_, detalle = detalle,
+                   calculado = as.numeric(avisa), referencia = 0))
+  list(comprobaciones = comprobaciones, factores = factores,
+       resumen = list(relacion = r, base = r_base, avisa = avisa, valida = valida, corrige = corrige,
+                      error_escalada = error_escalada, error_fija = error_fija))
 }
 
 # Control del paso 3 con la ECV: para cada comunidad (y España, con la curva del total) y año, el

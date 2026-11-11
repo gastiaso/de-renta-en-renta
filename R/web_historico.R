@@ -9,7 +9,7 @@
 # fechas clave, en su CSV (castellano e inglés). Incorporado el 10-nov-2026.
 
 HIST_DIR_WEB <- "historico"                          # bajo <dir_web>/datos/
-HIST_ESCALAS_WEB <- c(anios_renta = 100, esfuerzo_teorico = 100, tipo_hipotecas = 1000, mibor_euribor = 1000,
+HIST_ESCALAS_WEB <- c(anios_renta = 100, esfuerzo_teorico = 100, tipo_prestamos = 100, tipo_hipotecas = 1000, mibor_euribor = 1000,
                       valor_tasado = 10, sueldo_asalariado = 1)
 
 hist_serie_json <- function(d, escala) {

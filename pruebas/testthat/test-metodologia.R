@@ -78,13 +78,13 @@ test_that("las dos versiones citan los mismos objetivos, funciones, columnas y c
 
 # Cifras de cada versión: fuera quedan el código, las referencias a secciones (§3.1), los números
 # de los títulos, las versiones (v0.21, R 4.6, CC BY 4.0, MapLibre GL JS 6.15.0, PMTiles 4.5.0) y
-# el nombre inglés de la ficha «mochila» (Under-35). En inglés se intercambian el punto y la coma de
+# el nombre inglés de la ficha «mochila» (Young adult). En inglés se intercambian el punto y la coma de
 # las cifras (36,333.5 -> 36.333,5).
 cifras_nota <- function(idioma) {
   t <- paste(sin_bloques(leer_nota(idioma)), collapse = "\n")
   quitar <- c("`[^`]*`", "(?m)^#+\\s*[0-9.]+\\s", "§[0-9]+(\\.[0-9]+)*", "\\bv[0-9]+(\\.[0-9]+)*",
               "\\bR [0-9]+\\.[0-9]+", "CC BY(-SA)? [0-9]+\\.[0-9]+", "GL JS [0-9.]+[0-9]", "PMTiles [0-9]+\\.[0-9]+\\.[0-9]+",
-              "Under-35")
+              "Young adult")
   for (p in quitar) t <- gsub(p, " ", t, perl = TRUE)
   cifras <- regmatches(t, gregexpr("[0-9]+(?:[.,][0-9]+)*", t, perl = TRUE))[[1]]
   if (idioma == "en") cifras <- chartr(".,", ",.", cifras)

@@ -86,6 +86,12 @@ test_that("las ediciones de 2011 a 2014 se leen: cabeceras sin prefijo y sangrí
   d <- leer_aeat_mercado(ruta)
   expect_equal(d$nivel_fila, rep(0:2, each = 2))
   expect_equal(d$fila[5], "Almería")
+  # Margen en píxeles (cabeceras de grupo del recorrido y los centiles del SME): sin nivel y sin aviso
+  th <- function(estilo) xml2::xml_find_first(xml2::read_html(paste0('<table><tr><th id="f1"><div style="', estilo,
+                                                                    '">Decil 1</div></th></tr></table>')), "//th")
+  expect_no_warning(n <- aeat_sangria(th("margin-left: 10px")))
+  expect_identical(n, NA_integer_)
+  expect_identical(aeat_sangria(th("margin-left: 1.5em")), 1L)
   expect_equal(d$valor, c(17788121, 19102, 3226262, 15375, 269927, 14033))
   expect_equal(unique(d$columna), c("Asalariados", "Salario Medio Anual"))
 })
@@ -193,8 +199,10 @@ test_that("la mediana con pesos y el control de la mochila con la ECV de cada a�
   expect_equal(mediana_ponderada(c(10, 20, 30), c(1, 1, 1)), 20)
   expect_equal(mediana_ponderada(c(30, 10, 20), c(5, 1, 1)), 30)
   mochila <- tibble::tibble(anio = c(2023L, 2024L, 2024L), ccaa = "17", real_ccaa = 20000, forma = 0.9)
+  # Pregunta 44 g: la tolerancia es el intervalo de la mediana de la ECV, que sale de su muestra
   ecv <- tibble::tibble(anio = c(2024L, 2024L, 2023L), nuts2 = c("ES", "ES23", "ES23"), n = c(500L, 100L, 90L),
-                        mediana_bruto = c(17000, 18000, 20000))
+                        n_eff = c(400, 80, 70), mediana_bruto = c(17000, 18000, 20000),
+                        mediana_lo = c(16500, 16000, 19000), mediana_hi = c(17500, 19000, 21000))
   c <- comprobar_mochila_ecv(mochila, ecv, ccaa_inventadas)
   expect_equal(nrow(c), 2)
   salarios <- tibble::tibble(nivel = "nacional", edad = "Y26-35", anio = 2023:2024, salario_medio = 20000)
@@ -202,10 +210,54 @@ test_that("la mediana con pesos y el control de la mochila con la ECV de cada a�
   es <- mochila_espana(salarios, formas, anios = 2023:2024)
   expect_equal(es$forma, c(0.85, 0.85))     # 2023, sin módulo: la del primer año que lo tiene
   c2 <- comprobar_mochila_ecv(mochila, ecv, ccaa_inventadas, espana = es)
-  expect_equal(c2$calculado[c2$detalle == "España (n = 500)"], 100 * (17000 / 17000 - 1))
-  expect_equal(c$calculado[c$anio == 2024], 0)
-  expect_equal(c$calculado[c$anio == 2023], -10)
-  expect_equal(c$detalle[c$anio == 2024], "Rioja, La (n = 100)")
+  expect_equal(c2$calculado[startsWith(c2$detalle, "España")], 0)     # 17.000, dentro de 16.500–17.500
+  expect_equal(c$calculado[c$anio == 2024], 0)                         # 18.000, dentro de 16.000–19.000
+  expect_equal(c$calculado[c$anio == 2023], 100 * (18000 / 19000 - 1))  # 18.000, por debajo de 19.000
+  expect_match(c$detalle[c$anio == 2024], "^Rioja, La \\(n = 100, n efectiva = 80; mochila \\+0,0|^Rioja, La \\(n = 100, n efectiva = 80; mochila \\+0.0")
+})
+
+test_that("resumen de la ECV: muestra efectiva, intervalo de la mediana y relación de quien trabajó el año entero", {
+  set.seed(1)
+  a <- tibble::tibble(nuts2 = "ES30", peso = rep(c(1, 3), 200), bruto = round(stats::rlnorm(400, 10, 0.4)), neto = NA_real_,
+                      meses = rep(c(12, 6), each = 200))
+  e <- resumir_ecv_asalariados(a, 2019L)
+  es <- e[e$nuts2 == "ES", ]
+  expect_equal(es$n_eff, 400^2 * 4 / (200 * (1 + 9)))
+  expect_true(es$mediana_lo < es$mediana_bruto && es$mediana_bruto < es$mediana_hi)
+  expect_equal(es$n_12, 200)
+  doce <- a[a$meses >= 12, ]
+  expect_equal(es$media_12, stats::weighted.mean(doce$bruto, doce$peso))
+  expect_equal(es$relacion_12, mediana_ponderada(doce$bruto, doce$peso) / es$media_12)
+})
+
+test_that("pregunta 44 f: relación de 2015–2018 frente a 2019 con la ECV; se corrige solo si avisa y se valida", {
+  formas <- tidyr::expand_grid(anio = 2019:2024, ccaa = c("00", "13")) |>
+    dplyr::mutate(forma = ifelse(ccaa == "00", 0.85, 0.87))
+  ecv <- function(r) tibble::tibble(anio = 2015:2024, nuts2 = "ES", n_12 = 900L, relacion_12 = r)
+  # Sin aviso (todo a menos de 2 puntos de 2019): no se corrige
+  x <- ecv_mochila_correccion(ecv(c(0.90, 0.905, 0.895, 0.90, rep(0.90, 6))), formas)
+  expect_equal(x$comprobaciones$calculado[x$comprobaciones$id == "mochila_relacion_ecv"], 100 * (c(0.90, 0.905, 0.895, 0.90) - 0.90))
+  expect_equal(x$comprobaciones$calculado[x$comprobaciones$id == "mochila_relacion_correccion"], 0)
+  expect_equal(nrow(x$factores), 0)
+  # Avisa y la ECV se mueve en 2020–2024 mientras la AEAT no: el método no se valida y no se corrige
+  y <- ecv_mochila_correccion(ecv(c(0.93, 0.90, 0.87, 0.90, 0.90, 0.86, 0.88, 0.86, 0.86, 0.85)), formas)
+  expect_equal(y$comprobaciones$calculado[y$comprobaciones$id == "mochila_relacion_correccion"], 1)
+  expect_false(y$resumen$valida)
+  expect_equal(nrow(y$factores), 0)
+  expect_match(y$comprobaciones$detalle[y$comprobaciones$id == "mochila_relacion_correccion"], "no se corrige")
+  # Avisa y la AEAT se mueve como la ECV: se valida y se corrige con la relación del año / la de 2019
+  formas2 <- formas |> dplyr::mutate(forma = forma * c(1, 0.96, 0.98, 0.96, 0.96, 0.95)[anio - 2018L])
+  z <- ecv_mochila_correccion(ecv(c(0.93, 0.90, 0.87, 0.90, 0.90, 0.864, 0.882, 0.864, 0.864, 0.855)), formas2)
+  expect_true(z$resumen$corrige)
+  expect_equal(z$factores$anio, 2015:2018)
+  expect_equal(z$factores$factor, c(0.93, 0.90, 0.87, 0.90) / 0.90)
+  # La serie aplica el factor a los años sin módulo y anota el método
+  f <- formas_sme(combinar_modulos_sme(list(modulo_inventado(2019L))))
+  s <- calcular_mochila_serie(salarios_inventados(), f, anios = 2018:2019,
+                              correccion = tibble::tibble(anio = 2018L, factor = 1.1))
+  expect_equal(s$metodo_forma, c("primer_anio_ecv", "primer_anio_ecv", "anio", "anio"))
+  expect_equal(s$bruto_anual[s$anio == 2018], c(1100, 1300) * 1500 / 2000 * 1.1)
+  expect_equal(calcular_mochila_serie(salarios_inventados(), f, anios = 2018:2019)$metodo_forma[1], "primer_anio")
 })
 
 test_that("control del paso a neto con la ECV: neto calculado sobre la mediana del bruto; sin PY010N, fuera", {

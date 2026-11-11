@@ -502,6 +502,21 @@ body {
 .ficha-contexto { margin: 0 16px 16px; padding-top: 10px; border-top: 1px dashed var(--color-tenue); }
 .ficha-contexto .ficha-territorios { margin: 4px 0; }
 .ficha-pagas { margin: 2px 0 6px; padding: 0; list-style: none; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+/* Pregunta 43 h: entre dos sueldos, el piso de dos a la vista (70 m² por defecto) y cambiable */
+.ficha-dos-superficie { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+.ficha-dos-superficie button {
+  min-width: var(--objetivo-tactil); min-height: 32px; padding: 0 6px; border: var(--borde); border-radius: var(--radio-control);
+  background: var(--color-placa); color: var(--color-tinta); font: 600 0.85rem var(--fuente-tablero); font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.ficha-dos-superficie button[aria-pressed="true"] { background: var(--color-tinta); color: var(--color-crema); }
+/* Tarea 40: al lado de la cifra principal, el mínimo de 50 m² (sueldo necesario) o la proporción con
+   el alquiler real («¿te llega?»); tarea 44: estadístico de la ficha; tarea 41: el indicador 14 */
+.ficha-minimo, .ficha-real { margin: 2px 0 4px; font: 500 1rem/1.3 var(--fuente-tablero); font-variant-numeric: tabular-nums; }
+.ficha-minimo-cifra { font-size: 1.2rem; font-weight: 700; white-space: nowrap; }
+.ficha-metodo { margin: 0 0 6px; font-size: 0.9rem; color: var(--color-tenue); }
+.ficha-residentes { margin: 0 16px 16px; padding-top: 10px; border-top: 1px dashed var(--color-tenue); }
+.ficha-residentes-cifra { font: 700 1.35rem var(--fuente-tablero); font-variant-numeric: tabular-nums; }
+.ficha-residentes-anio { margin: 2px 0 4px; color: var(--color-tenue); font-size: 0.9rem; }
 .ficha-sin-nivel { font-size: 1.15rem; color: var(--color-tenue); }
 .ficha-vacia-nota { padding-top: 0; font-size: 0.9rem; }
 .ficha-tabla { border-collapse: collapse; font-variant-numeric: tabular-nums; }
@@ -511,6 +526,17 @@ body {
 .ficha-tabla-resto { text-align: right; font-family: var(--fuente-tablero); white-space: nowrap; }
 .ficha-tabla-estado { color: var(--color-tenue); }
 .ficha-tabla-activa th, .ficha-tabla-activa td { font-weight: 700; }
+/* Evolución (tareas 43 y 45): variación de cada año y gráfico con la banda del margen */
+.ficha-tabla thead th { color: var(--color-tenue); font-size: 0.8rem; border-bottom: 1px solid var(--color-fuera); }
+.ficha-tabla-variacion { text-align: right; font-family: var(--fuente-tablero); white-space: nowrap; }
+.evo-grafico { display: block; width: 100%; max-width: 360px; height: auto; margin: 4px 0 8px; }
+.evo-rejilla { stroke: var(--color-fuera); stroke-width: 1; }
+.evo-texto-eje { fill: var(--color-tenue); font: 10px var(--fuente-tablero); font-variant-numeric: tabular-nums; }
+.evo-banda { fill: var(--rampa-1); fill-opacity: 0.45; stroke: none; }
+.evo-linea { fill: none; stroke: var(--rampa-5); stroke-width: 2; stroke-linejoin: round; }
+.evo-punto { fill: var(--rampa-5); stroke: var(--color-placa); stroke-width: 1; }
+.evo-punto-pocos { fill: var(--color-placa); stroke: var(--rampa-5); stroke-width: 1.5; }
+.evo-punto-activo { stroke: var(--color-tinta); stroke-width: 1.5; }
 
 /* Comparador */
 .comparador-eleccion { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 4px 0 8px; }

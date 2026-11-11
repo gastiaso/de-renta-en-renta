@@ -10,14 +10,18 @@
 #
 # Las cartas solo llevan cifras reales del pipeline:
 #   - sueldo: sueldo necesario (21) de las secciones con dato del último año: percentiles 10, 50 y
-#     90 (quantile() de R, tipo 7), con la superficie y el umbral del mapa por defecto;
+#     90 (quantile() de R, tipo 7) de la cifra principal, con el alquiler mensual mediano real, y al
+#     lado (tarea 40, decisión 4) la mediana del mínimo teórico de 50 m² (`minimo`), con el umbral
+#     del mapa por defecto;
 #   - smi: peso del alquiler en el ingreso (15) de la tartera en las secciones con dato del último año que la
-#     tiene: porcentaje de secciones donde el alquiler de 50 m2 pasa del 30 y del 40 % del SMI neto;
+#     tiene: porcentaje de secciones donde el alquiler de 50 m2 pasa del 30 y del 40 % del SMI neto y,
+#     al lado (tarea 40), donde lo pasa el alquiler mensual mediano real (`pct_30_real`, `pct_40_real`;
+#     con el ingreso de la tartera de perfiles_web(), si llegan los perfiles);
 #   - sobrecarga: tasa de sobrecarga (22) de España del último año de la ECV, total y de quienes
 #     viven de alquiler a precio de mercado.
-# La compuerta recalcula la primera y la segunda desde el alquiler por m2 (9) y el ingreso de la
-# tartera que recibe la web (perfiles_web()), como lo haría el navegador; la tercera, desde las
-# filas de la sobrecarga. Redondeo de la guía (redondeo_guia()) a un decimal.
+# La compuerta recalcula la primera y la segunda desde el alquiler mensual (8) y por m2 (9) y el
+# ingreso de la tartera que recibe la web (perfiles_web()), como lo haría el navegador; la tercera,
+# desde las filas de la sobrecarga. Redondeo de la guía (redondeo_guia()) a un decimal.
 # Los textos llevan escapes \u: los caracteres no ASCII en el cuerpo de las funciones rompen targets.
 
 RUTA_CASILLAS_PORTADA <- file.path("inventario", "casillas_portada.csv")
@@ -120,15 +124,24 @@ escribir_casillas_portada <- function(casillas, ruta = file.path("web", "index.h
 # Porcentaje con el redondeo de la guia.
 porcentaje_guia <- function(x) redondeo_guia(100 * mean(x))
 
-cifras_portada <- function(larga, superficie = SUPERFICIE_FICHA, umbral = UMBRAL_SUELDO) {
+cifras_portada <- function(larga, superficie = SUPERFICIE_FICHA, umbral = UMBRAL_SUELDO, perfiles = NULL) {
   sueldo <- larga |> filter(indicador == "sueldo_necesario", nivel == "sc", corte == "total", !is.na(valor))
   anio_s <- max(sueldo$anio)
   s <- sueldo$valor[sueldo$anio == anio_s]
   q <- stats::quantile(s, c(0.1, 0.5, 0.9), names = FALSE, type = 7)
+  # tarea 40: al lado, el minimo teorico con la superficie de las fichas (corte superficie)
+  minimo <- larga |> filter(indicador == "sueldo_necesario", nivel == "sc", corte == CORTE_MINIMO_SUELDO,
+                            grupo == format(superficie, trim = TRUE), anio == anio_s, !is.na(valor))
 
   peso <- larga |> filter(indicador == "peso_alquiler_ingreso", nivel == "sc", corte == "ficha", grupo == "tartera", !is.na(valor))
   anio_b <- max(peso$anio)
   b <- peso$valor[peso$anio == anio_b]
+  # tarea 40: con el alquiler mensual mediano real y el ingreso de la tartera que recibe la web
+  ingreso <- if (is.null(perfiles)) NULL else (perfiles_web(perfiles)$tartera$anios[[as.character(anio_b)]] %||% list())[["00"]]
+  real <- if (is.null(ingreso)) NULL else {
+    larga |> filter(indicador == "alquiler_mes", nivel == "sc", corte == "tipologia", grupo == "VC", anio == anio_b) |>
+      mutate(valor = termino_publicado(valor)) |> filter(!is.na(valor)) |> pull(valor) / ingreso
+  }
 
   sc <- larga |> filter(indicador == "sobrecarga", nivel == "nacional", geo_id == "00", !is.na(valor))
   anio_c <- max(sc$anio)
@@ -136,12 +149,15 @@ cifras_portada <- function(larga, superficie = SUPERFICIE_FICHA, umbral = UMBRAL
   total <- de("total", "total")
   mercado <- de("tenencia", "RENT_MKT")
 
+  smi <- list(anio = anio_b, secciones = length(b), pct_30 = porcentaje_guia(b > 30), pct_40 = porcentaje_guia(b > 40))
+  if (length(real)) smi <- c(smi, list(pct_30_real = porcentaje_guia(real > 0.3), pct_40_real = porcentaje_guia(real > 0.4)))
   list(
-    sueldo = list(anio = anio_s, secciones = length(s), p10 = redondeo_guia(q[1]), mediana = redondeo_guia(q[2]),
-                  p90 = redondeo_guia(q[3]), superficie_m2 = superficie, umbral = 100 * umbral,
-                  mapa = "sueldo_necesario", fuentes = I(c("mivau_serpavi", "calculo_propio"))),
-    smi = list(anio = anio_b, secciones = length(b), pct_30 = porcentaje_guia(b > 30), pct_40 = porcentaje_guia(b > 40),
-               superficie_m2 = superficie, ficha = "tartera", fuentes = I(c("mivau_serpavi", "boe_smi", "calculo_propio"))),
+    sueldo = Filter(Negate(is.null), list(
+      anio = anio_s, secciones = length(s), p10 = redondeo_guia(q[1]), mediana = redondeo_guia(q[2]),
+      p90 = redondeo_guia(q[3]), minimo = if (nrow(minimo)) redondeo_guia(stats::median(minimo$valor)),
+      superficie_m2 = superficie, umbral = 100 * umbral,
+      mapa = "sueldo_necesario", fuentes = I(c("mivau_serpavi", "calculo_propio")))),
+    smi = c(smi, list(superficie_m2 = superficie, ficha = "tartera", fuentes = I(c("mivau_serpavi", "boe_smi", "calculo_propio")))),
     sobrecarga = if (length(total) == 1 && length(mercado) == 1) {
       list(anio = anio_c, total = redondeo_guia(total), alquiler_mercado = redondeo_guia(mercado), fuentes = I("ine_ecv"))
     }
@@ -151,7 +167,7 @@ cifras_portada <- function(larga, superficie = SUPERFICIE_FICHA, umbral = UMBRAL
 # Escribe <dir_web>/datos/portada.json. El ingreso neto de la tartera del año de la carta va con
 # ella (el que usa la web, perfiles_web()). Devuelve la ruta.
 exportar_portada <- function(larga, perfiles, dir_web = "web") {
-  cifras <- cifras_portada(larga)
+  cifras <- cifras_portada(larga, perfiles = perfiles)
   tartera <- perfiles_web(perfiles)$tartera
   neto <- (tartera$anios[[as.character(cifras$smi$anio)]] %||% list())[["00"]]
   if (is.null(neto)) cifras$smi <- NULL else cifras$smi$neto_mensual <- neto
@@ -206,28 +222,33 @@ comprobar_casillas_portada <- function(casillas, mapas = NULL, anclas = NULL, cl
 }
 
 # portada_valores: cada cifra de portada.json frente a la recalculada. Sueldo y salario minimo,
-# desde el alquiler por m2 de la vivienda colectiva (termino_publicado(), como lo recibe la web) y
-# el ingreso de la tartera de perfiles_web(); sobrecarga, desde sus filas. Una carta que falta en
-# el fichero cuenta como diferencia.
+# desde el alquiler mensual (cifra principal; tarea 40) y por m2 (minimo de 50 m2) de la vivienda
+# colectiva (termino_publicado(), como lo recibe la web) y el ingreso de la tartera de
+# perfiles_web(); sobrecarga, desde sus filas. Una carta que falta en el fichero cuenta como
+# diferencia.
 comprobar_portada <- function(larga, perfiles, dir_web = "web", superficie = SUPERFICIE_FICHA, umbral = UMBRAL_SUELDO) {
   ruta <- file.path(dir_web, "datos", FICHERO_PORTADA_WEB)
   json <- if (file.exists(ruta)) jsonlite::read_json(ruta) else list()
   cartas <- json$cartas %||% list()
-  m2 <- larga |> filter(indicador == "alquiler_m2", nivel == "sc", corte == "tipologia", grupo == "VC") |>
+  vc <- function(ind) larga |> filter(indicador == ind, nivel == "sc", corte == "tipologia", grupo == "VC") |>
     mutate(valor = termino_publicado(valor)) |> filter(!is.na(valor))
+  m2 <- vc("alquiler_m2")
+  mes <- vc("alquiler_mes")   # tarea 40: la cifra principal, con el alquiler mensual real
   fila <- function(detalle, calculado, referencia) {
     tibble::tibble(id = "portada_valores", detalle = detalle, calculado = as.numeric(calculado %||% NA_real_),
                    referencia = as.numeric(referencia))
   }
   filas <- list()
 
-  anio_s <- max(m2$anio)
-  sueldo <- m2$valor[m2$anio == anio_s] * superficie / umbral
+  anio_s <- max(mes$anio)
+  sueldo <- mes$valor[mes$anio == anio_s] / umbral
   q <- redondeo_guia(stats::quantile(sueldo, c(0.1, 0.5, 0.9), names = FALSE, type = 7))
+  minimo <- redondeo_guia(stats::median(m2$valor[m2$anio == anio_s] * superficie / umbral))
   s <- cartas$sueldo
   filas <- c(filas, list(fila("sueldo: a\u00f1o", s$anio, anio_s), fila("sueldo: secciones con dato", s$secciones, length(sueldo)),
                          fila("sueldo: percentil 10", s$p10, q[1]), fila("sueldo: mediana", s$mediana, q[2]),
-                         fila("sueldo: percentil 90", s$p90, q[3])))
+                         fila("sueldo: percentil 90", s$p90, q[3]),
+                         fila("sueldo: m\u00ednimo de 50 m2 (mediana)", s$minimo, minimo)))
 
   tartera <- perfiles_web(perfiles)$tartera
   c2 <- cartas$smi
@@ -237,10 +258,13 @@ comprobar_portada <- function(larga, perfiles, dir_web = "web", superficie = SUP
     filas <- c(filas, list(fila("salario m\u00ednimo: carta e ingreso de la tartera", NA_real_, 1)))
   } else {
     ratio <- m2$valor[m2$anio == anio_b] * superficie / ingreso
+    real <- mes$valor[mes$anio == anio_b] / ingreso
     filas <- c(filas, list(fila("salario m\u00ednimo: secciones con dato", c2$secciones, length(ratio)),
                            fila("salario m\u00ednimo: ingreso neto", c2$neto_mensual, ingreso),
                            fila("salario m\u00ednimo: m\u00e1s del 30 %", c2$pct_30, porcentaje_guia(ratio > 0.3)),
-                           fila("salario m\u00ednimo: m\u00e1s del 40 %", c2$pct_40, porcentaje_guia(ratio > 0.4))))
+                           fila("salario m\u00ednimo: m\u00e1s del 40 %", c2$pct_40, porcentaje_guia(ratio > 0.4)),
+                           fila("salario m\u00ednimo: m\u00e1s del 30 % con el alquiler real", c2$pct_30_real, porcentaje_guia(real > 0.3)),
+                           fila("salario m\u00ednimo: m\u00e1s del 40 % con el alquiler real", c2$pct_40_real, porcentaje_guia(real > 0.4))))
   }
 
   sc <- larga |> filter(indicador == "sobrecarga", nivel == "nacional", geo_id == "00", !is.na(valor))

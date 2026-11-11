@@ -49,8 +49,12 @@ CORTES_WEB <- c("total", "mes", names(GRUPO_POR_DEFECTO_WEB), CORTES_POR_GRUPO_W
 # toda escala, con las secciones apagadas.
 NIVELES_MAPA_WEB <- c("sc", "municipio")
 # Mapas que la web calcula en el navegador a partir de otra serie (web/js/formulas.js), para que
-# cambiar la superficie o el umbral no obligue a bajar nada
-FORMULAS_WEB <- list(sueldo_necesario = list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo"))
+# cambiar la superficie o el umbral no obligue a bajar nada. Tarea 40 (decisión 4): el sueldo
+# necesario pinta la cifra principal, con el alquiler mensual mediano real, y lleva `minimo`, la
+# serie y la fórmula del mínimo teórico con la superficie elegida (50 m² por defecto), que la ficha,
+# el CSV y la leyenda dan al lado.
+FORMULAS_WEB <- list(sueldo_necesario = list(base = "alquiler_mes", formula = "alquiler_mes_a_sueldo",
+                                             minimo = list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo")))
 MAPA_POR_DEFECTO_WEB <- "sueldo_necesario"                        # plan §6.6, «Tu sueldo»
 SUPUESTOS_WEB <- list(superficie_m2 = 50, umbral = 0.3)           # plan §3.1 y §6.6
 LIMITES_INICIALES_WEB <- c(-9.4, 35.9, 4.4, 43.9)                # península y Baleares (oeste, sur, este, norte)
@@ -337,7 +341,9 @@ cortes_web <- function(texto) {
 }
 
 # Mapas: uno por indicador con cortes_web y valores de sección; el por defecto, el primero. Los
-# de FORMULAS_WEB se calculan en el navegador desde su base.
+# de FORMULAS_WEB se calculan en el navegador desde su base (y, con `minimo`, la segunda cifra desde
+# la suya; tarea 40). Tarea 41: un indicador sin cortes_web (el 14) no tiene mapa ni sale en el
+# selector, aunque su serie se exporte (núcleo de la v0.1) y la ficha la muestre.
 # F5 (indicadores 20 y 13):
 #   - sin sección, el municipio como nivel más fino: el mapa lleva `nivel_minimo` («municipio»);
 #   - con `vocabulario` y un grupo del vocabulario con el código del indicador (zona_tensionada), el
@@ -379,7 +385,8 @@ mapas_web <- function(catalogo, indicadores, vocabulario = NULL) {
     }
     f <- FORMULAS_WEB[[codigo]]
     def <- if (!is.null(f) && f$base %in% con_seccion) {
-      list(base = f$base, formula = f$formula)
+      c(list(base = f$base, formula = f$formula),
+        if (!is.null(f$minimo) && f$minimo$base %in% catalogo$clave) list(minimo = f$minimo))   # tarea 40
     } else if (codigo %in% con_seccion) {
       list(base = codigo, formula = "directo")
     } else NULL

@@ -12,6 +12,7 @@
 // nada.
 
 import { posicionEnRegla } from './sueldo.js';
+import { textoSupuestos } from './formulas.js';
 import { clasesTramos, rampaDeCss, TRAMOS_LLEGA, decimalesDeCortes } from './colores.js';
 import { familiaDe, textoFamilia } from './familias.js';
 
@@ -132,12 +133,16 @@ export function pintarLeyenda(contenedor, t, datos) {
   cuerpo.push(...(categorias ? listaCategorias(t, datos.mapaDef) : necesario ? reglaNecesario(t, datos) : tramosLlega(t)));
   let supuestos = t('interfaz.leyenda.llega_nota');
   if (necesario) {
+    // Tarea 40: en el sueldo necesario, el alquiler real y el umbral, y la superficie del mínimo de la ficha
     supuestos = datos.conSupuestos
-      ? t('interfaz.leyenda.supuestos', { superficie: t.numero(datos.superficie), umbral: t.porcentaje(datos.umbral) })
+      ? textoSupuestos(t, datos.mapaDef, datos.supuestos ?? { superficie_m2: datos.superficie, umbral: datos.umbral })
       : null;
   }
   pliegue.append(...cuerpo, claves(t));
   if (supuestos) pliegue.append(crear('p', 'leyenda-supuestos', supuestos));
+  if (necesario && datos.conSupuestos && datos.mapaDef?.minimo) {   // tarea 40: el mínimo, en la ficha
+    pliegue.append(crear('p', 'leyenda-supuestos', t('interfaz.leyenda.minimo_ficha', { superficie: t.numero(datos.superficie) })));
+  }
 
   contenedor.replaceChildren(pliegue);
   contenedor.hidden = false;

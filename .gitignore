@@ -31,6 +31,10 @@ web/descargas/
 geo/brutos/
 *.zip
 
+# Salidas de una redirección mal escrita en la consola (p. ej. «> 0» en lugar de «2>&1»): el
+# fichero «0» de la raíz llegó así a git el 8-nov-2026
+/[0-9]
+
 # Secretos
 .Renviron
 .env

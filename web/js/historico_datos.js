@@ -13,7 +13,9 @@ export const ESPANA = '00';
 export const BLOQUES = [
   { id: 'hist-renta', series: ['anios_renta'] },
   { id: 'hist-esfuerzo', series: ['esfuerzo_teorico'] },
-  { id: 'hist-tipos', series: ['tipo_hipotecas', 'mibor_euribor'] },
+  // Tipos (plan §11, pregunta 47 c): el de los préstamos nuevos para vivienda, línea principal, y
+  // como referencia el MIBOR hasta 1998 y el euríbor desde 1999 (índices distintos, con su ruptura)
+  { id: 'hist-tipos', series: ['tipo_prestamos', 'mibor_euribor'] },
   { id: 'hist-tasado', series: ['valor_tasado'], territorial: true },
   { id: 'hist-sueldo', series: ['sueldo_asalariado'] },
 ];

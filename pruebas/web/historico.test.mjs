@@ -173,7 +173,11 @@ const RUTA_REAL = join(raiz, 'web', 'datos', 'historico', 'historico.json');
 test('datos exportados por el pipeline: contrato de historico.json', { skip: !existsSync(RUTA_REAL) && 'sin datos exportados' }, () => {
   const d = JSON.parse(readFileSync(RUTA_REAL, 'utf8'));
   assert.deepEqual(Object.keys(d.series).sort(),
-    ['anios_renta', 'esfuerzo_teorico', 'mibor_euribor', 'sueldo_asalariado', 'tipo_hipotecas', 'valor_tasado']);
+    ['anios_renta', 'esfuerzo_teorico', 'mibor_euribor', 'sueldo_asalariado', 'tipo_hipotecas', 'tipo_prestamos', 'valor_tasado']);
+  // Tipos (pregunta 47 c): el MIBOR hasta 1998 y el euríbor desde 1999, en una línea con su ruptura
+  assert.ok(d.rupturas.includes('bde_mibor_euribor_1999'));
+  assert.ok(d.rupturas.includes('bde_tipo_prestamos_2003'));
+  assert.equal(d.series.tipo_prestamos.territorios['00'].inicio[0], 1989);
   for (const [clave, s] of Object.entries(d.series)) {
     assert.ok(s.frecuencia in H.SUBPERIODOS, clave);
     assert.ok([1, 10, 100, 1000].includes(s.escala), clave);
@@ -324,6 +328,7 @@ test('datos exportados por el pipeline: contrato de cis_vivienda.json', { skip: 
   assert.deepEqual([espana.primero.clave, espana.primero.v], ['2014-01', 1.5]);
   assert.equal(espana.maximo.v, 55.7);
   assert.equal(H.extremos(H.puntosCis(d, 'personal')).primero.v, 1.6);
-  assert.equal(H.huecosCis(H.puntosCis(d, 'espana')), 15);
-  assert.equal(H.huecosCis(H.puntosCis(d, 'personal')), 13);
+  // Sin los seis meses solo en PDF, que ya van transcritos (pregunta 48 a)
+  assert.equal(H.huecosCis(H.puntosCis(d, 'espana')), 9);
+  assert.equal(H.huecosCis(H.puntosCis(d, 'personal')), 7);
 });

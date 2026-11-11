@@ -17,10 +17,17 @@
   },
   "fichas": {
     "llave": "Hogar del barrio",
-    "mochila": "Joven menor de 35",
+    "mochila": "Joven de 26 a 35",
     "tartera": "Salario mínimo",
     "transistor": "Pensionista",
     "peon": "Tu ficha"
+  },
+  "fichas_metodo": {
+    "llave": "Media del hogar: renta neta media por hogar de la sección (INE), entre 12.",
+    "mochila": "Mediana de una persona: salario neto estimado de 26 a 35 años en su provincia (AEAT), en 12 pagas.",
+    "tartera": "Mínimo legal de una persona: salario mínimo interprofesional neto de cada año, en 12 pagas.",
+    "transistor": "Media de una persona: pensión media de jubilación neta en su provincia (Seguridad Social), en 12 pagas. Es la media porque la Seguridad Social no publica la pensión mediana por provincia.",
+    "peon": "Cifra propia: el sueldo neto escrito, de una persona o de dos con el segundo sueldo, en 12 pagas."
   },
   "avisos": {
     "ejemplo": "Datos de ejemplo",
@@ -58,6 +65,8 @@
       "sin_dato": "Sin dato",
       "secreto": "Secreto estadístico",
       "supuestos": "{superficie} m² · umbral del {umbral}",
+      "supuestos_real": "Alquiler mensual mediano de la sección · umbral del {umbral}",
+      "minimo_ficha": "La ficha da al lado el mínimo teórico con un piso de {superficie} m².",
       "ficha_mediana": "{ficha} (mediana de las provincias)",
       "llave": "{ficha}: de {desde} a {hasta} € (cuartiles de las secciones)",
       "llega_titulo": "¿Te llega?",
@@ -83,6 +92,8 @@
       "superficie_fija": "Las fichas de una persona usan {superficie} m².",
       "superficie_llave": "La llave paga el alquiler mediano de su sección.",
       "supuestos_mapa": "La vivienda y el umbral cambian el sueldo necesario y «¿te llega?», no el mapa que se ve.",
+      "superficie_minimo": "El mapa usa el alquiler mensual mediano de cada sección; la vivienda elegida cambia el mínimo teórico que la ficha da al lado.",
+      "resumen_real": "Con el alquiler mensual mediano de cada sección, en el {pct} ({caben} de {total}).",
       "peon_sin_sueldo": "Escribe un sueldo para usar tu ficha.",
       "resumen_peon": "Te cabe en el {pct} de las secciones con dato ({caben} de {total}).",
       "resumen_ficha": "A «{ficha}» le cabe en el {pct} de las secciones con dato ({caben} de {total}).",
@@ -149,6 +160,7 @@
         "umbral": "umbral",
         "contratos": "contratos",
         "margen_pct": "margen_pct",
+        "valor_minimo": "valor_minimo",
         "categoria": "categoria",
         "etiqueta": "etiqueta"
       },
@@ -168,10 +180,22 @@
       "cerrar": "Cerrar la ficha",
       "evolucion": "Evolución",
       "evolucion_llega": "Evolución del alquiler sobre el ingreso",
+      "evolucion_grafico": "Gráfico de la evolución: {titulo}, de {desde} a {hasta}",
+      "evolucion_banda": "Banda sombreada: la cifra ± el margen aproximado de la mediana del alquiler.",
+      "evolucion_pocos": "Punto hueco: menos de {umbral} contratos.",
+      "cabecera_periodo": "Año",
+      "cabecera_variacion": "Variación",
+      "variacion_media": "†: variación media anual de los tres últimos años, porque alguno de los dos años tiene menos de {umbral} contratos.",
+      "variacion_pocos": "—: sin variación, porque alguno de los dos años tiene menos de {umbral} contratos y no hay cifra tres años antes.",
+      "euros_corrientes": "En euros corrientes de cada año, sin descontar la inflación.",
+      "euros_corrientes_resto": "Los euros que quedan van en euros corrientes de cada año, sin descontar la inflación.",
+      "ipc_periodo": "IPC general de {desde} a {hasta}: {variacion} (INE, medias anuales).",
       "ingreso_fijo": "Con el ingreso de hoy en todos los años: solo cambia el alquiler.",
       "ingreso_anio": "Con el ingreso de la ficha de cada año: cambian el alquiler y el ingreso.",
       "del_ingreso": "del ingreso se va en alquiler",
       "alquiler_ingreso": "Alquiler: {alquiler} € · ingreso: {ingreso} € al mes",
+      "minimo": "Mínimo teórico con un piso de {superficie} m²: {cifra} € netos al mes",
+      "real_llega": "Con el alquiler mensual mediano de la sección ({alquiler} €): {pct} del ingreso",
       "sin_seccion": "Territorio sin sección censal",
       "sin_seccion_texto": "Monte o terreno comunal que no pertenece a ningún término municipal. El INE no le asigna sección y no tiene población, así que no hay datos.",
       "provincias": "Provincias",
@@ -209,6 +233,8 @@
       "sin_ingreso_nivel": "La ficha {ficha} tiene un ingreso por provincia: no hay uno solo para toda la comunidad.",
       "paga_14": "En 14 pagas: {euros} € por paga",
       "dos_sueldos": "Entre dos sueldos iguales: {euros} € cada uno",
+      "dos_sueldos_m2": "Entre dos sueldos iguales, con un piso de {superficie} m²: {euros} € cada uno",
+      "dos_sueldos_superficie": "Piso para dos sueldos",
       "tus_terminos": "Con tus pagas",
       "ingreso_peon": {
         "12": "Tu ingreso: {neto} € al mes.",
@@ -279,23 +305,23 @@
     "dado_nota": "Una sección al azar, con alquiler publicado en {anio}.",
     "fichas_titulo": "¿Para quién?",
     "fichas": {
-      "llave": "Renta media del hogar de cada sección frente a su alquiler mediano.",
-      "mochila": "Salario mediano estimado de 26 a 35 años en su provincia.",
-      "tartera": "Salario mínimo neto de cada año.",
-      "transistor": "Pensión media de jubilación neta en su provincia.",
-      "peon": "El sueldo que escribas, con 12 o 14 pagas y un segundo sueldo."
+      "llave": "Media del hogar: renta neta media por hogar de cada sección frente a su alquiler mediano.",
+      "mochila": "Mediana de una persona: salario neto estimado de 26 a 35 años en su provincia.",
+      "tartera": "Mínimo legal de una persona: salario mínimo neto de cada año.",
+      "transistor": "Media de una persona: pensión media de jubilación neta en su provincia (no se publica la mediana por provincia).",
+      "peon": "Cifra propia: el sueldo neto escrito, con 12 o 14 pagas y un segundo sueldo."
     },
     "cartas_titulo": "Cartas del atlas",
     "cartas": {
       "fuente": "Fuente: {fuentes} · {anio}",
       "sueldo": {
         "titulo": "Sueldo necesario",
-        "texto": "Para alquilar {superficie} m² sin pasar del {umbral} del sueldo, la sección mediana pide {mediana} € netos al mes en {anio}. Una de cada diez secciones pide menos de {p10} €; otra de cada diez, más de {p90} €.",
+        "texto": "Para que su alquiler mensual mediano no pase del {umbral} del sueldo, la sección mediana pide {mediana} € netos al mes en {anio}; con un piso teórico de {superficie} m², {minimo} €. Una de cada diez secciones pide menos de {p10} €; otra de cada diez, más de {p90} €.",
         "enlace": "Ver el mapa del sueldo necesario"
       },
       "smi": {
         "titulo": "Salario mínimo",
-        "texto": "Con el salario mínimo de {anio} ({neto} € netos al mes, en 12 pagas), el alquiler de un piso de {superficie} m² pasa del 30 % del sueldo en el {pct30} de las secciones con dato, y del 40 % en el {pct40}.",
+        "texto": "Con el salario mínimo de {anio} ({neto} € netos al mes, en 12 pagas), el alquiler de un piso de {superficie} m² pasa del 30 % del sueldo en el {pct30} de las secciones con dato, y del 40 % en el {pct40}. Con el alquiler mensual mediano de cada sección, en el {pct30real} y en el {pct40real}.",
         "enlace": "Ver el mapa con el salario mínimo"
       },
       "sobrecarga": {
@@ -576,9 +602,9 @@
       },
       "hist-tipos": {
         "corto": "Tipos de interés",
-        "titulo": "Tipos de interés de referencia del mercado hipotecario",
-        "subtitulo": "Tipos oficiales que publica el Banco de España, en porcentaje. Mensual.",
-        "fuente": "Fuente: elaboración propia con datos extraídos del sitio web del Banco de España (www.bde.es): Boletín Estadístico, tabla 19.1, series D_1T9H0000 y D_1E723706.EUR. Datos descargados el {version}."
+        "titulo": "Tipos de interés de los préstamos para vivienda",
+        "subtitulo": "Tipo de los préstamos nuevos para comprar vivienda, el mismo con que se calcula el esfuerzo teórico; como referencia, el MIBOR a un año hasta 1998 y el euríbor a 12 meses desde 1999, que son índices distintos. En porcentaje. Mensual.",
+        "fuente": "Fuente: elaboración propia con datos extraídos del sitio web del Banco de España (www.bde.es): Síntesis de indicadores, tabla 1.5, serie D_IMVTIPLV; Boletín Estadístico, tabla 19.1, series D_1E723706.EUR (hasta 1998) y D_1NBAF472 (desde 1999). Datos descargados el {version}."
       },
       "hist-tasado": {
         "corto": "Valor tasado",
@@ -589,15 +615,16 @@
       "hist-sueldo": {
         "corto": "Sueldo medio",
         "titulo": "Sueldo bruto medio por asalariado",
-        "subtitulo": "Sueldos y salarios brutos de toda la economía divididos por las personas asalariadas del año. Anual, desde 1995.",
+        "subtitulo": "Sueldos y salarios brutos de toda la economía divididos por las personas asalariadas del año. Anual; la serie empieza en 1995. Queda por encima del salario medio de la AEAT.",
         "fuente": "Fuente: INE, Contabilidad Nacional Anual de España, base 2020 (tablas 71129 y 71133). Datos descargados el {version}."
       }
     },
     "series": {
       "anios_renta": "Años de renta",
       "esfuerzo_teorico": "Esfuerzo teórico",
+      "tipo_prestamos": "Tipo de los préstamos nuevos para vivienda",
       "tipo_hipotecas": "Tipo medio de los préstamos hipotecarios a más de tres años",
-      "mibor_euribor": "MIBOR a un año (sigue al euríbor desde 1999)",
+      "mibor_euribor": "Referencia: MIBOR a un año hasta 1998 y euríbor a 12 meses desde 1999 (índices distintos)",
       "valor_tasado": "Valor tasado",
       "sueldo_asalariado": "Sueldo bruto medio por asalariado"
     },
@@ -647,19 +674,19 @@
     "cis_estudio_col": "Estudio",
     "cis_entrevistas_col": "Entrevistas",
     "cis_aviso": "Opinión, no registro: la serie mide cuánta gente nombra la vivienda como problema, no su precio ni lo que cuesta pagarla.",
-    "cis_fuente": "Fuente: elaboración propia con datos del Centro de Investigaciones Sociológicas (CIS, www.cis.es), barómetros mensuales, con licencia CC BY 4.0. Cambios: cifras redondeadas a un decimal; los meses sin resultados abiertos no van. El CIS no participa en este atlas ni lo patrocina.",
+    "cis_fuente": "Fuente: elaboración propia con datos del Centro de Investigaciones Sociológicas (CIS, www.cis.es), barómetros mensuales, con licencia CC BY 4.0. Cambios: cifras redondeadas a un decimal; los seis meses publicados solo en PDF (julio de 2014 y cinco de 2025), transcritos a mano. El CIS no participa en este atlas ni lo patrocina.",
     "cis_fecha": "Barómetros publicados hasta el {fecha}.",
     "cis_sin_datos": "No hay datos del CIS en esta copia de la web (datos/cis_vivienda.json). Se generan con targets::tar_make(names = ficheros_web_cis).",
-    "cis_metodo": "La vivienda como problema (CIS): en el barómetro mensual, porcentaje de entrevistados que nombra la vivienda, sin lista de respuestas, entre los tres principales problemas de España o entre los tres que más le afectan personalmente. Es una encuesta de opinión, no un registro. Desde enero de 2014; sin barómetro en agosto, y los meses sin resultados abiertos quedan como hueco. Compuerta: la serie reproduce las cifras que el CIS da en sus notas de prensa.",
+    "cis_metodo": "La vivienda como problema (CIS): en el barómetro mensual, porcentaje de entrevistados que nombra la vivienda, sin lista de respuestas, entre los tres principales problemas de España o entre los tres que más le afectan personalmente. Es una encuesta de opinión, no un registro. Desde enero de 2014; sin barómetro en agosto. Los meses cuyos resultados solo están en PDF (julio de 2014 y febrero, abril, mayo, junio y julio de 2025) se transcriben a mano, con el enlace a cada PDF y su comprobación. Compuerta: la serie reproduce las cifras que el CIS da en sus notas de prensa.",
     "metodo": {
       "titulo": "Cómo se leen estas series",
       "renta": "Años de renta (Banco de España): precio medio de una vivienda libre tipo (93,75 m² hasta 2004; después, la superficie media de las compraventas registradas) entre la renta bruta anual estimada del hogar mediano, que sale de la Encuesta Financiera de las Familias, la Contabilidad Nacional y la EPA.",
       "esfuerzo": "Esfuerzo teórico (Banco de España): cuotas del primer año de un préstamo por el 80 % del valor de esa vivienda, con el tipo medio de los préstamos nuevos para vivienda y el plazo medio de las hipotecas, en porcentaje de la renta disponible del hogar mediano. Sin deducciones fiscales en toda la serie.",
-      "tipos": "Tipos (Banco de España, también en el BOE cada mes): tipo medio de los préstamos hipotecarios a más de tres años para adquisición de vivienda libre del conjunto de entidades de crédito, desde noviembre de 1990, y MIBOR a un año, que desde 1999 sigue al euríbor a un año.",
+      "tipos": "Tipos (Banco de España): la línea principal es el tipo de los préstamos nuevos para adquisición de vivienda de los hogares, desde enero de 1989, el mismo con que el Banco de España calcula el esfuerzo teórico (hasta 2002, según su Circular 8/1990; desde 2003, según la 4/2002: ruptura marcada). Como referencia, el MIBOR a un año hasta diciembre de 1998 y el euríbor a 12 meses desde enero de 1999: son índices distintos y el cambio va marcado.",
       "tasado": "Valor tasado (MIVAU): valor medio de tasación de la vivienda libre por metro cuadrado, no el precio pagado. Un año en la tabla del Banco de España es la media simple de sus cuatro trimestres.",
-      "sueldo": "Sueldo (INE, Contabilidad Nacional): sueldos y salarios brutos de toda la economía entre las personas asalariadas de cada año, también las que trabajan parte del año o a tiempo parcial. No es el salario medio de la AEAT que usa la ficha de la mochila.",
+      "sueldo": "Sueldo (INE, Contabilidad Nacional): sueldos y salarios brutos de toda la economía entre las personas asalariadas de cada año, también las que trabajan parte del año o a tiempo parcial. La serie empieza en 1995, con la base contable actual. Queda por encima del salario medio de la AEAT que usa la ficha «Joven de 26 a 35» (en 2024, 31.200 € frente a 24.962 €): la Contabilidad Nacional divide entre las personas asalariadas de media en el año, de modo que quien trabaja unos meses cuenta solo por esa parte, e incluye el País Vasco y Navarra, que la AEAT no cubre.",
       "mezcla": "Cada serie conserva su fuente, su unidad y su periodo (trimestre, mes o año): no se combinan en un indicador. Los gráficos comparten el eje de años para poder leerlos uno debajo de otro.",
-      "compuerta": "Compuerta: las series reproducen las cifras que el Banco de España publica en su tabla en PDF y el tipo de referencia publicado en el BOE; el valor tasado del MIVAU coincide con el que reproduce el Banco de España en todos los trimestres desde 1995."
+      "compuerta": "Compuerta: las series reproducen las cifras que el Banco de España publica en su tabla en PDF y el tipo de referencia publicado en el BOE; el valor tasado del MIVAU coincide con el que reproduce el Banco de España en todos los trimestres desde 1995. Si el Banco de España revisa una serie, la compuerta avisa y pide actualizar la referencia, sin bloquear."
     },
     "pie": {
       "fuentes": "Fuentes: Banco de España (Síntesis de indicadores, tabla 1.5; Boletín Estadístico, tabla 19.1), MIVAU (Valor tasado de la vivienda libre), INE (Contabilidad Nacional Anual de España) y CIS (barómetros mensuales).",
@@ -680,7 +707,7 @@
       "unidad": "€ por hogar y año",
       "definicion": "Renta disponible media de los hogares de la sección.",
       "calculo": "Cifra publicada por el INE (ADRH). En otros seccionados, media ponderada por el número de hogares (población entre tamaño medio del hogar), con el mismo estado que el indicador 1.",
-      "lectura": "Es renta del hogar, con varios perceptores, no un sueldo. Es el denominador del esfuerzo de residentes (14) y el ingreso de la ficha «hogar del barrio»."
+      "lectura": "Es renta del hogar, con varios perceptores, no un sueldo. Es el denominador del alquiler mediano sobre renta media del barrio (14) y el ingreso de la ficha «hogar del barrio»."
     },
     "renta_uc_mediana": {
       "nombre": "Mediana de la renta por unidad de consumo",
@@ -711,25 +738,25 @@
       "lectura": "Mide la desigualdad dentro del barrio, no entre barrios. Sin dato en Álava hasta 2019, en Gipuzkoa en 2015 y en Navarra hasta 2020."
     },
     "salario_medio": {
-      "nombre": "Salario medio anual por asalariado (total y menores de 35)",
+      "nombre": "Salario medio anual por asalariado (total y de 26 a 35 años)",
       "unidad": "€ por asalariado y año (bruto)",
       "definicion": "Salario medio anual bruto de los asalariados con domicilio fiscal en la provincia, en total y de 26 a 35 años.",
       "calculo": "Cifra publicada por la AEAT (Mercado de trabajo y pensiones en las fuentes tributarias, tabla por provincia, edad y sexo): salarios / asalariados, en total y del tramo de 26 a 35 años; la comunidad y España, con su cifra publicada. El País Vasco y Navarra no están en la estadística (domicilio fiscal foral) y van sin dato.",
-      "lectura": "Es salario real del año: incluye a quien trabajó pocos meses. Es una media, no una mediana; la ficha «joven» la pasa a mediana con la relación mediana/media del salario medio estimado de su comunidad y después a neto mensual repartido en 12, con la cotización del trabajador y la retención media de la AEAT por comunidad y tramo de renta (plan §3.1, método B)."
+      "lectura": "Es salario real del año: incluye a quien trabajó pocos meses. Es una media, no una mediana; la ficha «joven de 26 a 35» la pasa a mediana con la relación mediana/media del salario medio estimado de su comunidad y después a neto mensual repartido en 12, con la cotización del trabajador y la retención media de la AEAT por comunidad y tramo de renta (plan §3.1, método B)."
     },
     "alquiler_mes": {
       "nombre": "Alquiler mensual (mediana)",
       "unidad": "€ por mes",
       "definicion": "Mediana del alquiler mensual de los contratos de vivienda habitual vigentes en la sección, por tipología (colectiva y unifamiliar); se publican también el primer y el tercer cuartil.",
       "calculo": "Cifra publicada por el MIVAU (SERPAVI), a partir de los alquileres declarados en el IRPF y del Catastro, en el seccionado de 2021 para toda la serie. Sin dato con menos de 10 contratos.",
-      "lectura": "Es el parque alquilado, no los contratos nuevos: quien entra hoy paga más. El País Vasco y Navarra entran en el SERPAVI entre 2021 y 2024."
+      "lectura": "Es el parque alquilado, no los contratos nuevos: quien entra hoy paga más. Solo cuenta a los caseros que son personas físicas y declaran el alquiler como vivienda habitual en el IRPF: deja fuera las sociedades y la vivienda pública, el alquiler no declarado y el alquiler a parientes (metodología del MIVAU, 18-mar-2026). El País Vasco y Navarra entran en el SERPAVI entre 2021 y 2024."
     },
     "alquiler_m2": {
       "nombre": "Alquiler por metro cuadrado",
       "unidad": "€ por m² y mes",
       "definicion": "Mediana del alquiler mensual por metro cuadrado de los contratos de vivienda habitual vigentes en la sección, por tipología (colectiva y unifamiliar).",
       "calculo": "Cifra publicada por el MIVAU (SERPAVI), con la superficie del Catastro.",
-      "lectura": "Permite comparar secciones con viviendas de distinto tamaño y es la base del sueldo necesario (21)."
+      "lectura": "Permite comparar secciones con viviendas de distinto tamaño y es la base del sueldo necesario (21). Mismo universo que el 8: solo caseros que son personas físicas y declaran el alquiler en el IRPF."
     },
     "var_alquiler": {
       "nombre": "Variación anual del alquiler",
@@ -741,9 +768,9 @@
     "precio_compra_m2": {
       "nombre": "Precio de compraventa por metro cuadrado",
       "unidad": "€ por m²",
-      "definicion": "Precio medio por metro cuadrado de las compraventas de vivienda escrituradas ante notario.",
-      "calculo": "Cifra publicada por el Consejo General del Notariado.",
-      "lectura": "Es precio de cierre, no de oferta ni de tasación."
+      "definicion": "Precio medio por metro cuadrado de las compraventas de vivienda inscritas en los registros de la propiedad.",
+      "calculo": "Cifra publicada por el Colegio de Registradores (Estadística Registral Inmobiliaria, datos abiertos con licencia ODbL): precio medio por m² de vivienda del año, el del cuarto trimestre, que acumula el año natural; provincia, comunidad y España, cada uno con su cifra publicada.",
+      "lectura": "Es precio de compraventa inscrita, no de oferta ni de tasación. No se compara con el precio por m² del Notariado, que mide otra superficie; provincia como nivel más fino."
     },
     "valor_tasado_m2": {
       "nombre": "Valor tasado por metro cuadrado",
@@ -760,11 +787,11 @@
       "lectura": "Es precio de oferta, un dato privado de oferta: no se mezcla con contratos, escrituras ni tasaciones, ni un portal con otro."
     },
     "esfuerzo_residentes": {
-      "nombre": "Esfuerzo de residentes en alquiler",
+      "nombre": "Alquiler mediano sobre renta media del barrio",
       "unidad": "% de la renta del hogar",
-      "definicion": "Parte de la renta anual del hogar medio de la sección que se iría en el alquiler mediano de esa misma sección.",
+      "definicion": "Parte de la renta anual del hogar medio de la sección, la de todos sus hogares (propietarios incluidos), que se iría en el alquiler mediano de esa misma sección.",
       "calculo": "Alquiler mensual mediano de la vivienda colectiva × 12 / renta neta media por hogar, del mismo año, × 100. Sección censal y municipio. Si alguno de los dos términos está en secreto o falta, la cifra también.",
-      "lectura": "Mide la vulnerabilidad de quien ya vive allí, no lo que cuesta entrar: los barrios caros parecen asequibles porque los habita gente con más renta."
+      "lectura": "No es el esfuerzo de quien alquila: divide el alquiler de los contratos vigentes entre la renta media de todos los hogares de la sección, propietarios incluidos, y apenas distingue barrios (en 2024, mediana del 18,3 % en el quintil de secciones con menos renta por hogar y del 17,5 % en el de más). Los barrios caros parecen asequibles porque los habita gente con más renta."
     },
     "peso_alquiler_ingreso": {
       "nombre": "Peso del alquiler en el ingreso",
@@ -791,15 +818,15 @@
       "nombre": "Hogares en alquiler",
       "unidad": "% de los hogares",
       "definicion": "Hogares que viven de alquiler sobre el total de hogares (viviendas principales) de la sección.",
-      "calculo": "Cifra del Censo de Población y Viviendas 2021 (y 2011) del INE, en el seccionado de 2021.",
-      "lectura": "Es una fotografía de dos fechas, no una serie anual."
+      "calculo": "Cifra de los Censos de Población y Viviendas 2021 y 2011 del INE, en el seccionado de 2021; la de 2011, llevada desde las secciones del Censo 2011 con su tabla de paso.",
+      "lectura": "Es una fotografía de dos fechas, no una serie anual. El Censo 2011 es muestral: sus cifras por sección son estimaciones."
     },
     "viviendas_turisticas": {
       "nombre": "Viviendas de uso turístico sobre el total de viviendas",
       "unidad": "% de las viviendas",
       "definicion": "Viviendas de uso turístico sobre el total de viviendas de la sección.",
-      "calculo": "Viviendas turísticas de la estadística experimental del INE (anuncios de plataformas) sobre el total de viviendas del Censo 2021, el denominador que usa el INE desde agosto de 2023. Desde febrero de 2024, en el seccionado de 2024, llevado al de 2021 con la tabla de paso; semestral.",
-      "lectura": "Mide la presión del uso turístico. Numerador y denominador no son del mismo año: las viviendas son las del Censo 2021. Los meses de referencia cambiaron en 2024 (de febrero y agosto a mayo y noviembre)."
+      "calculo": "Viviendas turísticas de la estadística experimental del INE (anuncios de plataformas) sobre el total de viviendas del Censo, el denominador que usa el INE: el de 2011 hasta febrero de 2023 y el de 2021 desde agosto de 2023. De agosto de 2020 a febrero de 2023, en las secciones del Censo 2011, y desde febrero de 2024, en el seccionado de 2024, llevados al de 2021 con su tabla de paso; semestral.",
+      "lectura": "Mide la presión del uso turístico. Numerador y denominador no son del mismo año: las viviendas son las del Censo 2011 hasta febrero de 2023 y las del Censo 2021 desde febrero de 2024. Los meses de referencia cambiaron en 2024 (de febrero y agosto a mayo y noviembre)."
     },
     "zona_tensionada": {
       "nombre": "Zona de mercado residencial tensionado declarada",
@@ -811,9 +838,9 @@
     "sueldo_necesario": {
       "nombre": "Sueldo neto necesario para no pasar del umbral",
       "unidad": "€ netos por mes",
-      "definicion": "Sueldo neto mensual necesario para que el alquiler de 50 m² en la sección no pase del 30 % del sueldo.",
-      "calculo": "Alquiler mediano por m² de la vivienda colectiva × 50 / 0,30 (superficie cambiable a 70 y 90 m² y umbral al 40 %). Lleva el estado del alquiler.",
-      "lectura": "Es el alquiler expresado en otra unidad, no un indicador nuevo. El umbral del 30 % se inspira en el criterio de zona tensionada de la Ley 12/2023, que usa renta del hogar y suministros; no es ese criterio."
+      "definicion": "Sueldo neto mensual necesario para que el alquiler mensual mediano de la sección no pase del 30 % del sueldo. Al lado, el mínimo teórico: el mismo cálculo con un piso de 50 m².",
+      "calculo": "Alquiler mensual mediano de la vivienda colectiva / 0,30 (umbral cambiable al 40 %). Mínimo teórico (corte superficie, grupo 50): alquiler mediano por m² de la vivienda colectiva × 50 / 0,30 (superficie cambiable a 70 y 90 m² en la web). Cada cifra lleva el estado de su alquiler.",
+      "lectura": "Es el alquiler expresado en otra unidad, no un indicador nuevo. La cifra principal paga la vivienda alquilada mediana de la sección, de unos 79 m² de mediana; el mínimo de 50 m² queda por debajo y no se da sin ella. El umbral del 30 % se inspira en el criterio de zona tensionada de la Ley 12/2023, que usa renta del hogar y suministros; no es ese criterio."
     },
     "sobrecarga": {
       "nombre": "Tasa de sobrecarga por gastos de vivienda (método Eurostat)",
@@ -841,14 +868,14 @@
       "unidad": "% de la mediana",
       "definicion": "Error típico aproximado de la mediana del alquiler mensual (8), en porcentaje de la mediana, por tipología.",
       "calculo": "0,929 × (P75 − P25) / (P50 × √n), con los cuartiles y los contratos (n) del SERPAVI; solo donde se publica la mediana (10 o más contratos).",
-      "lectura": "Orden de magnitud del ruido de la mediana: supone una distribución regular dentro del territorio y no corrige que sean contratos vigentes, no nuevos. Acompaña al 8 y al 14."
+      "lectura": "Orden de magnitud del ruido de la mediana: supone una distribución regular dentro del territorio y no corrige que sean contratos vigentes, no nuevos. Acompaña al 8, al 14 y a la cifra principal del 21, que son el alquiler mensual en otra unidad."
     },
     "margen_alquiler_m2": {
       "nombre": "Margen aproximado de la mediana del alquiler por m²",
       "unidad": "% de la mediana",
       "definicion": "Error típico aproximado de la mediana del alquiler por metro cuadrado (9), en porcentaje de la mediana, por tipología.",
       "calculo": "0,929 × (P75 − P25) / (P50 × √n), con los cuartiles del alquiler por m² y los contratos (n) del SERPAVI; solo donde se publica la mediana (10 o más contratos).",
-      "lectura": "Vale también para el 15 y el 21, que son el alquiler por m² en otra unidad: la ficha da el sueldo necesario con su intervalo y avisa cuando «¿te llega?» queda en el límite entre dos tramos."
+      "lectura": "Vale también para el 15 y para el mínimo de 50 m² del 21, que son el alquiler por m² en otra unidad: la ficha avisa cuando «¿te llega?» queda en el límite entre dos tramos."
     }
   },
   "fuentes": {
@@ -858,6 +885,7 @@
     "nastat_epav": "Estadística de Precios de Alquiler de Vivienda (EPAV)",
     "ine_ipva": "Índice de Precios de Vivienda en Alquiler (IPVA)",
     "notariado": "Portal Estadístico del Notariado",
+    "registradores": "Estadística Registral Inmobiliaria: compraventas de inmuebles de uso residencial por provincia",
     "mivau_valor_tasado": "Valor tasado de la vivienda libre",
     "mivau_transacciones": "Transacciones inmobiliarias (compraventa): valor medio de las de vivienda libre",
     "ine_hipotecas": "Estadística de Hipotecas (H): tipo de interés medio al inicio",
@@ -866,6 +894,7 @@
     "inss_pensiones": "Pensiones contributivas del Sistema de la Seguridad Social (en vigor)",
     "boe_smi": "Real Decreto del salario mínimo interprofesional",
     "ine_censo2021": "Censo de Población y Viviendas 2021",
+    "ine_censo2011": "Censos de Población y Viviendas 2011",
     "ine_vut": "Viviendas de uso turístico (estadística experimental)",
     "zonas_tensionadas": "Declaraciones de zonas de mercado residencial tensionado",
     "ine_seccionado": "Cartografía de secciones censales (anual)",
@@ -886,7 +915,8 @@
     "calculo_propio": "Cálculo propio a partir de las fuentes de cada término",
     "bde_tipos_referencia": "Tipos de interés de referencia oficiales del mercado hipotecario",
     "ine_cne": "Contabilidad Nacional Anual de España: agregados por rama de actividad (base 2020)",
-    "cis_barometros": "Barómetros mensuales del CIS: la vivienda entre los principales problemas"
+    "cis_barometros": "Barómetros mensuales del CIS: la vivienda entre los principales problemas",
+    "ine_ipc": "Índice de Precios de Consumo (IPC): medias anuales del índice general (base 2025)"
   },
   "vocabulario": {
     "contrato": {
@@ -904,7 +934,8 @@
       "mes": "Mes de referencia",
       "ficha": "Ficha (ingreso de referencia)",
       "oferta_privada": "Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE)",
-      "contrato": "Antigüedad del contrato de alquiler (IPVA)"
+      "contrato": "Antigüedad del contrato de alquiler (IPVA)",
+      "superficie": "Superficie supuesta (mínimo teórico del sueldo necesario)"
     },
     "edad": {
       "Y_LT18": "Menos de 18 años",
@@ -943,7 +974,7 @@
     },
     "ficha": {
       "tartera": "Salario mínimo",
-      "mochila": "Joven menor de 35",
+      "mochila": "Joven de 26 a 35",
       "transistor": "Pensionista"
     },
     "mes": {
@@ -970,6 +1001,9 @@
     "sexo": {
       "M": "Hombres",
       "F": "Mujeres"
+    },
+    "superficie": {
+      "50": "Piso teórico de 50 m²"
     },
     "tenencia": {
       "OWN": "Propiedad",

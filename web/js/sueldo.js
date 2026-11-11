@@ -2,12 +2,14 @@
 // la ficha y las pruebas usen las mismas cuentas.
 //
 // Dos modos:
-//   - «necesario» (por defecto): sueldo neto necesario para que el alquiler de la superficie
-//     elegida no pase del umbral (indicador 21), en seis tramos con los cortes del manifiesto;
+//   - «necesario» (por defecto): sueldo neto necesario para que el alquiler mensual mediano real
+//     no pase del umbral (indicador 21; decisión 4, tarea 40), en seis tramos con los cortes del
+//     manifiesto; la ficha da al lado el mínimo teórico con la superficie elegida (formulas.js);
 //   - «llega» («¿te llega?», al escribir un sueldo o elegir una ficha): alquiler / ingreso, en
 //     tres tramos (hasta el 30 %, del 30 al 40 % y más del 40 %), con la proporción de secciones
 //     donde el alquiler cabe por debajo del umbral; en la ficha, también los euros que quedan al
-//     mes (ingreso − alquiler; tarea 34).
+//     mes (ingreso − alquiler; tarea 34). Las fichas de una persona pagan la superficie de la
+//     ficha (regla 8) y llevan al lado la cifra con el alquiler mensual mediano real (tarea 40).
 // Cada cálculo tiene dos caras que deben coincidir: la expresión de estilo de MapLibre (color
 // del mapa, sin volver a descargar teselas) y la función en JS (ficha, resumen, leyenda).
 
@@ -16,6 +18,9 @@ import { pasosDeRampa } from './colores.js';
 
 export const FICHAS_PERFIL = ['llave', 'mochila', 'tartera', 'transistor'];
 export const SUPERFICIES = [50, 70, 90];
+// Piso de dos sueldos: 70 m² por defecto, a la vista y cambiable (plan §3.1 y §11, pregunta 43 h):
+// «Tu ficha» con segundo sueldo, la línea de dos sueldos de la ficha y «entrar».
+export const SUPERFICIE_DOS_SUELDOS = 70;
 export const UMBRALES = [30, 40];
 export const LIMITES_LLEGA = [0.3, 0.4];
 
@@ -127,16 +132,22 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
   const sinIngresoEn = (n) => n === 'ccaa' && perfil?.nivel === 'provincia';
   const ingresoDe = (seccion) => (sinIngresoEn(nivel) ? null : perfil ? ingresoPerfil(perfil, seccion) : fijo);
   const m2Serie = serie('alquiler_m2');
+  // Tarea 40 (decisión 4): al lado, el mismo ingreso frente al alquiler mensual mediano real de la
+  // sección. El mapa sigue con la superficie de la ficha (regla 8). Sin esa serie, nada.
+  const realSerie = serie('alquiler_mes');
   return {
     ficha,
     series: [m2Serie],
+    serieReal: realSerie,
     ingreso: (seccion) => ingresoDe(seccion) || null,
     calcular(seccion, x) {
       const m2 = x(m2Serie);
       const ingreso = ingresoDe(seccion);
       if (m2 === null || !ingreso) return null;
       const alquiler = m2 * superficie;
-      return { alquiler, ingreso, ratio: alquiler / ingreso };
+      const mes = x(realSerie);
+      const real = mes === null || mes === undefined ? null : { alquiler: mes, ratio: mes / ingreso };
+      return { alquiler, ingreso, ratio: alquiler / ingreso, ...(real ? { real } : {}) };
     },
     expresion(idSeccion, nivelCapa = nivel) {
       const ingreso = sinIngresoEn(nivelCapa) ? 0 : perfil ? expresionIngresoPerfil(perfil, idSeccion) : fijo;
@@ -214,6 +225,22 @@ export function resumenLlega(calculo, secciones, x, umbral) {
     if (r.ratio <= umbral) caben++;
   }
   return { con, caben, proporcion: con ? caben / con : null };
+}
+
+// Tarea 40: la misma proporción con el alquiler mensual mediano real de cada sección (`real` de
+// calcular(); las fichas de una persona). Sin esa cifra en ninguna sección (la llave, que ya paga
+// el alquiler real), null.
+export function resumenLlegaReal(calculo, secciones, x, umbral) {
+  if (!calculo.serieReal) return null;
+  let con = 0;
+  let caben = 0;
+  for (let i = 0; i < secciones.length; i++) {
+    const r = calculo.calcular(secciones[i], (serie) => x(serie, i));
+    if (!r?.real) continue;
+    con++;
+    if (r.real.ratio <= umbral) caben++;
+  }
+  return con ? { con, caben, proporcion: caben / con } : null;
 }
 
 // Posición (0–1) de un valor en la regla de la leyenda: tramos de igual anchura entre los

@@ -124,12 +124,43 @@ test_that("la tabla larga da la situación a 31 de diciembre de todos los munici
   expect_true(all(larga$estado == "dato" & larga$nivel == "municipio" & larga$fuente == "zonas_tensionadas"))
 })
 
+test_that("prórrogas (pregunta 46 e): resolución nueva que alarga la declaración, desde el fin del periodo anterior", {
+  ruta <- xml_boe_inventado(id = "BOE-A-2102-1", publicacion = "21020301", filas = list(
+    c("Cataluña.", "el Masnou.", "Un año desde el día siguiente a la finalización del periodo de vigencia anterior.")))
+  b <- dplyr::bind_rows(boe_inventado(), leer_boe_zonas_tensionadas(ruta))
+  expect_equal(zt_anios_vigencia("Un año desde el día siguiente a la finalización del periodo de vigencia anterior."), 1L)
+  expect_false(zt_desde_publicacion("Un año desde el día siguiente a la finalización del periodo de vigencia anterior."))
+  z <- zonas_inventadas()
+  z$prorroga_de <- NA_character_
+  p <- z[1, ]
+  p$boe <- "BOE-A-2102-1"; p$fecha_publicacion <- as.Date("2102-03-01"); p$prorroga_de <- "BOE-A-2099-1"
+  p$fecha_inicio <- as.Date("2102-03-16"); p$fecha_fin <- as.Date("2103-03-15")
+  p$url <- sprintf(URL_BOE_ZONAS_TEXTO, p$boe)
+  z2 <- dplyr::bind_rows(z, p)
+  x <- comprobar_zonas_tensionadas(z2, b, territorios_inventados())
+  expect_true(all(x$calculado == 0), info = paste(x$detalle[x$calculado != 0], collapse = "; "))
+  # Sin la declaración que prorroga, o con el periodo contado desde la publicación, no pasa
+  p2 <- p; p2$prorroga_de <- "BOE-A-2098-9"
+  x2 <- comprobar_zonas_tensionadas(dplyr::bind_rows(z, p2), b, territorios_inventados())
+  expect_gt(sum(x2$calculado[x2$id == "zonas_tensionadas_fechas"]), 0)
+  p3 <- p; p3$fecha_inicio <- as.Date("2102-03-02")
+  x3 <- comprobar_zonas_tensionadas(dplyr::bind_rows(z, p3), b, territorios_inventados())
+  expect_gt(sum(x3$calculado[x3$id == "zonas_tensionadas_fechas"]), 0)
+  # La prórroga alarga la situación: el Masnou sigue declarado a 31 de diciembre de 2102
+  larga <- armonizar_zonas_tensionadas(z2, territorios_inventados(), version = "2099-01-01", anios = 2101:2103)
+  v <- function(cod, anio) larga$valor[larga$geo_id == cod & larga$anio == anio]
+  expect_equal(v("08118", 2102), 2)
+  expect_equal(v("08101", 2102), 0)       # l'Hospitalet, sin prórroga
+  expect_equal(v("08118", 2103), 0)
+})
+
 test_that("el inventario real cumple su forma: códigos de cinco cifras, ámbitos y fechas", {
   z <- leer_zonas_tensionadas(file.path("..", "..", "inventario", "zonas_tensionadas.csv"))
   expect_true(all(grepl("^[0-9]{5}$", z$municipio)))
   expect_true(all(grepl("^BOE-A-[0-9]{4}-[0-9]+$", z$boe)))
   expect_true(all(z$ambito %in% names(AMBITOS_ZONAS_TENSIONADAS)))
-  expect_true(all(z$fecha_inicio == z$fecha_publicacion + 1))
+  declaracion <- is.na(z$prorroga_de) | !nzchar(z$prorroga_de)   # las prórrogas pueden contar desde el periodo anterior
+  expect_true(all(z$fecha_inicio[declaracion] == z$fecha_publicacion[declaracion] + 1))
   expect_true(all(z$fecha_fin > z$fecha_inicio))
   expect_equal(z$url, sprintf(URL_BOE_ZONAS_TEXTO, z$boe))
 })

@@ -1,6 +1,9 @@
 # Indicadores derivados de F2 y perfiles de las fichas (plan §3.1, §5 C y §6.6):
-#   14 esfuerzo_residentes: alquiler mensual mediano × 12 / renta neta media por hogar (ADRH), en %;
-#   21 sueldo_necesario: alquiler mediano por m² × 50 m² / 0,30, en € netos al mes (mapa por defecto);
+#   14 esfuerzo_residentes: alquiler mensual mediano × 12 / renta neta media por hogar (ADRH), en %
+#      (tarea 41: «alquiler mediano sobre renta media del barrio», solo en la ficha);
+#   21 sueldo_necesario, con dos cifras (decisión 4; tarea 40): la principal, alquiler mensual mediano /
+#      0,30 (corte «total»; mapa por defecto), y al lado el mínimo teórico, alquiler mediano por m² × 50 m²
+#      / 0,30 (corte «superficie», grupo «50»), en € netos al mes;
 #   15 peso_alquiler_ingreso: alquiler mediano por m² × 50 m² / ingreso neto mensual de la ficha, en %. Se
 #      calcula en el navegador con la ficha elegida; en R, la tartera, la mochila y el transistor, como control.
 # El alquiler es siempre el de la vivienda colectiva (pregunta abierta 12). Estado: el peor de sus
@@ -11,7 +14,8 @@
 # Términos tal como se publican: el alquiler, la renta y el ingreso de la ficha entran redondeados a
 # un decimal con el redondeo de la guía, como los recibe la web, para que la página y R den la misma
 # cifra (pregunta abierta 19). La tabla larga del SERPAVI y del ADRH conserva la precisión de la fuente.
-# El 14 y el 21 no tienen desglose (corte y grupo «total»); el 15 lleva la ficha como corte.
+# El 14 no tiene desglose (corte y grupo «total»); el 15 lleva la ficha como corte; el 21, la cifra
+# principal sin desglose y el mínimo teórico con la superficie como corte (CORTE_MINIMO_SUELDO).
 
 ORDEN_ESTADOS <- c("dato", "estimado", "secreto", "ausente")
 
@@ -19,6 +23,8 @@ ORDEN_ESTADOS <- c("dato", "estimado", "secreto", "ausente")
 # defecto; umbral del 30 % para el sueldo necesario. La web los cambia (70 y 90 m², 40 %).
 SUPERFICIE_FICHA <- 50
 UMBRAL_SUELDO <- 0.30
+# Tarea 40: corte del mínimo teórico del sueldo necesario (21); el grupo es la superficie («50»).
+CORTE_MINIMO_SUELDO <- "superficie"
 
 # Niveles del esfuerzo de residentes: donde el SERPAVI y el ADRH publican los dos términos.
 NIVELES_ESFUERZO <- c("sc", "municipio")
@@ -53,12 +59,15 @@ SMI_FICHAS <- tibble::tribble(
 REFERENCIA_TARTERA_2026 <- 1332   # referencias_validacion.csv, smi_neto
 
 # Rangos de la compuerta: fuera de [minimo, maximo], bloqueo (derivados_rango); fuera de
-# [aviso_min, aviso_max], alerta por cifra (derivados_rango_detalle).
+# [aviso_min, aviso_max], alerta por cifra (derivados_rango_detalle). Por indicador y corte (tarea 40:
+# el sueldo necesario con el alquiler mediano real llega a 11.679 € en una sección de 2024; el mínimo
+# de 50 m², a 4.283 €).
 RANGOS_DERIVADOS <- tibble::tribble(
-  ~indicador,            ~minimo, ~maximo, ~aviso_min, ~aviso_max,
-  "esfuerzo_residentes",  0.1,     100,     3,          60,
-  "sueldo_necesario",     100,     10000,   200,        4000,
-  "peso_alquiler_ingreso",       0.1,     300,     3,          150
+  ~indicador,              ~corte,                ~minimo, ~maximo, ~aviso_min, ~aviso_max,
+  "esfuerzo_residentes",   "total",                0.1,     100,     3,          60,
+  "sueldo_necesario",      "total",                100,     20000,   200,        10000,
+  "sueldo_necesario",      CORTE_MINIMO_SUELDO,    100,     10000,   200,        4000,
+  "peso_alquiler_ingreso", "ficha",                0.1,     300,     3,          150
 )
 
 # Peor estado de varios términos, fila a fila; un término que falta (NA) cuenta como «ausente».
@@ -117,12 +126,21 @@ calcular_esfuerzo_residentes <- function(larga_serpavi, larga_adrh, niveles = NI
     select(geo_id, nivel, anio, indicador, corte, grupo, valor, estado)
 }
 
-# 21: alquiler mediano por m² (VC) × superficie / umbral, en todos los niveles del SERPAVI. Es el
-# alquiler en otra unidad: lleva el estado del alquiler.
+# 21, en todos los niveles del SERPAVI, con dos cifras (decisión 4; tarea 40):
+#   - principal (corte «total»): alquiler mensual mediano (VC) / umbral, el alquiler real de la sección;
+#   - mínimo teórico (corte CORTE_MINIMO_SUELDO, grupo con la superficie): alquiler mediano por m² (VC)
+#     × superficie / umbral.
+# Es el alquiler en otra unidad: cada cifra lleva el estado de su alquiler (el mensual y el por m²
+# tienen los mismos estados).
 calcular_sueldo_necesario <- function(larga_serpavi, superficie = SUPERFICIE_FICHA, umbral = UMBRAL_SUELDO) {
-  alquiler_vc(larga_serpavi, "alquiler_m2") |>
+  real <- alquiler_vc(larga_serpavi, "alquiler_mes") |>
     transmute(geo_id, nivel, anio, indicador = "sueldo_necesario", corte = "total", grupo = "total",
+              valor = if_else(con_valor(estado), valor / umbral, NA_real_), estado)
+  minimo <- alquiler_vc(larga_serpavi, "alquiler_m2") |>
+    transmute(geo_id, nivel, anio, indicador = "sueldo_necesario", corte = CORTE_MINIMO_SUELDO,
+              grupo = format(superficie, trim = TRUE),
               valor = if_else(con_valor(estado), valor * superficie / umbral, NA_real_), estado)
+  bind_rows(real, minimo)
 }
 
 # Ingreso neto mensual (12 pagas) de cada ficha:
@@ -238,9 +256,14 @@ terminos_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles,
   esfuerzo <- derivados |> filter(indicador == "esfuerzo_residentes") |>
     left_join(mes, by = clave) |> left_join(renta, by = clave) |>
     mutate(num = num * 12, recalculado = 100 * num / den)
-  sueldo <- derivados |> filter(indicador == "sueldo_necesario") |>
-    left_join(m2, by = clave) |>
-    mutate(den = umbral, e_den = "dato", num = num * superficie, recalculado = num / den)
+  sueldo <- bind_rows(
+    derivados |> filter(indicador == "sueldo_necesario", corte == "total") |>
+      left_join(mes, by = clave),
+    derivados |> filter(indicador == "sueldo_necesario", corte == CORTE_MINIMO_SUELDO) |>
+      left_join(m2, by = clave) |>
+      mutate(num = num * as.numeric(grupo))
+  ) |>
+    mutate(den = umbral, e_den = "dato", recalculado = num / den)
   ingresos <- ingresos_fichas(perfiles) |>
     transmute(grupo = ficha, provincia = if_else(ficha == "tartera", NA_character_, geo_id), anio, den = ingreso, e_den = estado)
   peso <- derivados |> filter(indicador == "peso_alquiler_ingreso") |>
@@ -271,7 +294,7 @@ comprobar_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles, 
     mutate(esperado = if_else(indicador == "peso_alquiler_ingreso", estado_peso_alquiler(e_num, e_den),
                               names(rango)[pmax(coalesce(rango[e_num], 4L), coalesce(rango[e_den], 4L))]),
            desviacion = 100 * abs(valor - recalculado) / abs(recalculado))
-  etiqueta_derivado <- function(x) if_else(x$indicador == "peso_alquiler_ingreso", paste(x$indicador, x$grupo), x$indicador)
+  etiqueta_derivado <- function(x) if_else(x$corte %in% c("ficha", CORTE_MINIMO_SUELDO), paste(x$indicador, x$grupo), x$indicador)
 
   terminos <- t |> filter(!is.na(valor)) |> mutate(detalle = etiqueta_derivado(pick(everything()))) |>
     group_by(anio, detalle) |>
@@ -283,7 +306,7 @@ comprobar_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles, 
     summarise(calculado = sum(estado != esperado | is.na(valor) == con_valor(estado)), .groups = "drop") |>
     transmute(id = "derivados_estado", anio, detalle, calculado, referencia = 0)
 
-  con_rango <- derivados |> filter(!is.na(valor)) |> inner_join(rangos, by = "indicador")
+  con_rango <- derivados |> filter(!is.na(valor)) |> inner_join(rangos, by = c("indicador", "corte"))
   fuera <- con_rango |> mutate(detalle = etiqueta_derivado(pick(everything()))) |>
     group_by(anio, detalle) |>
     summarise(calculado = sum(valor < minimo | valor > maximo), .groups = "drop") |>
@@ -313,7 +336,7 @@ comprobar_derivados <- function(derivados, larga_serpavi, larga_adrh, perfiles, 
 
 # Cifras para el informe: estados por indicador, nivel y año, y percentiles de las cifras con valor.
 resumen_derivados <- function(larga) {
-  etiqueta <- if_else(larga$corte == "ficha", paste(larga$indicador, larga$grupo), larga$indicador)
+  etiqueta <- if_else(larga$corte %in% c("ficha", CORTE_MINIMO_SUELDO), paste(larga$indicador, larga$grupo), larga$indicador)
   x <- mutate(larga, indicador = etiqueta)
   list(
     estados = x |> count(indicador, nivel, anio, estado) |>

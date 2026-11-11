@@ -6,7 +6,7 @@
 
 **Pregunta:** ¿A quién le queda sueldo después de pagar la vivienda? Dónde, desde cuándo y para quién ha cambiado la relación entre lo que cuesta la vivienda y lo que se cobra. Para quien ya está en el tablero y para quien entra nuevo en la partida: para quien ya vive de alquiler y para quien busca piso hoy.
 
-Atlas web de vivienda, salarios y otros indicadores sociales para España, por sección censal y desde 2015. Incluye fichas de perfil (hogar del barrio, joven menor de 35, salario mínimo, pensionista y el sueldo de cada usuario) y una sección europea de sobrecarga por gastos de vivienda con el método de Eurostat.
+Atlas web de vivienda, salarios y otros indicadores sociales para España, por sección censal y desde 2015. Incluye fichas de perfil (hogar del barrio, joven de 26 a 35, salario mínimo, pensionista y el sueldo de cada usuario) y una sección europea de sobrecarga por gastos de vivienda con el método de Eurostat.
 
 *English.* *De renta en renta* is left untranslated: it plays on a rhyme from the Spanish Game of the Goose, and *renta* means both rent and income. A web atlas of housing costs and wages in Spain at census-tract level, from 2015 onwards, with reference profiles, a pay calculator that runs in the browser, and a European housing cost overburden section (Eurostat method). Under construction.
 
@@ -44,8 +44,10 @@ testthat::test_dir("pruebas/testthat")
 
 La capa de precios de oferta de los portales está apagada por defecto. Se enciende con la variable de entorno `PORTALES=TRUE`.
 
+Con cada push, GitHub pasa las pruebas que no necesitan datos (`.github/workflows/pruebas.yml`): la batería de `testthat` y las de la web.
+
 ## Licencias
 
 - Código: MIT (`LICENSE`).
 - Datos derivados, textos e inventario: CC BY-SA 4.0 (`LICENCIA_DATOS.md`).
-- Los datos de origen mantienen las condiciones de cada fuente (`inventario/fuentes.csv`).
+- Los datos de origen mantienen las condiciones de cada fuente (`inventario/fuentes.csv`); qué obliga cada una, en la nota metodológica (§2.2).

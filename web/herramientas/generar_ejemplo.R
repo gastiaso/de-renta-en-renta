@@ -269,8 +269,10 @@ manifiesto <- list(
   indicadores = indicadores,
   mapas = list(
     # formula: nombre de una transformación conocida por la web (js/formulas.js), no código.
-    sueldo_necesario = list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo",
-                            cortes = c(2600L, 3200L, 3800L, 4400L, 5000L), decimales = 0L),
+    # Tarea 40: la cifra principal con el alquiler mensual real y, al lado, el mínimo de 50 m².
+    sueldo_necesario = list(base = "alquiler_mes", formula = "alquiler_mes_a_sueldo",
+                            minimo = list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo"),
+                            cortes = c(3000L, 3800L, 4500L, 5200L, 6000L), decimales = 0L),
     renta_hogar = list(base = "renta_hogar", formula = "directo",
                        cortes = c(35000L, 45000L, 55000L, 65000L), decimales = 0L),
     alquiler_m2 = list(base = "alquiler_m2", formula = "directo", cortes = c(14, 17, 20, 23), decimales = 1L),

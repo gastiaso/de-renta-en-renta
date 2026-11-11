@@ -17,10 +17,17 @@
   },
   "fichas": {
     "llave": "Neighbourhood household",
-    "mochila": "Under-35",
+    "mochila": "Young adult, 26 to 35",
     "tartera": "Minimum wage",
     "transistor": "Pensioner",
     "peon": "Your token"
+  },
+  "fichas_metodo": {
+    "llave": "Household mean: average net income per household in the tract (INE), divided by 12.",
+    "mochila": "Individual median: estimated net pay of people aged 26 to 35 in their province (AEAT), over 12 months.",
+    "tartera": "Individual legal minimum: each year's net statutory minimum wage, over 12 months.",
+    "transistor": "Individual mean: average net retirement pension in the province (Social Security), over 12 months. It is the mean because Social Security does not publish the median pension by province.",
+    "peon": "Own figure: the net pay typed in, for one person or for two with the second pay, over 12 months."
   },
   "avisos": {
     "ejemplo": "Sample data",
@@ -58,6 +65,8 @@
       "sin_dato": "No data",
       "secreto": "Statistical confidentiality",
       "supuestos": "{superficie} m² · {umbral} threshold",
+      "supuestos_real": "Median monthly rent in the tract · {umbral} threshold",
+      "minimo_ficha": "The profile also gives the theoretical minimum for a {superficie} m² flat.",
       "ficha_mediana": "{ficha} (median of provinces)",
       "llave": "{ficha}: €{desde} to €{hasta} (tract quartiles)",
       "llega_titulo": "Can you make rent?",
@@ -83,6 +92,8 @@
       "superficie_fija": "Single-person tokens use {superficie} m².",
       "superficie_llave": "The key pays the median rent of its tract.",
       "supuestos_mapa": "Home size and threshold change the pay needed and “Can you make rent?”, not the map on screen.",
+      "superficie_minimo": "The map uses each tract's median monthly rent; the home size chosen changes the theoretical minimum the profile gives alongside.",
+      "resumen_real": "With each tract's median monthly rent, in {pct} ({caben} of {total}).",
       "peon_sin_sueldo": "Type a pay figure to use your token.",
       "resumen_peon": "It fits your pay in {pct} of tracts with data ({caben} of {total}).",
       "resumen_ficha": "It fits “{ficha}” in {pct} of tracts with data ({caben} of {total}).",
@@ -149,6 +160,7 @@
         "umbral": "threshold",
         "contratos": "contracts",
         "margen_pct": "margin_pct",
+        "valor_minimo": "minimum_value",
         "categoria": "category",
         "etiqueta": "label"
       },
@@ -168,10 +180,22 @@
       "cerrar": "Close the profile",
       "evolucion": "Over time",
       "evolucion_llega": "Rent as a share of income over time",
+      "evolucion_grafico": "Chart over time: {titulo}, from {desde} to {hasta}",
+      "evolucion_banda": "Shaded band: the figure ± the approximate margin of the median rent.",
+      "evolucion_pocos": "Hollow dot: fewer than {umbral} contracts.",
+      "cabecera_periodo": "Year",
+      "cabecera_variacion": "Change",
+      "variacion_media": "†: average annual change over the last three years, because one of the two years has fewer than {umbral} contracts.",
+      "variacion_pocos": "—: no change shown, because one of the two years has fewer than {umbral} contracts and there is no figure three years earlier.",
+      "euros_corrientes": "In current euros of each year, not adjusted for inflation.",
+      "euros_corrientes_resto": "Money left over is in current euros of each year, not adjusted for inflation.",
+      "ipc_periodo": "General CPI from {desde} to {hasta}: {variacion} (INE, annual averages).",
       "ingreso_fijo": "Today's income in every year: only rent changes.",
       "ingreso_anio": "With the token's income for each year: both rent and income change.",
       "del_ingreso": "of income goes on rent",
       "alquiler_ingreso": "Rent: €{alquiler} · income: €{ingreso} a month",
+      "minimo": "Theoretical minimum for a {superficie} m² flat: €{cifra} net a month",
+      "real_llega": "With the tract's median monthly rent (€{alquiler}): {pct} of income",
       "sin_seccion": "Area without a census section",
       "sin_seccion_texto": "Common land that belongs to no municipality. The INE assigns it no section and it has no population, so there are no data.",
       "provincias": "Provinces",
@@ -209,6 +233,8 @@
       "sin_ingreso_nivel": "The {ficha} token has one income per province: there is no single one for the whole autonomous community.",
       "paga_14": "In 14 payments a year: €{euros} per payment",
       "dos_sueldos": "Split between two equal pays: €{euros} each",
+      "dos_sueldos_m2": "Split between two equal pays, for a {superficie} m² flat: €{euros} each",
+      "dos_sueldos_superficie": "Flat for two pays",
       "tus_terminos": "With your payments",
       "ingreso_peon": {
         "12": "Your income: €{neto} a month.",
@@ -279,23 +305,23 @@
     "dado_nota": "A random tract with published rent in {anio}.",
     "fichas_titulo": "For whom?",
     "fichas": {
-      "llave": "Average household income of each tract against its median rent.",
-      "mochila": "Estimated median wage of people aged 26 to 35 in their province.",
-      "tartera": "Net minimum wage of each year.",
-      "transistor": "Average net retirement pension in their province.",
-      "peon": "The pay you type, with 12 or 14 payments a year and a second pay."
+      "llave": "Household mean: average net household income of each tract against its median rent.",
+      "mochila": "Individual median: estimated net pay of people aged 26 to 35 in their province.",
+      "tartera": "Individual legal minimum: net minimum wage of each year.",
+      "transistor": "Individual mean: average net retirement pension in their province (the median is not published by province).",
+      "peon": "Own figure: the net pay typed in, with 12 or 14 payments a year and a second pay."
     },
     "cartas_titulo": "Atlas cards",
     "cartas": {
       "fuente": "Source: {fuentes} · {anio}",
       "sueldo": {
         "titulo": "Pay needed",
-        "texto": "To rent {superficie} m² without going over {umbral} of pay, the median tract requires €{mediana} net a month in {anio}. One tract in ten requires less than €{p10}; another one in ten, more than €{p90}.",
+        "texto": "For its median monthly rent to stay within {umbral} of pay, the median tract requires €{mediana} net a month in {anio}; for a notional {superficie} m² flat, €{minimo}. One tract in ten requires less than €{p10}; another one in ten, more than €{p90}.",
         "enlace": "See the map of pay needed"
       },
       "smi": {
         "titulo": "Minimum wage",
-        "texto": "With the {anio} minimum wage (€{neto} net a month, over 12 months), the rent of a {superficie} m² flat takes more than 30 % of pay in {pct30} of the tracts with data, and more than 40 % in {pct40}.",
+        "texto": "With the {anio} minimum wage (€{neto} net a month, over 12 months), the rent of a {superficie} m² flat takes more than 30 % of pay in {pct30} of the tracts with data, and more than 40 % in {pct40}. With each tract's median monthly rent, in {pct30real} and {pct40real}.",
         "enlace": "See the map with the minimum wage"
       },
       "sobrecarga": {
@@ -576,9 +602,9 @@
       },
       "hist-tipos": {
         "corto": "Interest rates",
-        "titulo": "Mortgage market reference interest rates",
-        "subtitulo": "Official rates published by the Banco de España, in percent. Monthly.",
-        "fuente": "Source: own elaboration with data extracted from the Banco de España website (www.bde.es): Statistical Bulletin, table 19.1, series D_1T9H0000 and D_1E723706.EUR. Data downloaded on {version}."
+        "titulo": "Interest rates on housing loans",
+        "subtitulo": "Rate on new loans for house purchase, the same one used to compute the theoretical burden; as a reference, the one-year MIBOR up to 1998 and the 12-month Euribor since 1999, which are different indices. In percent. Monthly.",
+        "fuente": "Source: own elaboration with data extracted from the Banco de España website (www.bde.es): Summary indicators, table 1.5, series D_IMVTIPLV; Statistical Bulletin, table 19.1, series D_1E723706.EUR (up to 1998) and D_1NBAF472 (since 1999). Data downloaded on {version}."
       },
       "hist-tasado": {
         "corto": "Appraised value",
@@ -589,15 +615,16 @@
       "hist-sueldo": {
         "corto": "Average wage",
         "titulo": "Average gross wage per employee",
-        "subtitulo": "Gross wages and salaries of the whole economy divided by the employees of the year. Annual, since 1995.",
+        "subtitulo": "Gross wages and salaries of the whole economy divided by the employees of the year. Annual; the series starts in 1995. It lies above the AEAT average wage.",
         "fuente": "Source: INE, Annual Spanish National Accounts, base 2020 (tables 71129 and 71133). Data downloaded on {version}."
       }
     },
     "series": {
       "anios_renta": "Years of income",
       "esfuerzo_teorico": "Theoretical burden",
+      "tipo_prestamos": "Rate on new housing loans",
       "tipo_hipotecas": "Average rate on mortgage loans over three years",
-      "mibor_euribor": "One-year MIBOR (follows the Euribor since 1999)",
+      "mibor_euribor": "Reference: one-year MIBOR up to 1998 and 12-month Euribor since 1999 (different indices)",
       "valor_tasado": "Appraised value",
       "sueldo_asalariado": "Average gross wage per employee"
     },
@@ -647,19 +674,19 @@
     "cis_estudio_col": "Study",
     "cis_entrevistas_col": "Interviews",
     "cis_aviso": "Opinion, not a register: the series measures how many people name housing as a problem, not its price or what it costs to pay for it.",
-    "cis_fuente": "Source: own elaboration with data from the Centro de Investigaciones Sociológicas (CIS, www.cis.es), monthly barometers, under a CC BY 4.0 licence. Changes: figures rounded to one decimal; months without open results are left out. The CIS neither takes part in nor sponsors this atlas.",
+    "cis_fuente": "Source: own elaboration with data from the Centro de Investigaciones Sociológicas (CIS, www.cis.es), monthly barometers, under a CC BY 4.0 licence. Changes: figures rounded to one decimal; the six months published only as PDF (July 2014 and five in 2025), transcribed by hand. The CIS neither takes part in nor sponsors this atlas.",
     "cis_fecha": "Barometers published up to {fecha}.",
     "cis_sin_datos": "There are no CIS data in this copy of the website (datos/cis_vivienda.json). They are generated with targets::tar_make(names = ficheros_web_cis).",
-    "cis_metodo": "Housing as a problem (CIS): in the monthly barometer, share of respondents who name housing, without a list of answers, among Spain’s three main problems or among the three that affect them most personally. It is an opinion survey, not a register. Since January 2014; no barometer in August, and months without open results are left as gaps. Validation: the series reproduces the figures the CIS gives in its press releases.",
+    "cis_metodo": "Housing as a problem (CIS): in the monthly barometer, share of respondents who name housing, without a list of answers, among Spain’s three main problems or among the three that affect them most personally. It is an opinion survey, not a register. Since January 2014; no barometer in August. The months whose results are only in PDF (July 2014 and February, April, May, June and July 2025) are transcribed by hand, with the link to each PDF and its check. Validation: the series reproduces the figures the CIS gives in its press releases.",
     "metodo": {
       "titulo": "How to read these series",
       "renta": "Years of income (Banco de España): average price of a standard open-market home (93.75 m² until 2004; afterwards, the average floor area of registered sales) divided by the estimated gross annual income of the median household, based on the Survey of Household Finances, the National Accounts and the Labour Force Survey.",
       "esfuerzo": "Theoretical burden (Banco de España): first-year payments on a loan for 80% of the value of that home, at the average rate on new housing loans and the average mortgage term, as a percentage of the disposable income of the median household. No tax deductions throughout the series.",
-      "tipos": "Rates (Banco de España, also published monthly in the Official State Gazette): average rate on mortgage loans over three years for buying open-market housing from all credit institutions, since November 1990, and one-year MIBOR, which has followed the one-year Euribor since 1999.",
+      "tipos": "Rates (Banco de España): the main line is the rate on new loans to households for house purchase, since January 1989, the same one the Banco de España uses for the theoretical burden (up to 2002, under its Circular 8/1990; since 2003, under Circular 4/2002: break marked). As a reference, the one-year MIBOR up to December 1998 and the 12-month Euribor since January 1999: they are different indices and the change is marked.",
       "tasado": "Appraised value (MIVAU): average appraisal value of open-market housing per square metre, not the price paid. A year in the Banco de España table is the simple mean of its four quarters.",
-      "sueldo": "Wage (INE, National Accounts): gross wages and salaries of the whole economy divided by the employees of each year, including those who work part of the year or part-time. It is not the AEAT average wage used by the backpack token.",
+      "sueldo": "Wage (INE, National Accounts): gross wages and salaries of the whole economy divided by the employees of each year, including those who work part of the year or part-time. The series starts in 1995, with the current accounting base. It lies above the AEAT average wage used by the «Young adult, 26 to 35» token (in 2024, €31,200 against €24,962): the National Accounts divide by the average number of employees over the year, so someone who works a few months counts only for that share, and they include the Basque Country and Navarre, which the AEAT does not cover.",
       "mezcla": "Each series keeps its source, unit and period (quarter, month or year): they are not combined into an indicator. The charts share the time axis so that they can be read one below the other.",
-      "compuerta": "Validation: the series reproduce the figures the Banco de España publishes in its PDF table and the reference rate published in the Official State Gazette; the MIVAU appraised value matches the one reproduced by the Banco de España in every quarter since 1995."
+      "compuerta": "Validation: the series reproduce the figures the Banco de España publishes in its PDF table and the reference rate published in the Official State Gazette; the MIVAU appraised value matches the one reproduced by the Banco de España in every quarter since 1995. If the Banco de España revises a series, the gate warns and asks for the reference to be updated, without blocking."
     },
     "pie": {
       "fuentes": "Sources: Banco de España (Summary indicators, table 1.5; Statistical Bulletin, table 19.1), MIVAU (Appraised value of open-market housing), INE (Annual Spanish National Accounts) and CIS (monthly barometers).",
@@ -680,7 +707,7 @@
       "unidad": "€ per household per year",
       "definicion": "Average disposable income of households in the tract.",
       "calculo": "Published by INE (ADRH). On other tract maps, mean weighted by the number of households (population divided by average household size), with the same status rules as indicator 1.",
-      "lectura": "This is household income, often with several earners, not a wage. It is the denominator of resident rent burden (14) and the income of the «neighbourhood household» token."
+      "lectura": "This is household income, often with several earners, not a wage. It is the denominator of median rent over the area's average household income (14) and the income of the «neighbourhood household» token."
     },
     "renta_uc_mediana": {
       "nombre": "Median income per consumption unit",
@@ -711,25 +738,25 @@
       "lectura": "Measures inequality within the neighbourhood, not between neighbourhoods. No data for Álava until 2019, Gipuzkoa in 2015 or Navarre until 2020."
     },
     "salario_medio": {
-      "nombre": "Average annual wage per employee (total and under 35)",
+      "nombre": "Average annual wage per employee (total and aged 26 to 35)",
       "unidad": "€ per employee per year (gross)",
       "definicion": "Average gross annual wage of employees with tax residence in the province, overall and aged 26 to 35.",
       "calculo": "Published by the Spanish Tax Agency (AEAT, Labour market and pensions in tax sources, table by province, age and sex): wages / employees, overall and for the 26 to 35 age band; regions and Spain, with their published figure. The Basque Country and Navarre are not covered (foral tax residence) and have no data.",
-      "lectura": "Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «under-35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region, and then to monthly net pay spread over 12, with the employee's social security contribution and the average AEAT withholding by region and income band (plan §3.1, method B)."
+      "lectura": "Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «young adult, 26 to 35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region, and then to monthly net pay spread over 12, with the employee's social security contribution and the average AEAT withholding by region and income band (plan §3.1, method B)."
     },
     "alquiler_mes": {
       "nombre": "Monthly rent (median)",
       "unidad": "€ per month",
       "definicion": "Median monthly rent of current main-residence tenancies in the tract, by building type (apartment and single-family); the first and third quartiles are also published.",
       "calculo": "Published by the Housing Ministry (SERPAVI) from rents declared in personal income tax and the Cadastre, on the 2021 tracts for the whole series. Not published with fewer than 10 tenancies.",
-      "lectura": "Covers the whole rented stock, not new contracts: newcomers pay more. The Basque Country and Navarre join SERPAVI between 2021 and 2024."
+      "lectura": "Covers the whole rented stock, not new contracts: newcomers pay more. It only counts landlords who are natural persons and declare the letting as a main residence in personal income tax: companies and public housing, undeclared lettings and lettings to relatives are left out (Housing Ministry methodology, 18-Mar-2026). The Basque Country and Navarre join SERPAVI between 2021 and 2024."
     },
     "alquiler_m2": {
       "nombre": "Rent per square metre",
       "unidad": "€ per m² per month",
       "definicion": "Median monthly rent per square metre of current main-residence tenancies in the tract, by building type (apartment and single-family).",
       "calculo": "Published by the Housing Ministry (SERPAVI), using Cadastre floor area.",
-      "lectura": "Allows comparing tracts with different dwelling sizes and underlies the pay needed (21)."
+      "lectura": "Allows comparing tracts with different dwelling sizes and underlies the pay needed (21). Same universe as 8: only landlords who are natural persons declaring the letting in personal income tax."
     },
     "var_alquiler": {
       "nombre": "Annual change in rents",
@@ -741,9 +768,9 @@
     "precio_compra_m2": {
       "nombre": "Sale price per square metre",
       "unidad": "€ per m²",
-      "definicion": "Average price per square metre of housing sales signed before a notary.",
-      "calculo": "Published by the General Council of Notaries.",
-      "lectura": "A closing price, not an asking price or an appraisal."
+      "definicion": "Average price per square metre of housing sales entered in the land registries.",
+      "calculo": "Published by the Spanish Land Registrars' Association (Real Estate Registry Statistics, open data under the ODbL): average price per m² of housing for the year, that of the fourth quarter, which accumulates the calendar year; province, region and Spain, each with its published figure.",
+      "lectura": "A registered sale price, not an asking price or an appraisal. It is not compared with the Notaries' price per m², which measures a different floor area; the province is the finest level."
     },
     "valor_tasado_m2": {
       "nombre": "Appraised value per square metre",
@@ -760,17 +787,17 @@
       "lectura": "An asking price, private asking-price data: not combined with contracts, deeds or appraisals, nor one portal with another."
     },
     "esfuerzo_residentes": {
-      "nombre": "Resident rent burden",
+      "nombre": "Median rent over the area's average household income",
       "unidad": "% of household income",
-      "definicion": "Share of the average household’s annual income in the tract that the median rent of that same tract would take.",
+      "definicion": "Share of the annual income of the average household in the tract, across all its households (owners included), that the median rent of that same tract would take.",
       "calculo": "Median monthly rent of flats × 12 / average net household income, same year, × 100. Census tract and municipality. If either term is confidential or missing, so is the result.",
-      "lectura": "Measures the vulnerability of current residents, not the cost of moving in: expensive areas look affordable because higher-income people live there."
+      "lectura": "It is not renters' burden: it divides the rent of current tenancies by the average income of all households in the tract, owners included, and barely tells areas apart (in 2024, a median of 18.3% in the fifth of tracts with the lowest household income and 17.5% in the highest). Expensive areas look affordable because higher-income people live there."
     },
     "peso_alquiler_ingreso": {
       "nombre": "Rent share of income",
       "unidad": "% of reference income",
-      "definicion": "Share of a token’s net monthly income (minimum wage, under-35, pensioner or the user’s own pay) that 50 m² of rent in the tract would take.",
-      "calculo": "Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token, with the token’s income from the same year as the rent (each year’s minimum wage, under-35 pay and pension, 2015 to 2024); if the token lacks that year, the latest is used and this is stated.",
+      "definicion": "Share of a token’s net monthly income (minimum wage, young adult, pensioner or the user’s own pay) that 50 m² of rent in the tract would take.",
+      "calculo": "Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token, with the token’s income from the same year as the rent (each year’s minimum wage, young-adult pay and pension, 2015 to 2024); if the token lacks that year, the latest is used and this is stated.",
       "lectura": "Measures what the rent of current tenancies in the tract (those already renting) would take from a given income; it is not the price of moving in today, which asking rents measure. Read by bands (up to 30%, 30–40% and over 40%), not as an exact figure."
     },
     "anios_salario_compra": {
@@ -791,15 +818,15 @@
       "nombre": "Renting households",
       "unidad": "% of households",
       "definicion": "Households renting as a share of all households (main residences) in the tract.",
-      "calculo": "From INE’s 2021 (and 2011) Population and Housing Census, on the 2021 tracts.",
-      "lectura": "A snapshot at two dates, not an annual series."
+      "calculo": "From INE’s 2021 and 2011 Population and Housing Censuses, on the 2021 tracts; 2011 is carried from the 2011 Census tracts with its conversion table.",
+      "lectura": "A snapshot at two dates, not an annual series. The 2011 Census is sample-based: its tract figures are estimates."
     },
     "viviendas_turisticas": {
       "nombre": "Tourist dwellings as a share of all dwellings",
       "unidad": "% of dwellings",
       "definicion": "Tourist dwellings as a share of all dwellings in the tract.",
-      "calculo": "Tourist dwellings from INE’s experimental statistics (platform listings) over all dwellings in the 2021 Census, the denominator INE has used since August 2023. From February 2024, on the 2024 tracts, carried to the 2021 tracts with the conversion table; twice a year.",
-      "lectura": "Measures pressure from tourist use. Numerator and denominator are not from the same year: dwellings are those of the 2021 Census. Reference months changed in 2024 (from February and August to May and November)."
+      "calculo": "Tourist dwellings from INE’s experimental statistics (platform listings) over all dwellings in the Census, the denominator used by INE: the 2011 Census up to February 2023 and the 2021 Census from August 2023. From August 2020 to February 2023 on the 2011 Census tracts, and from February 2024 on the 2024 tracts, carried to the 2021 tracts with their conversion tables; twice a year.",
+      "lectura": "Measures pressure from tourist use. Numerator and denominator are not from the same year: dwellings are those of the 2011 Census up to February 2023 and of the 2021 Census from February 2024. Reference months changed in 2024 (from February and August to May and November)."
     },
     "zona_tensionada": {
       "nombre": "Declared stressed housing market area",
@@ -811,9 +838,9 @@
     "sueldo_necesario": {
       "nombre": "Net monthly pay needed to stay under the threshold",
       "unidad": "net € per month",
-      "definicion": "Net monthly pay needed so that 50 m² of rent in the tract does not exceed 30% of pay.",
-      "calculo": "Median rent per m² of flats × 50 / 0.30 (floor area can be changed to 70 or 90 m² and the threshold to 40%). Carries the status of the rent figure.",
-      "lectura": "It is rent expressed in another unit, not a new indicator. The 30% threshold draws on the stressed-zone criterion of Law 12/2023, which uses household income and utilities; it is not that criterion."
+      "definicion": "Net monthly pay needed so that the tract's median monthly rent does not exceed 30% of pay. Alongside, the theoretical minimum: the same calculation for a 50 m² flat.",
+      "calculo": "Median monthly rent of flats / 0.30 (threshold can be changed to 40%). Theoretical minimum (cut superficie, group 50): median rent per m² of flats × 50 / 0.30 (floor area can be changed to 70 or 90 m² on the website). Each figure carries the status of its rent.",
+      "lectura": "It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² at the median; the 50 m² minimum falls below it and is never given without it. The 30% threshold draws on the stressed-zone criterion of Law 12/2023, which uses household income and utilities; it is not that criterion."
     },
     "sobrecarga": {
       "nombre": "Housing cost overburden rate (Eurostat method)",
@@ -841,14 +868,14 @@
       "unidad": "% of the median",
       "definicion": "Approximate standard error of the median monthly rent (8), as a percentage of the median, by building type.",
       "calculo": "0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI quartiles and tenancies (n); only where the median is published (10 or more tenancies).",
-      "lectura": "Order of magnitude of the noise in the median: it assumes a regular distribution within the area and does not correct for current rather than new tenancies. It accompanies 8 and 14."
+      "lectura": "Order of magnitude of the noise in the median: it assumes a regular distribution within the area and does not correct for current rather than new tenancies. It accompanies 8, 14 and the main figure of 21, which are monthly rent in another unit."
     },
     "margen_alquiler_m2": {
       "nombre": "Approximate margin of the median rent per m²",
       "unidad": "% of the median",
       "definicion": "Approximate standard error of the median rent per square metre (9), as a percentage of the median, by building type.",
       "calculo": "0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI rent-per-m² quartiles and tenancies (n); only where the median is published (10 or more tenancies).",
-      "lectura": "It also applies to 15 and 21, which are rent per m² in another unit: the profile gives the pay needed with its range and warns when «Can you make rent?» sits on the edge between two bands."
+      "lectura": "It also applies to 15 and to the 50 m² minimum of 21, which are rent per m² in another unit: the profile warns when «Can you make rent?» sits on the edge between two bands."
     }
   },
   "fuentes": {
@@ -858,6 +885,7 @@
     "nastat_epav": "Housing Rental Price Statistics (EPAV)",
     "ine_ipva": "Rental Housing Price Index (IPVA)",
     "notariado": "Notaries’ Statistical Portal",
+    "registradores": "Land Registry Real Estate Statistics: residential property sales by province",
     "mivau_valor_tasado": "Appraised value of open-market housing",
     "mivau_transacciones": "Real estate transactions (sales): average value of open-market housing sales",
     "ine_hipotecas": "Mortgage Statistics (H): average initial interest rate",
@@ -866,6 +894,7 @@
     "inss_pensiones": "Social Security contributory pensions (in payment)",
     "boe_smi": "Royal Decree on the minimum wage",
     "ine_censo2021": "Population and Housing Census 2021",
+    "ine_censo2011": "Population and Housing Censuses 2011",
     "ine_vut": "Tourist dwellings (experimental statistics)",
     "zonas_tensionadas": "Declarations of stressed residential market zones",
     "ine_seccionado": "Census tract boundaries (annual)",
@@ -886,7 +915,8 @@
     "calculo_propio": "Own calculation from the sources of each term",
     "bde_tipos_referencia": "Official mortgage market reference interest rates",
     "ine_cne": "Annual Spanish National Accounts: aggregates by industry (base 2020)",
-    "cis_barometros": "CIS monthly barometers: housing among the main problems"
+    "cis_barometros": "CIS monthly barometers: housing among the main problems",
+    "ine_ipc": "Consumer Price Index (CPI): annual averages of the general index (base 2025)"
   },
   "vocabulario": {
     "contrato": {
@@ -904,7 +934,8 @@
       "mes": "Reference month",
       "ficha": "Token (reference income)",
       "oferta_privada": "Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE)",
-      "contrato": "Age of the rental contract (IPVA)"
+      "contrato": "Age of the rental contract (IPVA)",
+      "superficie": "Assumed floor area (theoretical minimum of the pay needed)"
     },
     "edad": {
       "Y_LT18": "Under 18",
@@ -943,7 +974,7 @@
     },
     "ficha": {
       "tartera": "Minimum wage",
-      "mochila": "Under-35",
+      "mochila": "Young adult, 26 to 35",
       "transistor": "Pensioner"
     },
     "mes": {
@@ -970,6 +1001,9 @@
     "sexo": {
       "M": "Men",
       "F": "Women"
+    },
+    "superficie": {
+      "50": "Notional 50 m² flat"
     },
     "tenencia": {
       "OWN": "Owner",

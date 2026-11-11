@@ -4,12 +4,20 @@
 #     D_TKB57210_IPV  esfuerzo teórico anual sin deducciones (% de la renta disponible del hogar
 #                     mediano que se va en las cuotas del primer año, préstamo del 80 %);
 #     DHIVTNOAPLPMMUVT_RLI.T  valor tasado medio de la vivienda libre del MIVAU (€/m²), que el
-#                     Banco de España reproduce: solo para la compuerta del valor tasado.
+#                     Banco de España reproduce: solo para la compuerta del valor tasado;
+#     D_IMVTIPLV      tipo de los préstamos libres para adquisición de vivienda de los hogares
+#                     (nuevas operaciones), mensual desde 1989: el que usa el propio esfuerzo
+#                     teórico. Línea principal de los tipos (plan §11, pregunta 47 c revisada) y tipo
+#                     del indicador 17 (pregunta 45 e; compraventa_tipo_bde(), R/derivados_compraventa.R).
 #   be1901 (Boletín Estadístico, 19.1 «Tipos de interés de referencia oficiales del mercado
 #   hipotecario»), mensuales:
 #     D_1T9H0000      tipo medio de los préstamos hipotecarios a más de tres años para adquisición
 #                     de vivienda libre, conjunto de entidades de crédito en España (desde 1990);
-#     D_1E723706.EUR  MIBOR a un año (desde 1977; desde 1999 sigue al euríbor a un año).
+#     D_1E723706.EUR  MIBOR a un año (desde 1977; desde 1999 sigue al euríbor a un año);
+#     D_1NBAF472      euríbor a 12 meses (desde enero de 1999).
+#   La referencia de los tipos (pregunta 47 c) es una sola línea, mibor_euribor: el MIBOR a un año
+#   hasta diciembre de 1998 y el euríbor a 12 meses desde enero de 1999, cada mes con su código. Son
+#   índices distintos: la ruptura bde_mibor_euribor_1999 lo marca en la página.
 # CSV de dirección estable en latin1: seis filas de cabecera (código, número secuencial, alias,
 # descripción, unidades, frecuencia), una fila por mes («ENE 1987»; las series trimestrales solo
 # llenan marzo, junio, septiembre y diciembre), «_» sin dato y dos filas de cierre, FUENTE y NOTAS:
@@ -27,10 +35,14 @@ HIST_SERIES_BDE <- tibble::tribble(
   "esfuerzo_teorico", "si_1_5", "D_TKB57210_IPV",         "trimestral", "porcentaje", "bde_accesibilidad",
   "valor_tasado_bde", "si_1_5", "DHIVTNOAPLPMMUVT_RLI.T", "trimestral", "euros_m2",   "bde_accesibilidad",
   "tipo_hipotecas",   "be1901", "D_1T9H0000",             "mensual",    "porcentaje", "bde_tipos_referencia",
-  "mibor_euribor",    "be1901", "D_1E723706.EUR",         "mensual",    "porcentaje", "bde_tipos_referencia"
+  "mibor_euribor",    "be1901", "D_1E723706.EUR",         "mensual",    "porcentaje", "bde_tipos_referencia",
+  "euribor",          "be1901", "D_1NBAF472",             "mensual",    "porcentaje", "bde_tipos_referencia",
+  "tipo_prestamos",   "si_1_5", "D_IMVTIPLV",             "mensual",    "porcentaje", "bde_accesibilidad"
 )
-# Series del módulo que no se publican: solo sirven a una compuerta
-HIST_SOLO_COMPUERTA <- "valor_tasado_bde"
+# Series del módulo que no se publican: solo sirven a una compuerta o a otra serie (el euríbor, a
+# mibor_euribor desde 1999)
+HIST_SOLO_COMPUERTA <- c("valor_tasado_bde", "euribor")
+HIST_INICIO_EURIBOR <- 1999L
 HIST_MESES_BDE <- c(ENE = 1L, FEB = 2L, MAR = 3L, ABR = 4L, MAY = 5L, JUN = 6L, JUL = 7L, AGO = 8L, SEP = 9L,
                     OCT = 10L, NOV = 11L, DIC = 12L)
 
@@ -104,7 +116,19 @@ hist_leer_bde_tablas <- function(rutas, series = HIST_SERIES_BDE, desde = HIST_D
     hist_columnas(tibble::tibble(serie = s$serie, geo_id = "00", nivel = "nacional", frecuencia = s$frecuencia,
                                  anio = d$anio, subperiodo = d$subperiodo, valor = d$valor, unidad = s$unidad,
                                  fuente = s$fuente, codigo = s$codigo))
-  }))
+  })) |>
+    hist_enlazar_mibor_euribor()
+}
+
+# Referencia de los tipos (pregunta 47 c): mibor_euribor lleva el MIBOR hasta diciembre de `desde` - 1
+# y, desde enero de `desde`, el euríbor a 12 meses, con el código de cada uno. Sin la serie del
+# euríbor, no cambia nada.
+hist_enlazar_mibor_euribor <- function(x, desde = HIST_INICIO_EURIBOR) {
+  e <- x[x$serie == "euribor" & x$anio >= desde, ]
+  if (!nrow(e) || !any(x$serie == "mibor_euribor")) return(x)
+  m <- x[x$serie == "mibor_euribor" & x$anio < desde, ]
+  e$serie <- "mibor_euribor"
+  dplyr::bind_rows(x[x$serie != "mibor_euribor", ], m, e)
 }
 
 # Columnas de la tabla del módulo histórico (una tabla propia, no la tabla larga: series

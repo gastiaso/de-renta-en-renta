@@ -81,8 +81,10 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
       marcarGrupo(el.pagas, 'pagas', pagas);
     },
     // `vista`: { t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle,
-    // sinEfecto } (sinEfecto: el mapa activo no usa la superficie ni el umbral).
-    pintar({ t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle, sinEfecto = false }) {
+    // sinEfecto, soloMinimo } (sinEfecto: el mapa activo no usa la superficie ni el umbral;
+    // soloMinimo, tarea 40: el mapa del sueldo necesario usa el alquiler real y la superficie solo
+    // cambia el mínimo teórico de la ficha).
+    pintar({ t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle, sinEfecto = false, soloMinimo = false }) {
       // Fichas: las que tienen ingreso en perfiles.json, y «Tu ficha» si hay sueldo escrito.
       const disponibles = [...FICHAS_PERFIL.filter((f) => perfiles?.[f]), 'peon'];
       el.fichas.querySelector('.fichas-botones').replaceChildren(...disponibles.map((ficha) => {
@@ -111,6 +113,7 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
           ? t('interfaz.sueldo.superficie_llave')
           : t('interfaz.sueldo.superficie_fija', { superficie: t.numero(superficie ?? 50) });
       } else if (sinEfecto) nota = t('interfaz.sueldo.supuestos_mapa');
+      else if (soloMinimo) nota = t('interfaz.sueldo.superficie_minimo');
       el.superficieNota.textContent = nota;
       el.superficieNota.hidden = !nota;
       marcarGrupo(el.umbral, 'umbral', Math.round(umbral * 100));

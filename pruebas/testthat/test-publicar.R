@@ -39,6 +39,11 @@ proyecto_falso <- function(raiz = withr::local_tempdir(.local_envir = parent.fra
                           fuente = c("mivau_serpavi", "mivau_serpavi", "ine_adrh"), geo_ref = "2021",
                           version = c("2026-11-06", "2026-11-06", "2026-11-07"))
   arrow::write_parquet(larga, file.path(raiz, "datos/intermedios/tabla_larga.parquet"))
+  # Tabla del módulo histórico (pregunta 47 a: en el paquete de la v1.0)
+  historico <- tibble::tibble(serie = "anios_renta", geo_id = "00", nivel = "nacional", frecuencia = "trimestral",
+                              anio = 2026L, subperiodo = 1:2, valor = c(8.0, 8.4), unidad = "anios",
+                              fuente = "bde_accesibilidad", codigo = "D_TKB57110_IPV", version = "2026-11-05")
+  arrow::write_parquet(historico, file.path(raiz, "datos/intermedios/historico.parquet"))
   escribir("inventario/fuentes.csv", c("id,nombre", "mivau_serpavi,SERPAVI", "ine_adrh,ADRH"))
   escribir("inventario/indicadores.csv", c("id,codigo", "2,renta_hogar", "9,alquiler_m2"))
   # Copia local de las descargas para ver la página «Datos» (fuera de git): no cuenta en el sitio
@@ -50,27 +55,29 @@ empaquetar_falso <- function(raiz, ...) {
   empaquetar_publicacion(dir_web = file.path(raiz, "web"),
                          pmtiles = file.path(raiz, "geo/referencia/mapa_base_2021.pmtiles"),
                          tabla_larga = file.path(raiz, "datos/intermedios/tabla_larga.parquet"),
+                         historico = file.path(raiz, "datos/intermedios/historico.parquet"),
                          dir_salida = file.path(raiz, "publicacion"),
                          fuentes = file.path(raiz, "inventario/fuentes.csv"),
                          indicadores = file.path(raiz, "inventario/indicadores.csv"),
                          commit = COMMIT_FALSO, fecha = "2026-11-08T12:00:00+0100", ...)
 }
 
-test_that("empaqueta los cinco ficheros del release con sus sumas SHA-256", {
+test_that("empaqueta los seis ficheros del release con sus sumas SHA-256", {
   raiz <- proyecto_falso()
   res <- suppressMessages(empaquetar_falso(raiz))
   salida <- file.path(raiz, "publicacion")
   expect_setequal(list.files(salida), c("datos_web.tar.gz", "seccionado_2021.pmtiles", "tabla_larga.parquet",
-                                        "version.json", "SHA256SUMS"))
+                                        "historico.parquet", "version.json", "SHA256SUMS"))
   expect_true(all(res$comprobaciones$correcto))
 
   bruto <- readBin(file.path(salida, "SHA256SUMS"), "raw", 10000)
   expect_false(as.raw(13) %in% bruto)                                  # LF, también en Windows
   lineas <- readLines(file.path(salida, "SHA256SUMS"))
-  expect_length(lineas, 4)
+  expect_length(lineas, 5)
   expect_true(all(grepl("^[0-9a-f]{64}  [A-Za-z0-9_.]+$", lineas)))
   nombres <- sub("^.{64}  ", "", lineas)
-  expect_setequal(nombres, c("datos_web.tar.gz", "seccionado_2021.pmtiles", "tabla_larga.parquet", "version.json"))
+  expect_setequal(nombres, c("datos_web.tar.gz", "seccionado_2021.pmtiles", "tabla_larga.parquet", "historico.parquet",
+                             "version.json"))
   esperadas <- vapply(file.path(salida, nombres), function(r) digest::digest(r, algo = "sha256", file = TRUE), "")
   expect_equal(substr(lineas, 1, 64), unname(esperadas))
   # El mapa base y la tabla larga salen tal cual
@@ -128,7 +135,8 @@ test_that("tarea 35: el paquete no lleva la capa de portales, que es solo web (d
   arrow::write_parquet(dplyr::bind_rows(larga, capa), con_capa)
   expect_error(suppressMessages(capture.output(
     empaquetar_publicacion(dir_web = file.path(raiz, "web"), pmtiles = file.path(raiz, "geo/referencia/mapa_base_2021.pmtiles"),
-                           tabla_larga = con_capa, dir_salida = file.path(raiz, "publicacion"),
+                           tabla_larga = con_capa, historico = file.path(raiz, "datos/intermedios/historico.parquet"),
+                           dir_salida = file.path(raiz, "publicacion"),
                            fuentes = file.path(raiz, "inventario/fuentes.csv"), indicadores = file.path(raiz, "inventario/indicadores.csv"),
                            commit = COMMIT_FALSO, fecha = "2026-11-08T12:00:00+0100"))), "sin_portales")
 })
@@ -145,7 +153,11 @@ test_that("version.json: fecha, commit, web, fuentes con su versión y ficheros 
   expect_equal(v$fuentes$version, c("2026-11-07", "2026-11-06"))
   expect_equal(v$fuentes$filas, c(1, 2))
   expect_equal(v$fuentes$nombre, c("ADRH", "SERPAVI"))
-  expect_setequal(v$ficheros$nombre, c("datos_web.tar.gz", "seccionado_2021.pmtiles", "tabla_larga.parquet"))
+  expect_setequal(v$ficheros$nombre, c("datos_web.tar.gz", "seccionado_2021.pmtiles", "tabla_larga.parquet", "historico.parquet"))
+  expect_equal(v$ficheros$destino[v$ficheros$nombre == "historico.parquet"], "descargas/historico.parquet")
+  # Licencias: la general y la ODbL de Registradores (indicador 11; pregunta 45 a)
+  expect_match(v$licencia$datos, "CC BY-SA 4.0")
+  expect_match(v$licencia$excepciones$registradores, "ODbL 1.0")
   expect_equal(v$ficheros$destino[v$ficheros$nombre == "seccionado_2021.pmtiles"], "teselas/seccionado_2021.pmtiles")
   expect_equal(v$ficheros$destino[v$ficheros$nombre == "tabla_larga.parquet"], "descargas/tabla_larga.parquet")
   sumas <- readLines(file.path(raiz, "publicacion", "SHA256SUMS"))
@@ -182,7 +194,8 @@ test_that("el sitio montado: web/ sin herramientas ni copias locales, más lo de
   res <- suppressMessages(empaquetar_falso(raiz))
   rutas <- res$sitio$ruta
   expect_true(all(c("index.html", "js/principal.js", "datos/ejemplo/manifiesto.json", "datos/manifiesto.json",
-                    "teselas/seccionado_2021.pmtiles", "descargas/tabla_larga.parquet", "descargas/version.json")
+                    "teselas/seccionado_2021.pmtiles", "descargas/tabla_larga.parquet", "descargas/historico.parquet",
+                    "descargas/version.json")
                   %in% rutas))
   expect_false(any(c("LEEME.md", "servir.mjs", "herramientas/generar_ejemplo.R") %in% rutas))
   expect_equal(sum(rutas == "teselas/seccionado_2021.pmtiles"), 1L)
@@ -229,7 +242,7 @@ test_that("rehace el paquete encima del anterior, pero no borra ficheros ajenos"
   raiz <- proyecto_falso()
   suppressMessages(empaquetar_falso(raiz))
   suppressMessages(empaquetar_falso(raiz))
-  expect_length(list.files(file.path(raiz, "publicacion")), 5)
+  expect_length(list.files(file.path(raiz, "publicacion")), 6)
   writeLines("nota", file.path(raiz, "publicacion", "notas.txt"))
   expect_error(suppressMessages(empaquetar_falso(raiz)), "notas.txt")
   expect_true(file.exists(file.path(raiz, "publicacion", "notas.txt")))

@@ -83,19 +83,27 @@ const pct = (x) => t.porcentaje(x / 100);
 export function cartasDe(datos) {
   const c = datos?.cartas ?? {};
   const cartas = [];
+  // Tarea 40 (decisión 4): el sueldo con el alquiler real y, al lado, el mínimo de 50 m²; el salario
+  // mínimo con 50 m² y, al lado, con el alquiler real. Sin la cifra de al lado, la carta no sale.
   const s = c.sueldo;
-  if (s && hay(s.anio, s.mediana, s.p10, s.p90, s.superficie_m2, s.umbral)) {
+  if (s && hay(s.anio, s.mediana, s.p10, s.p90, s.minimo, s.superficie_m2, s.umbral)) {
     cartas.push({
       id: 'sueldo', anio: s.anio, fuentes: s.fuentes ?? [],
-      valores: { anio: s.anio, mediana: ['numero', s.mediana], p10: ['numero', s.p10], p90: ['numero', s.p90], superficie: ['numero', s.superficie_m2], umbral: ['pct', s.umbral] },
+      valores: {
+        anio: s.anio, mediana: ['numero', s.mediana], p10: ['numero', s.p10], p90: ['numero', s.p90], minimo: ['numero', s.minimo],
+        superficie: ['numero', s.superficie_m2], umbral: ['pct', s.umbral],
+      },
       enlace: `mapa.html?mapa=${s.mapa ?? MAPA_POR_DEFECTO}&anio=${s.anio}`,
     });
   }
   const b = c.smi;
-  if (b && hay(b.anio, b.neto_mensual, b.pct_30, b.pct_40, b.superficie_m2)) {
+  if (b && hay(b.anio, b.neto_mensual, b.pct_30, b.pct_40, b.pct_30_real, b.pct_40_real, b.superficie_m2)) {
     cartas.push({
       id: 'smi', anio: b.anio, fuentes: b.fuentes ?? [],
-      valores: { anio: b.anio, neto: ['numero', b.neto_mensual], pct30: ['pct', b.pct_30], pct40: ['pct', b.pct_40], superficie: ['numero', b.superficie_m2] },
+      valores: {
+        anio: b.anio, neto: ['numero', b.neto_mensual], pct30: ['pct', b.pct_30], pct40: ['pct', b.pct_40],
+        pct30real: ['pct', b.pct_30_real], pct40real: ['pct', b.pct_40_real], superficie: ['numero', b.superficie_m2],
+      },
       enlace: `mapa.html?ficha=${b.ficha ?? 'tartera'}&anio=${b.anio}`,
     });
   }

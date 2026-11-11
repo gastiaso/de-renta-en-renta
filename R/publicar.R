@@ -9,10 +9,12 @@
 #     teselas/seccionado_2021.pmtiles);
 #   - tabla_larga.parquet: la tabla larga validada, para la descarga de la página «Datos» (el flujo
 #     la deja en descargas/);
+#   - historico.parquet: la tabla del módulo histórico (series de España y comunidades desde 1987),
+#     también en descargas/ (plan §11, pregunta 47 a: entra en el paquete de la v1.0);
 #   - version.json: fecha, commit, versiones de las fuentes, cobertura de la tabla larga por
 #     indicador (filas, años, niveles y cortes; la muestra la página «Datos») y tamaño y suma de
 #     cada fichero;
-#   - SHA256SUMS: sumas SHA-256 de los cuatro anteriores, en el formato de sha256sum (el flujo las
+#   - SHA256SUMS: sumas SHA-256 de los cinco anteriores, en el formato de sha256sum (el flujo las
 #     comprueba con sha256sum --check antes de montar el sitio).
 #
 # No entra en el tar_make() por defecto: se ejecuta a mano, con la exportación de la web y la tabla
@@ -26,7 +28,7 @@
 #   - sitio_fichero: ningún fichero del sitio por encima de 100 MiB (límite de git, que se mantiene
 #     también en el sitio);
 #   - manifiesto: exportación real (ejemplo = false) con mapa base PMTiles en teselas/;
-#   - formato: el PMTiles empieza por «PMTiles» y el Parquet empieza y acaba por «PAR1»;
+#   - formato: el PMTiles empieza por «PMTiles» y los Parquet empiezan y acaban por «PAR1»;
 #   - tar_completo: el .tar.gz lleva todos los ficheros de datos/ (salvo la capa de portales), y solo esos;
 #   - versiones: cada fuente y versión del manifiesto está en la tabla larga (la exportación de la
 #     web y la tabla larga son de la misma pasada del pipeline);
@@ -42,8 +44,16 @@ LIMITES_PUBLICACION <- c(
 )
 # Herramientas de desarrollo de web/ que no se publican (el flujo las borra al montar el sitio)
 EXCLUIDOS_SITIO <- c("LEEME.md", "servir.mjs", "herramientas")
-FICHEROS_RELEASE <- c(datos = "datos_web.tar.gz", tabla = "tabla_larga.parquet", version = "version.json",
-                      sumas = "SHA256SUMS")
+FICHEROS_RELEASE <- c(datos = "datos_web.tar.gz", tabla = "tabla_larga.parquet", historico = "historico.parquet",
+                      version = "version.json", sumas = "SHA256SUMS")
+# Licencias del paquete (version.json): la general de los datos y las excepciones por fuente. Las
+# filas de Registradores (indicador 11) siguen su licencia, la ODbL 1.0 (LICENCIA_DATOS.md).
+LICENCIAS_PUBLICACION <- list(
+  datos = "CC BY-SA 4.0 (LICENCIA_DATOS.md)",
+  excepciones = list(registradores = paste("ODbL 1.0 (Open Database License): las filas de la fuente registradores",
+                                           "(indicador 11) y lo que derive de ellas; LICENCIA_DATOS.md")),
+  codigo = "MIT (LICENSE)"
+)
 DESTINO_DESCARGAS <- "descargas"   # carpeta del sitio con la tabla larga y version.json
 
 # Paquete del release en dir_salida. `commit`: lista con `id` y `cambios_sin_commit`
@@ -51,6 +61,7 @@ DESTINO_DESCARGAS <- "descargas"   # carpeta del sitio con la tabla larga y vers
 empaquetar_publicacion <- function(dir_web = "web",
                                    pmtiles = "geo/referencia/mapa_base_2021.pmtiles",
                                    tabla_larga = "datos/intermedios/tabla_larga.parquet",
+                                   historico = "datos/intermedios/historico.parquet",
                                    dir_salida = "publicacion",
                                    fuentes = "inventario/fuentes.csv",
                                    indicadores = "inventario/indicadores.csv",
@@ -58,7 +69,7 @@ empaquetar_publicacion <- function(dir_web = "web",
                                    fecha = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
                                    limites = LIMITES_PUBLICACION) {
   manifiesto_ruta <- file.path(dir_web, "datos", "manifiesto.json")
-  for (ruta in c(manifiesto_ruta, pmtiles, tabla_larga)) {
+  for (ruta in c(manifiesto_ruta, pmtiles, tabla_larga, historico)) {
     if (!file.exists(ruta)) {
       stop("Falta ", ruta, ". Antes de empaquetar: targets::tar_make() (o, solo la web, ",
            "targets::tar_make(names = c(ficheros_web, validacion_web))).", call. = FALSE)
@@ -82,6 +93,7 @@ empaquetar_publicacion <- function(dir_web = "web",
   salida <- c(datos = file.path(dir_salida, FICHEROS_RELEASE[["datos"]]),
               mapa = file.path(dir_salida, if (nzchar(nombre_mapa)) nombre_mapa else "mapa_base.pmtiles"),
               tabla = file.path(dir_salida, FICHEROS_RELEASE[["tabla"]]),
+              historico = file.path(dir_salida, FICHEROS_RELEASE[["historico"]]),
               version = file.path(dir_salida, FICHEROS_RELEASE[["version"]]),
               sumas = file.path(dir_salida, FICHEROS_RELEASE[["sumas"]]))
   correcto <- FALSE
@@ -91,8 +103,9 @@ empaquetar_publicacion <- function(dir_web = "web",
   copiar <- function(de, a) if (!file.copy(de, a, overwrite = TRUE)) stop("No se ha podido copiar ", de, call. = FALSE)
   copiar(pmtiles, salida[["mapa"]])
   copiar(tabla_larga, salida[["tabla"]])
+  copiar(historico, salida[["historico"]])
 
-  release <- salida[c("datos", "mapa", "tabla")]
+  release <- salida[c("datos", "mapa", "tabla", "historico")]
   sumas <- vapply(release, sha256_fichero, "")
   version <- version_publicacion(manifiesto, tabla_larga, fuentes, commit, fecha,
                                  ficheros = data.frame(nombre = basename(release), bytes = file.size(release),
@@ -195,7 +208,7 @@ version_publicacion <- function(manifiesto, tabla_larga, fuentes, commit, fecha,
     fuentes = por_fuente,
     indicadores = cobertura_publicacion(tabla_larga, indicadores),
     ficheros = ficheros,
-    licencia = list(datos = "CC BY-SA 4.0 (LICENCIA_DATOS.md)", codigo = "MIT (LICENSE)")
+    licencia = LICENCIAS_PUBLICACION
   )
 }
 
@@ -233,7 +246,7 @@ sitio_publicacion <- function(dir_web, datos, salida, url_mapa) {
     startsWith(web, paste0(DESTINO_DESCARGAS, "/"))
   desarrollo <- web %in% EXCLUIDOS_SITIO | sub("/.*", "", web) %in% EXCLUIDOS_SITIO
   web <- web[!fuera_de_git & !desarrollo]
-  descargas <- salida[c("tabla", "version")]
+  descargas <- salida[c("tabla", "historico", "version")]
   data.frame(
     ruta = c(web, datos, url_mapa, file.path(DESTINO_DESCARGAS, basename(descargas))),
     bytes = c(file.size(file.path(dir_web, c(web, datos))), file.size(salida[["mapa"]]), file.size(descargas)),
@@ -246,7 +259,7 @@ comprobar_publicacion <- function(manifiesto, salida, datos, sitio, tabla_larga,
   fila <- function(id, detalle, valor, limite, correcto) {
     data.frame(id = id, detalle = detalle, valor = as.numeric(valor), limite = as.numeric(limite), correcto = correcto)
   }
-  release <- salida[c("datos", "mapa", "tabla", "version", "sumas")]
+  release <- salida[c("datos", "mapa", "tabla", "historico", "version", "sumas")]
   tam <- file.size(release)
   mayor <- which.max(sitio$bytes)
   url_mapa <- manifiesto$mapa_base$url %||% ""
@@ -284,6 +297,9 @@ comprobar_publicacion <- function(manifiesto, salida, datos, sitio, tabla_larga,
     fila("formato", basename(salida[["tabla"]]), 0, 0,
          identical(leer_bytes(salida[["tabla"]], 4L), charToRaw("PAR1")) &&
            identical(leer_bytes(salida[["tabla"]], 4L, desde_el_final = TRUE), charToRaw("PAR1"))),
+    fila("formato", basename(salida[["historico"]]), 0, 0,
+         identical(leer_bytes(salida[["historico"]], 4L), charToRaw("PAR1")) &&
+           identical(leer_bytes(salida[["historico"]], 4L, desde_el_final = TRUE), charToRaw("PAR1"))),
     fila("tar_completo", basename(salida[["datos"]]), length(en_tar), length(datos), setequal(en_tar, datos)),
     fila("versiones", "fuente y versión del manifiesto que no están en la tabla larga", sin_par, 0, sin_par == 0L),
     fila("sin_portales", "ficheros de datos/portales/ en el .tar.gz", portales_tar, 0, portales_tar == 0),

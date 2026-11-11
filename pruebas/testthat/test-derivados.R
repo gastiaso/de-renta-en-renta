@@ -85,14 +85,21 @@ test_that("14: alquiler de vivienda colectiva × 12 / renta por hogar, solo en l
   expect_equal(fila(sin_renta, "2800101001", 2024L, "esfuerzo_residentes")$estado, "ausente")
 })
 
-test_that("21: alquiler por m² × 50 / 0,30 en todos los niveles, con el estado del alquiler", {
+test_that("21 con dos cifras (tarea 40): alquiler mensual / 0,30 y, al lado, el mínimo de 50 m², con el estado del alquiler", {
   s <- calcular_sueldo_necesario(serpavi_largo())
-  expect_equal(fila(s, "2800101001", 2024L, "sueldo_necesario")$valor, 15 * 50 / 0.3)
-  expect_equal(fila(s, "13", 2023L, "sueldo_necesario")$valor, 2000)
+  # Principal: el alquiler mensual mediano real de la sección, sin desglose
+  expect_equal(fila(s, "2800101001", 2024L, "sueldo_necesario")$valor, 900 / 0.3)
+  expect_equal(fila(s, "13", 2023L, "sueldo_necesario")$valor, 800 / 0.3)
   expect_equal(fila(s, "2800101002", 2024L, "sueldo_necesario")$estado, "secreto")
-  expect_equal(nrow(s), 10L)   # solo la mediana VC: 5 territorios × 2 años
-  expect_equal(calcular_sueldo_necesario(serpavi_largo(), superficie = 70, umbral = 0.4) |>
-                 fila("2800101001", 2024L, "sueldo_necesario") |> pull(valor), 15 * 70 / 0.4)
+  # Mínimo teórico: corte «superficie», grupo «50»
+  minimo <- fila(s, "2800101001", 2024L, "sueldo_necesario", "50")
+  expect_equal(c(minimo$corte, minimo$valor), c(CORTE_MINIMO_SUELDO, 15 * 50 / 0.3))
+  expect_equal(fila(s, "13", 2023L, "sueldo_necesario", "50")$valor, 2000)
+  expect_equal(fila(s, "2800101002", 2024L, "sueldo_necesario", "50")$estado, "secreto")
+  expect_equal(nrow(s), 20L)   # solo la mediana VC: 5 territorios × 2 años × 2 cifras
+  otros <- calcular_sueldo_necesario(serpavi_largo(), superficie = 70, umbral = 0.4)
+  expect_equal(fila(otros, "2800101001", 2024L, "sueldo_necesario", "70")$valor, 15 * 70 / 0.4)
+  expect_equal(fila(otros, "2800101001", 2024L, "sueldo_necesario")$valor, 900 / 0.4)
 })
 
 test_that("los derivados parten de los términos redondeados a un decimal, como la web (pregunta 19)", {
@@ -101,7 +108,8 @@ test_that("los derivados parten de los términos redondeados a un decimal, como 
                              geo_id == "2800101001" & indicador == "alquiler_mes" ~ 900.06,
                              TRUE ~ valor))
   a <- adrh_largo() |> mutate(valor = ifelse(geo_id == "2800101001" & indicador == "renta_hogar", 36000.04, valor))
-  expect_equal(fila(calcular_sueldo_necesario(s), "2800101001", 2024L, "sueldo_necesario")$valor, 12.3 * 50 / 0.3)
+  expect_equal(fila(calcular_sueldo_necesario(s), "2800101001", 2024L, "sueldo_necesario")$valor, 900.1 / 0.3)
+  expect_equal(fila(calcular_sueldo_necesario(s), "2800101001", 2024L, "sueldo_necesario", "50")$valor, 12.3 * 50 / 0.3)
   expect_equal(fila(calcular_esfuerzo_residentes(s, a), "2800101001", 2024L, "esfuerzo_residentes")$valor,
                100 * 900.1 * 12 / 36000)
   # El redondeo de la guía (sprintf) y sin aviso con los NA
@@ -194,7 +202,7 @@ test_that("la tabla larga de los derivados pasa la validación y la compuerta cu
   roto <- d |>
     mutate(valor = ifelse(geo_id == "2800101001" & anio == 2024L & indicador == "esfuerzo_residentes", 31, valor),
            estado = ifelse(geo_id == "0100101001" & anio == 2024L & indicador == "esfuerzo_residentes", "dato", estado),
-           valor = ifelse(geo_id == "13" & anio == 2023L & indicador == "sueldo_necesario", 20000, valor))
+           valor = ifelse(geo_id == "13" & anio == 2023L & indicador == "sueldo_necesario" & corte == "total", 25000, valor))
   c2 <- comprobar_derivados(roto, s, a, p, provincias_inventadas,
                             bind_rows(mochila_inventada, tibble::tibble(provincia = "Teruel", neto_mensual = 1100)))
   expect_gt(filter(c2, id == "derivados_terminos", anio == 2024L, detalle == "esfuerzo_residentes")$calculado, 1)
@@ -202,6 +210,11 @@ test_that("la tabla larga de los derivados pasa la validación y la compuerta cu
   expect_equal(filter(c2, id == "derivados_rango", anio == 2023L, detalle == "sueldo_necesario")$calculado, 1)
   expect_equal(nrow(filter(c2, id == "derivados_rango_detalle")), 1L)
   expect_equal(filter(c2, id == "perfiles_mochila")$calculado[1], 1)
+  # Tarea 40: el mínimo de 50 m² tiene su propio rango (más estrecho que el del alquiler real)
+  roto_minimo <- mutate(d, valor = ifelse(geo_id == "13" & anio == 2023L & corte == CORTE_MINIMO_SUELDO, 12000, valor))
+  c3 <- comprobar_derivados(roto_minimo, s, a, p, provincias_inventadas, mochila_inventada)
+  expect_equal(filter(c3, id == "derivados_rango", anio == 2023L, detalle == "sueldo_necesario 50")$calculado, 1)
+  expect_equal(filter(c3, id == "derivados_rango", anio == 2023L, detalle == "sueldo_necesario")$calculado, 0)
 })
 
 test_that("el resumen da estados y percentiles por indicador, nivel y año", {
@@ -210,5 +223,6 @@ test_that("el resumen da estados y percentiles por indicador, nivel y año", {
   r <- resumen_derivados(armonizar_derivados(s, a, p))
   expect_equal(filter(r$estados, indicador == "sueldo_necesario", nivel == "sc", anio == 2024L)$secreto, 1L)
   expect_true("peso_alquiler_ingreso tartera" %in% r$rangos$indicador)
+  expect_true("sueldo_necesario 50" %in% r$rangos$indicador)   # tarea 40: el mínimo de 50 m², aparte
   expect_equal(resumen_llave(p)$p50[resumen_llave(p)$anio == 2024L], 3000)
 })

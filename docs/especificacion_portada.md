@@ -52,7 +52,7 @@ Propuesta (a confirmar por el autor al revisar la portada):
 | 4 | Paga el alquiler | alquiler | mapa del alquiler mensual | sí |
 | 5 | Pisos turísticos en el portal | barrio | mapa de viviendas turísticas (19) | sí |
 | 6 | Zona tensionada | barrio | — (F5) | no |
-| 7 (esquina) | Renueva el contrato | alquiler | mapa del esfuerzo de residentes (14) | sí |
+| 7 (esquina) | Renueva el contrato | alquiler | «¿te llega?» con la llave (`mapa.html?ficha=llave`): el cociente del indicador 14, que ya no tiene mapa (tarea 41) | sí |
 | 8 | Actualización de la renta | alquiler | — (F4, indicador 10) | no |
 | 9 | Vecinos de alquiler | barrio | mapa de hogares en alquiler (18) | sí |
 | 10 | Compartir piso | ingresos | `mapa.html?ficha=peon#tu-sueldo` (dos sueldos) | sí |

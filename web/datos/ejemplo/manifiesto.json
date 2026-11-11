@@ -177,9 +177,13 @@
   },
   "mapas": {
     "sueldo_necesario": {
-      "base": "alquiler_m2",
-      "formula": "alquiler_m2_a_sueldo",
-      "cortes": [2600, 3200, 3800, 4400, 5000],
+      "base": "alquiler_mes",
+      "formula": "alquiler_mes_a_sueldo",
+      "minimo": {
+        "base": "alquiler_m2",
+        "formula": "alquiler_m2_a_sueldo"
+      },
+      "cortes": [3000, 3800, 4500, 5200, 6000],
       "decimales": 0
     },
     "renta_hogar": {

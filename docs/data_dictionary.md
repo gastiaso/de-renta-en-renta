@@ -42,6 +42,7 @@ Breakdown variable. Without a breakdown, `corte` and `grupo` are both `total`.
 | `ficha` | Token (reference income) |
 | `oferta_privada` | Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE) |
 | `contrato` | Age of the rental contract (IPVA) |
+| `superficie` | Assumed floor area (theoretical minimum of the pay needed) |
 
 ### `grupo`
 
@@ -79,7 +80,7 @@ Breakdown value, by `corte`.
 | `mes` | `M08` | August |
 | `mes` | `M11` | November |
 | `ficha` | `tartera` | Minimum wage |
-| `ficha` | `mochila` | Under-35 |
+| `ficha` | `mochila` | Young adult, 26 to 35 |
 | `ficha` | `transistor` | Pensioner |
 | `oferta_privada` | `alquiler_idealista` | Rent, Idealista (private asking-price data) |
 | `oferta_privada` | `alquiler_fotocasa` | Rent, Fotocasa (private asking-price data) |
@@ -87,6 +88,7 @@ Breakdown value, by `corte`.
 | `oferta_privada` | `venta_fotocasa` | Sale, Fotocasa (private asking-price data) |
 | `contrato` | `nuevo` | New contract (signed in the reference year) |
 | `contrato` | `existente` | Existing contract (signed before the reference year) |
+| `superficie` | `50` | Notional 50 m² flat |
 
 ### `fuente`
 
@@ -98,7 +100,7 @@ Sources cited by the indicator inventory; `calculo_propio` marks derived figures
 | `mivau_serpavi` | State Rental Price Reference System (SERPAVI): database |
 | `gv_emal` | Rental Market Statistics (deposits) |
 | `ine_ipva` | Rental Housing Price Index (IPVA) |
-| `notariado` | Notaries’ Statistical Portal |
+| `registradores` | Land Registry Real Estate Statistics: residential property sales by province |
 | `mivau_valor_tasado` | Appraised value of open-market housing |
 | `ine_hipotecas` | Mortgage Statistics (H): average initial interest rate |
 | `portales` | Asking-price reports (Idealista and Fotocasa press rooms) |
@@ -106,6 +108,7 @@ Sources cited by the indicator inventory; `calculo_propio` marks derived figures
 | `inss_pensiones` | Social Security contributory pensions (in payment) |
 | `boe_smi` | Royal Decree on the minimum wage |
 | `ine_censo2021` | Population and Housing Census 2021 |
+| `ine_censo2011` | Population and Housing Censuses 2011 |
 | `ine_vut` | Tourist dwellings (experimental statistics) |
 | `zonas_tensionadas` | Declarations of stressed residential market zones |
 | `ine_ecv` | Living Conditions Survey, EU-SILC (microdata) |
@@ -126,14 +129,14 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 | 4 | [`peso_salarios`](#peso_salarios) | Share of wages in income | % of gross income | v0.2 |
 | 5 | [`bajo_60_mediana`](#bajo_60_mediana) | Population below 60% of median income per consumption unit | % of population | v0.2 |
 | 6 | [`gini`](#gini) | Gini index | index (0–100) | v0.2 |
-| 7 | [`salario_medio`](#salario_medio) | Average annual wage per employee (total and under 35) | € per employee per year (gross) | v0.2 |
+| 7 | [`salario_medio`](#salario_medio) | Average annual wage per employee (total and aged 26 to 35) | € per employee per year (gross) | v0.2 |
 | 8 | [`alquiler_mes`](#alquiler_mes) | Monthly rent (median) | € per month | v0.1 |
 | 9 | [`alquiler_m2`](#alquiler_m2) | Rent per square metre | € per m² per month | v0.1 |
 | 10 | [`var_alquiler`](#var_alquiler) | Annual change in rents | annual % change | v0.3 |
 | 11 | [`precio_compra_m2`](#precio_compra_m2) | Sale price per square metre | € per m² | v0.3 |
 | 12 | [`valor_tasado_m2`](#valor_tasado_m2) | Appraised value per square metre | € per m² | v0.3 |
 | 13 | [`precio_oferta`](#precio_oferta) | Asking price (rent and sale) | € per m² (rent: per m² per month) | v0.4 |
-| 14 | [`esfuerzo_residentes`](#esfuerzo_residentes) | Resident rent burden | % of household income | v0.1 |
+| 14 | [`esfuerzo_residentes`](#esfuerzo_residentes) | Median rent over the area's average household income | % of household income | v0.1 |
 | 15 | [`peso_alquiler_ingreso`](#peso_alquiler_ingreso) | Rent share of income | % of reference income | v0.1 |
 | 16 | [`anios_salario_compra`](#anios_salario_compra) | Years of wages to buy a home | years | v0.3 |
 | 17 | [`esfuerzo_hipotecario`](#esfuerzo_hipotecario) | Theoretical mortgage burden | % of income | v0.3 |
@@ -169,7 +172,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Version:** v0.1
 - **Definition:** Average disposable income of households in the tract.
 - **Calculation:** Published by INE (ADRH). On other tract maps, mean weighted by the number of households (population divided by average household size), with the same status rules as indicator 1.
-- **Reading:** This is household income, often with several earners, not a wage. It is the denominator of resident rent burden (14) and the income of the «neighbourhood household» token.
+- **Reading:** This is household income, often with several earners, not a wage. It is the denominator of median rent over the area's average household income (14) and the income of the «neighbourhood household» token.
 
 ### `renta_uc_mediana`
 
@@ -221,7 +224,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 
 ### `salario_medio`
 
-**7 · Average annual wage per employee (total and under 35)**
+**7 · Average annual wage per employee (total and aged 26 to 35)**
 
 - **Unit:** € per employee per year (gross)
 - **Family:** Ability to pay
@@ -229,7 +232,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Version:** v0.2
 - **Definition:** Average gross annual wage of employees with tax residence in the province, overall and aged 26 to 35.
 - **Calculation:** Published by the Spanish Tax Agency (AEAT, Labour market and pensions in tax sources, table by province, age and sex): wages / employees, overall and for the 26 to 35 age band; regions and Spain, with their published figure. The Basque Country and Navarre are not covered (foral tax residence) and have no data.
-- **Reading:** Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «under-35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region, and then to monthly net pay spread over 12, with the employee's social security contribution and the average AEAT withholding by region and income band (plan §3.1, method B).
+- **Reading:** Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «young adult, 26 to 35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region, and then to monthly net pay spread over 12, with the employee's social security contribution and the average AEAT withholding by region and income band (plan §3.1, method B).
 
 ### `alquiler_mes`
 
@@ -241,7 +244,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Version:** v0.1
 - **Definition:** Median monthly rent of current main-residence tenancies in the tract, by building type (apartment and single-family); the first and third quartiles are also published.
 - **Calculation:** Published by the Housing Ministry (SERPAVI) from rents declared in personal income tax and the Cadastre, on the 2021 tracts for the whole series. Not published with fewer than 10 tenancies.
-- **Reading:** Covers the whole rented stock, not new contracts: newcomers pay more. The Basque Country and Navarre join SERPAVI between 2021 and 2024.
+- **Reading:** Covers the whole rented stock, not new contracts: newcomers pay more. It only counts landlords who are natural persons and declare the letting as a main residence in personal income tax: companies and public housing, undeclared lettings and lettings to relatives are left out (Housing Ministry methodology, 18-Mar-2026). The Basque Country and Navarre join SERPAVI between 2021 and 2024.
 
 ### `alquiler_m2`
 
@@ -253,7 +256,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Version:** v0.1
 - **Definition:** Median monthly rent per square metre of current main-residence tenancies in the tract, by building type (apartment and single-family).
 - **Calculation:** Published by the Housing Ministry (SERPAVI), using Cadastre floor area.
-- **Reading:** Allows comparing tracts with different dwelling sizes and underlies the pay needed (21).
+- **Reading:** Allows comparing tracts with different dwelling sizes and underlies the pay needed (21). Same universe as 8: only landlords who are natural persons declaring the letting in personal income tax.
 
 ### `var_alquiler`
 
@@ -273,11 +276,11 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 
 - **Unit:** € per m²
 - **Family:** Housing cost
-- **Sources:** `notariado`
+- **Sources:** `registradores`
 - **Version:** v0.3
-- **Definition:** Average price per square metre of housing sales signed before a notary.
-- **Calculation:** Published by the General Council of Notaries.
-- **Reading:** A closing price, not an asking price or an appraisal.
+- **Definition:** Average price per square metre of housing sales entered in the land registries.
+- **Calculation:** Published by the Spanish Land Registrars' Association (Real Estate Registry Statistics, open data under the ODbL): average price per m² of housing for the year, that of the fourth quarter, which accumulates the calendar year; province, region and Spain, each with its published figure.
+- **Reading:** A registered sale price, not an asking price or an appraisal. It is not compared with the Notaries' price per m², which measures a different floor area; the province is the finest level.
 
 ### `valor_tasado_m2`
 
@@ -305,15 +308,15 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 
 ### `esfuerzo_residentes`
 
-**14 · Resident rent burden**
+**14 · Median rent over the area's average household income**
 
 - **Unit:** % of household income
 - **Family:** Burden · Staying
 - **Sources:** `mivau_serpavi`, `ine_adrh`
 - **Version:** v0.1
-- **Definition:** Share of the average household’s annual income in the tract that the median rent of that same tract would take.
+- **Definition:** Share of the annual income of the average household in the tract, across all its households (owners included), that the median rent of that same tract would take.
 - **Calculation:** Median monthly rent of flats × 12 / average net household income, same year, × 100. Census tract and municipality. If either term is confidential or missing, so is the result.
-- **Reading:** Measures the vulnerability of current residents, not the cost of moving in: expensive areas look affordable because higher-income people live there.
+- **Reading:** It is not renters' burden: it divides the rent of current tenancies by the average income of all households in the tract, owners included, and barely tells areas apart (in 2024, a median of 18.3% in the fifth of tracts with the lowest household income and 17.5% in the highest). Expensive areas look affordable because higher-income people live there.
 
 ### `peso_alquiler_ingreso`
 
@@ -323,8 +326,8 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Family:** Burden · Staying
 - **Sources:** `mivau_serpavi`, `aeat_mercado_trabajo`, `boe_smi`, `inss_pensiones`
 - **Version:** v0.1
-- **Definition:** Share of a token’s net monthly income (minimum wage, under-35, pensioner or the user’s own pay) that 50 m² of rent in the tract would take.
-- **Calculation:** Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token, with the token’s income from the same year as the rent (each year’s minimum wage, under-35 pay and pension, 2015 to 2024); if the token lacks that year, the latest is used and this is stated.
+- **Definition:** Share of a token’s net monthly income (minimum wage, young adult, pensioner or the user’s own pay) that 50 m² of rent in the tract would take.
+- **Calculation:** Median rent per m² of flats × 50 / token’s net monthly income spread over 12 payments, × 100. Computed in the browser for the chosen token, with the token’s income from the same year as the rent (each year’s minimum wage, young-adult pay and pension, 2015 to 2024); if the token lacks that year, the latest is used and this is stated.
 - **Reading:** Measures what the rent of current tenancies in the tract (those already renting) would take from a given income; it is not the price of moving in today, which asking rents measure. Read by bands (up to 30%, 30–40% and over 40%), not as an exact figure.
 
 ### `anios_salario_compra`
@@ -357,11 +360,11 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 
 - **Unit:** % of households
 - **Family:** Structure and pressure
-- **Sources:** `ine_censo2021`
+- **Sources:** `ine_censo2021`, `ine_censo2011`
 - **Version:** v0.1
 - **Definition:** Households renting as a share of all households (main residences) in the tract.
-- **Calculation:** From INE’s 2021 (and 2011) Population and Housing Census, on the 2021 tracts.
-- **Reading:** A snapshot at two dates, not an annual series.
+- **Calculation:** From INE’s 2021 and 2011 Population and Housing Censuses, on the 2021 tracts; 2011 is carried from the 2011 Census tracts with its conversion table.
+- **Reading:** A snapshot at two dates, not an annual series. The 2011 Census is sample-based: its tract figures are estimates.
 
 ### `viviendas_turisticas`
 
@@ -372,8 +375,8 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Sources:** `ine_vut`
 - **Version:** v0.1
 - **Definition:** Tourist dwellings as a share of all dwellings in the tract.
-- **Calculation:** Tourist dwellings from INE’s experimental statistics (platform listings) over all dwellings in the 2021 Census, the denominator INE has used since August 2023. From February 2024, on the 2024 tracts, carried to the 2021 tracts with the conversion table; twice a year.
-- **Reading:** Measures pressure from tourist use. Numerator and denominator are not from the same year: dwellings are those of the 2021 Census. Reference months changed in 2024 (from February and August to May and November).
+- **Calculation:** Tourist dwellings from INE’s experimental statistics (platform listings) over all dwellings in the Census, the denominator used by INE: the 2011 Census up to February 2023 and the 2021 Census from August 2023. From August 2020 to February 2023 on the 2011 Census tracts, and from February 2024 on the 2024 tracts, carried to the 2021 tracts with their conversion tables; twice a year.
+- **Reading:** Measures pressure from tourist use. Numerator and denominator are not from the same year: dwellings are those of the 2011 Census up to February 2023 and of the 2021 Census from February 2024. Reference months changed in 2024 (from February and August to May and November).
 
 ### `zona_tensionada`
 
@@ -395,9 +398,9 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Family:** Burden · Staying
 - **Sources:** `mivau_serpavi`
 - **Version:** v0.1
-- **Definition:** Net monthly pay needed so that 50 m² of rent in the tract does not exceed 30% of pay.
-- **Calculation:** Median rent per m² of flats × 50 / 0.30 (floor area can be changed to 70 or 90 m² and the threshold to 40%). Carries the status of the rent figure.
-- **Reading:** It is rent expressed in another unit, not a new indicator. The 30% threshold draws on the stressed-zone criterion of Law 12/2023, which uses household income and utilities; it is not that criterion.
+- **Definition:** Net monthly pay needed so that the tract's median monthly rent does not exceed 30% of pay. Alongside, the theoretical minimum: the same calculation for a 50 m² flat.
+- **Calculation:** Median monthly rent of flats / 0.30 (threshold can be changed to 40%). Theoretical minimum (cut superficie, group 50): median rent per m² of flats × 50 / 0.30 (floor area can be changed to 70 or 90 m² on the website). Each figure carries the status of its rent.
+- **Reading:** It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² at the median; the 50 m² minimum falls below it and is never given without it. The 30% threshold draws on the stressed-zone criterion of Law 12/2023, which uses household income and utilities; it is not that criterion.
 
 ### `sobrecarga`
 
@@ -444,10 +447,10 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Family:** Housing cost · Staying
 - **Sources:** `calculo_propio`, `mivau_serpavi`
 - **Version:** v0.1
-- **Auxiliary of:** [`alquiler_mes`](#alquiler_mes), [`esfuerzo_residentes`](#esfuerzo_residentes)
+- **Auxiliary of:** [`alquiler_mes`](#alquiler_mes), [`esfuerzo_residentes`](#esfuerzo_residentes), [`sueldo_necesario`](#sueldo_necesario)
 - **Definition:** Approximate standard error of the median monthly rent (8), as a percentage of the median, by building type.
 - **Calculation:** 0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI quartiles and tenancies (n); only where the median is published (10 or more tenancies).
-- **Reading:** Order of magnitude of the noise in the median: it assumes a regular distribution within the area and does not correct for current rather than new tenancies. It accompanies 8 and 14.
+- **Reading:** Order of magnitude of the noise in the median: it assumes a regular distribution within the area and does not correct for current rather than new tenancies. It accompanies 8, 14 and the main figure of 21, which are monthly rent in another unit.
 
 ### `margen_alquiler_m2`
 
@@ -457,8 +460,8 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Family:** Housing cost · Staying
 - **Sources:** `calculo_propio`, `mivau_serpavi`
 - **Version:** v0.1
-- **Auxiliary of:** [`alquiler_m2`](#alquiler_m2), [`peso_alquiler_ingreso`](#peso_alquiler_ingreso), [`sueldo_necesario`](#sueldo_necesario)
+- **Auxiliary of:** [`alquiler_m2`](#alquiler_m2), [`peso_alquiler_ingreso`](#peso_alquiler_ingreso)
 - **Definition:** Approximate standard error of the median rent per square metre (9), as a percentage of the median, by building type.
 - **Calculation:** 0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI rent-per-m² quartiles and tenancies (n); only where the median is published (10 or more tenancies).
-- **Reading:** It also applies to 15 and 21, which are rent per m² in another unit: the profile gives the pay needed with its range and warns when «Can you make rent?» sits on the edge between two bands.
+- **Reading:** It also applies to 15 and to the 50 m² minimum of 21, which are rent per m² in another unit: the profile warns when «Can you make rent?» sits on the edge between two bands.
 

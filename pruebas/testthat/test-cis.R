@@ -165,3 +165,39 @@ test_that("cis_comprobacion_acceso reconoce la página con la que el CIS frena a
   expect_true(cis_comprobacion_acceso("<title>Comprobación de acceso | Centro de Investigaciones Sociológicas</title>"))
   expect_false(cis_comprobacion_acceso("<title>Estudio | CIS</title>"))
 })
+
+test_that("meses solo en PDF: la transcripción llena el hueco y su compuerta (pregunta 48 a)", {
+  tr <- tibble::tibble(anio = 2026L, mes = 5L, estudio = "3560", pregunta = c("espana", "personal"),
+                       pregunta_cis = c("Pregunta 10R", "Pregunta 11R"), pagina = c(5L, 7L),
+                       total = c(30, 20.1), primero = c(14, 9), segundo = c(10, 7), tercero = c(6, 4), n = 4000,
+                       url_pdf = "https://www.cis.es/documents/20117/1/es3560mar.pdf", bytes_pdf = 1, sha256_pdf = "x",
+                       comprobacion = "inventada")
+  b <- barometros_inventados()
+  completos <- cis_aplicar_transcripcion(b, tr)
+  mayo <- completos[completos$mes == 5L, ]
+  expect_equal(sort(mayo$pregunta), c("espana", "personal"))
+  expect_equal(unique(mayo$formato), "pdf_transcrito")
+  expect_equal(mayo$total[mayo$pregunta == "espana"], 30)
+  r <- cis_comprobar_vivienda(completos)
+  expect_equal(sum(r$id == "cis_vivienda_cobertura"), 0L)          # el hueco de mayo ya no está
+  expect_equal(sum(cis_comprobar_transcripcion(b, tr)$calculado), 0)
+  expect_equal(nrow(cis_serie_vivienda(completos)), 8L)
+  # Una transcripción que pisa un mes abierto, de otro estudio, que no suma o con un enlace ajeno
+  mal <- dplyr::bind_rows(tr, dplyr::mutate(tr, mes = 1L, estudio = "3540"))
+  mal$total[2] <- 25
+  mal$url_pdf[1] <- "https://ejemplo.invalid/es3560mar.pdf"
+  c2 <- cis_comprobar_transcripcion(b, mal)
+  expect_equal(c2$calculado, c(2, 0, 0, 1, 3))   # enero: el enlace tampoco nombra su estudio
+  # Sin transcripción, nada cambia
+  expect_identical(cis_aplicar_transcripcion(b, tr[0, ]), b)
+})
+
+test_that("la transcripción del inventario: seis meses, dos preguntas, sumas y enlaces del CIS", {
+  tr <- cis_leer_transcripcion(file.path("..", "..", "inventario", "cis_transcripcion_pdf.csv"))
+  expect_equal(nrow(tr), 12L)
+  expect_setequal(unique(paste(tr$anio, tr$mes)), c("2014 7", "2025 2", "2025 4", "2025 5", "2025 6", "2025 7"))
+  expect_true(all(abs(tr$total - (tr$primero + tr$segundo + tr$tercero)) <= 0.2 + 1e-9))
+  expect_true(all(startsWith(tr$url_pdf, "https://www.cis.es/documents/")))
+  expect_true(all(mapply(grepl, tr$estudio, basename(tr$url_pdf), fixed = TRUE)))
+  expect_true(all(nchar(tr$sha256_pdf) == 64L))
+})

@@ -42,6 +42,7 @@ Variable del desglose. Sin desglose, `corte` y `grupo` valen `total`.
 | `ficha` | Ficha (ingreso de referencia) |
 | `oferta_privada` | Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE) |
 | `contrato` | Antigüedad del contrato de alquiler (IPVA) |
+| `superficie` | Superficie supuesta (mínimo teórico del sueldo necesario) |
 
 ### `grupo`
 
@@ -79,7 +80,7 @@ Valor del desglose, según el corte.
 | `mes` | `M08` | Agosto |
 | `mes` | `M11` | Noviembre |
 | `ficha` | `tartera` | Salario mínimo |
-| `ficha` | `mochila` | Joven menor de 35 |
+| `ficha` | `mochila` | Joven de 26 a 35 |
 | `ficha` | `transistor` | Pensionista |
 | `oferta_privada` | `alquiler_idealista` | Alquiler, Idealista (dato privado de oferta) |
 | `oferta_privada` | `alquiler_fotocasa` | Alquiler, Fotocasa (dato privado de oferta) |
@@ -87,6 +88,7 @@ Valor del desglose, según el corte.
 | `oferta_privada` | `venta_fotocasa` | Venta, Fotocasa (dato privado de oferta) |
 | `contrato` | `nuevo` | Contrato nuevo (firmado en el año de referencia) |
 | `contrato` | `existente` | Contrato existente (firmado antes del año de referencia) |
+| `superficie` | `50` | Piso teórico de 50 m² |
 
 ### `fuente`
 
@@ -98,7 +100,7 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 | `mivau_serpavi` | Sistema Estatal de Referencia del Precio del Alquiler de Vivienda (SERPAVI): base de datos |
 | `gv_emal` | Estadística del Mercado del Alquiler (fianzas) |
 | `ine_ipva` | Índice de Precios de Vivienda en Alquiler (IPVA) |
-| `notariado` | Portal Estadístico del Notariado |
+| `registradores` | Estadística Registral Inmobiliaria: compraventas de inmuebles de uso residencial por provincia |
 | `mivau_valor_tasado` | Valor tasado de la vivienda libre |
 | `ine_hipotecas` | Estadística de Hipotecas (H): tipo de interés medio al inicio |
 | `portales` | Informes de precios de oferta (salas de prensa de Idealista y Fotocasa) |
@@ -106,6 +108,7 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 | `inss_pensiones` | Pensiones contributivas del Sistema de la Seguridad Social (en vigor) |
 | `boe_smi` | Real Decreto del salario mínimo interprofesional |
 | `ine_censo2021` | Censo de Población y Viviendas 2021 |
+| `ine_censo2011` | Censos de Población y Viviendas 2011 |
 | `ine_vut` | Viviendas de uso turístico (estadística experimental) |
 | `zonas_tensionadas` | Declaraciones de zonas de mercado residencial tensionado |
 | `ine_ecv` | Encuesta de Condiciones de Vida (microdatos) |
@@ -126,14 +129,14 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 | 4 | [`peso_salarios`](#peso_salarios) | Peso de los salarios en la renta | % de la renta bruta | v0.2 |
 | 5 | [`bajo_60_mediana`](#bajo_60_mediana) | Población por debajo del 60 % de la mediana de renta por unidad de consumo | % de la población | v0.2 |
 | 6 | [`gini`](#gini) | Índice de Gini | índice (0–100) | v0.2 |
-| 7 | [`salario_medio`](#salario_medio) | Salario medio anual por asalariado (total y menores de 35) | € por asalariado y año (bruto) | v0.2 |
+| 7 | [`salario_medio`](#salario_medio) | Salario medio anual por asalariado (total y de 26 a 35 años) | € por asalariado y año (bruto) | v0.2 |
 | 8 | [`alquiler_mes`](#alquiler_mes) | Alquiler mensual (mediana) | € por mes | v0.1 |
 | 9 | [`alquiler_m2`](#alquiler_m2) | Alquiler por metro cuadrado | € por m² y mes | v0.1 |
 | 10 | [`var_alquiler`](#var_alquiler) | Variación anual del alquiler | % de variación anual | v0.3 |
 | 11 | [`precio_compra_m2`](#precio_compra_m2) | Precio de compraventa por metro cuadrado | € por m² | v0.3 |
 | 12 | [`valor_tasado_m2`](#valor_tasado_m2) | Valor tasado por metro cuadrado | € por m² | v0.3 |
 | 13 | [`precio_oferta`](#precio_oferta) | Precio de oferta (alquiler y venta) | € por m² (alquiler: por m² y mes) | v0.4 |
-| 14 | [`esfuerzo_residentes`](#esfuerzo_residentes) | Esfuerzo de residentes en alquiler | % de la renta del hogar | v0.1 |
+| 14 | [`esfuerzo_residentes`](#esfuerzo_residentes) | Alquiler mediano sobre renta media del barrio | % de la renta del hogar | v0.1 |
 | 15 | [`peso_alquiler_ingreso`](#peso_alquiler_ingreso) | Peso del alquiler en el ingreso | % del ingreso de referencia | v0.1 |
 | 16 | [`anios_salario_compra`](#anios_salario_compra) | Años de salario para comprar | años | v0.3 |
 | 17 | [`esfuerzo_hipotecario`](#esfuerzo_hipotecario) | Esfuerzo hipotecario teórico | % del ingreso | v0.3 |
@@ -169,7 +172,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Versión:** v0.1
 - **Definición:** Renta disponible media de los hogares de la sección.
 - **Cálculo:** Cifra publicada por el INE (ADRH). En otros seccionados, media ponderada por el número de hogares (población entre tamaño medio del hogar), con el mismo estado que el indicador 1.
-- **Lectura:** Es renta del hogar, con varios perceptores, no un sueldo. Es el denominador del esfuerzo de residentes (14) y el ingreso de la ficha «hogar del barrio».
+- **Lectura:** Es renta del hogar, con varios perceptores, no un sueldo. Es el denominador del alquiler mediano sobre renta media del barrio (14) y el ingreso de la ficha «hogar del barrio».
 
 ### `renta_uc_mediana`
 
@@ -221,7 +224,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 
 ### `salario_medio`
 
-**7 · Salario medio anual por asalariado (total y menores de 35)**
+**7 · Salario medio anual por asalariado (total y de 26 a 35 años)**
 
 - **Unidad:** € por asalariado y año (bruto)
 - **Familia:** Capacidad de pago
@@ -229,7 +232,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Versión:** v0.2
 - **Definición:** Salario medio anual bruto de los asalariados con domicilio fiscal en la provincia, en total y de 26 a 35 años.
 - **Cálculo:** Cifra publicada por la AEAT (Mercado de trabajo y pensiones en las fuentes tributarias, tabla por provincia, edad y sexo): salarios / asalariados, en total y del tramo de 26 a 35 años; la comunidad y España, con su cifra publicada. El País Vasco y Navarra no están en la estadística (domicilio fiscal foral) y van sin dato.
-- **Lectura:** Es salario real del año: incluye a quien trabajó pocos meses. Es una media, no una mediana; la ficha «joven» la pasa a mediana con la relación mediana/media del salario medio estimado de su comunidad y después a neto mensual repartido en 12, con la cotización del trabajador y la retención media de la AEAT por comunidad y tramo de renta (plan §3.1, método B).
+- **Lectura:** Es salario real del año: incluye a quien trabajó pocos meses. Es una media, no una mediana; la ficha «joven de 26 a 35» la pasa a mediana con la relación mediana/media del salario medio estimado de su comunidad y después a neto mensual repartido en 12, con la cotización del trabajador y la retención media de la AEAT por comunidad y tramo de renta (plan §3.1, método B).
 
 ### `alquiler_mes`
 
@@ -241,7 +244,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Versión:** v0.1
 - **Definición:** Mediana del alquiler mensual de los contratos de vivienda habitual vigentes en la sección, por tipología (colectiva y unifamiliar); se publican también el primer y el tercer cuartil.
 - **Cálculo:** Cifra publicada por el MIVAU (SERPAVI), a partir de los alquileres declarados en el IRPF y del Catastro, en el seccionado de 2021 para toda la serie. Sin dato con menos de 10 contratos.
-- **Lectura:** Es el parque alquilado, no los contratos nuevos: quien entra hoy paga más. El País Vasco y Navarra entran en el SERPAVI entre 2021 y 2024.
+- **Lectura:** Es el parque alquilado, no los contratos nuevos: quien entra hoy paga más. Solo cuenta a los caseros que son personas físicas y declaran el alquiler como vivienda habitual en el IRPF: deja fuera las sociedades y la vivienda pública, el alquiler no declarado y el alquiler a parientes (metodología del MIVAU, 18-mar-2026). El País Vasco y Navarra entran en el SERPAVI entre 2021 y 2024.
 
 ### `alquiler_m2`
 
@@ -253,7 +256,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Versión:** v0.1
 - **Definición:** Mediana del alquiler mensual por metro cuadrado de los contratos de vivienda habitual vigentes en la sección, por tipología (colectiva y unifamiliar).
 - **Cálculo:** Cifra publicada por el MIVAU (SERPAVI), con la superficie del Catastro.
-- **Lectura:** Permite comparar secciones con viviendas de distinto tamaño y es la base del sueldo necesario (21).
+- **Lectura:** Permite comparar secciones con viviendas de distinto tamaño y es la base del sueldo necesario (21). Mismo universo que el 8: solo caseros que son personas físicas y declaran el alquiler en el IRPF.
 
 ### `var_alquiler`
 
@@ -273,11 +276,11 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 
 - **Unidad:** € por m²
 - **Familia:** Coste de la vivienda
-- **Fuentes:** `notariado`
+- **Fuentes:** `registradores`
 - **Versión:** v0.3
-- **Definición:** Precio medio por metro cuadrado de las compraventas de vivienda escrituradas ante notario.
-- **Cálculo:** Cifra publicada por el Consejo General del Notariado.
-- **Lectura:** Es precio de cierre, no de oferta ni de tasación.
+- **Definición:** Precio medio por metro cuadrado de las compraventas de vivienda inscritas en los registros de la propiedad.
+- **Cálculo:** Cifra publicada por el Colegio de Registradores (Estadística Registral Inmobiliaria, datos abiertos con licencia ODbL): precio medio por m² de vivienda del año, el del cuarto trimestre, que acumula el año natural; provincia, comunidad y España, cada uno con su cifra publicada.
+- **Lectura:** Es precio de compraventa inscrita, no de oferta ni de tasación. No se compara con el precio por m² del Notariado, que mide otra superficie; provincia como nivel más fino.
 
 ### `valor_tasado_m2`
 
@@ -305,15 +308,15 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 
 ### `esfuerzo_residentes`
 
-**14 · Esfuerzo de residentes en alquiler**
+**14 · Alquiler mediano sobre renta media del barrio**
 
 - **Unidad:** % de la renta del hogar
 - **Familia:** Esfuerzo · Quedarse
 - **Fuentes:** `mivau_serpavi`, `ine_adrh`
 - **Versión:** v0.1
-- **Definición:** Parte de la renta anual del hogar medio de la sección que se iría en el alquiler mediano de esa misma sección.
+- **Definición:** Parte de la renta anual del hogar medio de la sección, la de todos sus hogares (propietarios incluidos), que se iría en el alquiler mediano de esa misma sección.
 - **Cálculo:** Alquiler mensual mediano de la vivienda colectiva × 12 / renta neta media por hogar, del mismo año, × 100. Sección censal y municipio. Si alguno de los dos términos está en secreto o falta, la cifra también.
-- **Lectura:** Mide la vulnerabilidad de quien ya vive allí, no lo que cuesta entrar: los barrios caros parecen asequibles porque los habita gente con más renta.
+- **Lectura:** No es el esfuerzo de quien alquila: divide el alquiler de los contratos vigentes entre la renta media de todos los hogares de la sección, propietarios incluidos, y apenas distingue barrios (en 2024, mediana del 18,3 % en el quintil de secciones con menos renta por hogar y del 17,5 % en el de más). Los barrios caros parecen asequibles porque los habita gente con más renta.
 
 ### `peso_alquiler_ingreso`
 
@@ -357,11 +360,11 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 
 - **Unidad:** % de los hogares
 - **Familia:** Estructura y presión
-- **Fuentes:** `ine_censo2021`
+- **Fuentes:** `ine_censo2021`, `ine_censo2011`
 - **Versión:** v0.1
 - **Definición:** Hogares que viven de alquiler sobre el total de hogares (viviendas principales) de la sección.
-- **Cálculo:** Cifra del Censo de Población y Viviendas 2021 (y 2011) del INE, en el seccionado de 2021.
-- **Lectura:** Es una fotografía de dos fechas, no una serie anual.
+- **Cálculo:** Cifra de los Censos de Población y Viviendas 2021 y 2011 del INE, en el seccionado de 2021; la de 2011, llevada desde las secciones del Censo 2011 con su tabla de paso.
+- **Lectura:** Es una fotografía de dos fechas, no una serie anual. El Censo 2011 es muestral: sus cifras por sección son estimaciones.
 
 ### `viviendas_turisticas`
 
@@ -372,8 +375,8 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Fuentes:** `ine_vut`
 - **Versión:** v0.1
 - **Definición:** Viviendas de uso turístico sobre el total de viviendas de la sección.
-- **Cálculo:** Viviendas turísticas de la estadística experimental del INE (anuncios de plataformas) sobre el total de viviendas del Censo 2021, el denominador que usa el INE desde agosto de 2023. Desde febrero de 2024, en el seccionado de 2024, llevado al de 2021 con la tabla de paso; semestral.
-- **Lectura:** Mide la presión del uso turístico. Numerador y denominador no son del mismo año: las viviendas son las del Censo 2021. Los meses de referencia cambiaron en 2024 (de febrero y agosto a mayo y noviembre).
+- **Cálculo:** Viviendas turísticas de la estadística experimental del INE (anuncios de plataformas) sobre el total de viviendas del Censo, el denominador que usa el INE: el de 2011 hasta febrero de 2023 y el de 2021 desde agosto de 2023. De agosto de 2020 a febrero de 2023, en las secciones del Censo 2011, y desde febrero de 2024, en el seccionado de 2024, llevados al de 2021 con su tabla de paso; semestral.
+- **Lectura:** Mide la presión del uso turístico. Numerador y denominador no son del mismo año: las viviendas son las del Censo 2011 hasta febrero de 2023 y las del Censo 2021 desde febrero de 2024. Los meses de referencia cambiaron en 2024 (de febrero y agosto a mayo y noviembre).
 
 ### `zona_tensionada`
 
@@ -395,9 +398,9 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Familia:** Esfuerzo · Quedarse
 - **Fuentes:** `mivau_serpavi`
 - **Versión:** v0.1
-- **Definición:** Sueldo neto mensual necesario para que el alquiler de 50 m² en la sección no pase del 30 % del sueldo.
-- **Cálculo:** Alquiler mediano por m² de la vivienda colectiva × 50 / 0,30 (superficie cambiable a 70 y 90 m² y umbral al 40 %). Lleva el estado del alquiler.
-- **Lectura:** Es el alquiler expresado en otra unidad, no un indicador nuevo. El umbral del 30 % se inspira en el criterio de zona tensionada de la Ley 12/2023, que usa renta del hogar y suministros; no es ese criterio.
+- **Definición:** Sueldo neto mensual necesario para que el alquiler mensual mediano de la sección no pase del 30 % del sueldo. Al lado, el mínimo teórico: el mismo cálculo con un piso de 50 m².
+- **Cálculo:** Alquiler mensual mediano de la vivienda colectiva / 0,30 (umbral cambiable al 40 %). Mínimo teórico (corte superficie, grupo 50): alquiler mediano por m² de la vivienda colectiva × 50 / 0,30 (superficie cambiable a 70 y 90 m² en la web). Cada cifra lleva el estado de su alquiler.
+- **Lectura:** Es el alquiler expresado en otra unidad, no un indicador nuevo. La cifra principal paga la vivienda alquilada mediana de la sección, de unos 79 m² de mediana; el mínimo de 50 m² queda por debajo y no se da sin ella. El umbral del 30 % se inspira en el criterio de zona tensionada de la Ley 12/2023, que usa renta del hogar y suministros; no es ese criterio.
 
 ### `sobrecarga`
 
@@ -444,10 +447,10 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Familia:** Coste de la vivienda · Quedarse
 - **Fuentes:** `calculo_propio`, `mivau_serpavi`
 - **Versión:** v0.1
-- **Auxiliar de:** [`alquiler_mes`](#alquiler_mes), [`esfuerzo_residentes`](#esfuerzo_residentes)
+- **Auxiliar de:** [`alquiler_mes`](#alquiler_mes), [`esfuerzo_residentes`](#esfuerzo_residentes), [`sueldo_necesario`](#sueldo_necesario)
 - **Definición:** Error típico aproximado de la mediana del alquiler mensual (8), en porcentaje de la mediana, por tipología.
 - **Cálculo:** 0,929 × (P75 − P25) / (P50 × √n), con los cuartiles y los contratos (n) del SERPAVI; solo donde se publica la mediana (10 o más contratos).
-- **Lectura:** Orden de magnitud del ruido de la mediana: supone una distribución regular dentro del territorio y no corrige que sean contratos vigentes, no nuevos. Acompaña al 8 y al 14.
+- **Lectura:** Orden de magnitud del ruido de la mediana: supone una distribución regular dentro del territorio y no corrige que sean contratos vigentes, no nuevos. Acompaña al 8, al 14 y a la cifra principal del 21, que son el alquiler mensual en otra unidad.
 
 ### `margen_alquiler_m2`
 
@@ -457,8 +460,8 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Familia:** Coste de la vivienda · Quedarse
 - **Fuentes:** `calculo_propio`, `mivau_serpavi`
 - **Versión:** v0.1
-- **Auxiliar de:** [`alquiler_m2`](#alquiler_m2), [`peso_alquiler_ingreso`](#peso_alquiler_ingreso), [`sueldo_necesario`](#sueldo_necesario)
+- **Auxiliar de:** [`alquiler_m2`](#alquiler_m2), [`peso_alquiler_ingreso`](#peso_alquiler_ingreso)
 - **Definición:** Error típico aproximado de la mediana del alquiler por metro cuadrado (9), en porcentaje de la mediana, por tipología.
 - **Cálculo:** 0,929 × (P75 − P25) / (P50 × √n), con los cuartiles del alquiler por m² y los contratos (n) del SERPAVI; solo donde se publica la mediana (10 o más contratos).
-- **Lectura:** Vale también para el 15 y el 21, que son el alquiler por m² en otra unidad: la ficha da el sueldo necesario con su intervalo y avisa cuando «¿te llega?» queda en el límite entre dos tramos.
+- **Lectura:** Vale también para el 15 y para el mínimo de 50 m² del 21, que son el alquiler por m² en otra unidad: la ficha avisa cuando «¿te llega?» queda en el límite entre dos tramos.
 

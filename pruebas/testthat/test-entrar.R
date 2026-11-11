@@ -58,6 +58,9 @@ test_that("R y la página coinciden: tramo, límites, intervalos y «¿te llega?
       i <- entrar_intervalo(caso$tramo, b, f[[cifra]])
       cerca(c(i$desde, i$hasta), unlist(caso[[cifra]]))
     }
+    # Entre dos sueldos, con el piso de dos (70 m²; pregunta 43 h)
+    i <- entrar_intervalo(caso$tramo, b, f$sueldo_entrar_dos)
+    cerca(c(i$desde, i$hasta), unlist(caso$sueldo_entrar_dos))
     ll <- entrar_llega(entrar_intervalo(caso$tramo, b, f$barrera_entrar))
     expect_equal(c(ll$desde, ll$hasta), as.integer(unlist(caso$llega)))
     expect_equal(ll$en_limite, caso$llega[[1]] != caso$llega[[2]])

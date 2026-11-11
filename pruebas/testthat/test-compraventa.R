@@ -250,6 +250,41 @@ test_that("derivados 16 y 17: valores, estados y compuerta", {
   expect_true(all(sin_tipo$estado[sin_tipo$indicador == "esfuerzo_hipotecario"] == "ausente"))
 })
 
+test_that("17 con la renta neta por hogar del ADRH y el tipo del Banco de España (pregunta 45 d y e)", {
+  # Tipo: media de los doce meses de D_IMVTIPLV, a dos decimales; un año incompleto no entra
+  bde <- tibble::tibble(serie = "tipo_prestamos", anio = c(rep(2024L, 12), rep(2025L, 3)), subperiodo = c(1:12, 1:3),
+                        valor = c(rep(3.2, 6), rep(3.3, 6), 3, 3, 3))
+  tipo <- compraventa_tipo_bde(bde)
+  expect_equal(tipo$anio, 2024L)
+  expect_equal(tipo$tipo, 3.25)
+  # Renta por hogar: el municipio, la publicada; la provincia, la comunidad y España, media ponderada por hogares
+  renta <- tibble::tibble(anio = 2024L, nivel = c("municipio", "municipio", "seccion"), codigo = c("28079", "28006", "2807901001"),
+                          indicador = "renta_hogar", valor = c(40000, 30000, 41000))
+  pesos <- tibble::tibble(anio = 2024L, seccion = c("2807901001", "2807901002", "2800601001"), poblacion = c(250, 750, 250),
+                          hogares = c(100, 300, 100))
+  terr <- tibble::tibble(codigo = c("28", "04", "13", "01"), nivel = c("provincia", "provincia", "ccaa", "ccaa"),
+                         superior = c("13", "01", "00", "00"))
+  r <- compraventa_renta_hogar(renta, pesos, terr)
+  expect_equal(r$renta[r$nivel == "municipio" & r$geo_id == "28079"], 40000)
+  expect_equal(r$e_renta[r$nivel == "municipio" & r$geo_id == "28079"], "dato")
+  expect_equal(r$renta[r$nivel == "provincia" & r$geo_id == "28"], (40000 * 400 + 30000 * 100) / 500)
+  expect_equal(r$e_renta[r$nivel == "provincia"], "estimado")
+  expect_equal(r$renta[r$nivel == "nacional"], 38000)
+  expect_equal(r$geo_id[r$nivel == "ccaa"], "13")
+  d <- armonizar_derivados_compraventa(larga_vt_prueba(), larga_sal_prueba(), tipo, renta_hogar = r, version_renta = "2026-10-19")
+  e <- d[d$indicador == "esfuerzo_hipotecario", ]
+  expect_equal(e$valor[e$geo_id == "28079"], 100 * 12 * cuota_hipoteca(0.8 * 4000 * 80, 3.25) / 40000)
+  expect_equal(e$estado[e$geo_id == "28079"], "dato")
+  expect_equal(e$valor[e$geo_id == "28"], 100 * 12 * cuota_hipoteca(0.8 * 3000 * 80, 3.25) / 38000)
+  expect_equal(e$estado[e$geo_id == "28"], "estimado")
+  # El 16 sigue con el salario
+  a <- d[d$indicador == "anios_salario_compra", ]
+  expect_equal(a$valor[a$geo_id == "28079"], 4000 * 80 / 32000)
+  c0 <- comprobar_derivados_compraventa(d, larga_vt_prueba(), larga_sal_prueba(), tipo, renta_hogar = r)
+  expect_true(all(c0$calculado[c0$id %in% c("compraventa_estado", "compraventa_rango")] == 0))
+  expect_true(all(c0$calculado[c0$id == "compraventa_terminos"] < 1e-9))
+})
+
 test_that("coherencia: superficie implícita de las escrituras sobre la tasación", {
   q <- tidyr::expand_grid(nivel = c("nacional", "provincia"), anio = 2024L, trimestre = 1:4) |>
     dplyr::mutate(geo_id = ifelse(nivel == "nacional", "00", "28"))

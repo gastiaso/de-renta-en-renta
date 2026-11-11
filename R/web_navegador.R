@@ -17,7 +17,8 @@
 #   navegador_fichas: la ficha que pinta la página en unos casos escogidos (con mediana y muchos
 #     contratos, con pocos, en secreto, con 0 contratos, y «¿te llega?» con el salario mínimo en
 #     el límite entre dos tramos y lejos de él): su cifra, sus contratos y su margen, «pocos
-#     contratos», «sin contratos de pisos» y «en el límite», frente a lo que sale de R.
+#     contratos», «sin contratos de pisos» y «en el límite», frente a lo que sale de R; en el sueldo
+#     necesario, también el mínimo de 50 m² al lado de la cifra principal (tarea 40).
 #   navegador_redireccion: un enlace viejo a la raíz (con una sección, o con un sueldo tras «#»)
 #     acaba en mapa.html con la misma vista, y el sueldo no queda en la dirección (portada, tarea 24);
 #   navegador_portada: la portada carga, en castellano y en inglés, con sus 24 casillas, sin irse
@@ -98,6 +99,7 @@ JS_FICHA_NAVEGADOR <- r"(
     sin_nivel: Boolean(f?.querySelector('.ficha-sin-nivel')),
     estado: estados,
     cifra: num(f?.querySelector('.ficha-numero')?.textContent),
+    minimo: num(f?.querySelector('.ficha-minimo-cifra')?.textContent),
     contratos: contratos ? num(contratos[1]) : null,
     margen: margen ? num(margen[1]) : null,
     pocos: Boolean(f?.querySelector('.marca-pocos')),
@@ -157,29 +159,36 @@ servir_web_local <- function(raiz = ".", espera = 15) {
 }
 
 # Casos de la ficha: con mediana y muchos contratos, con pocos, en secreto, con 0 contratos, y
-# «¿te llega?» con la tartera en el límite y lejos de él. Una fila por caso con lo esperado.
+# «¿te llega?» con la tartera en el límite y lejos de él. Una fila por caso con lo esperado. Tarea
+# 40: en el sueldo necesario, la cifra es la principal (alquiler mensual real) con el margen de la
+# mediana del alquiler mensual, y la ficha da al lado el mínimo de 50 m² (`minimo`); en «¿te
+# llega?», la tartera paga 50 m² (regla 8), con el margen de la mediana por m².
 casos_ficha_navegador <- function(larga, ingreso_tartera, superficie = SUPERFICIE_FICHA, semilla = 20261109L) {
   ultimo <- max(larga$anio[larga$indicador == "sueldo_necesario" & larga$nivel == "sc"])
   ancho <- larga |>
     filter(nivel == "sc", anio == ultimo, corte %in% c("tipologia", "total"), grupo %in% c("VC", "total"),
-           indicador %in% c("alquiler_m2", "contratos_alquiler", "margen_alquiler_m2", "sueldo_necesario")) |>
+           indicador %in% c("alquiler_m2", "contratos_alquiler", "margen_alquiler_m2", "margen_alquiler_mes",
+                            "sueldo_necesario")) |>
     select(geo_id, indicador, valor, estado) |>
     tidyr::pivot_wider(names_from = indicador, values_from = c(valor, estado))
   x <- ancho |>
     transmute(seccion = geo_id, estado = estado_alquiler_m2, contratos = valor_contratos_alquiler,
-              margen = redondeo_guia(valor_margen_alquiler_m2), sueldo = valor_sueldo_necesario,
+              margen = redondeo_guia(valor_margen_alquiler_mes), margen_m2 = redondeo_guia(valor_margen_alquiler_m2),
+              sueldo = valor_sueldo_necesario,
+              minimo = termino_publicado(valor_alquiler_m2) * superficie / UMBRAL_SUELDO,
               ratio = termino_publicado(valor_alquiler_m2) * superficie / ingreso_tartera,
-              limite = !is.na(ratio) & !is.na(margen) &
-                tramo_llega(ratio * (1 - margen / 100)) != tramo_llega(ratio * (1 + margen / 100)))
+              limite = !is.na(ratio) & !is.na(margen_m2) &
+                tramo_llega(ratio * (1 - margen_m2 / 100)) != tramo_llega(ratio * (1 + margen_m2 / 100)))
   set.seed(semilla)
   uno <- function(d) d[sample.int(nrow(d), 1), ]
+  llega <- function(d) mutate(d, margen = margen_m2, ficha = "tartera")
   bind_rows(
     uno(filter(x, estado == "dato", contratos >= 100)) |> mutate(caso = "mediana", ficha = NA_character_),
     uno(filter(x, estado == "dato", contratos < UMBRAL_POCOS_CONTRATOS)) |> mutate(caso = "pocos", ficha = NA_character_),
     uno(filter(x, estado == "secreto")) |> mutate(caso = "secreto", ficha = NA_character_),
     uno(filter(x, estado == "ausente", contratos %in% 0)) |> mutate(caso = "sin_contratos", ficha = NA_character_),
-    uno(filter(x, estado == "dato", limite)) |> mutate(caso = "llega_limite", ficha = "tartera"),
-    uno(filter(x, estado == "dato", !limite, ratio < 0.2)) |> mutate(caso = "llega_lejos", ficha = "tartera")
+    uno(filter(x, estado == "dato", limite)) |> mutate(caso = "llega_limite") |> llega(),
+    uno(filter(x, estado == "dato", !limite, ratio < 0.2)) |> mutate(caso = "llega_lejos") |> llega()
   )
 }
 
@@ -253,7 +262,9 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
                              secreto = identical(as.numeric(f$contratos), as.numeric(cs$contratos)) && is.null(f$margen),
                              ausente = isTRUE(f$sin_contratos) == isTRUE(cs$contratos == 0))
       limite_ok <- is.na(cs$ficha) || identical(f$limite, cs$limite)
-      as.numeric(!(cifra_ok && contratos_ok && limite_ok))
+      # Tarea 40: en el sueldo necesario, el minimo de 50 m2 al lado de la cifra principal
+      minimo_ok <- !is.na(cs$ficha) || cs$estado != "dato" || (!is.null(f$minimo) && abs(f$minimo - round(cs$minimo)) <= 0.5 + 1e-9)
+      as.numeric(!(cifra_ok && contratos_ok && limite_ok && minimo_ok))
     }
     filas[[length(filas) + 1L]] <- tibble::tibble(id = "navegador_fichas", detalle = paste(cs$caso, cs$seccion),
                                                   calculado = mal, referencia = 0)
@@ -286,7 +297,7 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
   pagina <- tibble::tibble(geo_id = r$sueldo[, 1], anio = as.integer(r$sueldo[, 2]),
                            pagina = suppressWarnings(as.numeric(r$sueldo[, 3])), estado_pagina = r$sueldo[, 4])
   esperado <- larga |>
-    filter(indicador == "sueldo_necesario", nivel == "sc", geo_id %in% codigos) |>
+    filter(indicador == "sueldo_necesario", corte == "total", nivel == "sc", geo_id %in% codigos) |>
     transmute(geo_id, anio, r = redondeo_guia(valor), estado)
   cruce <- full_join(pagina, esperado, by = c("geo_id", "anio")) |>
     mutate(mal = is.na(estado) | is.na(estado_pagina) | estado != estado_pagina | xor(is.na(r), is.na(pagina)) |
@@ -296,16 +307,17 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
     calculado = sum(cruce$mal), referencia = 0)
   fia <- tibble::tibble(geo_id = r$fiabilidad[, 1], contratos_pagina = suppressWarnings(as.numeric(r$fiabilidad[, 2])),
                         margen_pagina = suppressWarnings(as.numeric(r$fiabilidad[, 3])))
+  # Tarea 40: el sueldo necesario sale del alquiler mensual, con el margen de su mediana
   fia_r <- larga |>
-    filter(nivel == "sc", anio == as.integer(r$ultimo), grupo == "VC", geo_id %in% codigos,
-           indicador %in% c("contratos_alquiler", "margen_alquiler_m2")) |>
+    filter(nivel == "sc", anio == as.integer(r$ultimo), corte == "tipologia", grupo == "VC", geo_id %in% codigos,
+           indicador %in% c("contratos_alquiler", "margen_alquiler_mes")) |>
     select(geo_id, indicador, valor) |>
     tidyr::pivot_wider(names_from = indicador, values_from = valor)
-  if (!"margen_alquiler_m2" %in% names(fia_r)) fia_r$margen_alquiler_m2 <- NA_real_
+  if (!"margen_alquiler_mes" %in% names(fia_r)) fia_r$margen_alquiler_mes <- NA_real_
   cruce_f <- left_join(fia, fia_r, by = "geo_id") |>
     mutate(mal = xor(is.na(contratos_pagina), is.na(contratos_alquiler)) | coalesce(contratos_pagina != contratos_alquiler, FALSE) |
-             xor(is.na(margen_pagina), is.na(margen_alquiler_m2)) |
-             coalesce(abs(margen_pagina - redondeo_guia(margen_alquiler_m2)) > 1e-9, FALSE))
+             xor(is.na(margen_pagina), is.na(margen_alquiler_mes)) |
+             coalesce(abs(margen_pagina - redondeo_guia(margen_alquiler_mes)) > 1e-9, FALSE))
   filas[[length(filas) + 1L]] <- tibble::tibble(id = "navegador_fiabilidad", detalle = sprintf("%d secciones de %s", nrow(fia), r$ultimo),
                                                 calculado = sum(cruce_f$mal), referencia = 0)
   if (isTRUE(r$ejemplo)) filas[[1]]$calculado <- 1
@@ -328,12 +340,14 @@ esperar_navegador <- function(evaluar, condicion, espera = 60) {
 }
 
 # Cifras de las cartas como las escribe la pagina en castellano (es-ES: punto de miles y coma
-# decimal; enteros en los euros, un decimal en los porcentajes).
+# decimal; enteros en los euros, con los empates hacia arriba, y un decimal en los porcentajes). Tarea 40: con el minimo de 50 m2
+# al lado del sueldo y, en el salario minimo, los porcentajes con el alquiler real.
 textos_cartas_navegador <- function(cifras) {
-  euros <- function(x) formatC(round(x), format = "d", big.mark = ".", decimal.mark = ",")
+  # los empates hacia arriba, como Intl.NumberFormat (2.976,5 da 2.977; round() daria 2.976)
+  euros <- function(x) formatC(floor(x + 0.5), format = "d", big.mark = ".", decimal.mark = ",")
   pct <- function(x) sub(".", ",", formatC(x, format = "f", digits = 1), fixed = TRUE)
-  list(sueldo = euros(c(cifras$sueldo$mediana, cifras$sueldo$p10, cifras$sueldo$p90)),
-       smi = pct(c(cifras$smi$pct_30, cifras$smi$pct_40)),
+  list(sueldo = euros(c(cifras$sueldo$mediana, cifras$sueldo$p10, cifras$sueldo$p90, cifras$sueldo$minimo)),
+       smi = pct(c(cifras$smi$pct_30, cifras$smi$pct_40, cifras$smi$pct_30_real, cifras$smi$pct_40_real)),
        sobrecarga = if (!is.null(cifras$sobrecarga)) pct(c(cifras$sobrecarga$total, cifras$sobrecarga$alquiler_mercado)))
 }
 
@@ -346,7 +360,7 @@ comprobar_portada_navegador <- function(b, evaluar, url, larga, perfiles, espera
   b$Page$navigate(url)
   esperar_navegador(evaluar, "document.readyState === 'complete'", espera)
   hay_cartas <- isTRUE(evaluar("fetch('datos/portada.json', { cache: 'no-cache' }).then((r) => r.ok)"))
-  esperados <- textos_cartas_navegador(cifras_portada(larga))
+  esperados <- textos_cartas_navegador(cifras_portada(larga, perfiles = perfiles))
   for (idioma in c("es", "en")) {
     b$Page$navigate(paste0(url, if (idioma == "en") "?idioma=en" else ""))
     listo <- esperar_navegador(evaluar, sprintf(

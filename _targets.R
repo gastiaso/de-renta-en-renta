@@ -303,7 +303,10 @@ bloque_serpavi <- list(
   tar_target(comprobaciones_fiabilidad, comprobar_fiabilidad_serpavi(larga_serpavi)),
   tar_target(validacion_fiabilidad, validar_referencias(comprobaciones_fiabilidad, referencias)),
   tar_target(resumen_larga_serpavi, resumen_serpavi(larga_serpavi)),
-  tar_target(resumen_fiabilidad, resumen_fiabilidad_serpavi(larga_serpavi))
+  tar_target(resumen_fiabilidad, resumen_fiabilidad_serpavi(larga_serpavi)),
+  # Tarea 42: viviendas alquiladas del SERPAVI frente a hogares en alquiler del Censo 2021, en las
+  # mismas secciones y el mismo año (R/serpavi_universo.R; nota §7.1). No aísla a las personas jurídicas.
+  tar_target(contraste_serpavi_censo, serpavi_contraste_censo(larga_serpavi, censo2021))
 )
 
 # Indicador 18: hogares en alquiler (%) del Censo 2021, en el seccionado de referencia (sin tabla
@@ -355,6 +358,63 @@ bloque_vut <- list(
     validacion_vut   # la compuerta va antes que la armonización
     bind_rows(armonizar_ine_vut(vut_2021, version = version_de(utils::tail(ficheros_vut, 1))),
               territorios_ine_vut(vut_provincias, version = version_de(ficheros_vut_provincias))) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  })
+)
+
+# Tarea 47: tabla de paso desde las secciones del Censo 2011 (R/paso2011.R; nota §3.11). Lleva al
+# seccionado de 2021 el indicador 18 de 2011 (Censo 2011) y el 19 de agosto de 2020 a febrero de 2023
+# (PERIODOS_VUT_2011, con las viviendas del Censo 2011 como denominador, el del INE). Las dos vías de
+# F1: callejero de enero de 2012 (aplicación antigua, como 2016–2020) y edificios del Catastro ya leídos
+# en F1 (edificios_paso; no se vuelve a leer ninguno): construidos hasta 2011 en la tabla del Censo y hasta
+# 2020 en la de las viviendas turísticas. La compuerta reutiliza cierre_poblacional y cobertura_destino
+# (anio 2011 y 2020, una por tabla) y añade las paso2011_*.
+#   targets::tar_make(names = c(larga_paso2011, fichero_paso_final_2011, resumen_paso2011))
+bloque_paso2011 <- list(
+  tar_target(zip_cartografia_censo2011, paso2011_descargar_cartografia(), format = "file"),
+  tar_target(secciones_censo2011, leer_ine_seccionado(zip_cartografia_censo2011, 2011L, SECCIONES_AMBITO)),
+  tar_target(zip_callejero_2012, descargar_ine_callejero(PASO2011_CALLEJERO), format = "file"),
+  tar_target(tramos_2012, leer_ine_callejero(zip_callejero_2012, FICHEROS_TRAMOS[["antigua_2015"]], AMBITO)),
+  tar_target(grupos_2011, geo_grupos_municipio(secciones_censo2011, secciones_2021)),
+  tar_target(paso2011_callejero, geo_tabla_paso_callejero_por_provincia(tramos_2012, tramos_2021_antigua,
+                                                                        topes_portal, grupos_2011)),
+  tar_target(fichero_paso2011_callejero, exportar_tabla_paso(
+    paso2011_callejero, sprintf("geo/tablas_paso/callejero_2011_2021%s.csv", SUFIJO_AMBITO)), format = "file"),
+  # Edificios de F1 con su sección del Censo 2011 (unos 5 min): una tabla de la vía (b) con los construidos
+  # hasta 2011, para el Censo, y otra con los construidos hasta 2020, para las viviendas turísticas
+  tar_target(edificios_censo2011, paso2011_origen_edificios(edificios_paso, secciones_censo2011, sf::st_crs(secciones_2021))),
+  tar_target(paso2011_catastro, paso2011_tabla_catastro(edificios_censo2011, PASO2011_ANIO_CATASTRO, grupos_2011)),
+  tar_target(paso2011_catastro_vut, paso2011_tabla_catastro(edificios_censo2011, PASO2011_ANIO_CATASTRO_VUT, grupos_2011)),
+  tar_target(paso2011_descasados, paso2011_municipios_descasados(secciones_censo2011$seccion, tramos_2012$seccion)),
+  tar_target(paso_final_2011, paso2011_combinar(paso2011_catastro, paso2011_callejero, unique(secciones_censo2011$seccion),
+                                                secciones_2021$seccion, paso2011_descasados)),
+  tar_target(paso_final_2011_vut, paso2011_combinar(paso2011_catastro_vut, paso2011_callejero,
+                                                    unique(secciones_censo2011$seccion), secciones_2021$seccion,
+                                                    paso2011_descasados)),
+  tar_target(fichero_paso_final_2011, c(
+    exportar_tabla_paso(paso_final_2011, sprintf("geo/tablas_paso/combinada_2011_2021%s.csv", SUFIJO_AMBITO)),
+    exportar_tabla_paso(paso_final_2011_vut, sprintf("geo/tablas_paso/combinada_2011_2021_vut%s.csv", SUFIJO_AMBITO))),
+    format = "file"),
+  tar_target(resumen_paso2011, bind_rows(
+    mutate(paso2011_resumen(paso2011_callejero, paso_final_2011, unique(secciones_censo2011$seccion)),
+           anio_catastro = PASO2011_ANIO_CATASTRO),
+    mutate(paso2011_resumen(paso2011_callejero, paso_final_2011_vut, unique(secciones_censo2011$seccion)),
+           anio_catastro = PASO2011_ANIO_CATASTRO_VUT))),
+  tar_target(fichero_censo2011, paso2011_descargar_indicadores(), format = "file"),
+  tar_target(ficheros_censo2011_tablas, vapply(TABLAS_CENSO2011, paso2011_descargar_tabla, character(1)), format = "file"),
+  tar_target(censo2011, paso2011_leer_censo2011(fichero_censo2011, AMBITO)),
+  tar_target(censo2011_tenencia, paso2011_leer_tenencia(ficheros_censo2011_tablas[1], ccaa, territorios_2021)),
+  tar_target(censo2011_viviendas, paso2011_leer_viviendas(ficheros_censo2011_tablas[2], ccaa, territorios_2021)),
+  tar_target(censo2011_2021, paso2011_reproyectar_censo(censo2011, paso_final_2011, secciones_2021$seccion)),
+  tar_target(vut_2011_2021, paso2011_reproyectar_vut(vut, paso_final_2011_vut, censo2011, secciones_2021$seccion)),
+  tar_target(comprobaciones_paso2011, paso2011_comprobar(
+    paso_final_2011, paso_final_2011_vut, edificios_censo2011, censo2011, censo2011_2021, censo2011_tenencia, vut,
+    vut_2011_2021, vut_provincias, secciones_censo2011$seccion, secciones_2021$seccion, grupos_2011, excepciones_cobertura)),
+  tar_target(validacion_paso2011, validar_referencias(comprobaciones_paso2011, referencias)),
+  tar_target(larga_paso2011, {
+    validacion_paso2011   # la compuerta va antes que la armonización
+    paso2011_armonizar(censo2011_2021, vut_2011_2021, censo2011_tenencia, vut_provincias,
+                       version_censo = version_de(fichero_censo2011), version_vut = version_de(fichero_vut_FEB2023)) |>
       validar_tabla_larga(indicadores, fuentes, vocabulario)
   })
 )
@@ -425,7 +485,8 @@ bloque_mochila <- list(
   }),
   tar_target(mochila, {
     validacion_salarios
-    calcular_mochila_serie(salarios_aeat, formas_mochila)
+    # 2015–2018, con la relación de 2019; escalada con la ECV solo si avisa y se valida (pregunta 44 f)
+    calcular_mochila_serie(salarios_aeat, formas_mochila, correccion = correccion_mochila$factores)
   }),
   tar_target(fichero_mochila, {
     ruta <- "datos/intermedios/mochila/mochila.csv"
@@ -436,7 +497,13 @@ bloque_mochila <- list(
   ecv_por_anio,
   tarchetypes::tar_combine(ecv_mochila, ecv_por_anio[["ecv_asalariados"]], command = dplyr::bind_rows(!!!.x)),
   tar_target(validacion_mochila_ecv, validar_referencias(
-    comprobar_mochila_ecv(mochila, ecv_mochila, ccaa, espana = mochila_espana(salarios_aeat, formas_mochila)), referencias)),
+    comprobar_mochila_ecv(mochila, ecv_mochila, ccaa,
+                          espana = mochila_espana(salarios_aeat, formas_mochila, correccion = correccion_mochila$factores)),
+    referencias)),
+  # Pregunta 44 f: relación mediana/media de 2015 a 2018 frente a 2019 con la ECV (quienes trabajaron
+  # los doce meses, de 26 a 35 años), y corrección solo si avisa y el método se valida en 2020–2024
+  tar_target(correccion_mochila, ecv_mochila_correccion(ecv_mochila, formas_mochila)),
+  tar_target(validacion_mochila_relacion, validar_referencias(correccion_mochila$comprobaciones, referencias)),
   # Paso 3: de bruto anual a neto mensual en 12 (regla 8); control con el neto de la ECV
   tar_target(validacion_mochila_neto_ecv,
              validar_referencias(comprobar_neto_ecv(retenciones_mochila, ecv_mochila, ccaa), referencias)),
@@ -539,8 +606,9 @@ mapa_base <- list(
     comprobar_mapa_base(fichero_mapa_base, secciones_2021, unidades_ign), referencias))
 )
 
-# Indicadores derivados (R/derivados.R): 14 (esfuerzo de residentes), 21 (sueldo neto necesario,
-# mapa por defecto: 50 m² y umbral del 30 %) y 15 (peso del alquiler en el ingreso: se calcula en la web; aquí,
+# Indicadores derivados (R/derivados.R): 14 (esfuerzo de residentes; en la web, solo en la ficha), 21
+# (sueldo neto necesario, mapa por defecto: alquiler mensual real y umbral del 30 %, con el mínimo de
+# 50 m² al lado como corte «superficie»; tarea 40) y 15 (peso del alquiler en el ingreso: se calcula en la web; aquí,
 # la tartera, la mochila y el transistor de 2015 a 2024, como control).
 # Alquiler de vivienda colectiva; estado, el peor de sus términos (plan, preguntas abiertas 12 y 15);
 # numerador y denominador del mismo año (regla 4).
@@ -568,11 +636,13 @@ bloque_derivados <- list(
 )
 
 # F4, compraventa: indicadores 10 (variación anual del alquiler, IPVA del INE), 12 (valor tasado
-# del MIVAU), 16 y 17 (derivados con el salario medio de la AEAT, indicador 7, y el tipo medio de
-# las hipotecas sobre viviendas del INE), compuerta de coherencia entre la tasación y las
+# del MIVAU), 16 (derivado con el salario medio de la AEAT, indicador 7) y 17 (con la renta neta por
+# hogar del ADRH y el tipo de los préstamos nuevos para vivienda del Banco de España; plan §11,
+# pregunta 45 d y e), compuerta de coherencia entre la tasación y las
 # escrituras ante notario (transacciones inmobiliarias del MIVAU) y tabla de paso código postal ↔
-# municipio (callejero de enero de 2021, a geo/). El 11 (Notariado) queda fuera: sus condiciones
-# no permiten reutilizar las cifras (inventario/fuentes.csv). Los ficheros del Ministerio salen de
+# municipio (callejero de enero de 2021, a geo/). El 11 no sale del Notariado, cuyas webs reservan
+# sus derechos y piden autorización expresa (inventario/fuentes.csv), sino de Registradores, por
+# provincia (decisión del autor, 10-nov-2026). Los ficheros del Ministerio salen de
 # su boletín estadístico en línea (R/fuente_mivau_valor_tasado.R). Con PROVINCIA, el bloque no
 # entra (los nombres del Ministerio se casan con toda España).
 #   targets::tar_make(names = c(larga_compraventa, fichero_cp_municipio))
@@ -624,9 +694,17 @@ bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL)
                                  anios = ANIOS_VALOR_TASADO) |>
       validar_tabla_larga(indicadores, fuentes, vocabulario)
   }),
-  tar_target(derivados_compraventa, armonizar_derivados_compraventa(larga_valor_tasado, larga_salarios, tipo_hipotecario_anual)),
+  # 17 con el tipo de los préstamos nuevos para vivienda del Banco de España (D_IMVTIPLV, del módulo
+  # histórico) y la renta neta media por hogar del ADRH (plan §11, pregunta 45 d y e revisadas); el
+  # tipo medio del INE sigue con su compuerta (validacion_hipotecas)
+  tar_target(tipo_bde_anual, compraventa_tipo_bde(series_bde)),
+  tar_target(renta_hogar_17, compraventa_renta_hogar(renta_adrh, pesos_adrh_prueba, territorios_2021)),
+  tar_target(derivados_compraventa, armonizar_derivados_compraventa(larga_valor_tasado, larga_salarios, tipo_bde_anual,
+                                                                    renta_hogar = renta_hogar_17,
+                                                                    version_renta = version_de(fichero_adrh_renta))),
   tar_target(validacion_derivados_compraventa, validar_referencias(
-    comprobar_derivados_compraventa(derivados_compraventa, larga_valor_tasado, larga_salarios, tipo_hipotecario_anual),
+    comprobar_derivados_compraventa(derivados_compraventa, larga_valor_tasado, larga_salarios, tipo_bde_anual,
+                                    renta_hogar = renta_hogar_17),
     referencias)),
   tar_target(larga_compraventa, {
     validacion_derivados_compraventa   # la compuerta va antes que la tabla larga
@@ -736,11 +814,12 @@ bloque_tabla_larga <- list(
       larga_serpavi,      # 8 y 9, contratos y margen: la tipología como corte; sin filas «total»
       larga_censo2021,    # 18
       larga_vut,          # 19: el mes de referencia en corte y grupo
-      larga_salarios,     # 7 (F3): el total sin desglose; de 26 a 35 años, con corte de edad
+      larga_paso2011,     # tarea 47: 18 de 2011 y 19 de 2020-2023, desde las secciones del Censo 2011
+      larga_salarios,    # 7 (F3): el total sin desglose; de 26 a 35 años, con corte de edad
       larga_compraventa,  # 10, 12, 16 y 17 (F4); en PROVINCIA, nada
       larga_zonas_tensionadas,   # 20 (F5): municipios, situación a 31 de diciembre; en PROVINCIA, nada
       # 13 (portales): no entra; solo web (decisión 3), en bloque_portales
-      larga_derivados,    # 14 y 21 sin desglose; 15 con la ficha (tartera, mochila y transistor) como corte
+      larga_derivados,    # 14 y 21 sin desglose (el mínimo de 50 m² del 21, con el corte superficie); 15 con la ficha como corte
       armonizar_sobrecarga_ecv(sobrecarga_ecv, sobrecarga_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)),
       armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa)),
       armonizar_ine_ecv_modulo_cortes(modulo_edad, modulo_tenencia, version = version_de(fichero_modulo_edad))
@@ -878,10 +957,16 @@ bloque_cis <- list(
   tar_target(cis_estudios, cis_descargar_estudios(CIS_DESDE), format = "file",
              cue = tarchetypes::tar_cue_force(cal_toca("cis_barometros"))),
   tar_target(cis_barometros, cis_leer_barometros(cis_estudios)),
-  tar_target(validacion_cis, validar_referencias(cis_comprobar_vivienda(cis_barometros), referencias)),
+  # Meses publicados solo en PDF, transcritos a mano (plan §11, pregunta 48 a; sin lector de PDF)
+  tar_target(fichero_cis_transcripcion, "inventario/cis_transcripcion_pdf.csv", format = "file"),
+  tar_target(cis_transcripcion, cis_leer_transcripcion(fichero_cis_transcripcion)),
+  tar_target(cis_barometros_completos, cis_aplicar_transcripcion(cis_barometros, cis_transcripcion)),
+  tar_target(validacion_cis, validar_referencias(bind_rows(
+    cis_comprobar_vivienda(cis_barometros_completos),
+    cis_comprobar_transcripcion(cis_barometros, cis_transcripcion)), referencias)),
   tar_target(cis_vivienda, {
     validacion_cis   # la compuerta va antes
-    cis_serie_vivienda(cis_barometros)
+    cis_serie_vivienda(cis_barometros_completos)
   }),
   tar_target(fichero_cis_vivienda, {
     ruta <- file.path("datos", "intermedios", "cis", "cis_vivienda.csv")
@@ -908,5 +993,21 @@ bloque_calendario <- list(
   }, cue = tarchetypes::tar_cue_force(cal_hay_cambios()))
 )
 
-list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_zonas_tensionadas, bloque_portales, bloque_tabla_larga, bloque_web, bloque_historico,
-     bloque_cis, bloque_calendario)   # F6, CIS y calendario
+# Tarea 45: IPC del INE (medias anuales del índice general, tabla 76144; R/fuente_ine_ipc.R) para el
+# aviso de euros corrientes de la evolución de la ficha (datos/ipc.json). No deflacta ninguna cifra ni
+# entra en la tabla larga.
+#   targets::tar_make(names = c(ficheros_web_ipc, validacion_web_ipc))
+bloque_ipc <- list(
+  tar_target(fichero_ipc, ipc_descargar(), format = "file"),
+  tar_target(ipc, ipc_leer(fichero_ipc)),
+  tar_target(validacion_ipc, validar_referencias(ipc_comprobar(ipc), referencias)),
+  tar_target(ficheros_web_ipc, {
+    validacion_ipc   # la compuerta va antes
+    ipc_exportar_web(ipc, dir_web = DIR_WEB)
+  }, format = "file"),
+  tar_target(validacion_web_ipc, validar_referencias(ipc_comprobar_web(ipc, ficheros_web_ipc), referencias))
+)
+
+list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, bloque_paso2011, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_zonas_tensionadas, bloque_portales, bloque_tabla_larga, bloque_web, bloque_historico,
+     bloque_cis, bloque_calendario,   # F6, CIS y calendario
+     bloque_ipc)                      # tarea 45, IPC

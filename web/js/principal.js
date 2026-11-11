@@ -16,11 +16,11 @@ import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
 import { pintarLeyenda } from './leyenda.js';
 import {
   fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fichaContexto, fichaTerritorio, nombresTerritorio,
-  fichaDeclaraciones, textoResto,
+  fichaDeclaraciones, textoResto, fichaResidentes,
 } from './ficha.js';
-import { formulaDe } from './formulas.js';
+import { formulaDe, daSueldo, minimoDe, textoSupuestos } from './formulas.js';
 import {
-  modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega,
+  modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega, resumenLlegaReal,
   marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, estadoLlega, perfilesDelAnio,
   eurosQueQuedan,
 } from './sueldo.js';
@@ -37,6 +37,9 @@ import { imagenMapa } from './imagen.js';
 import { pasosDeRampa, decimalesDeCortes } from './colores.js';
 import { crearAvisoImagen } from './aviso_imagen.js';
 import { opcionProximamente } from './familias.js';
+import {
+  variaciones, bandaMargen, pocosContratos, variacionIpc, enEuros, textosVariacion, notasEvolucion, graficoEvolucion, cargarIpc,
+} from './evolucion.js';
 
 const estado = { idioma: 'es', ...leerEstado() };
 let sueldo = leerSueldoCompartido();   // solo en memoria; en el enlace, solo con «Compartir»
@@ -119,10 +122,14 @@ function vista() {
   const perfilesAnio = perfilesDelAnio(perfiles, periodo ?? estado.anio);
   if (calculo) calculo = calculoLlega({ ficha: estado.ficha, perfiles: perfilesAnio, sueldo, superficie, serie: serieTipo });
   // En el sueldo necesario, las fichas de una persona y la llave van en la regla de la leyenda.
-  const enSueldo = !calculo && def.formula === 'alquiler_m2_a_sueldo';
+  const enSueldo = !calculo && daSueldo(def);
   const series = [...seriesColor];
   const renta = perfiles.llave?.ingreso.serie;
   if (enSueldo && renta && m.indicadores[renta]) series.push(renta);   // banda de la llave en la regla
+  // Tarea 40: la serie de la segunda cifra (el mínimo de 50 m² del sueldo necesario; en «¿te llega?»,
+  // el alquiler mensual real), para la ficha y el resumen
+  const segunda = calculo ? calculo.serieReal : !calculo && def.minimo ? serieTipo(def.minimo.base) : null;
+  if (segunda && m.indicadores[segunda]) series.push(segunda);
   // Contratos y margen de la mediana de la serie que da color, para la ficha (preguntas 12 y 15 ampliadas)
   const fiabilidad = seriesFiabilidad(m, seriesColor[0]);
   if (fiabilidad) series.push(...Object.values(fiabilidad).filter((s) => m.indicadores[s]));
@@ -262,6 +269,7 @@ async function actualizar() {
     grupo: v.modo === 'necesario' ? grupoDe(v.mapa) : null, etiqueta,   // F5
     periodo: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo, tipologia: v.tipologia,
     conSupuestos: usaSupuestos(v.mapa), fuera: v.fuera ? textoFuera(v.fuera) : null,
+    supuestos: v.supuestos,   // tarea 40: con el mínimo al lado, el texto de los supuestos lo dice
   };
   let resumen = null;
   let detalle = null;
@@ -277,7 +285,12 @@ async function actualizar() {
     resumen = !r.con ? t('interfaz.sueldo.sin_datos') : t(estado.ficha === 'peon' ? 'interfaz.sueldo.resumen_peon' : 'interfaz.sueldo.resumen_ficha', {
       pct: t.porcentaje(r.proporcion), caben: t.numero(r.caben), total: t.numero(r.con), ficha: t(`fichas.${estado.ficha}`),
     });
-    detalle = [t('interfaz.sueldo.detalle', { vivienda, ingreso, umbral: t.porcentaje(v.umbral) }), avisoAnios(v),
+    // Tarea 40: al lado, la misma proporción con el alquiler mensual mediano real de cada sección
+    const real = r.con ? resumenLlegaReal(v.calculo, secciones, valorEn, v.umbral) : null;
+    if (real) resumen += ` ${t('interfaz.sueldo.resumen_real', { pct: t.porcentaje(real.proporcion), caben: t.numero(real.caben), total: t.numero(real.con) })}`;
+    // Tarea 44: qué estadístico usa la ficha y de quién, en una línea
+    const metodo = t.existe(`fichas_metodo.${estado.ficha}`) ? t(`fichas_metodo.${estado.ficha}`) : null;
+    detalle = [metodo, t('interfaz.sueldo.detalle', { vivienda, ingreso, umbral: t.porcentaje(v.umbral) }), avisoAnios(v),
       estado.ficha === 'transistor' ? t('interfaz.sueldo.nota_transistor') : null]
       .filter(Boolean).join(' ');
   }
@@ -285,6 +298,7 @@ async function actualizar() {
   panel.pintar({
     t, estado, sueldo, perfiles, modo: v.modo, superficie: v.superficie, umbral: v.umbral, resumen, detalle,
     sinEfecto: v.modo === 'necesario' && !usaSupuestos(v.mapa),
+    soloMinimo: v.modo === 'necesario' && Boolean(v.mapa.minimo),   // tarea 40: la superficie solo cambia el mínimo
   });
   pintarFicha(v);
   guardarEstado(estado);
@@ -343,22 +357,25 @@ function pintarFicha(v = vista()) {
   let valor = null;
   let intervalo = null;
   let enLimite = false;
+  let minimo = null;
   if (v.modo === 'necesario') {
     const base = x(v.mapa.base);
     valor = base === null ? null : formulaDe(v.mapa).calcular(base, v.supuestos);
     // El intervalo, en los mapas que son el alquiler en alguna unidad (no en el esfuerzo, con la renta)
     if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen);
+    // Tarea 40: al lado, el mínimo teórico con la superficie elegida (fuera de la serie, nada)
+    if (!v.fuera) minimo = minimoDe(v.mapa, x, v.supuestos, serieTipo);
   } else {
     const r = v.calculo.calcular(codigo, x);
     valor = r && { ...r, tramo: tramoLlega(r.ratio) };
     enLimite = Boolean(r) && enLimiteLlega(r.ratio, margen);
   }
-  const { huecoContexto, huecoSerie, huecoComparador } = fichaSeccion(el.ficha, {
+  const { huecoContexto, huecoSerie, huecoComparador, huecoResidentes } = fichaSeccion(el.ficha, {
     t, codigo, territorios, modo: v.modo, mapaId: idTextos(estado.mapa), mapaDef: v.mapa, ficha: estado.ficha,
     supuestos: v.supuestos, anio: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo,
     tipologia: v.tipologia, valor, estado: estadoCifra(v, codigo, x, estadoDe), estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirSeccion(null),
-    fiabilidad, intervalo, enLimite, sueldo,
+    fiabilidad, intervalo, enLimite, sueldo, minimo,
     notas: notaPercentil(v, valor, columnas[v.seriesColor[0]]?.periodo ?? v.periodo, 'sc', codigo),
   });
   if (valor === null && !v.fuera) {
@@ -369,6 +386,28 @@ function pintarFicha(v = vista()) {
   const series = seriesDeSeccion(codigo, v).catch((error) => { console.error(error); return null; });
   series.then((s) => { if (yo === turnoFicha && s) pintarEvolucion(huecoSerie, s, v, codigo); });
   series.then((s) => pintarComparadorFicha(huecoComparador, s, v, codigo, yo)).catch((error) => console.error(error));
+  series.then((s) => { if (yo === turnoFicha && s) pintarResidentes(huecoResidentes, v, 'sc', codigo, s); })
+    .catch((error) => console.error(error));
+}
+
+// Tarea 41 (decisión 10): el indicador 14, fuera del selector del mapa, en la ficha de la sección (de
+// sus series, fichas/<municipio>.json) y del municipio (del fichero del periodo), en el periodo de
+// referencia de la vista y con su aviso de lectura. No va en «¿te llega?» con la llave, que ya da
+// ese mismo cociente como cifra principal (con el aviso).
+const SERIE_RESIDENTES = 'esfuerzo_residentes';
+async function pintarResidentes(hueco, v, nivel, codigo, series = null) {
+  const def = m.indicadores[SERIE_RESIDENTES];
+  if (!hueco || !def || !nivelesDe(SERIE_RESIDENTES).includes(nivel) || (v.modo === 'llega' && estado.ficha === 'llave')) return;
+  const periodo = periodoPara(def, v.referencia);
+  if (periodo === null) return;
+  let lectura = null;
+  const s = series?.[SERIE_RESIDENTES];
+  if (s) {
+    const k = s.anios.findIndex((p) => String(p) === String(periodo));
+    lectura = k < 0 ? null : { valor: s.valores[k], estado: s.estados[k] };
+  } else lectura = await valorDe(m, SERIE_RESIDENTES, nivel, codigo, periodo);
+  if (!hueco.isConnected) return;
+  fichaResidentes(hueco, { t, valor: lectura?.valor ?? null, estado: lectura?.estado, estados: m.codificacion.estados, anio: periodo });
 }
 
 // Contexto de una sección sin mediana del alquiler de su tipología (pregunta 12 ampliada): la
@@ -442,25 +481,89 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
       : estadoLlega(en(base, p).estado, calculoDe(p).ingreso(codigo, (serie) => en(serie, p).valor), indiceEstado('ausente'));
     let texto = '—';
     let resto = null;
+    let cifra = null;   // la cifra sin formato, para el gráfico y las variaciones (tareas 43 y 45)
     if (v.modo === 'necesario') {
       const b = en(base, p).valor;
       const cat = v.mapa.categorias;   // F5: en los mapas de categorías, su texto
-      if (b !== null) texto = cat ? t(`vocabulario.${cat.vocabulario}.${b}`) : t.numero(formulaDe(v.mapa).calcular(b, v.supuestos), v.mapa.decimales ?? 0);
+      if (b !== null && !cat) cifra = formulaDe(v.mapa).calcular(b, v.supuestos);
+      if (b !== null) texto = cat ? t(`vocabulario.${cat.vocabulario}.${b}`) : t.numero(cifra, v.mapa.decimales ?? 0);
     } else {
       const r = calculoDe(p).calcular(codigo, (serie) => en(serie, p).valor);
-      if (r) texto = t.porcentaje(r.ratio);
+      if (r) { texto = t.porcentaje(r.ratio); cifra = r.ratio; }
       resto = textoResto(t, eurosQueQuedan(r), { corto: true })?.texto ?? null;   // tarea 34
     }
-    return { periodo: p, texto, estado: estadoPeor, resto };
+    return { periodo: p, texto, estado: estadoPeor, resto, cifra };
   });
   let nota = null;
   if (v.modo === 'llega' && ficha !== 'llave') {
     nota = periodos.every(conSerie) ? t('interfaz.ficha.ingreso_anio') : t('interfaz.ficha.ingreso_fijo');
   }
-  fichaSeries(hueco, {
+  const datosSerie = {
     t, filas, estados: m.codificacion.estados, periodo: columnas[base]?.periodo,
     titulo: v.modo === 'necesario' ? t('interfaz.ficha.evolucion') : t('interfaz.ficha.evolucion_llega'),
     nota,
+  };
+  fichaSeries(hueco, datosSerie);
+  // Tareas 43 y 45: cuando llegan los contratos y el margen de cada año y el IPC, el gráfico con la
+  // banda, las variaciones con la regla de los contratos y el aviso de euros corrientes.
+  completarEvolucion(hueco, datosSerie, v, codigo, nivel, periodos).catch((error) => console.error(error));
+}
+
+// Contratos y margen de la mediana del alquiler de cada periodo en un territorio (tarea 43): de
+// los ficheros de cada periodo, como la ficha (no van en las fichas por municipio; nota §9.2).
+// { contratos, margen }, con un valor (o null) por periodo; null sin series de fiabilidad.
+async function fiabilidadEnPeriodos(v, nivel, codigo, periodos) {
+  const fia = v.fiabilidad;
+  if (!fia || v.fuera) return null;
+  const leer = async (serie) => {
+    const def = m.indicadores[serie];
+    if (!serie || !def || !nivelesDe(serie).includes(nivel)) return null;
+    const propios = new Set(periodosDe(def).map(String));
+    return Promise.all(periodos.map(async (p) => {
+      if (!propios.has(String(p))) return null;
+      const x = await valorDe(m, serie, nivel, codigo, p);
+      return x && x.estado === indiceEstado('dato') ? x.valor : null;
+    }));
+  };
+  const [contratos, margen] = await Promise.all([leer(fia.contratos), leer(fia.margen)]);
+  return contratos || margen ? { contratos, margen } : null;
+}
+
+async function completarEvolucion(hueco, datosSerie, v, codigo, nivel, periodos) {
+  const [fia, ipc] = await Promise.all([fiabilidadEnPeriodos(v, nivel, codigo, periodos), cargarIpc()]);
+  if (!hueco.isConnected) return;   // la ficha ya es otra
+  const { filas } = datosSerie;
+  const cifras = filas.map((f) => f.cifra ?? null);
+  const umbral = umbralPocos(m);
+  // La banda, donde la ficha da el intervalo: los mapas que son el alquiler en alguna unidad y «¿te
+  // llega?» (no en el esfuerzo, con la renta)
+  const conBanda = v.modo === 'llega' || tieneTipologia(m, v.seriesColor[0]);
+  const banda = conBanda ? bandaMargen(cifras, fia?.margen ?? null) : [];
+  const pocos = pocosContratos(cifras, fia?.contratos ?? null, umbral);
+  // Variaciones de un año: solo en las series del alquiler (con contratos) y en el modo «necesario»
+  const lista = v.modo === 'necesario' && fia?.contratos ? variaciones({ periodos, valores: cifras, contratos: fia.contratos, umbral }) : [];
+  const textos = textosVariacion(t, lista);
+  const mapaId = idTextos(estado.mapa);
+  const unidad = v.modo === 'necesario' ? t(`indicadores.${mapaId}.unidad`) : '';
+  const conCifra = periodos.filter((p, i) => cifras[i] !== null);
+  const euros = v.modo === 'necesario' ? (enEuros(unidad) ? 'cifra' : null) : (filas.some((f) => f.resto) ? 'resto' : null);
+  const formato = v.modo === 'necesario' ? (x) => t.numero(x, v.mapa.decimales ?? 0) : (x) => t.porcentaje(x);
+  const grafico = graficoEvolucion({
+    t, periodos, valores: cifras, banda, pocos, activo: datosSerie.periodo, formato,
+    etiqueta: t('interfaz.ficha.evolucion_grafico', {
+      titulo: v.modo === 'necesario' ? t(`indicadores.${mapaId}.nombre`) : datosSerie.titulo,
+      desde: t.periodo(periodos[0]), hasta: t.periodo(periodos.at(-1)),
+    }),
+  });
+  fichaSeries(hueco, {
+    ...datosSerie,
+    filas: filas.map((f, i) => ({ ...f, variacion: textos[i] || null })),
+    grafico,
+    cabeceras: { periodo: t('interfaz.ficha.cabecera_periodo'), cifra: unidad, variacion: t('interfaz.ficha.cabecera_variacion') },
+    notas: notasEvolucion(t, {
+      banda: Boolean(grafico) && banda.some(Boolean), pocos: Boolean(grafico) && pocos.some(Boolean), umbral, lista, euros,
+      ipc: euros && conCifra.length > 1 ? variacionIpc(ipc, conCifra[0], conCifra.at(-1)) : null,
+    }),
   });
 }
 
@@ -557,6 +660,9 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
     : null;
   const fia = v.fiabilidad && !v.fuera ? v.fiabilidad : null;
   const auxiliares = fia ? Object.values(fia).filter((s) => m.indicadores[s] && nivelesDe(s).includes(nivel)) : [];
+  // Tarea 40: la serie de la segunda cifra (mínimo de 50 m² o alquiler mensual real), si llega al nivel
+  const segunda = (calculo ? calculo.serieReal : v.mapa.minimo ? serieTipo(v.mapa.minimo.base) : null);
+  if (segunda && m.indicadores[segunda] && nivelesDe(segunda).includes(nivel)) auxiliares.push(segunda);
   const lecturas = tieneNivel && !v.fuera ? await lecturasTerritorio([...v.seriesColor, ...auxiliares], nivel, codigo, v.referencia) : {};
   if (yo !== turnoFicha) return;
   const x = (serie) => lecturas[serie]?.valor ?? null;
@@ -568,10 +674,12 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
   let valor = null;
   let intervalo = null;
   let enLimite = false;
+  let minimo = null;
   if (tieneNivel && v.modo === 'necesario') {
     const b = x(v.mapa.base);
     valor = b === null ? null : formulaDe(v.mapa).calcular(b, v.supuestos);
     if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen);
+    if (!v.fuera) minimo = minimoDe(v.mapa, x, v.supuestos, serieTipo);   // tarea 40
   } else if (tieneNivel) {
     const r = calculo.calcular(codigo, x);
     valor = r && { ...r, tramo: tramoLlega(r.ratio) };
@@ -588,14 +696,15 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
   if (tieneNivel) notas.push(...notaPercentil(v, valor, periodoBase ?? v.periodo, nivel, codigo));
   // F5: en los mapas sin sección, cómo se lee el indicador (el 20: política pública, no mercado)
   if (nivelMinimoDe(v) === 'municipio') notas.push(t(`indicadores.${idTextos(estado.mapa)}.lectura`));
-  const { huecoSerie, huecoComparador, huecoDetalle } = fichaTerritorio(el.ficha, {
+  const { huecoSerie, huecoComparador, huecoDetalle, huecoResidentes } = fichaTerritorio(el.ficha, {
     t, nivel, codigo, territorios, sinNivel: !tieneNivel, modo: v.modo, mapaId: idTextos(estado.mapa), mapaDef: v.mapa, ficha: estado.ficha,
     grupo: v.modo === 'necesario' ? grupoDe(v.mapa) : null, etiqueta: etiquetaVista(v),   // F5
     supuestos: v.supuestos, anio: v.fuera ? v.fuera.anio : periodoBase ?? v.periodo, tipologia: v.tipologia, valor,
     estado: estadoCifraT, estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirTerritorio(null),
-    fiabilidad, intervalo, enLimite, sueldo, notas,
+    fiabilidad, intervalo, enLimite, sueldo, notas, minimo,
   });
+  pintarResidentes(huecoResidentes, v, nivel, codigo).catch((error) => console.error(error));   // tarea 41
   // F5: declaraciones de zona tensionada del municipio (indicador 20; datos/zonas_tensionadas.json)
   if (v.modo === 'necesario' && v.mapa.detalle && nivel === 'municipio') {
     cargarDetalle(v.mapa.detalle)
@@ -720,6 +829,12 @@ async function exportarCsv(v) {
   const fia = seriesFiabilidad(m, serie);
   const columnaDe = async (s) => (s && !v.fuera ? (await cargarValores(m, s, nivel, periodo))?.valores ?? null : null);
   const fiabilidad = fia ? { contratos: await columnaDe(fia.contratos), margen: await columnaDe(fia.margen) } : null;
+  // Tarea 40: en el sueldo necesario, el mínimo teórico con la superficie elegida, en una columna más
+  const defMinimo = derivado ? v.mapa.minimo : null;
+  const serieMinimo = defMinimo ? serieTipo(defMinimo.base) : null;
+  const minimo = serieMinimo && nivelesDe(serieMinimo).includes(nivel)
+    ? { valores: await columnaDe(serieMinimo), transformar: (x) => formulaDe(defMinimo).calcular(x, v.supuestos) }
+    : defMinimo ? { valores: null, transformar: null } : null;
   const { cabecera, filas } = tablaCsv({
     t, codigos, valores: datos.valores, estados: datos.estados, nombresEstado: m.codificacion.estados,
     nivel, nombreDe: (codigo) => nombreParaExportar(nivel, codigo),
@@ -731,6 +846,7 @@ async function exportarCsv(v) {
     supuestos: derivado ? v.supuestos : null,
     desde: v.fuera ? v.fuera.desde : null,
     fiabilidad,
+    minimo,
     etiqueta: etiquetaPrivada(serie),   // F5: columna «etiqueta» (dato privado de oferta)
     categoria: categorias ? (x) => t(`vocabulario.${categorias.vocabulario}.${x}`) : null,   // F5: indicador 20
   });
@@ -755,7 +871,7 @@ async function exportarPng(v) {
   partes.push(t.periodo(periodo));
   if (v.fuera) partes.push(t('interfaz.exportar.estados.fuera', { desde: t.periodo(v.fuera.desde) }));
   if (v.tipologia) partes.push(t(`vocabulario.tipologia.${v.tipologia}`));
-  if (!llega && usaSupuestos(v.mapa)) partes.push(t('interfaz.leyenda.supuestos', { superficie: t.numero(v.supuestos.superficie_m2), umbral: t.porcentaje(v.umbral) }));
+  if (!llega && usaSupuestos(v.mapa)) partes.push(textoSupuestos(t, v.mapa, v.supuestos));   // tarea 40: con el mínimo, lo dice
   if (llega) partes.push(t('interfaz.exportar.umbral', { umbral: t.porcentaje(v.umbral) }));
 
   const tramosColor = (n) => pasosDeRampa(n, colores.rampa.length).map((i) => colores.rampa[i]);

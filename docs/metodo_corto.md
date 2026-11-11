@@ -57,11 +57,13 @@ Ninguna cifra del atlas combina las dos fuentes. Cuando aparecen juntas, cada un
 | INE, IGN, Eurostat (datos) | CC BY 4.0 | Citar |
 | Ministerio de Vivienda, Hacienda, Seguridad Social, Banco de España, BOE, CIS | Reutilización con cita | Citar la fuente y la fecha |
 | Catastro estatal y forales de Bizkaia y Gipuzkoa | Contradictoria entre sus propias páginas | Se tratan como abiertos; plan de retirada si se aclara en contra |
+| Registradores (precio de compraventa, por provincia) | ODbL | Citar; lo que derive de su base de datos se publica también con ODbL |
 | Geometrías europeas (GISCO) | Uso no comercial | Aviso de © EuroGeographics en el mapa |
-| Idealista | Condiciones de su web | Solo se muestra en la web, con enlace al informe; no se descarga |
+| Idealista | Condiciones de su web | Solo en la web, con enlace al informe, y «próximamente» hasta que lo autorice; nada suyo en las descargas |
+| Notariado | Derechos reservados | No se usa |
 | Derivados del atlas | CC BY-SA 4.0 | Citar y compartir igual |
 
-El detalle por fuente está en `inventario/fuentes.csv`.
+La tabla completa, con lo que obliga cada fuente y el plan de retirada, está en la nota metodológica (§2.2 y §2.4); el texto de cada licencia, en `inventario/fuentes.csv`.
 
 ## Citar y corregir
 

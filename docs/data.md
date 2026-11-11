@@ -24,7 +24,7 @@ Get-FileHash tabla_larga.parquet -Algorithm SHA256
 
 - **Derived data, texts and inventory:** [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) (`LICENCIA_DATOS.md`). Anyone who reuses or transforms them cites the source and publishes what they derive under the same licence.
 - **Code:** MIT (`LICENSE`).
-- **Source data:** keep the terms of each source (`inventario/fuentes.csv`, column `licencia`), which is also cited.
+- **Source data:** keep the terms of each source (`inventario/fuentes.csv`, column `licencia`), which is also cited. What each one requires and what is withdrawn if one changes: methodological note («Method»), §2.2 and §2.4.
 - **Base map:** INE 2021 census tract geometries.
 - **Eurostat NUTS geometries (GISCO)** of the European overburden map, which the site publishes as files (`datos/sobrecarga/nuts_2021.geojson` and `datos/sobrecarga/nuts_2024.geojson`): they are not covered by CC BY-SA 4.0. Their use is non-commercial and carries the notice «© EuroGeographics for the administrative boundaries»; commercial use requires a EuroGeographics licence.
 

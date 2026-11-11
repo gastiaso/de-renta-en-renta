@@ -91,13 +91,18 @@ entrar_limites_tramo <- function(tramo, b) {
   list(desde = bordes[tramo + 1L], hasta = bordes[tramo + 2L])
 }
 
+# Piso de dos sueldos iguales: 70 m² por defecto, cambiable a 50 o 90 en la web (plan §11, pregunta 43 h).
+ENTRAR_SUPERFICIE_DOS <- 70
+
 # Factores públicos por los que se multiplica el tramo de la brecha (mismo orden de operaciones que
-# FACTORES_ENTRAR de web/js/entrar.js): sueldo para entrar, sueldo de 50 m² y barrera (proporción).
+# FACTORES_ENTRAR de web/js/entrar.js): sueldo para entrar, sueldo de 50 m², barrera (proporción) y,
+# entre dos sueldos iguales con el piso de dos, cada uno (sueldo_entrar_dos; solo web, como intervalo).
 entrar_factores <- function(alquiler_m2, alquiler_mes, ingreso = NA_real_, superficie = SUPERFICIE_FICHA,
-                            umbral = UMBRAL_SUELDO) {
+                            umbral = UMBRAL_SUELDO, superficie_dos = ENTRAR_SUPERFICIE_DOS) {
   list(sueldo_entrar = alquiler_mes / umbral,
        sueldo_entrar_50 = (alquiler_m2 * superficie) / umbral,
-       barrera_entrar = (alquiler_m2 * superficie) / ingreso)
+       barrera_entrar = (alquiler_m2 * superficie) / ingreso,
+       sueldo_entrar_dos = (alquiler_m2 * superficie_dos) / umbral / 2)
 }
 
 # Intervalo de una cifra derivada: límites del tramo de la brecha × factor.
