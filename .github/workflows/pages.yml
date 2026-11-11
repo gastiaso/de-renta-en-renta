@@ -21,15 +21,15 @@ name: Publicar en Pages
 
 # Un push a main no publica nada (plan §11, pregunta 42). Se lanza a mano y monta el código y la
 # nota de la referencia `ref` con los datos del último release: por defecto, el commit de la última
-# publicación, la v0.4.0 (e04c643; decisión del autor, 10-nov-2026). Del 9 al 10-nov-2026 el sitio
-# estuvo congelado en la v0.1 (cdd9892).
+# publicación, la v1.0.0 (df67c1b; decisión del autor, 11-nov-2026); antes, la v0.4.0 (e04c643,
+# 10-nov-2026). Del 9 al 10-nov-2026 el sitio estuvo congelado en la v0.1 (cdd9892).
 on:
   workflow_dispatch:
     inputs:
       ref:
         description: Commit o etiqueta del código y la nota que se publican
         required: true
-        default: e04c643a4fa5b7927ee3266327685e127746af2b
+        default: df67c1b84ad780b4f4e57c8088148abaabcf3aca
 
 permissions: {}
 
