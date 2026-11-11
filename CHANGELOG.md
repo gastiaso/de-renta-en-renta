@@ -16,7 +16,7 @@ Primera versión estable (decisión del autor, 11-nov-2026): lo hecho desde la v
 - la rederivación a mano de 21 cifras;
 - las dos primeras historias, como recorridos guiados dentro del mapa.
 
-La oferta de Idealista sigue «próximamente», con la capa apagada, hasta su autorización (backlog, decisiones 17 a 19). La historia de la brecha entre entrar y quedarse y las tareas 38 y 39 esperan a esa autorización. Por decisión del autor, la v1.0 sale antes que la prueba en limpio (tarea 58, aplazada) y la lectura externa (tarea 60): las dos quedan como revisión posterior, y lo que encuentren irá a la fe de erratas o a una v1.0.x. Release `v1.0.0`.
+La oferta de Idealista sigue «próximamente», con la capa apagada, hasta su autorización (backlog, decisiones 17 a 19). La historia de la brecha entre entrar y quedarse y las tareas 38 y 39 esperan a esa autorización. Por decisión del autor, la v1.0 sale antes que la prueba en limpio (tarea 58, aplazada) y la lectura externa (tarea 60): las dos quedan como revisión posterior, y lo que encuentren irá a la fe de erratas o a una v1.0.x. Release `v1.0.0` (datos y código del commit `df67c1b`, sin cambios sin commit). Contra el sitio publicado, la prueba en el navegador (`comprobar_web_navegador()`, 300 secciones) da 0 en sus 56 comprobaciones de 18 tipos, historias incluidas, y el PMTiles se sirve por rangos.
 
 ### Añadido (11-nov-2026, tarea 49: primeras historias; decisiones del autor)
 

@@ -362,10 +362,10 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 
 ## Bloque F · Ingeniería
 
-**54. Pruebas en cada push.** Flujo de GitHub con las pruebas que no necesitan datos (inventario, utilidades, web con la muestra). El de publicación sigue manual.
+**54. Pruebas en cada push · HECHA (11-nov-2026).** Flujo de GitHub con las pruebas que no necesitan datos (inventario, utilidades, web con la muestra). El de publicación sigue manual.
 - **Hecha en local (11-nov-2026), falta la primera ejecución en GitHub:** `.github/workflows/pruebas.yml`, con cada push y cada *pull request*: la batería de `testthat` entera con `renv` (caché y paquetes compilados de Posit Package Manager) y `node --test pruebas/web/*.test.mjs`. Las pruebas que piden datos ya se saltaban solas; en una copia limpia del repositorio pasan todas las demás (`pruebas/LEEME.md`).
 - Por revisar tras el primer push: tiempo sin caché, versiones de `renv.lock` en binario, pruebas del mapa base con el GDAL de Ubuntu y uso de las acciones de r-lib (CHANGELOG).
-- **Primera ejecución en GitHub (11-nov-2026, commit `d874fdb`):** la parte de la web pasa; la de R falla al restaurar `renv`, porque el binario de `igraph` no carga sin la biblioteca GLPK del sistema. Añadidas `libglpk-dev` y `libxml2-dev` a las bibliotecas del sistema del flujo. Falta comprobarlo en la ejecución siguiente: puede haber más fallos detrás, en las pruebas que hasta ahora no han llegado a correr en Ubuntu.
+- **Primera ejecución en GitHub (11-nov-2026, commit `d874fdb`):** la parte de la web pasa; la de R falla al restaurar `renv`, porque el binario de `igraph` no carga sin la biblioteca GLPK del sistema. Añadidas `libglpk-dev` y `libxml2-dev` a las bibliotecas del sistema del flujo. Comprobado: las pruebas pasan en GitHub desde el commit `df67c1b` (R y web).
 
 **55. Avisos del pipeline (93) · HECHA (11-nov-2026).**
 - 56 de geometría sobre coordenadas geográficas: proyectar antes de calcular el punto interior.
@@ -394,8 +394,8 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 
 **60. Lectura externa.** Una persona que no haya participado revisa la nota corta y el mapa antes de anunciar. El autor decide quién.
 
-**61. *Release* v1.0.** Paquete con el histórico, prueba de navegador contra el sitio publicado, CHANGELOG `[1.0.0]`, descongelar el sitio.
-- **Decidido (11-nov-2026), decisión del autor:** la v1.0 sale ya, antes de la prueba en limpio (58, aplazada) y de la lectura externa (60), que quedan como revisión posterior. Preparados `CHANGELOG.md` `[1.0.0]`, `CITATION.cff` (1.0.0) y `README.md`. Faltan el commit de la publicación, el paquete (`empaquetar_publicacion()`), el release `v1.0.0`, el `ref` de `pages.yml`, la publicación y la prueba de navegador contra el sitio publicado.
+**61. *Release* v1.0 · HECHA (11-nov-2026).** Paquete con el histórico, prueba de navegador contra el sitio publicado, CHANGELOG `[1.0.0]`, descongelar el sitio.
+- **Decidido (11-nov-2026), decisión del autor:** la v1.0 sale ya, antes de la prueba en limpio (58, aplazada) y de la lectura externa (60), que quedan como revisión posterior. Preparados `CHANGELOG.md` `[1.0.0]`, `CITATION.cff` (1.0.0) y `README.md`. - **Hecho (11-nov-2026):** release `v1.0.0` sobre `df67c1b` (seis ficheros, `version.json` sin cambios sin commit), `ref` por defecto de `pages.yml` en ese commit y sitio publicado. Contra el sitio, la prueba en el navegador da 0 en sus 56 comprobaciones (300 secciones, historias incluidas) y el PMTiles responde `206`. Al empaquetar, la comprobación `versiones` paraba con el indicador 18, que lleva dos fuentes desde la tarea 47: corregida en `R/publicar.R`, con su prueba.
 
 ## Orden
 
