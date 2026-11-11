@@ -100,9 +100,8 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 | `mivau_serpavi` | Sistema Estatal de Referencia del Precio del Alquiler de Vivienda (SERPAVI): base de datos |
 | `gv_emal` | Estadística del Mercado del Alquiler (fianzas) |
 | `ine_ipva` | Índice de Precios de Vivienda en Alquiler (IPVA) |
-| `registradores` | Estadística Registral Inmobiliaria: compraventas de inmuebles de uso residencial por provincia |
+| `registradores` | Estadística Registral Inmobiliaria: compraventas de inmuebles de uso residencial por provincia (Colegio de Registradores; base de datos con licencia ODbL) |
 | `mivau_valor_tasado` | Valor tasado de la vivienda libre |
-| `ine_hipotecas` | Estadística de Hipotecas (H): tipo de interés medio al inicio |
 | `portales` | Informes de precios de oferta (salas de prensa de Idealista y Fotocasa) |
 | `aeat_mercado_trabajo` | Mercado de trabajo y pensiones en las fuentes tributarias |
 | `inss_pensiones` | Pensiones contributivas del Sistema de la Seguridad Social (en vigor) |
@@ -115,6 +114,7 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 | `ine_ecv_modulo` | Encuesta de Condiciones de Vida 2025: módulo sobre dificultades de acceso a la vivienda (tablas) |
 | `eurostat_ilc_lvho07` | Tasa de sobrecarga por gastos de vivienda (ilc\_lvho07a, ilc\_lvho07b, ilc\_lvho07c) |
 | `eurostat_ilc_lvho07_r` | Tasa de sobrecarga por regiones NUTS 2 (ilc\_lvho07\_r) |
+| `bde_accesibilidad` | Indicadores de accesibilidad a la vivienda (años de renta, esfuerzo teórico) |
 | `calculo_propio` | Cálculo propio a partir de las fuentes de cada término |
 
 ## Diccionario de indicadores
@@ -348,10 +348,10 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 
 - **Unidad:** % del ingreso
 - **Familia:** Esfuerzo
-- **Fuentes:** `mivau_valor_tasado`, `aeat_mercado_trabajo`, `ine_hipotecas`
+- **Fuentes:** `mivau_valor_tasado`, `ine_adrh`, `bde_accesibilidad`
 - **Versión:** v0.3
 - **Definición:** Parte del ingreso que se iría en la cuota del primer año de una hipoteca sobre una vivienda tipo.
-- **Cálculo:** Cuota anual del primer año de un préstamo francés sobre el 80 % del valor tasado de 80 m², a 25 años y al tipo medio de las hipotecas sobre viviendas del año (INE), dividida entre el salario medio anual bruto por asalariado (AEAT) del mismo año, × 100.
+- **Cálculo:** Cuota anual del primer año de un préstamo francés sobre el 80 % del valor tasado de 80 m², a 25 años y al tipo de los préstamos nuevos para adquisición de vivienda del Banco de España (media de los doce meses del año), dividida entre la renta neta media por hogar del ADRH (INE) del mismo año y territorio, × 100. La renta es la publicada en cada nivel; donde el INE no la publica, sin dato en la provincia y la comunidad (Navarra hasta 2020, Álava y el País Vasco hasta 2019, Gipuzkoa en 2015) y, en España hasta 2020, la media de los municipios ponderada por hogares, estimada.
 - **Lectura:** Es un esfuerzo teórico: supone que se tiene el 20 % restante y los gastos de compra.
 
 ### `hogares_alquiler`

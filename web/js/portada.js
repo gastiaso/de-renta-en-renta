@@ -11,6 +11,7 @@ import { crearBuscador, formasDeNombre } from './buscador.js';
 import { ordenNatural } from './nombres.js';
 import { FICHAS_PERFIL } from './sueldo.js';
 import { FAMILIAS_ALQUILER, FAMILIAS_PROXIMAMENTE, textoFamilia } from './familias.js';
+import { fechaLarga, lineaTransparencia } from './transparencia.js';
 
 const $ = (id) => document.getElementById(id);
 const estado = { idioma: leerEstado(globalThis.location?.search ?? '').idioma ?? 'es' };
@@ -118,11 +119,35 @@ export function cartasDe(datos) {
   return cartas;
 }
 
+// Tarea 52: cartas de la familia «entrar» (el sueldo para entrar y la brecha entre entrar y quedarse)
+// mientras la familia sale «próximamente» (familias.js): qué medirán, su familia y «próximamente»,
+// sin cifras ni enlace (la oferta de Idealista no se publica sin su autorización; decisiones 17–19).
+// Si falta alguno de sus textos, esa carta no sale.
+export const CARTAS_ENTRAR = ['sueldo_entrar', 'brecha'];
+export function cartasProximamente(t) {
+  if (!FAMILIAS_PROXIMAMENTE.includes('entrar')) return [];
+  const familia = textoFamilia(t, 'entrar');
+  if (!familia) return [];
+  return CARTAS_ENTRAR.filter((id) => t.existe(`portada.cartas.${id}.titulo`) && t.existe(`portada.cartas.${id}.texto`))
+    .map((id) => ({ id, familia, titulo: t(`portada.cartas.${id}.titulo`), texto: t(`portada.cartas.${id}.texto`) }));
+}
+
+function cartaProximamente({ id, familia, titulo, texto }) {
+  const art = crear('article', `carta carta-${id} carta-proximamente`);
+  art.setAttribute('data-carta', id);
+  art.setAttribute('data-proximamente', 'true');
+  art.append(crear('h3', 'carta-titulo cabecera-carta', titulo), crear('p', 'carta-texto', texto),
+    crear('p', 'carta-fuente', familia), crear('p', 'carta-pronto', t('portada.proximamente')));
+  return art;
+}
+
 function pintarCartas() {
   const seccion = $('portada-cartas');
   const cartas = cartasDe(portada);
-  seccion.hidden = !cartas.length;
-  $('portada-cartas-lista').replaceChildren(...cartas.map((carta) => {
+  const pronto = cartasProximamente(t);
+  seccion.hidden = !cartas.length && !pronto.length;
+  // La del sueldo necesario, primero; detrás, las de «entrar» (su contrapunto) y las demás
+  const reales = cartas.map((carta) => {
     const valores = Object.fromEntries(Object.entries(carta.valores).map(([k, v]) => {
       if (!Array.isArray(v)) return [k, String(v)];
       return [k, v[0] === 'pct' ? pct(v[1]) : t.numero(v[1])];
@@ -139,7 +164,9 @@ function pintarCartas() {
     a.href = conIdioma(carta.enlace, t.idioma);
     art.append(a);
     return art;
-  }));
+  });
+  const n = cartas.findIndex((c) => c.id === 'sueldo') + 1;
+  $('portada-cartas-lista').replaceChildren(...reales.slice(0, n), ...pronto.map(cartaProximamente), ...reales.slice(n));
 }
 
 // --- Familias, fichas, dado y pie -----------------------------------------------------------
@@ -217,14 +244,6 @@ async function tirarDado() {
   }
 }
 
-// Fecha de los datos («2026-11-09T13:14:33+0100» o «2026-11-09») en largo.
-function fechaLarga(texto) {
-  const r = /^(\d{4})-(\d{2})-(\d{2})/.exec(texto ?? '');
-  if (!r) return null;
-  const d = new Date(Date.UTC(Number(r[1]), Number(r[2]) - 1, Number(r[3])));
-  return new Intl.DateTimeFormat(t.idioma === 'en' ? 'en-GB' : 'es-ES', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d);
-}
-
 // Pie: las fuentes y la fecha de los datos publicados (descargas/version.json, del release) o, sin
 // él, las del manifiesto.
 function pintarPie() {
@@ -234,10 +253,12 @@ function pintarPie() {
   const pf = $('portada-pie-fuentes');
   pf.hidden = !fuentes.length;
   pf.textContent = fuentes.length ? t('portada.pie.fuentes', { fuentes: fuentes.join('; ') }) : '';
-  const fecha = fechaLarga(version?.fecha ?? m?.generado);
+  const fecha = fechaLarga(version?.fecha ?? m?.generado, t.idioma);
   const pfe = $('portada-pie-fecha');
   pfe.hidden = !fecha;
   pfe.textContent = fecha ? t('portada.pie.fecha', { fecha }) : '';
+  // Tarea 53: «Método en dos páginas», la fe de erratas y «Avisar de un error»
+  $('portada-pie-transparencia').replaceChildren(...lineaTransparencia(t, { erratas: true }).childNodes);
 }
 
 // --- Idioma y arranque ----------------------------------------------------------------------

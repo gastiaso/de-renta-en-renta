@@ -3,8 +3,8 @@
 //
 // Dos modos:
 //   - «necesario» (por defecto): sueldo neto necesario para que el alquiler mensual mediano real
-//     no pase del umbral (indicador 21; decisión 4, tarea 40), en seis tramos con los cortes del
-//     manifiesto; la ficha da al lado el mínimo teórico con la superficie elegida (formulas.js);
+//     no pase del umbral (indicador 21; decisión 4, tarea 40), en siete tramos con el juego de
+//     cortes de cada escala del manifiesto (tarea 51); la ficha da al lado el mínimo teórico con la superficie elegida (formulas.js);
 //   - «llega» («¿te llega?», al escribir un sueldo o elegir una ficha): alquiler / ingreso, en
 //     tres tramos (hasta el 30 %, del 30 al 40 % y más del 40 %), con la proporción de secciones
 //     donde el alquiler cabe por debajo del umbral; en la ficha, también los euros que quedan al
@@ -14,26 +14,40 @@
 // del mapa, sin volver a descargar teselas) y la función en JS (ficha, resumen, leyenda).
 
 import { formulaDe } from './formulas.js';
-import { pasosDeRampa } from './colores.js';
+import { pasosDeRampa, juegoDe } from './colores.js';
+import { SUPUESTOS } from './supuestos.js';
 
 export const FICHAS_PERFIL = ['llave', 'mochila', 'tartera', 'transistor'];
-export const SUPERFICIES = [50, 70, 90];
+// Supuestos (tarea 48): salen de inventario/supuestos.csv por js/supuestos.js, que genera R
+// (generar_supuestos_js()); aquí no se escriben cifras. Superficies de «Tu ficha» (50, 70 y 90 m²)
+// y la de una persona (50 m²).
+export const SUPERFICIES = SUPUESTOS.superficies;
+export const SUPERFICIE_UNA_PERSONA = SUPUESTOS.superficie_una_persona;
 // Piso de dos sueldos: 70 m² por defecto, a la vista y cambiable (plan §3.1 y §11, pregunta 43 h):
 // «Tu ficha» con segundo sueldo, la línea de dos sueldos de la ficha y «entrar».
-export const SUPERFICIE_DOS_SUELDOS = 70;
-export const UMBRALES = [30, 40];
-export const LIMITES_LLEGA = [0.3, 0.4];
+export const SUPERFICIE_DOS_SUELDOS = SUPUESTOS.superficie_dos_sueldos;
+export const UMBRALES = SUPUESTOS.umbrales;
+export const LIMITES_LLEGA = SUPUESTOS.limites_llega;
 
-const SUELDO_MAXIMO = 100000;
+const SUELDO_MAXIMO = SUPUESTOS.sueldo_maximo;
 
 // Ingreso de «Tu ficha»: neto mensual repartido en 12 (regla 8). Con 14 pagas, la paga × 14 / 12;
 // el segundo sueldo, si lo hay, se suma con las mismas pagas.
 export function ingresoPeon(sueldo) {
   const valido = (x) => Number.isFinite(x) && x > 0 && x <= SUELDO_MAXIMO;
   if (!sueldo || !valido(sueldo.neto)) return null;
-  const pagas = sueldo.pagas === 14 ? 14 : 12;
+  const pagas = SUPUESTOS.pagas.includes(sueldo.pagas) ? sueldo.pagas : SUPUESTOS.pagas_defecto;
   const segundo = valido(sueldo.segundo) ? sueldo.segundo : 0;
   return ((sueldo.neto + segundo) * pagas) / 12;
+}
+
+// Superficie típica de los pisos alquilados de un territorio (tarea 48; backlog, decisión 5):
+// alquiler mensual mediano / alquiler por m² mediano del SERPAVI, como superficie_tipica_serpavi()
+// de R. Es el cociente de dos medianas, no la mediana de las superficies. La usan «Tu ficha» (opción
+// «típica») y la ficha de municipio (decisión del autor, 11-nov-2026). null sin los dos términos.
+export function superficieTipica(alquilerMes, alquilerM2) {
+  if (!Number.isFinite(alquilerMes) || !Number.isFinite(alquilerM2) || !(alquilerM2 > 0) || !(alquilerMes > 0)) return null;
+  return alquilerMes / alquilerM2;
 }
 
 export function modoDe(estado, sueldo, perfiles) {
@@ -45,15 +59,20 @@ export function modoDe(estado, sueldo, perfiles) {
 // Superficie del cálculo (§3.1): las fichas de una persona, la suya (50 m²), para que sus mapas
 // solo difieran por el ingreso; la llave, ninguna (paga el alquiler mediano de su sección); el
 // peón y el mapa del sueldo necesario, la elegida o, si no, 50 m² con un sueldo y 70 con dos.
-export function superficieDe(estado, sueldo, perfiles) {
+// Decisión del autor (11-nov-2026; plan §11, pregunta 59): la superficie típica (`superficie` =
+// SUPERFICIE_TIPICA) es una opción más; `tipica`, la del territorio que manda (principal.js). Sin
+// ella (sin territorio o sin los dos términos), la de por defecto.
+export const SUPERFICIE_TIPICA = 'tipica';
+export function superficieDe(estado, sueldo, perfiles, tipica = null) {
   const ficha = estado.ficha;
   if (ficha === 'llave' && perfiles?.llave) return null;
-  if (ficha && ficha !== 'peon' && perfiles?.[ficha]) return perfiles[ficha].superficie_m2 ?? 50;
+  if (ficha && ficha !== 'peon' && perfiles?.[ficha]) return perfiles[ficha].superficie_m2 ?? SUPERFICIE_UNA_PERSONA;
+  if (estado.superficie === SUPERFICIE_TIPICA && Number.isFinite(tipica) && tipica > 0) return tipica;
   if (SUPERFICIES.includes(estado.superficie)) return estado.superficie;
-  return ficha === 'peon' && ingresoPeon(sueldo) && sueldo.segundo > 0 ? 70 : 50;
+  return ficha === 'peon' && ingresoPeon(sueldo) && sueldo.segundo > 0 ? SUPERFICIE_DOS_SUELDOS : SUPERFICIE_UNA_PERSONA;
 }
 
-export const umbralDe = (estado) => (UMBRALES.includes(estado.umbral) ? estado.umbral : 30) / 100;
+export const umbralDe = (estado) => (UMBRALES.includes(estado.umbral) ? estado.umbral : SUPUESTOS.umbral_sueldo) / 100;
 
 // Ingreso de una ficha de perfil en una sección: el de su provincia o el nacional (código «00»).
 export function ingresoPerfil(perfil, seccion) {
@@ -204,13 +223,16 @@ export function colorLlega(calculo, idSeccion, colores, nivel = null) {
     colores.llega[2]];
 }
 
-// Sueldo necesario por tramos: un tramo más que cortes (seis con los del indicador 21), cada uno
-// con su paso de la rampa (colores.js).
-export function colorNecesario(mapaDef, supuestos, colores) {
+// Sueldo necesario y demás mapas por tramos: un tramo más que cortes (siete con los juegos de la
+// tarea 51), cada uno con su paso de la rampa (colores.js). `nivel`: el de la capa que se pinta,
+// que elige su juego de cortes (sin nivel, los `cortes` del mapa). `propios`: otros cortes (la escala
+// relativa al municipio, escala_municipio.js).
+export function colorNecesario(mapaDef, supuestos, colores, nivel = null, propios = null) {
   const valor = formulaDe(mapaDef).expresion(numero(mapaDef.base), supuestos);
-  const color = pasosDeRampa(mapaDef.cortes.length + 1, colores.rampa.length).map((i) => colores.rampa[i]);
+  const cortes = propios ?? juegoDe(mapaDef, nivel).cortes;
+  const color = pasosDeRampa(cortes.length + 1, colores.rampa.length).map((i) => colores.rampa[i]);
   const pasos = ['step', valor, color[0]];
-  mapaDef.cortes.forEach((corte, i) => pasos.push(corte, color[i + 1]));
+  cortes.forEach((corte, i) => pasos.push(corte, color[i + 1]));
   return ['case', falta(mapaDef.base), colores.fuera, pasos];
 }
 

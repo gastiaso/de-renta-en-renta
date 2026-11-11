@@ -33,6 +33,9 @@ inventario <- list(
   tar_target(excepciones_cobertura, readr::read_csv(fichero_excepciones_cobertura, col_types = "ccc")),
   tar_target(fichero_vocabulario, "inventario/vocabulario.csv", format = "file"),
   tar_target(vocabulario, readr::read_csv(fichero_vocabulario, show_col_types = FALSE)),
+  # Tarea 51: tres juegos de cortes del mapa por indicador (sección, municipio, provincia y comunidad)
+  tar_target(fichero_cortes_niveles, "inventario/cortes_web_niveles.csv", format = "file"),
+  tar_target(cortes_niveles, leer_cortes_niveles(fichero_cortes_niveles)),
   # Diccionarios ES/EN de la web: las secciones de indicadores, fuentes y vocabulario salen del inventario
   tar_target(ficheros_i18n, exportar_i18n(indicadores, fuentes, vocabulario), format = "file"),
   tar_target(validacion_i18n, validar_referencias(comprobar_i18n(ficheros_i18n), referencias)),
@@ -632,10 +635,26 @@ bloque_derivados <- list(
     validacion_derivados   # la compuerta va antes que la tabla larga
     validar_tabla_larga(derivados, indicadores, fuentes, vocabulario)
   }),
-  tar_target(resumen_larga_derivados, resumen_derivados(larga_derivados))
+  tar_target(resumen_larga_derivados, resumen_derivados(larga_derivados)),
+  # Tarea 48, módulo de supuestos (R/comun_supuestos.R): inventario/supuestos.csv, que leen R y la
+  # web (web/js/supuestos.js, generado); superficie típica de los pisos alquilados (SERPAVI, de la
+  # sección a la comunidad, sin salir a la web) y compuerta en una muestra de catorce territorios
+  # con todas las combinaciones de «Tu ficha» (pruebas/datos/supuestos_muestra.json).
+  tar_target(fichero_supuestos, "inventario/supuestos.csv", format = "file"),
+  tar_target(supuestos_inventario, leer_supuestos(fichero_supuestos)),
+  tar_target(fichero_supuestos_js, generar_supuestos_js(supuestos_inventario), format = "file"),
+  tar_target(fichero_mapa_html, "web/mapa.html", format = "file"),
+  tar_target(fichero_muestra_supuestos, "pruebas/datos/supuestos_muestra.json", format = "file"),
+  tar_target(superficie_tipica, superficie_tipica_serpavi(larga_serpavi)),
+  tar_target(terminos_supuestos, muestra_supuestos(larga_serpavi, perfiles)),
+  tar_target(validacion_supuestos, validar_referencias(
+    comprobar_supuestos(supuestos_inventario, terminos_supuestos, larga_derivados, superficie_tipica,
+                        ruta_js = fichero_supuestos_js, ruta_mapa = fichero_mapa_html,
+                        ruta_muestra = fichero_muestra_supuestos), referencias))
 )
 
-# F4, compraventa: indicadores 10 (variación anual del alquiler, IPVA del INE), 12 (valor tasado
+# F4, compraventa: indicadores 10 (variación anual del alquiler, IPVA del INE), 11 (precio de
+# compraventa por m², de Registradores, por provincia; tarea 46), 12 (valor tasado
 # del MIVAU), 16 (derivado con el salario medio de la AEAT, indicador 7) y 17 (con la renta neta por
 # hogar del ADRH y el tipo de los préstamos nuevos para vivienda del Banco de España; plan §11,
 # pregunta 45 d y e), compuerta de coherencia entre la tasación y las
@@ -647,6 +666,7 @@ bloque_derivados <- list(
 # entra (los nombres del Ministerio se casan con toda España).
 #   targets::tar_make(names = c(larga_compraventa, fichero_cp_municipio))
 ANIOS_VALOR_TASADO <- 2015:2025
+ADRH_RENTA_TOTALES <- "53689"   # ADRH: renta media de España, comunidades, provincias e islas (17)
 bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL)) else list(
   tar_target(ficheros_ipva, vapply(TABLAS_IPVA, descargar_ine_ipva, character(1)), format = "file"),
   tar_target(ipva, leer_ine_ipva_tablas(ficheros_ipva)),
@@ -698,17 +718,41 @@ bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL)
   # histórico) y la renta neta media por hogar del ADRH (plan §11, pregunta 45 d y e revisadas); el
   # tipo medio del INE sigue con su compuerta (validacion_hipotecas)
   tar_target(tipo_bde_anual, compraventa_tipo_bde(series_bde)),
-  tar_target(renta_hogar_17, compraventa_renta_hogar(renta_adrh, pesos_adrh_prueba, territorios_2021)),
+  # Renta por hogar de provincias, comunidades y España: la publicada por el INE (tabla de totales
+  # 53689 del ADRH; 11-nov-2026), con su compuerta frente a la media de los municipios
+  tar_target(fichero_adrh_renta_totales, descargar_ine_adrh(ADRH_RENTA_TOTALES), format = "file"),
+  tar_target(renta_hogar_publicada, leer_ine_adrh_totales(fichero_adrh_renta_totales, "Renta neta media por hogar",
+                                                          ccaa, territorios_2021)),
+  tar_target(validacion_renta_hogar_publicada, validar_referencias(
+    comprobar_renta_hogar_publicada(renta_adrh, pesos_adrh_prueba, territorios_2021, renta_hogar_publicada), referencias)),
+  tar_target(renta_hogar_17, {
+    validacion_renta_hogar_publicada   # la compuerta va antes
+    compraventa_renta_hogar(renta_adrh, pesos_adrh_prueba, territorios_2021, publicada = renta_hogar_publicada)
+  }),
   tar_target(derivados_compraventa, armonizar_derivados_compraventa(larga_valor_tasado, larga_salarios, tipo_bde_anual,
                                                                     renta_hogar = renta_hogar_17,
-                                                                    version_renta = version_de(fichero_adrh_renta))),
+                                                                    version_renta = max(version_de(fichero_adrh_renta),
+                                                                                        version_de(fichero_adrh_renta_totales)))),
   tar_target(validacion_derivados_compraventa, validar_referencias(
     comprobar_derivados_compraventa(derivados_compraventa, larga_valor_tasado, larga_salarios, tipo_bde_anual,
                                     renta_hogar = renta_hogar_17),
     referencias)),
+  # 11 desde Registradores, por provincia (R/fuente_registradores.R; plan §11, pregunta 45 a y b
+  # revisadas): fichero manual en datos/brutos/registradores/, compuerta de lectura y coherencia con
+  # el valor tasado (12), provincia frente a provincia
+  tar_target(fichero_registradores, registradores_descargar(), format = "file"),
+  tar_target(registradores, registradores_leer(fichero_registradores)),
+  tar_target(validacion_registradores, validar_referencias(bind_rows(
+    registradores_comprobar(registradores, territorios_2021),
+    registradores_coherencia_tasado(registradores, larga_valor_tasado)), referencias)),
+  tar_target(larga_registradores, {
+    validacion_registradores   # la compuerta va antes que la tabla larga
+    registradores_armonizar(registradores, version = version_de(fichero_registradores)) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  }),
   tar_target(larga_compraventa, {
     validacion_derivados_compraventa   # la compuerta va antes que la tabla larga
-    bind_rows(larga_ipva, larga_valor_tasado, derivados_compraventa) |>
+    bind_rows(larga_ipva, larga_registradores, larga_valor_tasado, derivados_compraventa) |>
       validar_tabla_larga(indicadores, fuentes, vocabulario)
   }),
   # Tabla de paso código postal ↔ municipio (R/geo_codigos_postales.R), en git como la jerarquía
@@ -791,7 +835,8 @@ bloque_portales <- if (!PORTALES || AMBITO != "") list(
   tar_target(ficheros_web_portales, portales_exportar_web(larga_portales, portales_anual, portales, indicadores,
                                                           jerarquia_2021, territorios_2021, vocabulario = vocabulario,
                                                           dir_web = DIR_WEB, entrar = tramos_web_entrar,
-                                                          tramos_entrar = tramos_entrar), format = "file"),
+                                                          tramos_entrar = tramos_entrar,
+                                                          cortes_niveles = cortes_niveles), format = "file"),   # tarea 51
   tar_target(validacion_web_portales, {
     ficheros_web_portales
     validar_referencias(portales_comprobar_web(larga_portales, portales_anual, indicadores, jerarquia_2021,
@@ -816,7 +861,7 @@ bloque_tabla_larga <- list(
       larga_vut,          # 19: el mes de referencia en corte y grupo
       larga_paso2011,     # tarea 47: 18 de 2011 y 19 de 2020-2023, desde las secciones del Censo 2011
       larga_salarios,    # 7 (F3): el total sin desglose; de 26 a 35 años, con corte de edad
-      larga_compraventa,  # 10, 12, 16 y 17 (F4); en PROVINCIA, nada
+      larga_compraventa,  # 10, 11, 12, 16 y 17 (F4); en PROVINCIA, nada
       larga_zonas_tensionadas,   # 20 (F5): municipios, situación a 31 de diciembre; en PROVINCIA, nada
       # 13 (portales): no entra; solo web (decisión 3), en bloque_portales
       larga_derivados,    # 14 y 21 sin desglose (el mínimo de 50 m² del 21, con el corte superficie); 15 con la ficha como corte
@@ -842,8 +887,14 @@ bloque_web <- list(
     exportar_web(tabla_larga, indicadores, jerarquia_2021, territorios_2021, pmtiles = fichero_mapa_base,
                  perfiles = perfiles, cajas = cajas_municipios, salarios = salarios_web(curvas_salariales_aeat),
                  dir_web = DIR_WEB,
-                 vocabulario = vocabulario, zonas = zonas_tensionadas)   # F5: categorías y declaraciones del 20
+                 vocabulario = vocabulario, zonas = zonas_tensionadas,   # F5: categorías y declaraciones del 20
+                 cortes_niveles = cortes_niveles)                        # tarea 51: juegos de cortes por escala
   }, format = "file"),
+  # Tarea 51: reparto de los territorios entre los tramos de cada juego en el último año (alerta)
+  tar_target(validacion_web_tramos, {
+    ficheros_web
+    validar_referencias(comprobar_tramos_web(tabla_larga, indicadores, DIR_WEB), referencias)
+  }),
   tar_target(validacion_web, {
     ficheros_web
     validar_referencias(comprobar_web(tabla_larga, indicadores, jerarquia_2021, territorios_2021, DIR_WEB,

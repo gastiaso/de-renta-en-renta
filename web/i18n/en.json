@@ -43,7 +43,8 @@
       "region": "Census tract map",
       "acercar": "Zoom in",
       "alejar": "Zoom out",
-      "sin_dato_escala": "This map has no data at this scale: zoom in."
+      "sin_dato_escala": "This map has no data at this scale: zoom in.",
+      "cargando": "Loading the map…"
     },
     "buscador": {
       "etiqueta": "Search municipality or tract",
@@ -51,6 +52,8 @@
     },
     "vista": {
       "region": "What the map shows",
+      "mas_opciones": "More options",
+      "menos_opciones": "Fewer options",
       "mapa": "Map",
       "anio": "Year",
       "tipologia": "Housing",
@@ -63,6 +66,14 @@
     },
     "leyenda": {
       "sin_dato": "No data",
+      "juego": "Bands for {escala}: they change as the map zooms in or out.",
+      "juego_cambio": "Scale changed: bands now for {escala}.",
+      "anclaje": "Bands set with the latest year ({anio}): earlier years gather in the lower bands.",
+      "juegos": {
+        "seccion": "census sections",
+        "municipio": "municipalities",
+        "provincia_ccaa": "provinces and regions"
+      },
       "secreto": "Statistical confidentiality",
       "supuestos": "{superficie} m² · {umbral} threshold",
       "supuestos_real": "Median monthly rent in the tract · {umbral} threshold",
@@ -75,6 +86,16 @@
       "llega_2": "30 to 40%",
       "llega_3": "Over 40%",
       "llega_nota": "Bands do not change with the threshold; the threshold decides what “fits”.",
+      "relativa": {
+        "titulo": "Bands",
+        "nacional": "Spain",
+        "municipio": "{municipio}",
+        "municipio_sin": "A municipality",
+        "linea": "Bands for {municipio}, not comparable with other municipalities: septiles of its {n} tracts with data in {anio}.",
+        "fuera": "Outside {municipio}, no colour",
+        "pocas": "{municipio} has fewer than {minimo} tracts with data: Spain-wide bands only.",
+        "sin_municipio": "For a municipality's bands, pick a tract or zoom in on one."
+      },
       "lectura_familia": {
         "quedarse": "those already renting",
         "entrar": "those looking for a home today"
@@ -92,6 +113,10 @@
       "superficie_fija": "Single-person tokens use {superficie} m².",
       "superficie_llave": "The key pays the median rent of its tract.",
       "supuestos_mapa": "Home size and threshold change the pay needed and “Can you make rent?”, not the map on screen.",
+      "tipica": "Typical",
+      "tipica_nota": "Typical size of rented flats in {territorio} in {anio}: {superficie} m² (median monthly rent / median rent per m², SERPAVI).",
+      "tipica_sin": "No typical size for {territorio}: {superficie} m² is used.",
+      "tipica_elegir": "To use the typical size, pick a tract or a municipality, or zoom in on one; meanwhile, {superficie} m².",
       "superficie_minimo": "The map uses each tract's median monthly rent; the home size chosen changes the theoretical minimum the profile gives alongside.",
       "resumen_real": "With each tract's median monthly rent, in {pct} ({caben} of {total}).",
       "peon_sin_sueldo": "Type a pay figure to use your token.",
@@ -252,6 +277,7 @@
         "ninguna": "No declarations published in the BOE.",
         "nota": "List published every quarter in the BOE by the Ministry of Housing and Urban Agenda (Law 12/2023, art. 18): in force for three years from the day after publication. For declarations covering part of a municipality, the map paints the whole municipality with its own category; the exact area is the one in the declaration."
       },
+      "superficie_tipica": "Typical size of rented flats: {superficie} m² in {anio} (median monthly rent / median rent per m², multi-family housing; SERPAVI).",
       "resto": {
         "euros": "€{euros}",
         "queda": "{cifra} left each month after rent",
@@ -292,6 +318,12 @@
     "etiqueta": {
       "distrito": "District {distrito}",
       "seccion": "Tract {codigo}"
+    },
+    "transparencia": {
+      "fecha": "Data generated on {fecha}",
+      "metodo_corto": "Method in two pages",
+      "erratas": "Errata",
+      "error": "Report an error"
     }
   },
   "portada": {
@@ -328,6 +360,14 @@
         "titulo": "Overburden",
         "texto": "In {anio}, {mercado} of people renting at market price spend more than 40 % of their disposable income on housing. Across the whole population, {total}.",
         "enlace": "See overburden in Spain and Europe"
+      },
+      "sueldo_entrar": {
+        "titulo": "Pay needed to move in",
+        "texto": "Net monthly pay needed for the rent of a flat on offer not to exceed 30 %, with the typical floor area of rented flats in the municipality and with 50 m². It comes from Idealista asking prices and will be published in bands."
+      },
+      "brecha": {
+        "titulo": "Moving in versus staying",
+        "texto": "How much more is asked in rental listings than what those already renting pay in the same municipality. It will be published in bands."
       }
     },
     "casillas_titulo": "Board squares",
@@ -811,7 +851,7 @@
       "nombre": "Theoretical mortgage burden",
       "unidad": "% of income",
       "definicion": "Share of income taken by the first-year payment of a mortgage on a standard dwelling.",
-      "calculo": "First-year annual payment of a French-amortisation loan for 80% of the appraised value of 80 m², over 25 years at the year’s average home-mortgage rate (INE), divided by the average gross annual wage per employee (Tax Agency) of the same year, × 100.",
+      "calculo": "First-year annual payment of a French-amortisation loan for 80% of the appraised value of 80 m², over 25 years at the Bank of Spain's rate on new home-purchase loans (average of the year's twelve months), divided by the average net household income from the ADRH (INE) for the same year and area, × 100. The income is the one published at each level; where INE does not publish it, no value for the province and the region (Navarre until 2020, Álava and the Basque Country until 2019, Gipuzkoa in 2015) and, for Spain until 2020, the household-weighted mean of the municipalities, estimated.",
       "lectura": "A theoretical burden: it assumes the remaining 20% and purchase costs are available."
     },
     "hogares_alquiler": {
@@ -885,7 +925,7 @@
     "nastat_epav": "Housing Rental Price Statistics (EPAV)",
     "ine_ipva": "Rental Housing Price Index (IPVA)",
     "notariado": "Notaries’ Statistical Portal",
-    "registradores": "Land Registry Real Estate Statistics: residential property sales by province",
+    "registradores": "Land Registry Real Estate Statistics: residential property sales by province (Spanish Land Registrars' Association; database under the ODbL)",
     "mivau_valor_tasado": "Appraised value of open-market housing",
     "mivau_transacciones": "Real estate transactions (sales): average value of open-market housing sales",
     "ine_hipotecas": "Mortgage Statistics (H): average initial interest rate",

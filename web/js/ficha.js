@@ -24,6 +24,7 @@ import { ordenNatural } from './nombres.js';
 import { clasesTramos, rampaDeCss, TRAMOS_LLEGA } from './colores.js';
 import { eurosQueQuedan, SUPERFICIE_DOS_SUELDOS, SUPERFICIES } from './sueldo.js';
 import { daSueldo, textoSupuestos } from './formulas.js';
+import { lineaTransparencia } from './transparencia.js';
 
 const crear = (etiqueta, clase, texto) => {
   const el = document.createElement(etiqueta);
@@ -45,6 +46,10 @@ function cabecera(t, alCerrar, titulo = t('interfaz.ficha.titulo')) {
   }
   return caja;
 }
+
+// Tarea 53: al pie de la ficha, «Método en dos páginas» (qué mide cada familia y a quién deja fuera)
+// y «Avisar de un error».
+export const pieFicha = (t) => lineaTransparencia(t, { clase: 'nota ficha-pie' });
 
 // Sin nada elegido. Con un nivel con que comparar ya elegido (por ejemplo, desde la casilla
 // «Mudanza» de la portada, ?comparar=municipio), lo dice.
@@ -357,6 +362,7 @@ export function fichaSeccion(contenedor, { t, codigo, territorios, alCerrar, ...
     huecoContexto,
     huecoSerie,
     huecoComparador,
+    pieFicha(t),
   );
   return { huecoContexto, huecoSerie, huecoComparador, huecoResidentes };
 }
@@ -410,7 +416,7 @@ export function fichaTerritorio(contenedor, { t, nivel, codigo, territorios, alC
   const titulo = crear('p', 'ficha-codigo', propio.nombre);
   titulo.dataset.nivel = nivel;
   titulo.dataset.codigo = codigo;
-  contenedor.replaceChildren(cabecera(t, alCerrar, t('interfaz.ficha.titulo_territorio')), titulo, datos, bloque, huecoResidentes, huecoDetalle, huecoSerie, huecoComparador);
+  contenedor.replaceChildren(cabecera(t, alCerrar, t('interfaz.ficha.titulo_territorio')), titulo, datos, bloque, huecoResidentes, huecoDetalle, huecoSerie, huecoComparador, pieFicha(t));
   return { huecoSerie, huecoComparador, huecoDetalle, huecoResidentes };
 }
 

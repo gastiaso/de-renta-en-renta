@@ -86,3 +86,29 @@ test_that("las comprobaciones de Registradores tienen su fila en el inventario",
            "registradores_tasado_detalle")
   expect_equal(setdiff(ids, ref$id), character(0))
 })
+
+test_that("conectado en el pipeline (tarea 46): bloque de compraventa, tabla larga y calendario", {
+  pipeline <- paste(readLines(file.path("..", "..", "_targets.R"), encoding = "UTF-8", warn = FALSE), collapse = "\n")
+  for (o in c("fichero_registradores", "registradores", "validacion_registradores", "larga_registradores")) {
+    expect_match(pipeline, sprintf("tar_target\\(\\s*%s\\s*,", o), info = o)
+  }
+  expect_match(pipeline, "bind_rows\\(larga_ipva, larga_registradores,")
+  cal <- readr::read_csv(file.path("..", "..", "inventario", "calendario_fuentes.csv"), col_types = readr::cols(.default = "c"))
+  expect_equal(cal$objetivos[cal$id == "registradores"], "fichero_registradores")
+  # La tabla larga del 11 pasa el inventario real (fuente e indicador)
+  inv <- function(f) readr::read_csv(file.path("..", "..", "inventario", f), show_col_types = FALSE)
+  x <- registradores_armonizar(registradores_leer(MUESTRA_REGISTRADORES), version = "2026-11-11", anios = 2024:2025)
+  expect_no_error(validar_tabla_larga(x, inv("indicadores.csv"), inv("fuentes.csv"), inv("vocabulario.csv")))
+})
+
+test_that("sin municipio, el mapa del 11 es provincial (nivel_minimo provincia)", {
+  catalogo <- tibble::tibble(clave = c("precio_compra_m2", "valor_tasado_m2"), indicador = clave, corte = "total",
+                             grupo_web = "total", niveles = list(c("provincia", "ccaa", "nacional"),
+                                                                 c("municipio", "provincia", "ccaa", "nacional")))
+  ind <- tibble::tibble(id = c(11, 12), codigo = c("precio_compra_m2", "valor_tasado_m2"), unidad_es = "€ por m²",
+                        cortes_web = c("1000;1250;1500;2000;2500", "1000;1500;2000;2500;3500"))
+  m <- mapas_web(catalogo, ind)
+  expect_equal(m$precio_compra_m2$nivel_minimo, "provincia")
+  expect_equal(m$valor_tasado_m2$nivel_minimo, "municipio")
+  expect_equal(as.numeric(m$precio_compra_m2$cortes), c(1000, 1250, 1500, 2000, 2500))
+})

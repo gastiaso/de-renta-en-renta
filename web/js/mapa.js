@@ -29,7 +29,7 @@ const css = (nombre) => getComputedStyle(document.documentElement).getPropertyVa
 const absoluta = (ruta) => new URL(ruta, document.baseURI).href;
 let pmtilesRegistrado = false;
 
-// Colores del mapa, de tokens.css: la rampa entera (seis pasos) para los tramos del mapa y tres
+// Colores del mapa, de tokens.css: la rampa entera (siete pasos) para los tramos del mapa y tres
 // pasos repartidos para «¿te llega?» (de claro a oscuro: se distinguen también sin color).
 export function coloresMapa() {
   return paletaDe(rampaDeCss(), css('--color-fuera'));
@@ -161,9 +161,15 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
       paint: { 'fill-pattern': 'trama-secreto' },
     });
     // Contorno de todas las secciones: los tramos claros de la rampa no llegan a 3:1 sobre la crema.
+    // Tarea 51: sin contorno por debajo del zoom 9 (con secciones de pocos píxeles, la línea tapa el
+    // color y siete tramos dejan de distinguirse), y aparece poco a poco hasta el 11.
     mapa.addLayer({
       id: 'secciones-contorno', type: 'line', ...fuente('secciones'),
-      paint: { 'line-color': tinta, 'line-opacity': 0.6, 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 0.1, 12, 0.4, 16, 1] },
+      paint: {
+        'line-color': tinta,
+        'line-opacity': ['interpolate', ['linear'], ['zoom'], 9, 0, 11, 0.6],
+        'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.1, 12, 0.4, 16, 1],
+      },
     });
     for (const [capa, ancho] of [['municipios', 1], ['provincias', 1.5], ['comunidades', 2]]) {
       if (capas[capa]) mapa.addLayer({ id: `${capa}-borde`, type: 'line', ...fuente(capa), paint: { 'line-color': tinta, 'line-width': ancho } });
@@ -333,18 +339,31 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
     // Capas coloreadas por valores: [{ capa, nivel, id }].
     rellenos: RELLENOS.map((r) => ({ ...r, id: capas[r.capa].id })),
     // F5: nivel más fino del mapa activo: «municipio» (mapas sin sección, como el 20: los municipios
-    // llegan hasta el zoom máximo y las secciones no se pintan ni responden) o «sc» (lo de siempre).
+    // llegan hasta el zoom máximo y las secciones no se pintan ni responden), «provincia» (tarea 46:
+    // mapas sin municipio, como el 11; las provincias llegan hasta el zoom máximo y los municipios y
+    // las secciones se apagan) o «sc» (lo de siempre).
     ponerNivelMinimo(nivel) {
-      const municipios = RELLENOS.find((r) => r.capa === 'municipios');
-      const sinSecciones = nivel === 'municipio' && Boolean(municipios);
-      if (sinSecciones === (nivelMinimo === 'municipio')) return;
-      nivelMinimo = sinSecciones ? 'municipio' : 'sc';
-      municipios.hasta = sinSecciones ? 24 : municipios.franja;
-      for (const id of ['municipios-relleno', 'municipios-encima-halo', 'municipios-encima']) {
-        if (mapa.getLayer(id)) mapa.setLayerZoomRange(id, municipios.desde, municipios.hasta);
-      }
+      const corte = RELLENOS.findIndex((r) => r.nivel === nivel && r.capa !== 'secciones');
+      const nuevo = corte >= 0 && ['municipio', 'provincia'].includes(nivel) ? nivel : 'sc';
+      if (nuevo === nivelMinimo) return;
+      nivelMinimo = nuevo;
+      RELLENOS.forEach((r, i) => {
+        if (r.capa === 'secciones') return;
+        r.hasta = nuevo !== 'sc' && i === corte ? 24 : r.franja;
+        const visible = nuevo === 'sc' || i <= corte ? 'visible' : 'none';
+        for (const id of [`${r.capa}-relleno`, `${r.capa}-encima-halo`, `${r.capa}-encima`]) {
+          if (!mapa.getLayer(id)) continue;
+          mapa.setLayerZoomRange(id, r.desde, r.hasta);
+          mapa.setLayoutProperty(id, 'visibility', visible);
+        }
+      });
       for (const id of CAPAS_SECCION) {
-        if (mapa.getLayer(id)) mapa.setLayoutProperty(id, 'visibility', sinSecciones ? 'none' : 'visible');
+        if (mapa.getLayer(id)) mapa.setLayoutProperty(id, 'visibility', nuevo === 'sc' ? 'visible' : 'none');
+      }
+      // Con la provincia como nivel más fino, ni los bordes de los municipios ni el suelo sin sección
+      // (que es de alguna provincia): el mapa no debe parecer municipal
+      for (const id of ['municipios-borde', 'sin-seccion-relleno']) {
+        if (mapa.getLayer(id)) mapa.setLayoutProperty(id, 'visibility', nuevo === 'provincia' ? 'none' : 'visible');
       }
     },
     nivelMinimo: () => nivelMinimo,
@@ -352,6 +371,18 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
     nivelVisible() {
       const zoom = mapa.getZoom();
       return (RELLENOS.find((r) => zoom < r.hasta) ?? RELLENOS.at(-1)).nivel;
+    },
+    // Municipio en el centro de la vista (escala relativa al municipio y superficie típica, sin ficha):
+    // el de la sección pintada en el centro o, con menos zoom, el del municipio; si no hay, null.
+    municipioEnCentro() {
+      const punto = mapa.project(mapa.getCenter());
+      for (const capa of ['secciones', 'municipios']) {
+        if (!capas[capa]?.id || !mapa.getLayer(`${capa}-relleno`)) continue;
+        const f = mapa.queryRenderedFeatures(punto, { layers: [`${capa}-relleno`] })[0];
+        const x = f?.properties?.[capas[capa].id];
+        if (x !== undefined && x !== null) return String(x).slice(0, 5);
+      }
+      return null;
     },
     // Guarda en cada elemento de una capa los valores de varias series a la vez: { serie: [valor | null] },
     // en el orden de `codigos`.

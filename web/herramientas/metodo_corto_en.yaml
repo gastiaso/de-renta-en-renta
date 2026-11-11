@@ -1,0 +1,8 @@
+# «Method in two pages» in English (backlog, tarea 53): loaded after documento_en.yaml; it
+# changes what is specific to this page (the text comes from docs/short_method.md through
+# web/herramientas/pagina_metodo_corto.mjs, which adds the errata from inventario/erratas.csv).
+pagetitle: "Method in two pages · De renta en renta"
+descripcion: "What De renta en renta measures, with which sources and whom each one leaves out, in two pages; with the errata."
+pagina_es: metodo_corto.html
+pagina_en: short_method.html
+otra_pagina: metodo_corto.html

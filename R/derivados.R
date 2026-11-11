@@ -20,9 +20,12 @@
 ORDEN_ESTADOS <- c("dato", "estimado", "secreto", "ausente")
 
 # Supuestos por defecto (plan §3.1 y §6.6): 50 m² para las fichas de una persona y el mapa por
-# defecto; umbral del 30 % para el sueldo necesario. La web los cambia (70 y 90 m², 40 %).
-SUPERFICIE_FICHA <- 50
-UMBRAL_SUELDO <- 0.30
+# defecto; umbral del 30 % para el sueldo necesario. La web los cambia (70 y 90 m², 40 %). Salen
+# de inventario/supuestos.csv (R/comun_supuestos.R; tarea 48).
+SUPERFICIE_FICHA <- supuesto("superficie_una_persona")
+UMBRAL_SUELDO <- supuesto("umbral_sueldo")
+# Tramos de «¿te llega?» (hasta el 30 %, del 30 al 40 % y más): fijos, no cambian con el umbral.
+LIMITES_LLEGA <- supuesto("limites_llega")
 # Tarea 40: corte del mínimo teórico del sueldo necesario (21); el grupo es la superficie («50»).
 CORTE_MINIMO_SUELDO <- "superficie"
 

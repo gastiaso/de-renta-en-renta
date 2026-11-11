@@ -14,9 +14,10 @@
 # dos términos (regla 4). Términos redondeados como se publican (termino_publicado(); el tipo, con
 # sus dos decimales). Estado, el peor de sus términos (peor_estado(), R/derivados.R).
 
-SUPERFICIE_COMPRA <- 80        # superficie de la vivienda tipo, en m2 (plan, 5 C)
-FINANCIACION_COMPRA <- 0.80    # parte del valor financiada
-PLAZO_HIPOTECA <- 25           # en anios
+# Supuestos de la compraventa: inventario/supuestos.csv (R/comun_supuestos.R, tarea 48).
+SUPERFICIE_COMPRA <- supuesto("superficie_compra")        # superficie de la vivienda tipo, en m2 (plan, 5 C)
+FINANCIACION_COMPRA <- supuesto("financiacion_compra")    # parte del valor financiada
+PLAZO_HIPOTECA <- supuesto("plazo_hipoteca")           # en anios
 
 # Cuota mensual de un préstamo francés: capital, tipo anual en % y plazo en años.
 cuota_hipoteca <- function(capital, tipo_anual, anios = PLAZO_HIPOTECA) {
@@ -36,24 +37,32 @@ salario_referencia <- function(larga_salarios) {
 # Tipo de interés del 17 (pregunta 45 e): el de los préstamos nuevos para adquisición de vivienda de
 # los hogares del Banco de España (D_IMVTIPLV, serie tipo_prestamos de series_bde, R/fuente_bde.R),
 # el mismo con que calcula su esfuerzo teórico. Año: media simple de sus doce meses, a dos decimales
-# (como los publica); sin los doce meses, el año no entra.
+# (como los publica) con los empates hacia arriba sobre la cifra decimal (la media de 2024 es
+# exactamente 3,465: 3,47, y no el 3,46 de sprintf(); decisión del autor, 11-nov-2026, plan §11,
+# pregunta 59 b); sin los doce meses, el año no entra.
 compraventa_tipo_bde <- function(series_bde, serie = "tipo_prestamos") {
   d <- series_bde[series_bde$serie == serie & !is.na(series_bde$valor), ]
   d |>
     dplyr::group_by(anio) |>
     dplyr::summarise(n = dplyr::n(), tipo = mean(valor), .groups = "drop") |>
     dplyr::filter(n == 12L) |>
-    dplyr::transmute(anio = as.integer(anio), tipo = as.numeric(sprintf("%.2f", tipo))) |>
+    dplyr::transmute(anio = as.integer(anio), tipo = redondear_empate_arriba(tipo, 2L)) |>
     dplyr::arrange(anio)
 }
 
 # Renta neta media por hogar del ADRH (indicador 2), denominador del 17 (pregunta 45 d): en el
-# municipio, la cifra publicada («dato»); en la provincia, la comunidad y España, la media de sus
+# municipio, la cifra publicada («dato»); en la provincia, la comunidad y España, la cifra que
+# publica el INE en su tabla de totales (53689, `publicada`: leer_ine_adrh_totales() con «Renta
+# neta media por hogar»), también «dato» (regla 1: hay cifra publicada y manda, 11-nov-2026). Donde
+# el INE no la publica (territorios forales antes de entrar enteros en el ADRH: Navarra de 2015 a
+# 2020, Álava de 2015 a 2019 y Gipuzkoa en 2015, y con ellos su comunidad y España), la provincia y
+# la comunidad quedan «ausente», sin cifra: su cobertura municipal es parcial (Navarra de 2017 a
+# 2019, unos 60 de sus 272 municipios); España sigue con la media de sus municipios, «estimado»
+# (decisión del autor, 11-nov-2026). Sin `publicada`, en los tres niveles, la media de sus
 # municipios ponderada por sus hogares (suma de los de sus secciones: población / tamaño medio del
-# hogar), «estimado»: el pipeline no baja la tabla del ADRH con las cifras de esos niveles. Media
-# ponderada: válida hacia arriba (regla 1). `renta_adrh`: leer_ine_adrh_renta(); `pesos`:
-# pesos_adrh(); `territorios`: territorios_2021 (comunidad de cada provincia).
-compraventa_renta_hogar <- function(renta_adrh, pesos, territorios) {
+# hogar), «estimado». `renta_adrh`: leer_ine_adrh_renta(); `pesos`: pesos_adrh(); `territorios`:
+# territorios_2021 (comunidad de cada provincia).
+compraventa_renta_hogar <- function(renta_adrh, pesos, territorios, publicada = NULL) {
   mun <- renta_adrh |>
     dplyr::filter(nivel == "municipio", indicador == "renta_hogar", !is.na(valor)) |>
     dplyr::transmute(anio, municipio = codigo, renta = valor)
@@ -73,11 +82,62 @@ compraventa_renta_hogar <- function(renta_adrh, pesos, territorios) {
       dplyr::summarise(renta = sum(renta * hogares) / sum(hogares), .groups = "drop") |>
       dplyr::mutate(nivel = nivel, e_renta = "estimado")
   }
+  superiores <- dplyr::bind_rows(agregar("provincia", "provincia"), agregar("ccaa", "ccaa"), agregar("nacional", "nacional")) |>
+    dplyr::mutate(anio = as.integer(anio))
+  if (!is.null(publicada)) {
+    p <- publicada |>
+      dplyr::filter(estado == "dato", !is.na(valor), nivel %in% c("provincia", "ccaa", "nacional")) |>
+      dplyr::transmute(nivel, geo_id = codigo, anio = as.integer(anio), publicada = valor)
+    superiores <- dplyr::full_join(superiores, p, by = c("nivel", "geo_id", "anio")) |>
+      dplyr::mutate(e_renta = dplyr::case_when(!is.na(publicada) ~ "dato", nivel == "nacional" ~ e_renta,
+                                               TRUE ~ "ausente"),
+                    renta = dplyr::if_else(e_renta %in% "ausente", NA_real_, dplyr::coalesce(publicada, renta))) |>
+      dplyr::select(-publicada)
+  }
   dplyr::bind_rows(
-    dplyr::transmute(mun, nivel = "municipio", geo_id = municipio, anio, renta, e_renta = "dato"),
-    agregar("provincia", "provincia"), agregar("ccaa", "ccaa"), agregar("nacional", "nacional")
+    dplyr::transmute(mun, nivel = "municipio", geo_id = municipio, anio = as.integer(anio), renta, e_renta = "dato"),
+    superiores
   ) |>
     dplyr::transmute(nivel, geo_id, anio = as.integer(anio), renta, e_renta)
+}
+
+# Compuerta de la renta por hogar publicada (tabla 53689 del ADRH) frente a la media de los
+# municipios ponderada por hogares (inventario/referencias_validacion.csv):
+#   compraventa_renta_cobertura (bloqueo): por año, provincias, comunidades o España que faltan en
+#     la tabla (con cifra o sin ella) y filas repetidas. Las filas sin cifra cuentan como presentes:
+#     ahí la provincia y la comunidad dejan el 17 «ausente» y España sigue con la media de sus
+#     municipios, «estimado» (compraventa_renta_hogar(); decisión del autor, 11-nov-2026);
+#   compraventa_renta_publicada (bloqueo, ±0,5 %): por año y nivel, mediana de la desviación
+#     absoluta entre la media agregada y la publicada (prueba la lectura y el casado de nombres);
+#   compraventa_renta_publicada_detalle (alerta, ±1 %): cada territorio y año (la diferencia
+#     esperable: hogares aproximados, municipios sin cifra y el redondeo del tamaño del hogar).
+comprobar_renta_hogar_publicada <- function(renta_adrh, pesos, territorios, publicada) {
+  agregada <- compraventa_renta_hogar(renta_adrh, pesos, territorios) |> dplyr::filter(nivel != "municipio")
+  esperados <- dplyr::bind_rows(
+    tibble::tibble(nivel = "provincia", codigo = territorios$codigo[territorios$nivel == "provincia"]),
+    tibble::tibble(nivel = "ccaa", codigo = territorios$codigo[territorios$nivel == "ccaa"]),
+    tibble::tibble(nivel = "nacional", codigo = "00"))
+  anios <- sort(unique(agregada$anio))
+  cobertura <- dplyr::bind_rows(lapply(anios, function(a) {
+    q <- publicada[publicada$anio == a, ]
+    faltan <- nrow(dplyr::anti_join(esperados, q, by = c("nivel", "codigo")))
+    tibble::tibble(id = "compraventa_renta_cobertura", anio = as.integer(a),
+                   detalle = "provincias, comunidades o Espa\u00f1a que faltan y filas repetidas",
+                   calculado = as.numeric(faltan + sum(duplicated(q[c("nivel", "codigo")]))), referencia = 0)
+  }))
+  j <- agregada |>
+    dplyr::inner_join(publicada |> dplyr::filter(estado == "dato", !is.na(valor)) |>
+                        dplyr::transmute(nivel, geo_id = codigo, anio = as.integer(anio), publicada = valor),
+                      by = c("nivel", "geo_id", "anio")) |>
+    dplyr::mutate(desviacion = 100 * (renta / publicada - 1))
+  resumen <- j |>
+    dplyr::group_by(anio, detalle = nivel) |>
+    dplyr::summarise(calculado = stats::median(abs(desviacion)), .groups = "drop") |>
+    dplyr::transmute(id = "compraventa_renta_publicada", anio = as.integer(anio), detalle, calculado, referencia = 0)
+  detalle <- j |>
+    dplyr::transmute(id = "compraventa_renta_publicada_detalle", anio = as.integer(anio),
+                     detalle = paste(nivel, geo_id), calculado = desviacion, referencia = 0)
+  dplyr::bind_rows(cobertura, resumen, detalle)
 }
 
 # Términos de los dos derivados: valor tasado de cada territorio y año, con el salario del mismo

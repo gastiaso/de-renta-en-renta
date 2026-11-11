@@ -43,7 +43,8 @@
       "region": "Mapa de secciones censales",
       "acercar": "Acercar",
       "alejar": "Alejar",
-      "sin_dato_escala": "Este mapa no tiene datos a esta escala: acerca el mapa."
+      "sin_dato_escala": "Este mapa no tiene datos a esta escala: acerca el mapa.",
+      "cargando": "Cargando el mapa…"
     },
     "buscador": {
       "etiqueta": "Buscar municipio o sección",
@@ -51,6 +52,8 @@
     },
     "vista": {
       "region": "Qué muestra el mapa",
+      "mas_opciones": "Más opciones",
+      "menos_opciones": "Menos opciones",
       "mapa": "Mapa",
       "anio": "Año",
       "tipologia": "Vivienda",
@@ -63,6 +66,14 @@
     },
     "leyenda": {
       "sin_dato": "Sin dato",
+      "juego": "Tramos para {escala}: cambian al acercar o alejar el mapa.",
+      "juego_cambio": "Cambio de escala: ahora, tramos para {escala}.",
+      "anclaje": "Tramos fijados con el último año ({anio}): los años anteriores se acumulan en los tramos bajos.",
+      "juegos": {
+        "seccion": "secciones censales",
+        "municipio": "municipios",
+        "provincia_ccaa": "provincias y comunidades"
+      },
       "secreto": "Secreto estadístico",
       "supuestos": "{superficie} m² · umbral del {umbral}",
       "supuestos_real": "Alquiler mensual mediano de la sección · umbral del {umbral}",
@@ -75,6 +86,16 @@
       "llega_2": "Del 30 al 40 %",
       "llega_3": "Más del 40 %",
       "llega_nota": "Los tramos no cambian con el umbral; el umbral decide cuándo «cabe».",
+      "relativa": {
+        "titulo": "Tramos",
+        "nacional": "De España",
+        "municipio": "De {municipio}",
+        "municipio_sin": "De un municipio",
+        "linea": "Tramos de {municipio}, no comparables con otros municipios: septiles de sus {n} secciones con dato en {anio}.",
+        "fuera": "Fuera de {municipio}, sin color",
+        "pocas": "{municipio} tiene menos de {minimo} secciones con dato: solo tramos de España.",
+        "sin_municipio": "Para los tramos de un municipio, elige una sección o acerca el mapa a uno."
+      },
       "lectura_familia": {
         "quedarse": "quien ya vive de alquiler",
         "entrar": "quien busca piso hoy"
@@ -92,6 +113,10 @@
       "superficie_fija": "Las fichas de una persona usan {superficie} m².",
       "superficie_llave": "La llave paga el alquiler mediano de su sección.",
       "supuestos_mapa": "La vivienda y el umbral cambian el sueldo necesario y «¿te llega?», no el mapa que se ve.",
+      "tipica": "Típica",
+      "tipica_nota": "Superficie típica de los pisos alquilados de {territorio} en {anio}: {superficie} m² (alquiler mensual mediano / alquiler por m² mediano, SERPAVI).",
+      "tipica_sin": "Sin superficie típica de {territorio}: se usan {superficie} m².",
+      "tipica_elegir": "Para usar la superficie típica, elige una sección o un municipio, o acerca el mapa a uno; mientras, {superficie} m².",
       "superficie_minimo": "El mapa usa el alquiler mensual mediano de cada sección; la vivienda elegida cambia el mínimo teórico que la ficha da al lado.",
       "resumen_real": "Con el alquiler mensual mediano de cada sección, en el {pct} ({caben} de {total}).",
       "peon_sin_sueldo": "Escribe un sueldo para usar tu ficha.",
@@ -252,6 +277,7 @@
         "ninguna": "Sin declaraciones publicadas en el BOE.",
         "nota": "Relación que publica el Ministerio de Vivienda y Agenda Urbana en el BOE cada trimestre (Ley 12/2023, art. 18): tres años de vigencia desde el día siguiente a la publicación. En las declaraciones de una parte del municipio, el mapa pinta el municipio entero con su propia categoría; el ámbito exacto es el de la declaración."
       },
+      "superficie_tipica": "Superficie típica de los pisos alquilados: {superficie} m² en {anio} (alquiler mensual mediano / alquiler por m² mediano, vivienda colectiva; SERPAVI).",
       "resto": {
         "euros": "{euros} €",
         "queda": "Quedan {cifra} al mes después del alquiler",
@@ -292,6 +318,12 @@
     "etiqueta": {
       "distrito": "Distrito {distrito}",
       "seccion": "Sección {codigo}"
+    },
+    "transparencia": {
+      "fecha": "Datos generados el {fecha}",
+      "metodo_corto": "Método en dos páginas",
+      "erratas": "Fe de erratas",
+      "error": "Avisar de un error"
     }
   },
   "portada": {
@@ -328,6 +360,14 @@
         "titulo": "Sobrecarga",
         "texto": "En {anio}, el {mercado} de quienes viven de alquiler a precio de mercado dedica a la vivienda más del 40 % de su renta disponible. En toda la población, el {total}.",
         "enlace": "Ver la sobrecarga en España y Europa"
+      },
+      "sueldo_entrar": {
+        "titulo": "Sueldo para entrar",
+        "texto": "Sueldo neto al mes para que el alquiler de un piso en oferta no pase del 30 %, con la superficie típica de los pisos alquilados del municipio y con 50 m². Sale de los precios de anuncio de Idealista y se publicará por tramos."
+      },
+      "brecha": {
+        "titulo": "Entrar frente a quedarse",
+        "texto": "Cuánto más se pide en los anuncios de alquiler que lo que paga quien ya vive de alquiler en el mismo municipio. Se publicará por tramos."
       }
     },
     "casillas_titulo": "Casillas del tablero",
@@ -811,7 +851,7 @@
       "nombre": "Esfuerzo hipotecario teórico",
       "unidad": "% del ingreso",
       "definicion": "Parte del ingreso que se iría en la cuota del primer año de una hipoteca sobre una vivienda tipo.",
-      "calculo": "Cuota anual del primer año de un préstamo francés sobre el 80 % del valor tasado de 80 m², a 25 años y al tipo medio de las hipotecas sobre viviendas del año (INE), dividida entre el salario medio anual bruto por asalariado (AEAT) del mismo año, × 100.",
+      "calculo": "Cuota anual del primer año de un préstamo francés sobre el 80 % del valor tasado de 80 m², a 25 años y al tipo de los préstamos nuevos para adquisición de vivienda del Banco de España (media de los doce meses del año), dividida entre la renta neta media por hogar del ADRH (INE) del mismo año y territorio, × 100. La renta es la publicada en cada nivel; donde el INE no la publica, sin dato en la provincia y la comunidad (Navarra hasta 2020, Álava y el País Vasco hasta 2019, Gipuzkoa en 2015) y, en España hasta 2020, la media de los municipios ponderada por hogares, estimada.",
       "lectura": "Es un esfuerzo teórico: supone que se tiene el 20 % restante y los gastos de compra."
     },
     "hogares_alquiler": {
@@ -885,7 +925,7 @@
     "nastat_epav": "Estadística de Precios de Alquiler de Vivienda (EPAV)",
     "ine_ipva": "Índice de Precios de Vivienda en Alquiler (IPVA)",
     "notariado": "Portal Estadístico del Notariado",
-    "registradores": "Estadística Registral Inmobiliaria: compraventas de inmuebles de uso residencial por provincia",
+    "registradores": "Estadística Registral Inmobiliaria: compraventas de inmuebles de uso residencial por provincia (Colegio de Registradores; base de datos con licencia ODbL)",
     "mivau_valor_tasado": "Valor tasado de la vivienda libre",
     "mivau_transacciones": "Transacciones inmobiliarias (compraventa): valor medio de las de vivienda libre",
     "ine_hipotecas": "Estadística de Hipotecas (H): tipo de interés medio al inicio",

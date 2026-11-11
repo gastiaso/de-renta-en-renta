@@ -2,7 +2,7 @@
 // umbral, resumen y botones. El marcado está en mapa.html (textos con data-i18n); aquí se
 // conectan los controles y se actualiza lo que cambia. El sueldo solo vive en memoria.
 
-import { FICHAS_PERFIL, ingresoPeon } from './sueldo.js';
+import { FICHAS_PERFIL, ingresoPeon, SUPERFICIE_TIPICA } from './sueldo.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -54,7 +54,10 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
   });
   el.superficie.addEventListener('click', (e) => {
     const boton = e.target.closest('button[data-superficie]');
-    if (boton && !boton.disabled) alCambiar({ superficie: Number(boton.dataset.superficie) });
+    // Decisión del autor (11-nov-2026): «típica», la superficie típica del territorio que manda
+    if (boton && !boton.disabled) {
+      alCambiar({ superficie: boton.dataset.superficie === SUPERFICIE_TIPICA ? SUPERFICIE_TIPICA : Number(boton.dataset.superficie) });
+    }
   });
   el.umbral.addEventListener('click', (e) => {
     const boton = e.target.closest('button[data-umbral]');
@@ -83,8 +86,9 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
     // `vista`: { t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle,
     // sinEfecto, soloMinimo } (sinEfecto: el mapa activo no usa la superficie ni el umbral;
     // soloMinimo, tarea 40: el mapa del sueldo necesario usa el alquiler real y la superficie solo
-    // cambia el mínimo teórico de la ficha).
-    pintar({ t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle, sinEfecto = false, soloMinimo = false }) {
+    // cambia el mínimo teórico de la ficha). `tipica`: con la superficie típica elegida, el texto que
+    // dice de qué territorio es (o por qué no la hay).
+    pintar({ t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle, sinEfecto = false, soloMinimo = false, tipica = null }) {
       // Fichas: las que tienen ingreso en perfiles.json, y «Tu ficha» si hay sueldo escrito.
       const disponibles = [...FICHAS_PERFIL.filter((f) => perfiles?.[f]), 'peon'];
       el.fichas.querySelector('.fichas-botones').replaceChildren(...disponibles.map((ficha) => {
@@ -103,9 +107,11 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
 
       // Superficie: solo se elige para el sueldo necesario y para «Tu ficha».
       const fija = modo === 'llega' && estado.ficha !== 'peon';
+      const conTipica = !fija && estado.superficie === SUPERFICIE_TIPICA;
       for (const b of el.superficie.querySelectorAll('button[data-superficie]')) {
         b.disabled = fija;
-        b.setAttribute('aria-pressed', String(Number(b.dataset.superficie) === superficie));
+        const esTipica = b.dataset.superficie === SUPERFICIE_TIPICA;
+        b.setAttribute('aria-pressed', String(esTipica ? conTipica : !conTipica && Number(b.dataset.superficie) === superficie));
       }
       let nota = '';
       if (fija) {
@@ -114,6 +120,7 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
           : t('interfaz.sueldo.superficie_fija', { superficie: t.numero(superficie ?? 50) });
       } else if (sinEfecto) nota = t('interfaz.sueldo.supuestos_mapa');
       else if (soloMinimo) nota = t('interfaz.sueldo.superficie_minimo');
+      if (conTipica && tipica) nota = [tipica, nota].filter(Boolean).join(' ');
       el.superficieNota.textContent = nota;
       el.superficieNota.hidden = !nota;
       marcarGrupo(el.umbral, 'umbral', Math.round(umbral * 100));

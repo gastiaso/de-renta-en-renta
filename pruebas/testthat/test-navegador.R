@@ -21,11 +21,15 @@ test_that("la web en un navegador recalcula una muestra y coincide con R (plan �
   expect_setequal(unique(r$id), c("navegador_arranque", "navegador_errores", "navegador_sueldo", "navegador_fiabilidad",
                                   "navegador_fichas", "navegador_redireccion", "navegador_portada", "navegador_casillas",
                                   "navegador_tu_sueldo", "navegador_movil", "navegador_territorio", "navegador_clic",
-                                  "navegador_municipal"))   # F5: mapas sin sección y de categorías
+                                  "navegador_municipal",    # F5: mapas sin sección y de categorías
+                                  "navegador_leyenda",      # tarea 51: juegos de cortes por escala
+                                  "navegador_escala_municipio", "navegador_superficie_tipica",
+                                  "navegador_una_escala"))  # decisiones del autor, 11-nov-2026
   expect_equal(sum(r$id == "navegador_fichas"), 6L)
   expect_equal(sum(r$id == "navegador_redireccion"), 2L)
   expect_equal(sum(r$id == "navegador_territorio"), 4L)
   expect_equal(sum(r$id == "navegador_clic"), 4L)
   expect_equal(sum(r$id == "navegador_municipal"), 6L)
+  expect_equal(sum(r$id == "navegador_leyenda"), 3L)
   expect_equal(r$detalle[r$calculado != r$referencia], character(0))
 })

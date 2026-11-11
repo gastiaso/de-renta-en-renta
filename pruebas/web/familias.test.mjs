@@ -45,7 +45,7 @@ class Nodo {
 }
 globalThis.document = { createElement: (e) => new Nodo(e), documentElement: {}, getElementById: () => null, querySelector: () => null };
 globalThis.getComputedStyle = () => ({
-  getPropertyValue: (p) => { const n = Number(/--rampa-(\d+)/.exec(p)?.[1]); return n >= 1 && n <= 6 ? '#7d291e' : ''; },
+  getPropertyValue: (p) => { const n = Number(/--rampa-(\d+)/.exec(p)?.[1]); return n >= 1 && n <= 7 ? '#7d291e' : ''; },
 });
 // cargarIdioma() pide i18n/<idioma>.json: aquí, el fichero de web/i18n.
 globalThis.fetch = async (ruta) => ({ ok: true, json: async () => JSON.parse(leerTexto('web', ruta)) });
@@ -175,6 +175,32 @@ test('leyenda: en «¿te llega?», «quedarse»; un mapa sin familia, sin línea
   assert.equal(llega.buscar('leyenda-familia')[0].textContent, 'Quedarse · quien ya vive de alquiler');
   const renta = leyenda('es', { modo: 'necesario', mapaId: 'renta_hogar', mapaDef: { base: 'renta_hogar', cortes: [25000, 30000, 35000, 40000] } });
   assert.deepEqual(renta.buscar('leyenda-familia'), []);
+});
+
+test('leyenda: el juego de cortes de la escala que se ve, aviso al cambiar y año de anclaje (tarea 51)', () => {
+  const mapaDef = {
+    ...MAPA_ALQUILER, cortes: [325, 400, 450, 500, 600, 700],
+    juegos: {
+      seccion: { cortes: [325, 400, 450, 500, 600, 700], metodo: 'recalibrado', anio: 2024 },
+      municipio: { cortes: [300, 350, 400, 450, 500, 600], metodo: 'anclado', anio: 2024 },
+    },
+  };
+  const seccion = leyenda('es', { modo: 'necesario', mapaId: 'alquiler_mes', mapaDef, nivel: 'sc' });
+  assert.equal(seccion.buscar('leyenda-tramo').length, 7);
+  assert.deepEqual(seccion.buscar('leyenda-corte').map((n) => n.textContent), ['325', '400', '450', '500', '600', '700']);
+  assert.match(seccion.buscar('leyenda-juego')[0].textContent, /^Tramos para secciones censales/);
+  assert.deepEqual(seccion.buscar('leyenda-anclaje'), []);   // recalibrado: sin nota de anclaje
+  const municipio = leyenda('es', { modo: 'necesario', mapaId: 'alquiler_mes', mapaDef, nivel: 'municipio', cambioJuego: true });
+  assert.deepEqual(municipio.buscar('leyenda-corte').map((n) => n.textContent), ['300', '350', '400', '450', '500', '600']);
+  const aviso = municipio.buscar('leyenda-juego-cambio')[0];
+  assert.equal(aviso.textContent, 'Cambio de escala: ahora, tramos para municipios.');
+  assert.equal(aviso.atributos.role, 'status');
+  assert.match(municipio.buscar('leyenda-anclaje')[0].textContent, /^Tramos fijados con el último año \(2024\)/);
+  const en = leyenda('en', { modo: 'necesario', mapaId: 'alquiler_mes', mapaDef, nivel: 'municipio' });
+  assert.match(en.buscar('leyenda-anclaje')[0].textContent, /^Bands set with the latest year \(2024\)/);
+  // Un solo juego (o ninguno): sin línea de escala
+  const uno = leyenda('es', { modo: 'necesario', mapaId: 'alquiler_mes', mapaDef: MAPA_ALQUILER, nivel: 'municipio' });
+  assert.deepEqual(uno.buscar('leyenda-juego'), []);
 });
 
 // --- Ficha y evolución de «¿te llega?» ------------------------------------------------------------

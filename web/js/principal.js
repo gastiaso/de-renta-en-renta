@@ -22,21 +22,28 @@ import { formulaDe, daSueldo, minimoDe, textoSupuestos } from './formulas.js';
 import {
   modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega, resumenLlegaReal,
   marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, estadoLlega, perfilesDelAnio,
-  eurosQueQuedan,
+  eurosQueQuedan, superficieTipica, SUPERFICIE_TIPICA,
 } from './sueldo.js';
+import {
+  admiteRelativa, municipioQueManda, cortesRelativos, soloEnMunicipio, MINIMO_SECCIONES_RELATIVA,
+} from './escala_municipio.js';
 import { seriesFiabilidad, fiabilidadFicha, umbralPocos } from './fiabilidad.js';
 import { percentilSalarial } from './percentil.js';
 import { crearPanelSueldo } from './panel_sueldo.js';
 import { crearCompartir } from './compartir.js';
-import { codigoComparado, nombreTerritorio, filasComparador, pintarComparador, nivelesSuperiores } from './comparador.js';
+import {
+  codigoComparado, nombreTerritorio, filasComparador, pintarComparador, nivelesSuperiores, territorioEnNivel,
+} from './comparador.js';
 import { crearBuscador, formasDeNombre } from './buscador.js';
 import { ordenNatural } from './nombres.js';
 import { crearBarraVista } from './barra_vista.js';
 import { tablaCsv, textoCsv, nombreFichero, descargar, nivelParaExportar, decimalesDeEscala, descargaPermitida } from './exportar.js';
 import { imagenMapa } from './imagen.js';
-import { pasosDeRampa, decimalesDeCortes } from './colores.js';
+import { pasosDeRampa, decimalesDeCortes, juegoDe } from './colores.js';
 import { crearAvisoImagen } from './aviso_imagen.js';
 import { opcionProximamente } from './familias.js';
+import { mostrarFicha, prepararPlegado } from './movil.js';
+import { lineaTransparencia } from './transparencia.js';
 import {
   variaciones, bandaMargen, pocosContratos, variacionIpc, enEuros, textosVariacion, notasEvolucion, graficoEvolucion, cargarIpc,
 } from './evolucion.js';
@@ -53,6 +60,8 @@ const el = {
   escala: document.getElementById('aviso-escala'),
   privado: document.getElementById('aviso-privado'),   // F5: etiqueta de dato privado de oferta
   periodo: document.getElementById('aviso-periodo'),
+  cargando: document.getElementById('mapa-cargando'),   // tarea 51: indicador de carga
+  pie: document.getElementById('mapa-pie'),   // tarea 53: fecha de los datos y transparencia
   idiomas: [...document.querySelectorAll('[data-idioma]')],
 };
 
@@ -65,16 +74,23 @@ let perfiles;      // ingresos de las fichas
 let salarios;      // curvas del percentil salarial (datos/salarios.json)
 let mapa;          // funciones del mapa (mapa.js)
 let colores;       // colores del mapa (tokens.css)
+let colorPlaca;    // secciones fuera del municipio en la escala relativa: sin color
 let contornos;     // colores del contorno de cada tramo
 let panel;         // tarjeta «Tu sueldo»
 let barra;         // barra de la vista
+let plegado;       // botón que pliega la barra en pantallas estrechas (tarea 50)
 let compartir;     // diálogo «Compartir»
 let avisoImagen;   // aviso antes de la imagen de «¿te llega?» con «Tu ficha»
 const columnas = {};            // serie → { valores, estados, periodo, clave } del periodo activo
 let eligiendoComparada = false; // el siguiente clic en el mapa elige la sección con que comparar
 let sinSeccion = null;          // suelo sin sección pulsado: atributosSinSeccion() (sin sección elegida)
 let turno = 0;                  // descarta cálculos superados por otro más reciente
+let ultimaLeyenda = null;       // tarea 51: datos de la última leyenda, para cambiar de juego al acercar o alejar
+let esperaCarga = null;
+let cargaInicial = true;        // tarea 51: el aviso de carga sigue hasta que el mapa queda pintado
 let turnoFicha = 0;
+let centro = null;              // municipio en el centro de la vista (escala relativa y superficie típica, sin ficha)
+let tipica = null;              // superficie típica del territorio que manda: { clave, nivel, codigo, nombre, valor, anio }
 
 const MAPA_POR_DEFECTO = 'sueldo_necesario';
 const mapaDef = () => m.mapas[estado.mapa];
@@ -87,7 +103,8 @@ const serieTipo = (serie) => serieDeTipologia(m, serie, estado.tipologia);
 const nivelesDe = (serie) => m.indicadores[serie]?.niveles ?? ['sc'];
 
 // --- F5: mapas sin sección (indicador 20 y los de F4), de categorías y de datos privados (portales) ---
-// Nivel más fino del mapa activo: «municipio» en los mapas sin sección (nivel_minimo del manifiesto).
+// Nivel más fino del mapa activo: «municipio» en los mapas sin sección y «provincia» en los que
+// tampoco tienen municipio, como el 11 (tarea 46); nivel_minimo del manifiesto.
 const nivelMinimoDe = (v) => (v.modo === 'necesario' ? v.mapa.nivel_minimo ?? 'sc' : 'sc');
 // Indicador de los textos de un mapa: el suyo, o el `indicador` de los mapas por grupo (portales).
 const idTextos = (id) => m.mapas[id]?.indicador ?? id;
@@ -108,7 +125,7 @@ const etiquetaVista = (v) => (v.modo === 'necesario' ? etiquetaPrivada(v.seriesC
 // abierta 32); `referencia` es el periodo con que se buscan las demás series (comparador, llave).
 function vista() {
   const modo = modoDe(estado, sueldo, perfiles);
-  const superficie = superficieDe(estado, sueldo, perfiles);
+  const superficie = superficieDe(estado, sueldo, perfiles, tipica?.valor);   // con «típica», la del territorio que manda
   const umbral = umbralDe(estado);
   const supuestos = { superficie_m2: superficie ?? m.supuestos.superficie_m2, umbral };
   let calculo = modo === 'llega' ? calculoLlega({ ficha: estado.ficha, perfiles, sueldo, superficie, serie: serieTipo }) : null;
@@ -245,31 +262,159 @@ function avisarMapa(v = vista()) {
   el.escala.hidden = Boolean(v.fuera) || v.seriesColor.every((s) => nivelesDe(s).includes(nivel));
 }
 
+// --- Superficie típica y escala relativa al municipio (decisiones del autor, 11-nov-2026) ---------
+
+// Superficie típica de los pisos alquilados de un territorio en el periodo de referencia: alquiler
+// mensual mediano / alquiler por m² mediano del SERPAVI, vivienda colectiva (backlog, decisión 5;
+// superficie_tipica_serpavi() en R). { valor, anio }, con valor null si falta algún término; null si
+// las series no llegan al nivel o al año.
+const SERIES_TIPICA = ['alquiler_mes', 'alquiler_m2'];
+async function superficieTipicaEn(nivel, codigo, referencia) {
+  const defs = SERIES_TIPICA.map((s) => m.indicadores[s]);
+  if (defs.some((d) => !d?.niveles?.includes(nivel))) return null;
+  const periodo = periodoPara(defs[0], referencia);
+  if (periodo === null) return null;
+  const conValor = [indiceEstado('dato'), indiceEstado('estimado')];
+  const [mes, m2] = await Promise.all(SERIES_TIPICA.map((s) => valorDe(m, s, nivel, codigo, periodo)));
+  const termino = (x) => (x && conValor.includes(x.estado) ? x.valor : null);
+  return { valor: superficieTipica(termino(mes), termino(m2)), anio: periodo };
+}
+
+// Territorio cuya superficie típica usa «Tu ficha»: el municipio de la sección de la ficha, el
+// territorio elegido (municipio, provincia o comunidad) o, sin ficha, el municipio del centro de la
+// vista. Las secciones toman la de su municipio, no la suya (backlog, decisión 5: «del municipio»).
+function territorioTipica() {
+  if (estado.seccion) return { nivel: 'municipio', codigo: estado.seccion.slice(0, 5) };
+  return leerTerritorio(estado.territorio) ?? (centro ? { nivel: 'municipio', codigo: centro } : null);
+}
+
+async function prepararTipica(referencia) {
+  if (estado.superficie !== SUPERFICIE_TIPICA) { tipica = null; return; }
+  const terr = territorioTipica();
+  const clave = terr ? `${terr.nivel}:${terr.codigo}@${referencia}` : `@${referencia}`;
+  if (tipica?.clave === clave) return;
+  const r = terr ? await superficieTipicaEn(terr.nivel, terr.codigo, referencia).catch(() => null) : null;
+  tipica = { clave, ...terr, nombre: terr ? nombreTerritorio(t, terr.nivel, terr.codigo, territorios) : null, valor: r?.valor ?? null, anio: r?.anio ?? null };
+}
+
+// Texto de la superficie típica elegida (panel, leyenda e imagen), o null si no está elegida o no
+// se usa (las fichas de perfil y la llave tienen la suya).
+function textoTipica(v) {
+  if (estado.superficie !== SUPERFICIE_TIPICA || !tipica) return null;
+  const usa = v.modo === 'llega' ? estado.ficha === 'peon' : usaSupuestos(v.mapa);
+  if (!usa) return null;
+  const superficie = t.numero(v.superficie);
+  if (!tipica.nombre) return t('interfaz.sueldo.tipica_elegir', { superficie });
+  if (tipica.valor === null) return t('interfaz.sueldo.tipica_sin', { territorio: tipica.nombre, superficie });
+  return t('interfaz.sueldo.tipica_nota', { territorio: tipica.nombre, superficie, anio: t.periodo(tipica.anio) });
+}
+
+// Escala relativa al municipio (escala_municipio.js): null si el mapa no la admite; si no, { ofrecida,
+// elegida, activa, municipio, nombre, n, cortes, anio, motivo, minimo }, con los septiles de las
+// secciones del municipio que manda en el año y la serie que se ven, en la unidad del mapa.
+function escalaRelativa(v) {
+  if (!admiteRelativa(v.mapa, { modo: v.modo, nivelMinimo: nivelMinimoDe(v), privado: Boolean(etiquetaVista(v)) })) return null;
+  const municipio = municipioQueManda({ seccion: estado.seccion, territorio: leerTerritorio(estado.territorio), centro });
+  const r = {
+    ofrecida: true, elegida: estado.escala === 'municipio', activa: false, municipio, minimo: MINIMO_SECCIONES_RELATIVA,
+    nombre: municipio ? nombreTerritorio(t, 'municipio', municipio, territorios) : null, n: 0, cortes: null, anio: null,
+    motivo: municipio ? 'pocas' : 'sin_municipio',
+  };
+  const columna = columnas[v.mapa.base];
+  if (!municipio || !columna || v.fuera) return r;
+  const formula = formulaDe(v.mapa);
+  const valores = [];
+  for (let i = 0; i < secciones.length; i++) {
+    const x = columna.valores[i];
+    if (x !== null && x !== undefined && secciones[i].startsWith(municipio)) valores.push(formula.calcular(x, v.supuestos));
+  }
+  const { n, cortes } = cortesRelativos(valores, { decimales: v.mapa.decimales ?? 0 });
+  return { ...r, n, cortes, anio: columna.periodo, activa: r.elegida && Boolean(cortes), motivo: cortes ? null : 'pocas' };
+}
+
+function alCambiarEscala(valor) {
+  estado.escala = valor === 'municipio' ? 'municipio' : undefined;
+  actualizar();
+}
+
+// Sin ficha de sección ni de municipio, la escala relativa y la superficie típica siguen al
+// municipio del centro de la vista: al mover el mapa, si cambia y alguna lo usa, se repinta.
+function seguirCentro() {
+  const nuevo = mapa.municipioEnCentro();
+  if (nuevo === centro) return;
+  centro = nuevo;
+  const terr = leerTerritorio(estado.territorio);
+  const relativa = estado.escala === 'municipio' && !estado.seccion && terr?.nivel !== 'municipio';
+  const conTipica = estado.superficie === SUPERFICIE_TIPICA && !estado.seccion && !terr;
+  if (relativa || conTipica) actualizar();
+}
+
+// Tarea 51: al acercar o alejar el mapa, si la escala que se ve tiene otro juego de cortes, la
+// leyenda cambia de regla y lo avisa (el mapa ya pinta cada escala con el suyo). Con la escala
+// relativa al municipio, también al entrar o salir de la escala de sección (su selector solo va en ella).
+function leyendaAEscala() {
+  if (!ultimaLeyenda || ultimaLeyenda.modo !== 'necesario') return;
+  const nivel = mapa.nivelVisible();
+  const antes = juegoDe(ultimaLeyenda.mapaDef, ultimaLeyenda.nivel).nombre;
+  const cruzaSeccion = Boolean(ultimaLeyenda.relativa) && (ultimaLeyenda.nivel === 'sc') !== (nivel === 'sc');
+  ultimaLeyenda = { ...ultimaLeyenda, nivel };
+  if (juegoDe(ultimaLeyenda.mapaDef, nivel).nombre === antes && !cruzaSeccion) return;
+  pintarLeyenda(el.leyenda, t, { ...ultimaLeyenda, cambioJuego: juegoDe(ultimaLeyenda.mapaDef, nivel).nombre !== antes });
+}
+
+// Tarea 51: indicador de carga sobre el mapa. Al entrar se ve hasta que el mapa queda pintado; después,
+// solo si los datos de una vista nueva tardan más de un cuarto de segundo.
+function mostrarCarga(si) {
+  if (!el.cargando || cargaInicial) return;
+  clearTimeout(esperaCarga);
+  if (si) esperaCarga = setTimeout(() => { el.cargando.hidden = false; }, 250);
+  else el.cargando.hidden = true;
+}
+
 async function actualizar() {
   const yo = ++turno;
+  if (estado.superficie === SUPERFICIE_TIPICA || tipica) {
+    await prepararTipica(vista().referencia);   // la superficie típica del territorio que manda, antes del cálculo
+    if (yo !== turno) return;
+  }
   const v = vista();
   pintarBarra(v);
   mapa.ponerNivelMinimo(nivelMinimoDe(v));   // F5: sin sección, los municipios a toda escala
   const etiqueta = etiquetaVista(v);         // F5: dato privado de oferta, también sobre el mapa
   el.privado.hidden = !etiqueta;
   el.privado.textContent = etiqueta ?? '';
-  await cargarColumnas(v.series, v.referencia);
+  mostrarCarga(true);
+  try {
+    await cargarColumnas(v.series, v.referencia);
+  } finally {
+    if (yo === turno) mostrarCarga(false);
+  }
   if (yo !== turno) return;
 
+  // Escala relativa al municipio (decisión del autor, 11-nov-2026): solo las secciones, con los
+  // septiles de su municipio; las de fuera, sin color (placa) y con el contorno de tinta
+  const relativa = escalaRelativa(v);
   for (const { capa, id, nivel } of mapa.rellenos) {
-    const pintura = (paleta) => (v.modo === 'necesario'
-      ? colorNecesario(v.mapa, v.supuestos, paleta)
-      : colorLlega(v.calculo, id, paleta, nivel));
-    mapa.colorear(capa, pintura(colores), pintura(contornos), capa === 'secciones' ? secretos(v.seriesColor) : null);
+    const propia = relativa?.activa && capa === 'secciones' ? relativa : null;
+    const pintura = (paleta, fueraColor) => {
+      const color = v.modo === 'necesario'
+        ? colorNecesario(v.mapa, v.supuestos, paleta, nivel, propia?.cortes)   // tarea 51: el juego de cortes de cada escala
+        : colorLlega(v.calculo, id, paleta, nivel);
+      return propia ? soloEnMunicipio(color, { municipio: propia.municipio, idSeccion: id, fueraColor }) : color;
+    };
+    const ocultos = capa === 'secciones' ? secretos(v.seriesColor).filter((c) => !propia || c.startsWith(propia.municipio)) : null;
+    mapa.colorear(capa, pintura(colores, colorPlaca), pintura(contornos, contornos.fuera), ocultos);
   }
   avisarMapa(v);
 
   const leyenda = {
     modo: v.modo, mapaId: idTextos(estado.mapa), mapaDef: v.mapa, superficie: v.supuestos.superficie_m2, umbral: v.umbral,
+    nivel: mapa.nivelVisible(),   // tarea 51: la regla, con el juego de la escala que se ve
     grupo: v.modo === 'necesario' ? grupoDe(v.mapa) : null, etiqueta,   // F5
     periodo: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo, tipologia: v.tipologia,
     conSupuestos: usaSupuestos(v.mapa), fuera: v.fuera ? textoFuera(v.fuera) : null,
     supuestos: v.supuestos,   // tarea 40: con el mínimo al lado, el texto de los supuestos lo dice
+    relativa, alCambiarEscala, tipica: textoTipica(v),   // decisiones del autor del 11-nov-2026
   };
   let resumen = null;
   let detalle = null;
@@ -295,10 +440,12 @@ async function actualizar() {
       .filter(Boolean).join(' ');
   }
   pintarLeyenda(el.leyenda, t, leyenda);
+  ultimaLeyenda = leyenda;
   panel.pintar({
     t, estado, sueldo, perfiles, modo: v.modo, superficie: v.superficie, umbral: v.umbral, resumen, detalle,
     sinEfecto: v.modo === 'necesario' && !usaSupuestos(v.mapa),
     soloMinimo: v.modo === 'necesario' && Boolean(v.mapa.minimo),   // tarea 40: la superficie solo cambia el mínimo
+    tipica: textoTipica(v),
   });
   pintarFicha(v);
   guardarEstado(estado);
@@ -333,13 +480,20 @@ function estadoCifra(v, codigo, x, estadoDe) {
 function pintarFicha(v = vista()) {
   const yo = ++turnoFicha;
   const terr = leerTerritorio(estado.territorio);
-  // F5: en un mapa sin sección, la sección elegida se ve en la ficha de su municipio
-  const porMunicipio = Boolean(estado.seccion) && nivelMinimoDe(v) === 'municipio';
-  if ((!estado.seccion && terr) || porMunicipio) {
-    pintarFichaTerritorio(v, porMunicipio ? { nivel: 'municipio', codigo: estado.seccion.slice(0, 5) } : terr, yo)
+  // F5: en un mapa sin sección, la sección elegida se ve en la ficha de su municipio (o de su
+  // provincia, en los mapas sin municipio: tarea 46); y, generalizado con `nivel_minimo` (decisión
+  // del autor, 11-nov-2026), también un municipio elegido en un mapa sin municipio, con el
+  // territorio de la ficha resaltado en el mapa.
+  const nivelFicha = nivelMinimoDe(v);
+  const porTerritorio = Boolean(estado.seccion) && nivelFicha !== 'sc';
+  if ((!estado.seccion && terr) || porTerritorio) {
+    const propio = territorioEnNivel(porTerritorio ? { nivel: 'sc', codigo: estado.seccion } : terr, nivelFicha);
+    mapa.seleccionarTerritorio(propio);
+    pintarFichaTerritorio(v, propio, yo)
       .catch((error) => console.error(error));
     return;
   }
+  if (estado.seccion) mapa.seleccionarTerritorio(null);
   if (!estado.seccion) {
     if (sinSeccion) return fichaSinSeccion(el.ficha, { t, ...sinSeccion, territorios, alCerrar: () => elegirSeccion(null) });
     return fichaVacia(el.ficha, { t, comparar: NIVELES_COMPARAR_VACIA.includes(estado.comparar) ? estado.comparar : null });
@@ -663,7 +817,10 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
   // Tarea 40: la serie de la segunda cifra (mínimo de 50 m² o alquiler mensual real), si llega al nivel
   const segunda = (calculo ? calculo.serieReal : v.mapa.minimo ? serieTipo(v.mapa.minimo.base) : null);
   if (segunda && m.indicadores[segunda] && nivelesDe(segunda).includes(nivel)) auxiliares.push(segunda);
+  // Decisión del autor (11-nov-2026): en la ficha de municipio, su superficie típica (SERPAVI)
+  const pedirTipica = nivel === 'municipio' ? superficieTipicaEn(nivel, codigo, v.referencia).catch(() => null) : null;
   const lecturas = tieneNivel && !v.fuera ? await lecturasTerritorio([...v.seriesColor, ...auxiliares], nivel, codigo, v.referencia) : {};
+  const tipicaFicha = await pedirTipica;
   if (yo !== turnoFicha) return;
   const x = (serie) => lecturas[serie]?.valor ?? null;
   const estadoDe = (serie) => lecturas[serie]?.estado ?? indiceEstado('ausente');
@@ -695,7 +852,10 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
   const periodoBase = periodoPara(m.indicadores[base], v.referencia);
   if (tieneNivel) notas.push(...notaPercentil(v, valor, periodoBase ?? v.periodo, nivel, codigo));
   // F5: en los mapas sin sección, cómo se lee el indicador (el 20: política pública, no mercado)
-  if (nivelMinimoDe(v) === 'municipio') notas.push(t(`indicadores.${idTextos(estado.mapa)}.lectura`));
+  if (nivelMinimoDe(v) !== 'sc') notas.push(t(`indicadores.${idTextos(estado.mapa)}.lectura`));
+  if (Number.isFinite(tipicaFicha?.valor)) {
+    notas.push(t('interfaz.ficha.superficie_tipica', { superficie: t.numero(tipicaFicha.valor), anio: t.periodo(tipicaFicha.anio) }));
+  }
   const { huecoSerie, huecoComparador, huecoDetalle, huecoResidentes } = fichaTerritorio(el.ficha, {
     t, nivel, codigo, territorios, sinNivel: !tieneNivel, modo: v.modo, mapaId: idTextos(estado.mapa), mapaDef: v.mapa, ficha: estado.ficha,
     grupo: v.modo === 'necesario' ? grupoDe(v.mapa) : null, etiqueta: etiquetaVista(v),   // F5
@@ -873,8 +1033,17 @@ async function exportarPng(v) {
   if (v.tipologia) partes.push(t(`vocabulario.tipologia.${v.tipologia}`));
   if (!llega && usaSupuestos(v.mapa)) partes.push(textoSupuestos(t, v.mapa, v.supuestos));   // tarea 40: con el mínimo, lo dice
   if (llega) partes.push(t('interfaz.exportar.umbral', { umbral: t.porcentaje(v.umbral) }));
+  const tipicaTexto = textoTipica(v);   // la superficie típica elegida, de qué territorio
+  if (tipicaTexto) partes.push(tipicaTexto);
+  // Escala relativa al municipio, si se ve: sus cortes, y lo dice el subtítulo
+  const relativa = escalaRelativa(v);
+  const propia = relativa?.activa && mapa.nivelVisible() === 'sc' ? relativa : null;
+  if (propia) {
+    partes.push(t('interfaz.leyenda.relativa.linea', { municipio: propia.nombre, n: t.numero(propia.n), anio: t.periodo(propia.anio) }));
+  }
 
   const tramosColor = (n) => pasosDeRampa(n, colores.rampa.length).map((i) => colores.rampa[i]);
+  const cortes = propia ? propia.cortes : juegoDe(v.mapa, mapa.nivelVisible()).cortes;   // tarea 51: los de la escala que se ve
   const cat = !llega && v.mapa.categorias;   // F5: mapa de categorías (indicador 20)
   const leyenda = llega
     ? { tipo: 'lista', elementos: colores.llega.map((color, i) => ({ color, texto: t(`interfaz.leyenda.llega_${i + 1}`) })) }
@@ -886,8 +1055,8 @@ async function exportarPng(v) {
       })),
     } : {
       tipo: 'tramos',
-      colores: pasosDeRampa(v.mapa.cortes.length + 1, colores.rampa.length).map((i) => colores.rampa[i]),
-      etiquetas: v.mapa.cortes.map((corte) => t.numero(corte, decimalesDeCortes(v.mapa.cortes, v.mapa.decimales ?? 0))),
+      colores: pasosDeRampa(cortes.length + 1, colores.rampa.length).map((i) => colores.rampa[i]),
+      etiquetas: cortes.map((corte) => t.numero(corte, decimalesDeCortes(cortes, v.mapa.decimales ?? 0))),
     };
   const calculado = llega || usaSupuestos(v.mapa);
   const blob = await imagenMapa({
@@ -968,7 +1137,11 @@ function elegirTerritorio(nivel, codigo) {
   actualizar();
 }
 
-const alPulsarTerritorio = (nivel, codigo) => elegirTerritorio(nivel, codigo);
+// Tarea 50: al tocar el mapa en una pantalla estrecha, la página baja hasta la ficha (movil.js)
+const alPulsarTerritorio = (nivel, codigo) => {
+  elegirTerritorio(nivel, codigo);
+  mostrarFicha(el.ficha);
+};
 
 function alPulsar(codigo) {
   if (eligiendoComparada && estado.seccion && codigo !== estado.seccion) {
@@ -977,9 +1150,11 @@ function alPulsar(codigo) {
     mapa.comparar(codigo);
     pintarFicha();
     guardarEstado(estado);
+    mostrarFicha(el.ficha);
     return;
   }
   elegirSeccion(codigo);
+  mostrarFicha(el.ficha);
 }
 
 // Suelo sin sección: su ficha sustituye a la de la sección elegida y cancela la elección de la
@@ -987,6 +1162,7 @@ function alPulsar(codigo) {
 function alPulsarSinSeccion(hueco) {
   eligiendoComparada = false;
   elegirSeccion(null, hueco);
+  mostrarFicha(el.ficha);
 }
 
 function alCambiarSueldo(cambio) {
@@ -1035,6 +1211,15 @@ function prepararBuscador() {
     alElegir: async (o) => {
       const cajas = await cargarCajas(m).catch(() => ({}));
       const caja = cajas.municipio?.[o.codigo.slice(0, 5)];
+      // Decisión del autor (11-nov-2026): en un mapa sin sección (o sin municipio, como el 11), un
+      // municipio o una sección abren la ficha del territorio de su nivel más fino que los contiene,
+      // y el mapa va a él (`nivel_minimo` del manifiesto)
+      const minimo = nivelMinimoDe(vista());
+      if (minimo !== 'sc') {
+        const destino = territorioEnNivel({ nivel: o.tipo === 'municipio' ? 'municipio' : 'sc', codigo: o.codigo }, minimo);
+        elegirTerritorio(destino.nivel, destino.codigo);
+        return mapa.irA(cajaTerritorio(cajas, destino));
+      }
       if (o.tipo === 'municipio') {
         elegirTerritorio('municipio', o.codigo);   // su ficha (tarea 26)
         return mapa.irA(caja);
@@ -1048,6 +1233,12 @@ function prepararBuscador() {
   });
 }
 
+// Tarea 53: bajo el mapa, la fecha de los datos (la de la exportación, `generado` del manifiesto),
+// «Método en dos páginas», la fe de erratas y «Avisar de un error».
+function pintarPie() {
+  if (el.pie) el.pie.replaceChildren(...lineaTransparencia(t, { fecha: m?.generado ?? null, erratas: true }).childNodes);
+}
+
 function marcarIdioma() {
   for (const boton of el.idiomas) boton.setAttribute('aria-pressed', String(boton.dataset.idioma === estado.idioma));
 }
@@ -1059,6 +1250,8 @@ async function cambiarIdioma(idioma) {
   traducirPagina(t);
   document.title = `${t('nav.mapa')} · ${t('sitio.titulo')}`;
   marcarIdioma();
+  plegado?.traducir(t);
+  pintarPie();
   if (mapa) {
     mapa.traducir(t);
     actualizar();
@@ -1075,15 +1268,19 @@ async function iniciar() {
   panel = crearPanelSueldo({ alCambiar: alCambiarSueldo, alCompartir: abrirCompartir });
   panel.ponerSueldo(sueldo);
   barra = crearBarraVista({ alCambiar: alCambiarVista, alExportar: exportar });
+  plegado = prepararPlegado(document.getElementById('barra-vista'), document.getElementById('vista-plegar'), t);   // tarea 50
+  pintarPie();
   compartir = crearCompartir();
   avisoImagen = crearAvisoImagen();
 
   try {
     m = await cargarManifiesto();
     el.ejemplo.hidden = !m.ejemplo;
+    pintarPie();
     if (!m.mapas[estado.mapa]) estado.mapa = m.mapas[MAPA_POR_DEFECTO] ? MAPA_POR_DEFECTO : Object.keys(m.mapas)[0];
     colores = coloresMapa();
     contornos = coloresContorno();
+    colorPlaca = getComputedStyle(document.documentElement).getPropertyValue('--color-placa').trim();
 
     const pedirSalarios = cargarSalarios(m).catch((error) => { console.error(error); return null; });
     [secciones, territorios, perfiles, mapa] = await Promise.all([
@@ -1103,7 +1300,11 @@ async function iniciar() {
         alMover: (mp) => {
           estado.vista = vistaATexto(mp);
           guardarEstado(estado);
-          if (mapa) avisarMapa();
+          if (mapa) {
+            avisarMapa();
+            leyendaAEscala();   // tarea 51
+            seguirCentro();     // escala relativa y superficie típica sin ficha: el municipio del centro
+          }
         },
       }),
     ]);
@@ -1125,6 +1326,7 @@ async function iniciar() {
     if (esSeccion(estado.comparar)) mapa.comparar(estado.comparar);
     prepararBuscador();
     await actualizar();
+    mapa.mapa.once('idle', () => { cargaInicial = false; mostrarCarga(false); seguirCentro(); });   // tarea 51: ya pintado
     // Sin vista en el enlace (desde la portada: el dado o el buscador), el mapa va a lo elegido
     if (!vistaDelEnlace && (estado.seccion || terr)) {
       const cajas = await cargarCajas(m).catch(() => ({}));
@@ -1138,6 +1340,8 @@ async function iniciar() {
       } else mapa.irA(cajaTerritorio(cajas, terr));
     }
   } catch (error) {
+    cargaInicial = false;
+    mostrarCarga(false);
     fichaError(el.ficha, { t, error });
   }
 }

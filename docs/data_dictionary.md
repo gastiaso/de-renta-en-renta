@@ -100,9 +100,8 @@ Sources cited by the indicator inventory; `calculo_propio` marks derived figures
 | `mivau_serpavi` | State Rental Price Reference System (SERPAVI): database |
 | `gv_emal` | Rental Market Statistics (deposits) |
 | `ine_ipva` | Rental Housing Price Index (IPVA) |
-| `registradores` | Land Registry Real Estate Statistics: residential property sales by province |
+| `registradores` | Land Registry Real Estate Statistics: residential property sales by province (Spanish Land Registrars' Association; database under the ODbL) |
 | `mivau_valor_tasado` | Appraised value of open-market housing |
-| `ine_hipotecas` | Mortgage Statistics (H): average initial interest rate |
 | `portales` | Asking-price reports (Idealista and Fotocasa press rooms) |
 | `aeat_mercado_trabajo` | Labour market and pensions in tax sources |
 | `inss_pensiones` | Social Security contributory pensions (in payment) |
@@ -115,6 +114,7 @@ Sources cited by the indicator inventory; `calculo_propio` marks derived figures
 | `ine_ecv_modulo` | Living Conditions Survey 2025: housing access difficulties module (tables) |
 | `eurostat_ilc_lvho07` | Housing cost overburden rate (ilc\_lvho07a, ilc\_lvho07b, ilc\_lvho07c) |
 | `eurostat_ilc_lvho07_r` | Housing cost overburden rate by NUTS 2 region (ilc\_lvho07\_r) |
+| `bde_accesibilidad` | Housing affordability indicators (years of income, theoretical burden) |
 | `calculo_propio` | Own calculation from the sources of each term |
 
 ## Indicator dictionary
@@ -348,10 +348,10 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 
 - **Unit:** % of income
 - **Family:** Burden
-- **Sources:** `mivau_valor_tasado`, `aeat_mercado_trabajo`, `ine_hipotecas`
+- **Sources:** `mivau_valor_tasado`, `ine_adrh`, `bde_accesibilidad`
 - **Version:** v0.3
 - **Definition:** Share of income taken by the first-year payment of a mortgage on a standard dwelling.
-- **Calculation:** First-year annual payment of a French-amortisation loan for 80% of the appraised value of 80 m², over 25 years at the year’s average home-mortgage rate (INE), divided by the average gross annual wage per employee (Tax Agency) of the same year, × 100.
+- **Calculation:** First-year annual payment of a French-amortisation loan for 80% of the appraised value of 80 m², over 25 years at the Bank of Spain's rate on new home-purchase loans (average of the year's twelve months), divided by the average net household income from the ADRH (INE) for the same year and area, × 100. The income is the one published at each level; where INE does not publish it, no value for the province and the region (Navarre until 2020, Álava and the Basque Country until 2019, Gipuzkoa in 2015) and, for Spain until 2020, the household-weighted mean of the municipalities, estimated.
 - **Reading:** A theoretical burden: it assumes the remaining 20% and purchase costs are available.
 
 ### `hogares_alquiler`

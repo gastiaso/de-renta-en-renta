@@ -163,10 +163,11 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_equal(c2$calculado[c2$id == "web_fichas" & c2$detalle == "28002"], 0)
 })
 
-test_that("cortes de los mapas: de uno a cinco valores crecientes (seis tramos como mucho)", {
+test_that("cortes de los mapas: de uno a seis valores crecientes (siete tramos como mucho; tarea 51)", {
   expect_equal(cortes_web("700;900;1100;1500;2000"), c(700, 900, 1100, 1500, 2000))
+  expect_equal(cortes_web("1;2;3;4;5;6"), 1:6)
   expect_equal(cortes_web("1;2.5"), c(1, 2.5))
-  expect_error(cortes_web("1;2;3;4;5;6"), "de 1 a 5")
+  expect_error(cortes_web("1;2;3;4;5;6;7"), "de 1 a 6")
   expect_error(cortes_web("1;3;2"), "crecientes")
   expect_error(suppressWarnings(cortes_web("1;x")), "crecientes")
 })
@@ -215,4 +216,65 @@ test_that("auxiliares del alquiler: contratos y margen van a la web con su tipol
   comp <- comprobar_web(larga, ind, jer_web, ter_web, dir, perfiles = perfiles_prueba)
   expect_true(all(comp$calculado == 0))
   expect_true(any(grepl("contratos_alquiler", comp$detalle)))
+})
+
+# Tarea 51: tres juegos de cortes por indicador (inventario/cortes_web_niveles.csv)
+cortes_niveles_prueba <- function() {
+  ruta <- tempfile(fileext = ".csv")
+  writeLines(c("indicador,juego,metodo,anio_inicial,anio_ancla,cortes,max_tramo_anio_inicial,max_tramo_anio_ancla,reparto",
+               "renta_persona,seccion,anclado,2020,2021,9;10;11;12;13;14,0,0,x",
+               "renta_persona,municipio,recalibrado,2020,2021,5;6;7;8;9;10,0,0,x",
+               "viviendas_turisticas,seccion,recalibrado,2024,2024,1;2;3;4;5;6,0,0,x",
+               "sueldo_necesario,seccion,recalibrado,2024,2024,1100;1300;1500;1700;2000;2400,0,0,x",
+               "sueldo_necesario,provincia_ccaa,anclado_septiles,2015,2024,1400;1500;1600;1700;1800;2200,0,0,x"), ruta)
+  leer_cortes_niveles(ruta)
+}
+
+test_that("juegos de cortes: lectura, juego de cada nivel y juegos del manifiesto", {
+  cn <- cortes_niveles_prueba()
+  expect_equal(cn$anio_ancla[1], 2021L)
+  expect_equal(vapply(c("sc", "municipio", "provincia", "ccaa"), juego_de_nivel, ""),
+               c(sc = "seccion", municipio = "municipio", provincia = "provincia_ccaa", ccaa = "provincia_ccaa"))
+  j <- juegos_web(cn, "renta_persona")
+  expect_equal(names(j), c("seccion", "municipio"))
+  expect_equal(as.numeric(j$seccion$cortes), 9:14)
+  expect_equal(j$seccion[c("metodo", "anio")], list(metodo = "anclado", anio = 2021L))
+  expect_null(juegos_web(cn, "viviendas_turisticas"))     # excepción declarada
+  expect_null(juegos_web(cn, "alquiler_m2"))
+  expect_null(juegos_web(NULL, "renta_persona"))
+  expect_equal(cortes_por_defecto_web(j, "sc"), 9:14)
+  expect_equal(cortes_por_defecto_web(j, "provincia"), 9:14)   # sin el suyo, el primero
+  # Errores: juego desconocido, repetido o con siete cortes
+  ruta <- tempfile(fileext = ".csv")
+  writeLines(c("indicador,juego,metodo,anio_inicial,anio_ancla,cortes", "a,barrio,x,1,1,1;2"), ruta)
+  expect_error(leer_cortes_niveles(ruta), "desconocidos")
+  writeLines(c("indicador,juego,metodo,anio_inicial,anio_ancla,cortes", "a,seccion,x,1,1,1;2", "a,seccion,x,1,1,1;3"), ruta)
+  expect_error(leer_cortes_niveles(ruta), "repetido")
+  writeLines(c("indicador,juego,metodo,anio_inicial,anio_ancla,cortes", "a,seccion,x,1,1,1;2;3;4;5;6;7"), ruta)
+  expect_error(leer_cortes_niveles(ruta), "de 1 a 6")
+})
+
+test_that("con juegos, el manifiesto los lleva y la compuerta web_tramos cuenta los tramos vacíos o llenos", {
+  dir <- tempfile("web_")
+  on.exit(unlink(dir, recursive = TRUE))
+  exportar_web(larga_web, ind_web, jer_web, ter_web, dir_web = dir, fecha = "2026-11-11", cortes_niveles = cortes_niveles_prueba())
+  m <- jsonlite::fromJSON(file.path(dir, "datos", "manifiesto.json"), simplifyVector = FALSE)
+  expect_equal(names(m$mapas$renta_persona$juegos), c("seccion", "municipio"))
+  expect_equal(unlist(m$mapas$renta_persona$cortes), 9:14)               # los del nivel más fino
+  expect_equal(unlist(m$mapas$renta_persona$juegos$municipio$cortes), 5:10)
+  expect_equal(m$mapas$renta_persona$juegos$seccion$anio, 2021L)
+  expect_equal(unlist(m$mapas$sueldo_necesario$cortes), c(1100, 1300, 1500, 1700, 2000, 2400))
+  expect_null(m$mapas$alquiler_m2$juegos)
+  expect_null(m$mapas$viviendas_turisticas$juegos)
+  comp <- comprobar_tramos_web(larga_web, ind_web, dir)
+  expect_true(all(comp$id == "web_tramos"))
+  # renta_persona, sección 2021: 10 y 11, dos tramos con el 50 % y cinco vacíos (10 cae en [10, 11))
+  fila <- comp[grepl("^renta_persona, seccion 2021", comp$detalle), ]
+  expect_equal(fila$calculado, 7)
+  expect_match(fila$detalle, "0-0-50-50-0-0-0 %")
+  # municipio 2020: 9,96 en el último tramo; un solo territorio
+  expect_equal(comp$calculado[grepl("^renta_persona, municipio 2020", comp$detalle)], 7)
+  expect_equal(comp$calculado[grepl("^alquiler_m2: sin juegos$", comp$detalle)], 1)
+  expect_equal(comp$calculado[grepl("^viviendas_turisticas: sin juegos [(]", comp$detalle)], 0)
+  expect_equal(comp$calculado[grepl("sueldo_necesario, provincia_ccaa", comp$detalle)], 1)   # sin valores
 })

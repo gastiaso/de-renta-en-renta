@@ -17,20 +17,21 @@ test_that("los tramos claros de la rampa llevan contorno en el CSS y los oscuros
   expect_true(any(grepl("^\\.tramo-2 \\{.*outline", css)))
   expect_false(any(grepl("^\\.tramo-3 \\{.*outline", css)))
   expect_true(any(grepl("--color-crema: #f6efe0;", css, fixed = TRUE)))
-  expect_true(any(grepl("^\\.tramo-6 \\{", css)))
+  expect_true(any(grepl("^\\.tramo-7 \\{", css)))   # tarea 51: siete pasos
   comp <- comprobar_contrastes(tokens, ruta)
   expect_equal(comp$calculado[comp$id == "contraste_texto"], 0)
   expect_equal(comp$calculado[comp$id == "rampa_contorno"], 0)
   expect_true(all(abs(comp$calculado[comp$id == "contraste_declarado"]) <= 0.05))
-  expect_true(any(grepl("^rampa 6 crema$", comp$detalle[comp$id == "contraste_declarado"])))
+  expect_true(any(grepl("^rampa 7 crema$", comp$detalle[comp$id == "contraste_declarado"])))
 })
 
-test_that("la rampa tiene seis pasos que se distinguen también con daltonismo", {
+test_that("la rampa tiene siete pasos que se distinguen también con daltonismo", {
   expect_length(tokens$rampa_secuencial$pasos, MAX_CORTES_WEB + 1L)   # un paso por tramo del mapa más detallado
   hex <- vapply(tokens$rampa_secuencial$pasos, `[[`, "", "hex")
   d <- distancias_rampa(hex)
   expect_setequal(unique(d$vision), c("normal", "protanopia", "deuteranopia", "tritanopia"))
   expect_true(all(d$distancia >= DELTA_MINIMA_RAMPA))
+  expect_true(min(d$distancia[d$vision == "normal"]) >= 0.08)   # en visión normal, como antes (tarea 51)
   expect_true(all(d$baja_claridad))
   # OKLab: el blanco tiene claridad 1 y el negro, 0
   expect_equal(as.numeric(oklab(rgb_lineal("#ffffff"))[1, 1]), 1, tolerance = 1e-6)

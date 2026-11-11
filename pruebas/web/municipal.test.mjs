@@ -2,7 +2,7 @@
 // de categorías y capa desmontable de los portales (indicador 13, «dato privado de oferta»).
 //   - el CSV lleva la columna de la categoría y la de la etiqueta solo cuando hacen falta;
 //   - con la exportación del pipeline (web/datos/manifiesto.json), cada mapa con `nivel_minimo` tiene
-//     su serie sin sección y con ese nivel; las categorías tienen su texto en los dos idiomas; el
+//     su serie sin sección y con ese nivel (el 11, de Registradores, «provincia»: tarea 46); las categorías tienen su texto en los dos idiomas; el
 //     detalle de las declaraciones existe; y no hay ninguna serie ni mapa de los portales, que van
 //     aparte, en datos/portales/ (tarea 35; pruebas/web/portales.test.mjs);
 //   - los textos de la interfaz de F5 están en los dos idiomas.
@@ -84,6 +84,13 @@ test('exportación del pipeline: mapas sin sección, categorías y capa de porta
   const declaraciones = leerJson('web', ...z.detalle.split('/'));
   assert.ok(Object.keys(declaraciones).length > 300);
   assert.ok(declaraciones['08019'].every((d) => /^BOE-A-\d{4}-\d+$/.test(d.boe) && d.inicio < d.fin));
+  // Tarea 46: el 11 (Registradores), sin municipio: mapa provincial a toda escala, con la comunidad y España
+  const p = m.mapas.precio_compra_m2;
+  assert.ok(p, 'el mapa del indicador 11');
+  assert.equal(p.nivel_minimo, 'provincia');
+  assert.deepEqual(m.indicadores.precio_compra_m2.niveles, ['provincia', 'ccaa', 'nacional']);
+  assert.ok(m.indicadores.precio_compra_m2.anios.includes(2025));
+  assert.equal(m.indicadores.precio_compra_m2.fuente, 'registradores');
   // Tarea 35: la capa de portales nunca va en la exportación general (va en datos/portales/; portales.test.mjs)
   assert.deepEqual(Object.entries(m.indicadores).filter(([, d]) => d.fuente === 'portales').map(([k]) => k), []);
   assert.deepEqual(Object.entries(m.mapas).filter(([, d]) => d.indicador === 'precio_oferta').map(([k]) => k), []);

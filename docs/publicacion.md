@@ -15,6 +15,7 @@ El sitio se monta en GitHub Actions con el flujo `.github/workflows/pages.yml`. 
 | `descargas/historico.parquet` | release: `historico.parquet` | La tabla del módulo histórico (desde la v1.0; plan §11, pregunta 47 a). El flujo la copia si el release la trae |
 | `descargas/version.json` | release: `version.json` | Fecha, commit, versiones de las fuentes, cobertura de la tabla larga por indicador y suma de cada fichero |
 | `metodo.html`, `method.html` | git: se generan en el flujo desde `docs/metodologia.md` y `docs/methodology.md` | La página «Método» sale siempre de la nota que hay en `main` |
+| `metodo_corto.html`, `short_method.html` | git: se generan en el flujo desde `docs/metodo_corto.md` y `docs/short_method.md`, con la fe de erratas de `inventario/erratas.csv` | «Método en dos páginas» (tarea 53), enlazado desde la ficha y bajo el mapa |
 | `datos.html`, `data.html` | git y release: se generan en el flujo desde `docs/datos.md` y `docs/data.md`, el diccionario de `docs/` y `descargas/version.json` | La página «Datos» describe siempre la tabla larga del release que se publica |
 
 El flujo baja los ficheros del **último release** (el marcado como *Latest*; nunca un borrador ni una versión previa), comprueba sus sumas SHA-256 con `SHA256SUMS`, monta el sitio y lo publica. Las herramientas de desarrollo de `web/` (`LEEME.md`, `servir.mjs`, `herramientas/`) no se publican.
@@ -26,6 +27,15 @@ pandoc docs/metodologia.md --from gfm --to html5 --standalone --toc --toc-depth 
 ```
 
 y abrir <http://localhost:8000/metodo.html> con `node web/servir.mjs`. Ese `web/metodo.html` es una copia local: no se añade a git.
+
+**«Método en dos páginas»** (tarea 53). En el mismo paso, `web/herramientas/pagina_metodo_corto.mjs` rellena la marca `<!-- erratas -->` de `docs/metodo_corto.md` y `docs/short_method.md` con la fe de erratas de `inventario/erratas.csv` (sin filas, una línea que lo dice) y pandoc la convierte con la misma plantilla, `documento_<idioma>.yaml` y `metodo_corto_<idioma>.yaml`, en `metodo_corto.html` y `short_method.html`. El flujo se detiene si la página no lleva el título de la fe de erratas. Para verla en local (PowerShell, con pandoc instalado):
+
+```powershell
+node web/herramientas/pagina_metodo_corto.mjs --idioma es --nota docs/metodo_corto.md --erratas inventario/erratas.csv --salida "$env:TEMP/metodo_corto_es.md"
+pandoc "$env:TEMP/metodo_corto_es.md" --from gfm --to html5 --standalone --toc --toc-depth 2 --wrap none --template web/herramientas/plantilla_documento.html --metadata-file web/herramientas/documento_es.yaml --metadata-file web/herramientas/metodo_corto_es.yaml --metadata titulo="De renta en renta" --metadata subtitulo="Vivienda y sueldos, sección a sección" --metadata texto_mapa=Mapa --metadata texto_sobrecarga=Sobrecarga --metadata texto_datos=Datos --metadata texto_metodo=Método --output web/metodo_corto.html
+```
+
+Una errata nueva se anota en `inventario/erratas.csv` (fecha, versión afectada, dónde, el error y la corrección, en castellano e inglés) y sale con la siguiente publicación; `pruebas/web/transparencia.test.mjs` comprueba el fichero.
 
 **Página «Datos».** La descarga de la tabla larga, su modelo de datos y su diccionario, las licencias y la cita, y cómo leerla en R y en Python, en `datos.html` y `data.html`. Se monta en el mismo paso que «Método», en dos tiempos:
 
@@ -58,7 +68,7 @@ Los ficheros del release los prepara `empaquetar_publicacion()` (`R/publicar.R`)
 | `web/datos/portales/` (capa de portales, tarea 35) | `targets::tar_make(names = c(ficheros_web_portales, validacion_web_portales))`, con `PORTALES=TRUE` (apagada, solo el manifiesto vacío) | No va en el release; ver «Capa de portales» |
 | `*.pmtiles` (`geo/referencia/`, `web/teselas/`) | `targets::tar_make(names = fichero_mapa_base)` | Release |
 | `publicacion/` | `empaquetar_publicacion()` | Es el release |
-| `web/metodo.html`, `web/method.html`, `web/datos.html`, `web/data.html`, `web/descargas/` | Copias locales para ver las páginas de texto (pandoc y la copia de `publicacion/`) | Las genera el flujo |
+| `web/metodo.html`, `web/method.html`, `web/metodo_corto.html`, `web/short_method.html`, `web/datos.html`, `web/data.html`, `web/descargas/` | Copias locales para ver las páginas de texto (pandoc y la copia de `publicacion/`) | Las genera el flujo |
 | `_targets/`, `renv/library/` | El pipeline y `renv::restore()` | No se publican |
 | `.Renviron` | A mano | Nunca: credenciales |
 

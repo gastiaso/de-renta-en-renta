@@ -51,7 +51,7 @@ Propuesta (a confirmar por el autor al revisar la portada):
 | 3 | Fianza: un mes | alquiler | `metodo.html#…` (el alquiler sale de las fianzas del SERPAVI) | sí |
 | 4 | Paga el alquiler | alquiler | mapa del alquiler mensual | sí |
 | 5 | Pisos turísticos en el portal | barrio | mapa de viviendas turísticas (19) | sí |
-| 6 | Zona tensionada | barrio | — (F5) | no |
+| 6 | Zona tensionada | barrio | mapa del 20 con una vista de municipios (`mapa.html?mapa=zona_tensionada&vista=5.20/40.20000/-3.70000`; tarea 52) | sí |
 | 7 (esquina) | Renueva el contrato | alquiler | «¿te llega?» con la llave (`mapa.html?ficha=llave`): el cociente del indicador 14, que ya no tiene mapa (tarea 41) | sí |
 | 8 | Actualización de la renta | alquiler | — (F4, indicador 10) | no |
 | 9 | Vecinos de alquiler | barrio | mapa de hogares en alquiler (18) | sí |
@@ -64,7 +64,7 @@ Propuesta (a confirmar por el autor al revisar la portada):
 | 16 | Hipoteca variable | compra | — (F4) | no |
 | 17 | Sube el euríbor | compra | — (F4) | no |
 | 18 | Comunidad y derramas | barrio | — | no |
-| 19 (esquina) | Tasación | compra | — (F4, indicador 12) | no |
+| 19 (esquina) | Tasación | compra | mapa del valor tasado (12; tarea 52) | sí |
 | 20 | Notaría | compra | — (F4, indicador 11) | no |
 | 21 | Sorteo de vivienda protegida | barrio | — | no |
 | 22 | Herencia | compra | — | no |
@@ -90,6 +90,8 @@ Propuesta y valores de referencia actuales, que sirven también para las pruebas
 | Sobrecarga (ECV 2025) | 26,8 % de quienes viven de alquiler a precio de mercado; 7,2 % del total |
 
 Si falta un término, la carta no se muestra (nunca «—» en una carta).
+
+Tarea 52 (11-nov-2026): la carta del sueldo necesario da la cifra con el alquiler mensual real (1.900 € en 2024) y, al lado, el mínimo de 50 m² (1.217 €; tarea 40). Detrás, las cartas del sueldo para entrar y de la brecha entre entrar y quedarse salen «próximamente», con qué medirán y su familia, sin cifras ni enlace (`cartasProximamente()` de `web/js/portada.js`), mientras la familia «entrar» esté en `FAMILIAS_PROXIMAMENTE` (`web/js/familias.js`; decisiones 17–19 del backlog).
 
 ### Pie
 

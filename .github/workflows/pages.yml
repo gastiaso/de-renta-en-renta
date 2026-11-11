@@ -118,7 +118,8 @@ jobs:
           cp "$rel/tabla_larga.parquet" "$rel/version.json" "$sitio/descargas/"
           if [ -f "$rel/historico.parquet" ]; then cp "$rel/historico.parquet" "$sitio/descargas/"; fi
 
-      # Páginas de texto, en HTML y con la cabecera de la web. «Método»: la nota metodológica (docs/).
+      # Páginas de texto, en HTML y con la cabecera de la web. «Método»: la nota metodológica (docs/),
+      # y «Método en dos páginas» (docs/metodo_corto.md y docs/short_method.md, con la fe de erratas).
       # «Datos»: docs/datos.md y docs/data.md con la descarga, la cita y la cobertura rellenas desde
       # descargas/version.json (el del release) y CITATION.cff, más el diccionario que genera R desde
       # el inventario (web/herramientas/pagina_datos.mjs). Los textos compartidos (título, subtítulo,
@@ -131,8 +132,8 @@ jobs:
           echo "node $(node --version)"
           sitio="$RUNNER_TEMP/sitio"
           etiqueta=$(cat "$RUNNER_TEMP/etiqueta")
-          for par in "es metodologia.md metodo.html datos.md datos_diccionario.md datos.html" \
-                     "en methodology.md method.html data.md data_dictionary.md data.html"; do
+          for par in "es metodologia.md metodo.html datos.md datos_diccionario.md datos.html metodo_corto.md metodo_corto.html" \
+                     "en methodology.md method.html data.md data_dictionary.md data.html short_method.md short_method.html"; do
             set -- $par
             dic="web/i18n/$1.json"
             comunes=(--from gfm --to html5 --standalone --toc --toc-depth 2 --wrap none
@@ -149,6 +150,19 @@ jobs:
               --metadata texto_navegacion="$(jq -r .interfaz.navegacion "$dic")"
               --metadata texto_idioma="$(jq -r .interfaz.idioma "$dic")")
             pandoc "docs/$2" "${comunes[@]}" --output "$sitio/$3"
+
+            # «Método en dos páginas» (tarea 53), con la fe de erratas de inventario/erratas.csv
+            # (web/herramientas/pagina_metodo_corto.mjs). Con una referencia anterior, no se monta.
+            if [ -f web/herramientas/pagina_metodo_corto.mjs ] && [ -f "docs/$7" ]; then
+              node web/herramientas/pagina_metodo_corto.mjs --idioma "$1" --nota "docs/$7" \
+                --erratas inventario/erratas.csv --repositorio "$GITHUB_REPOSITORY" --salida "$RUNNER_TEMP/metodo_corto_$1.md"
+              pandoc "$RUNNER_TEMP/metodo_corto_$1.md" "${comunes[@]}" \
+                --metadata-file "web/herramientas/metodo_corto_$1.yaml" --output "$sitio/$8"
+              grep -q -E 'id="(fe-de-erratas|errata)"' "$sitio/$8" \
+                || { echo "::error::La página $8 no lleva la fe de erratas."; exit 1; }
+            else
+              echo "Sin «Método en dos páginas» en esta referencia."
+            fi
 
             # La página «Datos» llegó después de la v0.1: con una referencia anterior, no se monta.
             if [ ! -f web/herramientas/pagina_datos.mjs ] || [ ! -f "docs/$4" ]; then

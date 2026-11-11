@@ -1,0 +1,8 @@
+# «Método en dos páginas» en castellano (backlog, tarea 53): se carga después de
+# documento_es.yaml y cambia lo propio de esta página (el texto sale de docs/metodo_corto.md con
+# web/herramientas/pagina_metodo_corto.mjs, que añade la fe de erratas de inventario/erratas.csv).
+pagetitle: "Método en dos páginas · De renta en renta"
+descripcion: "Qué mide De renta en renta, con qué fuentes y a quién deja fuera cada una, en dos páginas; con la fe de erratas."
+pagina_es: metodo_corto.html
+pagina_en: short_method.html
+otra_pagina: short_method.html

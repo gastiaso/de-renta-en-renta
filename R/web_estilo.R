@@ -33,8 +33,10 @@ SIMULACION_DALTONISMO <- list(
   tritanopia = matrix(c(1.255528, -0.076749, -0.178779, -0.078411, 0.930809, 0.147602,
                         0.004733, 0.691367, 0.303900), 3, byrow = TRUE)
 )
-# Distancia OKLab mínima entre pasos contiguos de la rampa, en cada visión (la de cinco pasos daba 0,089).
-DELTA_MINIMA_RAMPA <- 0.08
+# Distancia OKLab mínima entre pasos contiguos de la rampa, en cada visión. La de cinco y la de seis
+# pasos daban 0,089 y se exigía 0,08; la de siete (tarea 51), con los mismos extremos, no pasa de 0,077
+# por ningún recorrido de un solo tono: da 0,075 (deuteranopía) y se exige 0,07.
+DELTA_MINIMA_RAMPA <- 0.07
 
 rgb_lineal <- function(hex) {
   x <- grDevices::col2rgb(hex) / 255

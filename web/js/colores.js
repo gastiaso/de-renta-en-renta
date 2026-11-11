@@ -2,11 +2,29 @@
 // rampa lleva cada tramo y de qué color va el contorno de las secciones. Sin DOM, salvo
 // `rampaDeCss()`, para que las pruebas usen las mismas cuentas.
 //
-// La rampa tiene un paso por tramo del mapa más detallado (seis: pregunta abierta 20 del plan).
+// La rampa tiene un paso por tramo del mapa más detallado (siete desde la tarea 51, decisión 15).
 // Un mapa con menos tramos toma pasos repartidos de punta a punta, y «¿te llega?», con tres
-// tramos, el primero, el del medio y el último.
+// tramos, el primero, el del medio y el último (con siete pasos, el 1, el 4 y el 7).
 
 export const TRAMOS_LLEGA = 3;
+
+// Tarea 51 (decisión 14): cada escala del mapa se pinta con su juego de cortes (`juegos` del
+// manifiesto): la sección, el municipio, y la provincia y la comunidad. Sin juegos, o sin el del
+// nivel, los `cortes` del mapa. `metodo` y `anio`: cómo se fijaron los cortes y el año de anclaje.
+export const JUEGO_DE_NIVEL = { sc: 'seccion', municipio: 'municipio', provincia: 'provincia_ccaa', ccaa: 'provincia_ccaa' };
+
+export function juegoDe(mapaDef, nivel) {
+  const nombre = JUEGO_DE_NIVEL[nivel] ?? null;
+  const juego = nombre ? mapaDef?.juegos?.[nombre] : null;
+  if (juego) return { nombre, cortes: juego.cortes, metodo: juego.metodo ?? null, anio: juego.anio ?? null };
+  return { nombre: null, cortes: mapaDef?.cortes ?? [], metodo: null, anio: null };
+}
+
+// El mapa cambia de tramos al cambiar de escala (tiene más de un juego).
+export const cambiaConLaEscala = (mapaDef) => Object.keys(mapaDef?.juegos ?? {}).length > 1;
+
+// Cortes fijados con el último año (decisión 13): los juegos «anclado» y «anclado_septiles».
+export const anclado = (juego) => Boolean(juego?.metodo?.startsWith('anclado'));
 
 // Índices (desde 0) de los pasos de una rampa de `pasos` colores para un mapa de `tramos` tramos.
 export function pasosDeRampa(tramos, pasos) {

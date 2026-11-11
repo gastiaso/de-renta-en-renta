@@ -8,7 +8,7 @@
 Reglas:
 
 - Texto normal con 4,5:1 como mínimo. Los dos primeros pasos de la rampa no llegan a 3:1 sobre la crema: en los mapas, siempre con contorno o sobre el mar.
-- La rampa tiene seis pasos, uno por tramo del mapa más detallado (el del sueldo necesario). Sus pasos contiguos se separan al menos 0,08 en OKLab en visión normal y con protanopía, deuteranopía y tritanopía simuladas (Machado et al., 2009). Un mapa con menos tramos toma pasos repartidos de punta a punta.
+- La rampa tiene siete pasos, uno por tramo de los mapas (tarea 51, decisión 15): los extremos de la de cinco y cinco puntos de su recorrido en OKLab. Sus pasos contiguos se separan al menos 0,07 en OKLab en visión normal y con protanopía, deuteranopía y tritanopía simuladas (Machado et al., 2009): 0,075 como mínimo (deuteranopía) y 0,081 en visión normal. Con esos extremos, siete pasos de un solo tono no llegan a 0,08, el mínimo que se exigía con cinco y seis pasos. Un mapa con menos tramos toma pasos repartidos de punta a punta; «¿te llega?», el primero, el cuarto y el séptimo.
 - El color propio de cada ficha es decorativo; para texto, la variante «texto» de `tokens.json`.
 - Sobre fondo oscuro, la ficha va sobre una placa crema.
 - Tipografías libres: Jost, Marcellus SC y Archivo Narrow (OFL) y Yellowtail (Apache 2.0, no OFL), autoalojadas en `web/estilo/fuentes/` con su licencia. Yellowtail solo en titulares de 22 px o más.

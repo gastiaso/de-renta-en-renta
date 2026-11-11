@@ -46,8 +46,9 @@ CORTES_POR_GRUPO_WEB <- c("oferta_privada")
 CORTES_WEB <- c("total", "mes", names(GRUPO_POR_DEFECTO_WEB), CORTES_POR_GRUPO_WEB)
 # F5: niveles más finos con que un indicador con cortes_web tiene mapa: la sección y, si no la tiene,
 # el municipio (indicador 20); entonces el mapa lleva `nivel_minimo` y la web pinta los municipios a
-# toda escala, con las secciones apagadas.
-NIVELES_MAPA_WEB <- c("sc", "municipio")
+# toda escala, con las secciones apagadas. Tarea 46: sin municipio, la provincia (indicador 11, de
+# Registradores): la web pinta las provincias a toda escala, con municipios y secciones apagados.
+NIVELES_MAPA_WEB <- c("sc", "municipio", "provincia")
 # Mapas que la web calcula en el navegador a partir de otra serie (web/js/formulas.js), para que
 # cambiar la superficie o el umbral no obligue a bajar nada. Tarea 40 (decisión 4): el sueldo
 # necesario pinta la cifra principal, con el alquiler mensual mediano real, y lleva `minimo`, la
@@ -56,8 +57,10 @@ NIVELES_MAPA_WEB <- c("sc", "municipio")
 FORMULAS_WEB <- list(sueldo_necesario = list(base = "alquiler_mes", formula = "alquiler_mes_a_sueldo",
                                              minimo = list(base = "alquiler_m2", formula = "alquiler_m2_a_sueldo")))
 MAPA_POR_DEFECTO_WEB <- "sueldo_necesario"                        # plan §6.6, «Tu sueldo»
-SUPUESTOS_WEB <- list(superficie_m2 = 50, umbral = 0.3)           # plan §3.1 y §6.6
-LIMITES_INICIALES_WEB <- c(-9.4, 35.9, 4.4, 43.9)                # península y Baleares (oeste, sur, este, norte)
+SUPUESTOS_WEB <- list(superficie_m2 = supuesto("superficie_una_persona"),   # plan §3.1 y §6.6;
+                      umbral = supuesto("umbral_sueldo"))               # inventario/supuestos.csv
+# Tarea 51: España entera, con Canarias (antes, península y Baleares: -9,4; 35,9; 4,4; 43,9)
+LIMITES_INICIALES_WEB <- c(-18.2, 27.6, 4.4, 43.9)               # oeste, sur, este, norte
 
 # Valor × escala en enteros, con el redondeo de la guía a los decimales de la escala (no
 # sprintf("%.0f", x * 10): con 0,15 da 2, y la guía, 0,1). `escala`: una o una por valor.
@@ -326,11 +329,12 @@ perfiles_web <- function(perfiles) {
   web[!vapply(web, is.null, TRUE)]
 }
 
-# Cortes de los tramos del mapa (columna cortes_web de inventario/indicadores.csv): de uno a
-# MAX_CORTES_WEB valores crecientes separados por «;», con punto decimal. La rampa de
-# diseno/tokens.json tiene un paso por tramo del mapa más detallado (seis: pregunta abierta 20);
-# con menos tramos, la web toma pasos repartidos (web/js/colores.js).
-MAX_CORTES_WEB <- 5L
+# Cortes de los tramos del mapa (columna cortes_web de inventario/indicadores.csv y juegos de
+# inventario/cortes_web_niveles.csv): de uno a MAX_CORTES_WEB valores crecientes separados por «;»,
+# con punto decimal. La rampa de diseno/tokens.json tiene un paso por tramo del mapa más detallado
+# (siete desde la tarea 51, decisión 15); con menos tramos, la web toma pasos repartidos
+# (web/js/colores.js).
+MAX_CORTES_WEB <- 6L
 
 cortes_web <- function(texto) {
   x <- as.numeric(strsplit(as.character(texto), ";", fixed = TRUE)[[1]])
@@ -340,25 +344,71 @@ cortes_web <- function(texto) {
   x
 }
 
+# Tarea 51 (decisiones 13 a 15): tres juegos de cortes por indicador, uno por escala, en
+# inventario/cortes_web_niveles.csv: la sección, el municipio, y la provincia y la comunidad. Los
+# cortes no se mueven al entrar un año nuevo (se revisan en cada versión mayor). Niveles que pinta
+# cada juego:
+JUEGOS_CORTES_WEB <- list(seccion = "sc", municipio = "municipio", provincia_ccaa = c("provincia", "ccaa"))
+# Mapas sin juegos, con los cortes de indicadores.csv en todas las escalas (excepciones declaradas:
+# distribución muy asimétrica o categorías). La sobrecarga va en su propia sección.
+SIN_JUEGOS_WEB <- c("viviendas_turisticas", "zona_tensionada")
+
+leer_cortes_niveles <- function(ruta) {
+  x <- readr::read_csv(ruta, col_types = readr::cols(.default = "c"))
+  malos <- setdiff(x$juego, names(JUEGOS_CORTES_WEB))
+  if (length(malos)) stop("Juegos de cortes desconocidos: ", paste(malos, collapse = ", "), call. = FALSE)
+  if (anyDuplicated(paste(x$indicador, x$juego))) stop("Juego de cortes repetido en ", ruta, call. = FALSE)
+  invisible(lapply(x$cortes, cortes_web))   # valida cada juego
+  x$anio_inicial <- as.integer(x$anio_inicial)
+  x$anio_ancla <- as.integer(x$anio_ancla)
+  x
+}
+
+# Juego de cortes de un nivel (sc, municipio, provincia o ccaa).
+juego_de_nivel <- function(nivel) names(JUEGOS_CORTES_WEB)[vapply(JUEGOS_CORTES_WEB, function(n) nivel %in% n, TRUE)][1]
+
+# Juegos de un indicador para el manifiesto: {juego: {cortes, metodo, anio}}, con `anio` el de
+# anclaje (anio_ancla) y `metodo` el de inventario/cortes_web_niveles.csv; sin juegos, NULL.
+juegos_web <- function(cortes_niveles, codigo) {
+  if (is.null(cortes_niveles) || codigo %in% SIN_JUEGOS_WEB) return(NULL)
+  f <- cortes_niveles[cortes_niveles$indicador == codigo, ]
+  if (!nrow(f)) return(NULL)
+  f <- f[order(match(f$juego, names(JUEGOS_CORTES_WEB))), ]
+  stats::setNames(lapply(seq_len(nrow(f)), function(k) {
+    list(cortes = I(cortes_web(f$cortes[k])), metodo = f$metodo[k], anio = f$anio_ancla[k])
+  }), f$juego)
+}
+
+# Cortes por defecto de un mapa con juegos: los de su nivel más fino (o, si falta, el primero).
+cortes_por_defecto_web <- function(juegos, nivel) {
+  if (is.null(juegos)) return(NULL)
+  j <- juegos[[juego_de_nivel(nivel)]] %||% juegos[[1]]
+  as.numeric(j$cortes)
+}
+
 # Mapas: uno por indicador con cortes_web y valores de sección; el por defecto, el primero. Los
 # de FORMULAS_WEB se calculan en el navegador desde su base (y, con `minimo`, la segunda cifra desde
 # la suya; tarea 40). Tarea 41: un indicador sin cortes_web (el 14) no tiene mapa ni sale en el
 # selector, aunque su serie se exporte (núcleo de la v0.1) y la ficha la muestre.
 # F5 (indicadores 20 y 13):
-#   - sin sección, el municipio como nivel más fino: el mapa lleva `nivel_minimo` («municipio»);
+#   - sin sección, el municipio como nivel más fino: el mapa lleva `nivel_minimo` («municipio»;
+#     sin municipio, «provincia», tarea 46);
 #   - con `vocabulario` y un grupo del vocabulario con el código del indicador (zona_tensionada), el
 #     mapa es de categorías: `categorias` = {vocabulario, valores}; los cortes separan los valores;
 #   - los cortes de CORTES_POR_GRUPO_WEB dan un mapa por grupo (clave «indicador_grupo», con
 #     `indicador`, `corte` y `grupo`), con los cortes de su grupo en cortes_web («general|grupo=…»).
 # Tarea 34: los mapas de alquiler llevan `familia` («quedarse» o «entrar»; columna familia_alquiler
 # de inventario/indicadores.csv), que la leyenda escribe con su lectura literal.
+# Tarea 51: con `cortes_niveles` (leer_cortes_niveles()), el mapa lleva `juegos` (juegos_web()) y sus
+# `cortes` son los del juego de su nivel más fino; la página pinta cada escala con su juego. En los
+# mapas por grupo, los juegos van al grupo sin cortes propios (el general).
 familia_web <- function(indicadores, codigo) {
   if (!"familia_alquiler" %in% names(indicadores)) return(NULL)
   f <- indicadores$familia_alquiler[match(codigo, indicadores$codigo)]
   if (is.na(f) || !nzchar(f)) NULL else f
 }
 
-mapas_web <- function(catalogo, indicadores, vocabulario = NULL) {
+mapas_web <- function(catalogo, indicadores, vocabulario = NULL, cortes_niveles = NULL) {
   con_seccion <- catalogo$clave[vapply(catalogo$niveles, function(n) any(NIVELES_MAPA_WEB %in% n), TRUE)]
   nivel_minimo <- function(clave) {
     n <- catalogo$niveles[[match(clave, catalogo$clave)]]
@@ -369,14 +419,18 @@ mapas_web <- function(catalogo, indicadores, vocabulario = NULL) {
   mapas <- list()
   for (k in seq_len(nrow(filas))) {
     codigo <- filas$codigo[k]
+    juegos <- juegos_web(cortes_niveles, codigo)   # tarea 51
     por_grupo <- catalogo[catalogo$indicador == codigo & catalogo$corte %in% CORTES_POR_GRUPO_WEB & catalogo$clave %in% con_seccion, ]
     if (nrow(por_grupo)) {
       cortes <- cortes_grupos_web(filas$cortes_web[k])
       for (j in seq_len(nrow(por_grupo))) {
         g <- por_grupo[j, ]
+        propios <- cortes[[g$grupo_web]]
+        de_grupo <- if (is.null(propios)) juegos else NULL
         def <- list(base = g$clave, formula = "directo", indicador = codigo, corte = g$corte, grupo = g$grupo_web,
-                    cortes = I(cortes[[g$grupo_web]] %||% cortes$general),
+                    cortes = I(propios %||% cortes_por_defecto_web(de_grupo, nivel_minimo(g$clave)) %||% cortes$general),
                     decimales = decimales_web(filas$unidad_es[k], escala_web(indicadores, codigo)))
+        if (!is.null(de_grupo)) def$juegos <- de_grupo
         if (!identical(nivel_minimo(g$clave), "sc")) def$nivel_minimo <- nivel_minimo(g$clave)
         def$familia <- familia_web(indicadores, codigo)
         mapas[[g$clave]] <- def
@@ -391,8 +445,10 @@ mapas_web <- function(catalogo, indicadores, vocabulario = NULL) {
       list(base = codigo, formula = "directo")
     } else NULL
     if (is.null(def)) next
-    mapas[[codigo]] <- c(def, list(cortes = I(cortes_web(filas$cortes_web[k])),
+    mapas[[codigo]] <- c(def, list(cortes = I(cortes_por_defecto_web(juegos, nivel_minimo(def$base)) %||%
+                                                cortes_web(filas$cortes_web[k])),
                                    decimales = decimales_web(filas$unidad_es[k], escala_web(indicadores, codigo))))
+    if (!is.null(juegos)) mapas[[codigo]]$juegos <- juegos   # tarea 51
     # F5: mapa sin seccion (nivel_minimo) y de categorias
     if (!identical(nivel_minimo(def$base), "sc")) mapas[[codigo]]$nivel_minimo <- nivel_minimo(def$base)
     categorias <- categorias_web(vocabulario, codigo)
@@ -400,6 +456,49 @@ mapas_web <- function(catalogo, indicadores, vocabulario = NULL) {
     mapas[[codigo]]$familia <- familia_web(indicadores, codigo)
   }
   mapas
+}
+
+# Tarea 51: compuerta web_tramos (alerta). Por mapa del manifiesto y juego de cortes, en el último
+# año de su serie, los territorios con dato de los niveles del juego (la provincia y la comunidad,
+# juntas) repartidos entre sus tramos, con el valor que lee la web (redondeo de la guía a los
+# decimales de su escala): cuenta los tramos vacíos y los que pasan de MAX_TRAMO_WEB. Un mapa sin
+# juegos cuenta uno, salvo las excepciones declaradas (SIN_JUEGOS_WEB); los de categorías no entran.
+MAX_TRAMO_WEB <- 0.35
+
+comprobar_tramos_web <- function(larga, indicadores, dir_web = "web") {
+  manifiesto <- jsonlite::fromJSON(file.path(dir_web, "datos", "manifiesto.json"), simplifyVector = FALSE)
+  series <- series_web(larga, indicadores)
+  series$redondeado <- redondeo_guia(series$valor, decimales_escala(series$escala))
+  series <- series[!is.na(series$redondeado), ]
+  fila <- function(detalle, calculado) tibble::tibble(id = "web_tramos", detalle = detalle, calculado = calculado, referencia = 0)
+  filas <- list()
+  for (id in names(manifiesto$mapas)) {
+    def <- manifiesto$mapas[[id]]
+    if (!is.null(def$categorias)) next
+    codigo <- def$indicador %||% id
+    if (is.null(def$juegos)) {
+      exento <- codigo %in% SIN_JUEGOS_WEB
+      filas[[length(filas) + 1L]] <- fila(paste0(id, ": sin juegos", if (exento) " (excepci\u00f3n declarada)"), as.numeric(!exento))
+      next
+    }
+    clave <- if (id %in% series$clave) id else def$base
+    d <- series[series$clave == clave, ]
+    for (juego in names(def$juegos)) {
+      cortes <- as.numeric(unlist(def$juegos[[juego]]$cortes))
+      d_j <- d[d$nivel %in% JUEGOS_CORTES_WEB[[juego]], ]
+      if (!nrow(d_j)) {
+        filas[[length(filas) + 1L]] <- fila(paste0(id, ", ", juego, ": sin valores"), 1)
+        next
+      }
+      ultimo <- max(d_j$periodo)
+      n <- tabulate(findInterval(d_j$redondeado[d_j$periodo == ultimo], cortes) + 1L, nbins = length(cortes) + 1L)
+      pct <- n / sum(n)
+      filas[[length(filas) + 1L]] <- fila(sprintf("%s, %s %s: %s %% (n = %d)", id, juego, ultimo,
+                                                  paste(round(100 * pct), collapse = "-"), sum(n)),
+                                          sum(n == 0 | pct > MAX_TRAMO_WEB))
+    }
+  }
+  dplyr::bind_rows(filas)
 }
 
 # F5: declaraciones de zona tensionada por municipio (indicador 20), para la ficha de la web:
@@ -519,7 +618,8 @@ indicadores_manifiesto_web <- function(catalogo, indicadores) {
 # cada municipio para la ficha del indicador 20, en datos/zonas_tensionadas.json (zonas_web()), con
 # su ruta en el mapa (`detalle`).
 exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = NULL, perfiles = NULL, cajas = NULL,
-                         salarios = NULL, dir_web = "web", fecha = format(Sys.Date()), vocabulario = NULL, zonas = NULL) {
+                         salarios = NULL, dir_web = "web", fecha = format(Sys.Date()), vocabulario = NULL, zonas = NULL,
+                         cortes_niveles = NULL) {
   datos <- file.path(dir_web, "datos")
   dir.create(datos, recursive = TRUE, showWarnings = FALSE)
   unlink(file.path(datos, c("manifiesto.json", "territorios.json", "cajas.json", "perfiles.json", "salarios.json", "indices", "fichas",
@@ -575,7 +675,7 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
     supuestos = SUPUESTOS_WEB,
     umbral_pocos_contratos = UMBRAL_POCOS_CONTRATOS,
     indicadores = indicadores_manifiesto_web(catalogo, indicadores),
-    mapas = mapas_web(catalogo, indicadores, vocabulario),
+    mapas = mapas_web(catalogo, indicadores, vocabulario, cortes_niveles),   # tarea 51: juegos por escala
     vista_inicial = list(limites = I(LIMITES_INICIALES_WEB))
   )
   # F5: declaraciones del indicador 20 para la ficha (ruta en su mapa)

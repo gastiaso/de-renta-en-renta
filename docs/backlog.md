@@ -253,7 +253,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 - **Hecho cuando:** el gráfico de evolución dice si está en euros corrientes o constantes.
 - **HECHA (11-nov-2026):** aviso fijo bajo el gráfico de la evolución («En euros corrientes de cada año, sin descontar la inflación»), con la variación del IPC del periodo (INE, tabla 76144, medias anuales; `datos/ipc.json`; de 2015 a 2024, +23,5 %). La nota explica la regla del 30 % y el ingreso residual (Stone, 2006) en §7.4 y §8. **Por revisar:** aviso fijo en lugar de un selector de euros constantes (propuesta; el selector podría añadirse sin datos nuevos).
 
-**46. Revisión de las preguntas 43–48** (antes, tarea 32; plan §11) · HECHA salvo el fichero de Registradores (11-nov-2026). Sigue igual, con dos cambios:
+**46. Revisión de las preguntas 43–48** (antes, tarea 32; plan §11) · HECHA (11-nov-2026). Sigue igual, con dos cambios:
 - 43 h: dos sueldos con 70 m² se aplica también a «Entrar».
 - 45 a: el indicador 11 sale de Registradores. **Nivel: provincia** (decisión del autor, 10-nov-2026, que sustituye al municipio de la pregunta 45): es el único que publica la fuente abierta.
 - **Hecho (11-nov-2026):**
@@ -267,7 +267,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
   - 46 e: prórrogas como resoluciones nuevas (`prorroga_de`), con su compuerta.
   - 47 a, c, d y g: `historico.parquet` en el paquete; tipos con D_IMVTIPLV y la referencia MIBOR (hasta 1998) y euríbor (desde 1999) como índices distintos; nota del sueldo de la Contabilidad Nacional; la revisión del Banco de España, alerta.
   - 48 a y g: los seis meses del CIS solo en PDF, transcritos en `inventario/cis_transcripcion_pdf.csv` con su compuerta; criterio de F6, «avisa».
-- **Falta:** el fichero de Registradores. Al dejarlo en `datos/brutos/registradores/RP_ComprvResid_2007-2t2026.csv`, conectar el bloque de la cabecera de `R/fuente_registradores.R` (con `larga_registradores` en la tabla larga y `fichero_registradores` en el calendario) y ejecutar `tar_make()`. Lo demás por revisar: plan §11, pregunta 57.
+- **Hecho (11-nov-2026), el fichero de Registradores:** `RP_ComprvResid_2007-2t2026.csv` en `datos/brutos/registradores/` (copiado por decisión del autor) y el bloque conectado en `bloque_compraventa` (`larga_registradores` en `larga_compraventa`, `fichero_registradores` en el calendario). El 11 de 2015 a 2025, 52 provincias, 19 comunidades y España (2.283,52 €/m² en 2025); pasan las ocho compuertas `registradores_*` y la de detalle avisa en Santa Cruz de Tenerife, 2022 (1,41). En la web, mapa provincial a toda escala (`nivel_minimo` «provincia»: municipios y secciones apagados), ficha, diccionario y descargas; siete tramos con su fila de `inventario/cortes_web_niveles.csv` (`anclado_septiles`, 950 a 2.550 €/m²; tarea 51) y, en `cortes_web`, 1.000 · 1.250 · 1.500 · 2.000 · 2.500 €/m². Además, el 17 con la renta por hogar publicada por el INE en provincias, comunidades y España (tabla 53689; compuerta `compraventa_renta_*`). Lo demás por revisar: plan §11, pregunta 57.
 
 ## Bloque D · Lo que faltaba de la v1.0
 
@@ -276,18 +276,23 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 - Secciones de 2021 `estimado`: 5.446 (Censo) y 5.497 (viviendas turísticas), frente a 11.043 con solo el callejero. Cierre exacto; 19 excepciones de cobertura y 2 secciones sin paso.
 - Por revisar (CHANGELOG): agosto de 2023 (mezcla seccionados), edificios hasta 2020 en la tabla de las viviendas turísticas, las excepciones de cobertura y las secciones sin paso (leer el Catastro de esos municipios sería otra descarga).
 
-**48. Módulo de supuestos.** Superficie, umbral, pagas y segundo sueldo, documentados y validados en una muestra (plan, F3). Incluye la superficie típica del municipio.
+**48. Módulo de supuestos · HECHA (11-nov-2026), salvo una decisión.** Superficie, umbral, pagas y segundo sueldo, documentados y validados en una muestra (plan, F3). Incluye la superficie típica del municipio.
+- Hecho: `inventario/supuestos.csv`, fuente única de los supuestos (superficie de una persona, 50 m², y de dos sueldos, 70, con las opciones 50, 70 y 90; umbral del 30 o del 40 %; tramos de «¿te llega?»; 12 o 14 pagas; segundo sueldo; vivienda tipo de la compraventa), con su unidad, uso y decisión. R lo lee al cargar las funciones (`R/comun_supuestos.R`; las constantes de los derivados salen de él, con los mismos valores) y la web por `web/js/supuestos.js`, generado (`sueldo.js` y `estado.js` ya no llevan cifras propias). Nota, §6.7.
+- Superficie típica de los pisos alquilados (decisión 5) con el SERPAVI que ya está en el pipeline, de la sección a la comunidad y de 2015 a 2024 (objetivo `superficie_tipica`): 82,1 m² de mediana en los 2.555 municipios de 2024; 62 en Madrid, 66 en Barcelona y 83 en València. Ni el Catastro de F1 ni el Censo 2021 por sección traen superficie de las viviendas: sin descarga nueva.
+- Compuerta `supuestos_*` (`validacion_supuestos`) en una muestra de 14 territorios × las 40 combinaciones de «Tu ficha» y las tres fichas de una persona: con los supuestos por defecto reproduce los indicadores 21 y 15 de la tabla larga; los casos, en `pruebas/datos/supuestos_muestra.json`, que comprueban R (`test-supuestos.R`) y la página (`pruebas/web/supuestos.test.mjs`).
+- **Falta (decisión del autor; plan §11, pregunta 59):** si «Tu ficha» y la ficha de municipio ofrecen la superficie típica, y si por defecto en lugar de 50 m². La cuenta está preparada en la web (`superficieTipica`), sin usar. **Decidido y hecho (11-nov-2026):** opción «Típica» en «Tu ficha» (la del municipio de la sección de la ficha, del territorio elegido o del municipio del centro de la vista), sin cambiar los 50 m² por defecto, y línea en la ficha de municipio; la muestra de `validacion_supuestos` toma en las secciones la de su municipio.
 
 **49. Primeras historias.** Dos o tres, y una de ellas, la brecha entre entrar y quedarse. Con cifras de la compuerta y enlace a su vista del mapa.
 
 ## Bloque E · Web
 
-**50. Móvil.**
+**50. Móvil · HECHA (11-nov-2026).**
 - El mapa empieza tras unos 450 px de controles, y la ficha se abre dos pantallas más abajo al tocar una sección.
 - La ficha se abre sobre el mapa o la página se desplaza a ella; controles plegables; menú sin desplazamiento horizontal.
 - **Hecho cuando:** a 375 px, tocar un territorio deja su ficha a la vista sin desplazarse.
+- **Hecho (11-nov-2026):** por debajo de 760 px, la ficha va antes que «Tu sueldo» y, al tocar el mapa, la página baja hasta ella (`web/js/movil.js`); menú en dos líneas; mapa en una fila de la barra y año en otra, con «Más opciones», que pliega la tipología y las descargas. A 375 × 812: el mapa empieza a unos 360 px (antes, 450) y, tras tocar Madrid, la ficha queda a 8 px del borde de arriba (antes, a 921 px). A 1280 y 1920, sin desbordes; solo la línea de transparencia bajo el mapa. Prueba en el navegador (`navegador_movil`) y `pruebas/web/movil.test.mjs`. **Por revisar** (plan §11, pregunta 58): ficha con desplazamiento y no encima del mapa; el mapa a 62vh pasa un poco del borde de un móvil de 812 px.
 
-**51. Lectura del mapa.**
+**51. Lectura del mapa.** · HECHA (11-nov-2026): siete tramos con tres juegos de cortes por indicador (sección, municipio, y provincia y comunidad) leídos de `inventario/cortes_web_niveles.csv`; la página pinta cada escala con su juego y la leyenda cambia de regla al acercar o alejar el mapa, con aviso y, en los juegos anclados, «tramos fijados con el último año». Rampa de siete pasos (0,075 en OKLab como mínimo con deuteranopía; `rampa_daltonismo` a 0,07). Cortes revisados a mano (alquiler mensual por municipio, variación del alquiler, juegos de provincia y comunidad) y recalculados (17, que ya divide por la renta por hogar, y 21, cuyas filas eran del mínimo de 50 m²). Compuerta `web_tramos` (alerta) y prueba de navegador `navegador_leyenda`. Leyenda abierta al entrar (en el móvil, bajo el mapa), sin contorno de sección por debajo del zoom 9, indicador de carga y Canarias en la vista inicial. Detalle en `CHANGELOG.md` y en la nota (§9.2). **Escala relativa al municipio · HECHA (11-nov-2026, decisión del autor):** a escala de sección, la leyenda ofrece «Tramos: De España · De <municipio>», con los septiles de las secciones del municipio de la ficha (o, sin ficha, del centro de la vista) en el año y la serie que se ven, calculados en la página (`web/js/escala_municipio.js`), redondeados a pasos de 1, 2, 2,5 o 5 por una potencia de 10; por defecto, la escala nacional; solo en los mapas con juego de la sección y en municipios con 14 secciones con dato o más; las secciones de fuera, sin color; la URL (`escala=municipio`) y el PNG llevan la escala. En 2024, con los cortes de la sección, el tramo más alto se lleva el 87 % de las secciones de Madrid y el 95 % de las de Barcelona en el alquiler mensual; con sus septiles, de 299 a 434 secciones por tramo en Madrid (de 2.421) y de 137 a 176 en Barcelona (de 1.061). Pruebas: `pruebas/web/escala_municipio.test.mjs` y `navegador_escala_municipio`. La capa de portales recibe los juegos (`cortes_niveles` en `portales_exportar_web()`).
 - Saturación: en el tramo más alto está el 64 % de las secciones de Madrid y el 84 % de las de Barcelona. Opción de escala relativa al municipio, o más tramos por arriba.
 - **Diagnóstico de los tramos (10-nov-2026; último año de cada serie, reparto de los territorios con dato entre los tramos de `cortes_web`):**
 
@@ -340,15 +345,17 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 - Indicador de carga: hoy hay de 5 a 8 segundos en blanco.
 - Canarias dentro de la vista inicial.
 
-**52. Portada al día.**
+**52. Portada al día · HECHA (11-nov-2026), salvo las cifras de «entrar».**
 - Cartas con las cifras nuevas: sueldo para entrar, brecha, sueldo necesario real.
 - Casillas «Zona tensionada» y «Tasación», activas: sus mapas ya existen.
+- **Hecho (11-nov-2026):** el sueldo necesario real y el mínimo de 50 m² ya salían del pipeline (tarea 40; `portada.json`, compuerta `portada_valores`); el sueldo para entrar y la brecha, como cartas «próximamente», sin cifras ni enlace, como la familia «entrar» (`FAMILIAS_PROXIMAMENTE`); «Zona tensionada» (con una vista de municipios: el 20 no tiene otra escala) y «Tasación», activas (`inventario/casillas_portada.csv`, compuerta `portada_casillas`). **Falta:** las cifras de «entrar», por tramos, cuando Idealista autorice (decisiones 17–19).
 
-**53. Transparencia.**
+**53. Transparencia · HECHA (11-nov-2026).**
 - «Avisar de un error» y fe de erratas en la web.
 - Fecha de los datos, visible en el mapa.
 - «Método en dos páginas» (ES y EN), enlazado desde la ficha: qué mide cada familia y a quién deja fuera.
 - **Avance (10-nov-2026):** borrador en castellano, `docs/metodo_corto.md`. Falta la versión inglesa, enlazarlo desde la web y la fe de erratas.
+- **Hecho (11-nov-2026):** «Avisar de un error» (incidencias del repositorio) bajo el mapa, al pie de la ficha y en la portada; fecha de los datos bajo el mapa, del manifiesto (`web/js/transparencia.js`); «Método en dos páginas» revisado contra las cifras actuales y sin cifras de Idealista, en castellano e inglés (`docs/metodo_corto.md`, `docs/short_method.md`), generado por el flujo de Pages (`metodo_corto.html`, `short_method.html`) y enlazado desde la ficha; fe de erratas al final, desde `inventario/erratas.csv` (`web/herramientas/pagina_metodo_corto.mjs`), hoy vacía. Pruebas: `pruebas/web/transparencia.test.mjs`. **Por revisar** (plan §11, pregunta 58): si los cambios de las tareas 40 y 41 cuentan como erratas de la v0.4.0. Las páginas se ven en el sitio con la próxima publicación.
 
 ## Bloque F · Ingeniería
 
@@ -356,11 +363,11 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 - **Hecha en local (11-nov-2026), falta la primera ejecución en GitHub:** `.github/workflows/pruebas.yml`, con cada push y cada *pull request*: la batería de `testthat` entera con `renv` (caché y paquetes compilados de Posit Package Manager) y `node --test pruebas/web/*.test.mjs`. Las pruebas que piden datos ya se saltaban solas; en una copia limpia del repositorio pasan todas las demás (`pruebas/LEEME.md`).
 - Por revisar tras el primer push: tiempo sin caché, versiones de `renv.lock` en binario, pruebas del mapa base con el GDAL de Ubuntu y uso de las acciones de r-lib (CHANGELOG).
 
-**55. Avisos del pipeline (93).**
+**55. Avisos del pipeline (93) · HECHA (11-nov-2026).**
 - 56 de geometría sobre coordenadas geográficas: proyectar antes de calcular el punto interior.
 - 6 «NA introducidos por coerción» en el módulo de salarios que alimenta la mochila: explicarlos o corregirlos.
 - **Hecho cuando:** cada aviso que quede está justificado en `docs/actualizacion.md`.
-- **Hecha (11-nov-2026), salvo un cambio preparado:** los 6 de coerción, corregidos (`aeat_sangria()`: sangría en píxeles); los que quedan, justificados en `docs/actualizacion.md` («Avisos de `tar_make()`»). Los 56 de geometría tienen el cambio preparado sin ejecutar (`punto_interior()`): rehace `edificios_foral` y las tablas de paso del Catastro, unos 21 minutos, y hasta 48 si cambia alguna tabla. Lo decide el autor.
+- **Hecha (11-nov-2026):** los 6 de coerción, corregidos (`aeat_sangria()`: sangría en píxeles); los que quedan, justificados en `docs/actualizacion.md` («Avisos de `tar_make()`»). Los 56 de geometría, corregidos con `punto_interior()` en `leer_catastro_foral()` (autorizado por el autor): rehízo `edificios_foral` (7 min 45 s) y las diez `paso_catastro_*` (unos 13 min); ningún edificio foral cambia de sección y las tablas de paso salen idénticas, así que las compuertas de F1 y de las tablas de paso no cambian. Queda el aviso de Gipuzkoa (`b5mdev`), justificado.
 
 **56. Limpieza · HECHA (11-nov-2026).**
 - Fichero `0` de la raíz, fuera de git: borrado (salida de una redirección mal escrita) y `.gitignore` al día. Falta que el autor registre el borrado en git.
@@ -375,7 +382,10 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 
 ## Bloque G · Verificación y v1.0
 
-**59. Rederivar a mano** diez cifras de F4–F6 y cinco de «Entrar», desde los ficheros de la fuente.
+**59. Rederivar a mano** diez cifras de F4–F6 y cinco de «Entrar», desde los ficheros de la fuente. · **HECHA (11-nov-2026).**
+- `pruebas/rederivar/rederivar.R`, sin cargar `R/` ni leer objetivos para la cifra a mano: dieciséis cifras de F4 a F6 (10, 11, 12, 16, 17, 20, histórico y CIS) desde `datos/brutos/`, frente a la tabla larga, el histórico y la web; `pruebas/rederivar/rederivar_entrar.R`: cinco de «Entrar» y la superficie típica, con las cifras exactas solo en `datos/intermedios/rederivar/` y en el repositorio «coincide / no coincide» y el tramo de la brecha. Tabla y método en `docs/rederivacion.md`.
+- Coinciden 15 de 16 y las cinco de «Entrar». No coincide el 17 de 2024 (Madrid: 30,43 a mano, 30,40 en el atlas): la media del tipo del Banco de España de 2024 es exactamente 3,465 y `sprintf("%.2f")` la deja en 3,46 (el binario queda por debajo); con el empate hacia arriba, 3,47. Afecta a todo el 17 de 2024, unos 0,03 puntos. Sin cambiar: lo decide el autor (plan §11, pregunta 59).
+- **Decidido y aplicado (11-nov-2026), decisión del autor:** el tipo se redondea con el empate hacia arriba (`redondear_empate_arriba()`, 3,47 % en 2024) y la rederivación coincide en las dieciséis cifras (Madrid, 30,43 a mano y en el atlas). En la misma tanda, el 17 de provincias y comunidades donde el INE no publica la renta por hogar pasa a `ausente` (22 cifras) y España sigue `estimado`.
 
 **60. Lectura externa.** Una persona que no haya participado revisa la nota corta y el mapa antes de anunciar. El autor decide quién.
 

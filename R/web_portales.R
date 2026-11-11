@@ -23,9 +23,11 @@ DIR_WEB_PORTALES <- file.path("datos", "portales")
 # Exportación de la capa encendida. `larga`: armonizar_portales(); `anual`: anualizar_portales();
 # `portales`: la capa mensual (para el último mes). Borra antes lo exportado la vez anterior.
 # `entrar` (entrar_tramos_web()) y `tramos_entrar` (inventario/entrar_tramos.csv): los tramos de
-# «entrar» (tarea 37), si los hay.
+# «entrar» (tarea 37), si los hay. `cortes_niveles` (leer_cortes_niveles()): los juegos de cortes por
+# escala de la tarea 51, como en la exportación general (mapas_web()).
 portales_exportar_web <- function(larga, anual, portales, indicadores, jerarquia, territorios, vocabulario = NULL,
-                                  dir_web = "web", fecha = format(Sys.Date()), entrar = NULL, tramos_entrar = NULL) {
+                                  dir_web = "web", fecha = format(Sys.Date()), entrar = NULL, tramos_entrar = NULL,
+                                  cortes_niveles = NULL) {
   dir <- file.path(dir_web, DIR_WEB_PORTALES)
   unlink(dir, recursive = TRUE)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
@@ -58,7 +60,7 @@ portales_exportar_web <- function(larga, anual, portales, indicadores, jerarquia
   manifiesto <- list(capa = "portales", activa = TRUE,
                      version = if (nrow(catalogo)) max(catalogo$version) else fecha, generado = fecha,
                      indicadores = if (length(entradas)) entradas else structure(list(), names = character()),
-                     mapas = mapas_web(catalogo, indicadores, vocabulario))
+                     mapas = mapas_web(catalogo, indicadores, vocabulario, cortes_niveles))
   if (!length(manifiesto$mapas)) manifiesto$mapas <- structure(list(), names = character())
   # Tarea 37: tramos de la brecha (solo el tramo; decision 18)
   if (!is.null(entrar) && !is.null(tramos_entrar) && any(!is.na(entrar$tramo))) {

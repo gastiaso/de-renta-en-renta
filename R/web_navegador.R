@@ -26,7 +26,10 @@
 #   navegador_casillas: el destino de cada casilla activa, en los dos idiomas, existe (página y ancla);
 #   navegador_tu_sueldo: «¿Te llega?» de la portada abre el mapa en «¿te llega?» con el sueldo, que
 #     no aparece en la consulta;
-#   navegador_movil: a 375 px de ancho, ni la portada ni el mapa desbordan;
+#   navegador_movil: a 375 px de ancho, ni la portada ni el mapa desbordan; en el mapa (tarea 50), el
+#     menú no se desplaza en horizontal, la tipología y las descargas salen plegadas y, al tocar
+#     el mapa, la ficha de lo tocado queda a la vista (su borde de arriba, en la mitad de arriba de
+#     la pantalla) sin desplazarse a mano;
 #   navegador_territorio: la ficha de una comunidad, una provincia y un municipio (?territorio=…)
 #     da la cifra y el estado de la tabla larga en su nivel (tarea 26);
 #   navegador_clic: con el ratón sobre el mapa en cada escala (comunidad, provincia, municipio y
@@ -37,6 +40,21 @@
 #     pública; la leyenda, una muestra por categoría; a escala de sección, el clic abre la ficha del
 #     municipio; con una sección en la dirección, la ficha es la de su municipio; y la del valor
 #     tasado (12) de un municipio da la cifra de la tabla larga.
+#   navegador_leyenda (tarea 51): en el sueldo necesario, desde la sección y alejando el mapa con el
+#     botón, la leyenda (abierta) lleva en cada escala (sección, municipio y provincia) los cortes de
+#     su juego en el manifiesto, con un tramo más, y avisa al cambiar de juego; en los juegos
+#     anclados, la nota del año de anclaje.
+#   navegador_escala_municipio (decisión del autor, 11-nov-2026): con ?escala=municipio y una sección
+#     de Madrid o de Barcelona, en la renta por hogar y el alquiler mensual, la leyenda lleva seis
+#     cortes en orden y siete tramos, la línea «no comparables» con el municipio y sus secciones con
+#     dato (las de la tabla larga), la clave de las secciones de fuera y, con los valores de la tabla
+#     larga, ningún tramo vacío ni con más de dos séptimos de las secciones; «De España» vuelve a los
+#     cortes del juego de la sección y quita la escala de la dirección; en un municipio con menos de
+#     14 secciones con dato, la opción no se puede elegir.
+#   navegador_superficie_tipica (ídem): la ficha de municipio de Madrid da su superficie típica, la de
+#     la tabla larga (alquiler mensual / alquiler por m², vivienda colectiva);
+#   navegador_una_escala (ídem): en el mapa del 11 (provincial), un municipio en la dirección abre la
+#     ficha de su provincia.
 # `larga`: la tabla larga (tar_read(tabla_larga)); `perfiles`: tar_read(perfiles), para el
 # ingreso de la tartera que usa la web. El mapa está en mapa.html; la raíz es la portada.
 
@@ -106,6 +124,23 @@ JS_FICHA_NAVEGADOR <- r"(
     limite: Boolean(f?.querySelector('.ficha-limite')),
     sin_contratos: texto.includes(t('interfaz.ficha.sin_contratos.VC')),
     ejemplo: !document.getElementById('aviso-ejemplo')?.hidden,
+  });
+})()
+)"
+
+# Tarea 50: en el mapa a 375 px, anchos del menú (el que ocupa y el que tiene), si la barra está
+# plegada, el centro del mapa en la ventana y el borde de arriba de la ficha frente al alto.
+JS_MOVIL_NAVEGADOR <- r"(
+(() => {
+  const nav = document.querySelector('.navegacion');
+  const r = document.getElementById('mapa').getBoundingClientRect();
+  return JSON.stringify({
+    menu: [nav.scrollWidth, nav.clientWidth],
+    plegada: document.getElementById('barra-vista')?.dataset.plegada === 'true'
+      && getComputedStyle(document.getElementById('vista-descargas')).display === 'none',
+    centro: [r.left + r.width / 2, r.top + Math.min(r.height, innerHeight - r.top) / 2],
+    ficha: [document.getElementById('ficha').getBoundingClientRect().top],
+    alto: innerHeight,
   });
 })()
 )"
@@ -287,6 +322,8 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
   # Front page, map by levels (tasks 24-26) and phone width
   filas <- c(filas, comprobar_portada_navegador(b, evaluar, url, larga, perfiles, espera),
              comprobar_territorios_navegador(b, evaluar, url, larga, espera),
+             comprobar_leyenda_navegador(b, evaluar, url, espera),   # tarea 51
+             comprobar_escala_municipio_navegador(b, evaluar, url, larga, espera),   # decisiones del 11-nov-2026
              comprobar_municipales_navegador(b, evaluar, url, larga, raiz, espera))   # F5
 
   # Sample recomputed with the page modules
@@ -408,6 +445,27 @@ comprobar_portada_navegador <- function(b, evaluar, url, larga, perfiles, espera
     anchos <- if (ok) jsonlite::fromJSON(evaluar("JSON.stringify([document.documentElement.scrollWidth, window.innerWidth])")) else c(1, 0)
     filas[[length(filas) + 1L]] <- fila("navegador_movil", paste("375 px:", if (pagina == "") "portada" else pagina), anchos[1] > anchos[2])
   }
+  # Task 50: at 375 px the menu wraps (no horizontal scroll), the secondary controls start folded
+  # and tapping the map leaves the profile of what was tapped in view, without scrolling by hand
+  b$Page$navigate(paste0(url, "mapa.html?mapa=sueldo_necesario&vista=6.00/40.41680/-3.70380"))
+  ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-vacia') && document.querySelector('.maplibregl-canvas')", espera)
+  Sys.sleep(3)
+  m <- if (ok) jsonlite::fromJSON(evaluar(JS_MOVIL_NAVEGADOR)) else NULL
+  filas[[length(filas) + 1L]] <- fila("navegador_movil", "375 px: menú sin desplazamiento horizontal",
+                                      is.null(m) || m$menu[1] > m$menu[2])
+  filas[[length(filas) + 1L]] <- fila("navegador_movil", "375 px: tipología y descargas plegadas al entrar",
+                                      is.null(m) || !isTRUE(m$plegada))
+  if (!is.null(m)) {
+    evaluar("window.scrollTo(0, 0); true")
+    b$Input$dispatchMouseEvent(type = "mousePressed", x = m$centro[1], y = m$centro[2], button = "left", clickCount = 1)
+    b$Input$dispatchMouseEvent(type = "mouseReleased", x = m$centro[1], y = m$centro[2], button = "left", clickCount = 1)
+    ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-codigo')", 20)
+    Sys.sleep(1.5)   # the smooth scroll
+  }
+  f <- if (!is.null(m) && ok) jsonlite::fromJSON(evaluar(JS_MOVIL_NAVEGADOR)) else NULL
+  filas[[length(filas) + 1L]] <- fila("navegador_movil", sprintf("375 px: la ficha a la vista al tocar el mapa (borde de arriba en %s px de %s)",
+                                                                 f$ficha[1] %||% NA, f$alto %||% NA),
+                                      is.null(f) || f$ficha[1] < 0 || f$ficha[1] > f$alto / 2)
   restaurar()
   filas
 }
@@ -466,7 +524,130 @@ comprobar_territorios_navegador <- function(b, evaluar, url, larga, espera = 60)
   filas
 }
 
-# F5: mapas sin sección (indicador 20, zonas tensionadas, y los de F4) y de categorías (navegador_municipal).
+# Tarea 51: la leyenda cambia de juego de cortes al cruzar de escala (navegador_leyenda). El mapa del
+# sueldo necesario se abre a escala de sección (zoom 7,5, en Madrid) y se aleja con el botón «Alejar»:
+# una vez hasta los municipios y dos más hasta las provincias. Cifras de la leyenda como las escribe la
+# página en castellano (punto de miles y coma decimal).
+comprobar_leyenda_navegador <- function(b, evaluar, url, espera = 60) {
+  fila <- function(detalle, mal) tibble::tibble(id = "navegador_leyenda", detalle = detalle, calculado = as.numeric(mal), referencia = 0)
+  leer <- "JSON.stringify({ cortes: [...document.querySelectorAll('#leyenda .leyenda-corte')].map((s) => s.textContent),
+    tramos: document.querySelectorAll('#leyenda .leyenda-tramo').length,
+    juego: document.querySelector('#leyenda .leyenda-juego')?.textContent ?? null,
+    cambio: Boolean(document.querySelector('#leyenda .leyenda-juego-cambio')),
+    anclaje: document.querySelector('#leyenda .leyenda-anclaje')?.textContent ?? null,
+    abierta: Boolean(document.querySelector('#leyenda details[open]')) })"
+  numero <- function(x) as.numeric(sub(",", ".", gsub(".", "", unlist(x), fixed = TRUE), fixed = TRUE))
+  b$Page$navigate(sprintf("%smapa.html?mapa=sueldo_necesario&vista=7.50/40.41680/-3.70380", url))
+  ok <- esperar_navegador(evaluar, "document.querySelector('#leyenda .leyenda-corte') && document.getElementById('mapa-cargando')?.hidden !== false", espera)
+  if (!ok) return(list(fila("sueldo_necesario: la leyenda no aparece", TRUE)))
+  m <- jsonlite::fromJSON(evaluar("fetch('datos/manifiesto.json').then((r) => r.text())"), simplifyVector = FALSE)
+  juegos <- m$mapas$sueldo_necesario$juegos
+  if (is.null(juegos)) return(list(fila("sueldo_necesario: el manifiesto no trae juegos de cortes", TRUE)))
+  filas <- list()
+  for (paso in list(list(juego = "seccion", alejar = 0L, cambio = FALSE), list(juego = "municipio", alejar = 1L, cambio = TRUE),
+                    list(juego = "provincia_ccaa", alejar = 2L, cambio = TRUE))) {
+    for (k in seq_len(paso$alejar)) {
+      evaluar("document.querySelector('.maplibregl-ctrl-zoom-out').click()")
+      Sys.sleep(1.5)
+    }
+    Sys.sleep(1)
+    l <- jsonlite::fromJSON(evaluar(leer), simplifyVector = FALSE)
+    j <- juegos[[paso$juego]]
+    esperados <- as.numeric(unlist(j$cortes))
+    leidos <- numero(l$cortes)
+    mal <- is.null(j) || !isTRUE(l$abierta) || l$tramos != length(esperados) + 1L || length(leidos) != length(esperados) ||
+      any(abs(leidos - esperados) > 1e-9) || is.null(l$juego) || !identical(isTRUE(l$cambio), paso$cambio) ||
+      (startsWith(j$metodo %||% "", "anclado") && is.null(l$anclaje))
+    filas[[length(filas) + 1L]] <- fila(sprintf("sueldo_necesario, %s: %s (%s)", paso$juego, paste(l$cortes, collapse = " "),
+                                                l$juego %||% "sin l\u00ednea de escala"), mal)
+  }
+  filas
+}
+
+# Decisiones del autor del 11-nov-2026: escala relativa al municipio (navegador_escala_municipio),
+# superficie típica en la ficha de municipio (navegador_superficie_tipica) y ficha de la provincia en
+# el mapa provincial del 11 (navegador_una_escala). Cifras de la leyenda como las escribe la página en
+# castellano. El reparto por tramos se cuenta con los valores de la tabla larga del último año.
+comprobar_escala_municipio_navegador <- function(b, evaluar, url, larga, espera = 60) {
+  fila <- function(id, detalle, mal) tibble::tibble(id = id, detalle = detalle, calculado = as.numeric(mal), referencia = 0)
+  numero <- function(x) as.numeric(sub(",", ".", gsub(".", "", unlist(x), fixed = TRUE), fixed = TRUE))
+  leer <- "JSON.stringify({ cortes: [...document.querySelectorAll('#leyenda .leyenda-corte')].map((s) => s.textContent),
+    tramos: document.querySelectorAll('#leyenda .leyenda-tramo').length,
+    linea: document.querySelector('#leyenda .leyenda-relativa')?.textContent ?? null,
+    botones: [...document.querySelectorAll('#leyenda .leyenda-escala button')].map((x) => ({ escala: x.dataset.escala, pulsado: x.getAttribute('aria-pressed') === 'true', desactivado: x.disabled })),
+    fuera: Boolean(document.querySelector('#leyenda .leyenda-fuera-municipio')),
+    busqueda: location.search })"
+  valores_sc <- function(indicador, municipio) {
+    x <- larga[larga$indicador == indicador & larga$nivel == "sc" & startsWith(larga$geo_id, municipio) &
+                 (indicador != "alquiler_mes" | (larga$corte == "tipologia" & larga$grupo == "VC")) &
+                 (indicador == "alquiler_mes" | larga$corte == "total"), ]
+    x <- x[x$anio == max(x$anio) & x$estado %in% c("dato", "estimado") & !is.na(x$valor), ]
+    redondeo_guia(x$valor)
+  }
+  filas <- list()
+  casos <- list(c("renta_hogar", "28079", "2807901001", "40.41680/-3.70380", "Madrid"),
+                c("alquiler_mes", "28079", "2807901001", "40.41680/-3.70380", "Madrid"),
+                c("renta_hogar", "08019", "0801901001", "41.38700/2.17000", "Barcelona"),
+                c("alquiler_mes", "08019", "0801901001", "41.38700/2.17000", "Barcelona"))
+  for (cs in casos) {
+    b$Page$navigate(sprintf("%smapa.html?mapa=%s&seccion=%s&escala=municipio&vista=12.00/%s", url, cs[1], cs[3], cs[4]))
+    ok <- esperar_navegador(evaluar, "document.querySelector('#leyenda .leyenda-relativa') && document.querySelectorAll('#leyenda .leyenda-corte').length > 0", espera)
+    l <- if (ok) jsonlite::fromJSON(evaluar(leer), simplifyVector = FALSE) else NULL
+    v <- valores_sc(cs[1], cs[2])
+    cortes <- if (is.null(l)) numeric(0) else numero(l$cortes)
+    reparto <- if (length(cortes)) tabulate(findInterval(v, cortes) + 1L, nbins = length(cortes) + 1L) else integer(0)
+    n_linea <- if (is.null(l$linea)) NA_real_ else numero(regmatches(l$linea, regexpr("[0-9.]+(?= secciones)", l$linea, perl = TRUE)))
+    mal <- is.null(l) || length(cortes) != 6L || is.unsorted(cortes, strictly = TRUE) || l$tramos != 7L ||
+      !grepl(cs[5], l$linea, fixed = TRUE) || !grepl("no comparables", l$linea, fixed = TRUE) ||
+      !identical(n_linea, as.numeric(length(v))) || !isTRUE(l$fuera) || !grepl("escala=municipio", l$busqueda, fixed = TRUE) ||
+      any(reparto == 0L) || any(reparto > 2 * length(v) / 7)
+    filas[[length(filas) + 1L]] <- fila("navegador_escala_municipio",
+                                        sprintf("%s %s: %s (reparto %s)", cs[1], cs[5], paste(l$cortes, collapse = " "), paste(reparto, collapse = "/")), mal)
+  }
+  # "De Espana": vuelve a los cortes del juego de la seccion y la escala sale de la direccion
+  evaluar("document.querySelector('#leyenda .leyenda-escala button[data-escala=\"nacional\"]')?.click()")
+  ok <- esperar_navegador(evaluar, "!document.querySelector('#leyenda .leyenda-relativa') && !location.search.includes('escala=')", 20)
+  m <- jsonlite::fromJSON(evaluar("fetch('datos/manifiesto.json').then((r) => r.text())"), simplifyVector = FALSE)
+  l <- if (ok) jsonlite::fromJSON(evaluar(leer), simplifyVector = FALSE) else NULL
+  esperados <- as.numeric(unlist(m$mapas$alquiler_mes$juegos$seccion$cortes))
+  filas[[length(filas) + 1L]] <- fila("navegador_escala_municipio", "\u00abDe Espa\u00f1a\u00bb: cortes del juego de la secci\u00f3n",
+                                      is.null(l) || !identical(numero(l$cortes), esperados) || isTRUE(l$fuera))
+  # Municipio con menos de 14 secciones con dato: la opcion no se puede elegir
+  pequenos <- larga[larga$indicador == "renta_hogar" & larga$nivel == "sc" & larga$corte == "total" & !is.na(larga$valor), ]
+  pequenos <- pequenos[pequenos$anio == max(pequenos$anio), ]
+  cuenta <- table(substr(pequenos$geo_id, 1, 5))
+  pequeno <- names(cuenta)[cuenta >= 3 & cuenta < 14][1]
+  if (!is.na(pequeno)) {
+    b$Page$navigate(sprintf("%smapa.html?mapa=renta_hogar&territorio=municipio:%s&escala=municipio", url, pequeno))
+    ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-codigo[data-nivel]') && document.querySelector('#leyenda .leyenda-corte')", espera)
+    # A escala de seccion, encuadrado en el municipio
+    ok <- ok && esperar_navegador(evaluar, "document.querySelectorAll('#leyenda .leyenda-escala button').length === 2", 30)
+    l <- if (ok) jsonlite::fromJSON(evaluar(leer), simplifyVector = FALSE) else NULL
+    municipal <- Filter(function(x) identical(x$escala, "municipio"), l$botones)
+    filas[[length(filas) + 1L]] <- fila("navegador_escala_municipio", sprintf("%s (%d secciones con dato): sin escala relativa", pequeno, cuenta[[pequeno]]),
+                                        is.null(l) || length(municipal) != 1L || !isTRUE(municipal[[1]]$desactivado) || !is.null(l$linea))
+  }
+  # Superficie tipica en la ficha de municipio (Madrid, ultimo anio del alquiler)
+  a <- larga[larga$geo_id == "28079" & larga$nivel == "municipio" & larga$corte == "tipologia" & larga$grupo == "VC" &
+               larga$indicador %in% c("alquiler_mes", "alquiler_m2"), ]
+  a <- a[a$anio == max(a$anio), ]
+  tipica <- redondeo_guia(a$valor[a$indicador == "alquiler_mes"]) / redondeo_guia(a$valor[a$indicador == "alquiler_m2"])
+  b$Page$navigate(paste0(url, "mapa.html?mapa=alquiler_mes&territorio=municipio:28079"))
+  ok <- esperar_navegador(evaluar, "[...document.querySelectorAll('#ficha .nota')].some((p) => p.textContent.startsWith('Superficie t\u00edpica'))", espera)
+  nota <- if (ok) evaluar("[...document.querySelectorAll('#ficha .nota')].find((p) => p.textContent.startsWith('Superficie t\u00edpica')).textContent") else ""
+  leida <- numero(regmatches(nota, regexpr("[0-9.,]+(?= m\u00b2)", nota, perl = TRUE)))
+  filas[[length(filas) + 1L]] <- fila("navegador_superficie_tipica", sprintf("28079 (%d): %s m\u00b2", max(a$anio), format(round(tipica))),
+                                      !ok || length(leida) != 1L || abs(leida - round(tipica)) > 1e-9)
+  # Mapa del 11 (provincial): un municipio abre la ficha de su provincia
+  b$Page$navigate(paste0(url, "mapa.html?mapa=precio_compra_m2&territorio=municipio:28065"))
+  ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-codigo[data-nivel]')", espera)
+  f <- if (ok) jsonlite::fromJSON(evaluar("JSON.stringify({ nivel: document.querySelector('#ficha .ficha-codigo').dataset.nivel, codigo: document.querySelector('#ficha .ficha-codigo').dataset.codigo })")) else NULL
+  filas[[length(filas) + 1L]] <- fila("navegador_una_escala", "precio_compra_m2 con municipio:28065: ficha de la provincia 28",
+                                      is.null(f) || !identical(f$nivel, "provincia") || !identical(f$codigo, "28"))
+  filas
+}
+
+# F5: mapas sin seccion (indicador 20, zonas tensionadas, y los de F4) y de categor\u00edas (navegador_municipal).
 # Los textos de las categorías, de web/i18n/es.json; las declaraciones, de inventario/zonas_tensionadas.csv.
 comprobar_municipales_navegador <- function(b, evaluar, url, larga, raiz = ".", espera = 60) {
   filas <- list()

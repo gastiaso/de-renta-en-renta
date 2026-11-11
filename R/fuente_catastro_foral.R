@@ -97,9 +97,8 @@ anio_construccion_foral <- function(e, columnas = c("beginning", "end", "anyPoin
 # los GML de Bizkaia y Navarra, en ETRS89 geográficas (EPSG:4258). Aquí la geometría pasa a
 # ETRS89 / UTM 30N (EPSG:25830, el sistema de las secciones), se toma el punto y vuelve a su
 # sistema. Con un sistema proyectado, es sf::st_point_on_surface() sin más.
-# PREPARADA, SIN USAR: leer_catastro_foral() la usaría en lugar de sf::st_point_on_surface(), pero
-# cambiar esa función rehace edificios_foral y lo que cuelga de ella (docs/actualizacion.md,
-# «Avisos de tar_make()»). Lo decide el autor.
+# En uso desde el 11-nov-2026 en leer_catastro_foral() (decisión del autor): rehízo edificios_foral
+# y las tablas de paso del Catastro (docs/actualizacion.md, «Avisos de tar_make()»).
 punto_interior <- function(geometria, crs_plano = 25830) {
   if (!isTRUE(sf::st_is_longlat(geometria))) return(sf::st_point_on_surface(geometria))
   crs <- sf::st_crs(geometria)
@@ -120,7 +119,7 @@ leer_catastro_foral <- function(zip) {
     e <- e[con_viviendas, ]
     sf::st_sf(viviendas = viviendas[con_viviendas],
               anio_construccion = anio_construccion_foral(e),
-              geometry = sf::st_point_on_surface(sf::st_make_valid(sf::st_geometry(e))))
+              geometry = punto_interior(sf::st_make_valid(sf::st_geometry(e))))
   })
   do.call(rbind, partes)
 }

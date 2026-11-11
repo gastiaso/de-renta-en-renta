@@ -92,7 +92,7 @@ entrar_limites_tramo <- function(tramo, b) {
 }
 
 # Piso de dos sueldos iguales: 70 m² por defecto, cambiable a 50 o 90 en la web (plan §11, pregunta 43 h).
-ENTRAR_SUPERFICIE_DOS <- 70
+ENTRAR_SUPERFICIE_DOS <- supuesto("superficie_dos_sueldos")   # inventario/supuestos.csv
 
 # Factores públicos por los que se multiplica el tramo de la brecha (mismo orden de operaciones que
 # FACTORES_ENTRAR de web/js/entrar.js): sueldo para entrar, sueldo de 50 m², barrera (proporción) y,

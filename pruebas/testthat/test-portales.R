@@ -85,7 +85,7 @@ test_that("la muestra manual se lee, pasa la compuerta y da un valor por año: m
 })
 
 test_that("la media anual redondea los empates hacia arriba y exige 9 meses", {
-  expect_equal(portales_redondear(c(7.575, 13.058333, 7.574999, 100.005)), c(7.58, 13.06, 7.57, 100.01))
+  expect_equal(redondear_empate_arriba(c(7.575, 13.058333, 7.574999, 100.005)), c(7.58, 13.06, 7.57, 100.01))
   mes <- function(n, valor) tibble::tibble(portal = "idealista", operacion = "alquiler", nivel = "municipio", geo_id = "28001",
                                            zona = NA_character_, nombre = "Uno", periodo = sprintf("2020-%02d", seq_len(n)),
                                            valor = valor, informe = "i", url = "https://ejemplo.invalid")

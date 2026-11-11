@@ -22,8 +22,8 @@
 # que el cuarto trimestre es el año natural: el valor anual del atlas es el del cuarto trimestre,
 # la media anual del €/m² de vivienda (no la media de los cuatro trimestres, que se solaparían).
 #
-# Objetivos, por conectar en _targets.R cuando esté el fichero (no antes: sin él, el pipeline se
-# pararía):
+# Objetivos, en bloque_compraventa de _targets.R (conectados el 11-nov-2026, con el fichero de
+# 2007-2t2026; sin él, registradores_descargar() para el pipeline y dice qué bajar):
 #   tar_target(fichero_registradores, registradores_descargar(), format = "file"),
 #   tar_target(registradores, registradores_leer(fichero_registradores)),
 #   tar_target(validacion_registradores, validar_referencias(bind_rows(
@@ -34,7 +34,7 @@
 #     registradores_armonizar(registradores, version = version_de(fichero_registradores)) |>
 #       validar_tabla_larga(indicadores, fuentes, vocabulario)
 #   }),
-# y larga_registradores en tabla_larga (bloque de compraventa). Incorporado el 10-nov-2026.
+# y larga_registradores en larga_compraventa y de ahí en tabla_larga. Incorporado el 10-nov-2026.
 
 REGISTRADORES_DIR <- file.path("datos", "brutos", "registradores")
 REGISTRADORES_PAGINA <- "https://opendata.registradores.org/dataset/dataset/compraventas-de-inmuebles-uso-residencial-por-provincia"

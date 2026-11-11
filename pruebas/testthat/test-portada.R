@@ -47,12 +47,13 @@ test_that("las casillas del CSV cumplen las reglas de la especificación", {
 test_that("la compuerta de las casillas detecta destinos mal puestos", {
   cs <- leer_casillas_portada(raiz_portada("inventario", "casillas_portada.csv"))
   mal <- cs
-  mal$destino[mal$id == "zona_tensionada"] <- "mapa.html"          # inactiva con destino
+  mal$destino[mal$id == "notaria"] <- "mapa.html"                  # inactiva con destino
   mal$destino[mal$id == "paga_alquiler"] <- "mapa.html?mapa=no_existe"
   mal$destino[mal$id == "mudanza"] <- "mapa.html?clave_rara=1"
   mal$destino[mal$id == "fianza"] <- "metodo.html#no-existe"
   mal$id[2] <- mal$id[1]
-  r <- comprobar_casillas_portada(mal, mapas = c("sueldo_necesario", "alquiler_mes", "viviendas_turisticas", "esfuerzo_residentes", "hogares_alquiler"),
+  r <- comprobar_casillas_portada(mal, mapas = c("sueldo_necesario", "alquiler_mes", "viviendas_turisticas", "esfuerzo_residentes", "hogares_alquiler",
+                                               "zona_tensionada", "valor_tasado_m2"),   # tarea 52
                                   anclas = list(metodo.html = "71-alquiler-indicadores-8-y-9", method.html = "71-rent-indicators-8-and-9"),
                                   claves_estado = claves_estado_web(raiz_portada("web", "js", "estado.js")))
   fallos <- r$detalle[r$calculado != r$referencia]

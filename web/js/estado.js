@@ -1,17 +1,21 @@
 // Estado de la vista en la URL, para que cada vista se pueda enlazar:
 //   ?idioma=es&mapa=sueldo_necesario&anio=2024&tipologia=VU&ficha=mochila&superficie=70&umbral=40
 //    &seccion=2807901001&comparar=municipio&vista=14.50/40.41680/-3.70380
-//    &territorio=municipio:28079
+//    &territorio=municipio:28079&escala=municipio
 // (anio = año o periodo de la serie del mapa, «2025-05»; sin él, el último; tipologia = VU para la
 // vivienda unifamiliar, sin ella la colectiva; vista = zoom/latitud/longitud; comparar = nivel o
 // código de otra sección; territorio = municipio, provincia o comunidad elegidos con un clic en
-// esas escalas, en lugar de una sección: tarea 26). Solo entran estas claves, validadas al leer y
-// al escribir. El mapa está en mapa.html; la raíz (la portada) manda a mapa.html los enlaces que
+// esas escalas, en lugar de una sección: tarea 26; superficie = 50, 70, 90 o «tipica», la superficie
+// típica del territorio que manda; escala = «municipio», tramos de las secciones relativos a su
+// municipio, escala_municipio.js; decisiones del autor del 11-nov-2026). Solo entran estas claves,
+// validadas al leer y al escribir. El mapa está en mapa.html; la raíz (la portada) manda a mapa.html los enlaces que
 // traen alguna de estas claves salvo el idioma (js/redireccion.js).
 //
 // El sueldo de «Tu sueldo» NO entra en la consulta: viaja en el enlace solo si la persona pulsa
 // «Compartir», con aviso previo (plan, §6.6), y entonces va tras «#», que el navegador no envía
 // al servidor. Al abrir un enlace así, se lee y se quita de la barra de direcciones.
+
+import { SUPUESTOS } from './supuestos.js';   // superficies, umbrales y pagas (tarea 48)
 
 const FICHAS = ['llave', 'mochila', 'tartera', 'transistor', 'peon'];
 const NIVELES_COMPARAR = ['distrito', 'municipio', 'provincia', 'ccaa', 'nacional'];
@@ -22,12 +26,13 @@ const VALIDAS = {
   anio: (v) => /^(19|20)\d{2}(-(0[1-9]|1[0-2]))?$/.test(v),
   tipologia: (v) => v === 'VC' || v === 'VU',
   ficha: (v) => FICHAS.includes(v),
-  superficie: (v) => ['50', '70', '90'].includes(v),
-  umbral: (v) => v === '30' || v === '40',
+  superficie: (v) => SUPUESTOS.superficies.map(String).includes(v) || v === 'tipica',
+  umbral: (v) => SUPUESTOS.umbrales.map(String).includes(v),
   seccion: (v) => /^\d{10}$/.test(v),
   comparar: (v) => /^\d{10}$/.test(v) || NIVELES_COMPARAR.includes(v),
   vista: (v) => /^\d{1,2}(\.\d+)?\/-?\d{1,2}(\.\d+)?\/-?\d{1,3}(\.\d+)?$/.test(v),
   territorio: (v) => /^(?:(?:ccaa|provincia):\d{2}|municipio:\d{5})$/.test(v),
+  escala: (v) => v === 'municipio',
 };
 export const CLAVES = Object.keys(VALIDAS);
 const NUMERICAS = ['anio', 'superficie', 'umbral'];
@@ -82,7 +87,7 @@ export function leerSueldoCompartido() {
   if (!p.has('sueldo')) return null;
   const numero = (clave) => {
     const x = Number(p.get(clave));
-    return Number.isFinite(x) && x > 0 && x <= 100000 ? x : null;
+    return Number.isFinite(x) && x > 0 && x <= SUPUESTOS.sueldo_maximo ? x : null;
   };
   const neto = numero('sueldo');
   history.replaceState(null, '', `${location.pathname}${location.search}`);

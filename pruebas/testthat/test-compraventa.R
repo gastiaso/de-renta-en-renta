@@ -257,6 +257,9 @@ test_that("17 con la renta neta por hogar del ADRH y el tipo del Banco de Españ
   tipo <- compraventa_tipo_bde(bde)
   expect_equal(tipo$anio, 2024L)
   expect_equal(tipo$tipo, 3.25)
+  # Empate exacto (media 3,465, la de 2024): hacia arriba, 3,47; sprintf() daría 3,46 (plan §11, pregunta 59 b)
+  bde$valor[1:12] <- rep(c(3.4, 3.53), 6)
+  expect_equal(compraventa_tipo_bde(bde)$tipo, 3.47)
   # Renta por hogar: el municipio, la publicada; la provincia, la comunidad y España, media ponderada por hogares
   renta <- tibble::tibble(anio = 2024L, nivel = c("municipio", "municipio", "seccion"), codigo = c("28079", "28006", "2807901001"),
                           indicador = "renta_hogar", valor = c(40000, 30000, 41000))
@@ -283,6 +286,56 @@ test_that("17 con la renta neta por hogar del ADRH y el tipo del Banco de Españ
   c0 <- comprobar_derivados_compraventa(d, larga_vt_prueba(), larga_sal_prueba(), tipo, renta_hogar = r)
   expect_true(all(c0$calculado[c0$id %in% c("compraventa_estado", "compraventa_rango")] == 0))
   expect_true(all(c0$calculado[c0$id == "compraventa_terminos"] < 1e-9))
+})
+
+test_that("17: renta por hogar publicada (tabla 53689) en provincia, comunidad y España, con su compuerta", {
+  renta <- tibble::tibble(anio = 2024L, nivel = c("municipio", "municipio"), codigo = c("28079", "28006"),
+                          indicador = "renta_hogar", valor = c(40000, 30000))
+  pesos <- tibble::tibble(anio = 2024L, seccion = c("2807901001", "2807901002", "2800601001"), poblacion = c(250, 750, 250),
+                          hogares = c(100, 300, 100))
+  terr <- tibble::tibble(codigo = c("28", "13"), nivel = c("provincia", "ccaa"), superior = c("13", "00"))
+  # La provincia y España, publicadas; la comunidad, sin cifra («ausente» en la tabla): queda «ausente», sin
+  # la media de sus municipios (cobertura municipal parcial; decisión del autor, 11-nov-2026)
+  publicada <- tibble::tibble(anio = 2024L, nivel = c("provincia", "ccaa", "nacional"), codigo = c("28", "13", "00"),
+                              sexo = "Total", indicador = "Renta neta media por hogar", estado = c("dato", "ausente", "dato"),
+                              valor = c(38200, NA, 37500))
+  r <- compraventa_renta_hogar(renta, pesos, terr, publicada = publicada)
+  expect_equal(r$renta[r$nivel == "provincia"], 38200)
+  expect_equal(r$e_renta[r$nivel == "provincia"], "dato")
+  expect_equal(r$renta[r$nivel == "nacional"], 37500)
+  expect_equal(r$renta[r$nivel == "ccaa"], NA_real_)
+  expect_equal(r$e_renta[r$nivel == "ccaa"], "ausente")
+  expect_equal(r$e_renta[r$nivel == "municipio"], c("dato", "dato"))
+  # Sin cifra de la provincia ni de España: la provincia, «ausente»; España, la media de sus municipios, «estimado»
+  sin_pub <- publicada |> dplyr::mutate(estado = c("ausente", "ausente", "ausente"), valor = NA_real_)
+  r2 <- compraventa_renta_hogar(renta, pesos, terr, publicada = sin_pub)
+  expect_equal(r2$e_renta[r2$nivel == "provincia"], "ausente")
+  expect_equal(r2$renta[r2$nivel == "nacional"], 38000)
+  expect_equal(r2$e_renta[r2$nivel == "nacional"], "estimado")
+  # ... y el 17: la provincia, «ausente» y sin valor; el municipio, con el suyo
+  vt <- larga_vt_prueba() |> dplyr::filter(geo_id %in% c("28079", "28", "00"))
+  d2 <- armonizar_derivados_compraventa(vt, larga_sal_prueba(), tibble::tibble(anio = 2024L, tipo = 3.47), renta_hogar = r2)
+  e2 <- d2[d2$indicador == "esfuerzo_hipotecario", ]
+  expect_equal(e2$estado[e2$geo_id == "28"], "ausente")
+  expect_true(is.na(e2$valor[e2$geo_id == "28"]))
+  expect_equal(e2$estado[e2$geo_id == "00"], "estimado")
+  expect_equal(e2$estado[e2$geo_id == "28079"], "dato")
+  c2 <- comprobar_derivados_compraventa(d2, vt, larga_sal_prueba(), tibble::tibble(anio = 2024L, tipo = 3.47), renta_hogar = r2)
+  expect_true(all(c2$calculado[c2$id %in% c("compraventa_estado", "compraventa_rango")] == 0))
+  # Compuerta: cobertura completa, desviación de la agregada (38.000) frente a la publicada
+  c0 <- comprobar_renta_hogar_publicada(renta, pesos, terr, publicada)
+  expect_equal(c0$calculado[c0$id == "compraventa_renta_cobertura"], 0)
+  expect_equal(c0$calculado[c0$id == "compraventa_renta_publicada" & c0$detalle == "provincia"], 100 * abs(38000 / 38200 - 1))
+  expect_equal(sum(c0$id == "compraventa_renta_publicada_detalle"), 2)   # provincia y España; la comunidad no tiene cifra
+  # Sin la comunidad en la tabla, la cobertura salta
+  c1 <- comprobar_renta_hogar_publicada(renta, pesos, terr, publicada[publicada$nivel != "ccaa", ])
+  expect_equal(c1$calculado[c1$id == "compraventa_renta_cobertura"], 1)
+  # Las filas sin cifra cuentan como presentes (ahí, el 17 de la provincia y la comunidad queda «ausente»)
+  c4 <- comprobar_renta_hogar_publicada(renta, pesos, terr, sin_pub)
+  expect_equal(c4$calculado[c4$id == "compraventa_renta_cobertura"], 0)
+  expect_equal(sum(c4$id == "compraventa_renta_publicada_detalle"), 0)
+  ref <- readr::read_csv(file.path("..", "..", "inventario", "referencias_validacion.csv"), show_col_types = FALSE)
+  expect_equal(setdiff(unique(c0$id), ref$id), character(0))
 })
 
 test_that("coherencia: superficie implícita de las escrituras sobre la tasación", {

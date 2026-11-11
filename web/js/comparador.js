@@ -30,6 +30,16 @@ const ORDEN_NIVELES = ['sc', 'distrito', 'municipio', 'provincia', 'ccaa', 'naci
 // Niveles con que se puede comparar un territorio de `nivel` (los que lo contienen).
 export const nivelesSuperiores = (nivel) => NIVELES_COMPARAR.filter((n) => ORDEN_NIVELES.indexOf(n) > ORDEN_NIVELES.indexOf(nivel));
 
+// Territorio de la ficha en un mapa cuyo nivel más fino es `minimo` (`nivel_minimo` del manifiesto:
+// «municipio» o «provincia»; tarea 46 y decisión del autor del 11-nov-2026): una sección o un
+// municipio más finos que él se ven en la ficha del territorio de ese nivel que los contiene; lo
+// demás, tal cual. Con 'sc', nada cambia.
+export function territorioEnNivel({ nivel, codigo }, minimo = 'sc') {
+  const cifras = { municipio: 5, provincia: 2 }[minimo];
+  if (!cifras || ORDEN_NIVELES.indexOf(nivel) >= ORDEN_NIVELES.indexOf(minimo)) return { nivel, codigo };
+  return { nivel: minimo, codigo: String(codigo).slice(0, cifras) };
+}
+
 // Código del territorio con el que se compara una sección (o, con `nivel`, un municipio, una
 // provincia o una comunidad: tarea 26). null si `comparar` no contiene al territorio.
 export function codigoComparado(seccion, comparar, territorios, nivel = 'sc') {

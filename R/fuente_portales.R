@@ -243,17 +243,10 @@ anualizar_portales <- function(portales, desde = PORTALES_ANIO_DESDE, meses_mini
     dplyr::summarise(nombre = dplyr::first(nombre), informe = dplyr::first(informe), url = dplyr::first(url),
                      meses = dplyr::n_distinct(periodo), media = mean(valor), .groups = "drop") |>
     dplyr::mutate(estado = dplyr::if_else(meses >= meses_minimos, "dato", "ausente"),
-                  valor = dplyr::if_else(estado == "dato", portales_redondear(media, 2L), NA_real_)) |>
+                  valor = dplyr::if_else(estado == "dato", redondear_empate_arriba(media, 2L), NA_real_)) |>
     dplyr::select(-media)
   dplyr::bind_rows(anual[c(clave, "nombre", "informe", "url", "meses", "valor", "estado")], mensual) |>
     dplyr::arrange(portal, operacion, nivel, geo_id, zona, anio)
-}
-
-# Redondeo a `decimales` con los empates hacia arriba sobre la cifra exacta (precios: positivos). Las
-# medias de cifras con un decimal caen en empates exactos (7,575) que el binario guarda por debajo.
-portales_redondear <- function(x, decimales = 2L) {
-  f <- 10^decimales
-  floor(x * f + 0.5 + 1e-7) / f
 }
 
 # Tabla de la capa en el formato de la tabla larga (no entra en ella: decisión 3): los niveles

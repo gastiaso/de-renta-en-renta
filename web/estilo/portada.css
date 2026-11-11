@@ -247,6 +247,10 @@ a.ficha-enlace:hover { background: var(--color-crema); }
 .carta-cifra { font: 700 1.05em var(--fuente-tablero); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .carta-fuente { margin: 0 0 6px; color: var(--color-tenue); font-size: 0.85rem; }
 .carta-enlace { color: var(--color-rojo); font: 600 0.95rem var(--fuente-tablero); }
+/* Tarea 52: cartas de «entrar» sin cifras mientras la familia sale «próximamente», como las casillas inactivas */
+.carta-proximamente { border-style: dashed; box-shadow: none; }
+.carta-proximamente .carta-texto { color: var(--color-tenue); }
+.carta-pronto { margin: 0; font: italic 400 0.85rem var(--fuente-carta); }
 
 /* Pie, con el dicho (tarea 34: baja del centro del tablero; Yellowtail, a 22 px o más) */
 .portada-pie { padding: 10px 16px 14px; border-top: var(--borde); color: var(--color-tenue); font-size: 0.85rem; }

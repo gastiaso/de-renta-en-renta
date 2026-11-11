@@ -46,7 +46,9 @@
 
     <main class="explorador">
       <div class="mapa-columna">
-        <div class="barra-vista" role="group" data-i18n-aria="interfaz.vista.region">
+        <!-- Tarea 50: en pantallas estrechas, la tipología y las descargas se pliegan tras el botón
+             «Más opciones» (movil.js); en escritorio, el botón no se ve y la barra no cambia. -->
+        <div id="barra-vista" class="barra-vista" role="group" data-i18n-aria="interfaz.vista.region" data-plegada="true">
           <label class="barra-campo barra-campo-mapa">
             <span id="vista-mapa-titulo" data-i18n="interfaz.vista.mapa">Mapa</span>
             <select id="vista-mapa" aria-labelledby="vista-mapa-titulo"></select>
@@ -55,14 +57,16 @@
             <span id="vista-anio-titulo" data-i18n="interfaz.vista.anio">Año</span>
             <select id="vista-anio" aria-labelledby="vista-anio-titulo"></select>
           </label>
-          <div id="vista-tipologia" class="barra-campo" role="group" aria-labelledby="vista-tipologia-titulo" hidden>
+          <button id="vista-plegar" type="button" class="boton barra-plegar" aria-expanded="false"
+                  aria-controls="vista-tipologia vista-descargas" data-i18n="interfaz.vista.mas_opciones">Más opciones</button>
+          <div id="vista-tipologia" class="barra-campo barra-plegable" role="group" aria-labelledby="vista-tipologia-titulo" hidden>
             <span id="vista-tipologia-titulo" data-i18n="interfaz.vista.tipologia">Vivienda</span>
             <span class="barra-botones">
               <button type="button" data-tipologia="VC" aria-pressed="true" data-i18n="interfaz.vista.vc" data-i18n-title="vocabulario.tipologia.VC">Colectiva</button>
               <button type="button" data-tipologia="VU" aria-pressed="false" data-i18n="interfaz.vista.vu" data-i18n-title="vocabulario.tipologia.VU">Unifamiliar</button>
             </span>
           </div>
-          <div class="barra-campo barra-descargas" role="group" aria-labelledby="exportar-titulo">
+          <div id="vista-descargas" class="barra-campo barra-descargas barra-plegable" role="group" aria-labelledby="exportar-titulo">
             <span id="exportar-titulo" data-i18n="interfaz.exportar.titulo">Descargar</span>
             <span class="barra-botones">
               <button id="exportar-csv" type="button" data-i18n="interfaz.exportar.csv"
@@ -85,8 +89,13 @@
           <p id="aviso-privado" class="etiqueta-privado aviso-mapa aviso-mapa-privado" hidden></p>
           <p id="aviso-escala" class="aviso-escala" role="status" hidden data-i18n="interfaz.mapa.sin_dato_escala">Este mapa no tiene datos a esta escala: acerca el mapa.</p>
           <p id="aviso-periodo" class="aviso-escala" role="status" hidden></p>
+          <!-- Tarea 51: indicador de carga, visible desde el principio hasta que el mapa queda pintado -->
+          <p id="mapa-cargando" class="mapa-cargando" role="status" data-i18n="interfaz.mapa.cargando">Cargando el mapa…</p>
           <div id="leyenda" class="leyenda" hidden></div>
         </section>
+        <!-- Tarea 53: fecha de los datos (la del manifiesto), «Método en dos páginas», fe de erratas y
+             «Avisar de un error» (transparencia.js) -->
+        <p id="mapa-pie" class="mapa-pie"><a href="https://github.com/gastiaso/de-renta-en-renta/issues" data-i18n="interfaz.transparencia.error">Avisar de un error</a></p>
       </div>
 
       <div class="lateral">
@@ -120,6 +129,7 @@
               <button type="button" data-superficie="50" aria-pressed="true">50 m²</button>
               <button type="button" data-superficie="70" aria-pressed="false">70 m²</button>
               <button type="button" data-superficie="90" aria-pressed="false">90 m²</button>
+              <button type="button" data-superficie="tipica" aria-pressed="false" data-i18n="interfaz.sueldo.tipica">Típica</button>
             </div>
             <p id="sueldo-superficie-nota" class="nota" hidden></p>
             <div id="sueldo-umbral" class="selector" role="group" aria-labelledby="sueldo-umbral-titulo">
