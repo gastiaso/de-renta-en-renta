@@ -66,7 +66,8 @@ body {
   white-space: nowrap;
 }
 .navegacion a:hover { background: var(--color-placa); }
-.navegacion [aria-current="page"] { background: var(--color-tinta); color: var(--color-crema); }
+/* «page»: la página; «location»: una parte de ella («Tu sueldo» en el mapa) */
+.navegacion [aria-current] { background: var(--color-tinta); color: var(--color-crema); }
 .navegacion [aria-disabled="true"] { color: var(--color-tenue); cursor: not-allowed; }
 
 /* Buscador */

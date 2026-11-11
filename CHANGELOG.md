@@ -4,6 +4,10 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (11-nov-2026, web)
+
+- **Menú del mapa** (`web/js/principal.js`, `web/estilo/sitio.css`): «Tu sueldo» e «Historias» no quedaban marcadas al pulsarlas, porque las dos abren `mapa.html` y la marca iba fija en «Mapa». Ahora se marca «Historias» mientras hay un recorrido abierto, «Tu sueldo» con su ancla en la dirección (`aria-current="location"`) y, si no, «Mapa»; al salir de la historia, la marca vuelve a «Mapa».
+
 ## [1.0.0] · 11-nov-2026
 
 Primera versión estable (decisión del autor, 11-nov-2026): lo hecho desde la v0.4.0, es decir, las tareas 37 y 40 a 57, la 59 y la 49 del backlog. Novedades principales:

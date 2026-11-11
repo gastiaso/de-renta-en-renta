@@ -1168,6 +1168,7 @@ function irAPaso(n) {
 }
 
 function pintarHistoria() {
+  marcarMenu();   // «Historias» en el menú, mientras haya recorrido
   if (!panelHistoria) return;
   if (!historiaActiva) { panelHistoria.ocultar(); return; }
   panelHistoria.pintar({ t, historias: historias.historias, historia: historiaActiva, n: pasoDe(historiaActiva, estado.paso).n });
@@ -1296,6 +1297,18 @@ function marcarIdioma() {
   for (const boton of el.idiomas) boton.setAttribute('aria-pressed', String(boton.dataset.idioma === estado.idioma));
 }
 
+// Menú: «Mapa», «Tu sueldo» e «Historias» son esta misma página, así que la entrada marcada no puede
+// ir fija en el HTML. Se marca «Tu sueldo» con su ancla en la dirección (`location`: una parte de la
+// página), «Historias» con un recorrido abierto y, si no, «Mapa». Las otras entradas del menú cargan
+// la página de nuevo y sin ancla, de modo que manda la última que se ha pulsado.
+function marcarMenu() {
+  const activa = location.hash === '#tu-sueldo' ? 'nav.tu_sueldo' : estado.historia ? 'nav.historias' : 'nav.mapa';
+  for (const enlace of document.querySelectorAll('.navegacion a[data-i18n]')) {
+    if (enlace.dataset.i18n === activa) enlace.setAttribute('aria-current', activa === 'nav.tu_sueldo' ? 'location' : 'page');
+    else enlace.removeAttribute('aria-current');
+  }
+}
+
 async function cambiarIdioma(idioma) {
   if (idioma === estado.idioma) return;
   estado.idioma = idioma;
@@ -1320,6 +1333,8 @@ async function iniciar() {
   traducirPagina(t);
   document.title = `${t('nav.mapa')} · ${t('sitio.titulo')}`;
   marcarIdioma();
+  marcarMenu();
+  window.addEventListener('hashchange', marcarMenu);
   for (const boton of el.idiomas) boton.addEventListener('click', () => cambiarIdioma(boton.dataset.idioma));
   panel = crearPanelSueldo({ alCambiar: alCambiarSueldo, alCompartir: abrirCompartir });
   panel.ponerSueldo(sueldo);
