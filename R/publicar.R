@@ -271,8 +271,15 @@ comprobar_publicacion <- function(manifiesto, salida, datos, sitio, tabla_larga,
     data.frame(fuente = x$fuente %||% NA_character_, version = x$version %||% NA_character_)
   })))
   versiones_larga <- arrow::open_dataset(tabla_larga) |> dplyr::distinct(fuente, version) |> dplyr::collect()
+  # Un indicador con varias fuentes ("ine_censo2011;ine_censo2021", tarea 47) lleva la version mas
+  # reciente de ellas: cada fuente tiene que estar en la tabla larga y alguna, con esa version.
+  pares_larga <- paste(versiones_larga$fuente, versiones_larga$version)
+  par_ok <- function(fuente, version) {
+    partes <- strsplit(fuente, ";", fixed = TRUE)[[1]]
+    all(partes %in% versiones_larga$fuente) && any(paste(partes, version) %in% pares_larga)
+  }
   sin_par <- if (is.null(versiones_web)) 0L else
-    sum(!paste(versiones_web$fuente, versiones_web$version) %in% paste(versiones_larga$fuente, versiones_larga$version))
+    sum(!mapply(par_ok, versiones_web$fuente, versiones_web$version))
 
   # Tarea 35: la capa de portales no va en el paquete (solo web; decision 3)
   portales_tar <- sum(startsWith(en_tar, "datos/portales/"))

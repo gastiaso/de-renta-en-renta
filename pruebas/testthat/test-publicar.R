@@ -5,7 +5,7 @@
 COMMIT_FALSO <- list(id = strrep("a1", 20), cambios_sin_commit = FALSE)
 
 proyecto_falso <- function(raiz = withr::local_tempdir(.local_envir = parent.frame()), ejemplo = FALSE,
-                           version_serpavi = "2026-11-06") {
+                           version_serpavi = "2026-11-06", fuente_renta = "ine_adrh") {
   escribir <- function(ruta, texto) {
     dir.create(dirname(file.path(raiz, ruta)), recursive = TRUE, showWarnings = FALSE)
     writeLines(texto, file.path(raiz, ruta), useBytes = TRUE)
@@ -19,7 +19,7 @@ proyecto_falso <- function(raiz = withr::local_tempdir(.local_envir = parent.fra
   manifiesto <- list(version = "2026-11-08", ejemplo = ejemplo, generado = "2026-11-08", seccionado = 2021L,
                      mapa_base = list(tipo = "pmtiles", url = "teselas/seccionado_2021.pmtiles", atribucion = "INE"),
                      indicadores = list(alquiler_m2 = list(fuente = "mivau_serpavi", version = version_serpavi),
-                                        renta_hogar = list(fuente = "ine_adrh", version = "2026-11-07")))
+                                        renta_hogar = list(fuente = fuente_renta, version = "2026-11-07")))
   escribir("web/datos/manifiesto.json", jsonlite::toJSON(manifiesto, auto_unbox = TRUE))
   escribir("web/datos/indices/sc.json", '["2807901001","2807901002"]')
   escribir("web/datos/sc/alquiler_m2/2024.json", '{"v": [247, null], "e": "03"}')
@@ -221,6 +221,11 @@ test_that("no empaqueta la muestra ni una exportación de otra pasada", {
   raiz <- proyecto_falso(ejemplo = TRUE)
   expect_error(suppressMessages(capture.output(empaquetar_falso(raiz))), "manifiesto")
   raiz <- proyecto_falso(version_serpavi = "2026-10-01")
+  expect_error(suppressMessages(capture.output(empaquetar_falso(raiz))), "versiones")
+  # Varias fuentes en un indicador (como el 18 desde la tarea 47): cada una en la tabla larga
+  raiz <- proyecto_falso(fuente_renta = "ine_adrh;mivau_serpavi")
+  expect_no_error(suppressMessages(capture.output(empaquetar_falso(raiz))))
+  raiz <- proyecto_falso(fuente_renta = "ine_adrh;fuente_que_no_esta")
   expect_error(suppressMessages(capture.output(empaquetar_falso(raiz))), "versiones")
 })
 
