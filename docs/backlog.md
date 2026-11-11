@@ -43,7 +43,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 
 **33 bis. Publicar la v0.4.0** (decisión 17) · HECHA (10-nov-2026): release `v0.4.0` (commit `e04c643`) y sitio montado con esa referencia; la prueba en el navegador contra el sitio publicado da 0 en sus 39 comprobaciones. Commit de la publicación, `empaquetar_publicacion()`, release `v0.4.0` y flujo de Pages con `ref` en ese commit. **Hecho cuando:** la prueba en el navegador pasa contra el sitio publicado y la oferta sale «próximamente».
 
-**33. Subir lo pendiente.** `main` va 9 commits por delante del remoto y hay cambios sin commit.
+**33. Subir lo pendiente · HECHA (11-nov-2026).** `main` va 9 commits por delante del remoto y hay cambios sin commit.
 - **Hecho cuando:** `git status` dice «up to date with 'origin/main'».
 
 ## Bloque A · Marco: dos familias
@@ -365,6 +365,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 **54. Pruebas en cada push.** Flujo de GitHub con las pruebas que no necesitan datos (inventario, utilidades, web con la muestra). El de publicación sigue manual.
 - **Hecha en local (11-nov-2026), falta la primera ejecución en GitHub:** `.github/workflows/pruebas.yml`, con cada push y cada *pull request*: la batería de `testthat` entera con `renv` (caché y paquetes compilados de Posit Package Manager) y `node --test pruebas/web/*.test.mjs`. Las pruebas que piden datos ya se saltaban solas; en una copia limpia del repositorio pasan todas las demás (`pruebas/LEEME.md`).
 - Por revisar tras el primer push: tiempo sin caché, versiones de `renv.lock` en binario, pruebas del mapa base con el GDAL de Ubuntu y uso de las acciones de r-lib (CHANGELOG).
+- **Primera ejecución en GitHub (11-nov-2026, commit `d874fdb`):** la parte de la web pasa; la de R falla al restaurar `renv`, porque el binario de `igraph` no carga sin la biblioteca GLPK del sistema. Añadidas `libglpk-dev` y `libxml2-dev` a las bibliotecas del sistema del flujo. Falta comprobarlo en la ejecución siguiente: puede haber más fallos detrás, en las pruebas que hasta ahora no han llegado a correr en Ubuntu.
 
 **55. Avisos del pipeline (93) · HECHA (11-nov-2026).**
 - 56 de geometría sobre coordenadas geográficas: proyectar antes de calcular el punto interior.
@@ -382,6 +383,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 - **Hecha (11-nov-2026):** tabla única en la nota (ES y EN, §2.2) y plan de retirada (§2.4); `docs/metodo_corto.md`, `LICENCIA_DATOS.md` y la página «Datos», al día. La ODbL en el paquete (`version.json`), con la tarea 46.
 
 **58. Reproducir en limpio.** Ejecutar el pipeline en otra máquina, desde `renv::restore()`, con la lista de descargas manuales. Anotar lo que falle.
+- **Aplazada (11-nov-2026), decisión del autor.** Desde cero son unos 9 GB de descargas (Catastro, 4 GB; ADRH, 2,9 GB) y varias horas de cálculo. Quedan por decidir dos cosas: dónde se hace (una copia limpia en el mismo equipo, otro equipo con una guía, o las dos) y si los ficheros que vinieron de fuera del repositorio (ECV de 2025, seccionado de 2025 y Registradores) se descargan de la fuente o se copian como descarga manual.
 
 ## Bloque G · Verificación y v1.0
 
@@ -393,6 +395,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 **60. Lectura externa.** Una persona que no haya participado revisa la nota corta y el mapa antes de anunciar. El autor decide quién.
 
 **61. *Release* v1.0.** Paquete con el histórico, prueba de navegador contra el sitio publicado, CHANGELOG `[1.0.0]`, descongelar el sitio.
+- **Decidido (11-nov-2026), decisión del autor:** la v1.0 sale ya, antes de la prueba en limpio (58, aplazada) y de la lectura externa (60), que quedan como revisión posterior. Preparados `CHANGELOG.md` `[1.0.0]`, `CITATION.cff` (1.0.0) y `README.md`. Faltan el commit de la publicación, el paquete (`empaquetar_publicacion()`), el release `v1.0.0`, el `ref` de `pages.yml`, la publicación y la prueba de navegador contra el sitio publicado.
 
 ## Orden
 

@@ -4,6 +4,20 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+## [1.0.0] · 11-nov-2026
+
+Primera versión estable (decisión del autor, 11-nov-2026): lo hecho desde la v0.4.0, es decir, las tareas 37 y 40 a 57, la 59 y la 49 del backlog. Novedades principales:
+- la familia «quedarse» completa, con el sueldo necesario con dos cifras y las fichas comparables;
+- el indicador 11, desde Registradores, por provincia;
+- siete tramos con tres juegos de cortes y la escala relativa al municipio;
+- el módulo de supuestos y la superficie típica;
+- el mapa en el móvil y la transparencia («Avisar de un error», fe de erratas y «Método en dos páginas»);
+- la tabla de paso desde el seccionado de 2011;
+- la rederivación a mano de 21 cifras;
+- las dos primeras historias, como recorridos guiados dentro del mapa.
+
+La oferta de Idealista sigue «próximamente», con la capa apagada, hasta su autorización (backlog, decisiones 17 a 19). La historia de la brecha entre entrar y quedarse y las tareas 38 y 39 esperan a esa autorización. Por decisión del autor, la v1.0 sale antes que la prueba en limpio (tarea 58, aplazada) y la lectura externa (tarea 60): las dos quedan como revisión posterior, y lo que encuentren irá a la fe de erratas o a una v1.0.x. Release `v1.0.0`.
+
 ### Añadido (11-nov-2026, tarea 49: primeras historias; decisiones del autor)
 
 - **Historias como recorridos guiados dentro del mapa** (`R/web_historias.R`, nuevo; `inventario/historias.csv` e `inventario/historias_cifras.csv`, nuevos; objetivos `historias_inventario`, `historias_cifras`, `validacion_historias` y `fichero_historias_web`, en `bloque_historias`): «El centro no cabe en la escala» (alquiler mensual por sección de Madrid y Barcelona, con la escala de España y con la del municipio; cuatro pasos) y «Años de renta» (Banco de España desde 1987 y el indicador 16 por provincia y municipio; cuatro pasos). Las cifras de los textos son marcas `{id}` que el pipeline rellena (42 cifras, de la tabla larga, el histórico y los cortes de la web) y escribe en `web/datos/historias.json`, en castellano y en inglés.

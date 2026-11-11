@@ -62,12 +62,14 @@ jobs:
           dobles=$(grep -h -o -E "^[A-Za-z_.][A-Za-z0-9_.]* *<- *function" R/*.R | sed 's/ *<- *function//' | sort | uniq -d)
           [ -z "$dobles" ] || { echo "::error::Funciones definidas dos veces en R/ (invalidan objetivos): $dobles"; exit 1; }
 
-      - name: Locale y bibliotecas del sistema (GDAL, GEOS, PROJ, udunits)
+      # GLPK: el binario de igraph de Posit Package Manager la enlaza y sin ella no carga (primera
+      # ejecucion, 11-nov-2026: "error testing if 'igraph' can be loaded").
+      - name: Locale y bibliotecas del sistema (GDAL, GEOS, PROJ, udunits, GLPK)
         run: |
           sudo locale-gen es_ES.UTF-8 > /dev/null
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends \
-            libgdal-dev libgeos-dev libproj-dev libudunits2-dev > /dev/null
+            libgdal-dev libgeos-dev libproj-dev libudunits2-dev libglpk-dev libxml2-dev > /dev/null
           gdal-config --version
 
       - name: Instalar R (la versión de renv.lock)

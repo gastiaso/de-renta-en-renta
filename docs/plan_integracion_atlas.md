@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.50 · 11 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.51 · 11 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.51:** decisiones del autor (11-nov-2026): la prueba en limpio (tarea 58) se aplaza, y la v1.0 se publica antes que ella y que la lectura externa (tarea 60), que quedan como revisión posterior (§7, F6).
 
 **Cambios en la v0.50:** tarea 49 del backlog (11-nov-2026): primeras historias, como recorridos guiados dentro del mapa, con las cifras calculadas en el pipeline y una compuerta que para si alguna se aparta de la redactada; la brecha entre entrar y quedarse se aplaza hasta la autorización de Idealista (decisiones del autor; §7, F6).
 
