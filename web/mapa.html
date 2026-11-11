@@ -26,6 +26,7 @@
       <nav class="navegacion" data-i18n-aria="interfaz.navegacion">
         <a href="mapa.html" aria-current="page" data-i18n="nav.mapa">Mapa</a>
         <a href="#tu-sueldo" data-i18n="nav.tu_sueldo">Tu sueldo</a>
+        <a href="mapa.html?historia=centro" data-href-es="mapa.html?historia=centro" data-href-en="mapa.html?historia=centro&amp;idioma=en" data-i18n="nav.historias">Historias</a>
         <a href="sobrecarga.html" data-href-es="sobrecarga.html" data-href-en="sobrecarga.html?idioma=en" data-i18n="nav.sobrecarga">Sobrecarga</a>
         <a href="datos.html" data-href-es="datos.html" data-href-en="data.html" data-i18n="nav.datos">Datos</a>
         <a href="metodo.html" data-href-es="metodo.html" data-href-en="method.html" data-i18n="nav.metodo">Método</a>
@@ -99,6 +100,35 @@
       </div>
 
       <div class="lateral">
+        <!-- Tarea 49: recorrido guiado (?historia=…&paso=…), con los textos de datos/historias.json;
+             lo pinta panel_historia.js y, sin historia o sin el fichero, no se ve. -->
+        <section id="historia" class="tarjeta historia" aria-labelledby="historia-titulo" hidden>
+          <header class="tarjeta-cabecera">
+            <p class="historia-etiqueta" data-i18n="interfaz.historia.etiqueta">Historia</p>
+            <h2 id="historia-titulo" class="tarjeta-titulo"></h2>
+          </header>
+          <div class="historia-cuerpo">
+            <label class="campo historia-elegir">
+              <span data-i18n="interfaz.historia.elegir">Historia</span>
+              <select id="historia-elegir"></select>
+            </label>
+            <div id="historia-paso" class="historia-paso" aria-live="polite" tabindex="-1">
+              <p id="historia-entradilla" class="historia-entradilla" hidden></p>
+              <p id="historia-contador" class="historia-contador"></p>
+              <h3 id="historia-paso-titulo" class="historia-paso-titulo"></h3>
+              <p id="historia-texto" class="historia-texto"></p>
+              <p id="historia-fuente" class="nota historia-fuente"></p>
+              <p id="historia-enlace" class="historia-enlace" hidden><a href="#"></a></p>
+            </div>
+            <div class="acciones historia-acciones">
+              <button id="historia-anterior" type="button" class="boton" data-i18n="interfaz.historia.anterior">Anterior</button>
+              <button id="historia-siguiente" type="button" class="boton boton-principal" data-i18n="interfaz.historia.siguiente">Siguiente</button>
+              <button id="historia-salir" type="button" class="boton historia-salir" data-i18n="interfaz.historia.salir"
+                      data-i18n-title="interfaz.historia.salir_largo">Salir</button>
+            </div>
+          </div>
+        </section>
+
         <section id="tu-sueldo" class="tarjeta sueldo" aria-labelledby="sueldo-titulo">
           <header class="tarjeta-cabecera">
             <h2 id="sueldo-titulo" class="tarjeta-titulo" data-i18n="nav.tu_sueldo">Tu sueldo</h2>

@@ -7,7 +7,8 @@
 // código de otra sección; territorio = municipio, provincia o comunidad elegidos con un clic en
 // esas escalas, en lugar de una sección: tarea 26; superficie = 50, 70, 90 o «tipica», la superficie
 // típica del territorio que manda; escala = «municipio», tramos de las secciones relativos a su
-// municipio, escala_municipio.js; decisiones del autor del 11-nov-2026). Solo entran estas claves,
+// municipio, escala_municipio.js; decisiones del autor del 11-nov-2026; historia y paso = recorrido
+// guiado de datos/historias.json y su paso, de 1 a 20, historias.js: tarea 49). Solo entran estas claves,
 // validadas al leer y al escribir. El mapa está en mapa.html; la raíz (la portada) manda a mapa.html los enlaces que
 // traen alguna de estas claves salvo el idioma (js/redireccion.js).
 //
@@ -33,9 +34,13 @@ const VALIDAS = {
   vista: (v) => /^\d{1,2}(\.\d+)?\/-?\d{1,2}(\.\d+)?\/-?\d{1,3}(\.\d+)?$/.test(v),
   territorio: (v) => /^(?:(?:ccaa|provincia):\d{2}|municipio:\d{5})$/.test(v),
   escala: (v) => v === 'municipio',
+  historia: (v) => /^[a-z0-9_]{1,30}$/.test(v),
+  paso: (v) => /^([1-9]|1\d|20)$/.test(v),
 };
 export const CLAVES = Object.keys(VALIDAS);
-const NUMERICAS = ['anio', 'superficie', 'umbral'];
+// ¿Vale `valor` para la clave? (historias.js valida con esto el estado de cada paso)
+export const esValida = (clave, valor) => Boolean(VALIDAS[clave]?.(String(valor)));
+const NUMERICAS = ['anio', 'superficie', 'umbral', 'paso'];
 // Número si lo es («2024» → 2024); los periodos con mes («2025-05») quedan como texto.
 const leerValor = (clave, valor) => (NUMERICAS.includes(clave) && /^\d+$/.test(valor) ? Number(valor) : valor);
 

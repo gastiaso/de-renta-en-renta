@@ -13,7 +13,8 @@
     "sobrecarga": "Overburden",
     "datos": "Data",
     "metodo": "Method",
-    "historico": "Time machine"
+    "historico": "Time machine",
+    "historias": "Stories"
   },
   "fichas": {
     "llave": "Neighbourhood household",
@@ -324,6 +325,16 @@
       "metodo_corto": "Method in two pages",
       "erratas": "Errata",
       "error": "Report an error"
+    },
+    "historia": {
+      "etiqueta": "Story",
+      "elegir": "Change story",
+      "contador": "Step {n} of {total}",
+      "fuente": "Source: {fuente}",
+      "anterior": "Previous",
+      "siguiente": "Next",
+      "salir": "Exit",
+      "salir_largo": "Leave the guided tour and stay on the map"
     }
   },
   "portada": {

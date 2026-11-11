@@ -8,6 +8,12 @@ test_that("tramos de «¿te llega?» como en web/js/sueldo.js", {
   expect_equal(tramo_llega(c(0.1, 0.3, 0.31, 0.4, 0.41)), c(0L, 0L, 1L, 1L, 2L))
 })
 
+test_that("parámetros de la consulta de la página, como lista con nombre (tarea 49)", {
+  p <- parametros_consulta_navegador("?mapa=alquiler_mes&territorio=municipio%3A28079&vista=11.30/40.42000/-3.70000")
+  expect_equal(p, list(mapa = "alquiler_mes", territorio = "municipio:28079", vista = "11.30/40.42000/-3.70000"))
+  expect_equal(parametros_consulta_navegador(""), stats::setNames(list(), character(0)))
+})
+
 test_that("la web en un navegador recalcula una muestra y coincide con R (plan §6.5)", {
   raiz <- file.path("..", "..")
   almacen <- file.path(raiz, "_targets")
@@ -24,12 +30,14 @@ test_that("la web en un navegador recalcula una muestra y coincide con R (plan �
                                   "navegador_municipal",    # F5: mapas sin sección y de categorías
                                   "navegador_leyenda",      # tarea 51: juegos de cortes por escala
                                   "navegador_escala_municipio", "navegador_superficie_tipica",
-                                  "navegador_una_escala"))  # decisiones del autor, 11-nov-2026
+                                  "navegador_una_escala",   # decisiones del autor, 11-nov-2026
+                                  "navegador_historias"))   # tarea 49: recorridos guiados (sin el fichero, una fila que se salta)
   expect_equal(sum(r$id == "navegador_fichas"), 6L)
   expect_equal(sum(r$id == "navegador_redireccion"), 2L)
   expect_equal(sum(r$id == "navegador_territorio"), 4L)
   expect_equal(sum(r$id == "navegador_clic"), 4L)
   expect_equal(sum(r$id == "navegador_municipal"), 6L)
   expect_equal(sum(r$id == "navegador_leyenda"), 3L)
+  expect_true(sum(r$id == "navegador_historias") %in% c(1L, 3L))
   expect_equal(r$detalle[r$calculado != r$referencia], character(0))
 })

@@ -1,0 +1,43 @@
+id,historia,consulta,indicador,nivel,geo_id,anio,grupo,parametro,decimales,redactado,nota
+corte_tope,centro,corte_mayor,alquiler_mes,seccion,,,,,0,700,Último corte del juego de la sección (inventario/cortes_web_niveles.csv): el tramo más alto
+mad_n_2015,centro,secciones_n,alquiler_mes,sc,28079,2015,tipologia:VC,,0,2357,Secciones de Madrid con dato
+mad_mediana_2015,centro,secciones_mediana,alquiler_mes,sc,28079,2015,tipologia:VC,,0,600,Mediana de las secciones de Madrid (€ al mes)
+mad_tope_2015,centro,secciones_cuota_desde,alquiler_mes,sc,28079,2015,tipologia:VC,700,0,35,% de las secciones de Madrid en el tramo más alto
+mad_n_2024,centro,secciones_n,alquiler_mes,sc,28079,2024,tipologia:VC,,0,2421,
+mad_mediana_2024,centro,secciones_mediana,alquiler_mes,sc,28079,2024,tipologia:VC,,0,850,
+mad_tope_2024,centro,secciones_cuota_desde,alquiler_mes,sc,28079,2024,tipologia:VC,700,0,87,
+es_tope_2024,centro,secciones_cuota_desde,alquiler_mes,sc,00,2024,tipologia:VC,700,0,30,% de todas las secciones de España con dato
+mad_p10_2024,centro,secciones_cuantil,alquiler_mes,sc,28079,2024,tipologia:VC,0.1,0,683,Percentil 10 de las secciones de Madrid
+mad_p90_2024,centro,secciones_cuantil,alquiler_mes,sc,28079,2024,tipologia:VC,0.9,0,1300,Percentil 90 de las secciones de Madrid
+bcn_n_2024,centro,secciones_n,alquiler_mes,sc,08019,2024,tipologia:VC,,0,1061,
+bcn_tope_2024,centro,secciones_cuota_desde,alquiler_mes,sc,08019,2024,tipologia:VC,700,0,95,
+bcn_p10_2024,centro,secciones_cuantil,alquiler_mes,sc,08019,2024,tipologia:VC,0.1,0,730,
+bcn_p90_2024,centro,secciones_cuantil,alquiler_mes,sc,08019,2024,tipologia:VC,0.9,0,1228,
+h_1987,anios,hist_valor,anios_renta,nacional,00,1987,,1,1,2.9,"Banco de España, primer trimestre de 1987"
+h_max,anios,hist_maximo,anios_renta,nacional,00,,,,1,9.5,Máximo de la serie
+h_max_anio,anios,hist_maximo_anio,anios_renta,nacional,00,,,,0,2007,«en el tercer trimestre de 2007»
+h_max_trim,anios,hist_maximo_subperiodo,anios_renta,nacional,00,,,,0,3,
+h_min,anios,hist_minimo_desde,anios_renta,nacional,00,2008,,,1,6.6,Mínimo desde 2008
+h_min_anio,anios,hist_minimo_desde_anio,anios_renta,nacional,00,2008,,,0,2015,«en el primer trimestre de 2015»
+h_min_trim,anios,hist_minimo_desde_subperiodo,anios_renta,nacional,00,2008,,,0,1,
+h_ultimo,anios,hist_ultimo,anios_renta,nacional,00,,,,1,8.4,Último trimestre publicado
+h_ultimo_anio,anios,hist_ultimo_anio,anios_renta,nacional,00,,,,0,2026,«en el segundo trimestre de 2026»
+h_ultimo_trim,anios,hist_ultimo_subperiodo,anios_renta,nacional,00,,,,0,2,
+h_desde_anio,anios,hist_mayor_desde_anio,anios_renta,nacional,00,,,,0,2011,«la más alta desde el primer trimestre de 2011»: último trimestre anterior con una cifra igual o mayor
+h_desde_trim,anios,hist_mayor_desde_subperiodo,anios_renta,nacional,00,,,,0,1,
+a16_es_2015,anios,valor,anios_salario_compra,nacional,00,2015,,,1,6.3,
+a16_es_2024,anios,valor,anios_salario_compra,nacional,00,2024,,,1,6.1,
+a16_prov_max_2024,anios,maximo,anios_salario_compra,provincia,,2024,,,1,10.5,
+a16_prov_max_geo,anios,maximo_geo,anios_salario_compra,provincia,,2024,,,0,7,«Illes Balears» (07)
+a16_prov_min_2024,anios,minimo,anios_salario_compra,provincia,,2024,,,1,2.7,
+a16_prov_min_geo,anios,minimo_geo,anios_salario_compra,provincia,,2024,,,0,13,«Ciudad Real» (13)
+a16_mun10_2015,anios,cuenta_desde,anios_salario_compra,municipio,,2015,,10,0,4,Municipios con diez años o más
+a16_mun10_2024,anios,cuenta_desde,anios_salario_compra,municipio,,2024,,10,0,18,
+a16_mun_max_geo,anios,maximo_geo,anios_salario_compra,municipio,,2024,,,0,7054,«Santa Eulària des Riu» (07054) es el primero
+a16_07054_2015,anios,valor,anios_salario_compra,municipio,07054,2015,,,1,10.7,
+a16_07054_2024,anios,valor,anios_salario_compra,municipio,07054,2024,,,1,17.9,
+a16_07026_2024,anios,valor,anios_salario_compra,municipio,07026,2024,,,1,16,
+a16_mun_min_geo,anios,minimo_geo,anios_salario_compra,municipio,,2024,,,0,13071,«Puertollano» (13071) es el último
+a16_13071_2024,anios,valor,anios_salario_compra,municipio,13071,2024,,,1,2.2,
+a16_ratio_2015,anios,cociente_p90_p10,anios_salario_compra,municipio,,2015,,,1,2.1,Percentil 90 entre percentil 10 de los municipios con dato
+a16_ratio_2024,anios,cociente_p90_p10,anios_salario_compra,municipio,,2024,,,1,3,

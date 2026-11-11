@@ -13,7 +13,8 @@
     "sobrecarga": "Sobrecarga",
     "datos": "Datos",
     "metodo": "Método",
-    "historico": "Máquina del tiempo"
+    "historico": "Máquina del tiempo",
+    "historias": "Historias"
   },
   "fichas": {
     "llave": "Hogar del barrio",
@@ -324,6 +325,16 @@
       "metodo_corto": "Método en dos páginas",
       "erratas": "Fe de erratas",
       "error": "Avisar de un error"
+    },
+    "historia": {
+      "etiqueta": "Historia",
+      "elegir": "Cambiar de historia",
+      "contador": "Paso {n} de {total}",
+      "fuente": "Fuente: {fuente}",
+      "anterior": "Anterior",
+      "siguiente": "Siguiente",
+      "salir": "Salir",
+      "salir_largo": "Salir del recorrido y seguir en el mapa"
     }
   },
   "portada": {

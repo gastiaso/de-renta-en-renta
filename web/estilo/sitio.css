@@ -618,6 +618,37 @@ body {
 /* Tarea 50: botón que pliega la barra de la vista; solo en pantallas estrechas */
 .barra-plegar { display: none; }
 
+/* Tarea 49: recorrido guiado (panel_historia.js), arriba de la columna lateral, junto al mapa */
+.historia { border-left-width: 8px; border-left-color: var(--color-rojo); }
+.historia[hidden] { display: none; }
+.historia .tarjeta-cabecera { padding: 8px 16px 6px; border-bottom: 1px solid var(--color-tinta); }
+.historia-etiqueta { margin: 0; color: var(--color-rojo); font: 600 0.8rem var(--fuente-tablero); letter-spacing: 0.06em; text-transform: uppercase; }
+.historia .tarjeta-titulo { font-size: 1.2rem; line-height: 1.25; }
+.historia-cuerpo { padding: 8px 16px 14px; }
+.historia-elegir[hidden] { display: none; }
+.historia-elegir select {
+  min-height: 40px;
+  max-width: 100%;
+  padding: 0 8px;
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  background: var(--color-placa);
+  color: var(--color-tinta);
+  font: 1rem var(--fuente-carta);
+}
+.historia-paso { margin-top: 10px; }
+.historia-paso:focus-visible { outline-offset: 4px; }
+.historia-entradilla { margin: 0 0 8px; font-style: italic; }
+.historia-entradilla[hidden], .historia-enlace[hidden] { display: none; }
+.historia-contador { margin: 0; color: var(--color-tenue); font: 600 0.85rem var(--fuente-tablero); font-variant-numeric: tabular-nums; }
+.historia-paso-titulo { margin: 2px 0 4px; font: 700 1.05rem/1.25 var(--fuente-tablero); }
+.historia-texto { margin: 0; line-height: 1.45; }
+.historia-enlace { margin: 6px 0 0; }
+.historia-enlace a { color: var(--color-tinta); }
+.historia-acciones .boton:disabled { border-style: dashed; color: var(--color-tenue); background: var(--color-crema); cursor: not-allowed; }
+.historia-acciones .boton-principal:disabled { border-color: var(--color-tinta); }
+.historia-salir { margin-left: auto; }
+
 /* Móvil: mapa arriba, columna debajo */
 @media (max-width: 760px) {
   body { padding: 0; }
@@ -643,6 +674,8 @@ body {
   .aviso-escala { max-width: calc(100% - 100px); }
   .lateral { overflow: visible; }
   #ficha { order: -1; }   /* tarea 50: la ficha, justo bajo el mapa; «Tu sueldo», después */
+  .historia { order: -2; }   /* tarea 49: el recorrido, bajo el mapa y antes de la ficha; no lo tapa */
+  .historia-elegir select { width: 100%; font-size: 16px; }
   .leyenda { width: min(260px, calc(100% - 90px)); padding: 4px 8px 6px; font-size: 0.75rem; }
   .leyenda-titulo { font-size: 0.8rem; }
   .leyenda-unidad { margin-bottom: 4px; }

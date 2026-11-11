@@ -1,7 +1,7 @@
 // Arranque del mapa (mapa.html) y coordinación: estado de la vista (URL), idioma, datos, barra de
 // la vista (mapa, año, tipología y descargas), mapa, leyenda, «Tu sueldo», ficha de sección o de
 // territorio (municipio, provincia o comunidad; tarea 26), etiqueta al pasar el ratón (tarea 25),
-// comparador, buscador y «Compartir».
+// comparador, buscador, «Compartir» y recorridos guiados (?historia=…&paso=…; tarea 49).
 
 import {
   leerEstado, guardarEstado, vistaATexto, textoAVista, leerSueldoCompartido, enlaceVista, leerTerritorio, territorioATexto,
@@ -47,10 +47,13 @@ import { lineaTransparencia } from './transparencia.js';
 import {
   variaciones, bandaMargen, pocosContratos, variacionIpc, enEuros, textosVariacion, notasEvolucion, graficoEvolucion, cargarIpc,
 } from './evolucion.js';
+import { cargarHistorias, buscarHistoria, pasoDe, cambiosDePaso } from './historias.js';
+import { crearPanelHistoria } from './panel_historia.js';
 
 const estado = { idioma: 'es', ...leerEstado() };
 let sueldo = leerSueldoCompartido();   // solo en memoria; en el enlace, solo con «Compartir»
 if (sueldo && !estado.ficha) estado.ficha = 'peon';
+if (!estado.historia) estado.paso = undefined;   // tarea 49: un paso sin historia no dice nada
 
 const el = {
   mapa: document.getElementById('mapa'),
@@ -91,6 +94,9 @@ let cargaInicial = true;        // tarea 51: el aviso de carga sigue hasta que e
 let turnoFicha = 0;
 let centro = null;              // municipio en el centro de la vista (escala relativa y superficie típica, sin ficha)
 let tipica = null;              // superficie típica del territorio que manda: { clave, nivel, codigo, nombre, valor, anio }
+let historias = null;           // tarea 49: datos/historias.json (solo con ?historia=…), o null
+let historiaActiva = null;      // la historia del recorrido abierto, o null
+let panelHistoria;              // panel del recorrido (panel_historia.js)
 
 const MAPA_POR_DEFECTO = 'sueldo_necesario';
 const mapaDef = () => m.mapas[estado.mapa];
@@ -1124,8 +1130,9 @@ function elegirSeccion(codigo, hueco = null) {
 }
 
 // Un municipio, una provincia o una comunidad (tarea 26): su ficha sustituye a la de la sección.
-// Se queda el nivel con que comparar si lo contiene; otra sección o un nivel menor, no.
-function elegirTerritorio(nivel, codigo) {
+// Se queda el nivel con que comparar si lo contiene; otra sección o un nivel menor, no. Con
+// `pintar: false`, sin repintar (un paso de una historia cambia más cosas y repinta una vez).
+function elegirTerritorio(nivel, codigo, { pintar = true } = {}) {
   sinSeccion = null;
   eligiendoComparada = false;
   estado.seccion = undefined;
@@ -1134,7 +1141,53 @@ function elegirTerritorio(nivel, codigo) {
   mapa.seleccionar(null);
   mapa.comparar(null);
   mapa.seleccionarTerritorio(codigo ? { nivel, codigo } : null);
+  if (pintar) actualizar();
+}
+
+// --- Recorridos guiados (tarea 49; historias.js y panel_historia.js) -------------------------
+
+// Pone en el estado el paso `n` de la historia activa: sus claves (mapa, año, vista, territorio,
+// escala), sin las que no trae, y sin sección, comparación, ficha de perfil ni tipología, de modo
+// que el mapa queda en el modo «necesario» aunque haya un sueldo escrito.
+function ponerPaso(n) {
+  const r = pasoDe(historiaActiva, n);
+  Object.assign(estado, cambiosDePaso(r.paso), { historia: historiaActiva.id, paso: r.n });
+  if (m && !m.mapas[estado.mapa]) estado.mapa = MAPA_POR_DEFECTO;
+}
+
+// Aplica un paso con el mapa ya en marcha: el territorio (con su marca en el mapa), el encuadre de
+// su vista y un solo repintado. Si la persona ha movido el mapa, el paso vuelve a su vista.
+function irAPaso(n) {
+  if (!historiaActiva || !mapa) return;
+  ponerPaso(n);
+  const terr = leerTerritorio(estado.territorio);
+  elegirTerritorio(terr?.nivel, terr?.codigo, { pintar: false });
+  mapa.mapa.flyTo(textoAVista(estado.vista));   // sin animación con «reducir movimiento» (MapLibre)
   actualizar();
+  pintarHistoria();
+}
+
+function pintarHistoria() {
+  if (!panelHistoria) return;
+  if (!historiaActiva) { panelHistoria.ocultar(); return; }
+  panelHistoria.pintar({ t, historias: historias.historias, historia: historiaActiva, n: pasoDe(historiaActiva, estado.paso).n });
+}
+
+// Salir: fuera `historia` y `paso` de la dirección y fuera el panel; la vista se queda como está.
+function salirHistoria() {
+  historiaActiva = null;
+  estado.historia = undefined;
+  estado.paso = undefined;
+  pintarHistoria();
+  guardarEstado(estado);
+  el.mapa.querySelector('canvas')?.focus();
+}
+
+function elegirHistoria(id) {
+  const elegida = buscarHistoria(historias, id);
+  if (!elegida || elegida === historiaActiva) return;
+  historiaActiva = elegida;
+  irAPaso(1);
 }
 
 // Tarea 50: al tocar el mapa en una pantalla estrecha, la página baja hasta la ficha (movil.js)
@@ -1252,6 +1305,7 @@ async function cambiarIdioma(idioma) {
   marcarIdioma();
   plegado?.traducir(t);
   pintarPie();
+  pintarHistoria();   // tarea 49
   if (mapa) {
     mapa.traducir(t);
     actualizar();
@@ -1259,7 +1313,9 @@ async function cambiarIdioma(idioma) {
 }
 
 async function iniciar() {
-  const vistaDelEnlace = Boolean(estado.vista);
+  let vistaDelEnlace = Boolean(estado.vista);
+  // Tarea 49: con ?historia=…, las historias se piden a la vez que el resto (sin el fichero, sin panel)
+  const pedirHistorias = estado.historia ? cargarHistorias() : null;
   t = await cargarIdioma(estado.idioma);
   traducirPagina(t);
   document.title = `${t('nav.mapa')} · ${t('sitio.titulo')}`;
@@ -1268,6 +1324,12 @@ async function iniciar() {
   panel = crearPanelSueldo({ alCambiar: alCambiarSueldo, alCompartir: abrirCompartir });
   panel.ponerSueldo(sueldo);
   barra = crearBarraVista({ alCambiar: alCambiarVista, alExportar: exportar });
+  panelHistoria = crearPanelHistoria({
+    alAnterior: () => irAPaso(estado.paso - 1),
+    alSiguiente: () => irAPaso(estado.paso + 1),
+    alSalir: salirHistoria,
+    alElegir: elegirHistoria,
+  });
   plegado = prepararPlegado(document.getElementById('barra-vista'), document.getElementById('vista-plegar'), t);   // tarea 50
   pintarPie();
   compartir = crearCompartir();
@@ -1277,6 +1339,19 @@ async function iniciar() {
     m = await cargarManifiesto();
     el.ejemplo.hidden = !m.ejemplo;
     pintarPie();
+    // Tarea 49: el paso pedido (el 1 sin paso) manda sobre el resto de la dirección, vista incluida;
+    // si falta el fichero o la historia, fuera las dos claves y la página sigue sin panel
+    if (pedirHistorias) {
+      historias = await pedirHistorias;
+      historiaActiva = buscarHistoria(historias, estado.historia);
+      if (historiaActiva) {
+        ponerPaso(estado.paso);
+        vistaDelEnlace = true;
+      } else {
+        estado.historia = undefined;
+        estado.paso = undefined;
+      }
+    }
     if (!m.mapas[estado.mapa]) estado.mapa = m.mapas[MAPA_POR_DEFECTO] ? MAPA_POR_DEFECTO : Object.keys(m.mapas)[0];
     colores = coloresMapa();
     contornos = coloresContorno();
@@ -1325,6 +1400,7 @@ async function iniciar() {
     if (terr) mapa.seleccionarTerritorio(terr);
     if (esSeccion(estado.comparar)) mapa.comparar(estado.comparar);
     prepararBuscador();
+    pintarHistoria();   // tarea 49: el panel, antes de esperar a los datos del mapa
     await actualizar();
     mapa.mapa.once('idle', () => { cargaInicial = false; mostrarCarga(false); seguirCentro(); });   // tarea 51: ya pintado
     // Sin vista en el enlace (desde la portada: el dado o el buscador), el mapa va a lo elegido

@@ -55,6 +55,10 @@
 #     la tabla larga (alquiler mensual / alquiler por m², vivienda colectiva);
 #   navegador_una_escala (ídem): en el mapa del 11 (provincial), un municipio en la dirección abre la
 #     ficha de su provincia.
+#   navegador_historias (tarea 49): ?historia=centro&paso=3 (con un sueldo tras «#») abre el panel con
+#     el texto de ese paso en datos/historias.json y deja en la dirección las claves de su estado, sin
+#     ficha de perfil (modo «necesario»); «Siguiente» pasa al paso 4 y «Salir» quita la historia de
+#     la dirección sin mover la vista. Sin el fichero, se salta (una fila, con el motivo).
 # `larga`: la tabla larga (tar_read(tabla_larga)); `perfiles`: tar_read(perfiles), para el
 # ingreso de la tartera que usa la web. El mapa está en mapa.html; la raíz es la portada.
 
@@ -324,7 +328,9 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
              comprobar_territorios_navegador(b, evaluar, url, larga, espera),
              comprobar_leyenda_navegador(b, evaluar, url, espera),   # tarea 51
              comprobar_escala_municipio_navegador(b, evaluar, url, larga, espera),   # decisiones del 11-nov-2026
-             comprobar_municipales_navegador(b, evaluar, url, larga, raiz, espera))   # F5
+             comprobar_municipales_navegador(b, evaluar, url, larga, raiz, espera),   # F5
+             comprobar_historias_navegador(b, evaluar, url, espera,   # tarea 49
+                                           hay_fichero = if (is.null(servidor)) NA else file.exists(file.path(raiz, "web", "datos", "historias.json"))))
 
   # Sample recomputed with the page modules
   sc <- unique(larga$geo_id[larga$nivel == "sc" & larga$indicador == "sueldo_necesario"])
@@ -708,4 +714,75 @@ comprobar_municipales_navegador <- function(b, evaluar, url, larga, raiz = ".", 
                                         is.null(f) || is.null(f$cifra) || abs(f$cifra - round(vt$valor)) > 1e-9)
   }
   filas
+}
+
+# Tarea 49: recorrido guiado en el mapa (navegador_historias). El texto y las claves esperadas salen
+# del propio datos/historias.json que sirve la pagina; sin el fichero, una fila que se salta.
+# `hay_fichero`: si se sabe (web local), si el fichero existe; con NA (web publicada), se pregunta a
+# la pagina. En local no se pide si falta, para que su 404 no cuente en navegador_errores.
+comprobar_historias_navegador <- function(b, evaluar, url, espera = 60, hay_fichero = NA, historia = "centro", paso = 3L) {
+  fila <- function(detalle, mal) tibble::tibble(id = "navegador_historias", detalle = detalle, calculado = as.numeric(mal), referencia = 0)
+  if (isFALSE(hay_fichero)) return(list(fila("sin web/datos/historias.json: se salta", FALSE)))
+  b$Page$navigate(paste0(url, "mapa.html"))
+  esperar_navegador(evaluar, "document.readyState === 'complete'", espera)
+  datos <- evaluar("fetch('datos/historias.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.text() : '')).catch(() => '')")
+  if (!nzchar(datos %||% "")) return(list(fila("sin datos/historias.json: se salta", FALSE)))
+  h <- Filter(function(x) identical(x$id, historia), jsonlite::fromJSON(datos, simplifyVector = FALSE)$historias)
+  if (length(h) != 1L || length(h[[1]]$pasos) <= paso) {
+    return(list(fila(sprintf("datos/historias.json sin la historia %s o sin el paso %d", historia, paso + 1L), TRUE)))
+  }
+  pasos <- h[[1]]$pasos
+  leer <- "JSON.stringify({ visible: !document.getElementById('historia').hidden,
+    texto: document.getElementById('historia-texto')?.textContent ?? '',
+    contador: document.getElementById('historia-contador')?.textContent ?? '',
+    busqueda: location.search })"
+  # Claves del estado del paso en la direccion (las que trae, con su valor; sin vista, que cambia
+  # con el encuadre) y las que no deben estar: las que no trae y la ficha de perfil
+  claves_bien <- function(busqueda, estado) {
+    p <- parametros_consulta_navegador(busqueda)
+    trae <- setdiff(names(estado), "vista")
+    todas <- c("mapa", "anio", "territorio", "escala")
+    all(vapply(trae, function(k) identical(p[[k]], as.character(estado[[k]])), TRUE)) &&
+      !any(setdiff(todas, trae) %in% names(p)) && !any(c("ficha", "seccion", "comparar", "tipologia") %in% names(p))
+  }
+  esperar_paso <- function(n) {
+    ok <- esperar_navegador(evaluar, sprintf(
+      "!document.getElementById('historia').hidden && location.search.includes('paso=%d') && document.getElementById('historia-texto').textContent && document.getElementById('mapa-cargando')?.hidden !== false",
+      n), espera)
+    Sys.sleep(1)   # la direccion se escribe un cuarto de segundo despues de pintar
+    if (ok) jsonlite::fromJSON(evaluar(leer), simplifyVector = FALSE) else NULL
+  }
+  filas <- list()
+  # Paso pedido en la direccion, con un sueldo compartido: el mapa sigue en el modo "necesario"
+  b$Page$navigate(sprintf("%smapa.html?historia=%s&paso=%d#sueldo=1500", url, historia, paso))
+  l <- esperar_paso(paso)
+  esperado <- pasos[[paso]]
+  filas[[length(filas) + 1L]] <- fila(
+    sprintf("%s, paso %d: panel, texto y estado (%s)", historia, paso, l$busqueda %||% "sin panel"),
+    is.null(l) || !isTRUE(l$visible) || !identical(l$texto, esperado$texto$es) ||
+      !grepl(sprintf("Paso %d de %d", paso, length(pasos)), l$contador, fixed = TRUE) || !claves_bien(l$busqueda, esperado$estado))
+  # Siguiente: el paso siguiente
+  evaluar("document.getElementById('historia-siguiente').click(); true")
+  l <- esperar_paso(paso + 1L)
+  esperado <- pasos[[paso + 1L]]
+  filas[[length(filas) + 1L]] <- fila(
+    sprintf("%s, Siguiente: paso %d (%s)", historia, paso + 1L, l$busqueda %||% "sin panel"),
+    is.null(l) || !identical(l$texto, esperado$texto$es) || !claves_bien(l$busqueda, esperado$estado))
+  # Salir: fuera historia y paso de la direccion y fuera el panel; la vista no cambia
+  Sys.sleep(3)   # el vuelo hasta la vista del paso
+  antes <- parametros_consulta_navegador(evaluar("location.search"))$vista
+  evaluar("document.getElementById('historia-salir').click(); true")
+  ok <- esperar_navegador(evaluar, "document.getElementById('historia').hidden && !location.search.includes('historia=') && !location.search.includes('paso=')", 20)
+  Sys.sleep(1)
+  despues <- parametros_consulta_navegador(evaluar("location.search"))$vista
+  filas[[length(filas) + 1L]] <- fila(sprintf("%s, Salir: sin historia en la direcci\u00f3n, vista %s", historia, despues %||% "sin vista"),
+                                      !ok || is.null(antes) || !identical(antes, despues))
+  filas
+}
+
+# Parametros de una consulta ("?a=1&b=2") como lista con nombre.
+parametros_consulta_navegador <- function(busqueda) {
+  partes <- strsplit(sub("^[?]", "", busqueda %||% ""), "&", fixed = TRUE)[[1]]
+  partes <- partes[nzchar(partes)]
+  stats::setNames(lapply(sub("^[^=]*=?", "", partes), utils::URLdecode), sub("=.*$", "", partes))
 }

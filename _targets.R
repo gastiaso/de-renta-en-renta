@@ -995,6 +995,35 @@ bloque_historico <- if (AMBITO != "") list() else list(
   })
 )
 
+# Tarea 49, primeras historias (R/web_historias.R; decisiones del autor del 11-nov-2026): recorridos
+# guiados dentro del mapa. Textos y vista de cada paso en inventario/historias.csv; cifras calculadas
+# desde la tabla larga, el histórico y los cortes de la web (inventario/historias_cifras.csv), con una
+# compuerta que para si alguna se aparta de la redactada (el texto se revisa a mano). Salida:
+# datos/historias.json. Sin el histórico (con PROVINCIA), el bloque no entra.
+#   targets::tar_make(names = c(fichero_historias_web, validacion_historias))
+bloque_historias <- if (AMBITO != "") list() else list(
+  tar_target(fichero_historias, "inventario/historias.csv", format = "file"),
+  tar_target(fichero_historias_cifras, "inventario/historias_cifras.csv", format = "file"),
+  tar_target(fichero_estado_js, "web/js/estado.js", format = "file"),
+  tar_target(fichero_historico_html, "web/historico.html", format = "file"),
+  tar_target(historias_inventario, leer_historias(fichero_historias)),
+  tar_target(historias_cifras, historias_calcular(leer_historias_cifras(fichero_historias_cifras), tabla_larga,
+                                                  historico, cortes_niveles)),
+  tar_target(validacion_historias, {
+    ficheros_web; fichero_historico_html
+    validar_referencias(comprobar_historias(
+      historias_inventario, historias_cifras,
+      manifiesto = jsonlite::read_json(file.path(DIR_WEB, "datos", "manifiesto.json")),
+      claves_estado = claves_estado_web(fichero_estado_js),
+      anclas = anclas_paginas_web(DIR_WEB, c("historico.html", "metodo.html", "method.html", "datos.html", "data.html")),
+      larga = tabla_larga, indicadores = indicadores), referencias)
+  }),
+  tar_target(fichero_historias_web, {
+    validacion_historias   # la compuerta va antes
+    exportar_historias(historias_inventario, historias_cifras, dir_web = DIR_WEB)
+  }, format = "file")
+)
+
 # F6, CIS: la vivienda entre los tres principales problemas de España y entre los que más afectan
 # personalmente, por barómetro mensual (R/fuente_cis_barometros.R). Serie nacional en una tabla propia
 # (no va a la tabla larga), desde enero de 2014: los resultados abiertos de cada barómetro (tabulaciones
@@ -1061,4 +1090,5 @@ bloque_ipc <- list(
 
 list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, bloque_paso2011, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_zonas_tensionadas, bloque_portales, bloque_tabla_larga, bloque_web, bloque_historico,
      bloque_cis, bloque_calendario,   # F6, CIS y calendario
-     bloque_ipc)                      # tarea 45, IPC
+     bloque_ipc,                      # tarea 45, IPC
+     bloque_historias)                # tarea 49, primeras historias

@@ -143,6 +143,7 @@ jobs:
               --metadata subtitulo="$(jq -r .sitio.subtitulo "$dic")"
               --metadata texto_mapa="$(jq -r .nav.mapa "$dic")"
               --metadata texto_tu_sueldo="$(jq -r .nav.tu_sueldo "$dic")"
+              --metadata texto_historias="$(jq -r '.nav.historias // empty' "$dic")"
               --metadata texto_sobrecarga="$(jq -r .nav.sobrecarga "$dic")"
               --metadata texto_datos="$(jq -r .nav.datos "$dic")"
               --metadata texto_metodo="$(jq -r .nav.metodo "$dic")"

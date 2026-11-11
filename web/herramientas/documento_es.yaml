@@ -8,6 +8,7 @@ descripcion: "Nota metodológica de De renta en renta: fuentes, geografía const
 portada: "./"
 mapa: "mapa.html"
 tu_sueldo: "mapa.html#tu-sueldo"
+historias: "mapa.html?historia=centro"
 sobrecarga: "sobrecarga.html"
 datos: datos.html
 metodo: metodo.html

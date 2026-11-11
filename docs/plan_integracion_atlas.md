@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.49 · 11 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.50 · 11 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.50:** tarea 49 del backlog (11-nov-2026): primeras historias, como recorridos guiados dentro del mapa, con las cifras calculadas en el pipeline y una compuerta que para si alguna se aparta de la redactada; la brecha entre entrar y quedarse se aplaza hasta la autorización de Idealista (decisiones del autor; §7, F6).
 
 **Cambios en la v0.49:** decisiones del autor sobre la web (11-nov-2026): tramos relativos al municipio en la leyenda, a escala de sección (§11, pregunta 51); superficie típica como opción de «Tu ficha» y línea de la ficha de municipio (pregunta 59 a); en los mapas de una sola escala, lo elegido en el buscador abre la ficha de su provincia (pregunta 57).
 
@@ -632,7 +634,7 @@ Sin fechas. Cada fase se cierra con un criterio verificable. F1b y F2 se publica
 - **Contenido:**
   - tabla de paso desde el seccionado de 2011 (callejero y seccionado de 2011, más la vía b), para las viviendas turísticas de 2020–2023 y el Censo 2011 (pregunta abierta 14) — hecho (11-nov-2026, tarea 47);
   - módulo histórico nacional y autonómico desde 1987: esfuerzo del Banco de España, valor tasado, salarios y tipos (es la «máquina del tiempo» que da sentido a la identidad retro) — hecho (10-nov-2026): años de renta y esfuerzo teórico del Banco de España (sin desglose por comunidad: no lo publica), tipos oficiales de referencia, valor tasado desde 1995 (España y comunidades) y sueldo bruto medio por asalariado de la Contabilidad Nacional desde 1995, en una tabla propia; página `historico.html`;
-  - primeras historias;
+  - primeras historias — hecho (11-nov-2026, tarea 49): «El centro no cabe en la escala» y «Años de renta», recorridos guiados dentro del mapa (decisión del autor), con compuerta de sus cifras; la brecha entre entrar y quedarse, aplazada hasta la autorización de Idealista;
   - enlace con *barómetros* (el problema de la vivienda en el CIS frente a los datos, por comunidad);
   - automatización de las actualizaciones.
 - **Hecho cuando:** el calendario de fuentes avisa de las actualizaciones y el CHANGELOG está al día (decisión del autor, 10-nov-2026: nada se actualiza solo).

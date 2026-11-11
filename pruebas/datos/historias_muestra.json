@@ -1,0 +1,61 @@
+{
+  "generado": "2026-01-01",
+  "historias": [
+    {
+      "id": "centro",
+      "titulo": { "es": "Historia de prueba A", "en": "Test story A" },
+      "entradilla": { "es": "Entradilla inventada para las pruebas.", "en": "Made-up lead for the tests." },
+      "pasos": [
+        {
+          "titulo": { "es": "Paso A1", "en": "Step A1" },
+          "texto": { "es": "Texto inventado con una cifra: 1.234 €.", "en": "Made-up text with a figure: €1,234." },
+          "estado": { "mapa": "alquiler_mes", "anio": 2015, "vista": "11.30/40.42000/-3.70000" },
+          "enlace": null,
+          "fuente": { "es": "Fuente inventada", "en": "Made-up source" }
+        },
+        {
+          "titulo": { "es": "Paso A2", "en": "Step A2" },
+          "texto": { "es": "Segundo texto inventado: 56,7 %.", "en": "Second made-up text: 56.7%." },
+          "estado": { "mapa": "alquiler_mes", "anio": 2024, "vista": "11.30/40.42000/-3.70000" },
+          "enlace": null,
+          "fuente": { "es": "Fuente inventada", "en": "Made-up source" }
+        },
+        {
+          "titulo": { "es": "Paso A3", "en": "Step A3" },
+          "texto": { "es": "Tercer texto inventado, con la escala del municipio.", "en": "Third made-up text, on the municipal scale." },
+          "estado": { "mapa": "alquiler_mes", "anio": 2024, "vista": "11.30/40.42000/-3.70000", "territorio": "municipio:28079", "escala": "municipio" },
+          "enlace": null,
+          "fuente": { "es": "Fuente inventada", "en": "Made-up source" }
+        },
+        {
+          "titulo": { "es": "Paso A4", "en": "Step A4" },
+          "texto": { "es": "Cuarto texto inventado.", "en": "Fourth made-up text." },
+          "estado": { "mapa": "alquiler_mes", "anio": 2024, "vista": "11.80/41.39500/2.16500", "territorio": "municipio:08019", "escala": "municipio" },
+          "enlace": null,
+          "fuente": { "es": "Fuente inventada", "en": "Made-up source" }
+        }
+      ]
+    },
+    {
+      "id": "anios",
+      "titulo": { "es": "Historia de prueba B", "en": "Test story B" },
+      "entradilla": { "es": "Otra entradilla inventada.", "en": "Another made-up lead." },
+      "pasos": [
+        {
+          "titulo": { "es": "Paso B1", "en": "Step B1" },
+          "texto": { "es": "Texto inventado con enlace.", "en": "Made-up text with a link." },
+          "estado": { "mapa": "anios_salario_compra", "anio": 2024, "vista": "4.60/39.80000/-3.70000" },
+          "enlace": { "href": "historico.html#hist-renta", "texto": { "es": "Ver la serie", "en": "See the series" } },
+          "fuente": { "es": "Fuente inventada", "en": "Made-up source" }
+        },
+        {
+          "titulo": { "es": "Paso B2", "en": "Step B2" },
+          "texto": { "es": "Último texto inventado.", "en": "Last made-up text." },
+          "estado": { "mapa": "anios_salario_compra", "anio": 2024, "vista": "8.20/39.20000/2.00000", "territorio": "municipio:07054" },
+          "enlace": null,
+          "fuente": { "es": "Fuente inventada", "en": "Made-up source" }
+        }
+      ]
+    }
+  ]
+}
