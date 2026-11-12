@@ -15,7 +15,7 @@ Lo hecho desde la v1.0.0 (decisión del autor, 12-nov-2026). Novedades principal
 - euros de 2025 en la Máquina del tiempo y en la evolución de la ficha (IPC del INE);
 - los datos de 2025 de la AEAT y del INSS: los indicadores 7 y 16 llegan a 2025.
 
-La oferta de Idealista sigue «próximamente», con la capa apagada. Lo que el backlog reservaba «para la v1.1» (venta y otros portales, microdatos del CIS, línea de ingreso residual) pasa a la versión siguiente.
+La oferta de Idealista sigue «próximamente», con la capa apagada. Lo que el backlog reservaba «para la v1.1» (venta y otros portales, microdatos del CIS, línea de ingreso residual) pasa a la versión siguiente. Release `v1.1.0` (datos y código del commit `8f356db`, sin cambios sin commit). Contra el sitio publicado, la prueba en el navegador (`comprobar_web_navegador()`, 300 secciones) da 0 en sus 56 comprobaciones de 18 tipos y el PMTiles se sirve por rangos.
 
 ### Actualizado (12-nov-2026, datos de 2025 de la AEAT y del INSS: decisión del autor)
 
