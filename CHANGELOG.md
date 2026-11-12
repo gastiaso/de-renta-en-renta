@@ -4,6 +4,10 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (12-nov-2026, borradores para la v1.2: por decidir)
+
+- **Tres especificaciones-borrador** para lo que el backlog reserva «para la v1.2», con fuentes, método y alternativas, encaje en la tabla larga, la web y las compuertas, esfuerzo y preguntas: `docs/especificacion_ingreso_residual.md` (línea de ingreso residual frente a la renta garantizada del IMV o el umbral de pobreza de la ECV, en «Tu sueldo» y como regla de «¿te llega?»), `docs/especificacion_reglas_del_juego.md` (pestaña con resúmenes de las normas del alquiler, enlazados al BOE consolidado; muestra de la ficha de zonas tensionadas, por revisar) y `docs/especificacion_cis_comunidad.md` (la vivienda como problema por comunidad, con los microdatos de los barómetros: media anual desde 2023 y márgenes; la descarga pide un formulario). Sin cambios en el pipeline ni en la web.
+
 ### Cambiado (12-nov-2026, historia «anios» a 2025)
 
 - Historia «Tres años de renta en 1987, más de ocho hoy»: los pasos del mapa pasan a 2025, con los datos de 2025 de la Agencia Tributaria. Madrid, 12,1 años de sueldo; Barcelona, 11,5; Illes Balears, 11,4. Los municipios del panel que llegan a diez años pasan de 4 en 2015 a 28 en 2025 (30 con todos los que tienen dato). El percentil 10 se queda en 3,4 años, como en 2015, y el paso 7 lo dice («lo barato sigue igual»). La nota del paso 6 avisa de que Villarrobledo empata a un decimal con Puertollano (cifra nueva en la compuerta). Ids de las cifras renombrados de `_2024` a `_2025`. `web/datos/historias.json` va en el paquete del release: el sitio sigue con la historia en 2024 hasta el próximo.
