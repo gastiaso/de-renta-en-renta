@@ -6,6 +6,7 @@
 |---|---|
 | `comun_utilidades.R` | Redondeo (`redondear_1`; `redondear_empate_arriba`, con los empates hacia arriba sobre la cifra decimal: precios de los portales y tipo del 17), códigos territoriales, neto mensual |
 | `comun_descargar.R` | `descargar_con_cache()`: descarga a `datos/brutos/`, no repite y conserva la versión anterior si falla |
+| `brutos_comprobar.R` | Qué falta en `datos/brutos/` antes de `tar_make()` (tarea 58; `docs/reproducir.md`): `brutos_comprobar()` cruza `inventario/descargas_manuales.csv` y la columna `ficheros` del calendario con el disco, y `brutos_informe()` dice si falta alguna descarga manual. No descarga nada; se usa sin cargar `targets` |
 | `comun_validar.R` | Compuerta: `leer_tolerancia()` y `validar_referencias()` |
 | `comun_supuestos.R` | Módulo de supuestos (tarea 48): lee `inventario/supuestos.csv` (fuente única de superficies, umbral, pagas, segundo sueldo y supuestos de la compraventa), genera `web/js/supuestos.js`, superficie típica del SERPAVI (`superficie_tipica_serpavi()`) y compuerta en una muestra (`comprobar_supuestos()`). Se carga antes que `derivados*.R`, que toman de él sus constantes |
 | `fuente_<id>.R` | Una fuente: `descargar_<id>()`, `leer_<id>()`, `armonizar_<id>()`. El `id` es el de `inventario/fuentes.csv` |

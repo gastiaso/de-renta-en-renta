@@ -4,6 +4,11 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (12-nov-2026, tarea 58: preparación de la prueba en limpio)
+
+- **Guía para reproducir el atlas desde cero** (`docs/reproducir.md`): requisitos (R 4.6.1 con `renv`, GDAL ≥ 3.8 con PMTiles, Node, unos 12 GB de disco y 16 GB de memoria), descargas manuales y automáticas con sus tamaños (9,6 GB desde cero; 5,7 GB con `PROVINCIA=28`), pasos en PowerShell y R, una pasada corta con `PROVINCIA=28` antes de la completa (unas 3 h 30 min), y cómo comprobar el resultado: compuertas y avisos, `tar_outdated()`, `testthat`, pruebas de la web, `git status` sin cambios y la tabla larga igual a la del release `v1.1.0` salvo `version`. La prueba no se ha hecho todavía.
+- **Qué falta en `datos/brutos/` antes de `tar_make()`**: `brutos_comprobar()` y `brutos_informe()` (`R/brutos_comprobar.R`, con su prueba), desde `inventario/descargas_manuales.csv` (nuevo: SERPAVI, Registradores, unidades del IGN, Idealista y los dos ficheros que vinieron de fuera del pipeline, la ECV y el seccionado de 2025) y la columna `ficheros` del calendario de fuentes. No descarga nada. Contra la carpeta del autor, completa: 33 de 33 entradas, 9.562 MB.
+
 ## [1.1.0] · 12-nov-2026
 
 Lo hecho desde la v1.0.0 (decisión del autor, 12-nov-2026). Novedades principales:
