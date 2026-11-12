@@ -41,34 +41,35 @@ e_ultimo_anio,anios,hist_ultimo_anio,esfuerzo_teorico,nacional,00,,,,0,2026,«en
 e_ultimo_trim,anios,hist_ultimo_subperiodo,esfuerzo_teorico,nacional,00,,,,0,2,
 tipo_1987,anios,hist_valor,mibor_euribor,nacional,00,1987,,1,1,11.9,Míbor a un año en enero de 1987 (%): «con los tipos de interés mucho más altos»
 tipo_ultimo,anios,hist_ultimo,mibor_euribor,nacional,00,,,,1,3.2,Euríbor a un año del último mes publicado (%)
-a16_prov_min_2024,anios,minimo,anios_salario_compra,provincia,,2024,,,1,2.7,
-a16_prov_min_geo,anios,minimo_geo,anios_salario_compra,provincia,,2024,,,0,13,«la provincia de Ciudad Real» (13)
+a16_prov_min_2025,anios,minimo,anios_salario_compra,provincia,,2025,,,1,2.7,
+a16_prov_min_geo,anios,minimo_geo,anios_salario_compra,provincia,,2025,,,0,13,«la provincia de Ciudad Real» (13)
 a16_13_2015,anios,valor,anios_salario_compra,provincia,13,2015,,,1,4.1,Provincia de Ciudad Real en 2015
-a16_prov_max_2024,anios,maximo,anios_salario_compra,provincia,,2024,,,1,10.5,
-a16_prov_max_geo,anios,maximo_geo,anios_salario_compra,provincia,,2024,,,0,7,«Illes Balears» (07)
+a16_prov_max_2025,anios,maximo,anios_salario_compra,provincia,,2025,,,1,11.4,
+a16_prov_max_geo,anios,maximo_geo,anios_salario_compra,provincia,,2025,,,0,7,«Illes Balears» (07)
 a16_07_2015,anios,valor,anios_salario_compra,provincia,07,2015,,,1,8.9,Illes Balears en 2015
-a16_28079_2024,anios,valor,anios_salario_compra,municipio,28079,2024,,,1,10.6,Madrid
+a16_28079_2025,anios,valor,anios_salario_compra,municipio,28079,2025,,,1,12.1,Madrid
 a16_28079_2015,anios,valor,anios_salario_compra,municipio,28079,2015,,,1,8,
-a16_08019_2024,anios,valor,anios_salario_compra,municipio,08019,2024,,,1,10.6,Barcelona
+a16_08019_2025,anios,valor,anios_salario_compra,municipio,08019,2025,,,1,11.5,Barcelona
 a16_08019_2015,anios,valor,anios_salario_compra,municipio,08019,2015,,,1,9,
-a16_panel_n,anios,panel_n,anios_salario_compra,municipio,,2024,,;2015,0,267,Municipios con dato en 2015 y en 2024: «los mismos»
-a16_mun10_2015,anios,panel_cuenta_desde,anios_salario_compra,municipio,,2015,,10;2024;1,0,4,"Municipios del panel con diez años o más, con la cifra a un decimal como la enseña el mapa"
-a16_mun10_2024,anios,panel_cuenta_desde,anios_salario_compra,municipio,,2024,,10;2015;1,0,17,
-a16_mun10_2024_todos,anios,panel_cuenta_desde,anios_salario_compra,municipio,,2024,,10;2024;1,0,19,"Todos los municipios con dato en 2024 (también los que no lo tenían en 2015), a un decimal"
-a16_mun10_malaga,anios,panel_cuenta_desde,anios_salario_compra,municipio,29,2024,,10;2015;1,0,6,De los diecisiete: los de la provincia de Málaga (29)
-a16_mun10_balears,anios,panel_cuenta_desde,anios_salario_compra,municipio,07,2024,,10;2015;1,0,3,De los diecisiete: los de Illes Balears (07)
-a16_mun_max_geo,anios,maximo_geo,anios_salario_compra,municipio,,2024,,,0,7054,«El primero es Santa Eulària des Riu» (07054)
+a16_panel_n,anios,panel_n,anios_salario_compra,municipio,,2025,,;2015,0,267,Municipios con dato en 2015 y en 2025: «los mismos»
+a16_mun10_2015,anios,panel_cuenta_desde,anios_salario_compra,municipio,,2015,,10;2025;1,0,4,"Municipios del panel con diez años o más, con la cifra a un decimal como la enseña el mapa"
+a16_mun10_2025,anios,panel_cuenta_desde,anios_salario_compra,municipio,,2025,,10;2015;1,0,28,«De cuatro municipios a veintiocho» (título del paso 5)
+a16_mun10_2025_todos,anios,panel_cuenta_desde,anios_salario_compra,municipio,,2025,,10;2025;1,0,30,"Todos los municipios con dato en 2025 (también los que no lo tenían en 2015), a un decimal"
+a16_mun10_malaga,anios,panel_cuenta_desde,anios_salario_compra,municipio,29,2025,,10;2015;1,0,8,De los veintiocho: los de la provincia de Málaga (29)
+a16_mun10_balears,anios,panel_cuenta_desde,anios_salario_compra,municipio,07,2025,,10;2015;1,0,7,De los veintiocho: los de Illes Balears (07)
+a16_mun_max_geo,anios,maximo_geo,anios_salario_compra,municipio,,2025,,,0,7054,«El primero es Santa Eulària des Riu» (07054)
 a16_07054_2015,anios,valor,anios_salario_compra,municipio,07054,2015,,,1,10.7,
-a16_07054_2024,anios,valor,anios_salario_compra,municipio,07054,2024,,,1,17.9,
-a16_mun_min_geo,anios,minimo_geo,anios_salario_compra,municipio,,2024,,,0,13071,«Puertollano» (13071): la cifra más baja de los municipios con dato
-a16_13071_2024,anios,valor,anios_salario_compra,municipio,13071,2024,,,1,2.2,
+a16_07054_2025,anios,valor,anios_salario_compra,municipio,07054,2025,,,1,19.1,
+a16_mun_min_geo,anios,minimo_geo,anios_salario_compra,municipio,,2025,,,0,13071,"«Puertollano» (13071): la cifra más baja de los municipios con dato, sin redondear"
+a16_13071_2025,anios,valor,anios_salario_compra,municipio,13071,2025,,,1,2.3,
 a16_13071_2015,anios,valor,anios_salario_compra,municipio,13071,2015,,,1,3.5,
+a16_02081_2025,anios,valor,anios_salario_compra,municipio,02081,2025,,,1,2.3,"Villarrobledo: a un decimal, empata con Puertollano (nota del paso 6)"
 vt_13071_2015,anios,valor,valor_tasado_m2,municipio,13071,2015,,,0,672,Valor tasado de Puertollano (€ por m²)
-vt_13071_2024,anios,valor,valor_tasado_m2,municipio,13071,2024,,,0,592,
-a16_p10_2015,anios,panel_cuantil,anios_salario_compra,municipio,,2015,,0.1;2024;1,1,3.4,"Percentil 10 de los municipios del panel, con la cifra a un decimal: «uno de cada diez queda por debajo»"
-a16_p10_2024,anios,panel_cuantil,anios_salario_compra,municipio,,2024,,0.1;2015;1,1,3.1,
-a16_p90_2015,anios,panel_cuantil,anios_salario_compra,municipio,,2015,,0.9;2024;1,1,7.2,Percentil 90 de los municipios del panel
-a16_p90_2024,anios,panel_cuantil,anios_salario_compra,municipio,,2024,,0.9;2015;1,1,9.2,
+vt_13071_2025,anios,valor,valor_tasado_m2,municipio,13071,2025,,,0,638,
+a16_p10_2015,anios,panel_cuantil,anios_salario_compra,municipio,,2015,,0.1;2025;1,1,3.4,"Percentil 10 de los municipios del panel, con la cifra a un decimal: «uno de cada diez queda por debajo»; el mismo que en 2025"
+a16_p10_2025,anios,panel_cuantil,anios_salario_compra,municipio,,2025,,0.1;2015;1,1,3.4,«el mismo listón que en 2015»
+a16_p90_2015,anios,panel_cuantil,anios_salario_compra,municipio,,2015,,0.9;2025;1,1,7.2,Percentil 90 de los municipios del panel
+a16_p90_2025,anios,panel_cuantil,anios_salario_compra,municipio,,2025,,0.9;2015;1,1,10.3,
 smi_p30_2015,minimo,portada_smi,peso_alquiler_ingreso,sc,00,2015,ficha:tartera,pct_30,1,69.2,Carta del salario mínimo de la portada (cifras_portada()) calculada para 2015: % de secciones donde 50 m² pasan del 30 % del salario mínimo neto
 smi_n_2015,minimo,portada_smi,peso_alquiler_ingreso,sc,00,2015,ficha:tartera,secciones,0,21627,Secciones con dato en 2015 (las de la carta)
 smi_neto_2015,minimo,perfil_ingreso,tartera,nacional,00,2015,,,1,708.6,Salario mínimo neto de 2015 en doce pagas: ingreso de la tartera que recibe la web (perfiles_web())

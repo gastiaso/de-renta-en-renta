@@ -4,6 +4,10 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Cambiado (12-nov-2026, historia «anios» a 2025)
+
+- Historia «Tres años de renta en 1987, más de ocho hoy»: los pasos del mapa pasan a 2025, con los datos de 2025 de la Agencia Tributaria. Madrid, 12,1 años de sueldo; Barcelona, 11,5; Illes Balears, 11,4. Los municipios del panel que llegan a diez años pasan de 4 en 2015 a 28 en 2025 (30 con todos los que tienen dato). El percentil 10 se queda en 3,4 años, como en 2015, y el paso 7 lo dice («lo barato sigue igual»). La nota del paso 6 avisa de que Villarrobledo empata a un decimal con Puertollano (cifra nueva en la compuerta). Ids de las cifras renombrados de `_2024` a `_2025`. `web/datos/historias.json` va en el paquete del release: el sitio sigue con la historia en 2024 hasta el próximo.
+
 ### Cambiado (12-nov-2026, carga inicial del mapa: tarea 62)
 
 - **El mapa abre con menos datos.** Sin vista en la dirección, `mapa.html` ya no pide el índice de las secciones ni sus valores: llegan al acercar el mapa hasta el zoom 7 (`secciones_desde_zoom` del manifiesto, el primero en que el PMTiles trae secciones), con una sección elegida, en «¿te llega?» o al buscar un código de sección. La banda de la llave en la regla de la leyenda sale de los cuartiles de la renta por hogar en las secciones, que el manifiesto trae por año (`cuartiles_sc`, con su compuerta en `web_valores`). Abrir el mapa pasa de 76 peticiones y 1,27 MB comprimidos a 69 y 0,89 MB.
