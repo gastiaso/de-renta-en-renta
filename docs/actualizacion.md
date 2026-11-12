@@ -45,6 +45,8 @@ targets::tar_make()                               # descarga, compuertas, tablas
 
 El IPC (`ine_ipc`) mueve el año base de los euros constantes de la web: cuando el INE publica en enero la media anual del año anterior, el siguiente `tar_make()` la recoge, el año base pasa a ese año (`ipc_anio_base()`) y la Máquina del tiempo y la evolución de la ficha cambian sus cifras en euros del año base. Las cifras de la nota metodológica en euros de 2025 se rehacen entonces. Cuando el INE cambie de base, cambia también el número de la tabla (`TABLA_IPC`, `R/fuente_ine_ipc.R`).
 
+La AEAT (`aeat_mercado_trabajo`) publica en noviembre el año anterior, y el INSS (`inss_pensiones`) tiene sus doce meses desde enero. Suben a la vez `ANIOS_SALARIOS` (`R/fuente_aeat_salarios.R`), `ANIOS_SME` y `ANIOS_MOCHILA` (`R/ficha_mochila.R`), `ANIOS_PERCENTIL` (`R/percentil_salarial.R`) y `ANIOS_TRANSISTOR` (`R/ficha_transistor.R`), y el objetivo `paginas_salarios_<año>` que da su versión a `larga_salarios` en `_targets.R`: la mochila y el percentil toman sus retenciones de las páginas del transistor del mismo año. El control de la mochila con la ECV se queda un año atrás (`ANIOS_MOCHILA_ECV`) hasta que el INE publica en febrero la ola con esos ingresos. El indicador 16 gana el año nuevo si el valor tasado ya lo tiene; el 17 espera a la renta del ADRH de octubre. La web no cambia: usa el ingreso del año del alquiler (regla 4). Hecho así el 12-nov-2026 con los datos de 2025.
+
 Si una descarga falla, el pipeline se detiene en ese objetivo. Los ficheros apartados vuelven a su sitio con `cal_restaurar("AAAA-MM-DD")` (la fecha de la carpeta de `_anteriores`), que solo devuelve los que no se han vuelto a bajar.
 
 ## 3. Comprobar

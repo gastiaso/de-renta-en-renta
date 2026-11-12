@@ -14,7 +14,7 @@
 # La provincia es la de la dirección provincial que gestiona la pensión, no la de residencia, y
 # se cuentan pensiones, no pensionistas (quien cobra dos pensiones aparece dos veces).
 
-ANIOS_TRANSISTOR <- 2015:2024
+ANIOS_TRANSISTOR <- 2015:2025
 PAGAS_PENSION <- 14L
 CCAA_FORALES <- c("15", "16")   # Navarra y Pais Vasco
 

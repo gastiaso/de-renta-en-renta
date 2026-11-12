@@ -1,11 +1,11 @@
 # Ficha «mochila» (joven de 26 a 35 años): mediana estimada del salario con la AEAT (plan §3.1,
-# «Método de la mochila»), de 2015 a 2024, en cinco pasos:
+# «Método de la mochila»), de 2015 a 2025, en cinco pasos:
 #   1. Nivel provincial: salario medio anual de 26 a 35 años de la provincia (indicador 7,
 #      R/fuente_aeat_salarios.R). Es lo cobrado en el año (paso 4).
 #   2. De media a mediana: × relación mediana/media del salario medio estimado (SME, módulo de
 #      «año completo») de 26 a 35 años de su comunidad, del mismo año (formas_sme). El módulo existe
 #      desde la edición de 2019: de 2015 a 2018 se usa la relación de 2019 (anio_forma), con la
-#      alerta mochila_forma, que mide cuánto se mueve de 2019 a 2024. Esos años son «estimado» y
+#      alerta mochila_forma, que mide cuánto se mueve de 2019 a 2025. Esos años son «estimado» y
 #      llevan su método en metodo_forma (plan §11, pregunta 44 f revisada). Comprobación con la ECV
 #      (ecv_mochila_correccion()): relación mediana/media del salario de quienes trabajaron los doce
 #      meses, de 26 a 35 años, de 2015 a 2024; si algún año de 2015 a 2018 se aparta más de 2
@@ -29,8 +29,11 @@
 # con los recuentos por centil que la AEAT sí da por comunidad (todas las edades).
 
 EDAD_MOCHILA <- "De 26 a 35 a\u00f1os"
-ANIOS_MOCHILA <- 2015:2024
-ANIOS_SME <- 2019:2024          # módulo de «año completo» de la AEAT
+ANIOS_MOCHILA <- 2015:2025
+ANIOS_SME <- 2019:2025          # módulo de «año completo» de la AEAT
+# Años con control de la ECV: los ingresos de un año salen en la ola del siguiente, así que el último
+# año de la AEAT se queda sin control hasta que el INE publica esa ola (la de 2026, en febrero de 2027).
+ANIOS_MOCHILA_ECV <- 2015:2024
 
 # Tablas de la AEAT que usa la ficha: título en el mapa de la estadística y filtros fijos. La
 # provincial, en R/fuente_aeat_salarios.R.
@@ -190,8 +193,8 @@ calcular_mochila_serie <- function(salarios, formas, anios = ANIOS_MOCHILA, corr
 
 # Cotización del trabajador a la Seguridad Social del año de ingresos (régimen general, contrato
 # indefinido): la de la tartera (SMI_FICHAS, R/derivados.R): 6,35 % hasta 2022 (contingencias
-# comunes 4,70, desempleo 1,55 y formación profesional 0,10) y, con el MEI, 6,45 % en 2023 y
-# 6,47 % en 2024. Con contrato temporal, el desempleo es del 1,60 % (0,05 puntos más).
+# comunes 4,70, desempleo 1,55 y formación profesional 0,10) y, con el MEI, 6,45 % en 2023,
+# 6,47 % en 2024 y 6,48 % en 2025. Con contrato temporal, el desempleo es del 1,60 % (0,05 puntos más).
 cotizacion_trabajador <- function(anios) {
   x <- SMI_FICHAS$cotizacion[match(as.integer(anios), SMI_FICHAS$anio)]
   if (anyNA(x)) stop("Sin cotizaci\u00f3n del trabajador para: ", paste(unique(anios[is.na(x)]), collapse = ", "), call. = FALSE)

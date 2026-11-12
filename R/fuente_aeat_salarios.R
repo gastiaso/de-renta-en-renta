@@ -1,7 +1,7 @@
 # Indicador 7 (F3): salario medio anual por asalariado, en total y de 26 a 35 años, por provincia,
 # comunidad y España. AEAT, «Mercado de trabajo y pensiones en las fuentes tributarias», tabla
 # «Asalariados, percepciones salariales y salarios por provincia, edad y sexo» (sexo total).
-#   - Ediciones en tablas HTML: 2011–2024 (las anteriores no están en la web de la AEAT).
+#   - Ediciones en tablas HTML: 2011–2025 (las anteriores no están en la web de la AEAT).
 #   - Salario medio = salarios / asalariados: lo cobrado en el año, también por quien trabajó pocos
 #     meses. Domicilio fiscal del perceptor.
 #   - Sin País Vasco ni Navarra (domicilio fiscal foral): sus provincias y comunidades van como
@@ -15,7 +15,7 @@
 # de su comunidad y de España.
 
 TITULO_AEAT_SALARIOS <- "Asalariados, percepciones salariales y salarios por provincia, edad y sexo"
-ANIOS_SALARIOS <- 2011:2024
+ANIOS_SALARIOS <- 2011:2025
 # Tramos de edad de la AEAT que van a la tabla larga: total y 26–35 (el de la mochila).
 GRUPOS_EDAD_SALARIOS <- c("Total" = "total", "De 26 a 35 a\u00f1os" = "Y26-35")
 # Comunidades de una sola provincia (código de comunidad del INE → código de provincia).

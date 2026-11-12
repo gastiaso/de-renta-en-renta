@@ -2,7 +2,7 @@
 // en la distribución de los salarios de su comunidad y año (datos/salarios.json: lo cobrado en el
 // año por los asalariados según la AEAT, neto y repartido en 12), por interpolación lineal entre
 // los percentiles 1 a 99. País Vasco y Navarra, que la AEAT no cubre (y Ceuta y Melilla en 2020 y
-// 2021), no tienen curva propia: la de España («00»). De 2015 a 2024.
+// 2021), no tienen curva propia: la de España («00»). De 2015 a 2025 (la web usa los años con alquiler).
 
 // `salarios`: { percentiles: [1, …, 99], anios: { '2024': { '00': [...], '09': [...] } } }.
 // Curva de una comunidad y año, o la de España si la comunidad no tiene; null si el año no tiene.

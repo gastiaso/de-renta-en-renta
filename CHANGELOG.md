@@ -4,6 +4,16 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Actualizado (12-nov-2026, datos de 2025 de la AEAT y del INSS: decisión del autor)
+
+- **Edición de 2025 de «Mercado de trabajo y pensiones en las fuentes tributarias»** (AEAT; 308 páginas, 11 MB) y **los doce Excel de 2025 de las pensiones del INSS** (2,4 MB), descargados el 12-nov-2026 (`ANIOS_SALARIOS`, `ANIOS_SME`, `ANIOS_MOCHILA`, `ANIOS_PERCENTIL` y `ANIOS_TRANSISTOR` hasta 2025; `inventario/calendario_fuentes.csv`, `inventario/fuentes.csv`). Todas las compuertas de bloqueo pasan con el año nuevo.
+- **Indicador 7** (salario medio de la AEAT), de 2011 a 2025: en España, 25.830 € por asalariado en 2025 (24.962 € en 2024) y 22.468 € de 26 a 35 años (21.506 €); 2.160 filas en la tabla larga.
+- **Indicador 16** (años de salario para comprar), de 2015 a 2025: su mapa abre ahora en 2025. En España, 6,6 años (6,1 en 2024); 30 municipios llegan a los diez años (19 en 2024). Las historias siguen en 2024, el año que fija cada paso.
+- **Indicador 17** (cuota hipotecaria sobre la renta del hogar): sigue de 2015 a 2024. `armonizar_derivados_compraventa()` lo deja en los años con renta del ADRH: sin ese filtro, 2025 habría entrado entero `ausente` y su mapa habría abierto vacío (`R/derivados_compraventa.R`, con su prueba).
+- **Fichas**: la mochila (joven de 26 a 35 años) y el transistor (pensionista) tienen ingreso de 2025 (1.381 y 1.631 € netos al mes de media, frente a 1.330 y 1.574 en 2024), y el percentil salarial, curvas de 2025. La web no cambia: usa el ingreso del mismo año que el alquiler, que llega a 2024 (regla 4).
+- **Control de la mochila con la ECV**, hasta 2024 (`ANIOS_MOCHILA_ECV`, nueva): los ingresos de 2025 salen en la ola de 2026, que el INE publica en febrero de 2027. `ANIO_AEAT`, que nadie usaba, sale de `_targets.R`.
+- **Por decidir**: si la historia de los años de sueldo pasa a contar 2025; hasta entonces cita 2024 y sus pasos fijan el mapa en 2024. Cómo renovar estas dos fuentes, en `docs/actualizacion.md`.
+
 ### Cambiado (12-nov-2026, «Tu sueldo», fichas y portada: decisiones del autor tras la revisión con seis lecturas)
 
 - **El resultado de «¿te llega?» dice qué y cuánto** (`web/mapa.html`, `web/js/panel_sueldo.js`, `web/js/principal.js`, `web/estilo/sitio.css`, `web/i18n/`): de «Te cabe en el X % de las secciones» a «El alquiler de 50 m² no pasa del 30 % de tus ingresos en el X % de las secciones con dato (N de M)»; la segunda cifra, «Con el piso mediano que se alquila en cada sección en lugar de 50 m², en el…». En la misma caja, un aviso fijo: «Es el alquiler de quien ya tiene contrato; quien busca piso hoy suele pagar más». Los campos pasan a «Ingresos netos al mes» y «Segundo ingreso (opcional)», para que valga una pensión.

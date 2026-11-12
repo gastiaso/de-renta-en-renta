@@ -58,7 +58,7 @@ Las cifras del SERPAVI miden a quien ya vive de alquiler, no lo que cuesta entra
 
 **Tipología del alquiler** (plan §11, pregunta 12). El SERPAVI no publica una mediana conjunta de la vivienda colectiva y la unifamiliar. El mapa de alquiler usa por defecto la vivienda colectiva, que reúne el 88,9 % de los testigos en 2024: 2.271.987 frente a 284.591 (`serpavi`, hoja de comunidades). La unifamiliar es una opción, y las dos no se mezclan en un mismo mapa. Los derivados (14, 15 y 21) se calculan con la colectiva.
 
-**Indicador 7.** Salario medio anual por asalariado de la AEAT, en total y de 26 a 35 años, por provincia, comunidad y España, de 2011 a 2024, en la tabla larga (`larga_salarios`, §5.6). Es el punto de partida de la ficha «mochila», que tiene serie de 2015 a 2024 (`mochila_neta`, §6.2).
+**Indicador 7.** Salario medio anual por asalariado de la AEAT, en total y de 26 a 35 años, por provincia, comunidad y España, de 2011 a 2025, en la tabla larga (`larga_salarios`, §5.6). Es el punto de partida de la ficha «mochila», que tiene serie de 2015 a 2025 (`mochila_neta`, §6.2).
 
 **Desfase.** El atlas va uno o dos años por detrás en renta y salarios. El ADRH tiene un desfase de unos 22 meses: el de 2024 se publicó el 19-oct-2026. *Mercado de trabajo y pensiones* de la AEAT tiene uno de unos 11 meses (plan §8).
 
@@ -514,20 +514,20 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `supuestos_muestra_15` | Misma muestra: peso del alquiler en el ingreso de la tartera, la mochila y el transistor frente al indicador 15 de la tabla larga | ±0,001 % | Bloqueo | 2 × 10⁻¹⁴ % como máximo en las 40 cifras | `validacion_supuestos` |
 | `supuestos_superficie_tipica` | Superficie típica de Madrid, Barcelona y València en 2024 frente a la tarea 37 del backlog (62, 66 y 83 m²) | ±0,5 | Bloqueo | 62,1, 65,7 y 83,0 m² | `validacion_supuestos` |
 | `smi_boe` | Cuantía mensual del SMI de cada año en `SMI_FICHAS` frente a la del real decreto en su XML del BOE, y la norma citada; 2021, media ponderada por meses de vigencia | Exacto | Bloqueo | 0 en las 18 cifras (2015–2023) | `validacion_smi` |
-| `inss_cobertura` | Provincias, comunidades de varias provincias y España que faltan o se repiten en algún mes del año (Excel del INSS) | Exacto | Bloqueo | 0 en los 10 años | `validacion_inss` |
-| `inss_suma` | Pensiones de jubilación de las provincias frente al número publicado para su comunidad y para España, cada mes | Exacto | Bloqueo | 0 en los 10 años (132 cifras al mes) | `validacion_inss` |
+| `inss_cobertura` | Provincias, comunidades de varias provincias y España que faltan o se repiten en algún mes del año (Excel del INSS) | Exacto | Bloqueo | 0 en los 11 años | `validacion_inss` |
+| `inss_suma` | Pensiones de jubilación de las provincias frente al número publicado para su comunidad y para España, cada mes | Exacto | Bloqueo | 0 en los 11 años (132 cifras al mes) | `validacion_inss` |
 | `inss_media` | Pensión media de jubilación de las provincias, ponderada, frente a la publicada para su comunidad y para España, cada mes | ±0,01 € | Bloqueo | 4,5 × 10⁻¹³ € como máximo | `validacion_inss` |
-| `transistor_cobertura` | Provincias sin ingreso neto del transistor en algún año | Exacto | Bloqueo | 0 en los 10 años | `validacion_transistor` |
-| `transistor_retencion` | Retenciones del transistor fuera de [0, 30 %] | Exacto | Bloqueo | 0 en los 10 años | `validacion_transistor` |
-| `aeat_provincia` | Cifras de la tabla provincial de la AEAT cuyo salario medio publicado no es salarios / asalariados redondeado al euro | Exacto | Bloqueo | 0 en los 14 años (2011–2024) | `validacion_salarios` |
-| `aeat_salarios_cobertura` | Provincias (48), comunidades (17) y España de régimen común sin el salario medio total y el de 26 a 35 años, o repetidas | Exacto | Bloqueo | 0 en los 14 años | `validacion_salarios` |
-| `aeat_salarios_suma` | Asalariados de las provincias sumados frente a los publicados para su comunidad y para España | Exacto | Bloqueo | 0 en los 14 años (36 cifras al año) | `validacion_salarios` |
+| `transistor_cobertura` | Provincias sin ingreso neto del transistor en algún año | Exacto | Bloqueo | 0 en los 11 años | `validacion_transistor` |
+| `transistor_retencion` | Retenciones del transistor fuera de [0, 30 %] | Exacto | Bloqueo | 0 en los 11 años | `validacion_transistor` |
+| `aeat_provincia` | Cifras de la tabla provincial de la AEAT cuyo salario medio publicado no es salarios / asalariados redondeado al euro | Exacto | Bloqueo | 0 en los 15 años (2011–2025) | `validacion_salarios` |
+| `aeat_salarios_cobertura` | Provincias (48), comunidades (17) y España de régimen común sin el salario medio total y el de 26 a 35 años, o repetidas | Exacto | Bloqueo | 0 en los 15 años | `validacion_salarios` |
+| `aeat_salarios_suma` | Asalariados de las provincias sumados frente a los publicados para su comunidad y para España | Exacto | Bloqueo | 0 en los 15 años (36 cifras al año) | `validacion_salarios` |
 | `aeat_salarios_media` | Salario medio de las provincias (salarios / asalariados sumados) frente al publicado para su comunidad y para España | ±0,5 € | Bloqueo | 0,499 € como máximo: el redondeo de la cifra publicada | `validacion_salarios` |
-| `mochila_cobertura` | Provincias de régimen común con módulo de año completo (46) sin mochila neta en algún año, o repetidas | Exacto | Bloqueo | 0 en los 10 años (2015–2024) | `validacion_mochila_serie` |
-| `percentil_cobertura` | Comunidades de régimen común (15) y España sin curva salarial completa (percentiles 1 a 99) | Exacto | Bloqueo | 0 en los 10 años (2015–2024) | `validacion_percentil` |
-| `percentil_monotono` | Curvas salariales cuyo neto no crece con el percentil | Exacto | Bloqueo | 0 en los 10 años | `validacion_percentil` |
-| `percentil_suma` | Asalariados de los 13 tramos de salario frente al total de su comunidad o de España | ±10 asalariados | Bloqueo | 1 como máximo, en 5 de los 10 años: la fuente no cuadra por un asalariado | `validacion_percentil` |
-| `percentil_limites` | Tramos cuyo salario medio cae fuera de sus límites con el SMI anual del año (14 pagas) | Exacto | Bloqueo | 0 en los 10 años | `validacion_percentil` |
+| `mochila_cobertura` | Provincias de régimen común con módulo de año completo (46) sin mochila neta en algún año, o repetidas | Exacto | Bloqueo | 0 en los 11 años (2015–2025) | `validacion_mochila_serie` |
+| `percentil_cobertura` | Comunidades de régimen común (15) y España sin curva salarial completa (percentiles 1 a 99) | Exacto | Bloqueo | 0 en los 11 años (2015–2025) | `validacion_percentil` |
+| `percentil_monotono` | Curvas salariales cuyo neto no crece con el percentil | Exacto | Bloqueo | 0 en los 11 años | `validacion_percentil` |
+| `percentil_suma` | Asalariados de los 13 tramos de salario frente al total de su comunidad o de España | ±10 asalariados | Bloqueo | 1 como máximo, en 5 de los 11 años: la fuente no cuadra por un asalariado | `validacion_percentil` |
+| `percentil_limites` | Tramos cuyo salario medio cae fuera de sus límites con el SMI anual del año (14 pagas) | Exacto | Bloqueo | 0 en los 11 años | `validacion_percentil` |
 | `web_salarios` | Cifras de `web/datos/salarios.json` distintas de las curvas redondeadas al euro, y curvas que faltan o sobran | Exacto | Bloqueo | 0 | `validacion_web_salarios` |
 | `web_valores` | Ficheros de valores de `web/datos/` cuyos valores o estados no son los de la tabla larga (con el redondeo de la guía a la precisión de cada serie: una décima; dos en el 19) o cuya longitud no es la del índice; series sin fichero. También los contratos y el margen de cada serie del alquiler | Exacto | Bloqueo | 0 en las 830 cifras | `validacion_web` |
 | `web_fichas` | Por municipio: celdas de las series de su ficha que no reproducen la tabla larga con la precisión de cada serie, y secciones de más o de menos | Exacto | Bloqueo | 0 en los 8.131 municipios | `validacion_web` |
@@ -569,10 +569,10 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `web_fuera_indice` | Filas de la tabla larga que van a la web sin hueco en el índice de su nivel | Exacto | Alerta | Avisa en 16 filas de municipio; en los demás niveles, 0 | `validacion_web` |
 | `web_tramos` | Por mapa y juego de cortes (sección, municipio, y provincia y comunidad juntas), en el último año: tramos vacíos o con más del 35 % de los territorios con dato; mapas sin juegos que no son excepción declarada | Exacto | Alerta | Pasa: ningún tramo vacío ni por encima del 35 % en los 35 juegos de 15 mapas; el más lleno, el 31 % (Gini, provincia y comunidad, 2024) | `validacion_web_tramos` |
 | `web_sobrecarga_geometria` | Territorios de una vista del mapa de la sobrecarga sin geometría en su versión NUTS ni en la de respaldo | Exacto | Alerta | Pasa: 0 en las 12 vistas (§7.5) | `validacion_web_sobrecarga` |
-| `aeat_mediana_deciles` | Mediana del SME por comunidad interpolada desde deciles frente a centiles | ±0,5 % | Alerta | Entre −0,19 y +0,45 % (2019–2024) | `validacion_mochila` |
+| `aeat_mediana_deciles` | Mediana del SME por comunidad interpolada desde deciles frente a centiles | ±0,5 % | Alerta | Entre −0,19 y +0,45 % (2019–2025) | `validacion_mochila` |
 | `mochila_ecv` | Mochila de cada comunidad y de España frente al intervalo del 95 % de la mediana del bruto de la ECV, que sale del tamaño de su muestra (cuánto se sale, en %) | Exacto | Alerta | Avisa en 20 de 160 cifras (con ±15 %, en 32); el intervalo va de ±2,7 % (España) a ±57 % (comunidades de unas 50 observaciones) | `validacion_mochila_ecv` |
 | `mochila_neto_ecv` | Paso a neto aplicado a la mediana del bruto de la ECV frente a la mediana del neto, cada año | ±5 % | Alerta | Avisa en 8 de 180 cifras, todas de comunidades (de −5,0 a +19,0 %); en 2024, entre −2,0 y +3,4 %; España, entre −1,2 y +2,5 % (+0,5 % en 2024) | `validacion_mochila_neto_ecv` |
-| `mochila_forma` | Relación mediana/media del SME de 26 a 35 años de cada comunidad, de 2020 a 2024, frente a la de 2019, que usan 2015–2018 | ±3 % | Alerta | Pasa: entre −2,7 y +1,7 % | `validacion_mochila_serie` |
+| `mochila_forma` | Relación mediana/media del SME de 26 a 35 años de cada comunidad, de 2020 a 2025, frente a la de 2019, que usan 2015–2018 | ±3 % | Alerta | Pasa: entre −2,7 y +1,8 % | `validacion_mochila_serie` |
 | `mochila_relacion_ecv` | Relación mediana/media del bruto de quien trabajó los doce meses, de 26 a 35 años, en la ECV de España, de 2015 a 2018 frente a la de 2019 (puntos) | ±2 puntos | Alerta | Avisa en 2015 (+2,1) y 2017 (−3,1) | `validacion_mochila_relacion` |
 | `mochila_relacion_correccion` | Si la anterior avisa, la corrección (la relación de 2019 escalada con la ECV) solo se aplica si se valida en 2020–2024 | Exacto | Alerta | Avisa y no se corrige: error medio de 4,0 puntos escalada frente a 0,6 sin escalar | `validacion_mochila_relacion` |
 | `percentil_media` | Media de la distribución por tramos modelada frente al salario medio publicado de cada comunidad y de España | ±0,5 % | Alerta | Pasa: 0,12 % como máximo (2017) | `validacion_percentil` |
@@ -591,7 +591,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `valor_tasado_nota` | España en el primer trimestre de 2026 | Exacto | Bloqueo | 2.315,7 €/m² | `validacion_valor_tasado` |
 | `compraventa_coherencia_espana` | Superficie implícita de España (escrituras entre tasación) fuera de 70–110 m² | Exacto | Bloqueo | Pasa: de 91,8 a 106,1 m² (2015–2025) | `validacion_coherencia_compraventa` |
 | `compraventa_coherencia_provincias` | Provincias y trimestres con la superficie implícita fuera de 50–150 m² | ±5 % | Bloqueo | 1,9 % como máximo (2021) | `validacion_coherencia_compraventa` |
-| `compraventa_terminos` | Años de salario y cuota hipotecaria sobre la renta del hogar frente a sus términos | ±0,001 % | Bloqueo | Pasa en 2015–2024 | `validacion_derivados_compraventa` |
+| `compraventa_terminos` | Años de salario y cuota hipotecaria sobre la renta del hogar frente a sus términos | ±0,001 % | Bloqueo | Pasa en 2015–2025 | `validacion_derivados_compraventa` |
 | `registradores_lectura` | Registradores (indicador 11): por año, provincias, comunidades o España que faltan, filas repetidas y cifras vacías | Exacto | Bloqueo | 0 en 2015–2026 | `validacion_registradores` |
 | `registradores_espana` | España, precio por m² de vivienda de 2025 (plan §11, pregunta 45: 2.284 €/m²) | ±0,5 | Bloqueo | Pasa: 2.283,52 €/m² | `validacion_registradores` |
 | `registradores_suma` | Compraventas de las provincias frente a las de su comunidad y de España, cada trimestre | Exacto | Bloqueo | 0 en 2015–2026 | `validacion_registradores` |
@@ -803,13 +803,13 @@ En 2024, la sección mediana tiene el 58,2 % de la renta bruta en salarios, el 1
 ### 5.6 Salario medio por asalariado (indicador 7)
 
 **Fuente y lectura** (`descargar_aeat_salarios()`, `leer_aeat_salarios()`). AEAT, *Mercado de trabajo y pensiones en las fuentes tributarias*, tabla «Asalariados, percepciones salariales y salarios por provincia, edad y sexo», con el sexo total y todos los tramos de edad: una página HTML por tramo y año.
-- Ediciones: de 2011 a 2024. Las anteriores no están en la web de la AEAT.
+- Ediciones: de 2011 a 2025. Las anteriores no están en la web de la AEAT.
 - Las ediciones cambian de maqueta: hasta 2014, cabeceras de tabla sin prefijo y sangría por margen (`aeat_sangria()`); hasta 2017, filtros en el subtítulo. El tramo de edad se llama «Edad», «Tramo de edad» o «Tramos de Edad», y Ourense, «Orense» hasta 2013.
 - Salario medio = salarios / asalariados: lo cobrado en el año por los asalariados con domicilio fiscal en el territorio, también por quien trabajó pocos meses.
 
 **Códigos y niveles** (`codificar_aeat_salarios()`; objetivo `salarios_aeat`): la provincia, por su nombre en `inventario/provincias_aeat.csv`; la comunidad, por su nombre en `geo/ccaa.csv`, con una clave que no depende de cómo lo escribe cada edición (`clave_comunidad()`); España, «00». Las comunidades de una provincia (Asturias, Baleares, Cantabria, Madrid, Murcia y La Rioja), Ceuta y Melilla solo tienen fila de comunidad, que es también la de su provincia.
 
-**En la tabla larga** (`armonizar_aeat_salarios()`; objetivo `larga_salarios`): indicador `salario_medio`, fuente `aeat_mercado_trabajo`, con la cifra publicada en cada nivel (guía, regla 1). El total va sin desglose, y el tramo de 26 a 35 años, con corte `edad` y grupo `Y26-35`. Son 2.016 filas: 14 años, 72 territorios (52 provincias, 19 comunidades y España) y 2 tramos.
+**En la tabla larga** (`armonizar_aeat_salarios()`; objetivo `larga_salarios`): indicador `salario_medio`, fuente `aeat_mercado_trabajo`, con la cifra publicada en cada nivel (guía, regla 1). El total va sin desglose, y el tramo de 26 a 35 años, con corte `edad` y grupo `Y26-35`. Son 2.160 filas: 15 años, 72 territorios (52 provincias, 19 comunidades y España) y 2 tramos.
 - **País Vasco y Navarra.** La AEAT no los cubre (domicilio fiscal foral): sus 4 provincias y 2 comunidades van como `ausente` todos los años (168 filas). De las haciendas forales, solo la de Gipuzkoa publica una cifra comparable (modelo 190, salario medio por edad), en un informe anual en PDF; las de Bizkaia, Álava y Navarra no publican ninguna. La Estadística Municipal de Estructura Salarial de Nastat y la Encuesta Anual de Estructura Salarial del INE miden otra cosa (otro universo y otro ajuste).
 - **España** es el territorio de régimen común: sin País Vasco ni Navarra.
 
@@ -823,8 +823,9 @@ En 2024, la sección mediana tiene el 58,2 % de la renta bruta en salarios, el 1
 | 2015 | 17.349.558 | 18.645 | 4.129.678 | 14.422 |
 | 2019 | 19.157.767 | 20.566 | 4.006.014 | 16.594 |
 | 2024 | 20.637.992 | 24.962 | 4.090.037 | 21.506 |
+| 2025 | 21.139.690 | 25.830 | 4.182.983 | 22.468 |
 
-En 2024, por provincia, de 17.792 € (Jaén) a 31.911 € (Madrid) en total, y de 15.281 € (Huelva) a 26.037 € (Madrid) de 26 a 35 años.
+En 2025, por provincia, de 18.595 € (Jaén) a 32.924 € (Madrid) en total, y de 16.167 € (Huelva) a 26.974 € (Madrid) de 26 a 35 años.
 
 ---
 
@@ -839,9 +840,9 @@ En 2024, por provincia, de 17.792 € (Jaén) a 31.911 € (Madrid) en total, y 
 | Ficha | Ingreso de referencia | Fuente | Escala | Vivienda | Estado |
 |---|---|---|---|---|---|
 | Llave (hogar del barrio) | Renta neta media por hogar ÷ 12 | INE, ADRH (indicador 2) | Sección | Alquiler mediano de su sección, sin superficie fija | Ingreso calculado (`perfiles`); esfuerzo (indicador 14), en `larga_derivados` (§7.4) |
-| Mochila (joven de 26 a 35 años) | Mediana estimada del salario cobrado en el año, neta, ÷ 12 | AEAT; control con la ECV | Provincia | 50 m² | Calculada de 2015 a 2024 (`mochila_neta`, `perfiles`), como `estimado` |
+| Mochila (joven de 26 a 35 años) | Mediana estimada del salario cobrado en el año, neta, ÷ 12 | AEAT; control con la ECV | Provincia | 50 m² | Calculada de 2015 a 2025 (`mochila_neta`, `perfiles`), como `estimado` |
 | Tartera (salario mínimo) | SMI neto anual ÷ 12 | Real decreto de cada año (RD 1106/2014 a RD 126/2026) | Nacional | 50 m² | Calculada de 2015 a 2026 (`perfiles`) |
-| Transistor (pensionista) | Pensión media de jubilación, neta de IRPF, ÷ 12 | INSS; retención de la AEAT | Provincia | 50 m² | Calculada de 2015 a 2024 (`transistor`, `perfiles`); País Vasco y Navarra, como `estimado` |
+| Transistor (pensionista) | Pensión media de jubilación, neta de IRPF, ÷ 12 | INSS; retención de la AEAT | Provincia | 50 m² | Calculada de 2015 a 2025 (`transistor`, `perfiles`); País Vasco y Navarra, como `estimado` |
 | Tu ficha | Neto mensual que escribe quien consulta: 12 o 14 pagas, segundo sueldo opcional | — | — | 50 m² con un sueldo, 70 m² con dos; cambiable a 50, 70 o 90 | Se calcula en el navegador y no se guarda (`js/sueldo.js`) |
 
 **Estadístico de cada ficha** (tarea 44 del backlog). La web lo dice en una línea en la ficha de «¿te llega?», en la tarjeta «Tu sueldo» y en la portada:
@@ -855,7 +856,7 @@ En 2024, por provincia, de 17.792 € (Jaén) a 31.911 € (Madrid) en total, y 
 
 ### 6.2 Mochila: método B, paso a neto y serie
 
-La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrada). La serie va de 2015 a 2024 (10-nov-2026): cada año, con la AEAT de ese año y con la ola de la ECV del año siguiente, que trae sus ingresos.
+La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abierta 7, cerrada). La serie va de 2015 a 2025 (10-nov-2026; 2025, desde el 12-nov-2026): cada año, con la AEAT de ese año y con la ola de la ECV del año siguiente, que trae sus ingresos. El último año queda sin control de la ECV hasta que el INE publica esa ola (la de 2026, en febrero de 2027; `ANIOS_MOCHILA_ECV`).
 
 **1. Salario de partida.** Salario medio anual bruto de 26 a 35 años por provincia: el indicador 7 (§5.6; objetivo `salarios_aeat`).
 - Es salario real del año: incluye a quien trabajó pocos meses.
@@ -865,14 +866,14 @@ La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abie
 - La AEAT no publica esa mediana. Se interpola con dos tablas (`cuantil_tramos()`):
   - los recuentos de asalariados de cada comunidad y edad en cada decil nacional;
   - los límites de los centiles nacionales.
-- Supuesto de la interpolación: dentro de cada decil nacional, la comunidad se reparte como el país. Contraste con los recuentos por centil que la AEAT da por comunidad, para todas las edades: entre −0,19 y +0,45 % de 2019 a 2024 (`aeat_mediana_deciles`).
+- Supuesto de la interpolación: dentro de cada decil nacional, la comunidad se reparte como el país. Contraste con los recuentos por centil que la AEAT da por comunidad, para todas las edades: entre −0,19 y +0,45 % de 2019 a 2025 (`aeat_mediana_deciles`).
 - Supuesto del método: la relación mediana/media es la misma en todas las provincias de una comunidad.
-- **Antes de 2019.** El módulo de año completo empieza en la edición de 2019: de 2015 a 2018 se usa la relación de 2019 (columna `anio_forma`). De 2020 a 2024, la de cada comunidad se aparta de la de 2019 entre un −2,7 % (Baleares, 2021) y un +1,7 % (Asturias, 2020) (`mochila_forma`); la de España es 0,844 en 2019 y en 2024. Esos cuatro años son una estimación con la relación de otro año: la columna `metodo_forma` lo dice (`primer_anio`) y la ficha va como `estimado`, como toda la mochila (plan §11, pregunta 44 f revisada).
+- **Antes de 2019.** El módulo de año completo empieza en la edición de 2019: de 2015 a 2018 se usa la relación de 2019 (columna `anio_forma`). De 2020 a 2025, la de cada comunidad se aparta de la de 2019 entre un −2,7 % (Baleares, 2021) y un +1,8 % (Extremadura, 2025) (`mochila_forma`); la de España es 0,844 en 2019 y en 2024, y 0,848 en 2025. Esos cuatro años son una estimación con la relación de otro año: la columna `metodo_forma` lo dice (`primer_anio`) y la ficha va como `estimado`, como toda la mochila (plan §11, pregunta 44 f revisada).
 - **Comprobación con la ECV de 2015 a 2018** (`ecv_mochila_correccion()`; objetivos `correccion_mochila` y `validacion_mochila_relacion`). Relación mediana/media del bruto de quien trabajó los doce meses, de 26 a 35 años, en España: 0,930 en 2015, 0,904 en 2016, 0,879 en 2017, 0,892 en 2018 y 0,909 en 2019; de 0,857 a 0,899 de 2020 a 2024. Se aparta más de 2 puntos de la de 2019 en 2015 (+2,1) y 2017 (−3,1): avisa (`mochila_relacion_ecv`). La corrección prevista, la relación de 2019 escalada por el cambio que mide la ECV, se valida antes en 2020–2024 y no pasa: se aleja más de la relación del módulo de cada comunidad y año (error medio de 4,0 puntos) que la de 2019 sin escalar (0,6), porque la de la ECV baja un 5,7 % de 2019 a 2024 y la del módulo no se mueve. No se corrige (`mochila_relacion_correccion`, alerta); si un año se validara, `ecv_mochila_aplicar()` escalaría esos años (`primer_anio_ecv`).
 - Fórmula: bruto anual = salario medio real provincial × relación mediana/media del SME de su comunidad (`calcular_mochila_serie()`, `mochila`).
 
 **3. De bruto a neto** (`calcular_mochila_neta()`): neto anual = bruto × (1 − cotización − retención); neto mensual = neto anual ÷ 12.
-- **Cotización del trabajador del año** (`cotizacion_trabajador()`, la de la tartera en `SMI_FICHAS`): 6,35 % hasta 2022, con contingencias comunes (4,70), desempleo (1,55) y formación profesional (0,10); con el MEI, 6,45 % en 2023 y 6,47 % en 2024. Con contrato temporal, 0,05 puntos más.
+- **Cotización del trabajador del año** (`cotizacion_trabajador()`, la de la tartera en `SMI_FICHAS`): 6,35 % hasta 2022, con contingencias comunes (4,70), desempleo (1,55) y formación profesional (0,10); con el MEI, 6,45 % en 2023, 6,47 % en 2024 y 6,48 % en 2025. Con contrato temporal, 0,05 puntos más.
 - **Retención:** tipo medio de la AEAT de las personas que solo cobran salarios, por comunidad, tramo de renta anual y año (*Grupos de población por la naturaleza de sus retribuciones*; `retenciones_aeat()`, objetivo `retenciones_mochila`). Sale de las mismas páginas que la del transistor (§6.5).
   - Se interpola linealmente entre los salarios medios de los tramos; fuera de ellos se toma el tipo del tramo extremo (`tipo_retencion()`).
   - En España en 2024: entre el 1,6 y el 1,8 % por debajo de 12.000 €; 2,6 % de 12.000 a 18.000 €; 9,0 % de 18.000 a 24.000 €; 13,6 % de 24.000 a 30.000 €.
@@ -900,8 +901,9 @@ La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abie
 | 2022 | 16.242 | 1.186 | 866 | 1.397 |
 | 2023 | 17.401 | 1.267 | 922 | 1.473 |
 | 2024 | 18.334 | 1.330 | 990 | 1.529 |
+| 2025 | 19.212 | 1.381 | 1.044 | 1.572 |
 
-- La de 2024 es la misma que antes de la serie (diferencias de menos de una milésima de euro). La relación neto/bruto baja de 0,90 (2015) a 0,87 (2024): la retención media pasa del 3,7 al 6,0 %.
+- La de 2024 es la misma que antes de la serie (diferencias de menos de una milésima de euro). La relación neto/bruto baja de 0,90 (2015) a 0,87 (2024 y 2025): la retención media pasa del 3,7 % (2015) al 6,0 % (2024) y al 6,8 % (2025).
 
 **Opciones descartadas.** Las opciones A y C se siguen calculando como registro, en `mochila` (columnas `A` y `C`; `datos/intermedios/mochila/mochila.csv`):
 - En 2024, la opción A sale entre 1,24 y 1,49 veces la B (mediana, 1,34). Media ponderada: 24.257 € frente a 18.334 €.
@@ -953,7 +955,7 @@ La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abie
 1. **Pensión de partida.** Pensión media de jubilación del total del sistema por provincia (INSS, *Pensiones contributivas del Sistema de la Seguridad Social*; Excel mensual «Pensiones por CCAA y provincias»; `descargar_inss_pensiones()`, `leer_inss_pensiones()`). No incluye Clases Pasivas. Es la media de una paga ordinaria; la provincia es la de la dirección provincial que gestiona la pensión, no la de residencia, y se cuentan pensiones, no pensionistas.
 2. **Media del año.** Media de las doce cifras mensuales (pensiones en vigor a día 1 de cada mes), ponderada por el número de pensiones (`armonizar_inss_pensiones()`, `anual_inss_pensiones()`; objetivos `inss_mensual` e `inss_anual`). Los nombres de los territorios pasan a códigos con una tabla fija (`inventario/provincias_inss.csv`). El Excel cambia de forma con los años (nombre de la hoja, una hoja por régimen y, desde 2024, el importe): la hoja del total del sistema y la columna de la jubilación se buscan por su texto.
 3. **De bruto a neto** (`calcular_transistor()`): bruto anual = media × 14 pagas; neto mensual = bruto anual × (1 − retención) / 12. Las pensiones no cotizan.
-   - **Retención:** tipo medio de la AEAT de las personas que solo cobran pensiones (*Grupos de población por la naturaleza de sus retribuciones*, bloque de pensiones, columna «Pensionistas»), por comunidad y tramo de renta anual, del mismo año, interpolado como en la mochila (`retenciones_pensiones()`, `tipo_retencion()`; objetivo `retenciones_transistor`). En 2024, del 0,4 % (Ourense) al 10,8 % (Bizkaia).
+   - **Retención:** tipo medio de la AEAT de las personas que solo cobran pensiones (*Grupos de población por la naturaleza de sus retribuciones*, bloque de pensiones, columna «Pensionistas»), por comunidad y tramo de renta anual, del mismo año, interpolado como en la mochila (`retenciones_pensiones()`, `tipo_retencion()`; objetivo `retenciones_transistor`). En 2024, del 0,4 % (Ourense) al 10,8 % (Bizkaia); en 2025, del 1,3 al 11,6 %.
    - La AEAT no separa la jubilación de las demás pensiones (viudedad, incapacidad, en parte exenta, y Clases Pasivas): la curva es la de todos los pensionistas con esa renta. Es la retención practicada, no la cuota final del IRPF.
    - **País Vasco y Navarra:** su IRPF es foral y la AEAT no los cubre; se usa la curva de España y el ingreso queda como `estimado` (decisión del autor). Ceuta y Melilla tienen curva propia, con retenciones más bajas por su bonificación.
 4. **Compuerta** (§4.1; objetivos `validacion_inss` y `validacion_transistor`): cada mes, las provincias reproducen el número y la pensión media publicados para su comunidad y para España en el mismo Excel (`inss_suma`, `inss_media`), sin territorios que falten ni sobren (`inss_cobertura`); el neto cubre las 52 provincias cada año, con retenciones entre el 0 y el 30 % (`transistor_cobertura`, `transistor_retencion`).
@@ -972,15 +974,16 @@ La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abie
 | 2022 | 1.254,14 | 1.030 | 1.657 | 1.385 |
 | 2023 | 1.374,58 | 1.136 | 1.796 | 1.503 |
 | 2024 | 1.442,67 | 1.198 | 1.869 | 1.574 |
+| 2025 | 1.506,06 | 1.245 | 1.926 | 1.631 |
 
 - En 2024, el transistor (1.574 € de media) queda por encima de la mochila (1.330 €) y de la tartera (1.237 €) del mismo año.
-- Las fuentes, descargadas con permiso del autor (9-nov-2026): los 120 Excel del INSS de 2015 a 2024 (≈ 9,6 MB) y las retenciones de la AEAT de 2015 a 2023 (1.458 páginas, ≈ 39 MB; las de 2024 ya estaban). Las ediciones de la AEAT hasta 2017 tienen otra maqueta y otros nombres de comunidad («Región de Murcia»): `aeat_titulo()` y `aeat_menus()` leen las dos.
+- Las fuentes, descargadas con permiso del autor (9-nov-2026): los 120 Excel del INSS de 2015 a 2024 (≈ 9,6 MB) y las retenciones de la AEAT de 2015 a 2023 (1.458 páginas, ≈ 39 MB; las de 2024 ya estaban). El 12-nov-2026, también con su permiso, los 12 Excel de 2025 (2,4 MB) y la edición de 2025 de la AEAT (308 páginas, 11 MB). Las ediciones de la AEAT hasta 2017 tienen otra maqueta y otros nombres de comunidad («Región de Murcia»): `aeat_titulo()` y `aeat_menus()` leen las dos.
 
 ### 6.6 Percentil salarial del sueldo necesario
 
 El sueldo necesario (21) se expresa también como percentil de la distribución salarial, para comparar en el tiempo sin depender de los precios de cada año (plan §7, F3; 10-nov-2026). Es una propuesta pendiente de revisión.
 
-**Distribución** (`leer_aeat_tramos()`, `curvas_salariales()`; objetivos `tramos_salariales` y `curvas_salariales_aeat`): lo cobrado en el año por los asalariados de cada comunidad y de España, la misma medida que el indicador 7 y la mochila (§5.6 y §6.2), de 2015 a 2024.
+**Distribución** (`leer_aeat_tramos()`, `curvas_salariales()`; objetivos `tramos_salariales` y `curvas_salariales_aeat`): lo cobrado en el año por los asalariados de cada comunidad y de España, la misma medida que el indicador 7 y la mochila (§5.6 y §6.2), de 2015 a 2025.
 - Fuente: AEAT, tabla «Asalariados, percepciones salariales y salarios por Comunidad Autónoma, tramos de salario y sexo», con el sexo total: asalariados y salarios en 13 tramos de salario anual, en múltiplos del SMI anual del año (14 pagas). En 2020 y 2021 la tabla añade la situación ERTE (se toma su total) y no trae Ceuta ni Melilla.
 - Dentro de cada tramo, una densidad lineal con la media del tramo; el último, abierto, se cierra con su media (uniforme entre 10 SMI y 2 × media − 10 SMI). De ahí salen los percentiles 1 a 99 del salario bruto anual (`cuantil_tramos_salario()`).
 - A neto mensual en 12 con la cotización del trabajador y la retención de la AEAT de su comunidad y año, como la mochila (§6.2). Es una función creciente del bruto, así que el orden no cambia.
@@ -989,7 +992,7 @@ El sueldo necesario (21) se expresa también como percentil de la distribución 
 
 **En la web** (`salarios_web()`; `datos/salarios.json`): en el mapa del sueldo necesario, la ficha de la sección (y la de los municipios, provincias y comunidades) da el percentil del sueldo que pinta (la cifra principal, con el alquiler mensual real; tarea 40), con el umbral elegido, en la curva de su comunidad y del año del alquiler (`web/js/percentil.js`): «Percentil 84 de los salarios (Comunidad de Madrid, 2024; …)». Por debajo del percentil 1 o por encima del 99, lo dice así.
 
-**Compuerta** (`comprobar_curvas_salariales()`, `validacion_percentil`; `comprobar_salarios_web()`, `validacion_web_salarios`; §4.1): `percentil_cobertura`, `percentil_monotono`, `percentil_suma`, `percentil_limites` y `web_salarios` (bloqueo) y `percentil_media` (alerta). La media de la distribución modelada se aparta como mucho un 0,12 % de la publicada (2017); los tramos no cuadran con el total por un asalariado en 5 de los 10 años.
+**Compuerta** (`comprobar_curvas_salariales()`, `validacion_percentil`; `comprobar_salarios_web()`, `validacion_web_salarios`; §4.1): `percentil_cobertura`, `percentil_monotono`, `percentil_suma`, `percentil_limites` y `web_salarios` (bloqueo) y `percentil_media` (alerta). La media de la distribución modelada se aparta como mucho un 0,12 % de la publicada (2017); los tramos no cuadran con el total por un asalariado en 5 de los 11 años.
 
 **Resultado** (España, neto mensual en 12, en euros, y percentil de algunas cantidades):
 
@@ -998,11 +1001,12 @@ El sueldo necesario (21) se expresa también como percentil de la distribución 
 | 2015 | 118 | 1.071 | 2.408 | 34,5 | 51,4 | 69,2 | 82,6 |
 | 2019 | 179 | 1.202 | 2.541 | 28,1 | 44,7 | 65,6 | 80,0 |
 | 2024 | 249 | 1.422 | 2.879 | 21,5 | 33,4 | 54,2 | 73,2 |
+| 2025 | 259 | 1.460 | 2.943 | 20,8 | 32,1 | 52,1 | 71,7 |
 
 - El percentil 10 es bajo porque cuenta a quien trabajó pocos meses.
 - Con el alquiler mensual real, la sección mediana de España necesitaba 1.333 € en 2015 (percentil 62,6 de los salarios de España) y 1.900 € en 2024 (percentil 70,5); con el mínimo de 50 m², 867 € (40,7) y 1.217 € (38,1).
 - La sección 2807901001 (Madrid) necesitaba, con el alquiler mensual real, 2.667 € en 2015 (percentil 87,2 de los salarios de la Comunidad de Madrid) y 4.256 € en 2024 (percentil 93,9), y con el mínimo de 50 m², 2.000 € (73,9) y 2.967 € (84,1); la 0801901001 (Barcelona), 2.000 € (percentil 79,1 de los de Cataluña) y 2.790 € (85,9), y 1.783 € (73,2) y 2.400 € (78,1).
-- **Alternativa descartada** (10-nov-2026): el salario medio estimado (SME) del módulo de año completo (§6.2), que anualiza por días cotizados y deja fuera a quien no llega al SMI. Solo existe de 2019 a 2024, y su percentil 1 queda en el SMI: la sección mediana caía por debajo del percentil 3 todos los años.
+- **Alternativa descartada** (10-nov-2026): el salario medio estimado (SME) del módulo de año completo (§6.2), que anualiza por días cotizados y deja fuera a quien no llega al SMI. Solo existe de 2019 a 2025, y su percentil 1 queda en el SMI: la sección mediana caía por debajo del percentil 3 todos los años.
 
 ### 6.7 Módulo de supuestos
 
@@ -1278,7 +1282,7 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 - **14** (`calcular_esfuerzo_residentes()`): en las secciones y los municipios, los niveles en que el SERPAVI y el ADRH publican los dos términos (`NIVELES_ESFUERZO`), y en los años con los dos, 2015–2024. Sin desglose.
 - **21** (`calcular_sueldo_necesario()`): en todos los niveles del SERPAVI, 2015–2024, con el umbral del 30 %: la cifra principal, con el alquiler mensual mediano, sin desglose, y el mínimo teórico de 50 m², con corte `superficie` y grupo `50` (`CORTE_MINIMO_SUELDO`).
 - **15** (`calcular_peso_alquiler_ingreso()`): corte `ficha`, con los grupos `tartera`, `mochila` y `transistor` (2015–2024). La mochila y el transistor, en las provincias y sus secciones, distritos y municipios; la tartera, también en las comunidades. Es un control: la web calcula el peso del alquiler con la ficha elegida.
-- **Ingresos de las fichas** (`perfiles_fichas()`; objetivo `perfiles`): la tartera (§6.3); la mochila de cada provincia y año, de 2015 a 2024 (§6.2; 46 provincias con dato y 6 `ausente` cada año); la llave (§6.4); el transistor de cada provincia y año (§6.5).
+- **Ingresos de las fichas** (`perfiles_fichas()`; objetivo `perfiles`): la tartera (§6.3); la mochila de cada provincia y año, de 2015 a 2025 (§6.2; 46 provincias con dato y 6 `ausente` cada año); la llave (§6.4); el transistor de cada provincia y año (§6.5).
 - **Versión:** la más reciente de sus términos, 7-nov-2026.
 
 **Resultado: alquiler mediano sobre renta media del barrio (14) en las secciones** (`larga_derivados`):
@@ -1447,7 +1451,7 @@ En España, de 2021 a 2024, los contratos nuevos suben un 19,3 % (índice de 114
 - años de salario para comprar (16): valor tasado × 80 / salario medio anual bruto por asalariado de la AEAT (indicador 7); en un municipio, el de su provincia;
 - cuota hipotecaria sobre la renta del hogar (17; nombre del 12-nov-2026): cuota del primer año de un préstamo francés por el 80 % del valor, a 25 años y al tipo del Banco de España del año (`cuota_hipoteca()`), × 12 / renta neta media por hogar del ADRH × 100 (plan §11, pregunta 45 d revisada; no es el esfuerzo teórico del Banco de España de §7.9, que hace la misma cuenta con su vivienda tipo y la renta del hogar mediano y da en torno al doble: en España, en 2024, 34,6 % de media frente a 18,1 %; `compraventa_renta_hogar()`, objetivo `renta_hogar_17`). En cada nivel, la renta que publica el INE: la del municipio y, desde el 11-nov-2026, la de la provincia, la comunidad y España, de la tabla de totales 53689 (`renta_hogar_publicada`; regla 1: hay cifra publicada y manda). Donde el INE no la publica (Navarra de 2015 a 2020, Álava de 2015 a 2019, Gipuzkoa en 2015, sus comunidades y España hasta 2020: 29 cifras), la provincia y la comunidad quedan `ausente`, sin cifra, porque la cobertura municipal es parcial (Navarra de 2017 a 2019, unos 60 de sus 272 municipios), y España lleva la media de sus municipios ponderada por sus hogares (población / tamaño medio del hogar de sus secciones), `estimado` (decisión del autor, 11-nov-2026). Compuerta `validacion_renta_hogar_publicada` (§4.1): la media agregada se aparta de la publicada un 0,13 % como máximo en la mediana de cada año y nivel, y en 6 de 691 cifras más de un 1 % (Guadalajara de 2015 a 2019 y Sevilla en 2016).
 
-De 2015 a 2024, en España, las comunidades, las provincias y los municipios de más de 25.000 habitantes. El 16, sin salario de la AEAT (País Vasco y Navarra), `ausente`; el 17 tiene también los forales, con la renta del ADRH. Estado: el peor de sus términos (el 17 de provincias, comunidades y España, `dato` donde el INE publica la renta: 508 provincias, 179 comunidades y España de 2021 a 2024; España de 2015 a 2020, `estimado`; 12 provincias y 11 comunidades, `ausente`). En España, 6,3 años en 2015 y 6,1 en 2024 (16), y 17,8 % en 2015 (`estimado`) y 18,1 % en 2024 (17; con el tipo a 3,46 %, 18,0 %; con la renta agregada de los municipios, 15,3 % en 2021 frente a 15,2 % con la publicada; con el salario de la AEAT y el tipo del INE daba 29,8 y 28,7 %); entre los municipios de 2024, de 2,2 a 17,9 años (mediana, 5,3) y del 6,8 % (Puertollano) al 39,8 % (Santa Eulària des Riu), con una mediana del 15,4 %. Compuerta: `compraventa_terminos`, `compraventa_estado` y `compraventa_rango` (bloqueo), y `compraventa_rango_detalle` (alerta).
+El 16, de 2015 a 2025, y el 17, de 2015 a 2024 (los años con renta del ADRH: sin ella, el año entraría entero `ausente`), en España, las comunidades, las provincias y los municipios de más de 25.000 habitantes. El 16, sin salario de la AEAT (País Vasco y Navarra), `ausente`; el 17 tiene también los forales, con la renta del ADRH. Estado: el peor de sus términos (el 17 de provincias, comunidades y España, `dato` donde el INE publica la renta: 508 provincias, 179 comunidades y España de 2021 a 2024; España de 2015 a 2020, `estimado`; 12 provincias y 11 comunidades, `ausente`). En España, 6,3 años en 2015, 6,1 en 2024 y 6,6 en 2025 (16), y 17,8 % en 2015 (`estimado`) y 18,1 % en 2024 (17; con el tipo a 3,46 %, 18,0 %; con la renta agregada de los municipios, 15,3 % en 2021 frente a 15,2 % con la publicada; con el salario de la AEAT y el tipo del INE daba 29,8 y 28,7 %); entre los municipios de 2024, de 2,2 a 17,9 años (mediana, 5,3) y del 6,8 % (Puertollano) al 39,8 % (Santa Eulària des Riu), con una mediana del 15,4 %. Compuerta: `compraventa_terminos`, `compraventa_estado` y `compraventa_rango` (bloqueo), y `compraventa_rango_detalle` (alerta).
 
 **Código postal ↔ municipio** (`leer_ine_callejero_cp()`, `geo_tabla_cp_municipio()`; objetivo `fichero_cp_municipio`, en `geo/codigos_postales_2021.csv`). Sale de los tramos de vía del callejero de enero de 2021: 11.046 códigos postales en 14.600 pares, que cubren los 8.131 municipios; 8.784 códigos postales caen en un solo municipio. El peso es la parte de los tramos del código postal en cada municipio. 50 pares tienen un código postal de otra provincia: enclaves como el condado de Treviño, con los de Álava, y erratas del callejero.
 
@@ -1596,7 +1600,7 @@ La serie con la deducción por vivienda habitual (vigente hasta diciembre de 201
 - **Retención de todos los pensionistas.** La AEAT no separa la jubilación; en País Vasco y Navarra, la curva es la de España (`estimado`; §6.5).
 - **Casa propia.** La gran mayoría de los mayores de 65 años no alquila: la ficha responde a «si tuviera que alquilar hoy» (§6.5).
 
-**Años de las fichas.** La tartera, la mochila y el transistor tienen ingreso de cada año de 2015 a 2024 (§7.4).
+**Años de las fichas.** La tartera, la mochila y el transistor tienen ingreso de cada año con alquiler, de 2015 a 2024 (§7.4); la mochila y el transistor llegan a 2025 y la tartera, a 2026.
 
 **Percentil salarial.** Cuenta a quien trabajó pocos meses, así que los percentiles bajos son cantidades pequeñas; dentro de cada tramo de salario se supone una densidad lineal; País Vasco y Navarra (y Ceuta y Melilla en 2020 y 2021) usan la curva de España (§6.6).
 

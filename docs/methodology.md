@@ -58,7 +58,7 @@ SERPAVI figures measure those already renting, not the cost of moving in. The re
 
 **Rental building type** (plan §11, question 12). SERPAVI does not publish a joint median for apartments (vivienda colectiva) and single-family houses (vivienda unifamiliar). The rent map shows apartments by default, which account for 88.9% of observations in 2024: 2,271,987 against 284,591 (`serpavi`, regions sheet). Single-family houses are an option, and the two are never combined in one map. The derived indicators (14, 15 and 21) use apartments.
 
-**Indicator 7.** AEAT average annual wage per employee, overall and aged 26 to 35, by province, region and Spain, from 2011 to 2024, in the long table (`larga_salarios`, §5.6). It is the starting point of the Young adult token, which has a series from 2015 to 2024 (`mochila_neta`, §6.2).
+**Indicator 7.** AEAT average annual wage per employee, overall and aged 26 to 35, by province, region and Spain, from 2011 to 2025, in the long table (`larga_salarios`, §5.6). It is the starting point of the Young adult token, which has a series from 2015 to 2025 (`mochila_neta`, §6.2).
 
 **Lag.** The atlas runs one or two years behind on income and wages. ADRH has a lag of about 22 months: the 2024 edition was published on 19 Oct 2026. AEAT's *Mercado de trabajo y pensiones* (labour market and pensions) has one of about 11 months (plan §8).
 
@@ -514,20 +514,20 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `supuestos_muestra_15` | Same sample: rent share of income of the Minimum wage, Young adult and Pensioner tokens against indicator 15 of the long table | ±0.001% | Blocking | 2 × 10⁻¹⁴% at most in the 40 figures | `validacion_supuestos` |
 | `supuestos_superficie_tipica` | Typical floor area of Madrid, Barcelona and València in 2024 against task 37 of the backlog (62, 66 and 83 m²) | ±0.5 | Blocking | 62.1, 65.7 and 83.0 m² | `validacion_supuestos` |
 | `smi_boe` | Monthly minimum wage of each year in `SMI_FICHAS` against that of the royal decree in its BOE XML, and the cited rule; 2021, mean weighted by months in force | Exact | Blocking | 0 in the 18 figures (2015–2023) | `validacion_smi` |
-| `inss_cobertura` | Provinces, multi-province regions and Spain missing or repeated in any month of the year (INSS Excel) | Exact | Blocking | 0 in the 10 years | `validacion_inss` |
-| `inss_suma` | Retirement pensions of the provinces against the number published for their region and for Spain, each month | Exact | Blocking | 0 in the 10 years (132 figures a month) | `validacion_inss` |
+| `inss_cobertura` | Provinces, multi-province regions and Spain missing or repeated in any month of the year (INSS Excel) | Exact | Blocking | 0 in the 11 years | `validacion_inss` |
+| `inss_suma` | Retirement pensions of the provinces against the number published for their region and for Spain, each month | Exact | Blocking | 0 in the 11 years (132 figures a month) | `validacion_inss` |
 | `inss_media` | Average retirement pension of the provinces, weighted, against the one published for their region and for Spain, each month | ±€0.01 | Blocking | €4.5 × 10⁻¹³ at most | `validacion_inss` |
-| `transistor_cobertura` | Provinces without a net Pensioner income in any year | Exact | Blocking | 0 in the 10 years | `validacion_transistor` |
-| `transistor_retencion` | Pensioner withholding outside [0, 30%] | Exact | Blocking | 0 in the 10 years | `validacion_transistor` |
-| `aeat_provincia` | Figures of the AEAT provincial table whose published average wage is not wages / employees rounded to the euro | Exact | Blocking | 0 in the 14 years (2011–2024) | `validacion_salarios` |
-| `aeat_salarios_cobertura` | Common-regime provinces (48), regions (17) and Spain without the overall average wage and that of ages 26 to 35, or repeated | Exact | Blocking | 0 in the 14 years | `validacion_salarios` |
-| `aeat_salarios_suma` | Employees of the provinces added up against those published for their region and for Spain | Exact | Blocking | 0 in the 14 years (36 figures a year) | `validacion_salarios` |
+| `transistor_cobertura` | Provinces without a net Pensioner income in any year | Exact | Blocking | 0 in the 11 years | `validacion_transistor` |
+| `transistor_retencion` | Pensioner withholding outside [0, 30%] | Exact | Blocking | 0 in the 11 years | `validacion_transistor` |
+| `aeat_provincia` | Figures of the AEAT provincial table whose published average wage is not wages / employees rounded to the euro | Exact | Blocking | 0 in the 15 years (2011–2025) | `validacion_salarios` |
+| `aeat_salarios_cobertura` | Common-regime provinces (48), regions (17) and Spain without the overall average wage and that of ages 26 to 35, or repeated | Exact | Blocking | 0 in the 15 years | `validacion_salarios` |
+| `aeat_salarios_suma` | Employees of the provinces added up against those published for their region and for Spain | Exact | Blocking | 0 in the 15 years (36 figures a year) | `validacion_salarios` |
 | `aeat_salarios_media` | Average wage of the provinces (wages / employees added up) against that published for their region and for Spain | ±€0.5 | Blocking | €0.499 at most: the rounding of the published figure | `validacion_salarios` |
-| `mochila_cobertura` | Common-regime provinces with the full-year module (46) without a net Young adult income in some year, or repeated | Exact | Blocking | 0 in the 10 years (2015–2024) | `validacion_mochila_serie` |
-| `percentil_cobertura` | Common-regime regions (15) and Spain without a complete wage curve (percentiles 1 to 99) | Exact | Blocking | 0 in the 10 years (2015–2024) | `validacion_percentil` |
-| `percentil_monotono` | Wage curves whose net pay does not rise with the percentile | Exact | Blocking | 0 in the 10 years | `validacion_percentil` |
-| `percentil_suma` | Employees of the 13 wage bands against the total of their region or of Spain | ±10 employees | Blocking | 1 at most, in 5 of the 10 years: the source is off by one employee | `validacion_percentil` |
-| `percentil_limites` | Bands whose average wage falls outside their limits with the annual minimum wage of the year (14 payments) | Exact | Blocking | 0 in the 10 years | `validacion_percentil` |
+| `mochila_cobertura` | Common-regime provinces with the full-year module (46) without a net Young adult income in some year, or repeated | Exact | Blocking | 0 in the 11 years (2015–2025) | `validacion_mochila_serie` |
+| `percentil_cobertura` | Common-regime regions (15) and Spain without a complete wage curve (percentiles 1 to 99) | Exact | Blocking | 0 in the 11 years (2015–2025) | `validacion_percentil` |
+| `percentil_monotono` | Wage curves whose net pay does not rise with the percentile | Exact | Blocking | 0 in the 11 years | `validacion_percentil` |
+| `percentil_suma` | Employees of the 13 wage bands against the total of their region or of Spain | ±10 employees | Blocking | 1 at most, in 5 of the 11 years: the source is off by one employee | `validacion_percentil` |
+| `percentil_limites` | Bands whose average wage falls outside their limits with the annual minimum wage of the year (14 payments) | Exact | Blocking | 0 in the 11 years | `validacion_percentil` |
 | `web_salarios` | Figures of `web/datos/salarios.json` different from the curves rounded to the euro, and curves missing or extra | Exact | Blocking | 0 | `validacion_web_salarios` |
 | `web_valores` | Value files in `web/datos/` whose values or states are not those of the long table (with the rounding of the guide to the precision of each series: one decimal; two for indicator 19) or whose length is not that of the index; series without a file. Also the contracts and margin of each rent series | Exact | Blocking | 0 in the 830 figures | `validacion_web` |
 | `web_fichas` | By municipality: cells of the series of its sheet that do not reproduce the long table with the precision of each series, and tracts in excess or missing | Exact | Blocking | 0 in the 8,131 municipalities | `validacion_web` |
@@ -569,10 +569,10 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `web_fuera_indice` | Long-table rows going to the website with no slot in the index of their level | Exact | Warning | Warns in 16 municipality rows; at the other levels, 0 | `validacion_web` |
 | `web_tramos` | By map and set of cut-offs (tract, municipality, and province and region together), in the latest year: classes that are empty or hold more than 35% of the units with data; maps without sets that are not a declared exception | Exact | Warning | Passes: no class empty or above 35% in the 35 sets of 15 maps; the fullest, 31% (Gini, province and region, 2024) | `validacion_web_tramos` |
 | `web_sobrecarga_geometria` | Units of a view of the overburden map with no geometry in their NUTS version or in the fallback one | Exact | Warning | Passes: 0 in the 12 views (§7.5) | `validacion_web_sobrecarga` |
-| `aeat_mediana_deciles` | SME median by region interpolated from deciles against centiles | ±0.5% | Warning | Between −0.19 and +0.45% (2019–2024) | `validacion_mochila` |
+| `aeat_mediana_deciles` | SME median by region interpolated from deciles against centiles | ±0.5% | Warning | Between −0.19 and +0.45% (2019–2025) | `validacion_mochila` |
 | `mochila_ecv` | Young adult token of each region and of Spain against the 95% interval of the ECV median gross pay, which comes from its sample size (how far outside, in %) | Exact | Warning | Warns on 20 of 160 figures (with ±15%, on 32); the interval goes from ±2.7% (Spain) to ±57% (regions with about 50 observations) | `validacion_mochila_ecv` |
 | `mochila_neto_ecv` | Gross-to-net step applied to the ECV median gross pay against the median net pay, each year | ±5% | Warning | Warns on 8 of 180 figures, all regional (from −5.0 to +19.0%); in 2024, between −2.0 and +3.4%; Spain, between −1.2 and +2.5% (+0.5% in 2024) | `validacion_mochila_neto_ecv` |
-| `mochila_forma` | Median-to-mean ratio of the SME at ages 26 to 35 of each region, from 2020 to 2024, against that of 2019, used for 2015–2018 | ±3% | Warning | Passes: between −2.7 and +1.7% | `validacion_mochila_serie` |
+| `mochila_forma` | Median-to-mean ratio of the SME at ages 26 to 35 of each region, from 2020 to 2025, against that of 2019, used for 2015–2018 | ±3% | Warning | Passes: between −2.7 and +1.8% | `validacion_mochila_serie` |
 | `mochila_relacion_ecv` | Median-to-mean ratio of the gross pay of those who worked the twelve months, aged 26 to 35, in the ECV for Spain, 2015 to 2018 against 2019 (points) | ±2 points | Warning | Warns in 2015 (+2.1) and 2017 (−3.1) | `validacion_mochila_relacion` |
 | `mochila_relacion_correccion` | If the previous one warns, the correction (the 2019 ratio scaled with the ECV) is only applied if it validates in 2020–2024 | Exact | Warning | Warns and is not corrected: mean error of 4.0 points scaled against 0.6 unscaled | `validacion_mochila_relacion` |
 | `percentil_media` | Mean of the modelled distribution by bands against the published average wage of each region and of Spain | ±0.5% | Warning | Passes: 0.12% at most (2017) | `validacion_percentil` |
@@ -591,7 +591,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `valor_tasado_nota` | Spain in the first quarter of 2026 | Exact | Blocking | 2,315.7 €/m² | `validacion_valor_tasado` |
 | `compraventa_coherencia_espana` | Implied floor area for Spain (deeds over appraisal) outside 70–110 m² | Exact | Blocking | Passes: from 91.8 to 106.1 m² (2015–2025) | `validacion_coherencia_compraventa` |
 | `compraventa_coherencia_provincias` | Provinces and quarters with an implied floor area outside 50–150 m² | ±5% | Blocking | 1.9% at most (2021) | `validacion_coherencia_compraventa` |
-| `compraventa_terminos` | Years of wages and mortgage payment over household income against their terms | ±0.001% | Blocking | Passes in 2015–2024 | `validacion_derivados_compraventa` |
+| `compraventa_terminos` | Years of wages and mortgage payment over household income against their terms | ±0.001% | Blocking | Passes in 2015–2025 | `validacion_derivados_compraventa` |
 | `registradores_lectura` | Registradores (indicator 11): by year, missing provinces, regions or Spain, duplicate rows and empty figures | Exact | Blocking | 0 in 2015–2026 | `validacion_registradores` |
 | `registradores_espana` | Spain, housing price per m² in 2025 (plan §11, question 45: €2,284/m²) | ±0.5 | Blocking | Passes: €2,283.52/m² | `validacion_registradores` |
 | `registradores_suma` | Sales of the provinces against those of their region and of Spain, each quarter | Exact | Blocking | 0 in 2015–2026 | `validacion_registradores` |
@@ -803,13 +803,13 @@ In 2024 the median tract has 58.2% of gross income from wages, 19.2% of the popu
 ### 5.6 Average wage per employee (indicator 7)
 
 **Source and reading** (`descargar_aeat_salarios()`, `leer_aeat_salarios()`). AEAT, *Mercado de trabajo y pensiones en las fuentes tributarias*, table «Asalariados, percepciones salariales y salarios por provincia, edad y sexo», with both sexes and all age bands: one HTML page per band and year.
-- Editions: from 2011 to 2024. Earlier ones are not on the AEAT website.
+- Editions: from 2011 to 2025. Earlier ones are not on the AEAT website.
 - The editions change layout: up to 2014, table headers without a prefix and indentation by margin (`aeat_sangria()`); up to 2017, filters in the subtitle. The age band is called «Edad», «Tramo de edad» or «Tramos de Edad», and Ourense, «Orense» until 2013.
 - Average wage = wages / employees: pay received in the year by employees with tax residence in the area, including people who worked only a few months.
 
 **Codes and levels** (`codificar_aeat_salarios()`; target `salarios_aeat`): the province, by its name in `inventario/provincias_aeat.csv`; the region, by its name in `geo/ccaa.csv`, with a key that does not depend on how each edition writes it (`clave_comunidad()`); Spain, «00». Single-province regions (Asturias, Balearic Islands, Cantabria, Madrid, Murcia and La Rioja), Ceuta and Melilla only have a region row, which is also that of their province.
 
-**In the long table** (`armonizar_aeat_salarios()`; target `larga_salarios`): indicator `salario_medio`, source `aeat_mercado_trabajo`, with the published figure at each level (guide, rule 1). The total has no breakdown, and the 26 to 35 band has cut `edad` and group `Y26-35`. There are 2,016 rows: 14 years, 72 areas (52 provinces, 19 regions and Spain) and 2 bands.
+**In the long table** (`armonizar_aeat_salarios()`; target `larga_salarios`): indicator `salario_medio`, source `aeat_mercado_trabajo`, with the published figure at each level (guide, rule 1). The total has no breakdown, and the 26 to 35 band has cut `edad` and group `Y26-35`. There are 2,160 rows: 15 years, 72 areas (52 provinces, 19 regions and Spain) and 2 bands.
 - **Basque Country and Navarre.** AEAT does not cover them (foral tax residence): their 4 provinces and 2 regions are `ausente` every year (168 rows). Of the foral tax authorities, only Gipuzkoa publishes a comparable figure (form 190, average wage by age), in an annual PDF report; those of Bizkaia, Álava and Navarre publish none. Nastat's Municipal Wage Structure Statistics and INE's Annual Wage Structure Survey measure something else (another universe and another adjustment).
 - **Spain** is the common-regime territory: without the Basque Country or Navarre.
 
@@ -823,8 +823,9 @@ In 2024 the median tract has 58.2% of gross income from wages, 19.2% of the popu
 | 2015 | 17,349,558 | 18,645 | 4,129,678 | 14,422 |
 | 2019 | 19,157,767 | 20,566 | 4,006,014 | 16,594 |
 | 2024 | 20,637,992 | 24,962 | 4,090,037 | 21,506 |
+| 2025 | 21,139,690 | 25,830 | 4,182,983 | 22,468 |
 
-In 2024, by province, from €17,792 (Jaén) to €31,911 (Madrid) overall, and from €15,281 (Huelva) to €26,037 (Madrid) at ages 26 to 35.
+In 2025, by province, from €18,595 (Jaén) to €32,924 (Madrid) overall, and from €16,167 (Huelva) to €26,974 (Madrid) at ages 26 to 35.
 
 ---
 
@@ -839,9 +840,9 @@ In 2024, by province, from €17,792 (Jaén) to €31,911 (Madrid) overall, and 
 | Token | Reference income | Source | Scale | Dwelling | Status |
 |---|---|---|---|---|---|
 | Neighbourhood household (llave) | Average net income per household ÷ 12 | INE, ADRH (indicator 2) | Tract | Median rent of its tract, no fixed floor area | Income computed (`perfiles`); burden (indicator 14), in `larga_derivados` (§7.4) |
-| Young adult (mochila; aged 26 to 35) | Estimated median of pay received in the year, net, ÷ 12 | AEAT; check with the ECV | Province | 50 m² | Computed from 2015 to 2024 (`mochila_neta`, `perfiles`), as `estimado` |
+| Young adult (mochila; aged 26 to 35) | Estimated median of pay received in the year, net, ÷ 12 | AEAT; check with the ECV | Province | 50 m² | Computed from 2015 to 2025 (`mochila_neta`, `perfiles`), as `estimado` |
 | Minimum wage (tartera) | Net annual minimum wage (SMI) ÷ 12 | Royal decree of each year (RD 1106/2014 to RD 126/2026) | National | 50 m² | Computed from 2015 to 2026 (`perfiles`) |
-| Pensioner (transistor) | Average retirement pension, net of income tax, ÷ 12 | INSS; AEAT withholding | Province | 50 m² | Computed from 2015 to 2024 (`transistor`, `perfiles`); Basque Country and Navarre, as `estimado` |
+| Pensioner (transistor) | Average retirement pension, net of income tax, ÷ 12 | INSS; AEAT withholding | Province | 50 m² | Computed from 2015 to 2025 (`transistor`, `perfiles`); Basque Country and Navarre, as `estimado` |
 | Your token | Net monthly pay entered by the user: 12 or 14 instalments, optional second wage | — | — | 50 m² with one wage, 70 m² with two; can be changed to 50, 70 or 90 | Computed in the browser and not stored (`js/sueldo.js`) |
 
 **Statistic of each token** (backlog task 44). The website states it in one line in the «Can you make rent?» profile, in the «Your pay» card and on the front page:
@@ -855,7 +856,7 @@ In 2024, by province, from €17,792 (Jaén) to €31,911 (Madrid) overall, and 
 
 ### 6.2 Young adult token: method B, gross-to-net step and series
 
-The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7, closed). The series runs from 2015 to 2024 (10 Nov 2026): each year, with AEAT data for that year and the ECV wave of the following year, which carries its income.
+The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7, closed). The series runs from 2015 to 2025 (10 Nov 2026; 2025, since 12 Nov 2026): each year, with AEAT data for that year and the ECV wave of the following year, which carries its income. The latest year has no ECV check until INE publishes that wave (the 2026 one, in February 2027; `ANIOS_MOCHILA_ECV`).
 
 **1. Starting wage.** Average gross annual wage at ages 26 to 35 by province: indicator 7 (§5.6; target `salarios_aeat`).
 - It is actual pay over the year: it includes people who worked only a few months.
@@ -865,14 +866,14 @@ The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7
 - AEAT does not publish that median. It is interpolated from two tables (`cuantil_tramos()`):
   - the counts of employees of each region and age in each national decile;
   - the limits of the national centiles.
-- Assumption of the interpolation: within each national decile, the region is distributed like the country. Check against the counts by centile that AEAT gives by region, for all ages: between −0.19 and +0.45% from 2019 to 2024 (`aeat_mediana_deciles`).
+- Assumption of the interpolation: within each national decile, the region is distributed like the country. Check against the counts by centile that AEAT gives by region, for all ages: between −0.19 and +0.45% from 2019 to 2025 (`aeat_mediana_deciles`).
 - Assumption of the method: the median-to-mean ratio is the same in all provinces of a region.
-- **Before 2019.** The full-year module starts with the 2019 edition: from 2015 to 2018 the 2019 ratio is used (column `anio_forma`). From 2020 to 2024, that of each region moves between −2.7% (Balearic Islands, 2021) and +1.7% (Asturias, 2020) away from the 2019 one (`mochila_forma`); that of Spain is 0.844 in 2019 and in 2024. Those four years are an estimate with another year's ratio: the column `metodo_forma` says so (`primer_anio`) and the token is `estimado`, like the whole Young adult token (plan §11, question 44 f as revised).
+- **Before 2019.** The full-year module starts with the 2019 edition: from 2015 to 2018 the 2019 ratio is used (column `anio_forma`). From 2020 to 2025, that of each region moves between −2.7% (Balearic Islands, 2021) and +1.8% (Extremadura, 2025) away from the 2019 one (`mochila_forma`); that of Spain is 0.844 in 2019 and in 2024, and 0.848 in 2025. Those four years are an estimate with another year's ratio: the column `metodo_forma` says so (`primer_anio`) and the token is `estimado`, like the whole Young adult token (plan §11, question 44 f as revised).
 - **Check with the ECV from 2015 to 2018** (`ecv_mochila_correccion()`; targets `correccion_mochila` and `validacion_mochila_relacion`). Median-to-mean ratio of the gross pay of those who worked the twelve months, aged 26 to 35, in Spain: 0.930 in 2015, 0.904 in 2016, 0.879 in 2017, 0.892 in 2018 and 0.909 in 2019; from 0.857 to 0.899 from 2020 to 2024. It moves more than 2 points away from the 2019 one in 2015 (+2.1) and 2017 (−3.1): it warns (`mochila_relacion_ecv`). The planned correction, the 2019 ratio scaled by the change the ECV measures, is first validated in 2020–2024 and fails: it moves further from the module ratio of each region and year (mean error of 4.0 points) than the unscaled 2019 one (0.6), because the ECV ratio falls by 5.7% from 2019 to 2024 while the module's does not move. It is not corrected (`mochila_relacion_correccion`, warning); if a year validated, `ecv_mochila_aplicar()` would scale those years (`primer_anio_ecv`).
 - Formula: gross annual = actual provincial average wage × median-to-mean ratio of the SME of its region (`calcular_mochila_serie()`, `mochila`).
 
 **3. From gross to net** (`calcular_mochila_neta()`): net annual = gross × (1 − contribution − withholding); net monthly = net annual ÷ 12.
-- **Employee contribution of the year** (`cotizacion_trabajador()`, that of the Minimum wage token in `SMI_FICHAS`): 6.35% until 2022, with common contingencies (4.70), unemployment (1.55) and vocational training (0.10); with the intergenerational equity mechanism (MEI), 6.45% in 2023 and 6.47% in 2024. With a temporary contract, 0.05 points more.
+- **Employee contribution of the year** (`cotizacion_trabajador()`, that of the Minimum wage token in `SMI_FICHAS`): 6.35% until 2022, with common contingencies (4.70), unemployment (1.55) and vocational training (0.10); with the intergenerational equity mechanism (MEI), 6.45% in 2023, 6.47% in 2024 and 6.48% in 2025. With a temporary contract, 0.05 points more.
 - **Withholding:** AEAT average rate for people who only earn wages, by region, annual income bracket and year (*Grupos de población por la naturaleza de sus retribuciones*; `retenciones_aeat()`, target `retenciones_mochila`). It comes from the same pages as that of the Pensioner token (§6.5).
   - It is interpolated linearly between the average wages of the brackets; outside them, the rate of the end bracket is taken (`tipo_retencion()`).
   - In Spain in 2024: between 1.6 and 1.8% below €12,000; 2.6% from €12,000 to €18,000; 9.0% from €18,000 to €24,000; 13.6% from €24,000 to €30,000.
@@ -900,8 +901,9 @@ The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7
 | 2022 | 16,242 | 1,186 | 866 | 1,397 |
 | 2023 | 17,401 | 1,267 | 922 | 1,473 |
 | 2024 | 18,334 | 1,330 | 990 | 1,529 |
+| 2025 | 19,212 | 1,381 | 1,044 | 1,572 |
 
-- The 2024 figure is the same as before the series (differences below a thousandth of a euro). The net-to-gross ratio falls from 0.90 (2015) to 0.87 (2024): average withholding rises from 3.7 to 6.0%.
+- The 2024 figure is the same as before the series (differences below a thousandth of a euro). The net-to-gross ratio falls from 0.90 (2015) to 0.87 (2024 and 2025): average withholding rises from 3.7% (2015) to 6.0% (2024) and 6.8% (2025).
 
 **Discarded options.** Options A and C are still computed for the record, in `mochila` (columns `A` and `C`; `datos/intermedios/mochila/mochila.csv`):
 - In 2024, option A comes out between 1.24 and 1.49 times B (median, 1.34). Weighted mean: €24,257 against €18,334.
@@ -953,7 +955,7 @@ The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7
 1. **Starting pension.** Average retirement pension of the whole system by province (INSS, *Pensiones contributivas del Sistema de la Seguridad Social*; monthly Excel «Pensiones por CCAA y provincias»; `descargar_inss_pensiones()`, `leer_inss_pensiones()`). It excludes Clases Pasivas (civil service pensions). It is the average of one ordinary instalment; the province is that of the provincial office that manages the pension, not of residence, and pensions are counted, not pensioners.
 2. **Average of the year.** Mean of the twelve monthly figures (pensions in payment on the 1st of each month), weighted by the number of pensions (`armonizar_inss_pensiones()`, `anual_inss_pensiones()`; targets `inss_mensual` and `inss_anual`). Unit names are turned into codes with a fixed table (`inventario/provincias_inss.csv`). The Excel changes shape over the years (sheet name, one sheet per scheme and, from 2024, the amount): the whole-system sheet and the retirement column are found by their text.
 3. **From gross to net** (`calcular_transistor()`): gross a year = average × 14 instalments; net a month = gross a year × (1 − withholding) / 12. Pensions pay no contributions.
-   - **Withholding:** AEAT average rate of people who only receive pensions (*Grupos de población por la naturaleza de sus retribuciones*, pensions block, «Pensionistas» column), by region and annual income band, of the same year, interpolated as for the Young adult token (`retenciones_pensiones()`, `tipo_retencion()`; target `retenciones_transistor`). In 2024, from 0.4% (Ourense) to 10.8% (Bizkaia).
+   - **Withholding:** AEAT average rate of people who only receive pensions (*Grupos de población por la naturaleza de sus retribuciones*, pensions block, «Pensionistas» column), by region and annual income band, of the same year, interpolated as for the Young adult token (`retenciones_pensiones()`, `tipo_retencion()`; target `retenciones_transistor`). In 2024, from 0.4% (Ourense) to 10.8% (Bizkaia); in 2025, from 1.3 to 11.6%.
    - AEAT does not separate retirement from other pensions (survivors', disability, partly exempt, and Clases Pasivas): the curve is that of all pensioners with that income. It is the withholding applied, not the final income tax.
    - **Basque Country and Navarre:** their income tax is foral and AEAT does not cover them; the Spain curve is used and the income is marked `estimado` (author's decision). Ceuta and Melilla have their own curve, with lower withholding because of their tax rebate.
 4. **Gate** (§4.1; targets `validacion_inss` and `validacion_transistor`): each month, the provinces reproduce the number and the average pension published for their region and for Spain in the same Excel (`inss_suma`, `inss_media`), with no unit missing or repeated (`inss_cobertura`); the net income covers the 52 provinces every year, with withholding between 0 and 30% (`transistor_cobertura`, `transistor_retencion`).
@@ -972,15 +974,16 @@ The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7
 | 2022 | 1,254.14 | 1,030 | 1,657 | 1,385 |
 | 2023 | 1,374.58 | 1,136 | 1,796 | 1,503 |
 | 2024 | 1,442.67 | 1,198 | 1,869 | 1,574 |
+| 2025 | 1,506.06 | 1,245 | 1,926 | 1,631 |
 
 - In 2024, the Pensioner token (€1,574 on average) lies above the Young adult token (€1,330) and the Minimum wage token (€1,237) of the same year.
-- Sources, downloaded with the author's permission (9 Nov 2026): the 120 INSS Excel files from 2015 to 2024 (≈ 9.6 MB) and AEAT withholding from 2015 to 2023 (1,458 pages, ≈ 39 MB; 2024 was already there). AEAT editions up to 2017 have another layout and other region names («Región de Murcia»): `aeat_titulo()` and `aeat_menus()` read both.
+- Sources, downloaded with the author's permission (9 Nov 2026): the 120 INSS Excel files from 2015 to 2024 (≈ 9.6 MB) and AEAT withholding from 2015 to 2023 (1,458 pages, ≈ 39 MB; 2024 was already there). On 12 Nov 2026, also with his permission, the 12 Excel files of 2025 (2.4 MB) and the 2025 AEAT edition (308 pages, 11 MB). AEAT editions up to 2017 have another layout and other region names («Región de Murcia»): `aeat_titulo()` and `aeat_menus()` read both.
 
 ### 6.6 Wage percentile of the required pay
 
 The required pay (21) is also expressed as a percentile of the wage distribution, to compare over time without depending on each year's prices (plan §7, F3; 10 Nov 2026). It is a proposal pending review.
 
-**Distribution** (`leer_aeat_tramos()`, `curvas_salariales()`; targets `tramos_salariales` and `curvas_salariales_aeat`): pay received in the year by employees of each region and of Spain, the same measure as indicator 7 and the Young adult token (§5.6 and §6.2), from 2015 to 2024.
+**Distribution** (`leer_aeat_tramos()`, `curvas_salariales()`; targets `tramos_salariales` and `curvas_salariales_aeat`): pay received in the year by employees of each region and of Spain, the same measure as indicator 7 and the Young adult token (§5.6 and §6.2), from 2015 to 2025.
 - Source: AEAT, table «Asalariados, percepciones salariales y salarios por Comunidad Autónoma, tramos de salario y sexo», with both sexes: employees and wages in 13 annual wage bands, in multiples of the annual minimum wage of the year (14 payments). In 2020 and 2021 the table adds the furlough (ERTE) status (its total is taken) and does not include Ceuta or Melilla.
 - Within each band, a linear density with the band mean; the last, open band is closed with its mean (uniform between 10 SMI and 2 × mean − 10 SMI). From that come percentiles 1 to 99 of gross annual pay (`cuantil_tramos_salario()`).
 - To monthly net pay over 12 with the employee contribution and the AEAT withholding of its region and year, as for the Young adult token (§6.2). It is an increasing function of gross pay, so the order does not change.
@@ -989,7 +992,7 @@ The required pay (21) is also expressed as a percentile of the wage distribution
 
 **On the website** (`salarios_web()`; `datos/salarios.json`): on the required pay map, the tract profile (and that of municipalities, provinces and regions) gives the percentile of the pay it shows (the main figure, with actual monthly rent; task 40), with the chosen threshold, on the curve of its region and of the rent year (`web/js/percentil.js`): «Percentile 84 of wages (Comunidad de Madrid, 2024; …)». Below the 1st percentile or above the 99th, it says so.
 
-**Gate** (`comprobar_curvas_salariales()`, `validacion_percentil`; `comprobar_salarios_web()`, `validacion_web_salarios`; §4.1): `percentil_cobertura`, `percentil_monotono`, `percentil_suma`, `percentil_limites` and `web_salarios` (blocking) and `percentil_media` (warning). The mean of the modelled distribution moves at most 0.12% away from the published one (2017); the bands are off from the total by one employee in 5 of the 10 years.
+**Gate** (`comprobar_curvas_salariales()`, `validacion_percentil`; `comprobar_salarios_web()`, `validacion_web_salarios`; §4.1): `percentil_cobertura`, `percentil_monotono`, `percentil_suma`, `percentil_limites` and `web_salarios` (blocking) and `percentil_media` (warning). The mean of the modelled distribution moves at most 0.12% away from the published one (2017); the bands are off from the total by one employee in 5 of the 11 years.
 
 **Result** (Spain, monthly net pay over 12, in euros, and percentile of some amounts):
 
@@ -998,11 +1001,12 @@ The required pay (21) is also expressed as a percentile of the wage distribution
 | 2015 | 118 | 1,071 | 2,408 | 34.5 | 51.4 | 69.2 | 82.6 |
 | 2019 | 179 | 1,202 | 2,541 | 28.1 | 44.7 | 65.6 | 80.0 |
 | 2024 | 249 | 1,422 | 2,879 | 21.5 | 33.4 | 54.2 | 73.2 |
+| 2025 | 259 | 1,460 | 2,943 | 20.8 | 32.1 | 52.1 | 71.7 |
 
 - Percentile 10 is low because it counts people who worked only a few months.
 - With actual monthly rent, the median tract of Spain required €1,333 in 2015 (percentile 62.6 of wages in Spain) and €1,900 in 2024 (percentile 70.5); with the 50 m² minimum, €867 (40.7) and €1,217 (38.1).
 - Tract 2807901001 (Madrid) required, with actual monthly rent, €2,667 in 2015 (percentile 87.2 of wages in Comunidad de Madrid) and €4,256 in 2024 (percentile 93.9), and with the 50 m² minimum, €2,000 (73.9) and €2,967 (84.1); tract 0801901001 (Barcelona), €2,000 (percentile 79.1 of those of Catalonia) and €2,790 (85.9), and €1,783 (73.2) and €2,400 (78.1).
-- **Discarded alternative** (10 Nov 2026): the estimated average salary (SME) of the full-year module (§6.2), which annualises by days of contribution and leaves out those below the minimum wage. It only exists from 2019 to 2024, and its 1st percentile sits at the minimum wage: the median tract fell below percentile 3 every year.
+- **Discarded alternative** (10 Nov 2026): the estimated average salary (SME) of the full-year module (§6.2), which annualises by days of contribution and leaves out those below the minimum wage. It only exists from 2019 to 2025, and its 1st percentile sits at the minimum wage: the median tract fell below percentile 3 every year.
 
 ### 6.7 Assumptions module
 
@@ -1278,7 +1282,7 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 - **14** (`calcular_esfuerzo_residentes()`): in tracts and municipalities, the levels at which SERPAVI and ADRH publish both terms (`NIVELES_ESFUERZO`), and in the years with both, 2015–2024. No breakdown.
 - **21** (`calcular_sueldo_necesario()`): at all SERPAVI levels, 2015–2024, with the 30% threshold: the main figure, with median monthly rent, no breakdown, and the 50 m² theoretical minimum, with cut `superficie` and group `50` (`CORTE_MINIMO_SUELDO`).
 - **15** (`calcular_peso_alquiler_ingreso()`): cut `ficha`, with groups `tartera`, `mochila` and `transistor` (2015–2024). The Young adult and Pensioner tokens, in the provinces and their tracts, districts and municipalities; the Minimum wage token, also in the regions. It is a check: the website computes the rent share with the chosen token.
-- **Token incomes** (`perfiles_fichas()`; target `perfiles`): the Minimum wage token (§6.3); the Young adult token of each province and year, from 2015 to 2024 (§6.2; 46 provinces with data and 6 `ausente` each year); the Neighbourhood household token (§6.4); the Pensioner token of each province and year (§6.5).
+- **Token incomes** (`perfiles_fichas()`; target `perfiles`): the Minimum wage token (§6.3); the Young adult token of each province and year, from 2015 to 2025 (§6.2; 46 provinces with data and 6 `ausente` each year); the Neighbourhood household token (§6.4); the Pensioner token of each province and year (§6.5).
 - **Version:** the most recent of its terms, 7 Nov 2026.
 
 **Result: median rent over the area's average household income (14) in the tracts** (`larga_derivados`):
@@ -1447,7 +1451,7 @@ In Spain, from 2021 to 2024, new tenancies rise by 19.3% (index from 114.871 to 
 - years of wages to buy (16): appraised value × 80 / the Tax Agency's average gross annual wage per employee (indicator 7); for a municipality, that of its province;
 - mortgage payment over household income (17; name of 12 Nov 2026): first-year payment of a French-amortisation loan for 80% of the value, over 25 years at the year's Banco de España rate (`cuota_hipoteca()`), × 12 / ADRH average net income per household × 100 (plan §11, question 45 d as revised; it is not the Banco de España's theoretical burden of §7.9, which does the same calculation with its standard home and the income of the median household and comes out at about twice as much: in Spain, in 2024, 34.6% on average against 18.1%; `compraventa_renta_hogar()`, target `renta_hogar_17`). At each level, the income INE publishes: the municipality's and, since 11 Nov 2026, the province's, the region's and Spain's, from totals table 53689 (`renta_hogar_publicada`; rule 1: there is a published figure and it prevails). Where INE does not publish it (Navarre from 2015 to 2020, Álava from 2015 to 2019, Gipuzkoa in 2015, their regions and Spain until 2020: 29 figures), the province and the region are `ausente`, without a figure, because municipal coverage is partial (Navarre from 2017 to 2019, about 60 of its 272 municipalities), and Spain takes the mean of its municipalities weighted by their households (population / average household size of their tracts), `estimado` (author's decision, 11 Nov 2026). Gate `validacion_renta_hogar_publicada` (§4.1): the aggregated mean deviates from the published one by 0.13% at most in the median of each year and level, and by more than 1% in 6 of 691 figures (Guadalajara from 2015 to 2019 and Seville in 2016).
 
-From 2015 to 2024, for Spain, the regions, the provinces and the municipalities above 25,000 inhabitants. Indicator 16, without a Tax Agency wage (Basque Country and Navarre), `ausente`; 17 also covers the foral territories, with ADRH income. Status: the worst of its terms (17 for provinces, regions and Spain, `dato` where INE publishes the income: 508 provinces, 179 regions and Spain from 2021 to 2024; Spain from 2015 to 2020, `estimado`; 12 provinces and 11 regions, `ausente`). In Spain, 6.3 years in 2015 and 6.1 in 2024 (16), and 17.8% in 2015 (`estimado`) and 18.1% in 2024 (17; with the rate at 3.46%, 18.0%; with the income aggregated from the municipalities, 15.3% in 2021 against 15.2% with the published one; with the Tax Agency wage and the INE rate it gave 29.8 and 28.7%); among the municipalities in 2024, from 2.2 to 17.9 years (median, 5.3) and from 6.8% (Puertollano) to 39.8% (Santa Eulària des Riu), with a median of 15.4%. Gate: `compraventa_terminos`, `compraventa_estado` and `compraventa_rango` (blocking), and `compraventa_rango_detalle` (warning).
+Indicator 16, from 2015 to 2025, and 17, from 2015 to 2024 (the years with ADRH income: without it, the whole year would come in as `ausente`), for Spain, the regions, the provinces and the municipalities above 25,000 inhabitants. Indicator 16, without a Tax Agency wage (Basque Country and Navarre), `ausente`; 17 also covers the foral territories, with ADRH income. Status: the worst of its terms (17 for provinces, regions and Spain, `dato` where INE publishes the income: 508 provinces, 179 regions and Spain from 2021 to 2024; Spain from 2015 to 2020, `estimado`; 12 provinces and 11 regions, `ausente`). In Spain, 6.3 years in 2015, 6.1 in 2024 and 6.6 in 2025 (16), and 17.8% in 2015 (`estimado`) and 18.1% in 2024 (17; with the rate at 3.46%, 18.0%; with the income aggregated from the municipalities, 15.3% in 2021 against 15.2% with the published one; with the Tax Agency wage and the INE rate it gave 29.8 and 28.7%); among the municipalities in 2024, from 2.2 to 17.9 years (median, 5.3) and from 6.8% (Puertollano) to 39.8% (Santa Eulària des Riu), with a median of 15.4%. Gate: `compraventa_terminos`, `compraventa_estado` and `compraventa_rango` (blocking), and `compraventa_rango_detalle` (warning).
 
 **Postcode ↔ municipality** (`leer_ine_callejero_cp()`, `geo_tabla_cp_municipio()`; target `fichero_cp_municipio`, in `geo/codigos_postales_2021.csv`). It comes from the street sections of the January 2021 street directory: 11,046 postcodes in 14,600 pairs, covering all 8,131 municipalities; 8,784 postcodes fall in a single municipality. The weight is the share of the postcode's street sections in each municipality. 50 pairs have a postcode from another province: enclaves such as the County of Treviño, with those of Álava, and typos in the street directory.
 
@@ -1596,7 +1600,7 @@ The series with the main-residence tax deduction (in force until December 2012),
 - **Withholding of all pensioners.** AEAT does not separate retirement; in the Basque Country and Navarre, the curve is that of Spain (`estimado`; §6.5).
 - **Own home.** The great majority of people aged over 65 do not rent: the token answers “if I had to rent today” (§6.5).
 
-**Token years.** The Minimum wage, Young adult and Pensioner tokens have an income for each year from 2015 to 2024 (§7.4).
+**Token years.** The Minimum wage, Young adult and Pensioner tokens have an income for each year with rent data, from 2015 to 2024 (§7.4); the Young adult and Pensioner tokens reach 2025 and the Minimum wage token, 2026.
 
 **Wage percentile.** It counts people who worked only a few months, so low percentiles are small amounts; within each wage band a linear density is assumed; the Basque Country and Navarre (and Ceuta and Melilla in 2020 and 2021) use the Spain curve (§6.6).
 

@@ -148,7 +148,7 @@ calcular_sueldo_necesario <- function(larga_serpavi, superficie = SUPERFICIE_FIC
 
 # Ingreso neto mensual (12 pagas) de cada ficha:
 #   tartera: salario mínimo de cada año de SMI_FICHAS (nacional);
-#   mochila: mochila_neta (método B, neto) de cada provincia y año de la AEAT (2015–2024), como
+#   mochila: mochila_neta (método B, neto) de cada provincia y año de la AEAT (2015–2025), como
 #     «estimado» (el método B es una estimación; pregunta 15 ampliada); sin dato en los territorios
 #     forales, Ceuta y Melilla (ausente), una fila por provincia de inventario/provincias_aeat.csv
 #     y año (codigos_mochila());
@@ -211,7 +211,7 @@ ingresos_fichas <- function(perfiles) {
 
 # 15, control en R: alquiler mediano por m² (VC) × superficie / ingreso de la ficha × 100, con el
 # ingreso del mismo año que el alquiler (regla 4): la tartera en los años de SMI_FICHAS con alquiler
-# (2015–2024), en todos los niveles; la mochila y el transistor (2015–2024) en sus años, en
+# (2015–2024), en todos los niveles; la mochila y el transistor (2015–2025) en sus años con alquiler, en
 # las provincias y sus secciones, distritos y municipios. Estado: estado_peso_alquiler().
 calcular_peso_alquiler_ingreso <- function(larga_serpavi, perfiles, superficie = SUPERFICIE_FICHA) {
   m2 <- alquiler_vc(larga_serpavi, "alquiler_m2") |> rename(alquiler_m2 = valor, e_alquiler = estado)

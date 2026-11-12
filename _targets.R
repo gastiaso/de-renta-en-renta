@@ -435,7 +435,7 @@ modulo_acceso <- list(
 )
 
 # Indicador 7 (F3): salario medio anual por asalariado, total y de 26 a 35 años, por provincia,
-# comunidad y España, 2011–2024 (AEAT, tabla provincial por edad y sexo; R/fuente_aeat_salarios.R).
+# comunidad y España, 2011–2025 (AEAT, tabla provincial por edad y sexo; R/fuente_aeat_salarios.R).
 # País Vasco y Navarra, «ausente» (la AEAT no los cubre). Compuerta: lectura, cobertura y suma y
 # media de las provincias frente a su comunidad y España.
 salarios_por_anio <- tarchetypes::tar_map(
@@ -450,19 +450,18 @@ bloque_salarios <- list(
   tar_target(validacion_salarios, validar_referencias(comprobar_aeat_salarios(salarios_aeat), referencias)),
   tar_target(larga_salarios, {
     validacion_salarios   # la compuerta va antes que la tabla larga
-    armonizar_aeat_salarios(salarios_aeat, version = version_de(paginas_salarios_2024)) |>
+    armonizar_aeat_salarios(salarios_aeat, version = version_de(paginas_salarios_2025)) |>
       validar_tabla_larga(indicadores, fuentes, vocabulario)
   })
 )
 
-# Ficha «mochila» (plan §3.1, método en cinco pasos; R/ficha_mochila.R), de 2015 a 2024: salario
+# Ficha «mochila» (plan §3.1, método en cinco pasos; R/ficha_mochila.R), de 2015 a 2025: salario
 # medio de 26 a 35 años de la provincia (indicador 7) × relación mediana/media del salario medio
 # estimado (SME) de su comunidad y año (módulo de año completo, desde 2019; antes, la de 2019), a neto
 # con la cotización del trabajador y la retención de la AEAT de su comunidad y año. Control con la ECV
-# de cada año (ingresos del mismo año que la AEAT). Método B, adoptado el 7-nov-2026; A y C, como
+# de cada año (ingresos del mismo año que la AEAT), hasta el último con ola publicada (ANIOS_MOCHILA_ECV). Método B, adoptado el 7-nov-2026; A y C, como
 # registro (datos/intermedios/mochila/mochila.csv). Las retenciones de los asalariados salen de las
 # mismas páginas que las del transistor (retenciones_por_anio).
-ANIO_AEAT <- 2024L
 modulo_sme_por_anio <- tarchetypes::tar_map(
   values = list(anio_sme = ANIOS_SME), names = "anio_sme",
   tar_target(paginas_sme_deciles, descargar_aeat_mochila("deciles", anio_sme), format = "file"),
@@ -473,8 +472,9 @@ modulo_sme_por_anio <- tarchetypes::tar_map(
                                          paginas_sme_centiles, anio_sme, ccaa))
 )
 # Control con la ECV: ficheros de hogares (d) y personas (p) de la ola siguiente a cada año de ingresos
+# (el último año de la AEAT no la tiene hasta el febrero siguiente: ANIOS_MOCHILA_ECV)
 ecv_por_anio <- tarchetypes::tar_map(
-  values = list(anio_ecv = ANIOS_MOCHILA), names = "anio_ecv",
+  values = list(anio_ecv = ANIOS_MOCHILA_ECV), names = "anio_ecv",
   tar_target(csv_ecv_asalariados, obtener_csv_ine_ecv(anio_ecv + 1L, c("d", "p")), format = "file"),
   tar_target(ecv_asalariados, resumir_ecv_asalariados(leer_ecv_asalariados(csv_ecv_asalariados, anio_ecv), anio_ecv))
 )
@@ -526,7 +526,7 @@ bloque_mochila <- list(
 
 # Percentil salarial (F3, plan §7; R/percentil_salarial.R): curvas del salario cobrado en el año por
 # los asalariados de cada comunidad y España (AEAT, tabla por comunidad y tramos de salario), netas
-# en 12 con la cotización y la retención de cada año, 2015–2024, para expresar el sueldo necesario
+# en 12 con la cotización y la retención de cada año, 2015–2025, para expresar el sueldo necesario
 # como percentil en la web (datos/salarios.json)
 tramos_por_anio <- tarchetypes::tar_map(
   values = list(anio_tramos = ANIOS_PERCENTIL), names = "anio_tramos",
@@ -542,7 +542,7 @@ bloque_percentil <- list(
 )
 
 # Ficha «transistor» (F3; plan §3.1, método decidido por el autor el 9-nov-2026): pensión media de
-# jubilación del INSS por provincia, media de los doce meses de cada año de 2015 a 2024
+# jubilación del INSS por provincia, media de los doce meses de cada año de 2015 a 2025
 # (R/fuente_inss_pensiones.R), neta de la retención de la AEAT de quienes solo cobran pensiones, de
 # su comunidad y año (País Vasco y Navarra, con la de España: «estimado»), repartida en 12
 # (R/ficha_transistor.R). Compuerta: las provincias reproducen las cifras de comunidad y España
@@ -612,7 +612,7 @@ mapa_base <- list(
 # Indicadores derivados (R/derivados.R): 14 (esfuerzo de residentes; en la web, solo en la ficha), 21
 # (sueldo neto necesario, mapa por defecto: alquiler mensual real y umbral del 30 %, con el mínimo de
 # 50 m² al lado como corte «superficie»; tarea 40) y 15 (peso del alquiler en el ingreso: se calcula en la web; aquí,
-# la tartera, la mochila y el transistor de 2015 a 2024, como control).
+# la tartera, la mochila y el transistor de 2015 a 2024, los años con alquiler, como control).
 # Alquiler de vivienda colectiva; estado, el peor de sus términos (plan, preguntas abiertas 12 y 15);
 # numerador y denominador del mismo año (regla 4).
 # `perfiles`: ingreso neto mensual de cada ficha (tartera, mochila, transistor y llave), para la web.

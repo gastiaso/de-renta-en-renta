@@ -322,6 +322,20 @@ test_that("17: renta por hogar publicada (tabla 53689) en provincia, comunidad y
   expect_equal(e2$estado[e2$geo_id == "28079"], "dato")
   c2 <- comprobar_derivados_compraventa(d2, vt, larga_sal_prueba(), tibble::tibble(anio = 2024L, tipo = 3.47), renta_hogar = r2)
   expect_true(all(c2$calculado[c2$id %in% c("compraventa_estado", "compraventa_rango")] == 0))
+  # Un año con salario y valor tasado pero sin renta del hogar (el ADRH sale casi un año después que los
+  # salarios de la AEAT): el 16 entra; el 17 no, para que su último año no sea un mapa entero «ausente»
+  vt25 <- dplyr::bind_rows(vt, dplyr::mutate(vt, anio = 2025L, valor = valor * 1.1))
+  sal25 <- dplyr::bind_rows(larga_sal_prueba(), dplyr::mutate(larga_sal_prueba(), anio = 2025L))
+  tipo25 <- tibble::tibble(anio = c(2024L, 2025L), tipo = c(3.47, 3.1))
+  d25 <- armonizar_derivados_compraventa(vt25, sal25, tipo25, renta_hogar = r2)
+  expect_equal(sort(unique(d25$anio[d25$indicador == "anios_salario_compra"])), c(2024L, 2025L))
+  expect_equal(unique(d25$anio[d25$indicador == "esfuerzo_hipotecario"]), 2024L)
+  expect_equal(d25[d25$anio == 2024L, ], d2)
+  c25 <- comprobar_derivados_compraventa(d25, vt25, sal25, tipo25, renta_hogar = r2)
+  expect_true(all(c25$calculado[c25$id %in% c("compraventa_estado", "compraventa_rango")] == 0))
+  # Sin tabla de renta (la cuenta con el salario), el 17 entra en todos los años con salario
+  d25s <- armonizar_derivados_compraventa(vt25, sal25, tipo25)
+  expect_equal(sort(unique(d25s$anio[d25s$indicador == "esfuerzo_hipotecario"])), c(2024L, 2025L))
   # Compuerta: cobertura completa, desviación de la agregada (38.000) frente a la publicada
   c0 <- comprobar_renta_hogar_publicada(renta, pesos, terr, publicada)
   expect_equal(c0$calculado[c0$id == "compraventa_renta_cobertura"], 0)

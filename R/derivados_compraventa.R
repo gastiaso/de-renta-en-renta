@@ -161,6 +161,8 @@ terminos_compraventa <- function(larga_valor_tasado, larga_salarios, tipo, renta
 }
 
 # Los dos derivados en el formato de la tabla larga, en los años con salario (los demás no entran).
+# El 17, además, solo en los años con renta del hogar: el ADRH sale casi un año después que los
+# salarios de la AEAT, y sin ella el último año entraría entero «ausente» (y su mapa abriría vacío).
 armonizar_derivados_compraventa <- function(larga_valor_tasado, larga_salarios, tipo, renta_hogar = NULL,
                                             version_renta = NULL,
                                             superficie = SUPERFICIE_COMPRA, financiacion = FINANCIACION_COMPRA,
@@ -172,7 +174,9 @@ armonizar_derivados_compraventa <- function(larga_valor_tasado, larga_salarios, 
   anios <- t |>
     dplyr::transmute(geo_id, nivel, anio, indicador = "anios_salario_compra",
                      valor = dplyr::if_else(con, valor_m2 * superficie / salario, NA_real_), estado)
+  anios_renta <- if (is.null(renta_hogar)) unique(t$anio) else unique(renta_hogar$anio[!is.na(renta_hogar$renta)])
   esfuerzo <- t |>
+    dplyr::filter(anio %in% anios_renta) |>
     dplyr::mutate(estado = dplyr::if_else(is.na(tipo), "ausente", peor_estado(e_valor, e_renta)), con = con_valor(estado)) |>
     dplyr::transmute(geo_id, nivel, anio, indicador = "esfuerzo_hipotecario",
                      valor = dplyr::if_else(con, 100 * 12 * cuota_hipoteca(financiacion * valor_m2 * superficie, tipo, plazo) /

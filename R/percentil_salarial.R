@@ -4,7 +4,7 @@
 # Distribución: salario cobrado en el año por los asalariados de cada comunidad (y de España), la
 # misma medida que el indicador 7 y la mochila (método B). AEAT, «Asalariados, percepciones
 # salariales y salarios por Comunidad Autónoma, tramos de salario y sexo», sexo total, de 2015 a
-# 2024: asalariados y salarios en 13 tramos de salario anual, en múltiplos del SMI anual del año
+# 2025: asalariados y salarios en 13 tramos de salario anual, en múltiplos del SMI anual del año
 # (14 pagas; SMI_FICHAS): 0–0,5, 0,5–1, …, 4,5–5, 5–7,5, 7,5–10 y más de 10.
 #   1. Dentro de cada tramo, densidad lineal con la media del tramo (salarios / asalariados): la
 #      pendiente que da esa media, acotada para que la densidad no sea negativa. El último tramo,
@@ -27,7 +27,7 @@
 TITULO_AEAT_TRAMOS <- "Asalariados, percepciones salariales y salarios por Comunidad Aut\u00f3noma, tramos de salario y sexo"
 # En 2020 y 2021, con una dimensión más (situación ERTE): se toma su total.
 TITULO_AEAT_TRAMOS_ERTE <- "Asalariados, percepciones salariales y salarios por Comunidad Aut\u00f3noma, tramos de salario, sexo y situaci\u00f3n ERTE"
-ANIOS_PERCENTIL <- 2015:2024       # los años del alquiler (y de la mochila)
+ANIOS_PERCENTIL <- 2015:2025       # los años de la mochila: los del alquiler y el último de la AEAT
 PERCENTILES_SALARIALES <- 1:99
 
 descargar_aeat_tramos <- function(anio) {
