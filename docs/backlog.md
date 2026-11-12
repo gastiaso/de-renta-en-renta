@@ -410,7 +410,9 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 
 Los bloques B y C van antes que la web porque cambian las cifras que la web enseña.
 
-## Para la v1.1
+## Para la v1.2
+
+La v1.1.0 (12-nov-2026) salió con la revisión de las seis lecturas, «Tu sueldo» y los datos de 2025; lo que esta lista reservaba «para la v1.1» pasa a la siguiente.
 
 - Venta y otros portales.
 - Microdatos del CIS por comunidad.

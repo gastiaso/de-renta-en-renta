@@ -2,7 +2,7 @@
 
 > **En construcción.** Nada de lo que hay aquí es definitivo.
 
-**Web:** <https://gastiaso.github.io/de-renta-en-renta/> · **Datos:** [release `v1.0.0`](https://github.com/gastiaso/de-renta-en-renta/releases/tag/v1.0.0)
+**Web:** <https://gastiaso.github.io/de-renta-en-renta/> · **Datos:** [release `v1.1.0`](https://github.com/gastiaso/de-renta-en-renta/releases/tag/v1.1.0)
 
 **Pregunta:** ¿A quién le queda sueldo después de pagar la vivienda? Dónde, desde cuándo y para quién ha cambiado la relación entre lo que cuesta la vivienda y lo que se cobra. Para quien ya está en el tablero y para quien entra nuevo en la partida: para quien ya vive de alquiler y para quien busca piso hoy.
 
@@ -12,7 +12,7 @@ Atlas web de vivienda, salarios y otros indicadores sociales para España, por s
 
 ## Estado
 
-v1.0.0 publicada (11-nov-2026): la familia «quedarse» completa, el indicador 11 (Registradores, por provincia), siete tramos por escala y la escala relativa al municipio, la superficie típica, el mapa en el móvil, la fe de erratas y «Método en dos páginas», y las dos primeras historias como recorridos guiados dentro del mapa. La oferta de los portales sigue «próximamente». v0.4.0 publicada (10-nov-2026): a lo de la v0.1 se suman los indicadores 4 a 7 y 10, 12, 16, 17 y 20, la mochila de 2015 a 2024, el percentil salarial, los mapas por municipio, provincia y comunidad, la portada, la «Máquina del tiempo» desde 1987 con la vivienda como problema en el CIS, y las dos familias de alquiler («quedarse» y «entrar»). La oferta de los portales, «próximamente». v0.1 publicada (9-nov-2026): mapa por sección censal de 2015 a 2024 (renta, alquiler, sueldo necesario, esfuerzo, hogares en alquiler y viviendas turísticas), «Tu sueldo» con las fichas de perfil, la sección europea de sobrecarga y la nota metodológica en castellano e inglés. Los datos (tabla larga en Parquet, mapa base y datos de la web) van en el release `v0.1.0`.
+v1.1.0 publicada (12-nov-2026): la portada en una columna y el tablero nuevo; cuatro historias, las dos primeras reescritas en lenguaje llano y dos nuevas; el buscador por código postal; «Tu sueldo» con el selector de otros gastos de vivienda y euros de 2025 en la Máquina del tiempo y en la ficha, y los datos de 2025 de la AEAT y del INSS. La oferta de los portales sigue «próximamente». v1.0.0 publicada (11-nov-2026): la familia «quedarse» completa, el indicador 11 (Registradores, por provincia), siete tramos por escala y la escala relativa al municipio, la superficie típica, el mapa en el móvil, la fe de erratas y «Método en dos páginas», y las dos primeras historias como recorridos guiados dentro del mapa. La oferta de los portales sigue «próximamente». v0.4.0 publicada (10-nov-2026): a lo de la v0.1 se suman los indicadores 4 a 7 y 10, 12, 16, 17 y 20, la mochila de 2015 a 2024, el percentil salarial, los mapas por municipio, provincia y comunidad, la portada, la «Máquina del tiempo» desde 1987 con la vivienda como problema en el CIS, y las dos familias de alquiler («quedarse» y «entrar»). La oferta de los portales, «próximamente». v0.1 publicada (9-nov-2026): mapa por sección censal de 2015 a 2024 (renta, alquiler, sueldo necesario, esfuerzo, hogares en alquiler y viviendas turísticas), «Tu sueldo» con las fichas de perfil, la sección europea de sobrecarga y la nota metodológica en castellano e inglés. Los datos (tabla larga en Parquet, mapa base y datos de la web) van en el release `v0.1.0`.
 
 - Plan: `docs/plan_integracion_atlas.md`
 - Tareas: `docs/backlog.md` (histórico: `docs/backlog_f0.md`)

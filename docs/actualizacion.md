@@ -91,4 +91,4 @@ Corregido: `modulo_sme_2019` a `modulo_sme_2024` daban `NAs introducidos por coe
 
 ## 5. Publicar
 
-La publicación (release y sitio) sigue `docs/publicacion.md` y la decide el autor: hasta la v1.0 no hay releases intermedios.
+La publicación (release y sitio) sigue `docs/publicacion.md` y la decide el autor. Hasta la v1.0 no hubo releases intermedios; la v1.1.0 (12-nov-2026) salió con los datos de 2025 de la AEAT y del INSS.
