@@ -390,7 +390,9 @@ export function cuantil(valores, p) {
 // Marcas de la regla del sueldo necesario: las fichas de una persona en su ingreso (con la
 // provincia de la sección elegida o, si no hay, la mediana de las provincias) y la llave como
 // tramo (del cuartil 1 al 3 de la renta del hogar ÷ 12 en las secciones con dato).
-export function marcasRegla({ perfiles, seccion, rentaHogar }) {
+// `cuartiles` (tarea 62): los cuartiles 1 y 3 de la renta del hogar en las secciones, del manifiesto;
+// con ellos no hacen falta los valores de las secciones (`rentaHogar`), que mandan si no los hay.
+export function marcasRegla({ perfiles, seccion, rentaHogar, cuartiles = null }) {
   const marcas = [];
   for (const ficha of FICHAS_PERFIL) {
     const perfil = perfiles?.[ficha];
@@ -409,7 +411,10 @@ export function marcasRegla({ perfiles, seccion, rentaHogar }) {
     if (valor !== null) marcas.push({ ficha, valor, mediana });
   }
   let llave = null;
-  if (perfiles?.llave && rentaHogar) {
+  if (perfiles?.llave && cuartiles) {
+    const divisor = perfiles.llave.ingreso.divisor ?? 12;
+    llave = { desde: cuartiles[0] / divisor, hasta: cuartiles[1] / divisor };
+  } else if (perfiles?.llave && rentaHogar) {
     const divisor = perfiles.llave.ingreso.divisor ?? 12;
     const mensual = rentaHogar.map((x) => (x === null ? null : x / divisor));
     const desde = cuantil(mensual, 0.25);

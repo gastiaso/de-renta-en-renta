@@ -31,7 +31,8 @@ test_that("la web en un navegador recalcula una muestra y coincide con R (plan Â
                                   "navegador_leyenda",      # tarea 51: juegos de cortes por escala
                                   "navegador_escala_municipio", "navegador_superficie_tipica",
                                   "navegador_una_escala",   # decisiones del autor, 11-nov-2026
-                                  "navegador_historias"))   # tarea 49: recorridos guiados (sin el fichero, una fila que se salta)
+                                  "navegador_historias",    # tarea 49: recorridos guiados (sin el fichero, una fila que se salta)
+                                  "navegador_carga"))       # tarea 62: carga inicial y primer clic
   expect_equal(sum(r$id == "navegador_fichas"), 6L)
   expect_equal(sum(r$id == "navegador_redireccion"), 2L)
   expect_equal(sum(r$id == "navegador_territorio"), 4L)
@@ -39,5 +40,6 @@ test_that("la web en un navegador recalcula una muestra y coincide con R (plan Â
   expect_equal(sum(r$id == "navegador_municipal"), 6L)
   expect_equal(sum(r$id == "navegador_leyenda"), 3L)
   expect_true(sum(r$id == "navegador_historias") %in% c(1L, 3L))
+  expect_true(sum(r$id == "navegador_carga") %in% c(1L, 2L))    # con una exportaciÃ³n anterior a la tarea 62, una fila que se salta
   expect_equal(r$detalle[r$calculado != r$referencia], character(0))
 })

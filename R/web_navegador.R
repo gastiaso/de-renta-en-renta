@@ -59,6 +59,10 @@
 #     el texto de ese paso en datos/historias.json y deja en la dirección las claves de su estado, sin
 #     ficha de perfil (modo «necesario»); «Siguiente» pasa al paso 4 y «Salir» quita la historia de
 #     la dirección sin mover la vista. Sin el fichero, se salta (una fila, con el motivo).
+#   navegador_carga (tarea 62): abrir mapa.html sin vista no pide el índice de las secciones ni
+#     ningún fichero de valores de sección; con la vista en Madrid, el primer clic en una sección pide
+#     la ficha de su distrito y ningún fichero nacional (ni de secciones ni de España). Con un
+#     manifiesto sin `secciones_desde_zoom` (exportación anterior a la tarea 62), se salta.
 # `larga`: la tabla larga (tar_read(tabla_larga)); `perfiles`: tar_read(perfiles), para el
 # ingreso de la tartera que usa la web. El mapa está en mapa.html; la raíz es la portada.
 
@@ -330,7 +334,8 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
              comprobar_escala_municipio_navegador(b, evaluar, url, larga, espera),   # decisiones del 11-nov-2026
              comprobar_municipales_navegador(b, evaluar, url, larga, raiz, espera),   # F5
              comprobar_historias_navegador(b, evaluar, url, espera,   # tarea 49
-                                           hay_fichero = if (is.null(servidor)) NA else file.exists(file.path(raiz, "web", "datos", "historias.json"))))
+                                           hay_fichero = if (is.null(servidor)) NA else file.exists(file.path(raiz, "web", "datos", "historias.json"))),
+             comprobar_carga_navegador(b, evaluar, url, espera))   # tarea 62
 
   # Sample recomputed with the page modules
   sc <- unique(larga$geo_id[larga$nivel == "sc" & larga$indicador == "sueldo_necesario"])
@@ -370,6 +375,43 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
   filas[[length(filas) + 1L]] <- tibble::tibble(id = "navegador_errores", detalle = paste(utils::head(errores, 5), collapse = " | "),
                                                 calculado = length(errores), referencia = 0)
   bind_rows(filas) |> mutate(calculado = as.numeric(calculado), referencia = as.numeric(referencia))
+}
+
+# Tarea 62: lo que pide el mapa al abrirse sin vista y en el primer clic en una sección de Madrid
+# (navegador_carga), con las rutas de la Resource Timing API del navegador.
+comprobar_carga_navegador <- function(b, evaluar, url, espera = 60) {
+  fila <- function(detalle, mal) tibble::tibble(id = "navegador_carga", detalle = detalle, calculado = as.numeric(mal), referencia = 0)
+  pedidas <- function() {
+    unlist(jsonlite::fromJSON(evaluar("JSON.stringify(performance.getEntriesByType('resource').map((e) => new URL(e.name).pathname))")))
+  }
+  de_secciones <- function(rutas) grepl("/datos/indices/sc[.]json$|/datos/sc/", rutas)
+  b$Page$navigate(paste0(url, "mapa.html"))
+  ok <- esperar_navegador(evaluar, "document.getElementById('mapa-cargando')?.hidden && document.querySelector('#ficha .ficha-vacia')", espera)
+  diferida <- ok && isTRUE(evaluar(
+    "fetch('datos/manifiesto.json').then((r) => r.json()).then((m) => Number.isFinite(m.secciones_desde_zoom))"))
+  if (ok && !diferida) return(list(fila("sin secciones_desde_zoom en el manifiesto: se salta", 0)))
+  Sys.sleep(2)
+  rutas <- if (ok) pedidas() else character()
+  filas <- list(fila(sprintf("mapa.html sin vista: %d peticiones, %d de secciones", length(rutas), sum(de_secciones(rutas))),
+                     !ok || any(de_secciones(rutas))))
+
+  b$Page$navigate(paste0(url, "mapa.html?vista=14.00/40.41680/-3.70380"))
+  ok <- esperar_navegador(evaluar, "document.getElementById('mapa-cargando')?.hidden && document.querySelector('#ficha .ficha-vacia')", espera)
+  Sys.sleep(3)
+  evaluar("performance.clearResourceTimings(); true")
+  xy <- if (ok) jsonlite::fromJSON(evaluar(
+    "(() => { const r = document.getElementById('mapa').getBoundingClientRect(); return JSON.stringify([r.left + r.width / 2, r.top + r.height / 2]); })()")) else c(0, 0)
+  b$Input$dispatchMouseEvent(type = "mousePressed", x = xy[1], y = xy[2], button = "left", clickCount = 1)
+  b$Input$dispatchMouseEvent(type = "mouseReleased", x = xy[1], y = xy[2], button = "left", clickCount = 1)
+  ok <- ok && esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-codigo')?.textContent.includes('28079')", 20)
+  Sys.sleep(3)
+  rutas <- if (ok) pedidas() else character()
+  fichas <- rutas[grepl("/datos/fichas/", rutas)]
+  nacionales <- rutas[de_secciones(rutas) | grepl("/datos/nacional/", rutas)]
+  filas[[2]] <- fila(sprintf("primer clic en Madrid: %s; %d ficheros nacionales", paste(sub(".*/datos/", "", fichas), collapse = ", "),
+                             length(nacionales)),
+                     !ok || length(nacionales) > 0 || length(fichas) != 1 || !any(grepl("/datos/fichas/28079/[0-9]{2}[.]json$", fichas)))
+  filas
 }
 
 # Espera (hasta `espera` segundos) a que una condicion de JavaScript sea cierta en la pagina.

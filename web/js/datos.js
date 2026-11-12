@@ -200,11 +200,35 @@ export async function valorDe(m, serie, nivel, codigo, periodo) {
   return { valor: datos.valores[i], estado: datos.estados[i] };
 }
 
-// Series de una sección para la ficha, desde el fichero de su municipio (los cinco primeros
-// dígitos del código): { serie: { anios, valores, estados } }, o null si no hay.
+// Fichero de la ficha de una sección: el de su municipio (los cinco primeros dígitos del código) o,
+// en los municipios grandes (`fichas_partidas`; tarea 62), el de su distrito (los dos siguientes).
+// Sin esas claves en el manifiesto (datos de la v1.1.0, la muestra), el del municipio.
+export function rutaFicha(m, seccion) {
+  if (!m?.fichas) return null;
+  const municipio = seccion.slice(0, 5);
+  if (m.fichas_distrito && (m.fichas_partidas ?? []).includes(municipio)) {
+    return m.fichas_distrito.replace('{municipio}', municipio).replace('{distrito}', seccion.slice(5, 7));
+  }
+  return m.fichas.replace('{municipio}', municipio);
+}
+
+// Tarea 62: zoom desde el que la web pide el índice y los valores de las secciones (el primero en
+// que el mapa base las trae). Sin la clave en el manifiesto (datos de la v1.1.0, la muestra), 0:
+// desde el principio, como antes.
+export const zoomSecciones = (m) => (Number.isFinite(m?.secciones_desde_zoom) ? m.secciones_desde_zoom : 0);
+
+// Banda de la llave en la regla de la leyenda (tarea 62): los cuartiles 1 y 3 de la serie en las
+// secciones con cifra que el manifiesto trae por periodo (`cuartiles_sc`), o null.
+export function cuartilesSc(m, serie, periodo) {
+  const q = m?.indicadores?.[serie]?.cuartiles_sc?.[String(periodo)];
+  return Array.isArray(q) && q.length === 2 && q.every(Number.isFinite) ? q : null;
+}
+
+// Series de una sección para la ficha, desde el fichero de su municipio o de su distrito
+// (rutaFicha): { serie: { anios, valores, estados } }, o null si no hay.
 export async function cargarSeries(m, seccion) {
-  if (!m.fichas) return null;
-  const ruta = m.fichas.replace('{municipio}', seccion.slice(0, 5));
+  const ruta = rutaFicha(m, seccion);
+  if (!ruta) return null;
   const fichero = await recordar(ruta, () => pedir(ruta));
   const propias = fichero.series?.[seccion];
   if (!propias) return null;

@@ -11,7 +11,9 @@
 #     ausente. Todos los niveles de una serie tienen todos sus periodos (si un nivel no tiene un
 #     periodo, el fichero va entero en ausente), porque la web pide cualquier combinación;
 #   - fichas/<municipio>.json: series de todos los periodos de las secciones del municipio y, en
-#     `series_municipio`, las del propio municipio, con el mismo par v/e;
+#     `series_municipio`, las del propio municipio, con el mismo par v/e; con los contratos y el
+#     margen de la mediana; los municipios grandes, por distrito (fichas/<municipio>/<distrito>.json,
+#     lista en `fichas_partidas`; tarea 62);
 #   - territorios.json (nombres y comunidad de cada provincia), cajas.json (rectángulo de cada
 #     municipio, para el buscador), cp.json (municipios de cada código postal, para el buscador) y
 #     perfiles.json (ingresos de las fichas).
@@ -248,14 +250,22 @@ matriz_web <- function(datos, codigos, periodos, escala = ESCALA_WEB) {
 # Fichas: un JSON por municipio con las series de sus secciones (las series con nivel sc) y, en
 # `series_municipio`, las del propio municipio (las series con nivel municipio). Solo las series
 # por defecto (la ficha usa la vivienda colectiva; las variantes, como alquiler_m2_vu, se leen de
-# los ficheros por periodo) y sin las auxiliares (contratos y margen: la ficha las lee de los
-# ficheros del periodo que pinta el mapa; en las fichas pesarían una cuarta parte más).
+# los ficheros por periodo). Tarea 62 (12-nov-2026): con las auxiliares de la vivienda colectiva
+# (contratos y margen de la mediana), que la evolución de la ficha leía de los ficheros nacionales de
+# cada periodo (veinte ficheros, 0,77 MB comprimidos, en el primer clic); pesan una cuarta parte más.
 series_ficha <- function(catalogo) {
-  auxiliar <- if ("auxiliar" %in% names(catalogo)) catalogo$auxiliar else FALSE
-  catalogo[catalogo$clave == catalogo$indicador & !auxiliar, ]
+  catalogo[catalogo$clave == catalogo$indicador, ]
 }
 
-escribir_fichas_web <- function(series, catalogo, jerarquia, dir_web = "web", prefijo = "datos") {
+# Tarea 62: los municipios con más de UMBRAL_PARTIR_FICHAS_WEB secciones llevan la ficha partida por
+# distrito, en fichas/<municipio>/<distrito>.json (mismo formato, con `distrito` y solo las secciones
+# del distrito; `series_municipio`, en cada trozo). El manifiesto los lista en `fichas_partidas`.
+# Por revisar: también cabía partir por serie (un fichero por serie y municipio), pero la ficha pide
+# a la vez casi todas las series de una sección, y por distrito basta una petición por clic.
+UMBRAL_PARTIR_FICHAS_WEB <- 100L
+
+escribir_fichas_web <- function(series, catalogo, jerarquia, dir_web = "web", prefijo = "datos",
+                                umbral_partir = UMBRAL_PARTIR_FICHAS_WEB) {
   catalogo <- series_ficha(catalogo)
   dir <- file.path(dir_web, prefijo, "fichas")
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
@@ -278,16 +288,61 @@ escribir_fichas_web <- function(series, catalogo, jerarquia, dir_web = "web", pr
   juntar <- function(m) if (ncol(m)) do.call(paste, c(lapply(seq_len(ncol(m)), function(j) m[, j]), sep = ",")) else ""
   por_seccion <- paste0('"', secciones, '":{', juntar(sc$series), "}")
   por_municipio <- split(por_seccion, municipio_de)
+  distrito_de <- substr(secciones, 6, 7)
+  n_secciones <- table(municipio_de)
+  partidos <- sort(names(n_secciones)[n_secciones > umbral_partir])
   propio <- rep_len(juntar(mun$series), length(municipios))
-  rutas <- file.path(dir, paste0(municipios, ".json"))
+  anios_sc <- paste(sc$periodos, collapse = ",")
+  rutas <- character()
   for (i in seq_along(municipios)) {
-    texto <- paste0('{"municipio":"', municipios[i], '","anios":{', paste(sc$periodos, collapse = ","),
-                    '},"series":{', paste(por_municipio[[municipios[i]]], collapse = ","),
-                    '},"series_municipio":{"anios":{', paste(mun$periodos, collapse = ","),
-                    '},"series":{', propio[i], "}}}")
-    writeLines(texto, rutas[i], useBytes = TRUE)
+    codigo <- municipios[i]
+    cola <- paste0('"series_municipio":{"anios":{', paste(mun$periodos, collapse = ","), '},"series":{', propio[i], "}}}")
+    if (!codigo %in% partidos) {
+      ruta <- file.path(dir, paste0(codigo, ".json"))
+      writeLines(paste0('{"municipio":"', codigo, '","anios":{', anios_sc, '},"series":{',
+                        paste(por_municipio[[codigo]], collapse = ","), "},", cola), ruta, useBytes = TRUE)
+      rutas <- c(rutas, ruta)
+      next
+    }
+    dir.create(file.path(dir, codigo), showWarnings = FALSE)
+    en <- municipio_de == codigo
+    por_distrito <- split(por_seccion[en], distrito_de[en])
+    for (d in names(por_distrito)) {
+      ruta <- file.path(dir, codigo, paste0(d, ".json"))
+      writeLines(paste0('{"municipio":"', codigo, '","distrito":"', d, '","anios":{', anios_sc, '},"series":{',
+                        paste(por_distrito[[d]], collapse = ","), "},", cola), ruta, useBytes = TRUE)
+      rutas <- c(rutas, ruta)
+    }
   }
-  rutas
+  structure(rutas, partidos = partidos)
+}
+
+# Ruta (relativa a web/) del fichero de la ficha de una sección o, sin `distrito`, de un municipio
+# entero; en un municipio partido, la de su distrito.
+ruta_ficha_web <- function(manifiesto, municipio, distrito = NULL) {
+  partido <- municipio %in% unlist(manifiesto$fichas_partidas)
+  if (partido && !is.null(distrito)) {
+    return(sub("{distrito}", distrito, sub("{municipio}", municipio, manifiesto$fichas_distrito, fixed = TRUE), fixed = TRUE))
+  }
+  sub("{municipio}", municipio, manifiesto$fichas, fixed = TRUE)
+}
+
+# Tarea 62: cuartiles 1 y 3 de una serie en las secciones con cifra, por periodo, con los valores tal
+# como los lee la web (÷ la escala, con el redondeo de la guía) y el cuantil de web/js/sueldo.js
+# (interpolación lineal, el tipo 7 de R). Con ellos la regla de la leyenda dibuja la banda de la
+# llave (renta por hogar ÷ 12) sin bajar los valores de todas las secciones: {"2015": [q1, q3], …}.
+cuartiles_sc_web <- function(series, clave, indice_sc) {
+  d <- series[series$clave == clave & series$nivel == "sc", ]
+  if (!nrow(d)) return(NULL)
+  escala <- d$escala[1]
+  out <- lapply(split(d, d$periodo), function(x) {
+    v <- valor_web(x$valor[x$geo_id %in% indice_sc], escala) / escala
+    v <- v[!is.na(v)]
+    if (!length(v)) return(NULL)
+    unname(stats::quantile(v, c(0.25, 0.75), type = 7))
+  })
+  out <- out[!vapply(out, is.null, TRUE)]
+  if (length(out)) lapply(out, I) else NULL
 }
 
 # Nombres por nivel y comunidad de cada provincia.
@@ -651,7 +706,7 @@ indicadores_manifiesto_web <- function(catalogo, indicadores) {
 # datos/cp.json (cp_web()) con su ruta en el manifiesto (`codigos_postales`).
 exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = NULL, perfiles = NULL, cajas = NULL,
                          salarios = NULL, dir_web = "web", fecha = format(Sys.Date()), vocabulario = NULL, zonas = NULL,
-                         cortes_niveles = NULL, cp = NULL) {
+                         cortes_niveles = NULL, cp = NULL, umbral_partir_fichas = UMBRAL_PARTIR_FICHAS_WEB) {
   datos <- file.path(dir_web, "datos")
   dir.create(datos, recursive = TRUE, showWarnings = FALSE)
   unlink(file.path(datos, c("manifiesto.json", "territorios.json", "cajas.json", "cp.json", "perfiles.json", "salarios.json", "indices", "fichas",
@@ -679,7 +734,7 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
              if (!is.null(salarios)) escribir_json(salarios, "salarios.json"),   # percentil salarial (salarios_web())
              if (!is.null(zonas)) escribir_json(zonas_web(zonas), "zonas_tensionadas.json"))   # F5, indicador 20
   valores <- escribir_valores_web(series, catalogo, indices, dir_web)
-  fichas <- escribir_fichas_web(series, catalogo, jerarquia, dir_web)
+  fichas <- escribir_fichas_web(series, catalogo, jerarquia, dir_web, umbral_partir = umbral_partir_fichas)
 
   url_teselas <- "teselas/seccionado_2021.pmtiles"
   if (!is.null(pmtiles)) {
@@ -703,6 +758,12 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
     cajas = if (!is.null(cajas)) "datos/cajas.json",
     codigos_postales = if (!is.null(cp)) "datos/cp.json",
     fichas = "datos/fichas/{municipio}.json",
+    # Tarea 62: fichas de los municipios grandes, por distrito (escribir_fichas_web())
+    fichas_distrito = "datos/fichas/{municipio}/{distrito}.json",
+    fichas_partidas = I(attr(fichas, "partidos")),
+    # Tarea 62: la web pide el índice y los valores de las secciones solo desde este zoom (el primero
+    # en que el mapa base trae secciones), o con una sección elegida o «¿te llega?»
+    secciones_desde_zoom = ZOOMS_MAPA_BASE$secciones[[1]],
     perfiles = if (!is.null(perfiles)) "datos/perfiles.json",
     salarios = if (!is.null(salarios)) "datos/salarios.json",
     codificacion = list(escala = ESCALA_WEB, estados = I(ESTADOS_WEB)),
@@ -712,6 +773,12 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
     mapas = mapas_web(catalogo, indicadores, vocabulario, cortes_niveles),   # tarea 51: juegos por escala
     vista_inicial = list(limites = I(LIMITES_INICIALES_WEB))
   )
+  # Tarea 62: cuartiles de la serie del ingreso de la llave en las secciones, por periodo (la banda de
+  # la llave en la regla de la leyenda, sin los valores de las secciones)
+  serie_llave <- perfiles_web(perfiles)$llave$ingreso$serie
+  if (!is.null(serie_llave) && !is.null(manifiesto$indicadores[[serie_llave]])) {
+    manifiesto$indicadores[[serie_llave]]$cuartiles_sc <- cuartiles_sc_web(series, serie_llave, indices$sc)
+  }
   # F5: declaraciones del indicador 20 para la ficha (ruta en su mapa)
   if (!is.null(zonas) && !is.null(manifiesto$mapas[[CODIGO_ZONAS_WEB]])) {
     manifiesto$mapas[[CODIGO_ZONAS_WEB]]$detalle <- "datos/zonas_tensionadas.json"
@@ -774,17 +841,30 @@ comprobar_web <- function(larga, indicadores, jerarquia, territorios, dir_web = 
     esperado <- perfiles_web(perfiles)
     filas[[length(filas) + 1L]] <- tibble::tibble(id = "web_valores", detalle = "perfiles.json",
                                                   calculado = as.numeric(!isTRUE(all.equal(leido, esperado))))
+    # Tarea 62: cuartiles de la llave en el manifiesto, frente a los de los valores de las secciones
+    serie_llave <- esperado$llave$ingreso$serie
+    if (!is.null(serie_llave) && !is.null(manifiesto$indicadores[[serie_llave]])) {
+      leidos <- lapply(manifiesto$indicadores[[serie_llave]]$cuartiles_sc, unlist)
+      esperados <- cuartiles_sc_web(series, serie_llave, indices$sc)
+      filas[[length(filas) + 1L]] <- tibble::tibble(id = "web_valores", detalle = paste("cuartiles_sc de", serie_llave),
+                                                    calculado = as.numeric(!isTRUE(all.equal(leidos, lapply(esperados, unclass)))))
+    }
   }
 
   # Fichas: se leen todas, se aplanan a una fila por territorio, serie y periodo, y se cruzan con
   # lo esperado: cada sección (y cada municipio) del índice con todos los periodos de cada serie.
   catalogo <- series_ficha(catalogo_web(series))
+  # Tarea 62: los municipios partidos, de los ficheros de sus distritos (cada uno con su municipio)
   leidas <- bind_rows(lapply(indices$municipio, function(mun) {
-    f <- jsonlite::fromJSON(file.path(dir_web, sub("{municipio}", mun, manifiesto$fichas, fixed = TRUE)),
-                            simplifyVector = TRUE)
-    propio <- if (length(f$series_municipio$series)) stats::setNames(list(f$series_municipio$series), mun)
-    bind_rows(mutate(aplanar_ficha(f$series, f$anios, escalas), nivel = "sc"),
-              mutate(aplanar_ficha(propio, f$series_municipio$anios, escalas), nivel = "municipio"))
+    distritos <- if (mun %in% unlist(manifiesto$fichas_partidas)) {
+      sort(unique(substr(indices$sc[startsWith(indices$sc, mun)], 6, 7)))
+    } else list(NULL)
+    bind_rows(lapply(seq_along(distritos), function(k) {
+      f <- jsonlite::fromJSON(file.path(dir_web, ruta_ficha_web(manifiesto, mun, distritos[[k]])), simplifyVector = TRUE)
+      propio <- if (k == 1L && length(f$series_municipio$series)) stats::setNames(list(f$series_municipio$series), mun)
+      bind_rows(mutate(aplanar_ficha(f$series, f$anios, escalas), nivel = "sc"),
+                mutate(aplanar_ficha(propio, f$series_municipio$anios, escalas), nivel = "municipio"))
+    }))
   }))
   esperadas <- bind_rows(lapply(c("sc", "municipio"), function(n) {
     cat_n <- catalogo[vapply(catalogo$niveles, function(x) n %in% x, TRUE), ]

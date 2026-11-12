@@ -123,6 +123,10 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_equal(m$mapas$sueldo_necesario$familia, "quedarse")
   expect_null(m$mapas$renta_persona$familia)
 
+  expect_equal(m$fichas_distrito, "datos/fichas/{municipio}/{distrito}.json")   # tarea 62
+  expect_length(m$fichas_partidas, 0L)                               # municipios pequeños: enteros
+  expect_equal(m$secciones_desde_zoom, ZOOMS_MAPA_BASE$secciones[[1]])
+
   # Valores en el orden del índice; la sección sin fila, null y ausente; el municipio sin 2021, entero ausente
   leer <- function(r) readLines(file.path(dir, "datos", r))
   expect_equal(leer("sc/renta_persona/2020.json"), '{"v":[1,null,123],"e":"021"}')
@@ -236,11 +240,75 @@ test_that("auxiliares del alquiler: contratos y margen van a la web con su tipol
   expect_equal(leer("sc/contratos_alquiler/2024.json"), '{"v":[250,40,0],"e":"000"}')   # 0 contratos: dato
   expect_equal(leer("sc/margen_alquiler_m2/2024.json"), '{"v":[84,null,118],"e":"030"}')
   f <- jsonlite::fromJSON(file.path(dir, "datos/fichas/28001.json"), simplifyVector = FALSE)
-  expect_false(any(c("contratos_alquiler", "margen_alquiler_m2") %in% names(f$anios)))  # no van en las fichas
+  # Tarea 62: van en las fichas (la evolución no baja los ficheros nacionales de cada periodo); sus
+  # variantes de la vivienda unifamiliar, no
+  expect_true(all(c("contratos_alquiler", "margen_alquiler_m2") %in% names(f$anios)))
+  expect_false(any(c("contratos_alquiler_vu", "margen_alquiler_m2_vu") %in% names(f$anios)))
+  expect_equal(f$series$`2800101001`$contratos_alquiler, list(v = list(250L), e = "0"))
   expect_true("alquiler_m2" %in% names(f$anios))
   comp <- comprobar_web(larga, ind, jer_web, ter_web, dir, perfiles = perfiles_prueba)
   expect_true(all(comp$calculado == 0))
   expect_true(any(grepl("contratos_alquiler", comp$detalle)))
+})
+
+test_that("tarea 62: fichas de los municipios grandes partidas por distrito, con su compuerta", {
+  jer <- tibble::tibble(seccion = c("2800101001", "2800101002", "2800102001", "2800201001"),
+                        distrito = c("2800101", "2800101", "2800102", "2800201"),
+                        municipio = c("28001", "28001", "28001", "28002"), provincia = "28", ccaa = "13")
+  ter <- geo_territorios(jer, tibble::tibble(municipio = c("28001", "28002"), nombre = c("Uno", "Dos")),
+                         tibble::tibble(provincia = "28", nombre = "Madrid", ccaa = "13"),
+                         tibble::tibble(codigo = "13", nombre_ine = "Madrid, Comunidad de", nuts2 = "ES30"))
+  larga <- bind_rows(larga_web, fila_web("2800102001", "sc", 2020, "renta_persona", 15))
+  dir <- tempfile("web_")
+  on.exit(unlink(dir, recursive = TRUE))
+  exportar_web(larga, ind_web, jer, ter, perfiles = perfiles_prueba, dir_web = dir, fecha = "2026-11-12",
+               umbral_partir_fichas = 2L)                            # más de dos secciones: partido
+  m <- jsonlite::fromJSON(file.path(dir, "datos", "manifiesto.json"), simplifyVector = FALSE)
+  expect_equal(unlist(m$fichas_partidas), "28001")
+  expect_false(file.exists(file.path(dir, "datos/fichas/28001.json")))
+  expect_true(file.exists(file.path(dir, "datos/fichas/28002.json")))
+  expect_equal(ruta_ficha_web(m, "28001", "02"), "datos/fichas/28001/02.json")
+  expect_equal(ruta_ficha_web(m, "28002", "01"), "datos/fichas/28002.json")
+  d1 <- jsonlite::fromJSON(file.path(dir, "datos/fichas/28001/01.json"), simplifyVector = FALSE)
+  d2 <- jsonlite::fromJSON(file.path(dir, "datos/fichas/28001/02.json"), simplifyVector = FALSE)
+  expect_equal(c(d1$municipio, d1$distrito, d2$distrito), c("28001", "01", "02"))
+  expect_equal(names(d1$series), c("2800101001", "2800101002"))
+  expect_equal(names(d2$series), "2800102001")
+  expect_equal(d2$series$`2800102001`$renta_persona, list(v = list(150L, NULL), e = "03"))
+  expect_equal(d2$series_municipio, d1$series_municipio)              # el municipio, en cada trozo
+  comp <- comprobar_web(larga, ind_web, jer, ter, dir, perfiles = perfiles_prueba)
+  expect_true(all(comp$calculado == 0))
+  # Una sección borrada de su distrito: la compuerta la ve en su municipio
+  d2$series$`2800102001` <- NULL
+  jsonlite::write_json(d2, file.path(dir, "datos/fichas/28001/02.json"), auto_unbox = TRUE, null = "null")
+  comp <- comprobar_web(larga, ind_web, jer, ter, dir)
+  expect_gt(comp$calculado[comp$id == "web_fichas" & comp$detalle == "28001"], 0)
+})
+
+test_that("tarea 62: cuartiles de la llave por periodo, con el cuantil de la web y su compuerta", {
+  s <- tibble::tibble(clave = "renta_hogar", nivel = "sc", escala = 10L,
+                      geo_id = c("a", "b", "c", "d", "e", "a", "b"), periodo = c(rep("2020", 5), "2021", "2021"),
+                      valor = c(10.04, 20, 30, 40, NA, 1, 3))
+  q <- cuartiles_sc_web(s, "renta_hogar", c("a", "b", "c", "d", "e"))
+  expect_equal(names(q), c("2020", "2021"))
+  expect_equal(unclass(q[["2020"]]), c(17.5, 32.5))                   # 10,0; 20; 30; 40, como la web
+  expect_equal(unclass(q[["2021"]]), c(1.5, 2.5))
+  expect_null(cuartiles_sc_web(s, "renta_hogar", c("x")))            # fuera del índice: nada
+  larga <- bind_rows(larga_web, fila_web(c("2800101001", "2800101002", "2800201001"), "sc", 2021, "renta_hogar",
+                                         c(24000, 30000, 36000)))
+  ind <- bind_rows(ind_web, tibble::tibble(id = 3, codigo = "renta_hogar", unidad_es = "euros", nucleo_v01 = TRUE,
+                                           cortes_web = NA, escala_web = NA))
+  dir <- tempfile("web_")
+  on.exit(unlink(dir, recursive = TRUE))
+  exportar_web(larga, ind, jer_web, ter_web, perfiles = perfiles_prueba, dir_web = dir, fecha = "2026-11-12")
+  m <- jsonlite::fromJSON(file.path(dir, "datos", "manifiesto.json"), simplifyVector = FALSE)
+  expect_equal(unlist(m$indicadores$renta_hogar$cuartiles_sc$`2021`), c(27000, 33000))
+  comp <- comprobar_web(larga, ind, jer_web, ter_web, dir, perfiles = perfiles_prueba)
+  expect_equal(comp$calculado[comp$detalle == "cuartiles_sc de renta_hogar"], 0)
+  m$indicadores$renta_hogar$cuartiles_sc$`2021` <- list(27000, 33001)
+  jsonlite::write_json(m, file.path(dir, "datos", "manifiesto.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA)
+  comp <- comprobar_web(larga, ind, jer_web, ter_web, dir, perfiles = perfiles_prueba)
+  expect_equal(comp$calculado[comp$detalle == "cuartiles_sc de renta_hogar"], 1)
 })
 
 # Tarea 51: tres juegos de cortes por indicador (inventario/cortes_web_niveles.csv)

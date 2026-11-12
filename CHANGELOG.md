@@ -4,6 +4,13 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Cambiado (12-nov-2026, carga inicial del mapa: tarea 62)
+
+- **El mapa abre con menos datos.** Sin vista en la dirección, `mapa.html` ya no pide el índice de las secciones ni sus valores: llegan al acercar el mapa hasta el zoom 7 (`secciones_desde_zoom` del manifiesto, el primero en que el PMTiles trae secciones), con una sección elegida, en «¿te llega?» o al buscar un código de sección. La banda de la llave en la regla de la leyenda sale de los cuartiles de la renta por hogar en las secciones, que el manifiesto trae por año (`cuartiles_sc`, con su compuerta en `web_valores`). Abrir el mapa pasa de 76 peticiones y 1,27 MB comprimidos a 69 y 0,89 MB.
+- **El primer clic en una sección baja un fichero pequeño.** Los contratos y el margen de la mediana (vivienda colectiva) van dentro de las fichas por municipio, y la evolución ya no pide un fichero nacional por año. Los 47 municipios de más de 100 secciones llevan la ficha partida por distrito (`fichas/<municipio>/<distrito>.json`, `fichas_partidas` en el manifiesto). En Madrid, el primer clic pasa de 20 peticiones y 1,28 MB comprimidos a 2 y 0,04 MB.
+- **`modulepreload`** de los 29 módulos del mapa en `mapa.html`, con una prueba que lo compara con las importaciones (`pruebas/web/carga.test.mjs`). Prueba en el navegador nueva, `navegador_carga`.
+- Compatibilidad: el código nuevo funciona con los datos de la v1.1.0 como antes (sin las claves nuevas, lo pide todo desde el principio). Al revés no: el código de la v1.1.0 no encuentra las fichas de los municipios partidos, así que el próximo release de datos debe salir con este código o posterior.
+
 ### Añadido (12-nov-2026, tarea 58: preparación de la prueba en limpio)
 
 - **Guía para reproducir el atlas desde cero** (`docs/reproducir.md`): requisitos (R 4.6.1 con `renv`, GDAL ≥ 3.8 con PMTiles, Node, unos 12 GB de disco y 16 GB de memoria), descargas manuales y automáticas con sus tamaños (9,6 GB desde cero; 5,7 GB con `PROVINCIA=28`), pasos en PowerShell y R, una pasada corta con `PROVINCIA=28` antes de la completa (unas 3 h 30 min), y cómo comprobar el resultado: compuertas y avisos, `tar_outdated()`, `testthat`, pruebas de la web, `git status` sin cambios y la tabla larga igual a la del release `v1.1.0` salvo `version`. La prueba no se ha hecho todavía.

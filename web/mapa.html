@@ -30,6 +30,38 @@
   <script type="importmap">
     { "imports": { "maplibre-gl": "./vendor/maplibre-gl/maplibre-gl.mjs" } }
   </script>
+  <!-- Tarea 62: todos los módulos que importa js/principal.js, para que el navegador los pida a la vez
+       y no uno detrás de otro según los descubre (después del mapa de importaciones). La lista la
+       comprueba pruebas/web/carga.test.mjs contra las importaciones de verdad. -->
+  <link rel="modulepreload" href="vendor/maplibre-gl/maplibre-gl.mjs">
+  <link rel="modulepreload" href="js/estado.js">
+  <link rel="modulepreload" href="js/supuestos.js">
+  <link rel="modulepreload" href="js/i18n.js">
+  <link rel="modulepreload" href="js/datos.js">
+  <link rel="modulepreload" href="js/mapa.js">
+  <link rel="modulepreload" href="js/colores.js">
+  <link rel="modulepreload" href="js/movil.js">
+  <link rel="modulepreload" href="js/leyenda.js">
+  <link rel="modulepreload" href="js/sueldo.js">
+  <link rel="modulepreload" href="js/formulas.js">
+  <link rel="modulepreload" href="js/familias.js">
+  <link rel="modulepreload" href="js/ficha.js">
+  <link rel="modulepreload" href="js/nombres.js">
+  <link rel="modulepreload" href="js/transparencia.js">
+  <link rel="modulepreload" href="js/escala_municipio.js">
+  <link rel="modulepreload" href="js/fiabilidad.js">
+  <link rel="modulepreload" href="js/percentil.js">
+  <link rel="modulepreload" href="js/panel_sueldo.js">
+  <link rel="modulepreload" href="js/compartir.js">
+  <link rel="modulepreload" href="js/comparador.js">
+  <link rel="modulepreload" href="js/buscador.js">
+  <link rel="modulepreload" href="js/barra_vista.js">
+  <link rel="modulepreload" href="js/exportar.js">
+  <link rel="modulepreload" href="js/imagen.js">
+  <link rel="modulepreload" href="js/aviso_imagen.js">
+  <link rel="modulepreload" href="js/evolucion.js">
+  <link rel="modulepreload" href="js/historias.js">
+  <link rel="modulepreload" href="js/panel_historia.js">
   <script src="vendor/pmtiles/pmtiles.js" defer></script>
   <script type="module" src="js/principal.js"></script>
 </head>

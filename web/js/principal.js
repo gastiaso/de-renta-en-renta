@@ -11,6 +11,7 @@ import {
   cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarCajas, cargarSalarios,
   cargarIndice, cargarValores, cargarSeries, valorDe, periodoPara, periodosDe, fueraDeSerie,
   serieDeTipologia, tipologiaDe, tieneTipologia, cargarDetalle, cargarCodigosPostales, cargarOtrosGastos,
+  zoomSecciones, cuartilesSc,
 } from './datos.js';
 import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
 import { pintarLeyenda, plegarLeyenda } from './leyenda.js';
@@ -76,8 +77,9 @@ const el = {
 
 let t;             // traductor del idioma activo
 let m;             // manifiesto
-let secciones;     // códigos de sección en el orden de los valores
-let indice;        // código → posición
+let secciones = null;   // códigos de sección en el orden de los valores (tarea 62: null hasta que hacen falta)
+let indice = null;      // código → posición
+let pedirSecciones = null;   // tarea 62: promesa del índice de las secciones, que se pide una sola vez
 let territorios;   // nombres por nivel
 let perfiles;      // ingresos de las fichas
 let salarios;      // curvas del percentil salarial (datos/salarios.json)
@@ -160,7 +162,8 @@ function vista() {
   const enSueldo = !calculo && daSueldo(def);
   const series = [...seriesColor];
   const renta = perfiles.llave?.ingreso.serie;
-  if (enSueldo && renta && m.indicadores[renta]) series.push(renta);   // banda de la llave en la regla
+  // Banda de la llave en la regla: de los cuartiles del manifiesto (tarea 62) o, sin ellos, de los valores
+  if (enSueldo && renta && m.indicadores[renta] && !m.indicadores[renta].cuartiles_sc) series.push(renta);
   // Tarea 40: la serie de la segunda cifra (el mínimo de 50 m² del sueldo necesario; en «¿te llega?»,
   // el alquiler mensual real), para la ficha y el resumen
   const segunda = calculo ? calculo.serieReal : !calculo && def.minimo ? serieTipo(def.minimo.base) : null;
@@ -196,6 +199,25 @@ const vacia = (serie, nivel, n) => (nivelesDe(serie).includes(nivel)
   ? { valores: new Array(n).fill(null), estados: new Uint8Array(n).fill(indiceEstado('ausente')) }
   : null);
 
+// Tarea 62: el índice de las secciones (y con él sus valores) solo cuando hacen falta: con el zoom en
+// que el mapa base trae secciones (zoomSecciones(): el manifiesto lo dice; sin la clave, desde el
+// principio, como con los datos de la v1.1.0), con una sección elegida o con que comparar, y en «¿te
+// llega?», cuyo resumen cuenta las secciones de toda España. Se pide una vez; si falla, se reintenta.
+function prepararSecciones() {
+  pedirSecciones ??= cargarSecciones(m).then((codigos) => {
+    secciones = codigos ?? [];
+    indice = new Map(secciones.map((codigo, i) => [codigo, i]));
+    return secciones;
+  }).catch((error) => {
+    pedirSecciones = null;
+    throw error;
+  });
+  return pedirSecciones;
+}
+
+const necesitaSecciones = (v) => Boolean(estado.seccion) || esSeccion(estado.comparar) || v?.modo === 'llega'
+  || (mapa ? mapa.mapa.getZoom() : 0) >= zoomSecciones(m);
+
 // Carga las series del periodo activo que falten, en cada nivel que pinta el mapa (secciones y,
 // con poco zoom, municipios y provincias), y las guarda en sus elementos. Una serie que no llega
 // al año pedido (empieza después) se pinta sin dato.
@@ -208,7 +230,7 @@ const otrosNiveles = {};   // nivel → serie → clave cargada
 async function cargarColumnas(series, referencia, yo) {
   const pedidos = await Promise.all(mapa.rellenos.map(async ({ capa, nivel }) => {
     const codigos = nivel === 'sc' ? secciones : await cargarIndice(m, nivel);
-    if (!codigos) return null;
+    if (!codigos) return null;   // las secciones, mientras no hacen falta (tarea 62)
     const cargadas = await Promise.all(series.map(async (serie) => {
       const def = m.indicadores[serie];
       if (!def) return null;
@@ -238,7 +260,7 @@ const valorEn = (serie, i) => (i === undefined ? null : columnas[serie]?.valores
 
 function secretos(series) {
   const secreto = indiceEstado('secreto');
-  return secciones.filter((_, i) => series.some((s) => columnas[s]?.estados[i] === secreto));
+  return (secciones ?? []).filter((_, i) => series.some((s) => columnas[s]?.estados[i] === secreto));
 }
 
 // Textos de «¿te llega?»: qué vivienda y qué ingreso. `sinCifra`: el sueldo escrito por el
@@ -402,7 +424,7 @@ function escalaRelativa(v) {
   const formula = formulaDe(v.mapa);
   const supuestos = supuestosDe(v, municipio, 'municipio');   // con otros gastos, los de su comunidad
   const valores = [];
-  for (let i = 0; i < secciones.length; i++) {
+  for (let i = 0; i < (secciones?.length ?? 0); i++) {
     const x = columna.valores[i];
     if (x !== null && x !== undefined && secciones[i].startsWith(municipio)) valores.push(formula.calcular(x, supuestos));
   }
@@ -484,6 +506,10 @@ async function actualizar() {
   mostrarCarga(true);
   let volcado = false;
   try {
+    if (!secciones && necesitaSecciones(v)) {
+      await prepararSecciones();   // tarea 62
+      if (yo !== turno) return;
+    }
     volcado = await cargarColumnas(v.series, v.referencia, yo);
   } catch (error) {
     // Un fichero que no llega: el mapa y la ficha siguen con la vista anterior, y se dice sobre el mapa
@@ -529,7 +555,9 @@ async function actualizar() {
     // La provincia de las fichas provinciales: la de la sección o la del municipio o provincia elegidos
     const terr = leerTerritorio(estado.territorio);
     const enProvincia = estado.seccion ?? (terr && terr.nivel !== 'ccaa' ? terr.codigo : undefined);
-    if (v.enSueldo) Object.assign(leyenda, marcasRegla({ perfiles: v.perfiles, seccion: enProvincia, rentaHogar: columnas[perfiles.llave?.ingreso.serie]?.valores }));
+    const renta = perfiles.llave?.ingreso.serie;
+    const cuartiles = renta ? cuartilesSc(m, renta, periodoPara(m.indicadores[renta], v.referencia)) : null;
+    if (v.enSueldo) Object.assign(leyenda, marcasRegla({ perfiles: v.perfiles, seccion: enProvincia, rentaHogar: columnas[renta]?.valores, cuartiles }));
   } else {
     const { vivienda, ingreso } = textosLlega(v);
     // Otros gastos de vivienda (12-nov-2026): el subtítulo y una línea de la leyenda lo dicen, con la cifra
@@ -538,14 +566,14 @@ async function actualizar() {
     leyenda.otros = conGastos ? t('interfaz.leyenda.llega_gastos', { otros: textoOtrosGastos(t, v.supuestos) }) : null;
     // Decisión del autor (12-nov-2026): el resultado dice qué y cuánto («El alquiler de 50 m² no pasa
     // del 30 % de tus ingresos en el 48 % de las secciones con dato»); la misma frase en la portada
-    const r = resumenLlega(v.calculo, secciones, valorEn, v.umbral);
+    const r = resumenLlega(v.calculo, secciones ?? [], valorEn, v.umbral);
     const clave = `interfaz.sueldo.${estado.ficha === 'peon' ? 'resumen_peon' : 'resumen_ficha'}${conGastos ? '_gastos' : ''}`;
     resumen = !r.con ? t('interfaz.sueldo.sin_datos') : t(clave, {
       vivienda, umbral: t.porcentaje(v.umbral),
       pct: t.porcentaje(r.proporcion), caben: t.numero(r.caben), total: t.numero(r.con), ficha: t(`fichas.${estado.ficha}`),
     });
     // Tarea 40: al lado, la misma proporción con el alquiler mensual mediano real de cada sección
-    const real = r.con ? resumenLlegaReal(v.calculo, secciones, valorEn, v.umbral) : null;
+    const real = r.con ? resumenLlegaReal(v.calculo, secciones ?? [], valorEn, v.umbral) : null;
     if (real) resumen += ` ${t('interfaz.sueldo.resumen_real', { vivienda, pct: t.porcentaje(real.proporcion), caben: t.numero(real.caben), total: t.numero(real.con) })}`;
     // Tarea 44: qué estadístico usa la ficha y de quién, en una línea
     const metodo = t.existe(`fichas_metodo.${estado.ficha}`) ? t(`fichas_metodo.${estado.ficha}`) : null;
@@ -614,7 +642,7 @@ function pintarFicha(v = vista()) {
     return fichaVacia(el.ficha, { t, comparar: NIVELES_COMPARAR_VACIA.includes(estado.comparar) ? estado.comparar : null });
   }
   const codigo = estado.seccion;
-  const i = indice.get(codigo);
+  const i = indice?.get(codigo);
   const x = (serie) => valorEn(serie, i);
   const estadoDe = (serie) => (i === undefined ? indiceEstado('ausente') : columnas[serie]?.estados[i] ?? indiceEstado('ausente'));
   // Fiabilidad de la mediana del alquiler que da color (sin serie de fiabilidad o fuera de la serie, nada)
@@ -776,19 +804,27 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
   fichaSeries(hueco, datosSerie);
   // Tareas 43 y 45: cuando llegan los contratos y el margen de cada año y el IPC, el gráfico con la
   // banda, las variaciones con la regla de los contratos y el aviso de euros corrientes.
-  completarEvolucion(hueco, datosSerie, v, codigo, nivel, periodos).catch((error) => console.error(error));
+  completarEvolucion(hueco, datosSerie, v, codigo, nivel, periodos, series).catch((error) => console.error(error));
 }
 
-// Contratos y margen de la mediana del alquiler de cada periodo en un territorio (tarea 43): de
-// los ficheros de cada periodo, como la ficha (no van en las fichas por municipio; nota §9.2).
+// Contratos y margen de la mediana del alquiler de cada periodo en un territorio (tarea 43): de las
+// series de la ficha si los traen (`series`: las de una sección, de fichas/; tarea 62) y, si no (la
+// vivienda unifamiliar, los territorios, los datos de la v1.1.0), de los ficheros de cada periodo.
 // { contratos, margen }, con un valor (o null) por periodo; null sin series de fiabilidad.
-async function fiabilidadEnPeriodos(v, nivel, codigo, periodos) {
+async function fiabilidadEnPeriodos(v, nivel, codigo, periodos, series = null) {
   const fia = v.fiabilidad;
   if (!fia || v.fuera) return null;
   const leer = async (serie) => {
     const def = m.indicadores[serie];
     if (!serie || !def || !nivelesDe(serie).includes(nivel)) return null;
     const propios = new Set(periodosDe(def).map(String));
+    const deFicha = series?.[serie];
+    if (deFicha) {
+      return periodos.map((p) => {
+        const k = propios.has(String(p)) ? deFicha.anios.findIndex((q) => String(q) === String(p)) : -1;
+        return k >= 0 && deFicha.estados[k] === indiceEstado('dato') ? deFicha.valores[k] : null;
+      });
+    }
     return Promise.all(periodos.map(async (p) => {
       if (!propios.has(String(p))) return null;
       const x = await valorDe(m, serie, nivel, codigo, p);
@@ -805,8 +841,8 @@ async function fiabilidadEnPeriodos(v, nivel, codigo, periodos) {
 // el paso de una historia abren siempre en euros de cada año.
 let eurosEvolucion = 'corrientes';
 
-async function completarEvolucion(hueco, datosSerie, v, codigo, nivel, periodos) {
-  const [fia, ipc] = await Promise.all([fiabilidadEnPeriodos(v, nivel, codigo, periodos), cargarIpc()]);
+async function completarEvolucion(hueco, datosSerie, v, codigo, nivel, periodos, series = null) {
+  const [fia, ipc] = await Promise.all([fiabilidadEnPeriodos(v, nivel, codigo, periodos, series), cargarIpc()]);
   if (!hueco.isConnected) return;   // la ficha ya es otra
   pintarGraficoEvolucion(hueco, datosSerie, v, periodos, fia, ipc);
 }
@@ -1438,8 +1474,9 @@ function prepararBuscador() {
     obtenerFuentes: async (texto) => {
       fuentes ??= {
         municipios: Object.entries(territorios.municipio ?? {}).map(([codigo, nombre]) => [codigo, nombre, formasDeNombre(nombre)]),
-        secciones,
       };
+      // Las secciones, desde seis cifras (antes, códigos postales); tarea 62: su índice se pide entonces
+      if (hayCifras(texto) && texto.replace(/\s/g, '').length > 5) fuentes.secciones = await prepararSecciones().catch(() => null);
       // Los códigos postales, solo cuando se escriben cifras (12-nov-2026)
       if (hayCifras(texto) && !fuentes.codigosPostales) {
         fuentes.codigosPostales = await cargarCodigosPostales(m).catch(() => null);
@@ -1620,8 +1657,13 @@ async function iniciar() {
 
     const pedirSalarios = cargarSalarios(m).catch((error) => { console.error(error); return null; });
     const pedirGastos = cargarOtrosGastos(m);   // otros gastos de vivienda (12-nov-2026); null sin fichero
-    [secciones, territorios, perfiles, mapa] = await Promise.all([
-      cargarSecciones(m),
+    // Tarea 62: las secciones, ya desde el principio solo si se sabe que hacen falta (sección elegida
+    // o con que comparar, «¿te llega?» con un sueldo o una ficha, vista o paso con zoom de secciones)
+    const zoomInicial = estado.vista ? textoAVista(estado.vista).zoom : 0;
+    const pedirSeccionesYa = zoomSecciones(m) <= 0 || Boolean(estado.seccion) || esSeccion(estado.comparar)
+      || Boolean(sueldo) || Boolean(estado.ficha) || zoomInicial >= zoomSecciones(m);
+    [, territorios, perfiles, mapa] = await Promise.all([
+      pedirSeccionesYa ? prepararSecciones() : null,
       cargarTerritorios(m),
       cargarPerfiles(m),
       crearMapa({
@@ -1648,17 +1690,22 @@ async function iniciar() {
     salarios = await pedirSalarios;
     otrosGastos = await pedirGastos;
     if (!otrosGastos) estado.gastos = undefined;
-    indice = new Map(secciones.map((codigo, i) => [codigo, i]));
+    if (estado.seccion || esSeccion(estado.comparar)) await prepararSecciones();
+    // Tarea 62: al acercar el mapa hasta las secciones, su índice y sus valores
+    mapa.mapa.on('zoom', () => {
+      if (secciones || pedirSecciones || mapa.mapa.getZoom() < zoomSecciones(m)) return;
+      prepararSecciones().then(() => actualizar(), () => actualizar());   // si falla, actualizar() lo reintenta y lo dice
+    });
 
     if (estado.ficha === 'peon' ? !ingresoPeon(sueldo) : estado.ficha && !perfiles[estado.ficha]) estado.ficha = undefined;
-    if (estado.seccion && !indice.has(estado.seccion)) estado.seccion = undefined;
+    if (estado.seccion && !indice?.has(estado.seccion)) estado.seccion = undefined;
     // Territorio elegido (tarea 26): solo sin sección, en un nivel que el mapa pinta y con un código de su índice
     let terr = estado.seccion ? null : leerTerritorio(estado.territorio);
     if (terr && (!mapa.niveles.includes(terr.nivel) || !(await cargarIndice(m, terr.nivel).catch(() => null))?.includes(terr.codigo))) terr = null;
     estado.territorio = terr ? territorioATexto(terr.nivel, terr.codigo) : undefined;
     // Con qué comparar: otra sección, solo con sección; un nivel, el que contiene lo elegido o, sin
     // nada elegido, el que se aplicará a la sección que se pulse (casilla «Mudanza» de la portada)
-    if (esSeccion(estado.comparar) ? !estado.seccion || !indice.has(estado.comparar)
+    if (esSeccion(estado.comparar) ? !estado.seccion || !indice?.has(estado.comparar)
       : terr && !nivelesSuperiores(terr.nivel).includes(estado.comparar)) estado.comparar = undefined;
     if (estado.seccion) mapa.seleccionar(estado.seccion);
     if (terr) mapa.seleccionarTerritorio(terr);
