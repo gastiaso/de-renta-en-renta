@@ -418,6 +418,7 @@ Los bloques B y C van antes que la web porque cambian las cifras que la web ense
 - Autorización del Notariado, si llega.
 - Geometría de las zonas de Idealista, si hay fuente reutilizable.
 - Barrios de Idealista, si la extracción guarda el enlace de cada fila y hay más de un mes.
+- Pestaña «Reglas del juego», con resúmenes de las leyes vigentes. Hasta entonces, la casilla «Ley de Vivienda» de la portada va sin enlace («próximamente»; decisión del autor, 12-nov-2026).
 
 ## Por decidir
 

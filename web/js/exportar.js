@@ -41,7 +41,8 @@ const COLUMNAS = ['codigo', 'nombre', 'nivel', 'indicador', 'tipologia', 'period
 // Tabla de una serie en un nivel: una fila por territorio, en el orden del índice.
 //   codigos, valores, estados: los del nivel (datos.js, cargarValores);
 //   nombresEstado: codificacion.estados del manifiesto;
-//   transformar(x): la fórmula del mapa (sueldo necesario) o nada;
+//   transformar(x, codigo): la fórmula del mapa (sueldo necesario) o nada; recibe el código para los
+//   otros gastos de vivienda de su comunidad;
 //   supuestos: { superficie_m2, umbral } si la fórmula los usa (dos columnas más);
 //   desde: con un año anterior a toda la serie (`periodo`), su primer periodo; las filas van sin
 //   valor y el estado dice desde cuándo hay serie (pregunta abierta 32);
@@ -53,10 +54,13 @@ const COLUMNAS = ['codigo', 'nombre', 'nivel', 'indicador', 'tipologia', 'period
 //   (indicador 20), en una columna más;
 //   minimo: tarea 40 (decisión 4), en el sueldo necesario, { valores, transformar } del mínimo
 //   teórico con la superficie de `supuestos` (su base, en el mismo nivel y periodo, y su fórmula),
-//   en la columna valor_minimo, al lado de la cifra principal (valor, con el alquiler real).
+//   en la columna valor_minimo, al lado de la cifra principal (valor, con el alquiler real);
+//   otros(codigo): con el selector «Añadir otros gastos de vivienda» (decisión del autor, 12-nov-2026),
+//   la cifra (€ al mes) que se ha sumado al alquiler en cada fila, en la columna otros_gastos.
 // Los textos (cabecera, nivel, indicador…) llegan ya traducidos, salvo los que pide `t`.
-export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, nombreDe, indicador, unidad, tipologia, periodo, fuente, transformar, decimales, supuestos, desde = null, fiabilidad = null, etiqueta = null, categoria = null, minimo = null }) {
+export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, nombreDe, indicador, unidad, tipologia, periodo, fuente, transformar, decimales, supuestos, desde = null, fiabilidad = null, etiqueta = null, categoria = null, minimo = null, otros = null }) {
   const columnas = [...COLUMNAS, ...(fiabilidad ? ['contratos', 'margen_pct'] : []), ...(supuestos ? ['superficie_m2', 'umbral'] : []),
+    ...(otros ? ['otros_gastos'] : []),
     ...(minimo ? ['valor_minimo'] : []), ...(categoria ? ['categoria'] : []), ...(etiqueta ? ['etiqueta'] : [])];   // F5
   const cabecera = columnas.map((c) => t(`interfaz.exportar.columnas.${c}`));
   const textoNivel = t(`vocabulario.nivel.${nivel}`);
@@ -64,7 +68,7 @@ export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, n
   const de = (lista, i) => (fuera || !lista ? null : lista[i] ?? null);
   const filas = codigos.map((codigo, i) => {
     const x = fuera ? null : valores[i];
-    const valor = x === null || x === undefined ? null : redondear(transformar ? transformar(x) : x, decimales);
+    const valor = x === null || x === undefined ? null : redondear(transformar ? transformar(x, codigo) : x, decimales);
     const fila = [codigo, nombreDe(codigo), textoNivel, indicador, tipologia ?? '', periodo, valor, unidad,
       fuera ?? t(`interfaz.exportar.estados.${nombresEstado[estados[i]]}`), fuente];
     if (fiabilidad) {
@@ -73,9 +77,13 @@ export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, n
       fila.push(n === null ? null : Math.round(n), margen === null ? null : redondear(margen, 1));
     }
     if (supuestos) fila.push(supuestos.superficie_m2, supuestos.umbral);
+    if (otros) {   // otros gastos de vivienda (12-nov-2026)
+      const o = otros(codigo);
+      fila.push(Number.isFinite(o) ? redondear(o, 1) : null);
+    }
     if (minimo) {   // tarea 40
       const b = de(minimo.valores, i);
-      fila.push(b === null || !minimo.transformar ? null : redondear(minimo.transformar(b), decimales));
+      fila.push(b === null || !minimo.transformar ? null : redondear(minimo.transformar(b, codigo), decimales));
     }
     if (categoria) fila.push(valor === null ? null : categoria(valor));   // F5
     if (etiqueta) fila.push(etiqueta);                                    // F5

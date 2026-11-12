@@ -5,7 +5,7 @@
 // cuándo hay serie (pregunta abierta 32).
 
 import { periodoPara, inicioSerie, valorDe, cargarSeries, tipologiaDe } from './datos.js';
-import { formulaDe, textoSupuestos } from './formulas.js';
+import { formulaDe, textoSupuestos, textoOtrosGastos } from './formulas.js';
 import { ordenNatural } from './nombres.js';
 
 // Indicadores de la v0.1 (plan, §7, F2) y los de distribución de la renta de F3 (4–6), en el
@@ -74,9 +74,26 @@ async function valorSeccion(m, series, serie, codigo, periodo) {
   return valorDe(m, serie, 'sc', codigo, periodo);
 }
 
-// Filas de la tabla: [{ indicador, periodo, desde, decimales, tipologia, derivado, a: {valor, estado} |
-// null, b: ... }]; `periodo` null y `desde` (primer periodo de la serie) si el año es anterior a la
-// serie; `derivado`, el mapa del manifiesto con que se calcula la fila (el 21) o null.
+// Supuestos de cada columna de una fila derivada (el 21): { a, b }. `supuestos` es un objeto (los
+// mismos en las dos columnas) o una función (codigo, nivel, periodo) que da los de cada territorio en
+// el año de la fila: con los otros gastos de vivienda encendidos, cada columna suma los de su
+// comunidad (decisión del autor, 12-nov-2026).
+export function supuestosDeColumnas(supuestos, { seccion, nivelA = 'sc', comparado, periodo }) {
+  const de = (codigo, nivel) => (typeof supuestos === 'function' ? supuestos(codigo, nivel, periodo) : supuestos);
+  return { a: de(seccion, nivelA), b: de(comparado.codigo, comparado.nivel) };
+}
+
+// Texto de los supuestos de una fila derivada. Con los otros gastos de vivienda, la cifra de cada
+// columna, una sola vez si es la misma: «149 € al mes en Madrid, ECV 2024; 145 € al mes en España, ECV 2024».
+export function textoSupuestosFila(t, derivado, columnas) {
+  const otros = [...new Set([columnas.a, columnas.b].map((s) => textoOtrosGastos(t, s)).filter(Boolean))].join('; ');
+  return textoSupuestos(t, derivado, columnas.a, otros || undefined);
+}
+
+// Filas de la tabla: [{ indicador, periodo, desde, decimales, tipologia, derivado, supuestos, a: {valor,
+// estado} | null, b: ... }]; `periodo` null y `desde` (primer periodo de la serie) si el año es anterior a la
+// serie; `derivado`, el mapa del manifiesto con que se calcula la fila (el 21) o null, y `supuestos`,
+// los de sus dos columnas (supuestosDeColumnas()) o null.
 // `serieDe(serie)`: la serie de la tipología elegida (los alquileres y el 21 de la vivienda
 // colectiva o de la unifamiliar, sin mezclarlas); por defecto, la misma.
 // `nivelA`: el de la columna A ('sc' por defecto; un municipio, una provincia o una comunidad en la
@@ -100,14 +117,15 @@ export async function filasComparador({ m, seccion, comparado, anio, supuestos, 
     const [a, b] = periodo === null
       ? [ausente, ausente]
       : await Promise.all([valor(serie, periodo, 'a'), valor(serie, periodo, 'b')]);
-    const transformar = (x) => {
+    const columnas = derivado ? supuestosDeColumnas(supuestos, { seccion, nivelA, comparado, periodo }) : null;
+    const transformar = (x, s) => {
       if (!x || !derivado || x.valor === null) return x;
-      return { ...x, valor: formulaDe(derivado).calcular(x.valor, supuestos) };
+      return { ...x, valor: formulaDe(derivado).calcular(x.valor, s) };
     };
     filas.push({
       indicador, periodo, desde: periodo === null ? inicioSerie(def) : null, derivado: derivado ?? null, tipologia: tipologiaDe(m, serie),
-      decimales: derivado ? derivado.decimales ?? 0 : def.decimales ?? 1,
-      a: transformar(a), b: transformar(b),
+      decimales: derivado ? derivado.decimales ?? 0 : def.decimales ?? 1, supuestos: columnas,
+      a: transformar(a, columnas?.a), b: transformar(b, columnas?.b),
     });
   }
   return filas;
@@ -166,8 +184,9 @@ export function pintarComparador(contenedor, { t, eleccion, opciones, filas, nom
       const th = crear('th');
       th.scope = 'row';
       th.append(crear('span', 'comparador-nombre', t(`indicadores.${fila.indicador}.nombre`)));
-      // Tarea 40: el sueldo necesario del comparador es la cifra principal (alquiler mensual real)
-      const textoS = fila.derivado ? textoSupuestos(t, fila.derivado, supuestos) : null;
+      // Tarea 40: el sueldo necesario del comparador es la cifra principal (alquiler mensual real).
+      // Con otros gastos de vivienda, los de cada columna
+      const textoS = fila.derivado ? textoSupuestosFila(t, fila.derivado, fila.supuestos ?? { a: supuestos, b: supuestos }) : null;
       const unidad = textoS
         ? `${t(`indicadores.${fila.indicador}.unidad`)} · ${textoS}`
         : t(`indicadores.${fila.indicador}.unidad`);

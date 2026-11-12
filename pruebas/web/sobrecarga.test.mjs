@@ -202,3 +202,19 @@ test('exportación del pipeline: vistas, escalera, muestra y geometrías', { ski
   assert.ok(quintiles.every((f) => Number.isInteger(f.n) && f.fiabilidad));
   assert.ok(d.modulo.ccaa.length === 19 && d.modulo.razones.some((r) => r.grupo === 'precio'));
 });
+
+test('«Puesto X de N»: debajo, en letra de nota, qué vale ese orden, en los dos idiomas', () => {
+  // Decisión del autor (12-nov-2026), ajustada a cómo sale el puesto (R/web_sobrecarga.R): sin
+  // márgenes de error; con toda la población, un mismo año de encuesta para todos; con tenencia o
+  // edad, las comunidades con las olas agrupadas
+  for (const idioma of ['es', 'en']) {
+    const d = leer('web', 'i18n', `${idioma}.json`).sobrecarga.detalle;
+    const marcas = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((x) => x[1]).sort();
+    assert.deepEqual(marcas(d.puesto_nota), ['anio'], idioma);
+    assert.deepEqual(marcas(d.puesto_nota_olas), ['anio', 'desde', 'hasta'], idioma);
+  }
+  const js = readFileSync(join(raiz, 'web', 'js', 'sobrecarga.js'), 'utf8');
+  assert.match(js, /fila\.puesto \? el\('p', \{ class: 'nota sc-detalle-puesto-nota' \}, notaPuesto\(v\)\) : null/);
+  assert.match(js, /'sobrecarga\.detalle\.puesto_nota'/);
+  assert.match(js, /'sobrecarga\.detalle\.puesto_nota_olas'/);
+});

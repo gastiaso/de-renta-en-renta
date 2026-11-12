@@ -1,5 +1,5 @@
 // Estado de la vista en la URL, para que cada vista se pueda enlazar:
-//   ?idioma=es&mapa=sueldo_necesario&anio=2024&tipologia=VU&ficha=mochila&superficie=70&umbral=40
+//   ?idioma=es&mapa=sueldo_necesario&anio=2024&tipologia=VU&ficha=mochila&superficie=70&umbral=40&gastos=1
 //    &seccion=2807901001&comparar=municipio&vista=14.50/40.41680/-3.70380
 //    &territorio=municipio:28079&escala=municipio
 // (anio = año o periodo de la serie del mapa, «2025-05»; sin él, el último; tipologia = VU para la
@@ -7,7 +7,8 @@
 // código de otra sección; territorio = municipio, provincia o comunidad elegidos con un clic en
 // esas escalas, en lugar de una sección: tarea 26; superficie = 50, 70, 90 o «tipica», la superficie
 // típica del territorio que manda; escala = «municipio», tramos de las secciones relativos a su
-// municipio, escala_municipio.js; decisiones del autor del 11-nov-2026; historia y paso = recorrido
+// municipio, escala_municipio.js; decisiones del autor del 11-nov-2026; gastos = 1, otros gastos de
+// vivienda sumados al alquiler en «Tu sueldo», decisión del autor del 12-nov-2026; historia y paso = recorrido
 // guiado de datos/historias.json y su paso, de 1 a 20, historias.js: tarea 49). Solo entran estas claves,
 // validadas al leer y al escribir. El mapa está en mapa.html; la raíz (la portada) manda a mapa.html los enlaces que
 // traen alguna de estas claves salvo el idioma (js/redireccion.js).
@@ -29,6 +30,7 @@ const VALIDAS = {
   ficha: (v) => FICHAS.includes(v),
   superficie: (v) => SUPUESTOS.superficies.map(String).includes(v) || v === 'tipica',
   umbral: (v) => SUPUESTOS.umbrales.map(String).includes(v),
+  gastos: (v) => v === '1',   // «Añadir otros gastos de vivienda» encendido (12-nov-2026)
   seccion: (v) => /^\d{10}$/.test(v),
   comparar: (v) => /^\d{10}$/.test(v) || NIVELES_COMPARAR.includes(v),
   // zoom/latitud/longitud, dentro de lo que admite el mapa (una latitud de 95 lo haría fallar)
@@ -44,7 +46,7 @@ const VALIDAS = {
 export const CLAVES = Object.keys(VALIDAS);
 // ¿Vale `valor` para la clave? (historias.js valida con esto el estado de cada paso)
 export const esValida = (clave, valor) => Boolean(VALIDAS[clave]?.(String(valor)));
-const NUMERICAS = ['anio', 'superficie', 'umbral', 'paso'];
+const NUMERICAS = ['anio', 'superficie', 'umbral', 'gastos', 'paso'];
 // Número si lo es («2024» → 2024); los periodos con mes («2025-05») quedan como texto.
 const leerValor = (clave, valor) => (NUMERICAS.includes(clave) && /^\d+$/.test(valor) ? Number(valor) : valor);
 

@@ -1003,7 +1003,16 @@ bloque_historico <- if (AMBITO != "") list() else list(
   tar_target(validacion_web_historico, {
     ficheros_web_historico
     validar_referencias(hist_comprobar_web(historico, historico_fechas, rupturas, dir_web = DIR_WEB), referencias)
-  })
+  }),
+  # Euros constantes (decisión del autor, 12-nov-2026; R/fuente_ine_ipc.R): cifras de control del valor
+  # tasado y el sueldo medio de España en euros del año base, para comprobar que la página deflacta
+  # igual que R (pruebas/web/historico.test.mjs).
+  #   targets::tar_make(names = c(ficheros_web_ipc_control, validacion_web_ipc_control))
+  tar_target(ficheros_web_ipc_control, {
+    validacion_historico; validacion_ipc_deflactor   # las compuertas van antes
+    ipc_exportar_control(historico, ipc, dir_web = DIR_WEB)
+  }, format = "file"),
+  tar_target(validacion_web_ipc_control, validar_referencias(ipc_comprobar_control(historico, ipc, ficheros_web_ipc_control), referencias))
 )
 
 # Tarea 49, primeras historias (R/web_historias.R; decisiones del autor del 11-nov-2026): recorridos
@@ -1084,16 +1093,41 @@ bloque_calendario <- list(
   }, cue = tarchetypes::tar_cue_force(cal_hay_cambios()))
 )
 
+# Otros gastos de vivienda de los inquilinos (decisión del autor, 12-nov-2026; R/fuente_ine_ecv_gastos.R):
+# mediana de HH070 − HH060 de la ECV por comunidad y ola, para el selector «Añadir otros gastos de
+# vivienda» de «Tu sueldo» (datos/otros_gastos.json). No entra en la tabla larga.
+#   targets::tar_make(names = c(fichero_web_otros_gastos, validacion_web_otros_gastos))
+ANIOS_OTROS_GASTOS <- 2016:2025
+olas_otros_gastos <- tarchetypes::tar_map(
+  values = list(anio = ANIOS_OTROS_GASTOS), names = "anio",
+  tar_target(csv_ecv_gastos, obtener_csv_ine_ecv(anio, c("d", "h")), format = "file"),
+  tar_target(ecv_gastos, leer_ine_ecv_gastos(csv_ecv_gastos))
+)
+bloque_otros_gastos <- list(
+  olas_otros_gastos,
+  tarchetypes::tar_combine(ecv_gastos_hogares, olas_otros_gastos$ecv_gastos, command = dplyr::bind_rows(!!!.x)),
+  tar_target(otros_gastos, calcular_otros_gastos_ecv(ecv_gastos_hogares, ccaa)),
+  tar_target(validacion_otros_gastos, validar_referencias(comprobar_otros_gastos(otros_gastos, ecv_gastos_hogares, ccaa), referencias)),
+  tar_target(fichero_web_otros_gastos, {
+    validacion_otros_gastos   # la compuerta va antes
+    exportar_web_otros_gastos(otros_gastos, dir_web = DIR_WEB)
+  }, format = "file"),
+  tar_target(validacion_web_otros_gastos,
+             validar_referencias(comprobar_web_otros_gastos(otros_gastos, fichero_web_otros_gastos), referencias))
+)
+
 # Tarea 45: IPC del INE (medias anuales del índice general, tabla 76144; R/fuente_ine_ipc.R) para el
-# aviso de euros corrientes de la evolución de la ficha (datos/ipc.json). No deflacta ninguna cifra ni
-# entra en la tabla larga.
+# aviso de euros corrientes de la evolución de la ficha y los euros constantes de la web (decisión del
+# autor, 12-nov-2026: «Euros de {año base}» en la Máquina del tiempo y en la ficha; datos/ipc.json).
+# Nada deflactado entra en la tabla larga.
 #   targets::tar_make(names = c(ficheros_web_ipc, validacion_web_ipc))
 bloque_ipc <- list(
   tar_target(fichero_ipc, ipc_descargar(), format = "file"),
   tar_target(ipc, ipc_leer(fichero_ipc)),
   tar_target(validacion_ipc, validar_referencias(ipc_comprobar(ipc), referencias)),
+  tar_target(validacion_ipc_deflactor, validar_referencias(ipc_comprobar_deflactor(ipc), referencias)),
   tar_target(ficheros_web_ipc, {
-    validacion_ipc   # la compuerta va antes
+    validacion_ipc; validacion_ipc_deflactor   # las compuertas van antes
     ipc_exportar_web(ipc, dir_web = DIR_WEB)
   }, format = "file"),
   tar_target(validacion_web_ipc, validar_referencias(ipc_comprobar_web(ipc, ficheros_web_ipc), referencias))
@@ -1101,5 +1135,6 @@ bloque_ipc <- list(
 
 list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, bloque_paso2011, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_zonas_tensionadas, bloque_portales, bloque_tabla_larga, bloque_web, bloque_historico,
      bloque_cis, bloque_calendario,   # F6, CIS y calendario
+     bloque_otros_gastos,             # otros gastos de vivienda de la ECV (12-nov-2026)
      bloque_ipc,                      # tarea 45, IPC
      bloque_historias)                # tarea 49, primeras historias

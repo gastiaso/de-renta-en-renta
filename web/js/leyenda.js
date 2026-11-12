@@ -223,6 +223,9 @@ export function pintarLeyenda(contenedor, t, datos) {
   }
   pliegue.append(...cuerpo, claves(t, relativaVisible(datos)));
   if (supuestos) pliegue.append(crear('p', 'leyenda-supuestos', supuestos));
+  // «¿Te llega?» con otros gastos de vivienda (12-nov-2026): cuáles y cuántos (en el sueldo necesario
+  // lo dicen los supuestos, textoSupuestos())
+  if (!necesario && datos.otros) pliegue.append(crear('p', 'leyenda-supuestos', datos.otros));
   if (necesario && datos.conSupuestos && datos.mapaDef?.minimo) {   // tarea 40: el mínimo, en la ficha
     pliegue.append(crear('p', 'leyenda-supuestos', t('interfaz.leyenda.minimo_ficha', { superficie: t.numero(datos.superficie) })));
   }

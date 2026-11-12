@@ -58,21 +58,27 @@
         <h1 id="portada-titulo" class="portada-titulo" data-i18n="sitio.titulo">De renta en renta</h1>
         <p class="portada-subtitulo" data-i18n="sitio.subtitulo">Vivienda y sueldos, sección a sección</p>
         <p class="portada-gancho" data-i18n="sitio.gancho">¿A quién le queda sueldo después de pagar la vivienda?</p>
-        <p class="portada-lema" data-i18n="sitio.lema">Dónde, desde cuándo y para quién ha cambiado la relación entre lo que cuesta la vivienda y lo que se cobra</p>
+        <!-- La cifra del salario mínimo con el alquiler real (datos/portada.json; portada.js,
+             cifraCentro()); sin ella (muestra de ejemplo, fallo de carga o sin JavaScript), el lema. -->
+        <p id="portada-cifra" class="portada-lema" data-i18n="sitio.lema">Dónde, desde cuándo y para quién ha cambiado la relación entre lo que cuesta la vivienda y lo que se cobra</p>
         <p id="aviso-ejemplo" class="etiqueta-ejemplo" hidden data-i18n="avisos.ejemplo" data-i18n-title="interfaz.ejemplo_nota">Datos de ejemplo</p>
 
         <!-- Sin «name» en el campo: sin JavaScript, el formulario lleva a «Tu sueldo» del mapa sin el sueldo. -->
         <form id="portada-sueldo" class="portada-sueldo" action="mapa.html#tu-sueldo" method="get" novalidate>
           <label class="portada-sueldo-etiqueta" for="portada-neto">
             <img class="ficha-icono" src="estilo/fichas/peon.svg" alt="" width="28" height="28">
-            <span data-i18n="interfaz.sueldo.neto">Sueldo neto al mes</span>
+            <span data-i18n="interfaz.sueldo.neto">Ingresos netos al mes</span>
           </label>
           <span class="portada-sueldo-fila">
             <span class="campo-euros"><input id="portada-neto" type="text" inputmode="decimal" autocomplete="off" aria-describedby="portada-sueldo-nota portada-sueldo-error"><span aria-hidden="true">€</span></span>
             <button type="submit" class="boton boton-principal" data-i18n="portada.te_llega">¿Te llega?</button>
           </span>
           <span id="portada-sueldo-error" class="portada-error" role="alert" hidden></span>
-          <span id="portada-sueldo-nota" class="nota portada-nota" data-i18n="portada.privacidad">Tu sueldo no sale de este dispositivo.</span>
+          <!-- La cuenta en el sitio (12-nov-2026): en cuántas secciones el alquiler mensual mediano no pasa
+               del 30 % de lo escrito, como la segunda frase del resumen del mapa (portada.js). -->
+          <span id="portada-cuenta" class="portada-cuenta" aria-live="polite"></span>
+          <span id="portada-cuenta-nota" class="nota portada-nota" data-i18n="portada.cuenta.nota" hidden>Es el alquiler de quien ya tiene contrato; quien busca piso hoy suele pagar más.</span>
+          <span id="portada-sueldo-nota" class="nota portada-nota" data-i18n="portada.privacidad">Lo que escribes no sale de este dispositivo.</span>
         </form>
 
         <div class="portada-acciones" data-js hidden>
@@ -96,17 +102,14 @@
         </div>
       </section>
 
-      <!-- Fichas: para quién. Cada una abre el mapa en «¿te llega?» con su ingreso. En una fila, con
+      <!-- Fichas: para quién. Cada una abre el mapa en «¿te llega?» con su ingreso; la llave, la última de
+           las de perfil (12-nov-2026: apenas distingue barrios). En una fila, con
            el icono y el nombre; la línea de método (.ficha-desc) va dentro del enlace, oculta a la
            vista salvo al pasar el ratón o enfocar, y la leen los lectores de pantalla. En el móvil,
            lista con la línea a la vista. -->
       <section class="portada-fichas" aria-labelledby="portada-fichas-titulo">
         <h2 id="portada-fichas-titulo" class="portada-h2" data-i18n="portada.fichas_titulo">¿Para quién?</h2>
         <ul class="fichas-lista">
-          <li><a class="ficha-enlace ficha-enlace-llave" data-ficha="llave" href="mapa.html?ficha=llave" data-href-es="mapa.html?ficha=llave" data-href-en="mapa.html?ficha=llave&amp;idioma=en">
-            <img class="ficha-icono" src="estilo/fichas/llave.svg" alt="" width="40" height="40">
-            <span class="ficha-nombre" data-i18n="fichas.llave">Hogar del barrio</span>
-            <span class="ficha-desc" data-i18n="portada.fichas.llave"></span></a></li>
           <li><a class="ficha-enlace ficha-enlace-mochila" data-ficha="mochila" href="mapa.html?ficha=mochila" data-href-es="mapa.html?ficha=mochila" data-href-en="mapa.html?ficha=mochila&amp;idioma=en">
             <img class="ficha-icono" src="estilo/fichas/mochila.svg" alt="" width="40" height="40">
             <span class="ficha-nombre" data-i18n="fichas.mochila">Joven de 26 a 35</span>
@@ -119,6 +122,10 @@
             <img class="ficha-icono" src="estilo/fichas/transistor.svg" alt="" width="40" height="40">
             <span class="ficha-nombre" data-i18n="fichas.transistor">Pensionista</span>
             <span class="ficha-desc" data-i18n="portada.fichas.transistor"></span></a></li>
+          <li><a class="ficha-enlace ficha-enlace-llave" data-ficha="llave" href="mapa.html?ficha=llave" data-href-es="mapa.html?ficha=llave" data-href-en="mapa.html?ficha=llave&amp;idioma=en">
+            <img class="ficha-icono" src="estilo/fichas/llave.svg" alt="" width="40" height="40">
+            <span class="ficha-nombre" data-i18n="fichas.llave">Hogar del barrio</span>
+            <span class="ficha-desc" data-i18n="portada.fichas.llave"></span></a></li>
           <li><a class="ficha-enlace ficha-enlace-peon" data-ficha="peon" href="mapa.html?ficha=peon#tu-sueldo" data-href-es="mapa.html?ficha=peon#tu-sueldo" data-href-en="mapa.html?ficha=peon&amp;idioma=en#tu-sueldo">
             <img class="ficha-icono" src="estilo/fichas/peon.svg" alt="" width="40" height="40">
             <span class="ficha-nombre" data-i18n="fichas.peon">Tu ficha</span>
@@ -153,7 +160,7 @@
           <li class="casilla casilla-alquiler" data-casilla="paga_alquiler"><a href="mapa.html?mapa=alquiler_mes" data-href-es="mapa.html?mapa=alquiler_mes" data-href-en="mapa.html?mapa=alquiler_mes&amp;idioma=en"><span class="casilla-texto" data-texto-es="Paga el alquiler" data-texto-en="Pay the rent">Paga el alquiler</span></a></li>
           <li class="casilla casilla-barrio" data-casilla="pisos_turisticos"><a href="mapa.html?mapa=viviendas_turisticas" data-href-es="mapa.html?mapa=viviendas_turisticas" data-href-en="mapa.html?mapa=viviendas_turisticas&amp;idioma=en"><span class="casilla-texto" data-texto-es="Pisos turísticos en el portal" data-texto-en="Tourist flats in the building">Pisos turísticos en el portal</span></a></li>
           <li class="casilla casilla-barrio" data-casilla="zona_tensionada"><a href="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000" data-href-es="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000" data-href-en="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000&amp;idioma=en"><span class="casilla-texto" data-texto-es="Zona tensionada" data-texto-en="Stressed housing market area">Zona tensionada</span></a></li>
-          <li class="casilla casilla-especial casilla-esquina" data-casilla="ley_vivienda"><a href="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000" data-href-es="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000" data-href-en="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000&amp;idioma=en"><span class="casilla-texto" data-texto-es="Ley de Vivienda" data-texto-en="Housing Act">Ley de Vivienda</span></a></li>
+          <li class="casilla casilla-especial casilla-esquina casilla-inactiva" data-casilla="ley_vivienda" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Ley de Vivienda" data-texto-en="Housing Act">Ley de Vivienda</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
           <li class="casilla casilla-alquiler" data-casilla="tope_alquileres"><a href="mapa.html?mapa=var_alquiler" data-href-es="mapa.html?mapa=var_alquiler" data-href-en="mapa.html?mapa=var_alquiler&amp;idioma=en"><span class="casilla-texto" data-texto-es="Tope de alquileres" data-texto-en="Rent cap">Tope de alquileres</span></a></li>
           <li class="casilla casilla-alquiler" data-casilla="renueva_contrato"><a href="mapa.html?ficha=llave" data-href-es="mapa.html?ficha=llave" data-href-en="mapa.html?ficha=llave&amp;idioma=en"><span class="casilla-texto" data-texto-es="Renueva el contrato" data-texto-en="Renew the lease">Renueva el contrato</span></a></li>
           <li class="casilla casilla-alquiler casilla-inactiva" data-casilla="actualizacion_renta" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Actualización de la renta" data-texto-en="Rent review">Actualización de la renta</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>

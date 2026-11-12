@@ -131,11 +131,12 @@ test('un paso pasa a cambios de estado: sus claves, las ausentes quitadas y sin 
   assert.deepEqual(tercero, {
     mapa: 'alquiler_mes', anio: 2024, vista: '11.30/40.42000/-3.70000', territorio: 'municipio:28079', escala: 'municipio',
     seccion: undefined, comparar: undefined, ficha: undefined, tipologia: undefined, superficie: undefined, umbral: undefined,
+    gastos: undefined,   // otros gastos de vivienda (12-nov-2026): un paso los apaga
   });
   // Sin territorio ni escala en el paso: se quitan los que hubiera (escala nacional, sin ficha de territorio),
   // y también la superficie y el umbral elegidos antes: el mapa del paso, con los supuestos por defecto
   const estado = { idioma: 'en', mapa: 'renta_hogar', seccion: '2807901001', comparar: 'municipio', ficha: 'peon', tipologia: 'VU',
-    territorio: 'provincia:28', escala: 'municipio', superficie: 70, umbral: 40, historia: 'centro', paso: 3 };
+    territorio: 'provincia:28', escala: 'municipio', superficie: 70, umbral: 40, gastos: 1, historia: 'centro', paso: 3 };
   Object.assign(estado, H.cambiosDePaso(H.pasoDe(h, 1).paso));
   assert.equal(consulta(estado), '?idioma=en&mapa=alquiler_mes&anio=2015&vista=11.30/40.42000/-3.70000&historia=centro&paso=3');
   // Un valor que no vale no entra

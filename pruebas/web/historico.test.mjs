@@ -54,13 +54,18 @@ const DATOS = {
 };
 
 test('estado de la URL: idioma y comunidad del valor tasado', () => {
-  assert.deepEqual(H.leerEstado(''), { idioma: 'es', ccaa: null });
-  assert.deepEqual(H.leerEstado('?idioma=en&ccaa=13', DATOS), { idioma: 'en', ccaa: '13' });
+  assert.deepEqual(H.leerEstado(''), { idioma: 'es', ccaa: null, euros: 'constantes' });
+  assert.deepEqual(H.leerEstado('?idioma=en&ccaa=13', DATOS), { idioma: 'en', ccaa: '13', euros: 'constantes' });
   assert.equal(H.leerEstado('?ccaa=99', DATOS).ccaa, null);
   assert.equal(H.leerEstado('?ccaa=00', DATOS).ccaa, null);
   assert.equal(H.leerEstado('?ccaa=<b>', DATOS).ccaa, null);
   assert.equal(H.consulta({ idioma: 'en', ccaa: '13' }), '?idioma=en&ccaa=13');
   assert.equal(H.consulta({ idioma: 'es', ccaa: null }), '');
+  // Euros: los del año base por defecto (no van en la dirección); los de cada año, sí
+  assert.equal(H.leerEstado('?euros=corrientes').euros, 'corrientes');
+  assert.equal(H.leerEstado('?euros=dolares').euros, 'constantes');
+  assert.equal(H.consulta({ idioma: 'es', ccaa: null, euros: 'constantes' }), '');
+  assert.equal(H.consulta({ idioma: 'en', ccaa: '13', euros: 'corrientes' }), '?idioma=en&ccaa=13&euros=corrientes');
 });
 
 test('puntos de una serie: periodos, centro del periodo y huecos', () => {
@@ -200,6 +205,104 @@ test('datos exportados por el pipeline: contrato de historico.json', { skip: !ex
   assert.equal(anios.maximo.clave, '2007-T3');
   assert.equal(anios.maximo.v, 9.46);
   assert.equal(H.extremos(H.puntosDe(d, 'esfuerzo_teorico')).maximo.v, 72.47);
+});
+
+// --- Euros constantes (decisión del autor, 12-nov-2026) ------------------------------------------
+
+// IPC inventado: índice desde 1996; 1997 es el año base (el último con media anual)
+const IPC = { anio_base: 1997, anios: [1996, 1997], indice: [80, 100] };
+
+test('euros constantes: valor tasado y sueldo en euros del año base; sin índice, fuera', () => {
+  const d = H.deflactarDatos(DATOS, IPC);
+  // Valor tasado de España: 1995 T1–T2, sin índice en 1995: no queda ninguna cifra; Madrid, igual
+  assert.deepEqual(Object.keys(d.series.valor_tasado.territorios), []);
+  // Sueldo: 1995 fuera (sin índice), 1996 × 100 / 80, 1997 tal cual (año base)
+  const sueldo = H.puntosDe(d, 'sueldo_asalariado');
+  assert.deepEqual(sueldo.map((p) => p.anio), [1996, 1997]);
+  assert.deepEqual(sueldo.map((p) => p.v), [20000, 31200]);
+  assert.deepEqual(d.series.sueldo_asalariado.deflactada, { base: 1997, desde: 1996, hasta: 1997, fuera: [1995] });
+  // Las demás series, tal cual; los datos originales, sin tocar
+  assert.equal(d.series.anios_renta, DATOS.series.anios_renta);
+  assert.deepEqual(DATOS.series.sueldo_asalariado.territorios['00'].v, [15635, 16000, 31200]);
+  // Sin IPC, nada que deflactar
+  assert.equal(H.deflactarDatos(DATOS, null), null);
+  assert.equal(H.datosVista(DATOS, null, 'constantes'), DATOS);
+  assert.equal(H.datosVista(DATOS, d, 'constantes'), d);
+  assert.equal(H.datosVista(DATOS, d, 'corrientes'), DATOS);
+});
+
+test('euros constantes: trimestres con la media anual de su año, y el año en curso fuera', () => {
+  const datos = { desde: 1987, series: { valor_tasado: { frecuencia: 'trimestral', unidad: 'euros_m2', escala: 10,
+    territorios: { '00': { inicio: [2024, 3], v: [10000, 10100, 10200, null, 10400, 10500] } } } } };
+  const ipc = { anios: [2024, 2025], indice: [97.397, 100] };   // sin anio_base: el último año con índice
+  const d = H.deflactarDatos(datos, ipc);
+  const p = H.puntosDe(d, 'valor_tasado');
+  assert.deepEqual(p.map((x) => x.clave), ['2024-T3', '2024-T4', '2025-T1', '2025-T2', '2025-T3', '2025-T4']);
+  assert.ok(Math.abs(p[0].v - 1000 * 100 / 97.397) < 1e-9);
+  assert.equal(p[2].v, 1020);
+  assert.equal(p[3].v, null);
+  // 2026 no tiene media anual: fuera de la serie constante, y anotado
+  const datos2 = structuredClone(datos);
+  datos2.series.valor_tasado.territorios['00'].v.push(10600, 10700);
+  const d2 = H.deflactarDatos(datos2, ipc);
+  assert.equal(H.puntosDe(d2, 'valor_tasado').at(-1).clave, '2025-T4');
+  assert.deepEqual(d2.series.valor_tasado.deflactada.fuera, [2026]);
+});
+
+test('euros constantes: textos del selector, las notas, la lectura y los ejes en los dos idiomas', () => {
+  for (const idioma of ['es', 'en']) {
+    const t = traductor(idioma);
+    assert.match(t('historico.euros.constantes', { anio: 2025 }), /2025/);
+    assert.ok(t('historico.euros.corrientes'));
+    for (const k of ['nota_constantes_trimestral', 'nota_constantes_anual', 'lectura_constantes', 'columna_constantes']) {
+      assert.match(t(`historico.euros.${k}`, { anio: 2025 }), /2025/, k);
+    }
+    assert.match(t('historico.euros.nota_antes', { desde: 1995, hasta: 2001, primero: 2002, anio: 2025 }), /1995.*2001.*2025.*2002/);
+    assert.match(t('historico.euros.nota_en_curso', { anios: '2026', anio: 2025 }), /2026.*2025/);
+    for (const u of ['euros_m2', 'euros_anio']) assert.match(t(`historico.ejes_constantes.${u}`, { anio: 2025 }), /2025/);
+    assert.ok(t('historico.metodo.euros'));
+  }
+  // El selector, en los dos bloques en euros y en ninguno más
+  const html = leerTexto('web', 'historico.html');
+  for (const b of H.BLOQUES) {
+    const seccion = new RegExp(`<section id="${b.id}"[\\s\\S]*?</section>`).exec(html)[0];
+    assert.equal(/class="hi-euros"/.test(seccion), Boolean(b.euros), b.id);
+    assert.equal(/class="nota hi-euros-nota"/.test(seccion), Boolean(b.euros), b.id);
+  }
+  assert.deepEqual(H.BLOQUES.filter((b) => b.euros).flatMap((b) => b.series), H.SERIES_EUROS);
+});
+
+// La página deflacta igual que R: con los datos exportados, el valor tasado y el sueldo de España en
+// euros del año base, redondeados a los decimales de su escala, son los de web/datos/ipc_control.json
+// (ipc_exportar_control(), R/fuente_ine_ipc.R).
+const RUTA_IPC = join(raiz, 'web', 'datos', 'ipc.json');
+const RUTA_CONTROL = join(raiz, 'web', 'datos', 'ipc_control.json');
+const hayControl = existsSync(RUTA_REAL) && existsSync(RUTA_IPC) && existsSync(RUTA_CONTROL);
+test('euros constantes: la página deflacta igual que R', { skip: !hayControl && 'sin historico.json, ipc.json o ipc_control.json' }, (t) => {
+  const d = JSON.parse(readFileSync(RUTA_REAL, 'utf8'));
+  const ipc = JSON.parse(readFileSync(RUTA_IPC, 'utf8'));
+  const control = JSON.parse(readFileSync(RUTA_CONTROL, 'utf8'));
+  const dv = H.deflactarDatos(d, ipc);
+  let comparadas = 0;
+  const diferencias = [];
+  for (const serie of H.SERIES_EUROS) {
+    const s = d.series[serie];
+    assert.equal(dv.series[serie].deflactada.base, control.anio_base, serie);
+    const r = H.puntosDe({ series: { [serie]: { ...s, territorios: { '00': control.series[serie] } } } }, serie);
+    const pagina = new Map(H.puntosDe(dv, serie).map((p) => [p.clave, p.v]));
+    for (const p of r) {
+      const x = pagina.get(p.clave) ?? null;
+      // Redondeo de la guía (sprintf de R): a los decimales de la escala, con empates hacia arriba
+      const redondeada = x === null ? null : Math.round(x * s.escala + 1e-9) / s.escala;
+      comparadas++;
+      if ((p.v === null) !== (redondeada === null) || (p.v !== null && Math.abs(p.v - redondeada) > 1e-9)) {
+        diferencias.push({ serie, clave: p.clave, r: p.v, pagina: redondeada });
+      }
+    }
+  }
+  t.diagnostic(`${comparadas} periodos comparados; ${diferencias.length} diferencias`);
+  assert.ok(comparadas > 100);
+  assert.deepEqual(diferencias.slice(0, 5), []);
 });
 
 // --- La vivienda como problema (CIS) ------------------------------------------------------------

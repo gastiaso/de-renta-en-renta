@@ -5,6 +5,9 @@
 // Al final, la vivienda como problema en los barómetros del CIS (mensual, desde 2014), en el mismo
 // eje. Datos: datos/historico/historico.json (R/web_historico.R) y datos/cis_vivienda.json
 // (R/fuente_cis_barometros.R), que puede faltar; lógica sin DOM en historico_datos.js.
+// Euros constantes (decisión del autor, 12-nov-2026): el valor tasado y el sueldo medio se ven en
+// euros del año base del IPC (datos/ipc.json; por defecto) o en euros de cada año, con un selector en
+// cada uno y la elección en la dirección (?euros=corrientes). Sin el IPC, solo en euros de cada año.
 
 import { cargarIdioma, traducirPagina } from './i18n.js';
 import { ordenNatural } from './nombres.js';
@@ -18,7 +21,8 @@ const CLASES = ['serie-a', 'serie-b'];
 let t;          // traductor del idioma activo
 let datos;      // historico.json
 let cis = null; // cis_vivienda.json (null si no está)
-let estado;     // { idioma, ccaa }
+let deflactados = null;   // historico.json con las series en euros del año base (null sin IPC)
+let estado;     // { idioma, ccaa, euros }
 let rango;      // años del eje común
 const anchos = new Map();   // ancho de la caja con que se dibujó cada gráfico
 
@@ -57,6 +61,7 @@ async function iniciar() {
   const nav = document.querySelector('.navegacion');
   if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = nav.scrollWidth;
   const pedidoCis = leerOpcional(H.RUTA_CIS);
+  const pedidoIpc = leerOpcional(H.RUTA_IPC);
   try {
     const respuesta = await fetch(H.RUTA_DATOS);
     if (!respuesta.ok) throw new Error(`${H.RUTA_DATOS}: ${respuesta.status}`);
@@ -70,6 +75,7 @@ async function iniciar() {
     return;
   }
   cis = await pedidoCis;
+  deflactados = H.deflactarDatos(datos, await pedidoIpc);
   estado = H.leerEstado(location.search, datos);
   rango = H.rangoAnios(datos, H.CIS_SERIES.map((p) => H.puntosCis(cis, p)));
   $('hi-estado').hidden = true;
@@ -79,6 +85,14 @@ async function iniciar() {
     guardarEstado();
     pintarBloque(H.BLOQUES.find((b) => b.territorial));
   });
+  for (const boton of document.querySelectorAll('[data-euros]')) {
+    boton.addEventListener('click', () => {
+      if (boton.dataset.euros === estado.euros) return;
+      estado.euros = boton.dataset.euros;
+      guardarEstado();
+      for (const b of H.BLOQUES.filter((x) => x.euros)) pintarBloque(b);
+    });
+  }
   pintarTodo();
   const cambio = (id) => Math.abs(document.querySelector(`[data-bloque="${id}"] .hi-grafico`).clientWidth - (anchos.get(id) ?? 0)) > 24;
   new ResizeObserver(() => {
@@ -144,28 +158,68 @@ function pintarSelector() {
     ...H.comunidades(datos, ordenNatural).map((c) => el('option', { value: c.codigo, selected: c.codigo === estado.ccaa }, c.nombre)));
 }
 
+// Datos con que se pinta un bloque: en los de euros, los del año base o los de cada año, según la
+// elección; en los demás, los de historico.json.
+const eurosActivos = () => (deflactados ? estado.euros : 'corrientes');
+const datosDe = (bloque) => (bloque.euros ? H.datosVista(datos, deflactados, eurosActivos()) : datos);
+const constantes = (bloque) => Boolean(bloque.euros) && eurosActivos() === 'constantes';
+const anioBase = (bloque) => deflactados?.series?.[bloque.series[0]]?.deflactada?.base ?? null;
+
+// Selector de euros y nota de la unidad de un bloque en euros: «Euros de 2025 · Euros de cada año»,
+// con el elegido marcado; la nota dice cómo se deflacta y qué periodos se quedan fuera. Sin IPC, el
+// selector no sale y la nota dice que son euros de cada año.
+function pintarEuros(bloque, seccion) {
+  const grupo = seccion.querySelector('.hi-euros');
+  const nota = seccion.querySelector('.hi-euros-nota');
+  if (!grupo || !nota) return;
+  const def = deflactados?.series?.[bloque.series[0]]?.deflactada;
+  grupo.hidden = !def;
+  for (const boton of grupo.querySelectorAll('[data-euros]')) {
+    boton.textContent = boton.dataset.euros === 'constantes' ? t('historico.euros.constantes', { anio: def?.base ?? '' }) : t('historico.euros.corrientes');
+    boton.setAttribute('aria-pressed', String(boton.dataset.euros === eurosActivos()));
+  }
+  if (!constantes(bloque)) {
+    nota.textContent = t('historico.euros.nota_corrientes');
+    return;
+  }
+  const frecuencia = datos.series[bloque.series[0]].frecuencia;
+  const partes = [t(`historico.euros.nota_constantes_${frecuencia === 'anual' ? 'anual' : 'trimestral'}`, { anio: def.base })];
+  const antes = def.fuera.filter((a) => a < def.desde);
+  const despues = def.fuera.filter((a) => a > def.base);
+  if (antes.length) partes.push(t('historico.euros.nota_antes', { desde: antes[0], hasta: antes.at(-1), primero: def.desde, anio: def.base }));
+  if (despues.length) partes.push(t('historico.euros.nota_en_curso', { anios: despues.join(', '), anio: def.base }));
+  nota.textContent = partes.join(' ');
+}
+
 // Series que dibuja un bloque: las suyas de España y, en el valor tasado, la comunidad elegida.
 function seriesDe(bloque) {
+  const d = datosDe(bloque);
   const lista = bloque.series.map((serie, i) => ({ serie, geo: H.ESPANA, clase: CLASES[i], nombre: t(`historico.series.${serie}`) }));
   if (bloque.territorial && estado.ccaa) {
     lista.push({ serie: bloque.series[0], geo: estado.ccaa, clase: CLASES[1],
       nombre: ordenNatural(datos.territorios?.[estado.ccaa] ?? estado.ccaa) });
     lista[0].nombre = t('historico.espana');
   }
-  return lista.map((s) => ({ ...s, puntos: H.puntosDe(datos, s.serie, s.geo) ?? [] }));
+  return lista.map((s) => ({ ...s, puntos: H.puntosDe(d, s.serie, s.geo) ?? [] }));
 }
 
 function pintarBloque(bloque) {
   const seccion = document.querySelector(`[data-bloque="${bloque.id}"]`);
+  const d = datosDe(bloque);
+  pintarEuros(bloque, seccion);
   pintarGrafico(bloque);
-  // Lectura: primer dato, extremos y último de cada serie
-  seccion.querySelector('.hi-lectura').replaceChildren(...seriesDe(bloque).map((s) => el('span', { class: 'hi-lectura-serie' },
-    seriesDe(bloque).length > 1 ? el('b', {}, `${s.nombre}. `) : null, H.lectura(datos, s.serie, s.geo, t))));
+  // Lectura: primer dato, extremos y último de cada serie; en los bloques en euros, antes, en qué euros
+  const unidad = !bloque.euros ? null : constantes(bloque)
+    ? t('historico.euros.lectura_constantes', { anio: anioBase(bloque) }) : t('historico.euros.lectura_corrientes');
+  const series = seriesDe(bloque);
+  seccion.querySelector('.hi-lectura').replaceChildren(...(unidad ? [el('span', { class: 'hi-lectura-serie hi-lectura-euros' }, unidad)] : []),
+    ...series.map((s) => el('span', { class: 'hi-lectura-serie' },
+      series.length > 1 ? el('b', {}, `${s.nombre}. `) : null, H.lectura(d, s.serie, s.geo, t))));
   // Fechas clave y rupturas, numeradas como en el gráfico
   const fechas = fechasBloque(bloque);
   seccion.querySelector('.hi-fechas').replaceChildren(...fechas.map((f) => {
     const s = datos.series[f.serie];
-    const valor = f.punto ? ` · ${H.textoValor(f.punto.v, f.serie, datos, t)}` : '';
+    const valor = f.punto ? ` · ${H.textoValor(f.punto.v, f.serie, d, t)}` : '';
     const periodo = H.textoPeriodo(f.punto ?? { anio: f.periodo[0], sub: f.periodo[1] }, s.frecuencia, t);
     return el('li', { class: f.tipo === 'ruptura' ? 'hi-fecha-ruptura' : null, value: f.numero },
       el('b', {}, `${periodo}${valor}`), `: ${f.tipo === 'ruptura' ? `${t('historico.fechas.ruptura')}. ` : ''}${t.idioma === 'en' ? f.texto_en : f.texto_es}`);
@@ -180,7 +234,7 @@ function pintarBloque(bloque) {
 
 // Fechas de las series de España del bloque, numeradas en orden de tiempo
 function fechasBloque(bloque) {
-  const todas = bloque.series.flatMap((serie, i) => H.fechasDe(datos, serie, H.ESPANA).map((f) => ({ ...f, clase: CLASES[i] })));
+  const todas = bloque.series.flatMap((serie, i) => H.fechasDe(datosDe(bloque), serie, H.ESPANA).map((f) => ({ ...f, clase: CLASES[i] })));
   return todas.sort((a, b) => a.t - b.t).map((f, k) => ({ ...f, numero: k + 1 }));
 }
 
@@ -202,7 +256,9 @@ function lienzo(id, caja, valores, unidad, nombre) {
     grafico.append(svg('line', { class: Math.abs(v) < 1e-9 ? 'eje' : 'rejilla', x1: m.izq, x2: ancho - m.der, y1: y(v), y2: y(v) }));
     grafico.append(svg('text', { class: 'texto-eje', x: m.izq - 6, y: y(v) + 4, 'text-anchor': 'end' }, t.numero(v, decimales)));
   }
-  grafico.append(svg('text', { class: 'texto-eje texto-unidad', x: m.izq - 6, y: m.arr - 10, 'text-anchor': 'end' }, unidad));
+  // La unidad, encima del eje; las largas («€/m² de 2025»), desde el borde, para que no se corten
+  const larga = unidad.length > 8;
+  grafico.append(svg('text', { class: 'texto-eje texto-unidad', x: larga ? 0 : m.izq - 6, y: m.arr - 10, 'text-anchor': larga ? 'start' : 'end' }, unidad));
   for (const a of H.marcasAnios(rango.desde, rango.hasta - 1, estrecho ? 10 : 5)) {
     grafico.append(svg('line', { class: 'marca-eje', x1: x(a), x2: x(a), y1: alto - m.aba, y2: alto - m.aba + 4 }));
     grafico.append(svg('text', { class: 'texto-eje', x: x(a), y: alto - m.aba + 17, 'text-anchor': 'middle' }, String(a)));
@@ -288,9 +344,11 @@ function pintarGrafico(bloque) {
   const seccion = document.querySelector(`[data-bloque="${bloque.id}"]`);
   const caja = seccion.querySelector('.hi-grafico');
   const series = seriesDe(bloque);
+  const d = datosDe(bloque);
   const unidad = datos.series[bloque.series[0]].unidad;
-  const g = lienzo(bloque.id, caja, series.flatMap((s) => s.puntos.map((p) => p.v)), t(`historico.ejes.${unidad}`),
-    series.map((s) => s.nombre).join(', '));
+  const eje = constantes(bloque) ? t(`historico.ejes_constantes.${unidad}`, { anio: anioBase(bloque) }) : t(`historico.ejes.${unidad}`);
+  const g = lienzo(bloque.id, caja, series.flatMap((s) => s.puntos.map((p) => p.v)), eje,
+    series.map((s) => s.nombre).join(', ') + (bloque.euros ? ` (${eje})` : ''));
   const { grafico, m, alto, x, y } = g;
   // Rupturas: línea vertical punteada
   const fechas = fechasBloque(bloque);
@@ -313,7 +371,7 @@ function pintarGrafico(bloque) {
     if (!filas.length) return null;
     return { t: filas[0].p.t, nodos: filas.map(({ s, p }) => el('p', {},
       el('span', { class: `hi-trazo ${s.clase}`, 'aria-hidden': 'true' }),
-      el('b', {}, H.textoValor(p.v, s.serie, datos, t)), ` ${H.textoPeriodo(p, datos.series[s.serie].frecuencia, t)}`,
+      el('b', {}, H.textoValor(p.v, s.serie, d, t)), ` ${H.textoPeriodo(p, datos.series[s.serie].frecuencia, t)}`,
       series.length > 1 ? el('span', { class: 'hi-globo-nombre' }, s.nombre) : null)) };
   };
   const globo = capaLectura(g, leer, H.pasosTeclado(series.map((s) => s.puntos)));
@@ -321,9 +379,13 @@ function pintarGrafico(bloque) {
   caja.replaceChildren(grafico, globo, ...(leyenda ? [leyenda] : []));
 }
 
-// Tabla con todas las cifras: una fila por periodo y una columna por serie
+// Tabla con todas las cifras: una fila por periodo y una columna por serie; en los bloques en euros,
+// la cabecera dice en qué euros.
 function pintarTabla(bloque, marco) {
   const series = seriesDe(bloque);
+  const d = datosDe(bloque);
+  const sufijo = !bloque.euros ? '' : ` (${constantes(bloque)
+    ? t('historico.euros.columna_constantes', { anio: anioBase(bloque) }) : t('historico.euros.columna_corrientes')})`;
   const porClave = new Map();
   series.forEach((s, i) => {
     for (const p of s.puntos) {
@@ -334,9 +396,9 @@ function pintarTabla(bloque, marco) {
   const filas = [...porClave.values()].sort((a, b) => a.p.t - b.p.t);
   marco.replaceChildren(el('table', { class: 'hi-tabla' },
     el('thead', {}, el('tr', {}, el('th', { scope: 'col' }, t('historico.periodo_col')),
-      series.map((s) => el('th', { scope: 'col' }, s.nombre)))),
+      series.map((s) => el('th', { scope: 'col' }, `${s.nombre}${sufijo}`)))),
     el('tbody', {}, filas.map((f) => el('tr', {}, el('th', { scope: 'row' }, H.textoPeriodo(f.p, f.frecuencia, t)),
-      series.map((s, i) => el('td', {}, f.valores[i] === undefined ? '' : H.textoValor(f.valores[i], s.serie, datos, t))))))));
+      series.map((s, i) => el('td', {}, f.valores[i] === undefined ? '' : H.textoValor(f.valores[i], s.serie, d, t))))))));
 }
 
 // --- La vivienda como problema (CIS) ------------------------------------------------------------

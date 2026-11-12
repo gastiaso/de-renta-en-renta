@@ -400,7 +400,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Versión:** v0.1
 - **Definición:** Sueldo neto mensual necesario para que el alquiler mensual mediano de la sección no pase del 30 % del sueldo. Al lado, el mínimo teórico: el mismo cálculo con un piso de 50 m².
 - **Cálculo:** Alquiler mensual mediano de la vivienda colectiva / 0,30 (umbral cambiable al 40 %). Mínimo teórico (corte superficie, grupo 50): alquiler mediano por m² de la vivienda colectiva × 50 / 0,30 (superficie cambiable a 70 y 90 m² en la web). Cada cifra lleva el estado de su alquiler.
-- **Lectura:** Es el alquiler expresado en otra unidad, no un indicador nuevo. La cifra principal paga la vivienda alquilada mediana de la sección, de unos 79 m² de mediana; el mínimo de 50 m² queda por debajo y no se da sin ella. El umbral del 30 % se inspira en el criterio de zona tensionada de la Ley 12/2023, que usa renta del hogar y suministros; no es ese criterio.
+- **Lectura:** Es el alquiler expresado en otra unidad, no un indicador nuevo. La cifra principal paga la vivienda alquilada mediana de la sección, de unos 79 m² de mediana; el mínimo de 50 m² queda por debajo y no se da sin ella. El 30 % es una convención y solo cuenta el alquiler: la Ley 12/2023 y Eurostat cuentan además los suministros y usan la renta del hogar. En la web se pueden añadir los otros gastos de vivienda de los inquilinos (ECV).
 
 ### `sobrecarga`
 

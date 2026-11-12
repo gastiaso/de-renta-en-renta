@@ -4,9 +4,16 @@
 // enteros (valor × escala) sin huecos de periodos (null sin cifra). La vivienda como problema
 // (CIS), aparte: datos/cis_vivienda.json (R/fuente_cis_barometros.R), al final de este fichero.
 
+import { EUROS, anioBaseIpc, deflactar } from './evolucion.js';
+
 export const RUTA_DATOS = 'datos/historico/historico.json';
+export const RUTA_IPC = 'datos/ipc.json';
 export const SUBPERIODOS = { trimestral: 4, mensual: 12, anual: 1 };
 export const ESPANA = '00';
+// Euros constantes (decisión del autor, 12-nov-2026): las series en euros se ven en euros del año
+// base del IPC (por defecto) o en euros de cada año; los demás gráficos son cocientes o tipos.
+export const SERIES_EUROS = ['valor_tasado', 'sueldo_asalariado'];
+export const EUROS_DEFECTO = 'constantes';
 
 // Bloques de la página, en orden: el id es el ancla de la sección (la casilla «Sube el euríbor» de
 // la portada lleva a #hist-tipos). El valor tasado se puede ver también por comunidad.
@@ -16,27 +23,74 @@ export const BLOQUES = [
   // Tipos (plan §11, pregunta 47 c): el de los préstamos nuevos para vivienda, línea principal, y
   // como referencia el MIBOR hasta 1998 y el euríbor desde 1999 (índices distintos, con su ruptura)
   { id: 'hist-tipos', series: ['tipo_prestamos', 'mibor_euribor'] },
-  { id: 'hist-tasado', series: ['valor_tasado'], territorial: true },
-  { id: 'hist-sueldo', series: ['sueldo_asalariado'] },
+  { id: 'hist-tasado', series: ['valor_tasado'], territorial: true, euros: true },
+  { id: 'hist-sueldo', series: ['sueldo_asalariado'], euros: true },
 ];
 
-// Estado de la URL: idioma y comunidad del valor tasado (solo una que tenga serie).
+// Estado de la URL: idioma, comunidad del valor tasado (solo una que tenga serie) y euros de las
+// series en euros («constantes», por defecto, o «corrientes»: ?euros=corrientes).
 export function leerEstado(busqueda, datos = null) {
   const p = new URLSearchParams(busqueda);
   const idioma = p.get('idioma') === 'en' ? 'en' : 'es';
   let ccaa = p.get('ccaa');
   const validas = datos?.series?.valor_tasado?.territorios ?? null;
   if (!ccaa || !/^\d{2}$/.test(ccaa) || ccaa === ESPANA || (validas && !(ccaa in validas))) ccaa = null;
-  return { idioma, ccaa };
+  const euros = EUROS.includes(p.get('euros')) ? p.get('euros') : EUROS_DEFECTO;
+  return { idioma, ccaa, euros };
 }
 
 export function consulta(estado) {
   const p = new URLSearchParams();
   if (estado.idioma === 'en') p.set('idioma', 'en');
   if (estado.ccaa) p.set('ccaa', estado.ccaa);
+  if (estado.euros && estado.euros !== EUROS_DEFECTO) p.set('euros', estado.euros);
   const s = p.toString();
   return s ? `?${s}` : '';
 }
+
+// --- Euros constantes ---------------------------------------------------------------------------
+
+// Copia de los datos con las series en euros en euros del año base del IPC (datos/ipc.json): cada
+// periodo, con la media anual de su año (un trimestre, con la de su año); sin índice (antes del
+// primer año con media anual, 2002, y el año en curso), sin cifra, y esos periodos se recortan de
+// los extremos de la serie. Las demás series, tal cual. Cada serie deflactada lleva `deflactada`:
+// { base, desde, hasta, fuera } (primer y último año con cifra; `fuera`, los años con cifra en
+// euros de cada año que se quedan fuera). null sin IPC: la página se queda en euros de cada año.
+export function deflactarDatos(datos, ipc, series = SERIES_EUROS) {
+  const base = anioBaseIpc(ipc);
+  if (!datos?.series || base === null) return null;
+  const copia = { ...datos, series: { ...datos.series } };
+  for (const serie of series) {
+    const s = datos.series[serie];
+    if (!s) continue;
+    const fuera = new Set();
+    const territorios = {};
+    for (const [geo, terr] of Object.entries(s.territorios)) {
+      const puntos = puntosDe(datos, serie, geo);
+      let v = puntos.map((p) => {
+        if (p.v === null) return null;
+        const x = deflactar(p.v, p.anio, ipc, base);
+        if (x === null) fuera.add(p.anio);
+        return x === null ? null : x * s.escala;
+      });
+      let primero = v.findIndex((x) => x !== null);
+      if (primero < 0) continue;
+      const ultimo = v.length - 1 - [...v].reverse().findIndex((x) => x !== null);
+      v = v.slice(primero, ultimo + 1);
+      const p0 = puntos[primero];
+      territorios[geo] = { ...terr, inicio: [p0.anio, p0.sub], v };
+    }
+    const anios = Object.keys(territorios).flatMap((g) => puntosDe({ series: { x: { ...s, territorios } } }, 'x', g)
+      .filter((p) => p.v !== null).map((p) => p.anio));
+    copia.series[serie] = { ...s, territorios,
+      deflactada: { base, desde: Math.min(...anios), hasta: Math.max(...anios), fuera: [...fuera].sort((a, b) => a - b) } };
+  }
+  return copia;
+}
+
+// Datos que pinta la página según la elección de euros: los deflactados con «constantes» (si hay
+// IPC) y los originales con «corrientes».
+export const datosVista = (datos, deflactados, euros) => (euros === 'constantes' && deflactados ? deflactados : datos);
 
 export const decimalesDe = (escala) => Math.round(Math.log10(escala));
 

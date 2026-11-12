@@ -72,6 +72,44 @@ export function variacionIpc(ipc, desde, hasta) {
   return a === null || b === null || a <= 0 ? null : { desde: Number(desde), hasta: Number(hasta), valor: 100 * (b / a - 1) };
 }
 
+// --- Euros constantes (decisión del autor, 12-nov-2026) ------------------------------------------
+// Las series en euros se ofrecen de dos maneras: «Euros de {año base}» (constantes) y «Euros de cada
+// año» (corrientes). Año base: el último con media anual del IPC (datos/ipc.json: anio_base, o el
+// último año con índice). Cada periodo va con la media anual de su año (un trimestre, con la de su
+// año); los años sin media anual (antes del primero del índice, 2002, y el año en curso) se quedan
+// fuera de la versión constante (null). La misma cuenta en R: ipc_deflactar() (R/fuente_ine_ipc.R).
+export const EUROS = ['constantes', 'corrientes'];
+
+export function anioBaseIpc(ipc) {
+  if (!ipc?.anios || !ipc?.indice) return null;
+  const con = ipc.anios.filter((a, i) => numero(ipc.indice[i]) !== null).map(Number);
+  if (!con.length) return null;
+  const ultimo = Math.max(...con);
+  return Number.isInteger(ipc.anio_base) && con.includes(ipc.anio_base) ? ipc.anio_base : ultimo;
+}
+
+// Índice (media anual) de un año, o null.
+export function indiceIpc(ipc, anio) {
+  if (!ipc?.anios || !ipc?.indice) return null;
+  const i = ipc.anios.findIndex((x) => Number(x) === Number(anio));
+  return i < 0 ? null : numero(ipc.indice[i]);
+}
+
+// Año de un periodo: «2024», «2024-T2», «2024-02» → 2024; null si no empieza por un año.
+export const anioDePeriodo = (p) => (/^\d{4}/.test(String(p)) ? Number(String(p).slice(0, 4)) : null);
+
+// Valor en euros del año base: x × índice del año base / índice de su año; null sin índice.
+export function deflactar(x, anio, ipc, base = anioBaseIpc(ipc)) {
+  const v = numero(x);
+  const ia = indiceIpc(ipc, anio);
+  const ib = indiceIpc(ipc, base);
+  return v === null || ia === null || ib === null || ia <= 0 ? null : (v * ib) / ia;
+}
+
+// Valores de una serie por periodos en euros del año base (null donde no hay índice).
+export const deflactarSerie = (periodos, valores, ipc, base = anioBaseIpc(ipc)) =>
+  valores.map((x, i) => deflactar(x, anioDePeriodo(periodos[i]), ipc, base));
+
 // ¿Es una cifra en euros? Por su unidad («€ por mes», «€ netos por mes»…), en los dos idiomas.
 export const enEuros = (unidad) => typeof unidad === 'string' && unidad.includes('€');
 
@@ -92,15 +130,23 @@ export function textosVariacion(t, lista) {
 }
 
 // Notas al pie de la evolución: la banda, los puntos huecos, la regla de las variaciones (solo las
-// que salen) y los euros corrientes con el IPC del periodo. `euros`: 'cifra' (la serie está en
-// euros), 'resto' (en «¿te llega?», los euros que quedan) o null.
-export function notasEvolucion(t, { banda = false, pocos = false, umbral = UMBRAL_POCOS_CONTRATOS, lista = [], euros = null, ipc = null }) {
+// que salen) y los euros, corrientes o del año base, con el IPC del periodo. `euros`: 'cifra' (la
+// serie está en euros), 'resto' (en «¿te llega?», los euros que quedan) o null. `unidad`:
+// 'corrientes' o 'constantes' (solo con euros 'cifra'); `base`, el año base; `fuera`, los periodos
+// sin media anual del IPC, que la versión constante deja fuera.
+export function notasEvolucion(t, { banda = false, pocos = false, umbral = UMBRAL_POCOS_CONTRATOS, lista = [], euros = null, ipc = null,
+  unidad = 'corrientes', base = null, fuera = [] }) {
   const notas = [];
   if (banda) notas.push(t('interfaz.ficha.evolucion_banda'));
   if (pocos) notas.push(t('interfaz.ficha.evolucion_pocos', { umbral: t.numero(umbral) }));
   if (lista.some((v) => v?.tipo === 'media')) notas.push(t('interfaz.ficha.variacion_media', { umbral: t.numero(umbral), anios: t.numero(ANIOS_MEDIA) }));
   if (lista.some((v) => v?.tipo === 'pocos')) notas.push(t('interfaz.ficha.variacion_pocos', { umbral: t.numero(umbral) }));
-  if (euros) {
+  if (euros === 'cifra' && unidad === 'constantes' && base) {
+    const partes = [t('interfaz.ficha.euros_constantes', { anio: base })];
+    if (fuera.length) partes.push(t('interfaz.ficha.euros_sin_ipc', { periodos: fuera.map((p) => t.periodo(p)).join(', '), anio: base }));
+    if (ipc) partes.push(t('interfaz.ficha.ipc_periodo', { desde: ipc.desde, hasta: ipc.hasta, variacion: textoVariacion(t, ipc.valor) }));
+    notas.push(partes.join(' '));
+  } else if (euros) {
     const partes = [t(euros === 'resto' ? 'interfaz.ficha.euros_corrientes_resto' : 'interfaz.ficha.euros_corrientes')];
     if (ipc) partes.push(t('interfaz.ficha.ipc_periodo', { desde: ipc.desde, hasta: ipc.hasta, variacion: textoVariacion(t, ipc.valor) }));
     notas.push(partes.join(' '));

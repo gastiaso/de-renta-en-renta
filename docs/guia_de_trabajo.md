@@ -38,6 +38,7 @@ F0 → en paralelo **F1b** (sobrecarga y Europa: publicable pronto, no depende d
 7. **Decisiones en CSV, no en código:** fuentes, indicadores, rupturas, tablas de paso y referencias de validación viven en `inventario/`.
 8. **Ingresos de las fichas en neto mensual repartido en 12** (plan, §3.1). Las fichas de una persona buscan 50 m²; la llave paga el alquiler mediano de su sección.
 9. **Las maquetas llevan valores inventados.** Nunca se copian como datos. Solo dos cifras de las maquetas son reales: el SMI neto de 2026 y los tres porcentajes del módulo de acceso de la ECV 2025.
+10. **Euros de cada año, y del año base solo donde se elige** (decisión del autor, 12-nov-2026). Las cifras en euros se publican en euros de cada año: el mapa, las leyendas, las cartas de la portada, las historias, las descargas y la tabla larga no se deflactan. La web las ofrece además en euros del año base, con el selector «Euros de {año base} · Euros de cada año», solo en la Máquina del tiempo (valor tasado y sueldo medio; abre en euros del año base) y en la evolución de la ficha (series en euros; abre en euros de cada año). Índice: medias anuales del IPC general nacional del INE (`ine_ipc`, base 2025); año base: el último con media anual publicada; un trimestre va con la media de su año; los años sin media anual (antes de 2002 y el año en curso) se quedan fuera de la versión deflactada y la nota del gráfico lo dice. La cuenta, en `ipc_deflactar()` y `js/evolucion.js`, y la página deflacta igual que R (nota metodológica, §9.2).
 
 ## Convenciones técnicas
 

@@ -205,11 +205,62 @@ test('tabla de la evolución con variación, cabecera, gráfico y notas', () => 
   assert.equal(tablaOtro.hijos[0].hijos[0].hijos.length, 3);
 });
 
+// --- Euros constantes (decisión del autor, 12-nov-2026) ------------------------------------------------
+
+test('euros constantes: año base, índice de un año y deflactado como R (ipc_deflactar())', () => {
+  const ipc = { anios: [2014, 2015, 2024, 2025], indice: [79.281, 78.885, 97.397, 100] };
+  assert.equal(E.anioBaseIpc(ipc), 2025);
+  assert.equal(E.anioBaseIpc({ ...ipc, anio_base: 2024 }), 2024);
+  assert.equal(E.anioBaseIpc({ ...ipc, anio_base: 2030 }), 2025);   // un año base sin índice no vale
+  assert.equal(E.anioBaseIpc(null), null);
+  assert.equal(E.anioDePeriodo('2024-T2'), 2024);
+  assert.equal(E.anioDePeriodo(2015), 2015);
+  assert.equal(E.anioDePeriodo('T2'), null);
+  // 1.000 € de 2015 en euros de 2025: 1.000 × 100 / 78,885
+  assert.ok(Math.abs(E.deflactar(1000, 2015, ipc) - 1267.668124484)< 1e-6);
+  assert.equal(E.deflactar(1000, 2025, ipc), 1000);
+  assert.equal(E.deflactar(1000, 2016, ipc), null);   // sin media anual
+  assert.equal(E.deflactar(null, 2015, ipc), null);
+  assert.deepEqual(E.deflactarSerie([2015, '2025-T1', 2026], [100, 200, 300], ipc).map((x) => (x === null ? null : Math.round(x * 10) / 10)),
+    [126.8, 200, null]);
+});
+
+test('euros constantes: la nota dice el año base y los periodos que quedan fuera, en los dos idiomas', () => {
+  const ipc = { desde: 2015, hasta: 2024, valor: 23.467 };
+  const es = sinNbsp(E.notasEvolucion(t.es, { euros: 'cifra', ipc, unidad: 'constantes', base: 2025, fuera: [2026] }).join(' '));
+  assert.match(es, /En euros de 2025, con la inflación descontada/);
+  assert.match(es, /fuera de los euros de 2025: 2026/);
+  assert.match(es, /IPC general de 2015 a 2024: \+23,5 %/);
+  assert.doesNotMatch(es, /euros corrientes/);
+  const en = E.notasEvolucion(t.en, { euros: 'cifra', ipc, unidad: 'constantes', base: 2025 }).join(' ');
+  assert.match(en, /In 2025 euros, adjusted for inflation/);
+  // Con «corrientes», el aviso de siempre; en «¿te llega?» (resto), también aunque se pida constantes
+  assert.match(E.notasEvolucion(t.es, { euros: 'cifra', unidad: 'corrientes', base: 2025 }).join(' '), /euros corrientes/);
+  assert.match(E.notasEvolucion(t.es, { euros: 'resto', unidad: 'constantes', base: 2025 }).join(' '), /euros que quedan/);
+});
+
+test('euros constantes: el selector va bajo el título de la evolución', () => {
+  const caja = new Nodo('div');
+  const selector = new Nodo('div');
+  selector.className = 'evo-euros';
+  ficha.fichaSeries(caja, { t: t.es, titulo: 'Evolución', filas: [{ periodo: 2024, texto: '1.217', estado: 0 }], estados: ['dato'], periodo: 2024, selector });
+  const seccion = caja.hijos[0];
+  assert.equal(seccion.hijos[0].etiqueta, 'h3');
+  assert.equal(seccion.hijos[1], selector);
+});
+
+test('euros constantes: la evolución abre en euros de cada año y no guarda la elección en la dirección', () => {
+  const principal = leerTexto('web', 'js', 'principal.js');
+  assert.match(principal, /let eurosEvolucion = 'corrientes';/);
+  assert.doesNotMatch(leerTexto('web', 'js', 'estado.js'), /eurosEvolucion|euros_evolucion|constantes/);
+});
+
 // --- Textos ---------------------------------------------------------------------------------------------
 
 test('los textos de la evolución están en castellano y en inglés', () => {
   const claves = ['evolucion_grafico', 'evolucion_banda', 'evolucion_pocos', 'cabecera_periodo', 'cabecera_variacion',
-    'variacion_media', 'variacion_pocos', 'euros_corrientes', 'euros_corrientes_resto', 'ipc_periodo'];
+    'variacion_media', 'variacion_pocos', 'euros_corrientes', 'euros_corrientes_resto', 'ipc_periodo',
+    'euros_grupo', 'euros_boton_constantes', 'euros_boton_corrientes', 'euros_constantes', 'euros_sin_ipc', 'euros_cabecera_constantes'];
   for (const idioma of ['es', 'en']) {
     for (const c of claves) assert.ok(t[idioma].existe(`interfaz.ficha.${c}`), `${idioma}: ${c}`);
   }

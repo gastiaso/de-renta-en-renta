@@ -400,7 +400,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Version:** v0.1
 - **Definition:** Net monthly pay needed so that the tract's median monthly rent does not exceed 30% of pay. Alongside, the theoretical minimum: the same calculation for a 50 m² flat.
 - **Calculation:** Median monthly rent of flats / 0.30 (threshold can be changed to 40%). Theoretical minimum (cut superficie, group 50): median rent per m² of flats × 50 / 0.30 (floor area can be changed to 70 or 90 m² on the website). Each figure carries the status of its rent.
-- **Reading:** It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² at the median; the 50 m² minimum falls below it and is never given without it. The 30% threshold draws on the stressed-zone criterion of Law 12/2023, which uses household income and utilities; it is not that criterion.
+- **Reading:** It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² at the median; the 50 m² minimum falls below it and is never given without it. The 30% is a convention and counts rent only: Law 12/2023 and Eurostat also count utilities and use household income. On the website, renters' other housing costs (ECV) can be added.
 
 ### `sobrecarga`
 

@@ -424,6 +424,14 @@ function pintarLeyenda() {
 
 // --- Territorio elegido -------------------------------------------------------------------------
 
+// Bajo el puesto, en letra de nota (decisión del autor, 12-nov-2026): el orden no tiene márgenes de
+// error (las cifras van sin intervalos) y sale de la lista de la vista (R/web_sobrecarga.R): con toda
+// la población, todos los territorios del mismo año de encuesta (armar_escalera()); con tenencia o
+// edad, los países y España con el último año y las comunidades con las olas agrupadas de la ECV.
+const notaPuesto = (v) => (v.corte === 'total'
+  ? t('sobrecarga.detalle.puesto_nota', { anio: v.anio })
+  : t('sobrecarga.detalle.puesto_nota_olas', { anio: v.anio, ...olas() }));
+
 function pintarDetalle() {
   const v = vista();
   const fila = estado.geo ? v.filas.find((f) => f.geo === estado.geo) : null;
@@ -453,6 +461,7 @@ function pintarDetalle() {
     el('p', { class: 'sc-detalle-cifra' },
       el('span', { class: 'sc-detalle-numero' }, pct(valor)),
       fila.puesto ? el('span', {}, t('sobrecarga.detalle.puesto', { p: fila.puesto, n: S.puestos(v) })) : null),
+    fila.puesto ? el('p', { class: 'nota sc-detalle-puesto-nota' }, notaPuesto(v)) : null,
     el('ul', { class: 'sc-detalle-lista' }, lineas.map((l) => el('li', {}, l))),
   );
 }

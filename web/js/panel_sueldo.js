@@ -1,6 +1,8 @@
-// Tarjeta «Tu sueldo»: sueldo neto (12 o 14 pagas, segundo sueldo opcional), fichas, superficie,
-// umbral, resumen y botones. El marcado está en mapa.html (textos con data-i18n); aquí se
-// conectan los controles y se actualiza lo que cambia. El sueldo solo vive en memoria.
+// Tarjeta «Tu sueldo»: ingresos netos (12 o 14 pagas, segundo ingreso opcional; «ingresos» para que
+// valga una pensión, decisión del autor del 12-nov-2026), fichas, superficie, umbral, «Añadir otros
+// gastos de vivienda» con su cifra a la vista, resumen con su aviso fijo y botones. El marcado está en
+// mapa.html (textos con data-i18n); aquí se conectan los controles y se actualiza lo que cambia. Lo
+// escrito solo vive en memoria.
 
 import { FICHAS_PERFIL, ingresoPeon, leerSueldo, SUPERFICIE_TIPICA } from './sueldo.js';
 
@@ -16,6 +18,10 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
     superficie: $('sueldo-superficie'),
     superficieNota: $('sueldo-superficie-nota'),
     umbral: $('sueldo-umbral'),
+    umbralTitulo: $('sueldo-umbral-titulo'),
+    gastos: $('sueldo-gastos'),
+    gastosNota: $('sueldo-gastos-nota'),
+    aviso: $('sueldo-aviso'),
     intro: $('sueldo-intro'),
     resumen: $('sueldo-resumen'),
     detalle: $('sueldo-detalle'),
@@ -76,6 +82,8 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
     const boton = e.target.closest('button[data-umbral]');
     if (boton) alCambiar({ umbral: Number(boton.dataset.umbral) });
   });
+  // Otros gastos de vivienda (decisión del autor, 12-nov-2026): apagado por defecto
+  el.gastos?.addEventListener('change', () => alCambiar({ gastos: el.gastos.checked }));
   el.volver.addEventListener('click', () => {
     el.neto.value = '';
     el.segundo.value = '';
@@ -89,6 +97,12 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
   }
 
   return {
+    // Solo el texto de los otros gastos de vivienda (al mover el mapa sin ficha, cambia el municipio del centro).
+    notaGastos(texto) {
+      if (!el.gastosNota) return;
+      el.gastosNota.textContent = texto ?? '';
+      el.gastosNota.hidden = !texto;
+    },
     // Rellena los campos con un sueldo que llega de un enlace compartido.
     ponerSueldo(sueldo) {
       if (!sueldo) return;
@@ -101,8 +115,9 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
     // sinEfecto, soloMinimo } (sinEfecto: el mapa activo no usa la superficie ni el umbral;
     // soloMinimo, tarea 40: el mapa del sueldo necesario usa el alquiler real y la superficie solo
     // cambia el mínimo teórico de la ficha). `tipica`: con la superficie típica elegida, el texto que
-    // dice de qué territorio es (o por qué no la hay).
-    pintar({ t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle, sinEfecto = false, soloMinimo = false, tipica = null }) {
+    // dice de qué territorio es (o por qué no la hay). `gastos`: { activo, disponible, nota }, el
+    // selector de otros gastos de vivienda y el texto con su cifra (o por qué no la hay).
+    pintar({ t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle, sinEfecto = false, soloMinimo = false, tipica = null, gastos = null }) {
       // Fichas: las que tienen ingreso en perfiles.json, y «Tu ficha» si hay sueldo escrito.
       const disponibles = [...FICHAS_PERFIL.filter((f) => perfiles?.[f]), 'peon'];
       el.fichas.querySelector('.fichas-botones').replaceChildren(...disponibles.map((ficha) => {
@@ -138,6 +153,17 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
       el.superficieNota.textContent = nota;
       el.superficieNota.hidden = !nota;
       marcarGrupo(el.umbral, 'umbral', Math.round(umbral * 100));
+      // El umbral dice qué cuenta: solo el alquiler o, con el selector, también los otros gastos
+      const conGastos = Boolean(gastos?.activo);
+      if (el.umbralTitulo) el.umbralTitulo.textContent = t(conGastos ? 'interfaz.sueldo.umbral_gastos' : 'interfaz.sueldo.umbral');
+      if (el.gastos) {
+        el.gastos.checked = conGastos;
+        el.gastos.disabled = !gastos?.disponible;
+      }
+      if (el.gastosNota) {
+        el.gastosNota.textContent = gastos?.nota ?? '';
+        el.gastosNota.hidden = !gastos?.nota;
+      }
       // Rótulos con el formato del idioma («30 %» en castellano, «30%» en inglés)
       for (const b of el.umbral.querySelectorAll('button[data-umbral]')) b.textContent = t.porcentaje(Number(b.dataset.umbral) / 100);
       for (const b of el.superficie.querySelectorAll('button[data-superficie]')) {
@@ -147,6 +173,10 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
       el.intro.textContent = modo === 'necesario' ? t('interfaz.sueldo.intro_necesario') : t('interfaz.sueldo.intro_llega');
       el.resumen.textContent = resumen ?? '';
       el.resumen.hidden = !resumen;
+      // Aviso fijo junto al resultado de «¿te llega?» (decisión del autor, 12-nov-2026)
+      const conAviso = Boolean(resumen) && modo === 'llega';
+      if (el.aviso) el.aviso.hidden = !conAviso;
+      el.resumen.classList.toggle('con-aviso', conAviso);
       el.detalle.textContent = detalle ?? '';
       el.detalle.hidden = !detalle;
       el.volver.hidden = modo === 'necesario';

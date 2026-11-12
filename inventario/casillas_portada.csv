@@ -5,7 +5,7 @@ orden,id,texto_es,texto_en,familia,destino,destino_en,activa
 4,paga_alquiler,Paga el alquiler,Pay the rent,alquiler,mapa.html?mapa=alquiler_mes,,TRUE
 5,pisos_turisticos,Pisos turísticos en el portal,Tourist flats in the building,barrio,mapa.html?mapa=viviendas_turisticas,,TRUE
 6,zona_tensionada,Zona tensionada,Stressed housing market area,barrio,mapa.html?mapa=zona_tensionada&vista=5.20/40.20000/-3.70000,,TRUE
-7,ley_vivienda,Ley de Vivienda,Housing Act,especial,mapa.html?mapa=zona_tensionada&vista=5.20/40.20000/-3.70000,,TRUE
+7,ley_vivienda,Ley de Vivienda,Housing Act,especial,,,FALSE
 8,tope_alquileres,Tope de alquileres,Rent cap,alquiler,mapa.html?mapa=var_alquiler,,TRUE
 9,renueva_contrato,Renueva el contrato,Renew the lease,alquiler,mapa.html?ficha=llave,,TRUE
 10,actualizacion_renta,Actualización de la renta,Rent review,alquiler,,,FALSE

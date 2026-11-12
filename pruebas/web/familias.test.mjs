@@ -112,6 +112,14 @@ test('texto de los euros que quedan: «quedan», o «faltan» en positivo; singu
   assert.equal(texto('en', 1347), '€1,347 left each month after rent');
   assert.equal(texto('en', -802), '€802 short of the rent each month');
   assert.equal(texto('en', -802, { corto: true }), '€802 short');
+  // Con los otros gastos de vivienda restados, la frase larga lo dice; la corta no cambia (12-nov-2026)
+  assert.equal(texto('es', 197, { gastos: true }), 'Quedan 197 € al mes después del alquiler y los otros gastos');
+  assert.equal(texto('es', 1, { gastos: true }), 'Queda 1 € al mes después del alquiler y los otros gastos');
+  assert.equal(texto('es', -10, { gastos: true }), 'Faltan 10 € al mes para cubrir el alquiler y los otros gastos');
+  assert.equal(texto('es', -1, { gastos: true }), 'Falta 1 € al mes para cubrir el alquiler y los otros gastos');
+  assert.equal(texto('es', 197, { corto: true, gastos: true }), 'quedan 197 €');
+  assert.equal(texto('en', 197, { gastos: true }), '€197 left each month after rent and other housing costs');
+  assert.equal(texto('en', -10, { gastos: true }), '€10 short of rent and other housing costs each month');
   assert.equal(texto('es', null), null);
   assert.equal(ficha.textoResto(t.es, -802).cifra, '802 €');
 });
@@ -121,7 +129,8 @@ test('texto de los euros que quedan: una resta, sin umbral ni «acceso» o «bar
     const dic = JSON.parse(leerTexto('web', 'i18n', `${idioma}.json`));
     const textos = [...Object.values(dic.interfaz.ficha.resto), ...Object.values(dic.interfaz.leyenda.lectura_familia)];
     assert.deepEqual(Object.keys(dic.interfaz.ficha.resto).sort(), [
-      'euros', 'falta', 'falta_corto', 'falta_corto_uno', 'falta_uno', 'queda', 'queda_corto', 'queda_corto_uno', 'queda_uno',
+      'euros', 'falta', 'falta_corto', 'falta_corto_uno', 'falta_gastos', 'falta_uno', 'falta_uno_gastos',
+      'queda', 'queda_corto', 'queda_corto_uno', 'queda_gastos', 'queda_uno', 'queda_uno_gastos',
     ]);
     for (const s of textos) {
       assert.doesNotMatch(s, /llega|basta|suficien|alcanza|enough|afford|sufficien|make rent/i, s);

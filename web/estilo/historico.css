@@ -59,6 +59,25 @@ html, body { height: auto; min-height: 100%; }
   color: var(--color-tinta);
   font: 600 0.9rem var(--fuente-tablero);
 }
+/* Euros del año base o de cada año (valor tasado y sueldo medio): dos botones como los del idioma */
+.hi-euros { display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%; margin-top: 8px; border: var(--borde); border-radius: var(--radio-control); overflow: hidden; }
+.hi-euros[hidden] { display: none; }
+.hi-euros button {
+  min-height: var(--objetivo-tactil);
+  padding: 0 12px;
+  border: 0;
+  background: var(--color-placa);
+  color: var(--color-tinta);
+  font: 600 0.9rem var(--fuente-tablero);
+  cursor: pointer;
+}
+.hi-euros button + button { border-left: var(--borde); }
+.hi-euros button:focus-visible { outline-offset: -4px; outline-color: var(--color-tinta); }
+.hi-euros button[aria-pressed="true"] { background: var(--color-rojo); color: #fff; }
+.hi-euros button[aria-pressed="true"]:focus-visible { outline-color: #fff; }
+.hi-euros-nota { margin-top: 6px; }
+.hi-euros-nota:empty { display: none; }
+.hi-lectura-euros { font-weight: 600; }
 .hi-grafico { position: relative; margin-top: 8px; min-width: 0; }
 .hi-grafico svg { display: block; width: 100%; height: auto; overflow: visible; }
 .hi-grafico .eje { stroke: var(--color-tinta); stroke-width: 1; }

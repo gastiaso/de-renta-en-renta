@@ -10,7 +10,7 @@ import { cargarIdioma, traducirPagina } from './i18n.js';
 import {
   cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarCajas, cargarSalarios,
   cargarIndice, cargarValores, cargarSeries, valorDe, periodoPara, periodosDe, fueraDeSerie,
-  serieDeTipologia, tipologiaDe, tieneTipologia, cargarDetalle, cargarCodigosPostales,
+  serieDeTipologia, tipologiaDe, tieneTipologia, cargarDetalle, cargarCodigosPostales, cargarOtrosGastos,
 } from './datos.js';
 import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
 import { pintarLeyenda, plegarLeyenda } from './leyenda.js';
@@ -18,11 +18,11 @@ import {
   fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fichaContexto, fichaTerritorio, nombresTerritorio,
   fichaDeclaraciones, textoResto, fichaResidentes,
 } from './ficha.js';
-import { formulaDe, daSueldo, minimoDe, textoSupuestos } from './formulas.js';
+import { formulaDe, daSueldo, minimoDe, textoSupuestos, textoOtrosGastos } from './formulas.js';
 import {
   modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega, resumenLlegaReal,
   marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, estadoLlega, perfilesDelAnio,
-  eurosQueQuedan, superficieTipica, SUPERFICIE_TIPICA,
+  eurosQueQuedan, superficieTipica, SUPERFICIE_TIPICA, gastosDelAnio, supuestosEn, otrosGastosEn, rangoOtrosGastos,
 } from './sueldo.js';
 import {
   admiteRelativa, municipioQueManda, cortesRelativos, soloEnMunicipio, MINIMO_SECCIONES_RELATIVA,
@@ -46,6 +46,7 @@ import { mostrarFicha, mostrarHistoria, esPantallaEstrecha, prepararPlegado } fr
 import { lineaTransparencia } from './transparencia.js';
 import {
   variaciones, bandaMargen, pocosContratos, variacionIpc, enEuros, textosVariacion, notasEvolucion, graficoEvolucion, cargarIpc,
+  anioBaseIpc, deflactarSerie,
 } from './evolucion.js';
 import { cargarHistorias, buscarHistoria, pasoDe, cambiosDePaso } from './historias.js';
 import { crearPanelHistoria } from './panel_historia.js';
@@ -80,6 +81,7 @@ let indice;        // código → posición
 let territorios;   // nombres por nivel
 let perfiles;      // ingresos de las fichas
 let salarios;      // curvas del percentil salarial (datos/salarios.json)
+let otrosGastos = null;   // otros gastos de vivienda de la ECV (datos/otros_gastos.json), o null
 let mapa;          // funciones del mapa (mapa.js)
 let colores;       // colores del mapa (tokens.css)
 let colorPlaca;    // secciones fuera del municipio en la escala relativa: sin color
@@ -140,7 +142,6 @@ function vista() {
   const modo = modoDe(estado, sueldo, perfiles);
   const superficie = superficieDe(estado, sueldo, perfiles, tipica?.valor);   // con «típica», la del territorio que manda
   const umbral = umbralDe(estado);
-  const supuestos = { superficie_m2: superficie ?? m.supuestos.superficie_m2, umbral };
   let calculo = modo === 'llega' ? calculoLlega({ ficha: estado.ficha, perfiles, sueldo, superficie, serie: serieTipo }) : null;
   const def = mapaDef();
   const mapaTipo = { ...def, base: serieTipo(def.base) };
@@ -150,7 +151,11 @@ function vista() {
   const fuera = fueraDeSerie(m.indicadores[seriesColor[0]], estado.anio);
   // Ingreso de las fichas del año del alquiler (regla 4): la tartera y el transistor tienen serie.
   const perfilesAnio = perfilesDelAnio(perfiles, periodo ?? estado.anio);
-  if (calculo) calculo = calculoLlega({ ficha: estado.ficha, perfiles: perfilesAnio, sueldo, superficie, serie: serieTipo });
+  // Otros gastos de vivienda (decisión del autor, 12-nov-2026): los de la ola de la ECV del año del
+  // alquiler que se ve (o la más cercana), si el selector está encendido; van en los supuestos
+  const gastos = gastosEnAnio(periodo ?? fuera?.anio ?? estado.anio);
+  const supuestos = { superficie_m2: superficie ?? m.supuestos.superficie_m2, umbral, gastos };
+  if (calculo) calculo = calculoLlega({ ficha: estado.ficha, perfiles: perfilesAnio, sueldo, superficie, serie: serieTipo, gastos });
   // En el sueldo necesario, las fichas de una persona y la llave van en la regla de la leyenda.
   const enSueldo = !calculo && daSueldo(def);
   const series = [...seriesColor];
@@ -164,10 +169,23 @@ function vista() {
   const fiabilidad = seriesFiabilidad(m, seriesColor[0]);
   if (fiabilidad) series.push(...Object.values(fiabilidad).filter((s) => m.indicadores[s]));
   return {
-    modo, superficie, umbral, supuestos, calculo, mapa: mapaTipo, seriesColor, periodo, fuera, fiabilidad,
+    modo, superficie, umbral, supuestos, gastos, calculo, mapa: mapaTipo, seriesColor, periodo, fuera, fiabilidad,
     referencia: periodo ?? estado.anio, enSueldo, tipologia: tipologiaDe(m, seriesColor[0]), series: [...new Set(series)],
     perfiles: perfilesAnio,
   };
+}
+
+// Otros gastos de vivienda de un año del alquiler (gastosDelAnio() de sueldo.js), con el selector
+// encendido y el fichero de la ECV cargado; si no, null.
+const gastosEnAnio = (anio) => (estado.gastos && otrosGastos
+  ? gastosDelAnio(otrosGastos, anio, territorios?.ccaa_de_provincia, nombresCcaa())
+  : null);
+const nombresCcaa = () => Object.fromEntries(Object.entries(territorios?.ccaa ?? {}).map(([c, n]) => [c, ordenNatural(n)]));
+// Supuestos de un territorio (la cifra de los otros gastos de su comunidad) y, con `periodo`, los de
+// ese año del alquiler (la evolución de la ficha).
+function supuestosDe(v, codigo, nivel, periodo = null) {
+  const s = periodo === null || !v.gastos ? v.supuestos : { ...v.supuestos, gastos: gastosEnAnio(periodo) };
+  return supuestosEn(s, codigo, nivel);
 }
 
 // «Sin datos de 2020: la serie empieza en febrero de 2024.»
@@ -334,6 +352,40 @@ function textoTipica(v) {
   return t('interfaz.sueldo.tipica_nota', { territorio: tipica.nombre, superficie, anio: t.periodo(tipica.anio) });
 }
 
+// Texto junto al selector «Añadir otros gastos de vivienda» (decisión del autor, 12-nov-2026), a la
+// vista también con el selector apagado: la cifra de la comunidad del territorio que manda (la
+// sección, el territorio elegido o, sin ficha, el municipio del centro de la vista) o, sin él, la
+// horquilla de las comunidades y la de España; qué cuenta, y si la ola no es del año del alquiler.
+// Sin el fichero de la ECV (la muestra de ejemplo), por qué no hay.
+function notaGastos(v) {
+  const g = otrosGastos
+    ? v.gastos ?? gastosDelAnio(otrosGastos, v.periodo ?? v.fuera?.anio ?? estado.anio, territorios?.ccaa_de_provincia, nombresCcaa())
+    : null;
+  if (!g) return t('interfaz.sueldo.gastos_sin');
+  const terr = estado.seccion
+    ? { nivel: 'sc', codigo: estado.seccion }
+    : leerTerritorio(estado.territorio) ?? (centro ? { nivel: 'municipio', codigo: centro } : null);
+  const anio = g.anio_ecv;
+  const euros = (x) => t.numero(Math.round(x));
+  const partes = [];
+  if (terr) {
+    const x = otrosGastosEn(g, terr.codigo, terr.nivel);
+    const territorio = x.ccaa === '00' ? t('vocabulario.nivel.nacional') : g.nombres[x.ccaa] ?? x.ccaa;
+    // España, su mediana; una comunidad, la de España ajustada con su factor (o tal cual, sin muestra)
+    if (x.ccaa === '00') partes.push(t('interfaz.sueldo.gastos_nota_pais', { euros: euros(x.valor), territorio, anio }));
+    else if (x.espana) partes.push(t('interfaz.sueldo.gastos_nota_espana', { euros: euros(x.valor), territorio, anio, minimo: t.numero(g.minimo ?? 0) }));
+    else partes.push(t('interfaz.sueldo.gastos_nota', { euros: euros(x.valor), territorio, anio, ola_desde: g.olas.desde, ola_hasta: g.olas.hasta }));
+  } else {
+    const r = rangoOtrosGastos(g);
+    partes.push(r
+      ? t('interfaz.sueldo.gastos_nota_rango', { desde: euros(r.desde), hasta: euros(r.hasta), euros: euros(g.espana.v), anio })
+      : t('interfaz.sueldo.gastos_nota_pais', { euros: euros(g.espana.v), territorio: t('vocabulario.nivel.nacional'), anio }));
+  }
+  partes.push(t('interfaz.sueldo.gastos_que'));
+  if (g.anio && g.anio !== g.anio_ecv) partes.push(t('interfaz.sueldo.gastos_anio', { alquiler: g.anio, anio: g.anio_ecv }));
+  return partes.join(' ');
+}
+
 // Escala relativa al municipio (escala_municipio.js): null si el mapa no la admite; si no, { ofrecida,
 // elegida, activa, municipio, nombre, n, cortes, anio, motivo, minimo }, con los septiles de las
 // secciones del municipio que manda en el año y la serie que se ven, en la unidad del mapa.
@@ -348,10 +400,11 @@ function escalaRelativa(v) {
   const columna = columnas[v.mapa.base];
   if (!municipio || !columna || v.fuera) return r;
   const formula = formulaDe(v.mapa);
+  const supuestos = supuestosDe(v, municipio, 'municipio');   // con otros gastos, los de su comunidad
   const valores = [];
   for (let i = 0; i < secciones.length; i++) {
     const x = columna.valores[i];
-    if (x !== null && x !== undefined && secciones[i].startsWith(municipio)) valores.push(formula.calcular(x, v.supuestos));
+    if (x !== null && x !== undefined && secciones[i].startsWith(municipio)) valores.push(formula.calcular(x, supuestos));
   }
   const { n, cortes } = cortesRelativos(valores, { decimales: v.mapa.decimales ?? 0 });
   return { ...r, n, cortes, anio: columna.periodo, activa: r.elegida && Boolean(cortes), motivo: cortes ? null : 'pocas' };
@@ -372,6 +425,7 @@ function seguirCentro() {
   const relativa = estado.escala === 'municipio' && !estado.seccion && terr?.nivel !== 'municipio';
   const conTipica = estado.superficie === SUPERFICIE_TIPICA && !estado.seccion && !terr;
   if (relativa || conTipica) actualizar();
+  else if (!estado.seccion && !terr && panel) panel.notaGastos(notaGastos(vista()));   // la cifra del municipio del centro
 }
 
 // Tarea 51: al acercar o alejar el mapa, si la escala que se ve tiene otro juego de cortes, la
@@ -451,7 +505,7 @@ async function actualizar() {
     const propia = relativa?.activa && capa === 'secciones' ? relativa : null;
     const pintura = (paleta, fueraColor) => {
       const color = v.modo === 'necesario'
-        ? colorNecesario(v.mapa, v.supuestos, paleta, nivel, propia?.cortes)   // tarea 51: el juego de cortes de cada escala
+        ? colorNecesario(v.mapa, v.supuestos, paleta, nivel, propia?.cortes, id)   // tarea 51: el juego de cortes de cada escala
         : colorLlega(v.calculo, id, paleta, nivel);
       return propia ? soloEnMunicipio(color, { municipio: propia.municipio, idSeccion: id, fueraColor }) : color;
     };
@@ -478,14 +532,21 @@ async function actualizar() {
     if (v.enSueldo) Object.assign(leyenda, marcasRegla({ perfiles: v.perfiles, seccion: enProvincia, rentaHogar: columnas[perfiles.llave?.ingreso.serie]?.valores }));
   } else {
     const { vivienda, ingreso } = textosLlega(v);
-    leyenda.vivienda = t('interfaz.leyenda.llega_sub', { vivienda, ingreso });
+    // Otros gastos de vivienda (12-nov-2026): el subtítulo y una línea de la leyenda lo dicen, con la cifra
+    const conGastos = Boolean(v.gastos);
+    leyenda.vivienda = t(conGastos ? 'interfaz.leyenda.llega_sub_gastos' : 'interfaz.leyenda.llega_sub', { vivienda, ingreso });
+    leyenda.otros = conGastos ? t('interfaz.leyenda.llega_gastos', { otros: textoOtrosGastos(t, v.supuestos) }) : null;
+    // Decisión del autor (12-nov-2026): el resultado dice qué y cuánto («El alquiler de 50 m² no pasa
+    // del 30 % de tus ingresos en el 48 % de las secciones con dato»); la misma frase en la portada
     const r = resumenLlega(v.calculo, secciones, valorEn, v.umbral);
-    resumen = !r.con ? t('interfaz.sueldo.sin_datos') : t(estado.ficha === 'peon' ? 'interfaz.sueldo.resumen_peon' : 'interfaz.sueldo.resumen_ficha', {
+    const clave = `interfaz.sueldo.${estado.ficha === 'peon' ? 'resumen_peon' : 'resumen_ficha'}${conGastos ? '_gastos' : ''}`;
+    resumen = !r.con ? t('interfaz.sueldo.sin_datos') : t(clave, {
+      vivienda, umbral: t.porcentaje(v.umbral),
       pct: t.porcentaje(r.proporcion), caben: t.numero(r.caben), total: t.numero(r.con), ficha: t(`fichas.${estado.ficha}`),
     });
     // Tarea 40: al lado, la misma proporción con el alquiler mensual mediano real de cada sección
     const real = r.con ? resumenLlegaReal(v.calculo, secciones, valorEn, v.umbral) : null;
-    if (real) resumen += ` ${t('interfaz.sueldo.resumen_real', { pct: t.porcentaje(real.proporcion), caben: t.numero(real.caben), total: t.numero(real.con) })}`;
+    if (real) resumen += ` ${t('interfaz.sueldo.resumen_real', { vivienda, pct: t.porcentaje(real.proporcion), caben: t.numero(real.caben), total: t.numero(real.con) })}`;
     // Tarea 44: qué estadístico usa la ficha y de quién, en una línea
     const metodo = t.existe(`fichas_metodo.${estado.ficha}`) ? t(`fichas_metodo.${estado.ficha}`) : null;
     detalle = [metodo, t('interfaz.sueldo.detalle', { vivienda, ingreso, umbral: t.porcentaje(v.umbral) }), avisoAnios(v),
@@ -499,6 +560,7 @@ async function actualizar() {
     sinEfecto: v.modo === 'necesario' && !usaSupuestos(v.mapa),
     soloMinimo: v.modo === 'necesario' && Boolean(v.mapa.minimo),   // tarea 40: la superficie solo cambia el mínimo
     tipica: textoTipica(v),
+    gastos: { activo: Boolean(v.gastos), disponible: Boolean(otrosGastos), nota: notaGastos(v) },
   });
   pintarFicha(v);
   guardarEstado(estado);
@@ -565,13 +627,14 @@ function pintarFicha(v = vista()) {
   let intervalo = null;
   let enLimite = false;
   let minimo = null;
+  const supuestos = supuestosDe(v, codigo, 'sc');   // con otros gastos de vivienda, los de su comunidad
   if (v.modo === 'necesario') {
     const base = x(v.mapa.base);
-    valor = base === null ? null : formulaDe(v.mapa).calcular(base, v.supuestos);
+    valor = base === null ? null : formulaDe(v.mapa).calcular(base, supuestos);
     // El intervalo, en los mapas que son el alquiler en alguna unidad (no en el esfuerzo, con la renta)
     if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen);
     // Tarea 40: al lado, el mínimo teórico con la superficie elegida (fuera de la serie, nada)
-    if (!v.fuera) minimo = minimoDe(v.mapa, x, v.supuestos, serieTipo);
+    if (!v.fuera) minimo = minimoDe(v.mapa, x, supuestos, serieTipo);
   } else {
     const r = v.calculo.calcular(codigo, x);
     valor = r && { ...r, tramo: tramoLlega(r.ratio) };
@@ -579,11 +642,11 @@ function pintarFicha(v = vista()) {
   }
   const { huecoContexto, huecoSerie, huecoComparador, huecoResidentes } = fichaSeccion(el.ficha, {
     t, codigo, territorios, modo: v.modo, mapaId: idTextos(estado.mapa), mapaDef: v.mapa, ficha: estado.ficha,
-    supuestos: v.supuestos, anio: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo,
+    supuestos, anio: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo,
     tipologia: v.tipologia, valor, estado: estadoCifra(v, codigo, x, estadoDe), estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirSeccion(null),
     fiabilidad, intervalo, enLimite, sueldo, minimo,
-    notas: notaPercentil(v, valor, columnas[v.seriesColor[0]]?.periodo ?? v.periodo, 'sc', codigo),
+    notas: [...notaPercentil(v, valor, columnas[v.seriesColor[0]]?.periodo ?? v.periodo, 'sc', codigo), ...notaGastosFicha(v, supuestos)],
   });
   if (valor === null && !v.fuera) {
     contextoSinMediana(v, codigo, x)
@@ -639,10 +702,10 @@ async function contextoSinMediana(v, codigo, x) {
     if (alquiler === null || alquiler === undefined) return null;
     if (v.modo === 'necesario') {
       const d = v.mapa.decimales ?? 0;
-      return `${t.numero(formulaDe(v.mapa).calcular(alquiler, v.supuestos), d)} ${t(`indicadores.${estado.mapa}.unidad`)}`;
+      return `${t.numero(formulaDe(v.mapa).calcular(alquiler, supuestosDe(v, codigo, 'sc')), d)} ${t(`indicadores.${estado.mapa}.unidad`)}`;
     }
     const r = v.calculo.calcular(codigo, (s) => (s === base ? alquiler : x(s)));
-    return r ? `${t.porcentaje(r.ratio)} ${t('interfaz.ficha.del_ingreso')}` : null;
+    return r ? `${t.porcentaje(r.ratio)} ${t(Number.isFinite(r.otros) ? 'interfaz.ficha.del_ingreso_gastos' : 'interfaz.ficha.del_ingreso')}` : null;
   };
   const filas = [];
   const cifraSeccion = enUnidad(enSeccion?.valor);
@@ -678,10 +741,10 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
   const conSerie = (p) => Boolean(perfiles[ficha]?.anios?.[String(p)]);
   const calculoNivel = nivel === 'sc' || !v.calculo
     ? v.calculo
-    : calculoLlega({ ficha, perfiles: v.perfiles, sueldo, superficie: v.superficie, serie: serieTipo, nivel });
+    : calculoLlega({ ficha, perfiles: v.perfiles, sueldo, superficie: v.superficie, serie: serieTipo, nivel, gastos: v.gastos });
   const calculoDe = (p) => (ficha !== 'llave' && conSerie(p)
-    ? calculoLlega({ ficha, perfiles: perfilesDelAnio(perfiles, p), sueldo, superficie: v.superficie, serie: serieTipo, nivel })
-    : calculoNivel);
+    ? calculoLlega({ ficha, perfiles: perfilesDelAnio(perfiles, p), sueldo, superficie: v.superficie, serie: serieTipo, nivel, gastos: v.gastos && gastosEnAnio(p) })
+    : v.gastos ? calculoLlega({ ficha, perfiles: v.perfiles, sueldo, superficie: v.superficie, serie: serieTipo, nivel, gastos: gastosEnAnio(p) }) : calculoNivel);
   const filas = periodos.map((p) => {
     const estadoPeor = v.modo !== 'llega'
       ? Math.max(...v.seriesColor.map((s) => en(s, p).estado))
@@ -692,7 +755,7 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
     if (v.modo === 'necesario') {
       const b = en(base, p).valor;
       const cat = v.mapa.categorias;   // F5: en los mapas de categorías, su texto
-      if (b !== null && !cat) cifra = formulaDe(v.mapa).calcular(b, v.supuestos);
+      if (b !== null && !cat) cifra = formulaDe(v.mapa).calcular(b, supuestosDe(v, codigo, nivel, p));   // otros gastos: los del año
       if (b !== null) texto = cat ? t(`vocabulario.${cat.vocabulario}.${b}`) : t.numero(cifra, v.mapa.decimales ?? 0);
     } else {
       const r = calculoDe(p).calcular(codigo, (serie) => en(serie, p).valor);
@@ -736,25 +799,43 @@ async function fiabilidadEnPeriodos(v, nivel, codigo, periodos) {
   return contratos || margen ? { contratos, margen } : null;
 }
 
+// Euros de la evolución en las series en euros (decisión del autor, 12-nov-2026): «corrientes»
+// (euros de cada año, como el mapa, la leyenda y las historias; con lo que abre) o «constantes»
+// (euros del año base del IPC). Se recuerda mientras dura la página, no en la dirección: un enlace o
+// el paso de una historia abren siempre en euros de cada año.
+let eurosEvolucion = 'corrientes';
+
 async function completarEvolucion(hueco, datosSerie, v, codigo, nivel, periodos) {
   const [fia, ipc] = await Promise.all([fiabilidadEnPeriodos(v, nivel, codigo, periodos), cargarIpc()]);
   if (!hueco.isConnected) return;   // la ficha ya es otra
+  pintarGraficoEvolucion(hueco, datosSerie, v, periodos, fia, ipc);
+}
+
+// Gráfico, variaciones y notas de la evolución, con los euros elegidos (se vuelve a llamar al cambiarlos).
+function pintarGraficoEvolucion(hueco, datosSerie, v, periodos, fia, ipc) {
   const { filas } = datosSerie;
-  const cifras = filas.map((f) => f.cifra ?? null);
+  const corrientes = filas.map((f) => f.cifra ?? null);
   const umbral = umbralPocos(m);
   // La banda, donde la ficha da el intervalo: los mapas que son el alquiler en alguna unidad y «¿te
   // llega?» (no en el esfuerzo, con la renta)
   const conBanda = v.modo === 'llega' || tieneTipologia(m, v.seriesColor[0]);
+  const mapaId = idTextos(estado.mapa);
+  const unidad = v.modo === 'necesario' ? t(`indicadores.${mapaId}.unidad`) : '';
+  const euros = v.modo === 'necesario' ? (enEuros(unidad) ? 'cifra' : null) : (filas.some((f) => f.resto) ? 'resto' : null);
+  // Euros del año base: solo en las series en euros y con el IPC; la tabla, el gráfico y las
+  // variaciones pasan a euros del año base, y los periodos sin media anual del IPC quedan sin cifra
+  const base = euros === 'cifra' ? anioBaseIpc(ipc) : null;
+  const constantes = base !== null && eurosEvolucion === 'constantes';
+  const cifras = constantes ? deflactarSerie(periodos, corrientes, ipc, base) : corrientes;
+  const fuera = constantes ? periodos.filter((p, i) => corrientes[i] !== null && cifras[i] === null) : [];
   const banda = conBanda ? bandaMargen(cifras, fia?.margen ?? null) : [];
   const pocos = pocosContratos(cifras, fia?.contratos ?? null, umbral);
   // Variaciones de un año: solo en las series del alquiler (con contratos) y en el modo «necesario»
   const lista = v.modo === 'necesario' && fia?.contratos ? variaciones({ periodos, valores: cifras, contratos: fia.contratos, umbral }) : [];
   const textos = textosVariacion(t, lista);
-  const mapaId = idTextos(estado.mapa);
-  const unidad = v.modo === 'necesario' ? t(`indicadores.${mapaId}.unidad`) : '';
   const conCifra = periodos.filter((p, i) => cifras[i] !== null);
-  const euros = v.modo === 'necesario' ? (enEuros(unidad) ? 'cifra' : null) : (filas.some((f) => f.resto) ? 'resto' : null);
   const formato = v.modo === 'necesario' ? (x) => t.numero(x, v.mapa.decimales ?? 0) : (x) => t.porcentaje(x);
+  const selector = base === null ? null : selectorEuros(base, () => pintarGraficoEvolucion(hueco, datosSerie, v, periodos, fia, ipc));
   const grafico = graficoEvolucion({
     t, periodos, valores: cifras, banda, pocos, activo: datosSerie.periodo, formato,
     etiqueta: t('interfaz.ficha.evolucion_grafico', {
@@ -764,14 +845,44 @@ async function completarEvolucion(hueco, datosSerie, v, codigo, nivel, periodos)
   });
   fichaSeries(hueco, {
     ...datosSerie,
-    filas: filas.map((f, i) => ({ ...f, variacion: textos[i] || null })),
+    filas: filas.map((f, i) => ({ ...f, variacion: textos[i] || null,
+      ...(constantes ? { texto: cifras[i] === null ? (corrientes[i] === null ? f.texto : '—') : formato(cifras[i]) } : {}) })),
     grafico,
-    cabeceras: { periodo: t('interfaz.ficha.cabecera_periodo'), cifra: unidad, variacion: t('interfaz.ficha.cabecera_variacion') },
+    selector,
+    cabeceras: { periodo: t('interfaz.ficha.cabecera_periodo'),
+      cifra: constantes ? t('interfaz.ficha.euros_cabecera_constantes', { unidad, anio: base }) : unidad,
+      variacion: t('interfaz.ficha.cabecera_variacion') },
     notas: notasEvolucion(t, {
       banda: Boolean(grafico) && banda.some(Boolean), pocos: Boolean(grafico) && pocos.some(Boolean), umbral, lista, euros,
       ipc: euros && conCifra.length > 1 ? variacionIpc(ipc, conCifra[0], conCifra.at(-1)) : null,
+      unidad: constantes ? 'constantes' : 'corrientes', base, fuera,
     }),
   });
+}
+
+// Selector «Euros de {año base} · Euros de cada año» de la evolución: dos botones con el elegido
+// marcado; al cambiar, se recuerda en la página y se vuelve a pintar la evolución.
+function selectorEuros(base, repintar) {
+  const grupo = document.createElement('div');
+  grupo.className = 'evo-euros';
+  grupo.setAttribute('role', 'group');
+  grupo.setAttribute('aria-label', t('interfaz.ficha.euros_grupo'));
+  for (const [valor, texto] of [['constantes', t('interfaz.ficha.euros_boton_constantes', { anio: base })],
+    ['corrientes', t('interfaz.ficha.euros_boton_corrientes')]]) {
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.textContent = texto;
+    boton.setAttribute('aria-pressed', String(eurosEvolucion === valor));
+    boton.addEventListener('click', () => {
+      if (eurosEvolucion === valor) return;
+      eurosEvolucion = valor;
+      repintar();
+      // El selector se ha vuelto a crear: el foco, al botón elegido del nuevo
+      if (!grupo.isConnected) document.querySelector('.evo-euros [aria-pressed="true"]')?.focus();
+    });
+    grupo.append(boton);
+  }
+  return grupo;
 }
 
 async function pintarComparadorFicha(hueco, seriesA, v, codigo, yo) {
@@ -791,7 +902,7 @@ async function pintarComparadorFicha(hueco, seriesA, v, codigo, yo) {
   const eleccion = eligiendoComparada || esSeccion(estado.comparar) ? 'seccion' : estado.comparar ?? '';
   const comparado = estado.comparar && !eligiendoComparada ? codigoComparado(codigo, estado.comparar, territorios) : null;
   const filas = comparado
-    ? await filasComparador({ m, seccion: codigo, comparado, anio: v.referencia, supuestos: v.supuestos, seriesA, serieDe: serieTipo })
+    ? await filasComparador({ m, seccion: codigo, comparado, anio: v.referencia, supuestos: supuestosComparador(v), seriesA, serieDe: serieTipo })
     : null;
   if (yo !== turnoFicha) return;
   pintarComparador(hueco, {
@@ -842,6 +953,18 @@ async function seriesDeTerritorio(nivel, codigo, v) {
   return series;
 }
 
+// Otros gastos de vivienda en la ficha de «¿te llega?» (12-nov-2026): cuáles y cuántos, en una nota (en
+// el sueldo necesario lo dicen los supuestos de la cifra). Sin el selector, nada.
+function notaGastosFicha(v, supuestos) {
+  if (v.modo !== 'llega' || !v.gastos) return [];
+  return [t('interfaz.sueldo.gastos_ficha', { otros: textoOtrosGastos(t, supuestos) })];
+}
+
+// El comparador pone dos territorios, quizá de comunidades distintas: con los otros gastos de vivienda
+// encendidos, cada columna suma los de su comunidad en el año de la fila y el texto da las dos cifras
+// (decisión del autor, 12-nov-2026; supuestosDeColumnas() de comparador.js).
+const supuestosComparador = (v) => (codigo, nivel, periodo) => supuestosDe(v, codigo, nivel, periodo);
+
 // Percentil salarial del sueldo necesario (F3; web/js/percentil.js): una nota de la ficha, solo en el
 // mapa del sueldo necesario, con la curva de los salarios de la comunidad del territorio y del año
 // del alquiler (País Vasco y Navarra, que la AEAT no cubre, y España, con la de España).
@@ -863,8 +986,9 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
   const base = v.seriesColor[0];
   const tieneNivel = v.seriesColor.every((s) => nivelesDe(s).includes(nivel));
   const calculo = v.modo === 'llega'
-    ? calculoLlega({ ficha: estado.ficha, perfiles: v.perfiles, sueldo, superficie: v.superficie, serie: serieTipo, nivel })
+    ? calculoLlega({ ficha: estado.ficha, perfiles: v.perfiles, sueldo, superficie: v.superficie, serie: serieTipo, nivel, gastos: v.gastos })
     : null;
+  const supuestos = supuestosDe(v, codigo, nivel);   // con otros gastos de vivienda, los de su comunidad
   const fia = v.fiabilidad && !v.fuera ? v.fiabilidad : null;
   const auxiliares = fia ? Object.values(fia).filter((s) => m.indicadores[s] && nivelesDe(s).includes(nivel)) : [];
   // Tarea 40: la serie de la segunda cifra (mínimo de 50 m² o alquiler mensual real), si llega al nivel
@@ -887,9 +1011,9 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
   let minimo = null;
   if (tieneNivel && v.modo === 'necesario') {
     const b = x(v.mapa.base);
-    valor = b === null ? null : formulaDe(v.mapa).calcular(b, v.supuestos);
+    valor = b === null ? null : formulaDe(v.mapa).calcular(b, supuestos);
     if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen);
-    if (!v.fuera) minimo = minimoDe(v.mapa, x, v.supuestos, serieTipo);   // tarea 40
+    if (!v.fuera) minimo = minimoDe(v.mapa, x, supuestos, serieTipo);   // tarea 40
   } else if (tieneNivel) {
     const r = calculo.calcular(codigo, x);
     valor = r && { ...r, tramo: tramoLlega(r.ratio) };
@@ -903,7 +1027,7 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
     ? estadoLlega(estadoDe(base), calculo.ingreso(codigo, x), indiceEstado('ausente'))
     : Math.max(...v.seriesColor.map(estadoDe));
   const periodoBase = periodoPara(m.indicadores[base], v.referencia);
-  if (tieneNivel) notas.push(...notaPercentil(v, valor, periodoBase ?? v.periodo, nivel, codigo));
+  if (tieneNivel) notas.push(...notaPercentil(v, valor, periodoBase ?? v.periodo, nivel, codigo), ...notaGastosFicha(v, supuestos));
   // F5: en los mapas sin sección, cómo se lee el indicador (el 20: política pública, no mercado)
   if (nivelMinimoDe(v) !== 'sc') notas.push(t(`indicadores.${idTextos(estado.mapa)}.lectura`));
   if (Number.isFinite(tipicaFicha?.valor)) {
@@ -912,7 +1036,7 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
   const { huecoSerie, huecoComparador, huecoDetalle, huecoResidentes } = fichaTerritorio(el.ficha, {
     t, nivel, codigo, territorios, sinNivel: !tieneNivel, modo: v.modo, mapaId: idTextos(estado.mapa), mapaDef: v.mapa, ficha: estado.ficha,
     grupo: v.modo === 'necesario' ? grupoDe(v.mapa) : null, etiqueta: etiquetaVista(v),   // F5
-    supuestos: v.supuestos, anio: v.fuera ? v.fuera.anio : periodoBase ?? v.periodo, tipologia: v.tipologia, valor,
+    supuestos, anio: v.fuera ? v.fuera.anio : periodoBase ?? v.periodo, tipologia: v.tipologia, valor,
     estado: estadoCifraT, estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirTerritorio(null),
     fiabilidad, intervalo, enLimite, sueldo, notas, minimo,
@@ -945,7 +1069,7 @@ async function pintarComparadorTerritorio(hueco, nivel, codigo, v, yo) {
   const eleccion = opciones.some((o) => o.valor === estado.comparar) ? estado.comparar : '';
   const comparado = eleccion ? codigoComparado(codigo, eleccion, territorios, nivel) : null;
   const filas = comparado
-    ? await filasComparador({ m, seccion: codigo, nivelA: nivel, comparado, anio: v.referencia, supuestos: v.supuestos, seriesA: null, serieDe: serieTipo })
+    ? await filasComparador({ m, seccion: codigo, nivelA: nivel, comparado, anio: v.referencia, supuestos: supuestosComparador(v), seriesA: null, serieDe: serieTipo })
     : null;
   if (yo !== turnoFicha) return;
   pintarComparador(hueco, {
@@ -1046,7 +1170,7 @@ async function exportarCsv(v) {
   const defMinimo = derivado ? v.mapa.minimo : null;
   const serieMinimo = defMinimo ? serieTipo(defMinimo.base) : null;
   const minimo = serieMinimo && nivelesDe(serieMinimo).includes(nivel)
-    ? { valores: await columnaDe(serieMinimo), transformar: (x) => formulaDe(defMinimo).calcular(x, v.supuestos) }
+    ? { valores: await columnaDe(serieMinimo), transformar: (x, codigo) => formulaDe(defMinimo).calcular(x, supuestosDe(v, codigo, nivel)) }
     : defMinimo ? { valores: null, transformar: null } : null;
   const { cabecera, filas } = tablaCsv({
     t, codigos, valores: datos.valores, estados: datos.estados, nombresEstado: m.codificacion.estados,
@@ -1054,12 +1178,15 @@ async function exportarCsv(v) {
     indicador: [t(`indicadores.${id}.nombre`), grupo].filter(Boolean).join(' · '), unidad: t(`indicadores.${id}.unidad`),
     tipologia: v.tipologia ? t(`vocabulario.tipologia.${v.tipologia}`) : '', periodo,
     fuente: fuentesDe([serie], derivado),
-    transformar: formula ? (x) => formula.calcular(x, v.supuestos) : null,
+    transformar: formula ? (x, codigo) => formula.calcular(x, supuestosDe(v, codigo, nivel)) : null,
     decimales: decimalesDeEscala(m.indicadores[serie]?.escala ?? m.codificacion.escala),
     supuestos: derivado ? v.supuestos : null,
     desde: v.fuera ? v.fuera.desde : null,
     fiabilidad,
     minimo,
+    // Otros gastos de vivienda (12-nov-2026): la cifra sumada en cada fila (en «¿te llega?», la que
+    // usa el mapa con el alquiler de la columna valor)
+    otros: v.gastos && (derivado || v.modo === 'llega') ? (codigo) => otrosGastosEn(v.gastos, codigo, nivel)?.valor ?? null : null,
     etiqueta: etiquetaPrivada(serie),   // F5: columna «etiqueta» (dato privado de oferta)
     categoria: categorias ? (x) => t(`vocabulario.${categorias.vocabulario}.${x}`) : null,   // F5: indicador 20
   });
@@ -1079,13 +1206,14 @@ async function exportarPng(v) {
   const partes = etiqueta ? [etiqueta] : [];
   if (llega) {
     const { vivienda, ingreso } = textosLlega(v, { sinCifra: true });
-    partes.push(t('interfaz.leyenda.llega_sub', { vivienda, ingreso }));
+    partes.push(t(v.gastos ? 'interfaz.leyenda.llega_sub_gastos' : 'interfaz.leyenda.llega_sub', { vivienda, ingreso }));
   } else partes.push(t(`indicadores.${idTextos(estado.mapa)}.unidad`));
   partes.push(t.periodo(periodo));
   if (v.fuera) partes.push(t('interfaz.exportar.estados.fuera', { desde: t.periodo(v.fuera.desde) }));
   if (v.tipologia) partes.push(t(`vocabulario.tipologia.${v.tipologia}`));
   if (!llega && usaSupuestos(v.mapa)) partes.push(textoSupuestos(t, v.mapa, v.supuestos));   // tarea 40: con el mínimo, lo dice
   if (llega) partes.push(t('interfaz.exportar.umbral', { umbral: t.porcentaje(v.umbral) }));
+  if (llega && v.gastos) partes.push(t('interfaz.leyenda.llega_gastos', { otros: textoOtrosGastos(t, v.supuestos) }));   // 12-nov-2026
   const tipicaTexto = textoTipica(v);   // la superficie típica elegida, de qué territorio
   if (tipicaTexto) partes.push(tipicaTexto);
   // Escala relativa al municipio, si se ve: sus cortes, y lo dice el subtítulo
@@ -1278,6 +1406,7 @@ function alCambiarSueldo(cambio) {
   if ('ficha' in cambio) estado.ficha = cambio.ficha ?? undefined;
   if ('superficie' in cambio) estado.superficie = cambio.superficie;
   if ('umbral' in cambio) estado.umbral = cambio.umbral;
+  if ('gastos' in cambio) estado.gastos = cambio.gastos ? 1 : undefined;   // otros gastos de vivienda (12-nov-2026)
   // «Ver el sueldo necesario»: vuelve a ese mapa.
   if (cambio.volver && m?.mapas[MAPA_POR_DEFECTO]) estado.mapa = MAPA_POR_DEFECTO;
   actualizar();
@@ -1490,6 +1619,7 @@ async function iniciar() {
     colorPlaca = getComputedStyle(document.documentElement).getPropertyValue('--color-placa').trim();
 
     const pedirSalarios = cargarSalarios(m).catch((error) => { console.error(error); return null; });
+    const pedirGastos = cargarOtrosGastos(m);   // otros gastos de vivienda (12-nov-2026); null sin fichero
     [secciones, territorios, perfiles, mapa] = await Promise.all([
       cargarSecciones(m),
       cargarTerritorios(m),
@@ -1516,6 +1646,8 @@ async function iniciar() {
       }),
     ]);
     salarios = await pedirSalarios;
+    otrosGastos = await pedirGastos;
+    if (!otrosGastos) estado.gastos = undefined;
     indice = new Map(secciones.map((codigo, i) => [codigo, i]));
 
     if (estado.ficha === 'peon' ? !ingresoPeon(sueldo) : estado.ficha && !perfiles[estado.ficha]) estado.ficha = undefined;

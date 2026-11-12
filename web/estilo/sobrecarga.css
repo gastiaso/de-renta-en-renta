@@ -96,6 +96,8 @@ html, body { height: auto; min-height: 100%; }
 .sc-detalle-nombre { margin: 0; font: 700 1.05rem/1.25 var(--fuente-tablero); }
 .sc-detalle-cifra { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 2px 0 0; }
 .sc-detalle-numero { font: 800 1.8rem/1 var(--fuente-tablero); font-variant-numeric: tabular-nums; }
+/* Bajo «Puesto X de N», en letra de nota: qué vale ese orden (12-nov-2026) */
+.sc-detalle-puesto-nota { margin: 4px 0 0; font-size: 0.8rem; line-height: 1.3; }
 .sc-detalle-lista { margin: 4px 0 0; padding: 0; list-style: none; color: var(--color-tenue); font-size: 0.9rem; }
 .sc-cerrar {
   flex: none;

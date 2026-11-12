@@ -171,10 +171,12 @@ test('casillas: cada destino existe (claves del mapa, mapas del manifiesto, ancl
   }
 });
 
-test('fichas de la portada: cinco, cada una al mapa con su ficha en «¿te llega?»', () => {
+test('fichas de la portada: cinco, cada una al mapa con su ficha en «¿te llega?»; la llave, la última de perfil', () => {
   const html = leerTexto('web', 'index.html');
   const fichas = [...html.matchAll(/class="ficha-enlace ficha-enlace-(\w+)" data-ficha="(\w+)" href="([^"]+)"/g)];
-  assert.deepEqual(fichas.map((f) => f[2]), ['llave', 'mochila', 'tartera', 'transistor', 'peon']);
+  // Decisión del autor (12-nov-2026): la llave, justo antes de «Tu ficha», en la portada y en el mapa
+  assert.deepEqual(fichas.map((f) => f[2]), ['mochila', 'tartera', 'transistor', 'llave', 'peon']);
+  assert.deepEqual(sueldo.FICHAS_PERFIL, ['mochila', 'tartera', 'transistor', 'llave']);
   for (const [, clase, ficha, href] of fichas) {
     assert.equal(clase, ficha);
     assert.equal(leerEstado(partes(href).busqueda).ficha, ficha);
@@ -271,6 +273,96 @@ test('cartas: cada texto tiene sus marcas en los dos idiomas', () => {
   }
 });
 
+test('centro: la cifra del salario mínimo con el alquiler real, «N de cada 10» cerca de una decena; sin dato, el lema', () => {
+  const con = (pct30real) => ({ cartas: { smi: { anio: 2024, pct_30_real: pct30real } } });
+  assert.deepEqual(portada.cifraCentro(con(89.9)), { clave: 'decimos', anio: 2024, n: 9 });
+  assert.deepEqual(portada.cifraCentro(con(87.6)), { clave: 'decimos', anio: 2024, n: 9 });
+  assert.deepEqual(portada.cifraCentro(con(12.4)), { clave: 'decimos', anio: 2024, n: 1 });
+  assert.deepEqual(portada.cifraCentro(con(87.5)), { clave: 'porcentaje', anio: 2024, pct: 87.5 });
+  assert.deepEqual(portada.cifraCentro(con(96)), { clave: 'porcentaje', anio: 2024, pct: 96 });
+  assert.deepEqual(portada.cifraCentro(con(1.5)), { clave: 'porcentaje', anio: 2024, pct: 1.5 });
+  for (const sin of [null, {}, { cartas: {} }, con(null), { cartas: { smi: { pct_30_real: 89.9 } } }]) assert.equal(portada.cifraCentro(sin), null);
+  // El lema se queda en el HTML (sin JavaScript o sin datos) en el mismo elemento
+  const centro = leerTexto('web', 'index.html').split('<section class="portada-centro"')[1].split('</section>')[0];
+  assert.match(centro, /<p id="portada-cifra" class="portada-lema" data-i18n="sitio\.lema">/);
+  for (const idioma of ['es', 'en']) {
+    const c = leerJson('web', 'i18n', `${idioma}.json`).portada.cifra;
+    assert.match(c.decimos, /\{n\}/, idioma);
+    assert.match(c.decimos, /\{anio\}/, idioma);
+    assert.match(c.porcentaje, /\{pct\}/, idioma);
+    assert.match(c.porcentaje, /\{anio\}/, idioma);
+  }
+  // Con los datos reales, la cifra es la de la carta
+  if (existsSync(join(raiz, 'web', 'datos', 'portada.json'))) {
+    const real = leerJson('web', 'datos', 'portada.json');
+    const c = portada.cifraCentro(real);
+    assert.ok(c, 'portada.json trae la cifra');
+    assert.equal(c.anio, real.cartas.smi.anio);
+  }
+});
+
+test('la cuenta de la portada: la misma que la segunda frase del resumen del mapa con «Tu ficha»', () => {
+  const m = {
+    indicadores: {
+      alquiler_m2: { anios: [2023, 2024], variantes: { VU: 'alquiler_m2_vu' } },
+      alquiler_m2_vu: { anios: [2024], por_defecto: 'alquiler_m2' },
+      alquiler_mes: { anios: [2022, 2023, 2024] },
+    },
+  };
+  const s = portada.seriesCuenta(m);
+  assert.equal(s.periodo, 2024);
+  assert.deepEqual(s.pedidos, [['alquiler_m2', 2024], ['alquiler_mes', 2024]]);
+  assert.equal(portada.seriesCuenta({ indicadores: { alquiler_m2: { anios: [2024] } } }), null);
+  assert.equal(portada.seriesCuenta(null), null);
+  // Tres secciones con los dos alquileres, una sin el mensual y otra sin el de m²
+  const secciones = ['a', 'b', 'c', 'd', 'e'];
+  const columnas = {
+    alquiler_m2: { valores: [10, 10, 10, 10, null] },
+    alquiler_mes: { valores: [400, 450, 451, null, 300] },
+  };
+  // 1.500 € en 12 pagas; umbral del 30 %: caben 400 y 450, no 451
+  assert.deepEqual(portada.cuentaIngresos(1500, secciones, columnas), { con: 3, caben: 2, proporcion: 2 / 3 });
+  const calculo = sueldo.calculoLlega({ ficha: 'peon', perfiles: {}, sueldo: { neto: 1500, pagas: 12 }, superficie: 50 });
+  assert.deepEqual(portada.cuentaIngresos(1500, secciones, columnas),
+    sueldo.resumenLlegaReal(calculo, secciones, (serie, i) => columnas[serie].valores[i], 0.3));
+  assert.equal(portada.cuentaIngresos(1500, ['e'], { alquiler_m2: { valores: [null] }, alquiler_mes: { valores: [300] } }), null);
+  // Textos: el resultado con sus marcas y la frase fija, en los dos idiomas; el campo pide ingresos
+  for (const idioma of ['es', 'en']) {
+    const p = leerJson('web', 'i18n', `${idioma}.json`).portada;
+    const marcas = [...p.cuenta.resultado.matchAll(/\{(\w+)\}/g)].map((x) => x[1]).sort();
+    assert.deepEqual(marcas, ['caben', 'neto', 'pct', 'total', 'umbral'], idioma);
+    for (const k of ['nota', 'sin_datos', 'error']) assert.ok(p.cuenta[k], `${idioma}: portada.cuenta.${k}`);
+    assert.doesNotMatch(p.sueldo_error, /sueldo|pay\b/i, idioma);
+  }
+  const html = leerTexto('web', 'index.html');
+  assert.match(html, /<span id="portada-cuenta" class="portada-cuenta" aria-live="polite"><\/span>/);
+  assert.match(html, /<span data-i18n="interfaz\.sueldo\.neto">Ingresos netos al mes<\/span>/);
+});
+
+test('la cuenta de la portada con los datos reales: 1.500 € como el mapa', () => {
+  if (!existsSync(join(raiz, 'web', 'datos', 'manifiesto.json'))) return;
+  const m = leerJson('web', 'datos', 'manifiesto.json');
+  if (m.ejemplo) return;
+  const s = portada.seriesCuenta(m);
+  assert.ok(s);
+  const secciones = leerJson('web', ...m.secciones.split('/'));
+  const columnas = Object.fromEntries(s.pedidos.map(([serie, p]) => {
+    const ruta = m.indicadores[serie].ruta.replaceAll('{nivel}', 'sc').replaceAll('{anio}', p);
+    const { v } = leerJson('web', ...ruta.split('/'));
+    return [serie, { valores: v.map((x) => (x === null ? null : x / m.codificacion.escala)) }];
+  }));
+  const r = portada.cuentaIngresos(1500, secciones, columnas, s.serie);
+  assert.ok(r.con > 0 && r.caben <= r.con);
+  // Con el salario mínimo del año, la cuenta da el complemento de la cifra del centro (la carta)
+  if (existsSync(join(raiz, 'web', 'datos', 'portada.json'))) {
+    const smi = leerJson('web', 'datos', 'portada.json').cartas.smi;
+    if (smi?.anio === s.periodo && smi.neto_mensual) {
+      const conSmi = portada.cuentaIngresos(smi.neto_mensual, secciones, columnas, s.serie);
+      assert.equal(Number((100 * (1 - conSmi.proporcion)).toFixed(1)), smi.pct_30_real);
+    }
+  }
+});
+
 test('dado: una sección con dato, al azar', () => {
   const secciones = ['a', 'b', 'c', 'd'];
   const estados = Uint8Array.from([3, 0, 2, 0]);
@@ -360,7 +452,7 @@ test('ficha: el ingreso de «Tu ficha» desglosado y el sueldo necesario en 14 p
   const s14b = { neto: 1500, pagas: 14, segundo: 900 };
   assert.equal(textoIngresoPeon(t, s12, ingreso(s12)), 'Tu ingreso: 1.500 € al mes.');
   assert.equal(textoIngresoPeon(t, s14, ingreso(s14)), 'Tu ingreso: 1.500 € × 14 pagas ÷ 12 = 1.750 € al mes.');
-  assert.equal(textoIngresoPeon(t, s14b, ingreso(s14b)), 'Tu ingreso: (1.500 € + 900 € del segundo sueldo) × 14 pagas ÷ 12 = 2.800 € al mes.');
+  assert.equal(textoIngresoPeon(t, s14b, ingreso(s14b)), 'Tu ingreso: (1.500 € + 900 € del segundo ingreso) × 14 pagas ÷ 12 = 2.800 € al mes.');
   assert.equal(textoIngresoPeon(t, null, 1000), null);
   const eq = equivalenciasSueldo(1400);
   assert.equal(eq.paga14, 1200);

@@ -164,15 +164,15 @@
             <p id="sueldo-intro" class="sueldo-intro"></p>
             <div class="campos">
               <label class="campo">
-                <span data-i18n="interfaz.sueldo.neto">Sueldo neto al mes</span>
+                <span data-i18n="interfaz.sueldo.neto">Ingresos netos al mes</span>
                 <span class="campo-euros"><input id="sueldo-neto" type="text" inputmode="decimal" autocomplete="off"><span aria-hidden="true">€</span></span>
               </label>
               <label class="campo">
-                <span data-i18n="interfaz.sueldo.segundo">Segundo sueldo (opcional)</span>
+                <span data-i18n="interfaz.sueldo.segundo">Segundo ingreso (opcional)</span>
                 <span class="campo-euros"><input id="sueldo-segundo" type="text" inputmode="decimal" autocomplete="off"><span aria-hidden="true">€</span></span>
               </label>
             </div>
-            <p id="sueldo-error" class="nota sueldo-error" role="alert" hidden data-i18n="interfaz.sueldo.error">Escribe el sueldo neto al mes en euros, por ejemplo 1500.</p>
+            <p id="sueldo-error" class="nota sueldo-error" role="alert" hidden data-i18n="interfaz.sueldo.error">Escribe los ingresos netos al mes en euros, por ejemplo 1500.</p>
             <div id="sueldo-pagas" class="selector" role="group" aria-labelledby="sueldo-pagas-titulo">
               <span id="sueldo-pagas-titulo" class="selector-titulo" data-i18n="interfaz.sueldo.pagas">Pagas al año</span>
               <button type="button" data-pagas="12" aria-pressed="true">12</button>
@@ -191,17 +191,25 @@
             </div>
             <p id="sueldo-superficie-nota" class="nota" hidden></p>
             <div id="sueldo-umbral" class="selector" role="group" aria-labelledby="sueldo-umbral-titulo">
-              <span id="sueldo-umbral-titulo" class="selector-titulo" data-i18n="interfaz.sueldo.umbral">Umbral</span>
+              <span id="sueldo-umbral-titulo" class="selector-titulo">Umbral (solo alquiler)</span>
               <button type="button" data-umbral="30" aria-pressed="true">30 %</button>
               <button type="button" data-umbral="40" aria-pressed="false">40 %</button>
             </div>
+            <div class="sueldo-gastos">
+              <label class="casilla-gastos">
+                <input id="sueldo-gastos" type="checkbox" aria-describedby="sueldo-gastos-nota">
+                <span data-i18n="interfaz.sueldo.gastos">Añadir otros gastos de vivienda</span>
+              </label>
+              <p id="sueldo-gastos-nota" class="nota"></p>
+            </div>
             <p id="sueldo-resumen" class="sueldo-resumen" aria-live="polite" hidden></p>
+            <p id="sueldo-aviso" class="sueldo-aviso" hidden data-i18n="interfaz.sueldo.aviso_parque">Es el alquiler de quien ya tiene contrato; quien busca piso hoy suele pagar más.</p>
             <p id="sueldo-detalle" class="nota" hidden></p>
             <div class="acciones">
               <button id="sueldo-volver" type="button" class="boton" data-i18n="interfaz.sueldo.volver" hidden>Ver el sueldo necesario</button>
               <button id="sueldo-compartir" type="button" class="boton boton-principal" data-i18n="interfaz.compartir.boton">Compartir</button>
             </div>
-            <p class="nota" data-i18n="interfaz.sueldo.privacidad">Tu sueldo no sale de este dispositivo.</p>
+            <p class="nota" data-i18n="interfaz.sueldo.privacidad">Los ingresos escritos no salen de este dispositivo.</p>
           </div>
         </section>
 

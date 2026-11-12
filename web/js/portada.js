@@ -1,14 +1,15 @@
 // Portada (index.html; docs/especificacion_portada.md): el tablero completo. Las casillas y los
 // enlaces están en el HTML (se ven sin JavaScript); aquí, el idioma, las fichas que tienen datos,
 // las historias (datos/historias.json), las cartas (datos/portada.json, cifras reales del
-// pipeline), «Tu sueldo» (abre el mapa en «¿te llega?» con el sueldo tras «#», como
-// «Compartir»), el buscador, «Tira el dado» y el pie.
+// pipeline), la cifra del salario mínimo bajo la pregunta (la de su carta; sin ella, el lema),
+// «Tu sueldo» (al escribir, la cuenta en la propia portada; el botón abre el mapa en «¿te llega?»
+// con lo escrito tras «#», como «Compartir»), el buscador, «Tira el dado» y el pie.
 
 import { cargarIdioma, traducirPagina } from './i18n.js';
 import { leerEstado, fragmentoSueldo } from './estado.js';
-import { cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarValores, periodosDe } from './datos.js';
+import { cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarValores, periodosDe, periodoPara, serieDeTipologia } from './datos.js';
 import { crearBuscador, formasDeNombre, etiquetaMunicipio } from './buscador.js';
-import { FICHAS_PERFIL, leerSueldo } from './sueldo.js';
+import { FICHAS_PERFIL, leerSueldo, calculoLlega, resumenLlegaReal, superficieDe, umbralDe } from './sueldo.js';
 import { FAMILIAS_PROXIMAMENTE, textoFamilia } from './familias.js';
 import { fechaLarga, lineaTransparencia } from './transparencia.js';
 import { cargarHistorias, textoEn } from './historias.js';
@@ -43,10 +44,12 @@ export function enlaceTeLlega(neto, idioma) {
   return `${conIdioma('mapa.html?ficha=peon', idioma)}${fragmentoSueldo({ neto, pagas: 12 })}`;
 }
 
-// Texto con marcas «{nombre}» en un elemento: el texto tal cual y cada cifra en su <span>.
-function rellenar(el, plantilla, valores) {
+// Texto con marcas «{nombre}» en un elemento: el texto tal cual y cada cifra en su <span>. Con
+// `resaltar`, solo esas marcas van en <span>; las demás, como texto.
+function rellenar(el, plantilla, valores, resaltar = null) {
   el.replaceChildren(...plantilla.split(/\{(\w+)\}/).map((parte, i) => {
     if (i % 2 === 0) return document.createTextNode(parte);
+    if (resaltar && !resaltar.includes(parte)) return document.createTextNode(valores[parte] ?? `{${parte}}`);
     const span = document.createElement('span');
     span.className = 'carta-cifra';
     span.textContent = valores[parte] ?? `{${parte}}`;
@@ -162,6 +165,108 @@ function pintarCartas() {
   $('portada-cartas-lista').replaceChildren(...reales.slice(0, n), ...pronto.map(cartaProximamente), ...reales.slice(n));
 }
 
+// --- La cifra del centro ----------------------------------------------------------------------
+
+// Decisión del autor (12-nov-2026): bajo la pregunta, en lugar del lema, la cifra de la carta del
+// salario mínimo con el alquiler mensual mediano real de cada sección (`pct_30_real`): «9 de cada
+// 10» si el porcentaje queda a menos de 2,5 puntos de una decena (de 10 a 90) y, si no, el
+// porcentaje. Sin el dato, null (se queda el lema).
+export function cifraCentro(datos) {
+  const b = datos?.cartas?.smi;
+  if (!b || !hay(b.anio, b.pct_30_real)) return null;
+  const n = Math.round(b.pct_30_real / 10);
+  if (n >= 1 && n <= 9 && Math.abs(b.pct_30_real - n * 10) < 2.5) return { clave: 'decimos', anio: b.anio, n };
+  return { clave: 'porcentaje', anio: b.anio, pct: b.pct_30_real };
+}
+
+function pintarCifra() {
+  const el = $('portada-cifra');
+  const c = cifraCentro(portada);
+  el.classList.toggle('portada-lema-cifra', Boolean(c));
+  if (!c) return;   // el lema, que ya ha puesto traducirPagina()
+  const valores = { anio: String(c.anio), n: c.n === undefined ? '' : t.numero(c.n), pct: c.pct === undefined ? '' : pct(c.pct) };
+  rellenar(el, t(`portada.cifra.${c.clave}`), valores, ['n', 'pct']);
+}
+
+// --- La cuenta con lo que se escribe ----------------------------------------------------------
+
+// Decisión del autor (12-nov-2026): al escribir unos ingresos, la portada calcula en cuántas
+// secciones el alquiler mensual mediano real (vivienda colectiva, último año) no pasa del umbral,
+// con lo escrito en 12 pagas: la misma cuenta que la segunda frase del resumen del mapa con «Tu
+// ficha» (resumenLlegaReal() de sueldo.js, con la vista por defecto del mapa). Los valores de las
+// secciones se piden solo al escribir.
+const RETARDO_CUENTA = 300;   // ms tras la última tecla
+
+// Series y periodos de la cuenta: el alquiler por m² en su último periodo (el que marca el mapa sin
+// año) y el alquiler mensual del mismo periodo, de la vivienda colectiva. null si falta alguno.
+export function seriesCuenta(m) {
+  if (!m?.indicadores) return null;
+  const serie = (s) => serieDeTipologia(m, s, 'VC');
+  const m2 = serie('alquiler_m2');
+  const mes = serie('alquiler_mes');
+  if (!m.indicadores[m2] || !m.indicadores[mes]) return null;
+  const periodo = periodoPara(m.indicadores[m2]);
+  const periodoMes = periodo === null ? null : periodoPara(m.indicadores[mes], periodo);
+  if (periodo === null || periodoMes === null) return null;
+  return { serie, periodo, pedidos: [[m2, periodo], [mes, periodoMes]] };
+}
+
+// La cuenta: { con, caben, proporcion } o null sin secciones con dato. `columnas`: { serie: { valores } }.
+export function cuentaIngresos(neto, secciones, columnas, serie = (s) => s) {
+  const sueldo = { neto, pagas: 12 };
+  const estado = { ficha: 'peon' };
+  const calculo = calculoLlega({ ficha: 'peon', perfiles: {}, sueldo, superficie: superficieDe(estado, sueldo, {}), serie });
+  return resumenLlegaReal(calculo, secciones, (s, i) => columnas[s]?.valores[i] ?? null, umbralDe(estado));
+}
+
+let datosCuenta = null;   // promesa de { secciones, columnas, serie } (o null si no hay)
+let cuenta = null;        // lo último pintado: { neto, r } | { error: true } | null
+let turnoCuenta = 0;
+let esperaCuenta = null;
+
+function pedirDatosCuenta() {
+  datosCuenta ??= (async () => {
+    const s = seriesCuenta(m);
+    if (!s) return null;
+    const [secciones, ...cols] = await Promise.all([cargarSecciones(m), ...s.pedidos.map(([serie, p]) => cargarValores(m, serie, 'sc', p))]);
+    if (!secciones || cols.some((c) => !c)) return null;
+    return { secciones, columnas: Object.fromEntries(s.pedidos.map(([serie], i) => [serie, cols[i]])), serie: s.serie };
+  })().catch((error) => {
+    console.error(error);
+    datosCuenta = null;   // se reintenta con la siguiente tecla
+    return undefined;
+  });
+  return datosCuenta;
+}
+
+function pintarCuenta() {
+  const caja = $('portada-cuenta');
+  const nota = $('portada-cuenta-nota');
+  nota.hidden = !cuenta?.r;
+  if (!cuenta) return caja.replaceChildren();
+  if (cuenta.error) return caja.replaceChildren(t('portada.cuenta.error'));
+  if (!cuenta.r) return caja.replaceChildren(t('portada.cuenta.sin_datos'));
+  const { neto, r } = cuenta;
+  rellenar(caja, t('portada.cuenta.resultado'), {
+    neto: t.numero(neto, Number.isInteger(neto) ? 0 : 2), umbral: t.porcentaje(umbralDe({})),
+    pct: t.porcentaje(r.proporcion), caben: t.numero(r.caben), total: t.numero(r.con),
+  }, ['pct']);
+}
+
+// Cuenta con lo escrito (sin datos reales, la muestra de ejemplo, o con algo que no se entiende, nada).
+async function actualizarCuenta() {
+  const yo = ++turnoCuenta;
+  const neto = leerSueldo($('portada-neto').value);
+  if (!neto || !m || m.ejemplo) {
+    cuenta = null;
+    return pintarCuenta();
+  }
+  const d = await pedirDatosCuenta();
+  if (yo !== turnoCuenta) return;   // ya se ha escrito otra cosa
+  cuenta = d ? { neto, r: cuentaIngresos(neto, d.secciones, d.columnas, d.serie) } : d === null ? null : { error: true };
+  pintarCuenta();
+}
+
 // --- Historias ------------------------------------------------------------------------------
 
 // Entradas del bloque «Historias»: título, entradilla (o '') y enlace al mapa con la historia, en
@@ -275,6 +380,8 @@ function pintar() {
   document.title = t('portada.titulo_pagina');
   document.querySelector('meta[name="description"]')?.setAttribute('content', t('portada.descripcion'));
   for (const b of document.querySelectorAll('[data-idioma]')) b.setAttribute('aria-pressed', String(b.dataset.idioma === t.idioma));
+  pintarCifra();
+  pintarCuenta();
   pintarFichas();
   pintarHistorias();
   pintarCartas();
@@ -309,6 +416,8 @@ function prepararSueldo() {
   entrada.addEventListener('input', () => {
     error.hidden = true;
     entrada.removeAttribute('aria-invalid');
+    clearTimeout(esperaCuenta);
+    esperaCuenta = setTimeout(actualizarCuenta, RETARDO_CUENTA);
   });
 }
 
@@ -367,6 +476,7 @@ async function iniciar() {
   $('portada-dado').addEventListener('click', tirarDado);
   for (const el of document.querySelectorAll('[data-js]')) el.hidden = false;
   pintar();
+  if ($('portada-neto').value.trim()) actualizarCuenta();   // escrito antes de que llegaran los datos
 }
 
 if (typeof document !== 'undefined' && document.getElementById('portada-sueldo')) iniciar();

@@ -1,0 +1,92 @@
+{
+  "nota": "Casos inventados de los otros gastos de vivienda (decisión del autor, 12-nov-2026): los comprueban test-otros-gastos.R y pruebas/web/otros_gastos.test.mjs, para que R y la página den la misma cuenta.",
+  "sueldo": [
+    {
+      "alquiler_mes": 800,
+      "otros": 145.3,
+      "umbral": 0.3,
+      "esperado": 3151
+    },
+    {
+      "alquiler_mes": 1234.5,
+      "otros": 162.4,
+      "umbral": 0.4,
+      "esperado": 3492.25
+    },
+    {
+      "alquiler_mes": 600,
+      "otros": 0,
+      "umbral": 0.3,
+      "esperado": 2000
+    }
+  ],
+  "minimo": [
+    {
+      "alquiler_m2": 12.5,
+      "superficie": 50,
+      "otros": 145.3,
+      "umbral": 0.3,
+      "esperado": 2567.6666666666665
+    },
+    {
+      "alquiler_m2": 17.8,
+      "superficie": 70,
+      "otros": 113.9,
+      "umbral": 0.4,
+      "esperado": 3399.75
+    }
+  ],
+  "llega": [
+    {
+      "alquiler": 625,
+      "otros": 145.3,
+      "ingreso": 1500,
+      "ratio": 0.5135333333333333,
+      "euros": 730
+    },
+    {
+      "alquiler": 900,
+      "otros": 120,
+      "ingreso": 3000,
+      "ratio": 0.34,
+      "euros": 1980
+    },
+    {
+      "alquiler": 1246,
+      "otros": 178.2,
+      "ingreso": 1184,
+      "ratio": 1.2028716216216218,
+      "euros": -240
+    }
+  ],
+  "anios": {
+    "olas": [
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "alquiler": [
+      2015,
+      2016,
+      2024,
+      2025,
+      2026,
+      2030
+    ],
+    "esperado": [
+      2016,
+      2016,
+      2024,
+      2025,
+      2025,
+      2025
+    ]
+  }
+}

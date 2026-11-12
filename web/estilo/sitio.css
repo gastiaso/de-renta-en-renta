@@ -420,6 +420,24 @@ body {
   font: 600 1rem/1.35 var(--fuente-tablero);
 }
 .sueldo-resumen[hidden] { display: none; }
+/* Aviso fijo junto al resultado de «¿te llega?» (decisión del autor, 12-nov-2026): en la misma caja */
+.sueldo-resumen.con-aviso { border-bottom: 0; border-radius: var(--radio-control) var(--radio-control) 0 0; }
+.sueldo-aviso {
+  margin: 0;
+  padding: 0 10px 8px;
+  border: var(--borde);
+  border-top: 0;
+  border-radius: 0 0 var(--radio-control) var(--radio-control);
+  background: var(--color-crema);
+  font: 400 0.92rem/1.35 var(--fuente-tablero);
+}
+.sueldo-aviso[hidden] { display: none; }
+/* «Añadir otros gastos de vivienda» (12-nov-2026) */
+.sueldo-gastos { margin: 8px 0 0; }
+.casilla-gastos { display: flex; align-items: center; gap: 8px; min-height: var(--objetivo-tactil); font: 500 0.9rem var(--fuente-tablero); cursor: pointer; }
+.casilla-gastos input { width: 20px; height: 20px; margin: 0; accent-color: var(--color-tinta); }
+.casilla-gastos input:disabled + span { color: var(--color-tenue); }
+.sueldo-gastos .nota { margin-top: 2px; }
 
 /* Leyenda */
 .leyenda {
@@ -613,6 +631,13 @@ body {
 .ficha-tabla thead th { color: var(--color-tenue); font-size: 0.8rem; border-bottom: 1px solid var(--color-fuera); }
 .ficha-tabla-variacion { text-align: right; font-family: var(--fuente-tablero); white-space: nowrap; }
 .evo-grafico { display: block; width: 100%; max-width: 360px; height: auto; margin: 4px 0 8px; }
+/* Euros del año base o de cada año en la evolución (principal.js, selectorEuros) */
+.evo-euros { display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%; margin: 4px 0; border: var(--borde); border-radius: var(--radio-control); overflow: hidden; }
+.evo-euros button { min-height: var(--objetivo-tactil); padding: 0 10px; border: 0; background: var(--color-placa); color: var(--color-tinta); font: 600 0.85rem var(--fuente-tablero); cursor: pointer; }
+.evo-euros button + button { border-left: var(--borde); }
+.evo-euros button:focus-visible { outline-offset: -4px; outline-color: var(--color-tinta); }
+.evo-euros button[aria-pressed="true"] { background: var(--color-rojo); color: #fff; }
+.evo-euros button[aria-pressed="true"]:focus-visible { outline-color: #fff; }
 .evo-rejilla { stroke: var(--color-fuera); stroke-width: 1; }
 .evo-texto-eje { fill: var(--color-tenue); font: 10px var(--fuente-tablero); font-variant-numeric: tabular-nums; }
 .evo-banda { fill: var(--rampa-1); fill-opacity: 0.45; stroke: none; }

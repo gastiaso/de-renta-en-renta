@@ -43,6 +43,8 @@ cal_actualizar(c("ine_ipva", "ine_hipotecas"), ejecutar = TRUE)
 targets::tar_make()                               # descarga, compuertas, tablas y web
 ```
 
+El IPC (`ine_ipc`) mueve el año base de los euros constantes de la web: cuando el INE publica en enero la media anual del año anterior, el siguiente `tar_make()` la recoge, el año base pasa a ese año (`ipc_anio_base()`) y la Máquina del tiempo y la evolución de la ficha cambian sus cifras en euros del año base. Las cifras de la nota metodológica en euros de 2025 se rehacen entonces. Cuando el INE cambie de base, cambia también el número de la tabla (`TABLA_IPC`, `R/fuente_ine_ipc.R`).
+
 Si una descarga falla, el pipeline se detiene en ese objetivo. Los ficheros apartados vuelven a su sitio con `cal_restaurar("AAAA-MM-DD")` (la fecha de la carpeta de `_anteriores`), que solo devuelve los que no se han vuelto a bajar.
 
 ## 3. Comprobar

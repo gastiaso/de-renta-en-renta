@@ -10,6 +10,8 @@
 //     donde el alquiler cabe por debajo del umbral; en la ficha, también los euros que quedan al
 //     mes (ingreso − alquiler; tarea 34). Las fichas de una persona pagan la superficie de la
 //     ficha (regla 8) y llevan al lado la cifra con el alquiler mensual mediano real (tarea 40).
+// Con «Añadir otros gastos de vivienda» (decisión del autor, 12-nov-2026), los dos modos suman al
+// alquiler los otros gastos de vivienda de los inquilinos de la comunidad (abajo, gastosDelAnio()).
 // Cada cálculo tiene dos caras que deben coincidir: la expresión de estilo de MapLibre (color
 // del mapa, sin volver a descargar teselas) y la función en JS (ficha, resumen, leyenda).
 
@@ -17,7 +19,7 @@ import { formulaDe } from './formulas.js';
 import { pasosDeRampa, juegoDe } from './colores.js';
 import { SUPUESTOS } from './supuestos.js';
 
-export const FICHAS_PERFIL = ['llave', 'mochila', 'tartera', 'transistor'];
+export const FICHAS_PERFIL = ['mochila', 'tartera', 'transistor', 'llave'];
 // Supuestos (tarea 48): salen de inventario/supuestos.csv por js/supuestos.js, que genera R
 // (generar_supuestos_js()); aquí no se escriben cifras. Superficies de «Tu ficha» (50, 70 y 90 m²)
 // y la de una persona (50 m²).
@@ -117,6 +119,82 @@ function expresionIngresoPerfil(perfil, idSeccion) {
   return perfil.neto_mensual?.['00'] ?? 0;
 }
 
+// --- Otros gastos de vivienda (decisión del autor, 12-nov-2026) ---------------------------------
+// Selector «Añadir otros gastos de vivienda» (clave `gastos` de la dirección, apagado por defecto):
+// al alquiler de cada territorio se le suma lo que pagan de más al mes los hogares que alquilan a
+// precio de mercado (HH070 − HH060 de la ECV: la mediana de España de la ola por el factor de la
+// comunidad, que sale de todas las olas juntas, o, sin muestra, la de España; datos/otros_gastos.json,
+// R/fuente_ine_ecv_gastos.R). Vale para «¿te llega?» y el sueldo necesario.
+
+// Ola de la ECV para un año del alquiler (2024 o «2025-05»): la misma o la más cercana (en un empate,
+// la más reciente), como anio_ecv_para() de R. null sin olas o sin año.
+export function anioEcv(anios, anio) {
+  const a = Number(String(anio ?? '').slice(0, 4));
+  if (!anios?.length || !Number.isFinite(a) || a <= 0) return null;
+  let mejor = null;
+  for (const x of anios.map(Number)) {
+    if (mejor === null || Math.abs(x - a) < Math.abs(mejor - a) || (Math.abs(x - a) === Math.abs(mejor - a) && x > mejor)) mejor = x;
+  }
+  return mejor;
+}
+
+// Cifras de la ola que toca al alquiler de `anio`: { anio (el del alquiler), anio_ecv, minimo,
+// olas: { desde, hasta } (las del factor de las comunidades), espana: { v, n },
+// ccaa: { código: { v, espana } }, provincia: { código: v }, nombres }.
+// `ccaaDeProvincia`: la de territorios.json; `nombres`: los de las comunidades (para los textos).
+// null sin tabla o sin ola.
+export function gastosDelAnio(tabla, anio, ccaaDeProvincia = {}, nombres = {}) {
+  const ola = anioEcv(tabla?.anios, anio);
+  const cifras = ola === null ? null : tabla.cifras?.[String(ola)];
+  if (!cifras?.['00'] || !Number.isFinite(cifras['00'].v)) return null;
+  const ccaa = Object.fromEntries(Object.entries(cifras).filter(([c, x]) => c !== '00' && Number.isFinite(x?.v)));
+  const provincia = {};
+  for (const [p, c] of Object.entries(ccaaDeProvincia ?? {})) if (ccaa[c]) provincia[p] = ccaa[c].v;
+  const olas = tabla.anios.map(Number);
+  return {
+    anio: Number(String(anio).slice(0, 4)), anio_ecv: ola, minimo: tabla.minimo_hogares ?? null,
+    olas: { desde: Math.min(...olas), hasta: Math.max(...olas) },
+    espana: cifras['00'], ccaa, provincia, ccaaDeProvincia: ccaaDeProvincia ?? {}, nombres: nombres ?? {},
+  };
+}
+
+// Cifra de un territorio: { valor, ccaa (código, o '00' en España), espana (la de España por falta de
+// muestra) }. Las secciones, los municipios y las provincias, la de su comunidad (de sus dos primeras
+// cifras); con nivel 'ccaa', la suya; con 'nacional' o un código sin comunidad, la de España. Sin
+// `gastos`, null.
+export function otrosGastosEn(gastos, codigo, nivel = null) {
+  if (!gastos) return null;
+  const deEspana = { valor: gastos.espana.v, ccaa: '00', espana: false };
+  if (nivel === 'nacional' || codigo === undefined || codigo === null || codigo === '00') return deEspana;
+  const c = nivel === 'ccaa' ? String(codigo) : gastos.ccaaDeProvincia[String(codigo).slice(0, 2)];
+  const x = c ? gastos.ccaa[c] : null;
+  return x ? { valor: x.v, ccaa: c, espana: Boolean(x.espana) } : deEspana;
+}
+
+// Supuestos de un territorio: con los otros gastos encendidos, `otros` es su cifra (las fórmulas la
+// suman al alquiler) y `otros_de`, de dónde sale; si no, los mismos supuestos.
+export function supuestosEn(supuestos, codigo, nivel = null) {
+  const x = otrosGastosEn(supuestos?.gastos, codigo, nivel);
+  return x ? { ...supuestos, otros: x.valor, otros_de: x } : supuestos;
+}
+
+// Expresión de MapLibre con la cifra de cada elemento: en las comunidades, por su código; en los
+// demás niveles, por la provincia (las dos primeras cifras). Lo que no casa, la de España.
+export function expresionOtrosGastos(gastos, idSeccion, nivel = null) {
+  const codigo = ['to-string', ['get', idSeccion]];
+  const pares = nivel === 'ccaa'
+    ? Object.entries(gastos.ccaa).map(([c, x]) => [c, x.v])
+    : Object.entries(gastos.provincia);
+  if (!pares.length) return gastos.espana.v;
+  return ['match', nivel === 'ccaa' ? codigo : ['slice', codigo, 0, 2], ...pares.flat(), gastos.espana.v];
+}
+
+// Mínimo y máximo de las cifras de las comunidades (la leyenda y la imagen, sin territorio).
+export function rangoOtrosGastos(gastos) {
+  const v = Object.values(gastos?.ccaa ?? {}).map((x) => x.v).filter(Number.isFinite);
+  return v.length ? { desde: Math.min(...v), hasta: Math.max(...v) } : null;
+}
+
 const estadoMapa = (serie) => ['feature-state', serie];
 const numero = (serie) => ['to-number', estadoMapa(serie)];
 const falta = (serie) => ['==', estadoMapa(serie), null];
@@ -131,7 +209,13 @@ const falta = (serie) => ['==', estadoMapa(serie), null];
 // La «sección» puede ser también un municipio o una provincia (el ingreso provincial sale de sus
 // dos primeras cifras). `nivel`: con 'ccaa', una ficha con ingreso por provincia no tiene uno solo
 // para toda la comunidad, y queda sin dato (tarea 26).
-export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) => s, nivel = null }) {
+// `gastos` (gastosDelAnio(), con el selector de otros gastos encendido): la cifra de cada territorio
+// se suma al alquiler de la ficha y al real; `calcular()` la devuelve en `otros` (el alquiler sigue
+// siendo solo el alquiler) y la proporción es (alquiler + otros) / ingreso.
+export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) => s, nivel = null, gastos = null }) {
+  const otrosDe = (seccion) => (gastos ? otrosGastosEn(gastos, seccion, nivel).valor : 0);
+  const conOtros = (expresion, idSeccion, nivelCapa) => (gastos ? ['+', expresion, expresionOtrosGastos(gastos, idSeccion, nivelCapa)] : expresion);
+  const conGastos = (r, otros) => (gastos ? { ...r, otros } : r);
   if (ficha === 'llave') {
     const { ingreso } = perfiles.llave;
     const vivienda = { serie: serie(perfiles.llave.vivienda.serie) };
@@ -147,13 +231,14 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
         const alquiler = x(vivienda.serie);
         const renta = x(ingreso.serie);
         if (alquiler === null || renta === null || !(renta > 0)) return null;
-        return { alquiler, ingreso: renta / divisor, ratio: alquiler / (renta / divisor) };
+        const otros = otrosDe(seccion);
+        return conGastos({ alquiler, ingreso: renta / divisor, ratio: (alquiler + otros) / (renta / divisor) }, otros);
       },
-      expresion() {
+      expresion(idSeccion, nivelCapa = nivel) {
         const ing = ['/', numero(ingreso.serie), divisor];
         return {
           valido: ['all', ['!', falta(vivienda.serie)], ['!', falta(ingreso.serie)], ['>', numero(ingreso.serie), 0]],
-          ratio: ['/', numero(vivienda.serie), ing],
+          ratio: ['/', conOtros(numero(vivienda.serie), idSeccion, nivelCapa), ing],
         };
       },
     };
@@ -176,15 +261,16 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
       const ingreso = ingresoDe(seccion);
       if (m2 === null || !ingreso) return null;
       const alquiler = m2 * superficie;
+      const otros = otrosDe(seccion);
       const mes = x(realSerie);
-      const real = mes === null || mes === undefined ? null : { alquiler: mes, ratio: mes / ingreso };
-      return { alquiler, ingreso, ratio: alquiler / ingreso, ...(real ? { real } : {}) };
+      const real = mes === null || mes === undefined ? null : { alquiler: mes, ratio: (mes + otros) / ingreso };
+      return conGastos({ alquiler, ingreso, ratio: (alquiler + otros) / ingreso, ...(real ? { real } : {}) }, otros);
     },
     expresion(idSeccion, nivelCapa = nivel) {
       const ingreso = sinIngresoEn(nivelCapa) ? 0 : perfil ? expresionIngresoPerfil(perfil, idSeccion) : fijo;
       return {
         valido: ['all', ['!', falta(m2Serie)], ['>', ingreso, 0]],
-        ratio: ['/', ['*', numero(m2Serie), superficie], ingreso],
+        ratio: ['/', conOtros(['*', numero(m2Serie), superficie], idSeccion, nivelCapa), ingreso],
       };
     },
   };
@@ -195,11 +281,12 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
 // resta, no un umbral de suficiencia. Cada término se redondea al euro, como los escribe la web
 // (t.numero sin decimales), y se restan ya redondeados: la resta cuadra con las dos cifras que
 // enseña la ficha. Negativa si el alquiler pasa del ingreso; null si falta algún término. No
-// depende de la familia: vale también para «entrar», con el alquiler de la oferta.
+// depende de la familia: vale también para «entrar», con el alquiler de la oferta. Con los otros
+// gastos de vivienda (`otros`, de calcular()), también se restan, redondeados igual.
 export function eurosQueQuedan(terminos) {
-  const { alquiler, ingreso } = terminos ?? {};
+  const { alquiler, ingreso, otros } = terminos ?? {};
   if (!Number.isFinite(alquiler) || !Number.isFinite(ingreso) || alquiler < 0 || !(ingreso > 0)) return null;
-  return Math.round(ingreso) - Math.round(alquiler);
+  return Math.round(ingreso) - Math.round(alquiler) - (Number.isFinite(otros) ? Math.round(otros) : 0);
 }
 
 // Tramo de «¿te llega?»: 0 hasta el 30 %, 1 del 30 al 40 %, 2 más del 40 %.
@@ -238,9 +325,11 @@ export function colorLlega(calculo, idSeccion, colores, nivel = null) {
 // Sueldo necesario y demás mapas por tramos: un tramo más que cortes (siete con los juegos de la
 // tarea 51), cada uno con su paso de la rampa (colores.js). `nivel`: el de la capa que se pinta,
 // que elige su juego de cortes (sin nivel, los `cortes` del mapa). `propios`: otros cortes (la escala
-// relativa al municipio, escala_municipio.js).
-export function colorNecesario(mapaDef, supuestos, colores, nivel = null, propios = null) {
-  const valor = formulaDe(mapaDef).expresion(numero(mapaDef.base), supuestos);
+// relativa al municipio, escala_municipio.js). `idSeccion`: la propiedad con el código de cada elemento,
+// para sumar los otros gastos de vivienda de su comunidad si están encendidos (supuestos.gastos).
+export function colorNecesario(mapaDef, supuestos, colores, nivel = null, propios = null, idSeccion = null) {
+  const s = supuestos?.gastos && idSeccion ? { ...supuestos, otros: expresionOtrosGastos(supuestos.gastos, idSeccion, nivel) } : supuestos;
+  const valor = formulaDe(mapaDef).expresion(numero(mapaDef.base), s);
   const cortes = propios ?? juegoDe(mapaDef, nivel).cortes;
   const color = pasosDeRampa(cortes.length + 1, colores.rampa.length).map((i) => colores.rampa[i]);
   const pasos = ['step', valor, color[0]];

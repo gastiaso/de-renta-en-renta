@@ -105,11 +105,17 @@
         <section id="hist-tasado" class="tarjeta hi-bloque" data-bloque="hist-tasado" aria-labelledby="hist-tasado-titulo">
           <h2 id="hist-tasado-titulo" class="hi-h2" data-i18n="historico.bloques.hist-tasado.titulo"></h2>
           <p class="nota" data-i18n="historico.bloques.hist-tasado.subtitulo"></p>
+          <!-- Euros del año base del IPC o de cada año (historico.js; la elección va en la dirección) -->
+          <div class="hi-euros" role="group" data-i18n-aria="historico.euros.grupo" hidden>
+            <button type="button" data-euros="constantes" aria-pressed="true"></button>
+            <button type="button" data-euros="corrientes" aria-pressed="false"></button>
+          </div>
           <label class="hi-selector">
             <span data-i18n="historico.ccaa"></span>
             <select id="hi-ccaa"></select>
           </label>
           <div class="hi-grafico"></div>
+          <p class="nota hi-euros-nota"></p>
           <p class="hi-lectura"></p>
           <ol class="hi-fechas"></ol>
           <p class="nota hi-fuente"></p>
@@ -119,7 +125,12 @@
         <section id="hist-sueldo" class="tarjeta hi-bloque" data-bloque="hist-sueldo" aria-labelledby="hist-sueldo-titulo">
           <h2 id="hist-sueldo-titulo" class="hi-h2" data-i18n="historico.bloques.hist-sueldo.titulo"></h2>
           <p class="nota" data-i18n="historico.bloques.hist-sueldo.subtitulo"></p>
+          <div class="hi-euros" role="group" data-i18n-aria="historico.euros.grupo" hidden>
+            <button type="button" data-euros="constantes" aria-pressed="true"></button>
+            <button type="button" data-euros="corrientes" aria-pressed="false"></button>
+          </div>
           <div class="hi-grafico"></div>
+          <p class="nota hi-euros-nota"></p>
           <p class="hi-lectura"></p>
           <ol class="hi-fechas"></ol>
           <p class="nota hi-fuente"></p>
@@ -145,6 +156,7 @@
             <li data-i18n="historico.metodo.tipos"></li>
             <li data-i18n="historico.metodo.tasado"></li>
             <li data-i18n="historico.metodo.sueldo"></li>
+            <li data-i18n="historico.metodo.euros"></li>
             <li data-i18n="historico.cis_metodo"></li>
             <li data-i18n="historico.metodo.mezcla"></li>
             <li data-i18n="historico.metodo.compuerta"></li>

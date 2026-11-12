@@ -6,7 +6,7 @@
 // (`?idioma=en`) se queda en la portada, que también lo usa.
 // Las pruebas (pruebas/web/portada.test.mjs) comprueban que la lista coincide con CLAVES.
 (function (global) {
-  var CLAVES_MAPA = ['mapa', 'anio', 'tipologia', 'ficha', 'superficie', 'umbral', 'seccion', 'comparar', 'vista', 'territorio', 'escala', 'historia', 'paso'];
+  var CLAVES_MAPA = ['mapa', 'anio', 'tipologia', 'ficha', 'superficie', 'umbral', 'gastos', 'seccion', 'comparar', 'vista', 'territorio', 'escala', 'historia', 'paso'];
 
   // Destino de una dirección de la raíz: 'mapa.html?…#…' o null (se queda la portada).
   function destinoRedireccion(busqueda, fragmento) {

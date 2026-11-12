@@ -9,8 +9,8 @@
 //   - la fe de erratas (inventario/erratas.csv; web/herramientas/pagina_metodo_corto.mjs): CSV
 //     válido, tabla de la más reciente a la más antigua y, sin filas, una línea que lo dice;
 //   - la portada (tarea 52): las cartas de «entrar» salen «próximamente», sin cifras ni enlace,
-//     mientras la familia esté en FAMILIAS_PROXIMAMENTE; «Zona tensionada», «Ley de Vivienda» y «Tope de
-//     alquileres», activas (12-nov-2026: «Tasación» sale del tablero).
+//     mientras la familia esté en FAMILIAS_PROXIMAMENTE; «Zona tensionada» y «Tope de
+//     alquileres», activas, y «Ley de Vivienda», sin enlace (12-nov-2026: «Tasación» sale del tablero).
 // Se ejecutan desde la raíz del proyecto, sin paquetes:
 //   node --test pruebas/web/transparencia.test.mjs
 
@@ -210,14 +210,15 @@ test('portada: las cartas de «entrar» salen «próximamente», sin cifras ni e
   assert.deepEqual(portada.cartasProximamente(sinTextos), []);
 });
 
-test('portada: «Zona tensionada», «Ley de Vivienda» y «Tope de alquileres», activas y con su mapa', () => {
+test('portada: «Zona tensionada» y «Tope de alquileres», activas y con su mapa; «Ley de Vivienda», sin enlace', () => {
   const csv = leerTexto('inventario', 'casillas_portada.csv').trim().split('\n').slice(1).map((l) => l.split(','));
   const fila = (id) => csv.find((f) => f[1] === id);
   assert.equal(fila('zona_tensionada').at(-1), 'TRUE');
   assert.match(fila('zona_tensionada')[5], /^mapa\.html\?mapa=zona_tensionada&vista=/);
-  // 12-nov-2026: la Ley de Vivienda lleva, de momento, al mismo mapa; «Tasación» sale del tablero
-  assert.equal(fila('ley_vivienda').at(-1), 'TRUE');
-  assert.equal(fila('ley_vivienda')[5], fila('zona_tensionada')[5]);
+  // 12-nov-2026: la Ley de Vivienda queda sin enlace («próximamente») hasta que exista la pestaña
+  // «Reglas del juego», con los resúmenes de las leyes vigentes; «Tasación» sale del tablero
+  assert.equal(fila('ley_vivienda').at(-1), 'FALSE');
+  assert.equal(fila('ley_vivienda')[5], '');
   assert.equal(fila('tope_alquileres')[5], 'mapa.html?mapa=var_alquiler');
   assert.equal(fila('tasacion'), undefined);
   const ruta = join(raiz, 'web', 'datos', 'manifiesto.json');

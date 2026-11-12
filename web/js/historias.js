@@ -16,7 +16,7 @@ export const RUTA_HISTORIAS = 'datos/historias.json';
 // Claves del estado que puede traer un paso (las que no trae se quitan) y las que aplicar un paso
 // quita siempre.
 export const CLAVES_PASO = ['mapa', 'anio', 'vista', 'territorio', 'escala', 'ficha'];
-export const CLAVES_QUITADAS = ['seccion', 'comparar', 'tipologia', 'superficie', 'umbral'];
+export const CLAVES_QUITADAS = ['seccion', 'comparar', 'tipologia', 'superficie', 'umbral', 'gastos'];
 // Fichas que puede fijar un paso: las de perfil (HISTORIAS_FICHAS en R/web_historias.R)
 export const FICHAS_PASO = ['llave', 'mochila', 'tartera', 'transistor'];
 const valeEnPaso = (clave, valor) => esValida(clave, valor) && (clave !== 'ficha' || FICHAS_PASO.includes(String(valor)));

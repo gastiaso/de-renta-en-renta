@@ -102,6 +102,13 @@ export const cargarCodigosPostales = (m) => opcional(m?.codigos_postales, {});
 export const cargarPerfiles = (m) => opcional(m.perfiles, {});
 // Percentil salarial (F3): { percentiles: [1, …, 99], anios: { '2024': { '00': [...], '09': [...] } } }.
 export const cargarSalarios = (m) => opcional(m.salarios, null);
+// Otros gastos de vivienda de los inquilinos (decisión del autor, 12-nov-2026; R/fuente_ine_ecv_gastos.R):
+// datos/otros_gastos.json, fuera del manifiesto (como ipc.json). La muestra de datos/ejemplo/ no lo
+// trae: sin él (o si no llega), null, y «Tu sueldo» ofrece el selector desactivado.
+export const RUTA_OTROS_GASTOS = 'datos/otros_gastos.json';
+export const cargarOtrosGastos = (m) => (m?.ejemplo
+  ? Promise.resolve(null)
+  : recordar(RUTA_OTROS_GASTOS, () => pedir(RUTA_OTROS_GASTOS)).catch(() => null));
 // F5: fichero de detalle de un mapa (`detalle` en el manifiesto; las declaraciones del indicador 20,
 // { municipio: [...] }), o null.
 export const cargarDetalle = (ruta) => opcional(ruta, null);

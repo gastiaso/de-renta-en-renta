@@ -132,12 +132,14 @@ export function textoIngresoPeon(t, sueldo, ingreso) {
 // Euros que quedan al mes (tarea 34; la resta, eurosQueQuedan() de sueldo.js): «Quedan 673 € al mes
 // después del alquiler». Si la resta sale negativa, lo que falta, en positivo: «Faltan 85 € al mes
 // para cubrir el alquiler». Con 1 €, en singular. `corto`: «quedan 673 €», para la tabla de la
-// evolución. Solo dice la resta: ningún texto dice si con eso llega o no. Devuelve la clave, la
-// cifra ya escrita (para resaltarla) y el texto entero; null sin resta.
-export function textoResto(t, euros, { corto = false } = {}) {
+// evolución. Solo dice la resta: ningún texto dice si con eso llega o no. `gastos`: la resta lleva
+// también los otros gastos de vivienda, y la frase larga lo dice («… después del alquiler y los otros
+// gastos»; 12-nov-2026); la corta no nombra el alquiler y no cambia. Devuelve la clave, la cifra ya
+// escrita (para resaltarla) y el texto entero; null sin resta.
+export function textoResto(t, euros, { corto = false, gastos = false } = {}) {
   if (euros === null || euros === undefined || !Number.isFinite(euros)) return null;
   const n = Math.abs(euros);
-  const clave = `interfaz.ficha.resto.${euros < 0 ? 'falta' : 'queda'}${corto ? '_corto' : ''}${n === 1 ? '_uno' : ''}`;
+  const clave = `interfaz.ficha.resto.${euros < 0 ? 'falta' : 'queda'}${corto ? '_corto' : ''}${n === 1 ? '_uno' : ''}${gastos && !corto ? '_gastos' : ''}`;
   const cifra = t('interfaz.ficha.resto.euros', { euros: t.numero(n) });
   return { clave, cifra, texto: t(clave, { cifra }) };
 }
@@ -285,11 +287,13 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
     const metodo = lineaMetodo(t, ficha);   // tarea 44: estadístico y de quién
     if (metodo) bloque.append(metodo);
     cifra.append(crear('span', claseNumero, valor === null ? sinCifra : t.porcentaje(valor.ratio)));
-    if (!sinNivel) cifra.append(crear('span', 'ficha-unidad', t('interfaz.ficha.del_ingreso')));
+    // Con los otros gastos de vivienda sumados (`otros`, de calcular()), las dos frases lo dicen
+    const conGastos = Number.isFinite(valor?.otros);
+    if (!sinNivel) cifra.append(crear('span', 'ficha-unidad', t(conGastos ? 'interfaz.ficha.del_ingreso_gastos' : 'interfaz.ficha.del_ingreso')));
     bloque.append(cifra);
     if (valor !== null) {
       // Al lado del porcentaje, los euros que quedan al mes con los mismos términos (tarea 34)
-      const resto = textoResto(t, eurosQueQuedan(valor));
+      const resto = textoResto(t, eurosQueQuedan(valor), { gastos: conGastos });
       if (resto) bloque.append(lineaResto(t, resto));
       // Tarea 40: con el alquiler mensual mediano real de la sección (las fichas de una persona)
       if (valor.real) {
@@ -480,8 +484,10 @@ export function fichaContexto(contenedor, { t, filas }) {
 // llega?», los euros que quedan al mes («quedan 673 €»; tarea 34), en una columna al lado.
 // Tareas 43 y 45 (evolucion.js): `grafico`, el gráfico con la banda del margen, encima de la tabla;
 // `variacion` de cada fila, en una columna con cabecera (`cabeceras`: { periodo, cifra, variacion });
-// `notas`, al pie (banda, pocos contratos, regla de las variaciones, euros corrientes e IPC).
-export function fichaSeries(contenedor, { t, titulo, nota, filas, estados, periodo, grafico = null, cabeceras = null, notas = [] }) {
+// `notas`, al pie (banda, pocos contratos, regla de las variaciones, euros corrientes o del año
+// base e IPC). `selector`: en las series en euros, «Euros de {año base} · Euros de cada año», bajo
+// el título (decisión del autor, 12-nov-2026).
+export function fichaSeries(contenedor, { t, titulo, nota, filas, estados, periodo, grafico = null, cabeceras = null, notas = [], selector = null }) {
   const cuerpo = crear('tbody');
   const conResto = filas.some((f) => f.resto);
   const conVariacion = filas.some((f) => f.variacion);
@@ -513,7 +519,7 @@ export function fichaSeries(contenedor, { t, titulo, nota, filas, estados, perio
   }
   tabla.append(cuerpo);
   const bloque = crear('section', 'ficha-serie');
-  bloque.append(crear('h3', 'ficha-indicador', titulo), ...(grafico ? [grafico] : []), tabla);
+  bloque.append(crear('h3', 'ficha-indicador', titulo), ...(selector ? [selector] : []), ...(grafico ? [grafico] : []), tabla);
   if (nota) bloque.append(crear('p', 'nota', nota));
   for (const n of notas) bloque.append(crear('p', 'nota', n));
   contenedor.replaceChildren(bloque);
