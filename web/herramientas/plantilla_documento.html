@@ -9,8 +9,19 @@ $-- datos_<idioma>.yaml en la página «Datos» y de web/i18n/<idioma>.json. Est
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>$pagetitle$</title>
   <meta name="description" content="$descripcion$">
-  <link rel="icon" href="data:,">
-  <link rel="alternate" hreflang="$otro_idioma$" href="$otra_pagina$">
+  <link rel="icon" href="estilo/fichas/llave.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://gastiaso.github.io/de-renta-en-renta/$if(es)$$pagina_es$$else$$pagina_en$$endif$">
+  <link rel="alternate" hreflang="es" href="https://gastiaso.github.io/de-renta-en-renta/$pagina_es$">
+  <link rel="alternate" hreflang="en" href="https://gastiaso.github.io/de-renta-en-renta/$pagina_en$">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="$titulo$">
+  <meta property="og:title" content="$pagetitle$">
+  <meta property="og:description" content="$descripcion$">
+  <meta property="og:url" content="https://gastiaso.github.io/de-renta-en-renta/$if(es)$$pagina_es$$else$$pagina_en$$endif$">
+  <meta property="og:image" content="https://gastiaso.github.io/de-renta-en-renta/estilo/tarjeta.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="estilo/tokens.css">
   <link rel="stylesheet" href="estilo/sitio.css">
   <link rel="stylesheet" href="estilo/documento.css">

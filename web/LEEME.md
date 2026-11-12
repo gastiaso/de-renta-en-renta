@@ -96,7 +96,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 | `js/sobrecarga.js`, `js/sobrecarga_datos.js`, `estilo/sobrecarga.css` | Sección «Sobrecarga»: página (DOM y MapLibre) y su lógica sin DOM; datos en `datos/sobrecarga/` (`exportar_web_sobrecarga()`) |
 | `js/historico.js`, `js/historico_datos.js`, `estilo/historico.css` | «Máquina del tiempo»: página (DOM y SVG) y su lógica sin DOM; datos en `datos/historico/` (`hist_exportar_web()`, `R/web_historico.R`) y `datos/cis_vivienda.json` (`cis_exportar_vivienda()`, `R/fuente_cis_barometros.R`; si falta, el bloque del CIS dice que no hay datos) |
 | `js/panel_sueldo.js`, `js/compartir.js` | Tarjeta «Tu sueldo» y diálogo «Compartir» |
-| `js/historias.js`, `js/panel_historia.js` | Recorridos guiados (tarea 49): `?historia=…&paso=…` lee `datos/historias.json` (lo escribe R, fuera de git), lo valida frente al contrato y pasa cada paso a cambios de estado (mapa, año, vista, territorio y escala; sin sección, comparación, ficha de perfil ni tipología); el panel, junto al mapa, con Anterior, Siguiente, Salir, las flechas y un selector de historia. Sin el fichero, sin panel |
+| `js/historias.js`, `js/panel_historia.js` | Recorridos guiados (tarea 49): `?historia=…&paso=…` lee `datos/historias.json` (lo escribe R, fuera de git), lo valida frente al contrato y pasa cada paso a cambios de estado (mapa, año, vista, territorio y escala; sin sección, comparación, ficha de perfil ni tipología, y con la superficie y el umbral por defecto); el panel, junto al mapa, con Anterior, Siguiente, Salir, las flechas, un selector de historia y, si el paso trae `nota`, el desplegable «Cómo se mide» (los matices de método, fuera del texto). En pantallas estrechas, con un recorrido abierto (`body.con-historia`), el mapa se queda fijo arriba y el paso va justo debajo, con los botones siempre a la vista. Sin el fichero o sin la historia pedida, la página sigue sin panel y lo dice en un aviso sobre el mapa |
 | `js/movil.js` | Pantallas estrechas (tarea 50; por debajo de 760 px, el corte de `sitio.css`): baja hasta la ficha al tocar el mapa si no está a la vista (sin animación con «reducir movimiento») y pliega la tipología y las descargas de la barra con «Más opciones» (`aria-expanded`). En escritorio no hace nada |
 | `js/transparencia.js` | Transparencia (tarea 53): «Avisar de un error» (incidencias del repositorio), «Método en dos páginas» y su fe de erratas en cada idioma, y la fecha de los datos en largo; la línea bajo el mapa (con la fecha, `generado` del manifiesto), al pie de la ficha y en el pie de la portada |
 | `js/comparador.js`, `js/buscador.js` | Comparador entre territorios y buscador |
@@ -115,7 +115,7 @@ Con la exportación del pipeline (`datos/manifiesto.json` y `teselas/seccionado_
 
 ## Datos: el contrato con el pipeline
 
-`js/datos.js` busca `datos/manifiesto.json` y, si no existe, `datos/ejemplo/manifiesto.json`. Ese es el punto de enganche: cuando el pipeline escribe el manifiesto y el PMTiles, la web los usa sin tocar el código. La prueba `exportación del pipeline` de `pruebas/web/datos.test.mjs` comprueba el contrato.
+`js/datos.js` busca `datos/manifiesto.json` y, si no existe, `datos/ejemplo/manifiesto.json`. La muestra solo es reserva **en local** (`localhost`, `127.0.0.1`) y solo si el manifiesto no existe (404): en el sitio publicado, o si el manifiesto falla por otra causa (un 503, la red), la página dice el error y nunca enseña cifras inventadas. Ese es el punto de enganche: cuando el pipeline escribe el manifiesto y el PMTiles, la web los usa sin tocar el código. La prueba `exportación del pipeline` de `pruebas/web/datos.test.mjs` comprueba el contrato.
 
 El manifiesto dice:
 
@@ -210,9 +210,12 @@ node --test pruebas/web/municipal.test.mjs
 node --test pruebas/web/portales.test.mjs
 node --test pruebas/web/entrar.test.mjs
 node --test pruebas/web/evolucion.test.mjs
+node --test pruebas/web/robustez.test.mjs
 ```
 
 Todas a la vez: `node --test pruebas/web/*.test.mjs`. Así las pasa GitHub con cada push (`.github/workflows/pruebas.yml`, con la muestra de `datos/ejemplo/`); las que piden la exportación del pipeline se saltan solas.
+
+La de robustez (revisión del 11-nov-2026) prueba lo que falló o podía fallar: que «1.500» son mil quinientos también en «Tu sueldo» del mapa (un solo lector, `leerSueldo()` de `js/sueldo.js`), que la vista de la dirección cabe en lo que admite el mapa, que la muestra de `datos/ejemplo/` solo se usa en local y sin manifiesto, que en un recorrido la página se coloca con el mapa arriba en pantallas estrechas, que las cuatro páginas y la plantilla llevan dirección canónica, idiomas y tarjeta para compartir, que la página de «no existe» no usa rutas relativas, que el enlace del menú a la propia página lleva el idioma y que una carga superada no pinta el mapa.
 
 La de la evolución (tareas 43 y 45) prueba las variaciones con la regla de los contratos (nunca una variación de un año sin aviso con menos de 30 contratos en alguno de los dos años), la banda del margen, la geometría del gráfico, el aviso de euros corrientes con la variación del IPC, la tabla con la columna de variación y los textos en los dos idiomas; con la exportación del pipeline, que `datos/ipc.json` trae los años del alquiler.
 
@@ -242,6 +245,18 @@ Queda aparte la prueba en un navegador de verdad, con `chromote` (que no está e
 «Método» (`metodo.html`, `method.html`) y «Datos» (`datos.html`, `data.html`) no son módulos de la web: el flujo de Pages las genera con pandoc desde `docs/` y `herramientas/plantilla_documento.html`, con la misma cabecera y el mismo menú, en un fichero por idioma (el botón ES/EN lleva al otro). Sus copias locales están fuera de git; cómo montarlas: `docs/publicacion.md`.
 
 «Datos» lleva la descarga de la tabla larga (`descargas/tabla_larga.parquet`, con su tamaño, su suma SHA-256, la fecha y el commit de los datos y el enlace al release, de `descargas/version.json`), las licencias y la cita, cómo leerla en R y en Python, el modelo de datos, la cobertura de cada indicador en el release, los valores de las columnas y el diccionario de indicadores. Los textos a mano están en `docs/datos.md` y `docs/data.md`; los valores de las columnas y el diccionario, en `docs/datos_diccionario.md` y `docs/data_dictionary.md`, que genera R desde `inventario/` (`exportar_diccionario_datos()`): no se editan a mano. El menú de `index.html`, `mapa.html` y `sobrecarga.html` la enlaza con `data-href-es` y `data-href-en`, como «Método».
+
+## Compartir, icono y página de «no existe»
+
+- **Tarjeta para compartir.** Las cuatro páginas y la plantilla de «Método» y «Datos» llevan en `<head>` la dirección canónica, los dos idiomas (`hreflang`) y las etiquetas Open Graph y de Twitter, con direcciones absolutas del sitio publicado. La imagen es `estilo/tarjeta.png` (1.200 × 630 px), que sale de `herramientas/tarjeta.html`, con los colores, las tipografías y las fichas del sitio. Para regenerarla, con la web servida en local (`node web/servir.mjs`) y un Chrome o un Edge:
+
+  ```bash
+  chrome --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 --screenshot=web/estilo/tarjeta.png http://localhost:8000/herramientas/tarjeta.html
+  ```
+
+  Quien lee esas etiquetas no ejecuta JavaScript: la tarjeta es la misma para toda la página, también con `?historia=…` o `?idioma=en`.
+- **Icono.** `estilo/fichas/llave.svg`.
+- **`404.html`.** GitHub Pages la sirve en cualquier dirección que no exista, también en subcarpetas: por eso lleva su estilo dentro y enlaces absolutos a la portada y al mapa.
 
 ## Publicación
 

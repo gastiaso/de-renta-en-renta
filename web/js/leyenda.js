@@ -35,6 +35,14 @@ const crear = (etiqueta, clase, texto) => {
 // Abierta al entrar (tarea 51); luego, como la deje el usuario.
 let abierta = true;
 
+// Pliega la leyenda desde fuera (un recorrido en una pantalla estrecha: deja sitio al texto del
+// paso). Quien la abra después, la conserva abierta.
+export function plegarLeyenda(contenedor) {
+  abierta = false;
+  const pliegue = contenedor?.querySelector('.leyenda-pliegue');
+  if (pliegue) pliegue.open = false;
+}
+
 function claves(t, relativa = null) {
   const lista = crear('ul', 'leyenda-claves');
   const filas = [['leyenda-sin-dato', t('interfaz.leyenda.sin_dato')], ['secreto', t('interfaz.leyenda.secreto')]];

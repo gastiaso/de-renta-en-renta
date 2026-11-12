@@ -1,10 +1,12 @@
 // Recorridos guiados por el mapa (backlog, tarea 49): lógica sin DOM. Las historias las escribe R
 // (R/web_historias.R) en datos/historias.json, fuera de git como portada.json:
-//   { generado, historias: [{ id, titulo, entradilla, pasos: [{ titulo, texto, estado, enlace, fuente }] }] }
-// con los textos en { es, en }, en HTML plano y con las cifras ya escritas. `estado` lleva claves de
+//   { generado, historias: [{ id, titulo, entradilla, pasos: [{ titulo, texto, nota, estado, enlace, fuente }] }] }
+// con los textos en { es, en }, sin HTML y con las cifras ya escritas. `nota` (opcional, o null) es el
+// desplegable «Cómo se mide» del paso: los matices de método, fuera del cuerpo del texto. `estado` lleva claves de
 // estado.js (mapa, anio, vista, territorio, escala; `vista` siempre): aplicar un paso pone esas y
-// quita las que falten, y también la sección, la comparación, la ficha de perfil y la tipología,
-// para que el mapa quede en el modo «necesario» con lo que cuenta el texto. El panel lo pinta
+// quita las que falten, y también la sección, la comparación, la ficha de perfil, la tipología, la
+// superficie y el umbral, para que el mapa quede en el modo «necesario», con los supuestos por
+// defecto y con lo que cuenta el texto. El panel lo pinta
 // panel_historia.js y lo coordina principal.js.
 
 import { esValida } from './estado.js';
@@ -12,7 +14,7 @@ import { esValida } from './estado.js';
 export const RUTA_HISTORIAS = 'datos/historias.json';
 // Claves del estado que puede traer un paso y las que aplicar un paso quita siempre.
 export const CLAVES_PASO = ['mapa', 'anio', 'vista', 'territorio', 'escala'];
-export const CLAVES_QUITADAS = ['seccion', 'comparar', 'ficha', 'tipologia'];
+export const CLAVES_QUITADAS = ['seccion', 'comparar', 'ficha', 'tipologia', 'superficie', 'umbral'];
 export const MAXIMO_PASOS = 20;   // el de la clave `paso` (estado.js)
 const IDIOMAS = ['es', 'en'];
 const ID = /^[a-z0-9_]{1,30}$/;
@@ -30,7 +32,7 @@ export function textoEn(texto, idioma) {
 
 // Errores de un texto { es, en }: los dos idiomas, sin vacíos y sin etiquetas HTML.
 function erroresTexto(texto, donde, { opcional = false } = {}) {
-  if (texto === undefined && opcional) return [];
+  if ((texto === undefined || texto === null) && opcional) return [];
   if (!esObjeto(texto)) return [`${donde}: falta el texto`];
   const errores = [];
   for (const idioma of IDIOMAS) {
@@ -82,6 +84,7 @@ export function validarHistorias(datos, { mapas = null } = {}) {
       if (!esObjeto(p)) { errores.push(`${dondePaso}: no es un objeto`); return; }
       errores.push(...erroresTexto(p.titulo, `${dondePaso}, título`));
       errores.push(...erroresTexto(p.texto, `${dondePaso}, texto`));
+      errores.push(...erroresTexto(p.nota, `${dondePaso}, nota`, { opcional: true }));
       errores.push(...erroresTexto(p.fuente, `${dondePaso}, fuente`));
       errores.push(...erroresEstado(p.estado, dondePaso, mapas));
       errores.push(...erroresEnlace(p.enlace, dondePaso));

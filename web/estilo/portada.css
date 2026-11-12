@@ -190,6 +190,16 @@
 .casilla > a:hover { background: var(--color-tinta); color: var(--color-crema); }
 .casilla > a:focus-visible { outline-offset: -3px; }
 .casilla-esquina { font-weight: 700; font-size: 0.85rem; }
+/* Las cuatro esquinas, en rojo y con el texto en blanco (5,95:1), como la esquina de inicio de la
+   maqueta original del tablero (decisión del autor, 11-nov-2026). Solo con el tablero montado: por
+   debajo de 700 px las casillas son una lista y no hay esquinas. La banda de su familia se conserva,
+   con una línea de tinta que la separa del rojo. */
+@media (min-width: 700px) {
+  .casilla-esquina { background: var(--color-rojo); font-weight: 800; letter-spacing: 0.02em; }
+  .casilla-esquina > a { color: #fff; }
+  .casilla-esquina > a:focus-visible { outline-color: #fff; }
+  .casilla-esquina::before { outline: 1px solid var(--color-tinta); }
+}
 .casilla-inactiva { color: var(--color-tenue); }
 .casilla-inactiva { flex-direction: column; justify-content: center; align-items: center; padding-inline: 4px; }
 .casilla-pronto { display: block; margin-top: 2px; font: italic 400 0.72rem var(--fuente-carta); }

@@ -97,6 +97,22 @@ body {
   border: var(--borde);
   border-radius: var(--radio-control);
 }
+/* «Sin resultados», en el sitio de la lista */
+.buscador-vacio {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--color-placa);
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  color: var(--color-tenue);
+  font-size: 0.85rem;
+}
+.buscador-vacio[hidden] { display: none; }
 .buscador-lista li { padding: 8px 12px; cursor: pointer; }
 .buscador-lista li[aria-selected="true"] { background: var(--color-tinta); color: var(--color-crema); }
 
@@ -117,6 +133,9 @@ body {
   cursor: pointer;
 }
 .idioma button + button { border-left: var(--borde); }
+/* El marco recorta lo que sobresale: el anillo de foco va por dentro (y en blanco sobre el rojo) */
+.idioma button:focus-visible { outline-offset: -4px; outline-color: var(--color-tinta); }
+.idioma button[aria-pressed="true"]:focus-visible { outline-color: #fff; }
 .idioma button[aria-pressed="true"] { background: var(--color-rojo); color: #fff; }   /* 5,95:1 */
 
 /* Explorador: mapa y columna lateral (Tu sueldo y ficha) */
@@ -174,6 +193,23 @@ body {
   background: var(--color-mar);
 }
 .mapa { position: absolute; inset: 0; }
+.mapa canvas:focus-visible { outline-offset: -3px; }   /* por dentro: el marco recorta lo que sobresale */
+/* Con el foco en el mapa (teclado), una cruz marca el centro: Intro elige el territorio que hay debajo */
+.mapa:has(canvas:focus-visible)::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--color-tinta), var(--color-tinta)) center / 2px 100% no-repeat,
+    linear-gradient(var(--color-tinta), var(--color-tinta)) center / 100% 2px no-repeat;
+  filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff);
+}
 /* Etiqueta con los nombres del territorio bajo el ratón (tarea 25); la mueve mapa.js. */
 .mapa-etiqueta {
   position: absolute;
@@ -268,6 +304,20 @@ body {
   text-align: center;
 }
 .aviso-escala[hidden] { display: none; }
+/* Aviso de error: por encima de los demás avisos, con su botón («Reintentar», «Cerrar») */
+.aviso-error {
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  padding: 8px 12px;
+  border-color: var(--color-rojo);
+  box-shadow: var(--sombra-ficha);
+}
+.aviso-error[hidden] { display: none; }
+.aviso-error .boton { min-height: 32px; padding: 0 10px; font-size: 0.85rem; }
 
 /* Botones y selectores comunes */
 .boton {
@@ -331,6 +381,8 @@ body {
   font: 600 1.15rem var(--fuente-tablero);
   font-variant-numeric: tabular-nums;
 }
+.campo-euros input[aria-invalid="true"] { border-color: var(--color-rojo); }
+.sueldo-error { color: var(--color-rojo); }
 .campo-euros > span { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--color-tinta); font: 600 1.05rem var(--fuente-tablero); }
 
 .fichas { margin: 10px 0 0; }
@@ -645,6 +697,15 @@ body {
 .historia-paso-titulo { margin: 2px 0 4px; font: 700 1.05rem/1.25 var(--fuente-tablero); }
 .historia-texto { margin: 0; line-height: 1.45; }
 .historia-enlace { margin: 6px 0 0; }
+/* «Cómo se mide»: los matices de método del paso, plegados */
+.historia-nota { margin: 8px 0 0; }
+.historia-nota[hidden] { display: none; }
+.historia-nota > summary { display: inline-flex; align-items: center; min-height: 32px; color: var(--color-tenue); font: 600 0.85rem var(--fuente-tablero); cursor: pointer; }
+.historia-nota > summary::before { content: "B8"; margin-right: 6px; }
+.historia-nota[open] > summary::before { content: "BE"; }
+.historia-nota > summary::-webkit-details-marker { display: none; }
+.historia-nota > summary { list-style: none; }
+.historia-nota .nota { margin: 0 0 4px; line-height: 1.4; }
 .historia-enlace a { color: var(--color-tinta); }
 .historia-acciones .boton:disabled { border-style: dashed; color: var(--color-tenue); background: var(--color-crema); cursor: not-allowed; }
 .historia-acciones .boton-principal:disabled { border-color: var(--color-tinta); }
@@ -677,6 +738,22 @@ body {
   #ficha { order: -1; }   /* tarea 50: la ficha, justo bajo el mapa; «Tu sueldo», después */
   .historia { order: -2; }   /* tarea 49: el recorrido, bajo el mapa y antes de la ficha; no lo tapa */
   .historia-elegir select { width: 100%; font-size: 16px; }
+  /* Con un recorrido abierto (body.con-historia), el mapa, más bajo, se queda fijo arriba y el texto
+     del paso va justo debajo: se ven a la vez y «Siguiente» cambia un mapa que se está viendo. Las
+     dos columnas se deshacen (display: contents) para que el mapa siga fijo mientras pasa el texto;
+     el orden lo dan las reglas de abajo. La leyenda, plegada, sigue en el marco del mapa. */
+  body.con-historia .tablero { overflow: visible; }
+  body.con-historia .explorador { display: flex; flex-direction: column; }
+  body.con-historia .mapa-columna, body.con-historia .lateral { display: contents; }
+  body.con-historia .barra-vista { order: -4; }
+  body.con-historia .mapa-marco { order: -3; position: sticky; top: 0; z-index: 5; min-height: 0; }
+  body.con-historia .mapa-marco > .mapa { height: 40vh; }
+  /* El selector de historia, al final de la tarjeta: arriba va el paso, que es lo que se lee */
+  .historia-cuerpo { display: flex; flex-direction: column; }
+  .historia-elegir { order: 1; margin-top: 12px; }
+  .historia .tarjeta-titulo { font-size: 1.05rem; }
+  /* Los botones del paso, siempre a mano: se quedan en el borde de abajo mientras se lee */
+  .historia-acciones { position: sticky; bottom: 0; margin: 8px -16px 0; padding: 8px 16px; background: var(--color-placa); border-top: 1px solid var(--color-tinta); }
   .leyenda { width: min(260px, calc(100% - 90px)); padding: 4px 8px 6px; font-size: 0.75rem; }
   .leyenda-titulo { font-size: 0.8rem; }
   .leyenda-unidad { margin-bottom: 4px; }

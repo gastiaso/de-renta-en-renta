@@ -4,11 +4,37 @@
 # cifras calculadas aquí, desde la tabla larga, la tabla del histórico y los cortes de la web.
 #
 #   inventario/historias.csv         una fila por paso: textos, fuente, vista del mapa y enlace opcional;
-#                                    el título y la entradilla de la historia, en su paso 1.
+#                                    el título y la entradilla de la historia, en su paso 1. Columnas
+#                                    opcionales `nota_es` y `nota_en`: la nota «Cómo se mide» del paso
+#                                    (los matices de método, fuera del cuerpo), con marcas {id} como el
+#                                    texto; en los dos idiomas o en ninguno.
 #   inventario/historias_cifras.csv  una fila por cifra: la consulta que la calcula y la cifra tal como
 #                                    se redactó el texto (`redactado`, ya redondeada a `decimales`); el
 #                                    grupo de la tabla larga, como «corte:grupo» (tipologia:VC) o vacío
 #                                    para el total.
+#
+# Registro (decisión del autor, 11-nov-2026, tras la lectura con seis perfiles): las historias van en
+# lenguaje llano, con una idea, una o dos cifras y un lugar con nombre por paso; siguen sin
+# valoraciones ni recomendaciones. Lo técnico va a la nota del paso.
+#
+# Consultas (columna `consulta`):
+#   valor                      la cifra de un territorio (geo_id), en cualquier nivel
+#   maximo, minimo, *_geo,     sobre los territorios del nivel; con geo_id, solo los que empiezan por
+#   cuenta_desde,              ese código (los distritos de un municipio, los municipios de una
+#   cociente_p90_p10           provincia)
+#   secciones_*                secciones de un municipio (geo_id de cinco cifras) o de España (00)
+#   panel_n, panel_cuenta_desde, panel_cuantil
+#                              lo mismo con panel constante: solo los territorios con dato en `anio`
+#                              y en otro año. Parámetro «valor;año;decimales»: el umbral o el cuantil
+#                              (vacío en panel_n), el otro año y, si se dan, los decimales a que se
+#                              redondea cada valor antes de contar (los que enseña el mapa)
+#   corte_mayor                último corte de un juego de la web
+#   hist_*                     tabla del histórico
+#   ipc_variacion              subida del IPC (media anual) de `parametro` a `anio`, en %. El IPC no
+#                              deflacta ninguna cifra: se da al lado de la subida en euros de cada año
+#   derivada_variacion, derivada_diferencia
+#                              de dos cifras de la misma tabla (parámetro «id_final;id_inicial»),
+#                              desde sus valores ya redondeados, como los lee quien sigue la historia
 #
 # Compuerta (validacion_historias, bloqueo): cada cifra calculada, redondeada, coincide con la
 # redactada. Si una actualización de los datos la mueve, el pipeline para y el texto se revisa a mano
@@ -23,10 +49,17 @@
 FICHERO_HISTORIAS_WEB <- "historias.json"
 
 HISTORIAS_CONSULTAS <- c(
-  # tabla larga, territorios de un nivel (nivel, anio; geo_id solo en "valor")
+  # tabla larga, territorios de un nivel (nivel, anio; geo_id: el territorio en "valor" y, en las
+  # demas, el prefijo que los limita)
   "valor", "maximo", "minimo", "maximo_geo", "minimo_geo", "cuenta_desde", "cociente_p90_p10",
+  # tabla larga, panel constante entre dos anios (parametro "valor;anio;decimales")
+  "panel_n", "panel_cuenta_desde", "panel_cuantil",
   # tabla larga, secciones de un municipio (geo_id de cinco cifras) o de toda Espa\u00f1a (geo_id 00)
   "secciones_n", "secciones_mediana", "secciones_cuantil", "secciones_cuota_desde",
+  # IPC (indicador = ipc; anio = final; parametro = inicial)
+  "ipc_variacion",
+  # de otras dos cifras (parametro "id_final;id_inicial")
+  "derivada_variacion", "derivada_diferencia",
   # inventario/cortes_web_niveles.csv (nivel = juego: seccion, municipio, provincia_ccaa)
   "corte_mayor",
   # tabla del historico (indicador = serie; parametro de hist_valor = subperiodo)
@@ -39,6 +72,7 @@ HISTORIAS_CONSULTAS <- c(
 HISTORIAS_COLUMNAS <- c("historia", "paso", "historia_titulo_es", "historia_titulo_en", "entradilla_es", "entradilla_en",
                         "titulo_es", "titulo_en", "texto_es", "texto_en", "fuente_es", "fuente_en",
                         "mapa", "anio", "vista", "territorio", "escala", "enlace", "enlace_es", "enlace_en")
+HISTORIAS_COLUMNAS_NOTA <- c("nota_es", "nota_en")   # opcionales: sin ellas, pasos sin nota
 HISTORIAS_CIFRAS_COLUMNAS <- c("id", "historia", "consulta", "indicador", "nivel", "geo_id", "anio", "grupo",
                                "parametro", "decimales", "redactado", "nota")
 
@@ -56,6 +90,7 @@ leer_historias <- function(ruta) {
   x <- readr::read_csv(ruta, col_types = readr::cols(.default = "c"), na = character())
   faltan <- setdiff(HISTORIAS_COLUMNAS, names(x))
   if (length(faltan)) stop("Faltan columnas en ", ruta, ": ", paste(faltan, collapse = ", "), call. = FALSE)
+  for (opcional in HISTORIAS_COLUMNAS_NOTA) if (!opcional %in% names(x)) x[[opcional]] <- ""
   x$paso <- as.integer(x$paso)
   x
 }
@@ -73,11 +108,13 @@ leer_historias_cifras <- function(ruta) {
 
 # Una cifra de la tabla larga. `d`: filas del indicador, ya sin valores vacíos.
 historias_cifra_larga <- function(f, d) {
-  d <- d[d$nivel == f$nivel & d$anio == as.integer(f$anio), ]
+  d <- d[d$nivel == f$nivel, ]
   if (nzchar(f$grupo)) {
     corte_grupo <- strsplit(f$grupo, ":", fixed = TRUE)[[1]]   # "tipologia:VC"
     d <- d[d$corte %in% corte_grupo[1] & d$grupo %in% corte_grupo[2], ]
   } else d <- d[d$grupo %in% c("total", NA), ]
+  if (startsWith(f$consulta, "panel_")) return(historias_cifra_panel(f, d))
+  d <- d[d$anio == as.integer(f$anio), ]
   p <- suppressWarnings(as.numeric(f$parametro))
   if (startsWith(f$consulta, "secciones_")) {
     if (f$geo_id != "00") d <- d[substr(d$geo_id, 1, 5) == f$geo_id, ]
@@ -89,16 +126,40 @@ historias_cifra_larga <- function(f, d) {
                   secciones_cuantil = stats::quantile(x, p, names = FALSE),
                   secciones_cuota_desde = 100 * mean(x >= p)))
   }
+  if (f$consulta == "valor") {
+    v <- d$valor[d$geo_id == f$geo_id]
+    return(if (length(v) == 1) v else NA_real_)
+  }
+  if (nzchar(f$geo_id)) d <- d[startsWith(d$geo_id, f$geo_id), ]   # los distritos de un municipio, etc.
   x <- d$valor
   if (!length(x)) return(NA_real_)
   switch(f$consulta,
-         valor = { v <- d$valor[d$geo_id == f$geo_id]; if (length(v) == 1) v else NA_real_ },
          maximo = max(x),
          minimo = min(x),
          maximo_geo = as.numeric(d$geo_id[which.max(x)]),
          minimo_geo = as.numeric(d$geo_id[which.min(x)]),
          cuenta_desde = sum(x >= p),
          cociente_p90_p10 = stats::quantile(x, 0.9, names = FALSE) / stats::quantile(x, 0.1, names = FALSE),
+         NA_real_)
+}
+
+# Consultas con panel constante. `d`: filas del indicador, del nivel y del grupo, de todos los años.
+# Cuentan solo los territorios con dato en el año de la cifra y en el otro año (segundo trozo del
+# parámetro); con un tercer trozo, cada valor se redondea antes a esos decimales, los que enseña el
+# mapa, para que la cuenta sea la que puede hacer quien lo mira.
+historias_cifra_panel <- function(f, d) {
+  pp <- suppressWarnings(as.numeric(strsplit(f$parametro, ";", fixed = TRUE)[[1]]))
+  otro <- if (length(pp) >= 2) as.integer(pp[2]) else NA_integer_
+  if (is.na(otro)) return(NA_real_)
+  if (nzchar(f$geo_id)) d <- d[startsWith(d$geo_id, f$geo_id), ]
+  a <- d[d$anio == as.integer(f$anio), ]
+  x <- a$valor[a$geo_id %in% d$geo_id[d$anio == otro]]
+  if (!length(x)) return(if (f$consulta == "panel_cuantil") NA_real_ else 0)
+  if (length(pp) >= 3 && !is.na(pp[3])) x <- redondear_empate_arriba(x, as.integer(pp[3]))
+  switch(f$consulta,
+         panel_n = length(x),
+         panel_cuenta_desde = if (is.na(pp[1])) NA_real_ else sum(x >= pp[1]),
+         panel_cuantil = if (is.na(pp[1])) NA_real_ else stats::quantile(x, pp[1], names = FALSE),
          NA_real_)
 }
 
@@ -126,25 +187,52 @@ historias_cifra_hist <- function(f, h) {
   as.numeric(r$valor)
 }
 
-# Calcula todas las cifras: columna `calculado` (sin redondear).
-historias_calcular <- function(cifras, larga, historico, cortes_niveles) {
+# Subida del IPC entre dos años, en %. `ipc`: tabla de ipc_leer() (anio, indice).
+historias_cifra_ipc <- function(f, ipc) {
+  if (is.null(ipc)) return(NA_real_)
+  fin <- ipc$indice[ipc$anio == suppressWarnings(as.integer(f$anio))]
+  ini <- ipc$indice[ipc$anio == suppressWarnings(as.integer(f$parametro))]
+  if (length(fin) == 1 && length(ini) == 1) 100 * (fin / ini - 1) else NA_real_
+}
+
+# Cifras derivadas de otras dos de la tabla («id_final;id_inicial»), desde sus valores ya redondeados
+# a sus decimales, como en los derivados de la web. Una derivada no puede salir de otra derivada.
+historias_derivar <- function(cifras) {
+  derivadas <- which(startsWith(cifras$consulta, "derivada_"))
+  for (i in derivadas) {
+    ids <- strsplit(cifras$parametro[i], ";", fixed = TRUE)[[1]]
+    j <- match(ids, cifras$id)
+    if (length(ids) != 2 || anyNA(j) || any(j %in% derivadas)) next
+    terminos <- redondear_empate_arriba(cifras$calculado[j], cifras$decimales[j])
+    cifras$calculado[i] <- switch(cifras$consulta[i],
+                                  derivada_variacion = 100 * (terminos[1] / terminos[2] - 1),
+                                  derivada_diferencia = terminos[1] - terminos[2],
+                                  NA_real_)
+  }
+  cifras
+}
+
+# Calcula todas las cifras: columna `calculado` (sin redondear). `ipc`: tabla del IPC (ipc_leer()),
+# solo para las consultas ipc_variacion.
+historias_calcular <- function(cifras, larga, historico, cortes_niveles, ipc = NULL) {
   usados <- unique(cifras$indicador)
   l <- larga[larga$indicador %in% usados & !is.na(larga$valor), c("geo_id", "nivel", "anio", "indicador", "valor", "corte", "grupo")]
   h <- historico[historico$serie %in% usados, ]
   cifras$calculado <- vapply(seq_len(nrow(cifras)), function(i) {
     f <- cifras[i, ]
-    if (!f$consulta %in% HISTORIAS_CONSULTAS) return(NA_real_)
+    if (!f$consulta %in% HISTORIAS_CONSULTAS || startsWith(f$consulta, "derivada_")) return(NA_real_)
     if (f$consulta == "corte_mayor") {
       cc <- cortes_niveles$cortes[cortes_niveles$indicador == f$indicador & cortes_niveles$juego == f$nivel]
       return(if (length(cc) == 1) max(cortes_web(cc)) else NA_real_)
     }
+    if (f$consulta == "ipc_variacion") return(historias_cifra_ipc(f, ipc))
     if (startsWith(f$consulta, "hist_")) {
       hh <- h[h$serie == f$indicador & h$geo_id == f$geo_id, ]
       return(historias_cifra_hist(f, hh[order(hh$anio, hh$subperiodo), ]))
     }
     as.numeric(historias_cifra_larga(f, l[l$indicador == f$indicador, ]))
   }, numeric(1))
-  cifras
+  historias_derivar(cifras)
 }
 
 # Cifra escrita: redondeo con los empates hacia arriba y separadores de cada idioma (2.421,5 · 2,421.5).
@@ -195,7 +283,8 @@ historias_web <- function(historias, cifras) {
           texto = bilingue(p, "texto"),
           estado = estado,
           enlace = if (nzchar(p$enlace)) list(href = p$enlace, texto = list(es = p$enlace_es, en = p$enlace_en)) else NULL,
-          fuente = bilingue(p, "fuente")
+          fuente = bilingue(p, "fuente"),
+          nota = if (nzchar(p$nota_es) && nzchar(p$nota_en)) bilingue(p, "nota") else NULL
         )
       })
     )
@@ -226,14 +315,26 @@ comprobar_historias <- function(historias, cifras, manifiesto, claves_estado, an
 
   # 2. Textos
   campos <- c("titulo", "texto", "fuente")
-  marcas_es <- lapply(historias$texto_es, historias_marcas)
-  marcas_en <- lapply(historias$texto_en, historias_marcas)
+  for (opcional in HISTORIAS_COLUMNAS_NOTA) if (!opcional %in% names(historias)) historias[[opcional]] <- ""
+  # Marcas del texto y de la nota de cada paso, por idioma (las dos se rellenan igual)
+  marcas_de <- function(idioma) {
+    lapply(seq_len(nrow(historias)), function(i) {
+      unique(c(historias_marcas(historias[[paste0("texto_", idioma)]][i]), historias_marcas(historias[[paste0("nota_", idioma)]][i])))
+    })
+  }
+  marcas_es <- marcas_de("es")
+  marcas_en <- marcas_de("en")
   sin_cifra <- sum(vapply(seq_len(nrow(historias)), function(i) {
     sum(!c(marcas_es[[i]], marcas_en[[i]]) %in% cifras$id[cifras$historia == historias$historia[i]])
   }, numeric(1)))
   distintas <- sum(vapply(seq_len(nrow(historias)), function(i) !setequal(marcas_es[[i]], marcas_en[[i]]), TRUE))
   vacios <- sum(vapply(campos, function(cp) sum(!nzchar(historias[[paste0(cp, "_es")]]) | !nzchar(historias[[paste0(cp, "_en")]])),
                        numeric(1)))
+  nota_coja <- sum(nzchar(historias$nota_es) != nzchar(historias$nota_en))
+  # Marcas en la cabecera o en la fuente: no se rellenan (historias_web), asi que no puede haberlas
+  sin_rellenar <- sum(vapply(c("historia_titulo_es", "historia_titulo_en", "entradilla_es", "entradilla_en",
+                               "titulo_es", "titulo_en", "enlace_es", "enlace_en"),
+                             function(cp) sum(grepl("{", historias[[cp]], fixed = TRUE)), numeric(1)))
   primero <- historias$paso == 1L
   cabecera <- c("historia_titulo_es", "historia_titulo_en", "entradilla_es", "entradilla_en")
   sin_cabecera <- sum(vapply(cabecera, function(cp) sum(!nzchar(historias[[cp]][primero])), numeric(1)))
@@ -246,6 +347,8 @@ comprobar_historias <- function(historias, cifras, manifiesto, claves_estado, an
     cuenta("historias_textos", "marcas {id} sin cifra de su historia", sin_cifra),
     cuenta("historias_textos", "pasos con marcas distintas en castellano y en ingl\u00e9s", distintas),
     cuenta("historias_textos", "t\u00edtulos, textos o fuentes vac\u00edos", vacios),
+    cuenta("historias_textos", "notas en un solo idioma", nota_coja),
+    cuenta("historias_textos", "marcas {id} en un campo que no se rellena (t\u00edtulos, entradilla, enlace)", sin_rellenar),
     cuenta("historias_textos", "historias sin t\u00edtulo o entradilla en el paso 1", sin_cabecera),
     cuenta("historias_textos", "t\u00edtulo o entradilla fuera del paso 1", sobra_cabecera),
     cuenta("historias_textos", "historias con los pasos fuera de 1 a N", orden),
@@ -294,7 +397,7 @@ comprobar_historias <- function(historias, cifras, manifiesto, claves_estado, an
   privada <- function(x) grepl("portal|idealista", x, ignore.case = TRUE)
   mapas_priv <- sum(!sin_mapa & vapply(def, function(d) !is.null(d) && privada(manifiesto$indicadores[[d$base]]$fuente %||% ""), TRUE))
   ind_priv <- indicadores$codigo[privada(indicadores$fuentes)]
-  de_larga <- unique(cifras$indicador[!startsWith(cifras$consulta, "hist_") & cifras$consulta != "corte_mayor"])
+  de_larga <- unique(cifras$indicador[!grepl("^(hist|ipc|derivada)_", cifras$consulta) & cifras$consulta != "corte_mayor"])
   fuentes_cifras <- unique(larga$fuente[larga$indicador %in% de_larga])
   cifras_priv <- sum(cifras$indicador %in% ind_priv) + sum(privada(fuentes_cifras)) +
     sum(grepl("entrar", cifras$indicador)) + sum(grepl("entrar", historias$mapa))

@@ -32,12 +32,28 @@ export function buscar(texto, { municipios, secciones, limite = 8 }) {
   return [...empiezan, ...contienen].slice(0, limite);
 }
 
-export function crearBuscador({ entrada, lista, obtenerFuentes, etiqueta, alElegir }) {
+// `sinResultados`: función que da el texto de «sin resultados» en el idioma activo (dice por qué se
+// puede buscar: municipio o código de sección, no calle ni barrio); sin ella, no hay aviso.
+export function crearBuscador({ entrada, lista, obtenerFuentes, etiqueta, alElegir, sinResultados = null }) {
   let opciones = [];
   let activa = -1;
 
+  // La lista toma el nombre de la etiqueta del campo (un listbox sin nombre no dice qué es)
+  const rotulo = entrada.id ? document.querySelector(`label[for="${entrada.id}"]`) : null;
+  if (rotulo && !lista.hasAttribute('aria-labelledby')) {
+    rotulo.id ||= `${entrada.id}-rotulo`;
+    lista.setAttribute('aria-labelledby', rotulo.id);
+  }
+  // Aviso de «sin resultados»: una región viva bajo el campo, en el sitio de la lista
+  const vacio = document.createElement('p');
+  vacio.className = 'buscador-vacio';
+  vacio.setAttribute('role', 'status');
+  vacio.hidden = true;
+  lista.after(vacio);
+
   const cerrar = () => {
     lista.hidden = true;
+    vacio.hidden = true;
     entrada.setAttribute('aria-expanded', 'false');
     entrada.removeAttribute('aria-activedescendant');
     activa = -1;
@@ -69,6 +85,9 @@ export function crearBuscador({ entrada, lista, obtenerFuentes, etiqueta, alEleg
     lista.hidden = !opciones.length;
     entrada.setAttribute('aria-expanded', String(opciones.length > 0));
     marcar(opciones.length ? 0 : -1);
+    const sinNada = Boolean(sinResultados) && !opciones.length && entrada.value.trim().length >= 2;
+    vacio.textContent = sinNada ? sinResultados() : '';
+    vacio.hidden = !sinNada;
   });
   entrada.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown' && opciones.length) { e.preventDefault(); marcar((activa + 1) % opciones.length); }

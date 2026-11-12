@@ -45,11 +45,13 @@
       "acercar": "Acercar",
       "alejar": "Alejar",
       "sin_dato_escala": "Este mapa no tiene datos a esta escala: acerca el mapa.",
-      "cargando": "Cargando el mapa…"
+      "cargando": "Cargando el mapa…",
+      "lienzo": "Mapa. Las flechas lo mueven; más y menos, lo acercan y lo alejan; Intro elige el territorio del centro."
     },
     "buscador": {
       "etiqueta": "Buscar municipio o sección",
-      "marcador": "Buscar municipio o sección"
+      "marcador": "Buscar municipio o sección",
+      "sin_resultados": "Sin resultados. Se busca por municipio (nombre o código) o por código de sección censal; no por calle, barrio ni código postal."
     },
     "vista": {
       "region": "Qué muestra el mapa",
@@ -107,6 +109,7 @@
       "intro_llega": "Parte del ingreso que se va en alquiler, sección a sección.",
       "neto": "Sueldo neto al mes",
       "segundo": "Segundo sueldo (opcional)",
+      "error": "Escribe el sueldo neto al mes en euros, por ejemplo 1500.",
       "pagas": "Pagas al año",
       "fichas": "O elige una ficha",
       "superficie": "Vivienda",
@@ -334,8 +337,12 @@
       "anterior": "Anterior",
       "siguiente": "Siguiente",
       "salir": "Salir",
-      "salir_largo": "Salir del recorrido y seguir en el mapa"
-    }
+      "salir_largo": "Salir del recorrido y seguir en el mapa",
+      "no_disponible": "No se ha podido abrir la historia: se muestra el mapa.",
+      "nota": "Cómo se mide"
+    },
+    "error_vista": "No se han podido cargar los datos de esta vista.",
+    "reintentar": "Reintentar"
   },
   "portada": {
     "titulo_pagina": "De renta en renta · Vivienda y sueldos, sección a sección",

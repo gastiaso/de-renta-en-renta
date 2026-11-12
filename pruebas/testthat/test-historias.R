@@ -1,5 +1,6 @@
-# Primeras historias (tarea 49; R/web_historias.R): consultas de las cifras, formato en los dos
-# idiomas, relleno de las marcas, exportación y compuerta. Datos inventados, salvo la última prueba,
+# Historias (tarea 49; R/web_historias.R): consultas de las cifras (también las de panel constante,
+# el IPC y las derivadas), formato en los dos idiomas, relleno de las marcas del texto y de la nota,
+# exportación y compuerta. Datos inventados, salvo la última prueba,
 # que lee los dos CSV de inventario/ y comprueba su forma sin el almacén de targets.
 
 raiz <- function(...) file.path("..", "..", ...)
@@ -69,6 +70,53 @@ test_that("las consultas del histórico: valor, máximo, mínimo desde un año, 
   expect_equal(unname(v), c(9.3, 9.46, 2007, 3, 6.59, 2015, 8.36, 2, 2011, 1))
 })
 
+test_that("prefijo de territorio, panel constante, IPC y cifras derivadas", {
+  l <- dplyr::bind_rows(larga_historias(), tibble::tibble(
+    geo_id = c("07054", "28079", "29067"), nivel = "municipio", anio = 2015L, indicador = "anios_salario_compra",
+    corte = "total", grupo = "total", valor = c(10.69, 9.96, 5), estado = "dato", fuente = "x"))
+  m <- function(consulta, geo_id = "", anio = "2024", parametro = "", id = consulta, decimales = 0L) {
+    cifra(consulta, indicador = "anios_salario_compra", nivel = "municipio", geo_id = geo_id, anio = anio, grupo = "",
+          parametro = parametro, decimales = decimales, id = id)
+  }
+  derivada <- function(consulta, parametro, id = consulta) {
+    cifra(consulta, indicador = "", nivel = "", geo_id = "", anio = "", grupo = "", parametro = parametro, id = id)
+  }
+  cf <- dplyr::bind_rows(
+    m("maximo_geo", geo_id = "13"),                                    # solo los municipios de la provincia 13
+    m("cuenta_desde", geo_id = "07", parametro = "10", id = "desde_07"),
+    m("panel_n", parametro = ";2015"),                                 # 07054 y 28079: 13071 no tiene 2015 ni 29067, 2024
+    m("panel_cuenta_desde", anio = "2015", parametro = "10;2024", id = "panel_sin_redondear"),   # 10,69 (9,96 no llega)
+    m("panel_cuenta_desde", anio = "2015", parametro = "10;2024;1", id = "panel_un_decimal"),    # 10,7 y 10,0
+    m("panel_cuantil", parametro = "0.5;2015;1"),                      # entre 17,9 y 8,1
+    m("panel_cuenta_desde", geo_id = "28", parametro = "8;2015", id = "panel_prefijo"),
+    m("panel_n", id = "panel_sin_anio"),
+    cifra("ipc_variacion", indicador = "ipc", nivel = "", geo_id = "", anio = "2024", grupo = "", parametro = "2015"),
+    m("valor", geo_id = "07054", id = "a", decimales = 1L),            # 17,88: redondeado, 17,9
+    m("valor", geo_id = "28079", id = "b"),                            # 8,1: redondeado, 8
+    derivada("derivada_variacion", "a;b"), derivada("derivada_diferencia", "a;b"),
+    derivada("derivada_diferencia", "a;no_existe", id = "derivada_coja"),
+    derivada("derivada_diferencia", "derivada_variacion;b", id = "derivada_de_derivada"))
+  ipc <- tibble::tibble(anio = c(2015L, 2024L), indice = c(80, 100))
+  r <- historias_calcular(cf, l, historico_historias(), NULL, ipc = ipc)
+  v <- stats::setNames(r$calculado, r$id)
+  expect_equal(v[["maximo_geo"]], 13071)
+  expect_equal(v[["desde_07"]], 1)
+  expect_equal(v[["panel_n"]], 2)
+  expect_equal(v[["panel_sin_redondear"]], 1)
+  expect_equal(v[["panel_un_decimal"]], 2)
+  expect_equal(v[["panel_cuantil"]], 13)
+  expect_equal(v[["panel_prefijo"]], 1)
+  expect_true(is.na(v[["panel_sin_anio"]]))
+  expect_equal(v[["ipc_variacion"]], 25)
+  expect_equal(v[["derivada_variacion"]], 100 * (17.9 / 8 - 1))   # desde los términos ya redondeados
+  expect_equal(v[["derivada_diferencia"]], 17.9 - 8)
+  expect_true(is.na(v[["derivada_coja"]]))
+  expect_true(is.na(v[["derivada_de_derivada"]]))
+  # Sin la tabla del IPC, la cifra queda sin calcular (y la compuerta la para)
+  sin_ipc <- historias_calcular(cf[cf$consulta == "ipc_variacion", ], l, historico_historias(), NULL)
+  expect_true(is.na(sin_ipc$calculado))
+})
+
 test_that("cifras con los separadores de cada idioma y empates hacia arriba", {
   expect_equal(historias_formatear(2421, 0, "es"), "2.421")
   expect_equal(historias_formatear(2421, 0, "en"), "2,421")
@@ -108,6 +156,39 @@ test_that("la compuerta encuentra marcas sin cifra, vistas imposibles y la ofert
   expect_equal(mal("historias_privado", "mapa de la oferta"), 1)
 })
 
+test_that("la nota del paso se rellena y se exporta, y la compuerta también la mira", {
+  historias <- tibble::tibble(
+    historia = "h", paso = c(1L, 2L), historia_titulo_es = c("T {a}", ""), historia_titulo_en = c("T", ""),
+    entradilla_es = c("E", ""), entradilla_en = c("E", ""), titulo_es = "t", titulo_en = "t",
+    texto_es = "{a}", texto_en = "{a}", fuente_es = "f", fuente_en = "f",
+    mapa = "m1", anio = "2024", vista = "5/40/-3", territorio = "", escala = "",
+    enlace = "", enlace_es = "", enlace_en = "",
+    nota_es = c("{a} y {b}", "solo en castellano"), nota_en = c("{a}", ""))
+  cf <- tibble::tibble(id = "a", historia = "h", consulta = "valor", indicador = "alquiler_mes", calculado = 1234,
+                       decimales = 0L, redactado = 1234)
+  manifiesto <- list(mapas = list(m1 = list(base = "s1")),
+                     indicadores = list(s1 = list(anios = list(2024L), niveles = list("municipio"), fuente = "mivau_serpavi")))
+  comprobar <- function(h) {
+    comprobar_historias(h, cf, manifiesto, claves_estado = c("mapa", "anio", "vista", "territorio", "escala", "historia", "paso"),
+                        anclas = list(), larga = tibble::tibble(indicador = "alquiler_mes", fuente = "mivau_serpavi"),
+                        indicadores = tibble::tibble(codigo = "alquiler_mes", fuentes = "mivau_serpavi"))
+  }
+  r <- comprobar(historias)
+  mal <- function(r, texto) r$calculado[r$id == "historias_textos" & grepl(texto, r$detalle, fixed = TRUE)]
+  expect_equal(mal(r, "sin cifra"), 1)                 # {b}, solo en la nota
+  expect_equal(mal(r, "marcas distintas"), 1)          # paso 1: {b} en castellano y no en inglés
+  expect_equal(mal(r, "notas en un solo idioma"), 1)   # paso 2
+  expect_equal(mal(r, "no se rellena"), 1)             # {a} en el título de la historia
+  expect_equal(sum(r$calculado[r$id %in% c("historias_estado", "historias_privado")]), 0)
+  pasos <- historias_web(historias, cf)[[1]]$pasos
+  expect_equal(pasos[[1]]$nota, list(es = "1.234 y {b}", en = "1,234"))
+  expect_null(pasos[[2]]$nota)                         # sin las dos lenguas, sin nota
+  # Sin las columnas de la nota (inventario antiguo), la compuerta no falla por ellas
+  sin <- historias[setdiff(names(historias), c("nota_es", "nota_en"))]
+  expect_equal(mal(comprobar(sin), "notas en un solo idioma"), 0)
+  expect_equal(mal(comprobar(sin), "sin cifra"), 0)
+})
+
 test_that("los CSV de inventario/ tienen la forma que esperan la exportación y la compuerta", {
   h <- leer_historias(raiz("inventario", "historias.csv"))
   cf <- leer_historias_cifras(raiz("inventario", "historias_cifras.csv"))
@@ -115,8 +196,18 @@ test_that("los CSV de inventario/ tienen la forma que esperan la exportación y 
   expect_false(any(grepl("entrar", c(h$mapa, cf$indicador))))   # la brecha queda aplazada
   expect_true(all(cf$consulta %in% HISTORIAS_CONSULTAS))
   expect_false(anyDuplicated(cf$id) > 0)
-  marcas <- unique(unlist(lapply(c(h$texto_es, h$texto_en), historias_marcas)))
+  marcas <- unique(unlist(lapply(c(h$texto_es, h$texto_en, h$nota_es, h$nota_en), historias_marcas)))
   expect_true(all(marcas %in% cf$id))
+  expect_true(all(nzchar(h$nota_es) == nzchar(h$nota_en)))   # la nota, en los dos idiomas o en ninguno
+  sin_relleno <- c(h$historia_titulo_es, h$historia_titulo_en, h$entradilla_es, h$entradilla_en, h$titulo_es, h$titulo_en)
+  expect_false(any(grepl("{", sin_relleno, fixed = TRUE)))   # títulos y entradilla no llevan marcas
+  # Las derivadas salen de dos cifras de su misma historia que no son derivadas
+  d <- cf[startsWith(cf$consulta, "derivada_"), ]
+  for (i in seq_len(nrow(d))) {
+    terminos <- strsplit(d$parametro[i], ";", fixed = TRUE)[[1]]
+    expect_length(terminos, 2)
+    expect_true(all(terminos %in% cf$id[cf$historia == d$historia[i] & !startsWith(cf$consulta, "derivada_")]))
+  }
   # Exportación con las cifras redactadas: misma forma que lee web/js/historias.js
   cf$calculado <- cf$redactado
   d <- withr::local_tempdir()
@@ -125,8 +216,10 @@ test_that("los CSV de inventario/ tienen la forma que esperan la exportación y 
   paso <- j$historias[[1]]$pasos[[3]]
   expect_setequal(names(paso$estado), c("mapa", "anio", "vista", "territorio", "escala"))
   expect_false(grepl("{", paso$texto$es, fixed = TRUE))
-  expect_match(j$historias[[1]]$pasos[[2]]$texto$es, "2.421 secciones", fixed = TRUE)
-  expect_match(j$historias[[1]]$pasos[[2]]$texto$en, "2,421 tracts", fixed = TRUE)
+  expect_match(j$historias[[1]]$pasos[[2]]$texto$es, "de 600 a 850 € al mes", fixed = TRUE)
+  expect_match(j$historias[[1]]$pasos[[2]]$nota$es, "2.421 secciones", fixed = TRUE)
+  expect_match(j$historias[[1]]$pasos[[2]]$nota$en, "2,421 tracts", fixed = TRUE)
+  expect_false(any(grepl("{", unlist(j$historias), fixed = TRUE)))   # ninguna marca sin rellenar, tampoco en las notas
   expect_null(j$historias[[1]]$pasos[[1]]$enlace)
   expect_equal(j$historias[[2]]$pasos[[1]]$enlace$href, "historico.html#hist-renta")
 })

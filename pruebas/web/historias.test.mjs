@@ -73,6 +73,18 @@ test('cargarHistorias: el fichero válido se lee; si falta, no se lee o no cumpl
   }
 });
 
+test('la nota del paso es opcional: vale con los dos idiomas, null o sin ella; no con uno solo ni con HTML', () => {
+  const con = (nota) => { const d = muestra(); d.historias[0].pasos[0].nota = nota; return H.validarHistorias(d); };
+  assert.equal(muestra().historias[0].pasos[0].nota.es, 'Nota inventada: cómo se mide la cifra.');
+  assert.equal(muestra().historias[0].pasos[1].nota, null);
+  assert.deepEqual(con(null), []);
+  assert.deepEqual(con(undefined), []);
+  assert.equal(con({ es: 'Solo en castellano' }).length, 1);
+  assert.equal(con({ es: 'Con <b>marcado</b>', en: 'With markup' }).length, 1);
+  assert.equal(con('texto suelto').length, 1);
+  assert.equal(H.textoEn(null, 'es'), '');
+});
+
 // --- Pasos -------------------------------------------------------------------------------------
 
 test('buscar historia y paso: sin paso, el 1; fuera de rango, el más cercano', () => {
@@ -88,18 +100,19 @@ test('buscar historia y paso: sin paso, el 1; fuera de rango, el más cercano', 
   assert.equal(H.pasoDe({ pasos: [] }, 1), null);
 });
 
-test('un paso pasa a cambios de estado: sus claves, las ausentes quitadas y sin sección, comparación, ficha ni tipología', () => {
+test('un paso pasa a cambios de estado: sus claves, las ausentes quitadas y sin sección, comparación, ficha, tipología, superficie ni umbral', () => {
   const h = H.buscarHistoria(muestra(), 'centro');
   const tercero = H.cambiosDePaso(H.pasoDe(h, 3).paso);
   assert.deepEqual(tercero, {
     mapa: 'alquiler_mes', anio: 2024, vista: '11.30/40.42000/-3.70000', territorio: 'municipio:28079', escala: 'municipio',
-    seccion: undefined, comparar: undefined, ficha: undefined, tipologia: undefined,
+    seccion: undefined, comparar: undefined, ficha: undefined, tipologia: undefined, superficie: undefined, umbral: undefined,
   });
-  // Sin territorio ni escala en el paso: se quitan los que hubiera (escala nacional, sin ficha de territorio)
+  // Sin territorio ni escala en el paso: se quitan los que hubiera (escala nacional, sin ficha de territorio),
+  // y también la superficie y el umbral elegidos antes: el mapa del paso, con los supuestos por defecto
   const estado = { idioma: 'en', mapa: 'renta_hogar', seccion: '2807901001', comparar: 'municipio', ficha: 'peon', tipologia: 'VU',
-    territorio: 'provincia:28', escala: 'municipio', superficie: 70, historia: 'centro', paso: 3 };
+    territorio: 'provincia:28', escala: 'municipio', superficie: 70, umbral: 40, historia: 'centro', paso: 3 };
   Object.assign(estado, H.cambiosDePaso(H.pasoDe(h, 1).paso));
-  assert.equal(consulta(estado), '?idioma=en&mapa=alquiler_mes&anio=2015&superficie=70&vista=11.30/40.42000/-3.70000&historia=centro&paso=3');
+  assert.equal(consulta(estado), '?idioma=en&mapa=alquiler_mes&anio=2015&vista=11.30/40.42000/-3.70000&historia=centro&paso=3');
   // Un valor que no vale no entra
   assert.equal(H.cambiosDePaso({ estado: { vista: '11/40/-3', escala: 'nacional', anio: '2025-05' } }).escala, undefined);
   assert.equal(H.cambiosDePaso({ estado: { vista: '11/40/-3', anio: '2025-05' } }).anio, '2025-05');
@@ -144,17 +157,24 @@ test('mapa.html: el panel con región aria-live, los tres botones y el selector;
   const html = leerTexto('web', 'mapa.html');
   assert.match(html, /<section id="historia" class="tarjeta historia" aria-labelledby="historia-titulo" hidden>/);
   assert.match(html, /<div id="historia-paso" class="historia-paso" aria-live="polite" tabindex="-1">/);
-  for (const id of ['historia-elegir', 'historia-anterior', 'historia-siguiente', 'historia-salir', 'historia-texto', 'historia-fuente', 'historia-contador']) {
+  for (const id of ['historia-elegir', 'historia-anterior', 'historia-siguiente', 'historia-salir', 'historia-texto', 'historia-fuente', 'historia-contador', 'historia-nota', 'historia-nota-texto']) {
     assert.match(html, new RegExp(`id="${id}"`), id);
   }
   for (const [, clave] of html.matchAll(/data-i18n(?:-title)?="(interfaz\.historia\.\w+)"/g)) {
     assert.equal(typeof en(i18n.es, clave), 'string', clave);
   }
+  // La nota del paso («Cómo se mide»): un desplegable, después de la región viva y fuera de ella
+  assert.match(html, /<details id="historia-nota" class="historia-nota" hidden>\s*<summary data-i18n="interfaz\.historia\.nota">/);
+  assert.ok(html.indexOf('id="historia-nota"') > html.indexOf('id="historia-enlace"'));
   // En pantallas estrechas, bajo el mapa y antes de la ficha (no lo tapa)
   const css = leerTexto('web', 'estilo', 'sitio.css');
   const movil = css.slice(css.indexOf('@media (max-width: 760px)'));
   assert.match(movil, /\.historia \{ order: -2; \}/);
   assert.doesNotMatch(css, /\.historia \{[^}]*position: (absolute|fixed)/);
+  // Con un recorrido abierto, el mapa se queda fijo arriba y el paso va debajo, a la vista los dos
+  assert.match(movil, /body\.con-historia \.mapa-marco \{[^}]*position: sticky; top: 0;/);
+  assert.match(movil, /body\.con-historia \.mapa-columna, body\.con-historia \.lateral \{ display: contents; \}/);
+  assert.match(movil, /\.historia-acciones \{[^}]*position: sticky; bottom: 0;/);
 });
 
 test('menú: «Historias» en todas las páginas con menú, hacia mapa.html?historia=centro, y «Máquina del tiempo» al final', () => {
@@ -184,7 +204,10 @@ test('web/datos/historias.json cumple el contrato y sus mapas están en el manif
   // Las cifras, ya escritas: ninguna marca {…} sin sustituir
   for (const h of d.historias) {
     for (const [k, p] of h.pasos.entries()) {
-      for (const idioma of ['es', 'en']) assert.doesNotMatch(p.texto[idioma], /\{\w+\}/, `${h.id}, paso ${k + 1} (${idioma})`);
+      for (const idioma of ['es', 'en']) {
+        assert.doesNotMatch(p.texto[idioma], /\{\w+\}/, `${h.id}, paso ${k + 1} (${idioma})`);
+        if (p.nota) assert.doesNotMatch(p.nota[idioma], /\{\w+\}/, `${h.id}, nota del paso ${k + 1} (${idioma})`);
+      }
     }
   }
 });

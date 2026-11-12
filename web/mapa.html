@@ -5,7 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mapa · De renta en renta</title>
   <meta name="description" content="Vivienda y sueldos, sección a sección">
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="estilo/fichas/llave.svg" type="image/svg+xml">
+  <!-- Dirección de la página, sus dos idiomas y la tarjeta que enseñan la mensajería y las redes al
+       pegar un enlace (estilo/tarjeta.png; web/herramientas/tarjeta.html). Direcciones absolutas: las
+       piden quienes leen estas etiquetas. -->
+  <link rel="canonical" href="https://gastiaso.github.io/de-renta-en-renta/mapa.html">
+  <link rel="alternate" hreflang="es" href="https://gastiaso.github.io/de-renta-en-renta/mapa.html">
+  <link rel="alternate" hreflang="en" href="https://gastiaso.github.io/de-renta-en-renta/mapa.html?idioma=en">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="De renta en renta">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:title" content="Mapa · De renta en renta">
+  <meta property="og:description" content="Vivienda y sueldos, sección a sección: cuánto cuesta alquilar en cada sección censal de España y a quién le llega el sueldo.">
+  <meta property="og:url" content="https://gastiaso.github.io/de-renta-en-renta/mapa.html">
+  <meta property="og:image" content="https://gastiaso.github.io/de-renta-en-renta/estilo/tarjeta.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="De renta en renta: vivienda y sueldos, sección a sección">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css">
   <link rel="stylesheet" href="estilo/tokens.css">
   <link rel="stylesheet" href="estilo/sitio.css">
@@ -90,6 +107,11 @@
           <p id="aviso-privado" class="etiqueta-privado aviso-mapa aviso-mapa-privado" hidden></p>
           <p id="aviso-escala" class="aviso-escala" role="status" hidden data-i18n="interfaz.mapa.sin_dato_escala">Este mapa no tiene datos a esta escala: acerca el mapa.</p>
           <p id="aviso-periodo" class="aviso-escala" role="status" hidden></p>
+          <!-- Datos de una vista que no llegan («Reintentar») o historia que no se puede abrir («Cerrar») -->
+          <p id="aviso-error" class="aviso-escala aviso-error" role="alert" hidden>
+            <span id="aviso-error-texto"></span>
+            <button id="aviso-error-boton" type="button" class="boton"></button>
+          </p>
           <!-- Tarea 51: indicador de carga, visible desde el principio hasta que el mapa queda pintado -->
           <p id="mapa-cargando" class="mapa-cargando" role="status" data-i18n="interfaz.mapa.cargando">Cargando el mapa…</p>
           <div id="leyenda" class="leyenda" hidden></div>
@@ -120,6 +142,11 @@
               <p id="historia-fuente" class="nota historia-fuente"></p>
               <p id="historia-enlace" class="historia-enlace" hidden><a href="#"></a></p>
             </div>
+            <!-- Matices de método del paso, plegados y fuera de la región viva: quien los quiera, los abre -->
+            <details id="historia-nota" class="historia-nota" hidden>
+              <summary data-i18n="interfaz.historia.nota">Cómo se mide</summary>
+              <p id="historia-nota-texto" class="nota"></p>
+            </details>
             <div class="acciones historia-acciones">
               <button id="historia-anterior" type="button" class="boton" data-i18n="interfaz.historia.anterior">Anterior</button>
               <button id="historia-siguiente" type="button" class="boton boton-principal" data-i18n="interfaz.historia.siguiente">Siguiente</button>
@@ -145,6 +172,7 @@
                 <span class="campo-euros"><input id="sueldo-segundo" type="text" inputmode="decimal" autocomplete="off"><span aria-hidden="true">€</span></span>
               </label>
             </div>
+            <p id="sueldo-error" class="nota sueldo-error" role="alert" hidden data-i18n="interfaz.sueldo.error">Escribe el sueldo neto al mes en euros, por ejemplo 1500.</p>
             <div id="sueldo-pagas" class="selector" role="group" aria-labelledby="sueldo-pagas-titulo">
               <span id="sueldo-pagas-titulo" class="selector-titulo" data-i18n="interfaz.sueldo.pagas">Pagas al año</span>
               <button type="button" data-pagas="12" aria-pressed="true">12</button>
@@ -177,7 +205,10 @@
           </div>
         </section>
 
-        <aside id="ficha" class="tarjeta ficha" aria-live="polite"></aside>
+        <!-- La ficha se rehace entera en cada repintado: no es región viva. A los lectores de pantalla se
+             les anuncia aparte, y solo cuando cambia, qué territorio es y su cifra (principal.js). -->
+        <aside id="ficha" class="tarjeta ficha"></aside>
+        <p id="ficha-anuncio" class="oculto" role="status"></p>
       </div>
     </main>
   </div>

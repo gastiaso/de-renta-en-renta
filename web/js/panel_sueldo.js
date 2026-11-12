@@ -2,7 +2,7 @@
 // umbral, resumen y botones. El marcado está en mapa.html (textos con data-i18n); aquí se
 // conectan los controles y se actualiza lo que cambia. El sueldo solo vive en memoria.
 
-import { FICHAS_PERFIL, ingresoPeon, SUPERFICIE_TIPICA } from './sueldo.js';
+import { FICHAS_PERFIL, ingresoPeon, leerSueldo, SUPERFICIE_TIPICA } from './sueldo.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -10,6 +10,7 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
   const el = {
     neto: $('sueldo-neto'),
     segundo: $('sueldo-segundo'),
+    error: $('sueldo-error'),
     pagas: $('sueldo-pagas'),
     fichas: $('sueldo-fichas'),
     superficie: $('sueldo-superficie'),
@@ -24,17 +25,29 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
   let pagas = 12;
   let espera = null;
 
-  const numero = (input) => {
-    const x = Number(String(input.value).replace(',', '.'));
-    return Number.isFinite(x) && x > 0 ? x : null;
-  };
+  // «1.500» son mil quinientos (leerSueldo, el lector de la portada). Lo escrito que no se entiende
+  // («mil», «1500 al mes») no se calla: el campo queda marcado y sale el aviso.
+  const numero = (input) => leerSueldo(input.value);
   const sueldoEscrito = () => {
     const s = { neto: numero(el.neto), pagas, segundo: numero(el.segundo) };
     return ingresoPeon(s) ? s : null;
   };
+  const marcarErrores = () => {
+    let alguno = false;
+    for (const input of [el.neto, el.segundo]) {
+      const mal = input.value.trim() !== '' && numero(input) === null;
+      if (mal) input.setAttribute('aria-invalid', 'true');
+      else input.removeAttribute('aria-invalid');
+      alguno ||= mal;
+    }
+    if (el.error) el.error.hidden = !alguno;
+  };
   const avisarSueldo = () => {
     clearTimeout(espera);
-    espera = setTimeout(() => alCambiar({ sueldo: sueldoEscrito(), escrito: true }), 300);
+    espera = setTimeout(() => {
+      marcarErrores();
+      alCambiar({ sueldo: sueldoEscrito(), escrito: true });
+    }, 300);
   };
 
   el.neto.addEventListener('input', avisarSueldo);
@@ -66,6 +79,7 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
   el.volver.addEventListener('click', () => {
     el.neto.value = '';
     el.segundo.value = '';
+    marcarErrores();
     alCambiar({ ficha: null, sueldo: null, volver: true });
   });
   el.compartir.addEventListener('click', alCompartir);
@@ -124,6 +138,11 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
       el.superficieNota.textContent = nota;
       el.superficieNota.hidden = !nota;
       marcarGrupo(el.umbral, 'umbral', Math.round(umbral * 100));
+      // Rótulos con el formato del idioma («30 %» en castellano, «30%» en inglés)
+      for (const b of el.umbral.querySelectorAll('button[data-umbral]')) b.textContent = t.porcentaje(Number(b.dataset.umbral) / 100);
+      for (const b of el.superficie.querySelectorAll('button[data-superficie]')) {
+        if (b.dataset.superficie !== SUPERFICIE_TIPICA) b.textContent = t('interfaz.sueldo.vivienda_m2', { superficie: t.numero(Number(b.dataset.superficie)) });
+      }
 
       el.intro.textContent = modo === 'necesario' ? t('interfaz.sueldo.intro_necesario') : t('interfaz.sueldo.intro_llega');
       el.resumen.textContent = resumen ?? '';

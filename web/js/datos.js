@@ -3,8 +3,8 @@
 // municipios, ingresos de las fichas y mapas derivados. Esquema: web/LEEME.md.
 //
 // Punto de enganche: cuando el pipeline exporte web/datos/manifiesto.json (y el mapa base en
-// web/teselas/), la web lo usa; mientras no exista, carga la muestra de web/datos/ejemplo/
-// (geometría real, valores inventados; web/herramientas/generar_ejemplo.R).
+// web/teselas/), la web lo usa; mientras no exista, y solo en local, carga la muestra de
+// web/datos/ejemplo/ (geometría real, valores inventados; web/herramientas/generar_ejemplo.R).
 
 const MANIFIESTOS = ['datos/manifiesto.json', 'datos/ejemplo/manifiesto.json'];
 // Capas desmontables (guía, regla 6), aparte de la exportación general: cada una con su manifiesto,
@@ -27,10 +27,16 @@ function recordar(clave, promesa) {
 
 const opcional = (ruta, vacio) => (ruta ? recordar(ruta, () => pedir(ruta)) : Promise.resolve(vacio));
 
-export async function cargarManifiesto() {
-  for (const ruta of MANIFIESTOS) {
-    const respuesta = await fetch(ruta, { cache: 'no-cache' });
-    if (!respuesta.ok) continue;
+// La muestra (valores inventados) solo es reserva al trabajar en local y solo si el manifiesto del
+// pipeline no existe (404). En el sitio publicado, o si el manifiesto falla por otra causa (un 503,
+// la red), se lanza el error y la página lo dice: nunca se enseñan cifras inventadas por un fallo.
+const EN_LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$|\.localhost$/.test(globalThis.location?.hostname ?? 'localhost');
+
+export async function cargarManifiesto({ local = EN_LOCAL, leer = globalThis.fetch } = {}) {
+  for (const ruta of local ? MANIFIESTOS : MANIFIESTOS.slice(0, 1)) {
+    const respuesta = await leer(ruta, { cache: 'no-cache' });
+    if (respuesta.status === 404 && local) continue;
+    if (!respuesta.ok) throw new Error(`${ruta}: ${respuesta.status}`);
     const m = { ...(await respuesta.json()), ruta };
     return m.ejemplo ? m : unirCapas(m, await Promise.all(CAPAS.map(pedirCapa)));
   }

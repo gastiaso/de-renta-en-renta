@@ -120,6 +120,9 @@ function traducir() {
   for (const enlace of document.querySelectorAll('[data-enlace]')) {
     enlace.href = `${enlace.dataset.pagina ?? './'}${estado.idioma === 'en' ? '?idioma=en' : ''}${enlace.dataset.enlace}`;
   }
+  // Y el del menú a esta misma página: sin el idioma, en inglés recargaría en castellano
+  const propio = document.querySelector('.navegacion a[aria-current="page"]');
+  if (propio) propio.href = `sobrecarga.html${estado.idioma === 'en' ? '?idioma=en' : ''}`;
 }
 
 async function cambiarIdioma(idioma) {

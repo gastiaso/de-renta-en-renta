@@ -1,0 +1,61 @@
+<!doctype html>
+<!-- Tarjeta para compartir (og:image): 1200 × 630 px, con los colores y las tipografías del sitio.
+     De aquí sale web/estilo/tarjeta.png, que es lo que enseñan las aplicaciones de mensajería y las
+     redes al pegar un enlace del sitio. Cómo regenerarla: web/LEEME.md, «Tarjeta para compartir». -->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Tarjeta para compartir · De renta en renta</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/estilo/tokens.css">
+  <style>
+    html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: var(--color-crema); }
+    .tarjeta {
+      box-sizing: border-box;
+      width: 1200px;
+      height: 630px;
+      padding: 56px 64px 44px;
+      display: flex;
+      flex-direction: column;
+      border: 12px solid var(--color-tinta);
+      background: var(--color-crema);
+      color: var(--color-tinta);
+    }
+    .titulo {
+      margin: 0;
+      font: 800 94px/1 var(--fuente-tablero);
+      white-space: nowrap;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--color-rojo);
+    }
+    .subtitulo { margin: 26px 0 0; font: 400 50px/1.15 var(--fuente-carta); }
+    .rampa { display: flex; width: 620px; height: 30px; margin: 54px 0 0; border: 3px solid var(--color-tinta); }
+    .rampa span { flex: 1; }
+    .pie { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; }
+    .fichas { display: flex; gap: 18px; }
+    .fichas img { width: 104px; height: 104px; }
+    .direccion { margin: 0 0 8px; font: 500 28px/1 var(--fuente-tablero); color: var(--color-tenue); white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <div class="tarjeta">
+    <p class="titulo">De renta en renta</p>
+    <p class="subtitulo">Vivienda y sueldos, sección a sección</p>
+    <div class="rampa" aria-hidden="true">
+      <span style="background: var(--rampa-1)"></span><span style="background: var(--rampa-2)"></span>
+      <span style="background: var(--rampa-3)"></span><span style="background: var(--rampa-4)"></span>
+      <span style="background: var(--rampa-5)"></span><span style="background: var(--rampa-6)"></span>
+      <span style="background: var(--rampa-7)"></span>
+    </div>
+    <div class="pie">
+      <div class="fichas">
+        <img src="/estilo/fichas/llave.svg" alt=""><img src="/estilo/fichas/mochila.svg" alt="">
+        <img src="/estilo/fichas/tartera.svg" alt=""><img src="/estilo/fichas/transistor.svg" alt="">
+        <img src="/estilo/fichas/peon.svg" alt="">
+      </div>
+      <p class="direccion">gastiaso.github.io/de-renta-en-renta</p>
+    </div>
+  </div>
+</body>
+</html>

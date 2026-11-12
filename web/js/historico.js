@@ -8,6 +8,7 @@
 
 import { cargarIdioma, traducirPagina } from './i18n.js';
 import { ordenNatural } from './nombres.js';
+import { fechaLarga } from './transparencia.js';
 import * as H from './historico_datos.js';
 
 const $ = (id) => document.getElementById(id);
@@ -101,6 +102,9 @@ function traducir() {
   for (const enlace of document.querySelectorAll('[data-enlace]')) {
     enlace.href = `${enlace.dataset.pagina ?? './'}${estado.idioma === 'en' ? '?idioma=en' : ''}${enlace.dataset.enlace}`;
   }
+  // Y el del menú a esta misma página: sin el idioma, en inglés recargaría en castellano
+  const propio = document.querySelector('.navegacion a[aria-current="page"]');
+  if (propio) propio.href = `historico.html${estado.idioma === 'en' ? '?idioma=en' : ''}`;
 }
 
 async function cambiarIdioma(idioma) {
@@ -354,7 +358,7 @@ function pintarCis() {
     el('b', {}, `${s.nombre}. `), H.lecturaCis(cis, s.pregunta, t))) : []));
   const fuente = seccion.querySelector('.hi-fuente');
   fuente.textContent = hay
-    ? [t('historico.cis_fuente'), cis.actualizado ? t('historico.cis_fecha', { fecha: cis.actualizado }) : null].filter(Boolean).join(' ')
+    ? [t('historico.cis_fuente'), cis.actualizado ? t('historico.cis_fecha', { fecha: fechaLarga(cis.actualizado, t.idioma) ?? cis.actualizado }) : null].filter(Boolean).join(' ')
     : '';
   fuente.hidden = !hay;
   seccion.querySelector('.hi-plegable').hidden = !hay;

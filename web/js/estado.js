@@ -31,7 +31,11 @@ const VALIDAS = {
   umbral: (v) => SUPUESTOS.umbrales.map(String).includes(v),
   seccion: (v) => /^\d{10}$/.test(v),
   comparar: (v) => /^\d{10}$/.test(v) || NIVELES_COMPARAR.includes(v),
-  vista: (v) => /^\d{1,2}(\.\d+)?\/-?\d{1,2}(\.\d+)?\/-?\d{1,3}(\.\d+)?$/.test(v),
+  // zoom/latitud/longitud, dentro de lo que admite el mapa (una latitud de 95 lo haría fallar)
+  vista: (v) => {
+    const p = /^(\d{1,2}(?:\.\d+)?)\/(-?\d{1,2}(?:\.\d+)?)\/(-?\d{1,3}(?:\.\d+)?)$/.exec(v);
+    return Boolean(p) && Number(p[1]) <= 24 && Math.abs(Number(p[2])) <= 90 && Math.abs(Number(p[3])) <= 180;
+  },
   territorio: (v) => /^(?:(?:ccaa|provincia):\d{2}|municipio:\d{5})$/.test(v),
   escala: (v) => v === 'municipio',
   historia: (v) => /^[a-z0-9_]{1,30}$/.test(v),

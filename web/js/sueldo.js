@@ -31,6 +31,18 @@ export const LIMITES_LLEGA = SUPUESTOS.limites_llega;
 
 const SUELDO_MAXIMO = SUPUESTOS.sueldo_maximo;
 
+// Sueldo escrito («1500», «1.500», «1500,50», «1 500 €») → número, o null si no vale. Un punto
+// seguido de tres cifras es de millar («1.500» son mil quinientos, no uno y medio). Lo usan la
+// portada y «Tu sueldo» del mapa.
+export function leerSueldo(texto) {
+  let s = String(texto ?? '').replace(/[\s €]/g, '');
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+  else s = s.replace(',', '.');
+  if (!/^\d+(\.\d+)?$/.test(s)) return null;
+  const x = Number(s);
+  return Number.isFinite(x) && x > 0 && x <= SUELDO_MAXIMO ? x : null;
+}
+
 // Ingreso de «Tu ficha»: neto mensual repartido en 12 (regla 8). Con 14 pagas, la paga × 14 / 12;
 // el segundo sueldo, si lo hay, se suma con las mismas pagas.
 export function ingresoPeon(sueldo) {

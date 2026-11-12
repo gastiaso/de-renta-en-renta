@@ -9,14 +9,13 @@ import { leerEstado, fragmentoSueldo } from './estado.js';
 import { cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarValores, periodosDe } from './datos.js';
 import { crearBuscador, formasDeNombre } from './buscador.js';
 import { ordenNatural } from './nombres.js';
-import { FICHAS_PERFIL } from './sueldo.js';
+import { FICHAS_PERFIL, leerSueldo } from './sueldo.js';
 import { FAMILIAS_ALQUILER, FAMILIAS_PROXIMAMENTE, textoFamilia } from './familias.js';
 import { fechaLarga, lineaTransparencia } from './transparencia.js';
 
 const $ = (id) => document.getElementById(id);
 const estado = { idioma: leerEstado(globalThis.location?.search ?? '').idioma ?? 'es' };
 const MAPA_POR_DEFECTO = 'sueldo_necesario';
-const SUELDO_MAXIMO = 100000;   // como ingresoPeon() (sueldo.js)
 
 let t;
 let m = null;          // manifiesto (o null si no carga)
@@ -34,15 +33,8 @@ export function conIdioma(ruta, idioma) {
   return `${sinAncla}${unir}idioma=en${ancla.length ? `#${ancla.join('#')}` : ''}`;
 }
 
-// Sueldo escrito («1500», «1.500», «1500,50», «1 500 €») → número, o null si no vale.
-export function leerSueldo(texto) {
-  let s = String(texto ?? '').replace(/[\s €]/g, '');
-  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
-  else s = s.replace(',', '.');
-  if (!/^\d+(\.\d+)?$/.test(s)) return null;
-  const x = Number(s);
-  return Number.isFinite(x) && x > 0 && x <= SUELDO_MAXIMO ? x : null;
-}
+// Sueldo escrito → número, o null si no vale: el mismo lector que «Tu sueldo» del mapa (sueldo.js).
+export { leerSueldo };
 
 // Enlace del botón «¿Te llega?»: el mapa con «Tu ficha» y el sueldo en el fragmento (nunca en la
 // consulta), en 12 pagas, igual que «Compartir».
@@ -310,6 +302,7 @@ function prepararBuscador(territorios, secciones) {
   crearBuscador({
     entrada: $('buscador-entrada'),
     lista: $('buscador-lista'),
+    sinResultados: () => t('interfaz.buscador.sin_resultados'),
     obtenerFuentes: async () => {
       fuentes ??= {
         municipios: Object.entries(territorios.municipio ?? {}).map(([codigo, nombre]) => [codigo, nombre, formasDeNombre(nombre)]),

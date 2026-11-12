@@ -9,6 +9,7 @@
         {
           "titulo": { "es": "Paso A1", "en": "Step A1" },
           "texto": { "es": "Texto inventado con una cifra: 1.234 €.", "en": "Made-up text with a figure: €1,234." },
+          "nota": { "es": "Nota inventada: cómo se mide la cifra.", "en": "Made-up note: how the figure is measured." },
           "estado": { "mapa": "alquiler_mes", "anio": 2015, "vista": "11.30/40.42000/-3.70000" },
           "enlace": null,
           "fuente": { "es": "Fuente inventada", "en": "Made-up source" }
@@ -16,6 +17,7 @@
         {
           "titulo": { "es": "Paso A2", "en": "Step A2" },
           "texto": { "es": "Segundo texto inventado: 56,7 %.", "en": "Second made-up text: 56.7%." },
+          "nota": null,
           "estado": { "mapa": "alquiler_mes", "anio": 2024, "vista": "11.30/40.42000/-3.70000" },
           "enlace": null,
           "fuente": { "es": "Fuente inventada", "en": "Made-up source" }

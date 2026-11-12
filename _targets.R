@@ -996,8 +996,8 @@ bloque_historico <- if (AMBITO != "") list() else list(
 )
 
 # Tarea 49, primeras historias (R/web_historias.R; decisiones del autor del 11-nov-2026): recorridos
-# guiados dentro del mapa. Textos y vista de cada paso en inventario/historias.csv; cifras calculadas
-# desde la tabla larga, el histórico y los cortes de la web (inventario/historias_cifras.csv), con una
+# guiados dentro del mapa. Textos, nota y vista de cada paso en inventario/historias.csv; cifras calculadas
+# desde la tabla larga, el histórico, el IPC y los cortes de la web (inventario/historias_cifras.csv), con una
 # compuerta que para si alguna se aparta de la redactada (el texto se revisa a mano). Salida:
 # datos/historias.json. Sin el histórico (con PROVINCIA), el bloque no entra.
 #   targets::tar_make(names = c(fichero_historias_web, validacion_historias))
@@ -1008,7 +1008,7 @@ bloque_historias <- if (AMBITO != "") list() else list(
   tar_target(fichero_historico_html, "web/historico.html", format = "file"),
   tar_target(historias_inventario, leer_historias(fichero_historias)),
   tar_target(historias_cifras, historias_calcular(leer_historias_cifras(fichero_historias_cifras), tabla_larga,
-                                                  historico, cortes_niveles)),
+                                                  historico, cortes_niveles, ipc = ipc)),
   tar_target(validacion_historias, {
     ficheros_web; fichero_historico_html
     validar_referencias(comprobar_historias(

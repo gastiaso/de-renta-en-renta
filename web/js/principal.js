@@ -13,7 +13,7 @@ import {
   serieDeTipologia, tipologiaDe, tieneTipologia, cargarDetalle,
 } from './datos.js';
 import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
-import { pintarLeyenda } from './leyenda.js';
+import { pintarLeyenda, plegarLeyenda } from './leyenda.js';
 import {
   fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fichaContexto, fichaTerritorio, nombresTerritorio,
   fichaDeclaraciones, textoResto, fichaResidentes,
@@ -42,7 +42,7 @@ import { imagenMapa } from './imagen.js';
 import { pasosDeRampa, decimalesDeCortes, juegoDe } from './colores.js';
 import { crearAvisoImagen } from './aviso_imagen.js';
 import { opcionProximamente } from './familias.js';
-import { mostrarFicha, prepararPlegado } from './movil.js';
+import { mostrarFicha, mostrarHistoria, esPantallaEstrecha, prepararPlegado } from './movil.js';
 import { lineaTransparencia } from './transparencia.js';
 import {
   variaciones, bandaMargen, pocosContratos, variacionIpc, enEuros, textosVariacion, notasEvolucion, graficoEvolucion, cargarIpc,
@@ -64,7 +64,12 @@ const el = {
   privado: document.getElementById('aviso-privado'),   // F5: etiqueta de dato privado de oferta
   periodo: document.getElementById('aviso-periodo'),
   cargando: document.getElementById('mapa-cargando'),   // tarea 51: indicador de carga
+  error: document.getElementById('aviso-error'),        // datos que no llegan o historia que no abre
+  errorTexto: document.getElementById('aviso-error-texto'),
+  errorBoton: document.getElementById('aviso-error-boton'),
   pie: document.getElementById('mapa-pie'),   // tarea 53: fecha de los datos y transparencia
+  barra: document.getElementById('barra-vista'),
+  anuncio: document.getElementById('ficha-anuncio'),   // lo que se lee de la ficha al cambiar
   idiomas: [...document.querySelectorAll('[data-idioma]')],
 };
 
@@ -92,6 +97,8 @@ let ultimaLeyenda = null;       // tarea 51: datos de la última leyenda, para c
 let esperaCarga = null;
 let cargaInicial = true;        // tarea 51: el aviso de carga sigue hasta que el mapa queda pintado
 let turnoFicha = 0;
+let turnoIdioma = 0;            // descarta un cambio de idioma superado por otro
+let aviso = null;               // aviso de error sobre el mapa: { tipo, clave, boton, accion }
 let centro = null;              // municipio en el centro de la vista (escala relativa y superficie típica, sin ficha)
 let tipica = null;              // superficie típica del territorio que manda: { clave, nivel, codigo, nombre, valor, anio }
 let historias = null;           // tarea 49: datos/historias.json (solo con ?historia=…), o null
@@ -174,27 +181,39 @@ const vacia = (serie, nivel, n) => (nivelesDe(serie).includes(nivel)
 // Carga las series del periodo activo que falten, en cada nivel que pinta el mapa (secciones y,
 // con poco zoom, municipios y provincias), y las guarda en sus elementos. Una serie que no llega
 // al año pedido (empieza después) se pinta sin dato.
+//
+// En dos tiempos, para que el mapa no quede a medias: primero se pide todo y nada se escribe; después,
+// solo si este cálculo sigue siendo el último (`yo` es su turno), se vuelca de una vez. Así, dos
+// cambios de año seguidos no dejan pintado el primero bajo la barra del segundo, y si un fichero no
+// llega no queda apuntada como cargada ninguna serie que el mapa no tenga. Devuelve si ha volcado.
 const otrosNiveles = {};   // nivel → serie → clave cargada
-async function cargarColumnas(series, referencia) {
-  await Promise.all(mapa.rellenos.map(async ({ capa, nivel }) => {
+async function cargarColumnas(series, referencia, yo) {
+  const pedidos = await Promise.all(mapa.rellenos.map(async ({ capa, nivel }) => {
     const codigos = nivel === 'sc' ? secciones : await cargarIndice(m, nivel);
-    if (!codigos) return;
-    const nuevas = {};
-    await Promise.all(series.map(async (serie) => {
+    if (!codigos) return null;
+    const cargadas = await Promise.all(series.map(async (serie) => {
       const def = m.indicadores[serie];
-      if (!def) return;
+      if (!def) return null;
       const periodo = periodoPara(def, referencia);
       const clave = `${serie}@${periodo}`;
       const cargada = nivel === 'sc' ? columnas[serie]?.clave : otrosNiveles[nivel]?.[serie];
-      if (cargada === clave) return;
+      if (cargada === clave) return null;
       const datos = periodo === null ? vacia(serie, nivel, codigos.length) : await cargarValores(m, serie, nivel, periodo);
-      if (!datos) return;
+      return datos ? { serie, datos, periodo, clave } : null;
+    }));
+    return { capa, nivel, codigos, cargadas: cargadas.filter(Boolean) };
+  }));
+  if (yo !== turno) return false;
+  for (const pedido of pedidos) {
+    if (!pedido) continue;
+    const { capa, nivel, codigos, cargadas } = pedido;
+    mapa.ponerSeries(capa, codigos, Object.fromEntries(cargadas.map((c) => [c.serie, c.datos.valores])));
+    for (const { serie, datos, periodo, clave } of cargadas) {
       if (nivel === 'sc') columnas[serie] = { ...datos, periodo, clave };
       else (otrosNiveles[nivel] ??= {})[serie] = clave;
-      nuevas[serie] = datos.valores;
-    }));
-    mapa.ponerSeries(capa, codigos, nuevas);
-  }));
+    }
+  }
+  return true;
 }
 
 const valorEn = (serie, i) => (i === undefined ? null : columnas[serie]?.valores[i] ?? null);
@@ -368,6 +387,22 @@ function leyendaAEscala() {
   pintarLeyenda(el.leyenda, t, { ...ultimaLeyenda, cambioJuego: juegoDe(ultimaLeyenda.mapaDef, nivel).nombre !== antes });
 }
 
+// Aviso de error sobre el mapa, con un botón: los datos de una vista que no llegan («Reintentar») o
+// un recorrido que no se puede abrir («Cerrar»). Va sobre el mapa y no en la ficha, que en una
+// pantalla estrecha queda debajo. `nuevo`: { tipo, clave, boton, accion }, o null para quitarlo.
+function avisar(nuevo) {
+  aviso = nuevo;
+  pintarAviso();
+}
+
+function pintarAviso() {
+  if (!el.error) return;
+  el.error.hidden = !aviso;
+  if (!aviso || !t) return;
+  el.errorTexto.textContent = t(aviso.clave);
+  el.errorBoton.textContent = t(aviso.boton);
+}
+
 // Tarea 51: indicador de carga sobre el mapa. Al entrar se ve hasta que el mapa queda pintado; después,
 // solo si los datos de una vista nueva tardan más de un cuarto de segundo.
 function mostrarCarga(si) {
@@ -378,6 +413,9 @@ function mostrarCarga(si) {
 }
 
 async function actualizar() {
+  // Antes de que el mapa esté listo (un sueldo escrito mientras carga) no hay con qué pintar: lo
+  // escrito queda en el estado y lo recoge el primer repintado, al acabar de arrancar.
+  if (!mapa) return;
   const yo = ++turno;
   if (estado.superficie === SUPERFICIE_TIPICA || tipica) {
     await prepararTipica(vista().referencia);   // la superficie típica del territorio que manda, antes del cálculo
@@ -390,12 +428,21 @@ async function actualizar() {
   el.privado.hidden = !etiqueta;
   el.privado.textContent = etiqueta ?? '';
   mostrarCarga(true);
+  let volcado = false;
   try {
-    await cargarColumnas(v.series, v.referencia);
-  } finally {
-    if (yo === turno) mostrarCarga(false);
+    volcado = await cargarColumnas(v.series, v.referencia, yo);
+  } catch (error) {
+    // Un fichero que no llega: el mapa y la ficha siguen con la vista anterior, y se dice sobre el mapa
+    console.error(error);
+    if (yo === turno) {
+      mostrarCarga(false);
+      avisar({ tipo: 'vista', clave: 'interfaz.error_vista', boton: 'interfaz.reintentar', accion: actualizar });
+    }
+    return;
   }
-  if (yo !== turno) return;
+  if (!volcado || yo !== turno) return;
+  mostrarCarga(false);
+  if (aviso?.tipo === 'vista') avisar(null);
 
   // Escala relativa al municipio (decisión del autor, 11-nov-2026): solo las secciones, con los
   // septiles de su municipio; las de fuera, sin color (placa) y con el contorno de tinta
@@ -1165,10 +1212,13 @@ function irAPaso(n) {
   mapa.mapa.flyTo(textoAVista(estado.vista));   // sin animación con «reducir movimiento» (MapLibre)
   actualizar();
   pintarHistoria();
+  mostrarHistoria(el.barra);
 }
 
 function pintarHistoria() {
   marcarMenu();   // «Historias» en el menú, mientras haya recorrido
+  // En pantallas estrechas, con recorrido, el mapa queda fijo arriba y el paso debajo (sitio.css)
+  document.body.classList.toggle('con-historia', Boolean(historiaActiva));
   if (!panelHistoria) return;
   if (!historiaActiva) { panelHistoria.ocultar(); return; }
   panelHistoria.pintar({ t, historias: historias.historias, historia: historiaActiva, n: pasoDe(historiaActiva, estado.paso).n });
@@ -1254,6 +1304,7 @@ function prepararBuscador() {
   crearBuscador({
     entrada: document.getElementById('buscador-entrada'),
     lista: document.getElementById('buscador-lista'),
+    sinResultados: () => t('interfaz.buscador.sin_resultados'),
     obtenerFuentes: async () => {
       fuentes ??= {
         municipios: Object.entries(territorios.municipio ?? {}).map(([codigo, nombre]) => [codigo, nombre, formasDeNombre(nombre)]),
@@ -1280,8 +1331,9 @@ function prepararBuscador() {
       }
       elegirSeccion(o.codigo);
       if (caja) {
-        mapa.irA(caja);
+        // Antes de mover: con «reducir movimiento» el mapa llega sin animación y avisa en el acto
         mapa.mapa.once('moveend', () => mapa.encuadrarSeccion(o.codigo));
+        mapa.irA(caja);
       } else mapa.encuadrarSeccion(o.codigo);
     },
   });
@@ -1309,15 +1361,59 @@ function marcarMenu() {
   }
 }
 
+// Lectores de pantalla: la ficha se rehace entera en cada repintado, y otra vez al llegar la
+// evolución y el comparador, así que no es región viva (se leería varias veces). Se anuncia solo
+// qué territorio es y su cifra, y solo cuando cambian.
+function anunciarFicha() {
+  if (!el.anuncio) return;
+  const texto = ['.ficha-codigo', '.ficha-cifra'].map((s) => el.ficha.querySelector(s)?.textContent.trim()).filter(Boolean).join(': ');
+  if (texto !== el.anuncio.textContent) el.anuncio.textContent = texto;
+}
+
+// Cabecera en el idioma activo, lo que traducirPagina() no alcanza: el enlace del menú a esta misma
+// página (sin esto, en inglés «Map» recargaría en castellano) y la descripción de <head>.
+function traducirCabecera() {
+  const propio = document.querySelector('.navegacion a[data-i18n="nav.mapa"]');
+  if (propio) propio.href = t.idioma === 'en' ? 'mapa.html?idioma=en' : 'mapa.html';
+  document.querySelector('meta[name="description"]')?.setAttribute('content', t('sitio.subtitulo'));
+}
+
+// Diccionario del idioma pedido; si no llega, el del otro idioma (mejor la página en la otra lengua
+// que sin textos). Si no llega ninguno, lanza el error.
+async function cargarIdiomaInicial() {
+  try {
+    return await cargarIdioma(estado.idioma);
+  } catch (error) {
+    console.error(error);
+    const otro = estado.idioma === 'en' ? 'es' : 'en';
+    const traductor = await cargarIdioma(otro);
+    estado.idioma = otro;
+    return traductor;
+  }
+}
+
+// El idioma solo cambia cuando su diccionario ha llegado: dos pulsaciones seguidas (ES, EN, ES) no
+// dejan los textos en un idioma y la dirección en otro, y un diccionario que no llega no cambia nada.
 async function cambiarIdioma(idioma) {
+  const yo = ++turnoIdioma;
   if (idioma === estado.idioma) return;
+  let nuevo;
+  try {
+    nuevo = await cargarIdioma(idioma);
+  } catch (error) {
+    console.error(error);
+    return;
+  }
+  if (yo !== turnoIdioma) return;
   estado.idioma = idioma;
-  t = await cargarIdioma(idioma);
+  t = nuevo;
   traducirPagina(t);
   document.title = `${t('nav.mapa')} · ${t('sitio.titulo')}`;
+  traducirCabecera();
   marcarIdioma();
   plegado?.traducir(t);
   pintarPie();
+  pintarAviso();
   pintarHistoria();   // tarea 49
   if (mapa) {
     mapa.traducir(t);
@@ -1329,12 +1425,26 @@ async function iniciar() {
   let vistaDelEnlace = Boolean(estado.vista);
   // Tarea 49: con ?historia=…, las historias se piden a la vez que el resto (sin el fichero, sin panel)
   const pedirHistorias = estado.historia ? cargarHistorias() : null;
-  t = await cargarIdioma(estado.idioma);
+  try {
+    t = await cargarIdiomaInicial();
+  } catch (error) {
+    // Sin diccionario no hay textos que pintar: se dice en las dos lenguas en vez de «Cargando el mapa…»
+    console.error(error);
+    if (el.cargando) el.cargando.textContent = 'No se han podido cargar los textos de la página. · The page texts could not be loaded.';
+    return;
+  }
   traducirPagina(t);
   document.title = `${t('nav.mapa')} · ${t('sitio.titulo')}`;
+  traducirCabecera();
   marcarIdioma();
   marcarMenu();
   window.addEventListener('hashchange', marcarMenu);
+  el.errorBoton?.addEventListener('click', () => aviso?.accion?.());
+  let esperaAnuncio = null;
+  new MutationObserver(() => {
+    clearTimeout(esperaAnuncio);
+    esperaAnuncio = setTimeout(anunciarFicha, 400);
+  }).observe(el.ficha, { childList: true, subtree: true });
   for (const boton of el.idiomas) boton.addEventListener('click', () => cambiarIdioma(boton.dataset.idioma));
   panel = crearPanelSueldo({ alCambiar: alCambiarSueldo, alCompartir: abrirCompartir });
   panel.ponerSueldo(sueldo);
@@ -1363,6 +1473,8 @@ async function iniciar() {
         ponerPaso(estado.paso);
         vistaDelEnlace = true;
       } else {
+        // No se calla: quien llega por el menú «Historias» ve por qué solo hay mapa
+        avisar({ tipo: 'historia', clave: 'interfaz.historia.no_disponible', boton: 'interfaz.compartir.cerrar', accion: () => avisar(null) });
         estado.historia = undefined;
         estado.paso = undefined;
       }
@@ -1415,7 +1527,10 @@ async function iniciar() {
     if (terr) mapa.seleccionarTerritorio(terr);
     if (esSeccion(estado.comparar)) mapa.comparar(estado.comparar);
     prepararBuscador();
+    // En una pantalla estrecha, con recorrido, la leyenda empieza plegada (deja sitio al paso)
+    if (historiaActiva && esPantallaEstrecha()) plegarLeyenda(el.leyenda);
     pintarHistoria();   // tarea 49: el panel, antes de esperar a los datos del mapa
+    if (historiaActiva) mostrarHistoria(el.barra);
     await actualizar();
     mapa.mapa.once('idle', () => { cargaInicial = false; mostrarCarga(false); seguirCentro(); });   // tarea 51: ya pintado
     // Sin vista en el enlace (desde la portada: el dado o el buscador), el mapa va a lo elegido
@@ -1425,8 +1540,8 @@ async function iniciar() {
         const caja = cajas.municipio?.[estado.seccion.slice(0, 5)];
         const codigo = estado.seccion;
         if (caja) {
+          mapa.mapa.once('moveend', () => mapa.encuadrarSeccion(codigo));   // antes de mover (ver el buscador)
           mapa.irA(caja);
-          mapa.mapa.once('moveend', () => mapa.encuadrarSeccion(codigo));
         } else mapa.encuadrarSeccion(codigo);
       } else mapa.irA(cajaTerritorio(cajas, terr));
     }
@@ -1434,6 +1549,8 @@ async function iniciar() {
     cargaInicial = false;
     mostrarCarga(false);
     fichaError(el.ficha, { t, error });
+    // También sobre el mapa: en una pantalla estrecha la ficha queda debajo y no se vería
+    avisar({ tipo: 'arranque', clave: 'interfaz.error_carga', boton: 'interfaz.reintentar', accion: () => location.reload() });
   }
 }
 

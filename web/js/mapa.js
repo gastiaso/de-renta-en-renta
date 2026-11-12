@@ -96,6 +96,7 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
   const mapa = new maplibregl.Map(opciones);
   mapa.touchZoomRotate.disableRotation();
   mapa.keyboard.disableRotation();
+  mapa.getCanvas().setAttribute('aria-label', t('interfaz.mapa.lienzo'));
   mapa.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
   mapa.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
   mapa.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
@@ -304,6 +305,22 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
         if (p) alPulsarSinSeccion(atributosSinSeccion(p));
       });
     }
+    // Teclado: el clic no puede ser la única forma de elegir. Con el foco en el mapa (las flechas lo
+    // mueven; + y −, lo acercan y lo alejan), Intro elige el territorio que hay en el centro de la
+    // vista, que una cruz marca mientras el mapa tiene el foco (sitio.css). Vale también para elegir
+    // la sección con que comparar.
+    mapa.getCanvas().addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || e.altKey || e.ctrlKey || e.metaKey) return;
+      const centro = mapa.project(mapa.getCenter());
+      for (const { capa, nivel } of RELLENOS) {
+        const x = mapa.queryRenderedFeatures(centro, { layers: [`${capa}-relleno`] })[0]?.properties?.[capas[capa].id];
+        if (x === undefined || x === null) continue;
+        e.preventDefault();
+        if (nivel === 'sc') alPulsar(String(x));
+        else alPulsarTerritorio?.(nivel, String(x));
+        return;
+      }
+    });
     mapa.on('moveend', () => alMover(mapa));
     mapa.on('movestart', quitarEtiqueta);
   }
@@ -423,6 +440,7 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
       };
       poner('.maplibregl-ctrl-zoom-in', t('interfaz.mapa.acercar'));
       poner('.maplibregl-ctrl-zoom-out', t('interfaz.mapa.alejar'));
+      mapa.getCanvas().setAttribute('aria-label', t('interfaz.mapa.lienzo'));   // MapLibre lo deja en «Map»
     },
   };
 

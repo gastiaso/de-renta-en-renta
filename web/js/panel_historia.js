@@ -1,6 +1,6 @@
 // Panel del recorrido guiado en mapa.html (backlog, tarea 49): título de la historia, «Paso n de N»,
-// título, texto, fuente y enlace del paso, selector de historia y botones Anterior, Siguiente y
-// Salir. La lógica (qué paso, qué cambia en el mapa) está en historias.js y principal.js; aquí solo
+// título, texto, fuente y enlace del paso, el desplegable «Cómo se mide» (la nota del paso, si la
+// trae), selector de historia y botones Anterior, Siguiente y Salir. La lógica (qué paso, qué cambia en el mapa) está en historias.js y principal.js; aquí solo
 // el DOM. Accesible: el paso es una región aria-live; las flechas izquierda y derecha, con el foco en
 // el panel (no en el selector), van al paso anterior y al siguiente; si el botón pulsado deja de
 // valer (primer o último paso), el foco pasa al texto del paso.
@@ -21,6 +21,8 @@ export function crearPanelHistoria({ alAnterior, alSiguiente, alSalir, alElegir 
     texto: $('historia-texto'),
     fuente: $('historia-fuente'),
     enlace: $('historia-enlace'),
+    nota: $('historia-nota'),
+    notaTexto: $('historia-nota-texto'),
     anterior: $('historia-anterior'),
     siguiente: $('historia-siguiente'),
     salir: $('historia-salir'),
@@ -40,6 +42,9 @@ export function crearPanelHistoria({ alAnterior, alSiguiente, alSalir, alElegir 
     if (e.target === el.elegir || e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.key === 'ArrowLeft' && !el.anterior.disabled) { e.preventDefault(); alAnterior(); }
     else if (e.key === 'ArrowRight' && !el.siguiente.disabled) { e.preventDefault(); alSiguiente(); }
+    else return;
+    // Como con el clic: si el botón que tenía el foco deja de valer (primer o último paso), no se pierde
+    if (document.activeElement?.disabled) el.paso.focus();
   });
 
   return {
@@ -68,6 +73,13 @@ export function crearPanelHistoria({ alAnterior, alSiguiente, alSalir, alElegir 
         const a = el.enlace.querySelector('a');
         a.href = enlaceEnIdioma(enlace.href, idioma);
         a.textContent = textoEn(enlace.texto, idioma);
+      }
+      // La nota, plegada en cada paso: quien la quiera la abre; sin nota, no hay desplegable
+      const nota = textoEn(paso.nota, idioma);
+      if (el.nota) {
+        el.nota.hidden = !nota;
+        el.nota.open = false;
+        el.notaTexto.textContent = nota;
       }
       el.anterior.disabled = n <= 1;
       el.siguiente.disabled = n >= total;

@@ -45,11 +45,13 @@
       "acercar": "Zoom in",
       "alejar": "Zoom out",
       "sin_dato_escala": "This map has no data at this scale: zoom in.",
-      "cargando": "Loading the map…"
+      "cargando": "Loading the map…",
+      "lienzo": "Map. Arrow keys move it; plus and minus zoom in and out; Enter picks the area at the centre."
     },
     "buscador": {
       "etiqueta": "Search municipality or tract",
-      "marcador": "Search municipality or tract"
+      "marcador": "Search municipality or tract",
+      "sin_resultados": "No results. Search by municipality (name or code) or by census tract code; not by street, neighbourhood or postcode."
     },
     "vista": {
       "region": "What the map shows",
@@ -107,6 +109,7 @@
       "intro_llega": "Share of income that goes on rent, tract by tract.",
       "neto": "Net monthly pay",
       "segundo": "Second pay (optional)",
+      "error": "Type the monthly net pay in euros, for example 1500.",
       "pagas": "Payments a year",
       "fichas": "Or choose a token",
       "superficie": "Home size",
@@ -334,8 +337,12 @@
       "anterior": "Previous",
       "siguiente": "Next",
       "salir": "Exit",
-      "salir_largo": "Leave the guided tour and stay on the map"
-    }
+      "salir_largo": "Leave the guided tour and stay on the map",
+      "no_disponible": "The story could not be opened: showing the map.",
+      "nota": "How it is measured"
+    },
+    "error_vista": "The data for this view could not be loaded.",
+    "reintentar": "Retry"
   },
   "portada": {
     "titulo_pagina": "De renta en renta · Housing costs and wages, tract by tract",

@@ -33,6 +33,22 @@ export function mostrarFicha(ficha, ventana = globalThis) {
   });
 }
 
+// Recorrido guiado en pantallas estrechas: el mapa queda fijo arriba y el texto del paso justo debajo
+// (sitio.css, body.con-historia), a la vista los dos. Al abrir un paso, la página se coloca con el
+// mapa arriba del todo; la barra de la vista, que va antes, queda fuera por arriba. `barra`: el
+// elemento que precede al mapa. Posición de destino, aparte, para las pruebas.
+export const destinoHistoria = (rectBarra, scrollY, respiro = 6) => Math.max(0, Math.round(scrollY + rectBarra.bottom + respiro));
+
+export function mostrarHistoria(barra, ventana = globalThis) {
+  if (!barra || !esPantallaEstrecha(ventana)) return;
+  ventana.requestAnimationFrame(() => {
+    const destino = destinoHistoria(barra.getBoundingClientRect(), ventana.scrollY);
+    if (Math.abs(destino - ventana.scrollY) < 4) return;
+    const suave = !ventana.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    ventana.scrollTo({ top: destino, behavior: suave ? 'smooth' : 'auto' });
+  });
+}
+
 // Botón que pliega y despliega los controles secundarios de la barra (data-plegada en la barra).
 export function prepararPlegado(barra, boton, t) {
   if (!barra || !boton) return { traducir() {} };
