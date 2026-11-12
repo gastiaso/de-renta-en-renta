@@ -39,7 +39,8 @@ test('la validación detecta lo que rompe el contrato', () => {
     [(d) => { delete d.historias[0].pasos[1].fuente; }, /fuente: falta el texto/],
     [(d) => { delete d.historias[0].pasos[0].estado.vista; }, /falta la vista/],
     [(d) => { d.historias[0].pasos[0].estado.seccion = '2807901001'; }, /no admitida «seccion»/],
-    [(d) => { d.historias[0].pasos[0].estado.ficha = 'peon'; }, /no admitida «ficha»/],
+    [(d) => { d.historias[0].pasos[0].estado.ficha = 'peon'; }, /valor no válido de «ficha» \(peon\)/],
+    [(d) => { d.historias[1].pasos[2].estado.ficha = 'casa'; }, /valor no válido de «ficha» \(casa\)/],
     [(d) => { d.historias[0].pasos[2].estado.territorio = 'municipio:280'; }, /valor no válido de «territorio»/],
     [(d) => { d.historias[0].pasos[2].estado.escala = 'nacional'; }, /valor no válido de «escala»/],
     [(d) => { d.historias[1].pasos[0].enlace.href = 'javascript:alert(1)'; }, /dirección del enlace/],
@@ -98,6 +99,30 @@ test('buscar historia y paso: sin paso, el 1; fuera de rango, el más cercano', 
   assert.equal(H.pasoDe(h, 3).paso.titulo.es, 'Paso A3');
   assert.equal(H.pasoDe(null, 1), null);
   assert.equal(H.pasoDe({ pasos: [] }, 1), null);
+});
+
+test('un paso con ficha de perfil deja el mapa en «¿te llega?» con ella y el año del paso; el siguiente sin ficha la quita', async () => {
+  const { modoDe } = await modulo('web/js/sueldo.js');
+  const perfiles = { tartera: { anios: { 2020: { '00': 1038 } } } };
+  const h = H.buscarHistoria(muestra(), 'anios');
+  assert.deepEqual(H.FICHAS_PASO, ['llave', 'mochila', 'tartera', 'transistor']);
+  assert.ok(!H.CLAVES_QUITADAS.includes('ficha'));
+  const estado = { mapa: 'alquiler_mes', seccion: '2807901001', ficha: 'peon', historia: 'anios', paso: 2 };
+  Object.assign(estado, H.cambiosDePaso(H.pasoDe(h, 3).paso));
+  assert.equal(estado.ficha, 'tartera');
+  assert.equal(estado.anio, 2020);
+  assert.equal(estado.seccion, undefined);
+  assert.equal(modoDe(estado, null, perfiles), 'llega');
+  assert.equal(consulta(estado), '?mapa=anios_salario_compra&anio=2020&ficha=tartera&vista=4.60/39.80000/-3.70000&historia=anios&paso=2');
+  Object.assign(estado, H.cambiosDePaso(H.pasoDe(h, 2).paso));
+  assert.equal(estado.ficha, undefined);
+  assert.equal(modoDe(estado, null, perfiles), 'necesario');
+  // El peón (el sueldo de quien visita) o una ficha que no existe no entran: el paso queda sin ficha
+  assert.equal(H.cambiosDePaso({ estado: { vista: '11/40/-3', ficha: 'peon' } }).ficha, undefined);
+  assert.equal(H.cambiosDePaso({ estado: { vista: '11/40/-3', ficha: 'casa' } }).ficha, undefined);
+  // El enlace a otra historia (mapa.html con consulta) vale
+  assert.equal(H.pasoDe(h, 3).paso.enlace.href, 'mapa.html?historia=centro');
+  assert.equal(H.enlaceEnIdioma('mapa.html?historia=centro', 'en'), 'mapa.html?historia=centro&idioma=en');
 });
 
 test('un paso pasa a cambios de estado: sus claves, las ausentes quitadas y sin sección, comparación, ficha, tipología, superficie ni umbral', () => {

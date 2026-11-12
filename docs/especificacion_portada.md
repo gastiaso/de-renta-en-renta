@@ -20,7 +20,8 @@
 
 ### Centro del tablero
 
-- Título, subtítulo (`sitio.subtitulo`), dicho (`sitio.dicho`) y pregunta rectora (`sitio.lema`). Las claves no se renombran; la confusión entre `lema` (la pregunta) y `dicho` (el lema real) se anota en `web/LEEME.md`.
+- Título, subtítulo (`sitio.subtitulo`), gancho (`sitio.gancho`) y pregunta rectora (`sitio.lema`); el dicho (`sitio.dicho`), al pie. Las claves no se renombran; la confusión entre `lema` (la pregunta) y `dicho` (el lema real) se anota en `web/LEEME.md`.
+- Sin la línea de las familias ni sus dos lecturas («Quedarse · …», «Entrar · …»): ningún lector las entendió (decisión del autor, 12-nov-2026). Las familias siguen en la leyenda del mapa.
 - **«Tu sueldo» (ficha del peón)**: campo de sueldo neto mensual y botón «¿Te llega?», que abre `mapa.html?ficha=peon` con el sueldo en el fragmento, con el mismo formato que «Compartir» (`#sueldo=…&pagas=…&segundo=…`, `estado.js`), que el mapa lee y quita de la barra. El sueldo nunca va en la consulta. Aviso visible: «Tu sueldo no sale de este dispositivo».
 - **Buscador**: reutiliza `buscador.js` (municipio o sección) y abre el mapa en el resultado.
 - **«Tira el dado»**: abre una sección al azar con `dato` en el último año del mapa por defecto. Sin animación con `prefers-reduced-motion`.
@@ -28,7 +29,11 @@
 
 ### Fichas («¿para quién?»)
 
-Cinco botones con los iconos de `diseno/fichas/*.svg`: llave, mochila, tartera, transistor y peón. Cada uno abre `mapa.html?ficha=<ficha>` en el modo «¿te llega?». El transistor, mientras no tenga datos (F3), aparece desactivado y rotulado «próximamente», como «Datos» en el menú.
+Cinco botones con los iconos de `diseno/fichas/*.svg`: llave, mochila, tartera, transistor y peón. Cada uno abre `mapa.html?ficha=<ficha>` en el modo «¿te llega?». Una ficha sin datos aparece desactivada y rotulada «próximamente». En una fila compacta bajo el tablero, con el icono y el nombre; la línea de método, solo al pasar el ratón o enfocar (y siempre para los lectores de pantalla). En el móvil, lista con la línea a la vista.
+
+### Historias
+
+Bajo las fichas, los títulos de las historias de `datos/historias.json` con su entradilla, cada uno enlazado a `mapa.html?historia=<id>` (`&idioma=en` en inglés), en dos columnas (una en el móvil). No depende de cuántas haya. Si el fichero no carga o no cumple su contrato (`web/js/historias.js`), o con la muestra de ejemplo, el bloque no se ve.
 
 ### Casillas
 
@@ -36,40 +41,43 @@ Cinco botones con los iconos de `diseno/fichas/*.svg`: llave, mochila, tartera, 
 - **Decisiones en CSV (regla 7)**: `inventario/casillas_portada.csv`, con `orden`, `id`, `texto_es`, `texto_en`, `familia`, `destino` (ruta relativa o vacío) y `activa` (`TRUE`/`FALSE`).
 - **Activas solo donde hay datos o página.** Las demás, texto sin enlace con el título «próximamente». Ningún enlace lleva a una página vacía.
 - **Bandas por familia** con la paleta del atlas (`diseno/tokens.json`, contraste ≥ 3:1 sobre el fondo crema) y una leyenda de cuatro familias: ingresos, alquiler, compra y barrio.
-- **Nada propio de Monopoly**: ni «Salida» (la esquina de inicio es «Firma el contrato»), ni «La banca», ni «Suerte» o «Caja de comunidad», ni franja diagonal, ni la secuencia de colores de sus grupos.
+- **Esquinas: casillas especiales** (decisión del autor, 12-nov-2026), con la familia `especial` en el CSV: fuera de las cuatro de la leyenda y sin banda. La compuerta exige que sean especiales las cuatro esquinas y solo ellas. La de inicio, «Cobra la nómina», en rojo con el texto en blanco (5,95:1); las otras tres, en beige (`--color-beige`, `#e9dcc0`, de la maqueta original) con el texto en tinta (10,43:1) y en negrita.
+- **Nada propio de Monopoly**: ni «Salida», ni sus esquinas, ni «La banca», ni «Suerte» o «Caja de comunidad», ni franja diagonal, ni la secuencia de colores de sus grupos. El referente es *The Landlord's Game* (Lizzie Magie, 1904, dominio público), cuyas esquinas son el salario, el parque público, la cárcel y «ve a la cárcel»: de ahí «Cobra la nómina» (la esquina de inicio) y «Parque público» (aquí, el parque público de vivienda).
 - **Exactitud de las etiquetas** (la portada no puede contradecir la ley):
   - «Fianza: un mes» (art. 36.1 de la LAU), no «dos meses»;
   - fuera «Agencia: un mes»: desde la Ley 12/2023, los gastos de gestión inmobiliaria y de formalización del contrato corren a cargo del arrendador;
   - «Actualización de la renta» en lugar de «Sube el IPC».
 
-Propuesta (a confirmar por el autor al revisar la portada):
+Tablero vigente (decisión del autor, 12-nov-2026; `inventario/casillas_portada.csv`). Salen «Sobrecarga en Europa», «Sorteo de vivienda protegida» (la absorbe «Parque público») y «Tasación» (la sustituye «Tope de alquileres»):
 
-| Orden | Casilla | Familia | Destino | Activa |
+| Orden | Casilla (en inglés) | Familia | Destino | Activa |
 |---|---|---|---|---|
-| 1 (esquina) | Firma el contrato | alquiler | `mapa.html` (sueldo necesario) | sí |
-| 2 | Cobra la nómina | ingresos | `mapa.html#tu-sueldo` | sí |
-| 3 | Fianza: un mes | alquiler | `metodo.html#…` (el alquiler sale de las fianzas del SERPAVI) | sí |
-| 4 | Paga el alquiler | alquiler | mapa del alquiler mensual | sí |
-| 5 | Pisos turísticos en el portal | barrio | mapa de viviendas turísticas (19) | sí |
-| 6 | Zona tensionada | barrio | mapa del 20 con una vista de municipios (`mapa.html?mapa=zona_tensionada&vista=5.20/40.20000/-3.70000`; tarea 52) | sí |
-| 7 (esquina) | Renueva el contrato | alquiler | «¿te llega?» con la llave (`mapa.html?ficha=llave`): el cociente del indicador 14, que ya no tiene mapa (tarea 41) | sí |
-| 8 | Actualización de la renta | alquiler | — (F4, indicador 10) | no |
-| 9 | Vecinos de alquiler | barrio | mapa de hogares en alquiler (18) | sí |
-| 10 | Compartir piso | ingresos | `mapa.html?ficha=peon#tu-sueldo` (dos sueldos) | sí |
-| 11 | Mudanza | alquiler | comparador (`?comparar=municipio`) | sí |
-| 12 | Cobra el salario mínimo | ingresos | `mapa.html?ficha=tartera` | sí |
-| 13 (esquina) | Vuelve a casa de tus padres | barrio | `sobrecarga.html` (módulo de acceso, indicador 23) | sí |
-| 14 | Ahorra la entrada | compra | — (F4) | no |
-| 15 | Aval de tus padres | compra | — (F4) | no |
-| 16 | Hipoteca variable | compra | — (F4) | no |
-| 17 | Sube el euríbor | compra | — (F4) | no |
-| 18 | Comunidad y derramas | barrio | — | no |
-| 19 (esquina) | Tasación | compra | mapa del valor tasado (12; tarea 52) | sí |
-| 20 | Notaría | compra | — (F4, indicador 11) | no |
-| 21 | Sorteo de vivienda protegida | barrio | — | no |
-| 22 | Herencia | compra | — | no |
-| 23 | Cobra la pensión | ingresos | `mapa.html?ficha=transistor` (F3) | no |
-| 24 | Sobrecarga en Europa | barrio | `sobrecarga.html` | sí |
+| 1 (esquina, inicio) | Cobra la nómina (Collect your wages) | especial | `mapa.html#tu-sueldo` | sí |
+| 2 | Firma el contrato (Sign the lease) | alquiler | `mapa.html?mapa=sueldo_necesario` | sí |
+| 3 | Fianza: un mes (Deposit: one month) | alquiler | `metodo.html#…` (el alquiler sale de las fianzas del SERPAVI) | sí |
+| 4 | Paga el alquiler (Pay the rent) | alquiler | mapa del alquiler mensual | sí |
+| 5 | Pisos turísticos en el portal (Tourist flats in the building) | barrio | mapa de viviendas turísticas (19) | sí |
+| 6 | Zona tensionada (Stressed housing market area) | barrio | mapa del 20 con una vista de municipios (`mapa.html?mapa=zona_tensionada&vista=5.20/40.20000/-3.70000`) | sí |
+| 7 (esquina) | Ley de Vivienda (Housing Act) | especial | de momento, el mismo que la 6; será una sección «Normas del juego» con las leyes explicadas | sí |
+| 8 | Tope de alquileres (Rent cap) | alquiler | `mapa.html?mapa=var_alquiler` (variación anual del alquiler); sin ese mapa en el manifiesto, inactiva | sí |
+| 9 | Renueva el contrato (Renew the lease) | alquiler | «¿te llega?» con la llave (`mapa.html?ficha=llave`) | sí |
+| 10 | Actualización de la renta (Rent review) | alquiler | — | no |
+| 11 | Vecinos de alquiler (Neighbours who rent) | barrio | mapa de hogares en alquiler (18) | sí |
+| 12 | Compartir piso (Share a flat) | ingresos | `mapa.html?superficie=70#tu-sueldo` (dos sueldos) | sí |
+| 13 (esquina) | Vuelve a casa de tus padres (Move back in with your parents) | especial | `sobrecarga.html#sc-acceso-titulo` (módulo de acceso, indicador 23) | sí |
+| 14 | Mudanza (Moving house) | alquiler | comparador (`?comparar=municipio`) | sí |
+| 15 | Sube el salario mínimo (The minimum wage goes up) | ingresos | `mapa.html?ficha=tartera` | sí |
+| 16 | Ahorra la entrada (Save for the down payment) | compra | `mapa.html?mapa=anios_salario_compra` | sí |
+| 17 | Aval de tus padres (Parents as guarantors) | compra | — | no |
+| 18 | Hipoteca variable (Variable-rate mortgage) | compra | `mapa.html?mapa=esfuerzo_hipotecario` | sí |
+| 19 (esquina) | Parque público (Public housing): vivienda protegida | especial | — | no |
+| 20 | Sube el euríbor (The Euribor goes up) | compra | `historico.html#hist-tipos` | sí |
+| 21 | Notaría (Notary) | compra | — | no |
+| 22 | Comunidad y derramas (Service charges and levies) | barrio | — | no |
+| 23 | Herencia (Inheritance) | compra | — | no |
+| 24 | Suben las pensiones (Pensions go up) | ingresos | `mapa.html?ficha=transistor` | sí |
+
+Las casillas que siguen conservan su `id` aunque cambie el texto (`cobra_smi`, `cobra_pension`); las nuevas son `ley_vivienda`, `tope_alquileres` y `parque_publico`.
 
 Los identificadores de los mapas y las anclas de «Método» se toman del manifiesto y de la página generada, no se escriben a mano. La prueba comprueba que existen.
 
@@ -106,8 +114,8 @@ Fuentes, fecha de los datos (`version.json`), licencias vigentes (`LICENSE`, `LI
 ## 4. Diseño y accesibilidad
 
 - Solo variables de `tokens.css` y las tipografías ya autoalojadas (Jost, Marcellus SC, Archivo Narrow y Yellowtail, con sus licencias en `estilo/fuentes/`).
-- **Escritorio**: tablero cuadrado (hasta unos 720 px) y columna lateral con las fichas y las cartas.
-- **Móvil** (menos de 700 px): primero el centro (título, gancho, pregunta y familias, «Tu sueldo», buscador; el dicho, al pie desde la tarea 34), luego las fichas, las cartas y las casillas como recorrido vertical en el mismo orden. Nada de tablero comprimido.
+- **Una sola columna centrada en todos los anchos** (decisión del autor, 12-nov-2026: la portada daba mucha información de golpe): el tablero cuadrado (hasta 720 px) y, debajo, con su mismo ancho, «¿Para quién?», «Historias» y «Cartas del atlas» (en dos columnas).
+- **Móvil** (menos de 700 px): primero el centro (título, gancho, pregunta, «Tu sueldo», buscador; el dicho, al pie desde la tarea 34), luego las fichas, las historias y las cartas en lista, y las casillas como recorrido vertical. Nada de tablero comprimido.
 - **HTML semántico**: las casillas son una lista ordenada (`<ol>`) colocada con CSS grid, no una imagen. Foco visible, navegable con teclado, contraste ≥ 4,5:1 en el texto.
 - **Sin JavaScript**: se ven el tablero y los enlaces; las cartas, el buscador y «Tira el dado» lo necesitan.
 - **Imagen para redes** (`og:image`, 1200 × 630, generada con `chromote` al empaquetar): segunda tanda, opcional.

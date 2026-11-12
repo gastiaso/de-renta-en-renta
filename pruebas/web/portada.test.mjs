@@ -91,6 +91,58 @@ test('casillas: 24, en el HTML como lista ordenada, activas con enlace e inactiv
   }
   assert.ok(/<ol class="casillas">/.test(leerTexto('web', 'index.html')));
   assert.deepEqual(cs.filter((c) => c.clases.includes('casilla-esquina')).map((c) => cs.indexOf(c) + 1), [1, 7, 13, 19]);
+  // Las esquinas, casillas especiales (sin familia de la leyenda); una sola de inicio, la primera
+  assert.deepEqual(cs.filter((c) => c.clases.includes('casilla-especial')).map((c) => cs.indexOf(c) + 1), [1, 7, 13, 19]);
+  assert.deepEqual(cs.filter((c) => c.clases.includes('casilla-inicio')).map((c) => cs.indexOf(c) + 1), [1]);
+  assert.equal(cs[0].texto, 'Cobra la nómina');
+});
+
+test('esquinas: solo la de inicio en rojo; las especiales, en beige y sin banda', () => {
+  const css = leerTexto('web', 'estilo', 'portada.css');
+  const regla = (sel) => new RegExp(`(^|\\n)${sel.replace(/[.#[\]()>:]/g, '\\$&')} \\{([^}]*)\\}`).exec(css)?.[2] ?? '';
+  assert.match(regla('.casilla-inicio'), /background: var\(--color-rojo\)/);
+  assert.match(regla('.casilla-especial'), /background: var\(--color-beige\)/);
+  assert.match(regla('.casilla.casilla-especial::before'), /content: none/);
+  assert.doesNotMatch(css, /\.casilla-esquina[^{]*\{[^}]*color-rojo/, 'ninguna regla pinta de rojo todas las esquinas');
+  assert.match(leerTexto('web', 'estilo', 'tokens.css'), /--color-beige: #[0-9a-f]{6};/);
+});
+
+test('una sola columna: sin la disposición de dos columnas ni su corte de 1.160 px', () => {
+  const css = leerTexto('web', 'estilo', 'portada.css');
+  assert.doesNotMatch(css, /max-width: 1159px|min-width: 1160px/);
+  assert.match(css, /\.portada \{[^}]*grid-template-columns: var\(--lado\);[^}]*justify-content: center;/);
+  // Orden en la página: centro, fichas, historias, cartas y casillas (en el móvil, ese recorrido)
+  const html = leerTexto('web', 'index.html');
+  const orden = ['class="portada-centro"', 'class="portada-fichas"', 'id="portada-historias"', 'id="portada-cartas"', 'class="portada-tablero"']
+    .map((x) => html.indexOf(x));
+  assert.ok(orden.every((i) => i > 0));
+  assert.deepEqual([...orden].sort((a, b) => a - b), orden);
+});
+
+test('historias: una entrada por historia del fichero, con su enlace al mapa en cada idioma', () => {
+  const datos = {
+    historias: [
+      { id: 'centro', titulo: { es: 'Uno', en: 'One' }, entradilla: { es: 'Entradilla', en: 'Lead' }, pasos: [] },
+      { id: 'otra', titulo: { es: 'Dos' }, pasos: [] },
+      { id: 'sin_titulo', titulo: {}, pasos: [] },
+    ],
+  };
+  assert.deepEqual(portada.entradasHistorias(datos, 'es'), [
+    { id: 'centro', titulo: 'Uno', entradilla: 'Entradilla', enlace: 'mapa.html?historia=centro' },
+    { id: 'otra', titulo: 'Dos', entradilla: '', enlace: 'mapa.html?historia=otra' },
+  ]);
+  const en = portada.entradasHistorias(datos, 'en');
+  assert.deepEqual(en.map((h) => [h.titulo, h.enlace]), [['One', 'mapa.html?historia=centro&idioma=en'], ['Dos', 'mapa.html?historia=otra&idioma=en']]);
+  assert.deepEqual(portada.entradasHistorias(null, 'es'), []);
+  assert.deepEqual(portada.entradasHistorias({}, 'es'), []);
+  // El bloque está en la portada, oculto hasta que el fichero carga
+  assert.match(leerTexto('web', 'index.html'), /<section id="portada-historias" class="portada-historias"[^>]*hidden>/);
+  for (const idioma of ['es', 'en']) assert.ok(leerJson('web', 'i18n', `${idioma}.json`).portada.historias_titulo, idioma);
+  // Con el fichero real, cada historia tiene su título en los dos idiomas
+  if (existsSync(join(raiz, 'web', 'datos', 'historias.json'))) {
+    const real = leerJson('web', 'datos', 'historias.json');
+    for (const idioma of ['es', 'en']) assert.equal(portada.entradasHistorias(real, idioma).length, real.historias.length, idioma);
+  }
 });
 
 test('casillas: cada destino existe (claves del mapa, mapas del manifiesto, anclas de las páginas)', () => {

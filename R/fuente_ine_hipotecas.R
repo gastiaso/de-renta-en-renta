@@ -1,6 +1,6 @@
 # INE, Estadística de Hipotecas (H): tipo de interés medio al inicio de las hipotecas constituidas
-# sobre viviendas, total (fijo y variable), España. Es el «tipo medio» del esfuerzo hipotecario
-# teórico (indicador 17, F4; plan §5 C). Dos tablas de INEbase en CSV de jaxiT3: la anual (24460,
+# sobre viviendas, total (fijo y variable), España. Es el «tipo medio» de la cuota hipotecaria
+# sobre la renta del hogar (indicador 17, F4; plan §5 C). Dos tablas de INEbase en CSV de jaxiT3: la anual (24460,
 # desde 2003) y la mensual (24457, desde 2009), que sirve de compuerta. Licencia: CC BY 4.0.
 # Se toma la cifra anual publicada del mismo año que el valor tasado (regla 4).
 

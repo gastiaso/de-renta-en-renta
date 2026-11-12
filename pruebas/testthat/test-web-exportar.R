@@ -163,6 +163,31 @@ test_that("la exportación escribe el contrato de la web y pasa la compuerta de 
   expect_equal(c2$calculado[c2$id == "web_fichas" & c2$detalle == "28002"], 0)
 })
 
+test_that("códigos postales para el buscador: cp.json por peso, en el manifiesto, con su compuerta (12-nov-2026)", {
+  cp <- tibble::tibble(cp = c("28001", "28001", "28013", "28300"), municipio = c("28002", "28001", "28079", "28013"),
+                       tramos = c(10, 30, 252, 400), peso = c(25, 75, 100, 100), principal = c(FALSE, TRUE, TRUE, TRUE))
+  expect_equal(cp_web(cp), list("28001" = I(c("28001", "28002")), "28013" = I("28079"), "28300" = I("28013")))
+  dir <- tempfile("web_")
+  on.exit(unlink(dir, recursive = TRUE))
+  exportar_web(larga_web, ind_web, jer_web, ter_web, dir_web = dir, fecha = "2026-11-12", cp = cp)
+  m <- jsonlite::fromJSON(file.path(dir, "datos", "manifiesto.json"), simplifyVector = FALSE)
+  expect_equal(m$codigos_postales, "datos/cp.json")
+  # Un municipio va como lista de uno (la web siempre lee una lista)
+  expect_equal(readLines(file.path(dir, "datos", "cp.json")), '{"28001":["28001","28002"],"28013":["28079"],"28300":["28013"]}')
+  c1 <- comprobar_cp_web(cp, dir)
+  expect_equal(c1$id, rep("web_cp", 3))
+  expect_true(all(c1$calculado == 0))
+  # Un par de más, el orden cambiado y el manifiesto sin la ruta: la compuerta los ve
+  writeLines('{"28001":["28002","28001"],"28013":["28079","28006"],"28300":["28013"]}', file.path(dir, "datos", "cp.json"))
+  m$codigos_postales <- NULL
+  jsonlite::write_json(m, file.path(dir, "datos", "manifiesto.json"), auto_unbox = TRUE)
+  expect_equal(comprobar_cp_web(cp, dir)$calculado, c(1, 2, 1))
+  # Sin tabla, ni fichero ni ruta
+  exportar_web(larga_web, ind_web, jer_web, ter_web, dir_web = dir, fecha = "2026-11-12")
+  expect_false(file.exists(file.path(dir, "datos", "cp.json")))
+  expect_null(jsonlite::fromJSON(file.path(dir, "datos", "manifiesto.json"))$codigos_postales)
+})
+
 test_that("cortes de los mapas: de uno a seis valores crecientes (siete tramos como mucho; tarea 51)", {
   expect_equal(cortes_web("700;900;1100;1500;2000"), c(700, 900, 1100, 1500, 2000))
   expect_equal(cortes_web("1;2;3;4;5;6"), 1:6)

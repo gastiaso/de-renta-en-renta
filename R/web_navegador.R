@@ -411,7 +411,7 @@ comprobar_portada_navegador <- function(b, evaluar, url, larga, perfiles, espera
       idioma, tolower(hay_cartas)), espera)
     p <- if (listo) jsonlite::fromJSON(evaluar(JS_PORTADA_NAVEGADOR), simplifyVector = FALSE) else NULL
     mal <- is.null(p) || grepl("mapa\\.html$", p$ruta) || p$casillas != 24L || p$titulo != "De renta en renta" ||
-      (idioma == "en" && p$primera != "Sign the lease") || (idioma == "es" && p$primera != "Firma el contrato")
+      (idioma == "en" && p$primera != "Collect your wages") || (idioma == "es" && p$primera != "Cobra la nómina")
     filas[[length(filas) + 1L]] <- fila("navegador_portada", paste("portada", idioma), mal)
     if (!is.null(p) && hay_cartas) {
       cartas <- stats::setNames(vapply(p$cartas, function(x) x$texto, ""), vapply(p$cartas, function(x) x$id, ""))

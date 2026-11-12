@@ -297,6 +297,9 @@ test_that("el flujo de Pages cuadra con el empaquetado", {
   borrado <- grep("rm -rf", strsplit(guion, "\n")[[1]], value = TRUE)
   for (f in EXCLUIDOS_SITIO) expect_match(borrado, paste0("$sitio/", f), fixed = TRUE)
   expect_match(guion, "1000000000", fixed = TRUE)                  # LIMITES_PUBLICACION[["sitio_total"]]
+  # Sin datos/historias.json en el paquete, un aviso (no un error): el menú «Historias» abre el mapa con un aviso
+  expect_match(guion, 'if [ ! -f "$sitio/datos/historias.json" ]; then', fixed = TRUE)
+  expect_match(guion, "::warning::datos_web.tar.gz no trae datos/historias.json", fixed = TRUE)
   expect_match(guion, format(LIMITES_PUBLICACION[["sitio_fichero"]], scientific = FALSE), fixed = TRUE)
 
   # Páginas «Método» y «Datos»: plantilla, metadatos por idioma, herramienta y textos que cita el flujo

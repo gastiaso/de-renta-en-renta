@@ -95,6 +95,9 @@ export async function posiciones(m, nivel) {
 export const cargarTerritorios = (m) => opcional(m.territorios, {});
 // Cajas de los municipios para el buscador: { municipio: { '28079': [oeste, sur, este, norte] } }.
 export const cargarCajas = (m) => opcional(m.cajas, {});
+// Códigos postales para el buscador (12-nov-2026): { '28013': ['28079'], … }, municipios por peso;
+// {} si el manifiesto no lo trae (la muestra). Se pide solo cuando se escriben cifras.
+export const cargarCodigosPostales = (m) => opcional(m?.codigos_postales, {});
 // Ingresos de las fichas (neto mensual en euros): { llave: {...}, mochila: {...}, ... }.
 export const cargarPerfiles = (m) => opcional(m.perfiles, {});
 // Percentil salarial (F3): { percentiles: [1, …, 99], anios: { '2024': { '00': [...], '09': [...] } } }.

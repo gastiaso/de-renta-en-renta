@@ -36,7 +36,12 @@ test_that("las casillas del CSV cumplen las reglas de la especificación", {
   r <- comprobar_casillas_portada(cs, claves_estado = claves_estado_web(raiz_portada("web", "js", "estado.js")))
   expect_equal(r$calculado, r$referencia, label = paste(r$detalle, collapse = "; "))
   expect_equal(sum(cs$orden %in% ESQUINAS_PORTADA), 4L)
-  expect_true(cs$texto_es[cs$orden == 1] == "Firma el contrato")   # la esquina de inicio no es «Salida»
+  # Las esquinas, casillas especiales fuera de las cuatro familias; la de inicio no es «Salida», sino
+  # el salario de The Landlord's Game, y otra, su parque público (decisión del autor, 12-nov-2026)
+  expect_equal(cs$familia[cs$orden %in% ESQUINAS_PORTADA], rep(FAMILIA_ESPECIAL, 4))
+  expect_true(all(cs$familia[!cs$orden %in% ESQUINAS_PORTADA] %in% FAMILIAS_PORTADA))
+  expect_true(cs$texto_es[cs$orden == ESQUINA_INICIO] == "Cobra la nómina")
+  expect_true("Parque público" %in% cs$texto_es[cs$orden %in% ESQUINAS_PORTADA])
   # Etiquetas que la portada no puede llevar (especificación, §2): ni «dos meses» de fianza, ni la
   # agencia a cargo de quien alquila, ni nombres propios de Monopoly
   prohibidas <- "dos meses|agencia|salida|la banca|suerte|caja de comunidad|sube el ipc"
@@ -52,13 +57,18 @@ test_that("la compuerta de las casillas detecta destinos mal puestos", {
   mal$destino[mal$id == "mudanza"] <- "mapa.html?clave_rara=1"
   mal$destino[mal$id == "fianza"] <- "metodo.html#no-existe"
   mal$id[2] <- mal$id[1]
-  r <- comprobar_casillas_portada(mal, mapas = c("sueldo_necesario", "alquiler_mes", "viviendas_turisticas", "esfuerzo_residentes", "hogares_alquiler",
-                                               "zona_tensionada", "valor_tasado_m2"),   # tarea 52
-                                  anclas = list(metodo.html = "71-alquiler-indicadores-8-y-9", method.html = "71-rent-indicators-8-and-9"),
-                                  claves_estado = claves_estado_web(raiz_portada("web", "js", "estado.js")))
+  mal$familia[mal$orden == 7] <- "barrio"                          # esquina sin la familia especial
+  mapas <- c("sueldo_necesario", "alquiler_mes", "viviendas_turisticas", "hogares_alquiler", "zona_tensionada",
+             "var_alquiler", "anios_salario_compra", "esfuerzo_hipotecario")
+  anclas <- list(metodo.html = "71-alquiler-indicadores-8-y-9", method.html = "71-rent-indicators-8-and-9")
+  claves <- claves_estado_web(raiz_portada("web", "js", "estado.js"))
+  expect_true(all(comprobar_casillas_portada(cs, mapas = mapas, anclas = anclas, claves_estado = claves)$calculado ==
+                    c(24, rep(0, 12))))
+  r <- comprobar_casillas_portada(mal, mapas = mapas, anclas = anclas, claves_estado = claves)
   fallos <- r$detalle[r$calculado != r$referencia]
   expect_setequal(fallos, c("ids repetidos", "inactivas con destino", "mapas que no están en el manifiesto",
-                            "claves del mapa que no son de estado.js", "anclas que no están en su página"))
+                            "claves del mapa que no son de estado.js", "anclas que no están en su página",
+                            "esquinas sin la familia especial o especiales fuera de las esquinas"))
 })
 
 test_that("el destino en inglés lleva el idioma o la página inglesa", {
@@ -80,6 +90,9 @@ test_that("las casillas se escriben en el HTML entre sus marcas, sin enlace las 
   expect_true(all(grepl("portada.proximamente", inactivas, fixed = TRUE)))
   expect_true(all(grepl("data-href-en=", li[cs$activa[order(cs$orden)]], fixed = TRUE)))
   expect_true(any(grepl("&amp;idioma=en", li, fixed = TRUE)))
+  # Una sola casilla de inicio (la primera); las cuatro esquinas, especiales
+  expect_equal(which(grepl("casilla-inicio", li, fixed = TRUE)), ESQUINA_INICIO)
+  expect_equal(which(grepl("casilla-especial", li, fixed = TRUE)), ESQUINAS_PORTADA)
 
   tmp <- tempfile(fileext = ".html")
   writeLines(c("<ol>", paste0("  ", MARCAS_CASILLAS[["inicio"]]), "  <li>viejo</li>", paste0("  ", MARCAS_CASILLAS[["fin"]]), "</ol>"), tmp)
@@ -165,6 +178,23 @@ test_that("las bandas de las familias contrastan al menos 3:1 con la crema", {
     expect_false(is.na(var), label = familia)
     expect_gte(contraste_wcag(hex(var), crema), 3)
   }
+})
+
+test_that("solo la esquina de inicio va en rojo; las otras tres, en beige con texto en tinta", {
+  css <- paste(readLines(raiz_portada("web", "estilo", "portada.css"), encoding = "UTF-8"), collapse = "\n")
+  tokens <- paste(readLines(raiz_portada("web", "estilo", "tokens.css"), encoding = "UTF-8"), collapse = "\n")
+  hex <- function(var) regmatches(tokens, regexec(paste0("--", var, ":\\s*(#[0-9a-fA-F]{6})"), tokens))[[1]][2]
+  fondo <- function(selector) {
+    regmatches(css, regexec(paste0("(^|\\n)", gsub(".", "\\.", selector, fixed = TRUE),
+                                   " \\{[^}]*background: var\\(--([a-z-]+)\\)"), css))[[1]][3]
+  }
+  expect_equal(fondo(".casilla-especial"), "color-beige")
+  expect_equal(fondo(".casilla-inicio"), "color-rojo")
+  # Ninguna otra regla pinta de rojo las esquinas
+  expect_false(grepl("\\.casilla-esquina[^{]*\\{[^}]*color-rojo", css))
+  expect_gte(contraste_wcag(hex("color-tinta"), hex("color-beige")), 4.5)
+  expect_gte(contraste_wcag(hex("color-tenue"), hex("color-beige")), 4.5)   # la inactiva, «próximamente»
+  expect_gte(contraste_wcag("#ffffff", hex("color-rojo")), 4.5)
 })
 
 test_that("las claves del estado de la vista se leen de estado.js", {

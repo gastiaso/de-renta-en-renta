@@ -7,7 +7,10 @@
 #                                    el título y la entradilla de la historia, en su paso 1. Columnas
 #                                    opcionales `nota_es` y `nota_en`: la nota «Cómo se mide» del paso
 #                                    (los matices de método, fuera del cuerpo), con marcas {id} como el
-#                                    texto; en los dos idiomas o en ninguno.
+#                                    texto; en los dos idiomas o en ninguno. Columna opcional `ficha`:
+#                                    una ficha de perfil (llave, mochila, tartera o transistor; nunca
+#                                    el peón, que es el sueldo de quien visita) que deja el mapa en
+#                                    «¿te llega?» con ella; vacía, el modo normal.
 #   inventario/historias_cifras.csv  una fila por cifra: la consulta que la calcula y la cifra tal como
 #                                    se redactó el texto (`redactado`, ya redondeada a `decimales`); el
 #                                    grupo de la tabla larga, como «corte:grupo» (tipologia:VC) o vacío
@@ -22,7 +25,10 @@
 #   maximo, minimo, *_geo,     sobre los territorios del nivel; con geo_id, solo los que empiezan por
 #   cuenta_desde,              ese código (los distritos de un municipio, los municipios de una
 #   cociente_p90_p10           provincia)
-#   secciones_*                secciones de un municipio (geo_id de cinco cifras) o de España (00)
+#   secciones_*                secciones de un territorio (las que empiezan por geo_id: una provincia,
+#                              un municipio) o de España (00). secciones_cuota_mayor: % de secciones
+#                              por encima del parámetro (estrictamente, como «pasa del 30 %» de la
+#                              carta del salario mínimo de la portada)
 #   panel_n, panel_cuenta_desde, panel_cuantil
 #                              lo mismo con panel constante: solo los territorios con dato en `anio`
 #                              y en otro año. Parámetro «valor;año;decimales»: el umbral o el cuantil
@@ -35,13 +41,21 @@
 #   derivada_variacion, derivada_diferencia
 #                              de dos cifras de la misma tabla (parámetro «id_final;id_inicial»),
 #                              desde sus valores ya redondeados, como los lee quien sigue la historia
+#   derivada_por               una cifra de la tabla, ya redondeada, por un número (parámetro
+#                              «id;factor»: la entrada del 20 % en meses de renta, años × 0,2 × 12)
+#   perfil_ingreso             ingreso neto mensual de una ficha de perfil (indicador = ficha, geo_id,
+#                              anio), el que recibe la web (perfiles_web())
+#   portada_smi                una cifra de la carta del salario mínimo de la portada (cifras_portada(),
+#                              R/web_portada.R) calculada para `anio`: parámetro = su campo (pct_30,
+#                              pct_30_real, secciones...). La misma definición que la portada, no otra
 #
 # Compuerta (validacion_historias, bloqueo): cada cifra calculada, redondeada, coincide con la
 # redactada. Si una actualización de los datos la mueve, el pipeline para y el texto se revisa a mano
 # antes de publicarlo: las frases («la más alta desde 2011», «el primero es…») no se reescriben solas.
 # Las cifras que solo sostienen una frase (el año del máximo, el municipio que encabeza) van también
 # como cifras, aunque no se impriman. Además: marcas sin cifra, textos vacíos, vistas que no puede
-# pintar el mapa y ninguna cifra ni mapa de la oferta privada (Idealista: decisiones 17 a 19).
+# pintar el mapa, fichas que no son de perfil (el peón no) y ninguna cifra ni mapa de la oferta
+# privada (Idealista: decisiones 17 a 19).
 # La brecha entre entrar y quedarse queda aplazada hasta la autorización de Idealista.
 #
 # Salida: web/datos/historias.json (fuera de git), con las cifras ya escritas en cada idioma.
@@ -55,11 +69,13 @@ HISTORIAS_CONSULTAS <- c(
   # tabla larga, panel constante entre dos anios (parametro "valor;anio;decimales")
   "panel_n", "panel_cuenta_desde", "panel_cuantil",
   # tabla larga, secciones de un municipio (geo_id de cinco cifras) o de toda Espa\u00f1a (geo_id 00)
-  "secciones_n", "secciones_mediana", "secciones_cuantil", "secciones_cuota_desde",
+  "secciones_n", "secciones_mediana", "secciones_cuantil", "secciones_cuota_desde", "secciones_cuota_mayor",
+  # ingreso de una ficha de perfil (perfiles_web()) y la carta del salario minimo de la portada
+  "perfil_ingreso", "portada_smi",
   # IPC (indicador = ipc; anio = final; parametro = inicial)
   "ipc_variacion",
   # de otras dos cifras (parametro "id_final;id_inicial")
-  "derivada_variacion", "derivada_diferencia",
+  "derivada_variacion", "derivada_diferencia", "derivada_por",
   # inventario/cortes_web_niveles.csv (nivel = juego: seccion, municipio, provincia_ccaa)
   "corte_mayor",
   # tabla del historico (indicador = serie; parametro de hist_valor = subperiodo)
@@ -73,6 +89,8 @@ HISTORIAS_COLUMNAS <- c("historia", "paso", "historia_titulo_es", "historia_titu
                         "titulo_es", "titulo_en", "texto_es", "texto_en", "fuente_es", "fuente_en",
                         "mapa", "anio", "vista", "territorio", "escala", "enlace", "enlace_es", "enlace_en")
 HISTORIAS_COLUMNAS_NOTA <- c("nota_es", "nota_en")   # opcionales: sin ellas, pasos sin nota
+# Fichas de perfil que puede fijar un paso (columna opcional `ficha`): las del pipeline, nunca el peon
+HISTORIAS_FICHAS <- c("llave", "mochila", "tartera", "transistor")
 HISTORIAS_CIFRAS_COLUMNAS <- c("id", "historia", "consulta", "indicador", "nivel", "geo_id", "anio", "grupo",
                                "parametro", "decimales", "redactado", "nota")
 
@@ -90,7 +108,7 @@ leer_historias <- function(ruta) {
   x <- readr::read_csv(ruta, col_types = readr::cols(.default = "c"), na = character())
   faltan <- setdiff(HISTORIAS_COLUMNAS, names(x))
   if (length(faltan)) stop("Faltan columnas en ", ruta, ": ", paste(faltan, collapse = ", "), call. = FALSE)
-  for (opcional in HISTORIAS_COLUMNAS_NOTA) if (!opcional %in% names(x)) x[[opcional]] <- ""
+  for (opcional in c(HISTORIAS_COLUMNAS_NOTA, "ficha")) if (!opcional %in% names(x)) x[[opcional]] <- ""
   x$paso <- as.integer(x$paso)
   x
 }
@@ -117,14 +135,16 @@ historias_cifra_larga <- function(f, d) {
   d <- d[d$anio == as.integer(f$anio), ]
   p <- suppressWarnings(as.numeric(f$parametro))
   if (startsWith(f$consulta, "secciones_")) {
-    if (f$geo_id != "00") d <- d[substr(d$geo_id, 1, 5) == f$geo_id, ]
+    if (f$geo_id != "00") d <- d[startsWith(d$geo_id, f$geo_id), ]   # una provincia, un municipio...
     x <- d$valor
     if (!length(x)) return(NA_real_)
     return(switch(f$consulta,
                   secciones_n = length(x),
                   secciones_mediana = stats::median(x),
                   secciones_cuantil = stats::quantile(x, p, names = FALSE),
-                  secciones_cuota_desde = 100 * mean(x >= p)))
+                  secciones_cuota_desde = 100 * mean(x >= p),
+                  secciones_cuota_mayor = 100 * mean(x > p),
+                  NA_real_))
   }
   if (f$consulta == "valor") {
     v <- d$valor[d$geo_id == f$geo_id]
@@ -201,6 +221,14 @@ historias_derivar <- function(cifras) {
   derivadas <- which(startsWith(cifras$consulta, "derivada_"))
   for (i in derivadas) {
     ids <- strsplit(cifras$parametro[i], ";", fixed = TRUE)[[1]]
+    if (cifras$consulta[i] == "derivada_por") {
+      # "id;factor": la cifra ya redondeada, por un numero
+      j <- match(ids[1], cifras$id)
+      factor <- suppressWarnings(as.numeric(ids[2]))
+      if (length(ids) != 2 || is.na(j) || j %in% derivadas || is.na(factor)) next
+      cifras$calculado[i] <- redondear_empate_arriba(cifras$calculado[j], cifras$decimales[j]) * factor
+      next
+    }
     j <- match(ids, cifras$id)
     if (length(ids) != 2 || anyNA(j) || any(j %in% derivadas)) next
     terminos <- redondear_empate_arriba(cifras$calculado[j], cifras$decimales[j])
@@ -212,15 +240,44 @@ historias_derivar <- function(cifras) {
   cifras
 }
 
+# Ingreso neto mensual de una ficha de perfil (indicador = ficha) en un año y territorio, el que
+# recibe la web. `ingresos`: perfiles_web(perfiles), o NULL.
+historias_cifra_perfil <- function(f, ingresos) {
+  v <- ((ingresos[[f$indicador]]$anios %||% list())[[f$anio]] %||% list())[[f$geo_id]]
+  if (is.null(v)) NA_real_ else as.numeric(v)
+}
+
+# Cartas del salario minimo de la portada (cifras_portada(), R/web_portada.R) de cada año pedido: la
+# tabla larga hasta ese año, para que el «último año» de la carta sea el de la cifra. Solo las series
+# que usa la carta del salario minimo; la de la sobrecarga queda fuera (sus avisos, callados).
+historias_cartas_smi <- function(cifras, larga, perfiles) {
+  anios <- unique(cifras$anio[cifras$consulta == "portada_smi"])
+  if (!length(anios) || is.null(perfiles)) return(list())
+  base <- larga[larga$indicador %in% c("peso_alquiler_ingreso", "alquiler_mes", "sueldo_necesario"), ]
+  stats::setNames(lapply(anios, function(a) {
+    smi <- tryCatch(suppressWarnings(cifras_portada(base[base$anio <= as.integer(a), ], perfiles = perfiles)$smi),
+                    error = function(e) NULL)
+    if (is.null(smi) || !identical(as.integer(smi$anio), as.integer(a))) NULL else smi
+  }), anios)
+}
+
 # Calcula todas las cifras: columna `calculado` (sin redondear). `ipc`: tabla del IPC (ipc_leer()),
-# solo para las consultas ipc_variacion.
-historias_calcular <- function(cifras, larga, historico, cortes_niveles, ipc = NULL) {
+# solo para las consultas ipc_variacion; `perfiles`: el objetivo del pipeline, solo para
+# perfil_ingreso y portada_smi.
+historias_calcular <- function(cifras, larga, historico, cortes_niveles, ipc = NULL, perfiles = NULL) {
   usados <- unique(cifras$indicador)
   l <- larga[larga$indicador %in% usados & !is.na(larga$valor), c("geo_id", "nivel", "anio", "indicador", "valor", "corte", "grupo")]
   h <- historico[historico$serie %in% usados, ]
+  ingresos <- if (is.null(perfiles) || !any(cifras$consulta == "perfil_ingreso")) NULL else perfiles_web(perfiles)
+  cartas <- historias_cartas_smi(cifras, larga, perfiles)
   cifras$calculado <- vapply(seq_len(nrow(cifras)), function(i) {
     f <- cifras[i, ]
     if (!f$consulta %in% HISTORIAS_CONSULTAS || startsWith(f$consulta, "derivada_")) return(NA_real_)
+    if (f$consulta == "perfil_ingreso") return(historias_cifra_perfil(f, ingresos))
+    if (f$consulta == "portada_smi") {
+      v <- cartas[[f$anio]][[f$parametro]]
+      return(if (is.numeric(v) && length(v) == 1) as.numeric(v) else NA_real_)
+    }
     if (f$consulta == "corte_mayor") {
       cc <- cortes_niveles$cortes[cortes_niveles$indicador == f$indicador & cortes_niveles$juego == f$nivel]
       return(if (length(cc) == 1) max(cortes_web(cc)) else NA_real_)
@@ -264,6 +321,7 @@ historias_web <- function(historias, cifras) {
     list(es = historias_rellenar(fila[[paste0(campo, "_es")]], cifras, "es"),
          en = historias_rellenar(fila[[paste0(campo, "_en")]], cifras, "en"))
   }
+  if (!"ficha" %in% names(historias)) historias$ficha <- ""   # columna opcional
   ids <- unique(historias$historia)
   lapply(ids, function(id) {
     h <- historias[historias$historia == id, ]
@@ -278,6 +336,7 @@ historias_web <- function(historias, cifras) {
         estado <- list(mapa = p$mapa, anio = as.integer(p$anio), vista = p$vista)
         if (nzchar(p$territorio)) estado$territorio <- p$territorio
         if (nzchar(p$escala)) estado$escala <- p$escala
+        if (nzchar(p$ficha)) estado$ficha <- p$ficha   # mapa en "te llega" con esa ficha
         list(
           titulo = bilingue(p, "titulo"),
           texto = bilingue(p, "texto"),
@@ -315,7 +374,7 @@ comprobar_historias <- function(historias, cifras, manifiesto, claves_estado, an
 
   # 2. Textos
   campos <- c("titulo", "texto", "fuente")
-  for (opcional in HISTORIAS_COLUMNAS_NOTA) if (!opcional %in% names(historias)) historias[[opcional]] <- ""
+  for (opcional in c(HISTORIAS_COLUMNAS_NOTA, "ficha")) if (!opcional %in% names(historias)) historias[[opcional]] <- ""
   # Marcas del texto y de la nota de cada paso, por idioma (las dos se rellenan igual)
   marcas_de <- function(idioma) {
     lapply(seq_len(nrow(historias)), function(i) {
@@ -373,9 +432,13 @@ comprobar_historias <- function(historias, cifras, manifiesto, claves_estado, an
   terr_mal <- sum(nzchar(historias$territorio) & !sin_mapa & !mapply(function(n, d) {
     is.null(d) || n %in% unlist(manifiesto$indicadores[[d$base]]$niveles)
   }, nivel_terr, def))
-  claves_mal <- length(setdiff(c("mapa", "anio", "vista", "territorio", "escala", "historia", "paso"), claves_estado))
+  con_ficha <- nzchar(historias$ficha)
+  claves_mal <- length(setdiff(c("mapa", "anio", "vista", "territorio", "escala", "historia", "paso",
+                                 if (any(con_ficha)) "ficha"), claves_estado))
+  # Ficha de perfil: solo las del pipeline (nunca el peon, el sueldo de quien visita)
+  ficha_mal <- sum(con_ficha & !historias$ficha %in% HISTORIAS_FICHAS)
   con_enlace <- nzchar(historias$enlace)
-  pagina <- sub("#.*$", "", historias$enlace[con_enlace])
+  pagina <- sub("[?#].*$", "", historias$enlace[con_enlace])   # la pagina, sin consulta ni ancla
   ancla <- ifelse(grepl("#", historias$enlace[con_enlace]), sub("^[^#]*#", "", historias$enlace[con_enlace]), "")
   paginas <- c("mapa.html", "sobrecarga.html", "metodo.html", "method.html", "datos.html", "data.html", "historico.html",
                "metodo_corto.html", "short_method.html")
@@ -390,6 +453,7 @@ comprobar_historias <- function(historias, cifras, manifiesto, claves_estado, an
     cuenta("historias_estado", "escala del municipio en un mapa sin juego de cortes de la secci\u00f3n", escala_mal),
     cuenta("historias_estado", "territorios de un nivel que el mapa no tiene", terr_mal),
     cuenta("historias_estado", "claves del recorrido que no admite web/js/estado.js", claves_mal),
+    cuenta("historias_estado", "fichas que no son de perfil (llave, mochila, tartera o transistor)", ficha_mal),
     cuenta("historias_estado", "enlaces a p\u00e1ginas o anclas que no existen, o sin texto en los dos idiomas", enlace_mal)
   )
 

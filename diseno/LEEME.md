@@ -12,7 +12,8 @@ Reglas:
 - El color propio de cada ficha es decorativo; para texto, la variante «texto» de `tokens.json`.
 - Sobre fondo oscuro, la ficha va sobre una placa crema.
 - Tipografías libres: Jost, Marcellus SC y Archivo Narrow (OFL) y Yellowtail (Apache 2.0, no OFL), autoalojadas en `web/estilo/fuentes/` con su licencia. Yellowtail solo en titulares de 22 px o más.
-- Nada de elementos propios de Monopoly (sus fichas, sus esquinas, la banda diagonal del título ni los nombres de sus mazos). Referente de dominio público: *The Landlord's Game* (Lizzie Magie, 1904).
+- Nada de elementos propios de Monopoly (sus fichas, sus esquinas, la banda diagonal del título ni los nombres de sus mazos). Referente de dominio público: *The Landlord's Game* (Lizzie Magie, 1904), cuyas esquinas (el salario, el parque público, la cárcel y «ve a la cárcel») dan «Cobra la nómina» y «Parque público» al tablero de la portada.
+- Esquinas del tablero de la portada: casillas especiales, sin banda de familia. Solo la de inicio, en rojo con texto blanco; las otras tres, en beige (`beige`, de la maqueta original) con texto en tinta.
 
 Las maquetas (`docs/maquetas.md`) son referencia visual; las cifras que llevan son de ejemplo.
 

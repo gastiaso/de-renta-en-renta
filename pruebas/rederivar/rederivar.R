@@ -198,7 +198,7 @@ anotar("16", "Años de salario para comprar 80 m², Madrid (municipio), 2024 (a�
        0.005, "tabla larga",
        "Valor tasado a un decimal × 80 / salario medio de la provincia (salarios / asalariados, al euro)")
 
-# ---- 17 · Esfuerzo hipotecario teórico: cuota del primer año / renta neta media por hogar ---------
+# ---- 17 · Cuota hipotecaria sobre la renta del hogar: cuota del primer año / renta neta media por hogar
 
 bde <- function(tabla) {
   l <- readLines(file.path(BRUTOS, "bde", tabla), encoding = "latin1", warn = FALSE)
@@ -236,7 +236,7 @@ esfuerzo <- function(tipo) {
 # el pipeline desde el 11-nov-2026 (decisión del autor); sprintf("%.2f") da 3,46 (el binario de 3,465
 # queda por debajo). Se anota también la cifra con 3,46, la que daba el atlas antes.
 tipo_sprintf <- as.numeric(sprintf("%.2f", mean(tipos_2024)))
-anotar("17", "Esfuerzo hipotecario teórico, Madrid (municipio), 2024 (% de la renta del hogar)",
+anotar("17", "Cuota hipotecaria sobre la renta del hogar, Madrid (municipio), 2024 (% de la renta del hogar)",
        "MIVAU, Banco de España e INE (ADRH)", "35103500.xls, bde/si_1_5.csv y ine_adrh/30824.csv",
        esfuerzo(tipo_2024), atlas("esfuerzo_hipotecario", "municipio", "28079", 2024), 0.005, "tabla larga",
        sprintf(paste("Préstamo del 80 %% de 80 m², 25 años, tipo D_IMVTIPLV medio de 2024 (media exacta %.3f, a dos",

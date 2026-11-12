@@ -1,17 +1,17 @@
 // Portada (index.html; docs/especificacion_portada.md): el tablero completo. Las casillas y los
-// enlaces están en el HTML (se ven sin JavaScript); aquí, el idioma, la lectura literal de las
-// familias (tarea 34), las fichas que tienen datos, las cartas (datos/portada.json, cifras reales
-// del pipeline), «Tu sueldo» (abre el mapa en «¿te llega?» con el sueldo tras «#», como
+// enlaces están en el HTML (se ven sin JavaScript); aquí, el idioma, las fichas que tienen datos,
+// las historias (datos/historias.json), las cartas (datos/portada.json, cifras reales del
+// pipeline), «Tu sueldo» (abre el mapa en «¿te llega?» con el sueldo tras «#», como
 // «Compartir»), el buscador, «Tira el dado» y el pie.
 
 import { cargarIdioma, traducirPagina } from './i18n.js';
 import { leerEstado, fragmentoSueldo } from './estado.js';
 import { cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarValores, periodosDe } from './datos.js';
-import { crearBuscador, formasDeNombre } from './buscador.js';
-import { ordenNatural } from './nombres.js';
+import { crearBuscador, formasDeNombre, etiquetaMunicipio } from './buscador.js';
 import { FICHAS_PERFIL, leerSueldo } from './sueldo.js';
-import { FAMILIAS_ALQUILER, FAMILIAS_PROXIMAMENTE, textoFamilia } from './familias.js';
+import { FAMILIAS_PROXIMAMENTE, textoFamilia } from './familias.js';
 import { fechaLarga, lineaTransparencia } from './transparencia.js';
+import { cargarHistorias, textoEn } from './historias.js';
 
 const $ = (id) => document.getElementById(id);
 const estado = { idioma: leerEstado(globalThis.location?.search ?? '').idioma ?? 'es' };
@@ -22,6 +22,7 @@ let m = null;          // manifiesto (o null si no carga)
 let portada = null;    // datos/portada.json (o null)
 let perfiles = null;
 let version = null;    // descargas/version.json (o null)
+let historias = null;  // datos/historias.json (o null)
 
 // --- Utilidades ----------------------------------------------------------------------------
 
@@ -161,22 +162,36 @@ function pintarCartas() {
   $('portada-cartas-lista').replaceChildren(...reales.slice(0, n), ...pronto.map(cartaProximamente), ...reales.slice(n));
 }
 
-// --- Familias, fichas, dado y pie -----------------------------------------------------------
+// --- Historias ------------------------------------------------------------------------------
 
-// Bajo las familias del centro, su lectura literal con los mismos textos que la leyenda del mapa
-// («Quedarse · quien ya vive de alquiler»). Si falta alguno, la lista no se ve.
-// Las familias aún sin mapa llevan detrás «(próximamente)».
-export const lecturasFamilias = (t) => FAMILIAS_ALQUILER.map((f) => {
-  const texto = textoFamilia(t, f);
-  return texto && FAMILIAS_PROXIMAMENTE.includes(f) ? `${texto} (${t('portada.proximamente')})` : texto;
-});
-
-function pintarLecturas() {
-  const lista = $('portada-lecturas');
-  const textos = lecturasFamilias(t);
-  lista.hidden = textos.some((x) => !x);
-  if (!lista.hidden) lista.replaceChildren(...textos.map((x) => crear('li', null, x)));
+// Entradas del bloque «Historias»: título, entradilla (o '') y enlace al mapa con la historia, en
+// el idioma de la página. Las historias sin título en ese idioma (ni en castellano) no salen. No
+// depende de cuántas haya.
+export function entradasHistorias(datos, idioma) {
+  return (datos?.historias ?? []).map((h) => ({
+    id: h.id,
+    titulo: textoEn(h.titulo, idioma),
+    entradilla: textoEn(h.entradilla, idioma),
+    enlace: conIdioma(`mapa.html?historia=${encodeURIComponent(h.id)}`, idioma),
+  })).filter((h) => h.titulo);
 }
+
+function pintarHistorias() {
+  const seccion = $('portada-historias');
+  const entradas = entradasHistorias(historias, t.idioma);
+  seccion.hidden = !entradas.length;
+  $('portada-historias-lista').replaceChildren(...entradas.map((h) => {
+    const li = crear('li', 'portada-historia');
+    li.dataset.historia = h.id;
+    const a = crear('a', 'portada-historia-enlace', h.titulo);
+    a.href = h.enlace;
+    li.append(a);
+    if (h.entradilla) li.append(crear('p', 'portada-historia-entradilla', h.entradilla));
+    return li;
+  }));
+}
+
+// --- Fichas, dado y pie ---------------------------------------------------------------------
 
 // Las fichas de perfil sin ingreso en perfiles.json quedan desactivadas y rotuladas «próximamente».
 function pintarFichas() {
@@ -260,8 +275,8 @@ function pintar() {
   document.title = t('portada.titulo_pagina');
   document.querySelector('meta[name="description"]')?.setAttribute('content', t('portada.descripcion'));
   for (const b of document.querySelectorAll('[data-idioma]')) b.setAttribute('aria-pressed', String(b.dataset.idioma === t.idioma));
-  pintarLecturas();
   pintarFichas();
+  pintarHistorias();
   pintarCartas();
   pintarNotaDado();
   pintarPie();
@@ -303,14 +318,20 @@ function prepararBuscador(territorios, secciones) {
     entrada: $('buscador-entrada'),
     lista: $('buscador-lista'),
     sinResultados: () => t('interfaz.buscador.sin_resultados'),
-    obtenerFuentes: async () => {
+    obtenerFuentes: async (texto) => {
       fuentes ??= {
         municipios: Object.entries(territorios.municipio ?? {}).map(([codigo, nombre]) => [codigo, nombre, formasDeNombre(nombre)]),
         secciones: await secciones(),
       };
+      // Los códigos postales, solo cuando se escriben cifras (12-nov-2026; js/buscador.js)
+      if (/^\d+$/.test(String(texto ?? '').trim()) && !fuentes.codigosPostales) {
+        const { cargarCodigosPostales } = await import('./datos.js');
+        fuentes.codigosPostales = await cargarCodigosPostales(m).catch(() => null);
+      }
       return fuentes;
     },
-    etiqueta: (o) => (o.tipo === 'municipio' ? `${ordenNatural(o.nombre)} (${o.codigo})` : t('interfaz.ficha.seccion', { codigo: o.codigo })),
+    // Municipio: «28013 · Madrid» si sale de un código postal; si no, con su provincia (etiquetaMunicipio())
+    etiqueta: (o) => (o.tipo === 'municipio' ? etiquetaMunicipio(o, territorios.provincia) : t('interfaz.ficha.seccion', { codigo: o.codigo })),
     alElegir: (o) => {
       const destino = o.tipo === 'municipio' ? `mapa.html?territorio=municipio:${o.codigo}` : `mapa.html?seccion=${o.codigo}`;
       location.href = conIdioma(destino, t.idioma);
@@ -330,15 +351,18 @@ async function iniciar() {
     return;
   }
   $('aviso-ejemplo').hidden = !m.ejemplo;
-  const [territorios, perf, port, ver] = await Promise.all([
+  // Las historias llevan cifras reales: con la muestra de ejemplo, como las cartas, no salen
+  const [territorios, perf, port, ver, hist] = await Promise.all([
     cargarTerritorios(m).catch(() => ({})),
     cargarPerfiles(m).catch(() => null),
     m.ejemplo ? null : pedirJson('datos/portada.json').catch(() => null),
     m.ejemplo ? null : pedirJson('descargas/version.json').catch(() => null),
+    m.ejemplo ? null : cargarHistorias(),
   ]);
   perfiles = perf;
   portada = port;
   version = ver;
+  historias = hist;
   prepararBuscador(territorios, () => cargarSecciones(m));
   $('portada-dado').addEventListener('click', tirarDado);
   for (const el of document.querySelectorAll('[data-js]')) el.hidden = false;

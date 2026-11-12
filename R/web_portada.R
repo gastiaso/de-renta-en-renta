@@ -25,8 +25,13 @@
 # Los textos llevan escapes \u: los caracteres no ASCII en el cuerpo de las funciones rompen targets.
 
 RUTA_CASILLAS_PORTADA <- file.path("inventario", "casillas_portada.csv")
-FAMILIAS_PORTADA <- c("ingresos", "alquiler", "compra", "barrio")
+FAMILIAS_PORTADA <- c("ingresos", "alquiler", "compra", "barrio")   # las de la leyenda, con su banda
+# Las cuatro esquinas son casillas especiales, fuera de las familias (decision del autor, 12-nov-2026):
+# sin banda ni leyenda; la de inicio (Cobra la nomina, el salario de The Landlord's Game), en rojo, y
+# las otras tres, en beige.
+FAMILIA_ESPECIAL <- "especial"
 ESQUINAS_PORTADA <- c(1L, 7L, 13L, 19L)   # tablero de 7 x 7: cuatro esquinas y cinco casillas por lado
+ESQUINA_INICIO <- 1L
 MARCAS_CASILLAS <- c(inicio = "<!-- casillas:inicio (escribir_casillas_portada(), desde inventario/casillas_portada.csv; no editar a mano) -->",
                      fin = "<!-- casillas:fin -->")
 FICHERO_PORTADA_WEB <- "portada.json"   # bajo <dir_web>/datos/
@@ -78,7 +83,8 @@ escapar_html <- function(x) {
 }
 
 # Lineas de la lista ordenada de las casillas (dentro de web/index.html). Cada casilla lleva su
-# familia (la banda de color, web/estilo/portada.css), sus textos en los dos idiomas (i18n.js los
+# familia (la banda de color, web/estilo/portada.css; las esquinas, casilla-especial, sin banda, y la
+# de inicio, ademas, casilla-inicio), sus textos en los dos idiomas (i18n.js los
 # cambia con data-texto-es y data-texto-en) y, si esta activa, el enlace a su destino en cada
 # idioma (data-href-es y data-href-en); si no, el aviso «proximamente», sin enlace.
 html_casillas_portada <- function(casillas, sangria = "          ") {
@@ -86,7 +92,7 @@ html_casillas_portada <- function(casillas, sangria = "          ") {
   li <- vapply(seq_len(nrow(casillas)), function(k) {
     cs <- casillas[k, ]
     clases <- c("casilla", paste0("casilla-", cs$familia), if (cs$orden %in% ESQUINAS_PORTADA) "casilla-esquina",
-                if (!cs$activa) "casilla-inactiva")
+                if (cs$orden == ESQUINA_INICIO) "casilla-inicio", if (!cs$activa) "casilla-inactiva")
     texto <- sprintf("<span class=\"casilla-texto\" data-texto-es=\"%s\" data-texto-en=\"%s\">%s</span>",
                      escapar_html(cs$texto_es), escapar_html(cs$texto_en), escapar_html(cs$texto_es))
     cuerpo <- if (cs$activa) {
@@ -207,17 +213,19 @@ comprobar_casillas_portada <- function(casillas, mapas = NULL, anclas = NULL, cl
   tibble::tibble(
     id = "portada_casillas",
     detalle = c("casillas (24: 4 esquinas y 5 por lado)", "orden de 1 a 24 sin huecos", "ids repetidos",
-                "familias fuera de las cuatro", "textos vac\u00edos", "activas sin destino", "inactivas con destino",
+                "familias fuera de las cuatro y la especial", "esquinas sin la familia especial o especiales fuera de las esquinas",
+                "textos vac\u00edos", "activas sin destino", "inactivas con destino",
                 "destinos fuera de las p\u00e1ginas del sitio", "mapas que no est\u00e1n en el manifiesto",
                 "claves del mapa que no son de estado.js", "anclas que no est\u00e1n en su p\u00e1gina",
                 "anclas de M\u00e9todo o Datos sin destino en ingl\u00e9s"),
     calculado = c(nrow(casillas), sum(sort(casillas$orden) != seq_len(nrow(casillas))), sum(duplicated(casillas$id)),
-                  sum(!casillas$familia %in% FAMILIAS_PORTADA),
+                  sum(!casillas$familia %in% c(FAMILIAS_PORTADA, FAMILIA_ESPECIAL)),
+                  sum((casillas$familia == FAMILIA_ESPECIAL) != (casillas$orden %in% ESQUINAS_PORTADA)),
                   sum(!nzchar(trimws(casillas$texto_es)) | !nzchar(trimws(casillas$texto_en)) | !nzchar(casillas$id)),
                   sum(activa & !con_destino), sum(!activa & (con_destino | nzchar(casillas$destino_en))),
                   sum(!vapply(partes, function(p) p$pagina %in% paginas_conocidas, TRUE)), mapa_mal, clave_mal,
                   ancla_mal, ancla_sin_ingles),
-    referencia = c(24, rep(0, 11))
+    referencia = c(24, rep(0, 12))
   )
 }
 

@@ -10,7 +10,7 @@ import { cargarIdioma, traducirPagina } from './i18n.js';
 import {
   cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarCajas, cargarSalarios,
   cargarIndice, cargarValores, cargarSeries, valorDe, periodoPara, periodosDe, fueraDeSerie,
-  serieDeTipologia, tipologiaDe, tieneTipologia, cargarDetalle,
+  serieDeTipologia, tipologiaDe, tieneTipologia, cargarDetalle, cargarCodigosPostales,
 } from './datos.js';
 import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
 import { pintarLeyenda, plegarLeyenda } from './leyenda.js';
@@ -34,7 +34,7 @@ import { crearCompartir } from './compartir.js';
 import {
   codigoComparado, nombreTerritorio, filasComparador, pintarComparador, nivelesSuperiores, territorioEnNivel,
 } from './comparador.js';
-import { crearBuscador, formasDeNombre } from './buscador.js';
+import { crearBuscador, formasDeNombre, hayCifras, etiquetaMunicipio } from './buscador.js';
 import { ordenNatural } from './nombres.js';
 import { crearBarraVista } from './barra_vista.js';
 import { tablaCsv, textoCsv, nombreFichero, descargar, nivelParaExportar, decimalesDeEscala, descargaPermitida } from './exportar.js';
@@ -1194,8 +1194,9 @@ function elegirTerritorio(nivel, codigo, { pintar = true } = {}) {
 // --- Recorridos guiados (tarea 49; historias.js y panel_historia.js) -------------------------
 
 // Pone en el estado el paso `n` de la historia activa: sus claves (mapa, año, vista, territorio,
-// escala), sin las que no trae, y sin sección, comparación, ficha de perfil ni tipología, de modo
-// que el mapa queda en el modo «necesario» aunque haya un sueldo escrito.
+// escala y, si la trae, la ficha de perfil con que se pinta «¿te llega?»), sin las que no trae, y
+// sin sección, comparación ni tipología. Sin ficha en el paso, el mapa queda en el modo «necesario»
+// aunque haya un sueldo escrito; «Tu ficha» (el sueldo de quien visita) nunca la pone un paso.
 function ponerPaso(n) {
   const r = pasoDe(historiaActiva, n);
   Object.assign(estado, cambiosDePaso(r.paso), { historia: historiaActiva.id, paso: r.n });
@@ -1305,14 +1306,18 @@ function prepararBuscador() {
     entrada: document.getElementById('buscador-entrada'),
     lista: document.getElementById('buscador-lista'),
     sinResultados: () => t('interfaz.buscador.sin_resultados'),
-    obtenerFuentes: async () => {
+    obtenerFuentes: async (texto) => {
       fuentes ??= {
         municipios: Object.entries(territorios.municipio ?? {}).map(([codigo, nombre]) => [codigo, nombre, formasDeNombre(nombre)]),
         secciones,
       };
+      // Los códigos postales, solo cuando se escriben cifras (12-nov-2026)
+      if (hayCifras(texto) && !fuentes.codigosPostales) {
+        fuentes.codigosPostales = await cargarCodigosPostales(m).catch(() => null);
+      }
       return fuentes;
     },
-    etiqueta: (o) => (o.tipo === 'municipio' ? `${ordenNatural(o.nombre)} (${o.codigo})` : t('interfaz.ficha.seccion', { codigo: o.codigo })),
+    etiqueta: (o) => (o.tipo === 'municipio' ? etiquetaMunicipio(o, territorios.provincia) : t('interfaz.ficha.seccion', { codigo: o.codigo })),
     alElegir: async (o) => {
       const cajas = await cargarCajas(m).catch(() => ({}));
       const caja = cajas.municipio?.[o.codigo.slice(0, 5)];

@@ -32,7 +32,7 @@ Tolerancia: la mitad de la última cifra publicada (0,05 en los porcentajes a un
 | 12 · Valor tasado, España, 2024 (€/m²) | MIVAU | `mivau_valor_tasado/35101000.xls` y `35103000.xls` | 1.913,857 | 1.913,857 | 0 |
 | 12 · Valor tasado, Madrid (municipio), 2024 (€/m²) | MIVAU | `mivau_valor_tasado/35103500.xls` | 4.225,130 | 4.225,130 | 0 |
 | 16 · Años de salario para comprar 80 m², Madrid (municipio), 2024 | MIVAU y AEAT | `35103500.xls` y `aeat_mercado/2024/` | 10,592 | 10,592 | 0 |
-| 17 · Esfuerzo hipotecario teórico, Madrid (municipio), 2024 (%) | MIVAU, Banco de España e INE (ADRH) | `35103500.xls`, `bde/si_1_5.csv` y `ine_adrh/30824.csv` | 30,430 | 30,430 ¹ | 0 |
+| 17 · Cuota hipotecaria sobre la renta del hogar, Madrid (municipio), 2024 (%) | MIVAU, Banco de España e INE (ADRH) | `35103500.xls`, `bde/si_1_5.csv` y `ine_adrh/30824.csv` | 30,430 | 30,430 ¹ | 0 |
 | 20 · Municipios con zona tensionada declarada, 31-12-2025 | MIVAU, resoluciones en el BOE | `zonas_tensionadas/BOE-A-*.xml` | 304 | 304 | 0 |
 | 20 · Barcelona, categoría a 31-12-2025 | MIVAU, resolución en el BOE | `zonas_tensionadas/BOE-A-2024-5214.xml` | 2 | 2 | 0 |
 | Histórico · Sueldo bruto medio por asalariado, España, 2024 (€ al año) | INE, Contabilidad Nacional | `ine_cne/71129.csv` y `71133.csv` | 31.199,74 | 31.199,74 | 0 |

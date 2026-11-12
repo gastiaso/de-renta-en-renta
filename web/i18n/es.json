@@ -4,8 +4,7 @@
     "subtitulo": "Vivienda y sueldos, sección a sección",
     "dicho": "De renta en renta, y pago porque me toca",
     "gancho": "¿A quién le queda sueldo después de pagar la vivienda?",
-    "lema": "Dónde, desde cuándo y para quién ha cambiado la relación entre lo que cuesta la vivienda y lo que se cobra",
-    "familias": "Para quien ya está en el tablero y para quien entra nuevo en la partida"
+    "lema": "Dónde, desde cuándo y para quién ha cambiado la relación entre lo que cuesta la vivienda y lo que se cobra"
   },
   "nav": {
     "mapa": "Mapa",
@@ -46,12 +45,15 @@
       "alejar": "Alejar",
       "sin_dato_escala": "Este mapa no tiene datos a esta escala: acerca el mapa.",
       "cargando": "Cargando el mapa…",
-      "lienzo": "Mapa. Las flechas lo mueven; más y menos, lo acercan y lo alejan; Intro elige el territorio del centro."
+      "lienzo": "Mapa. Las flechas lo mueven; más y menos, lo acercan y lo alejan; Intro elige el territorio del centro.",
+      "gesto_windows": "Ctrl + rueda para ampliar el mapa",
+      "gesto_mac": "⌘ + rueda para ampliar el mapa",
+      "gesto_movil": "Dos dedos para mover el mapa"
     },
     "buscador": {
-      "etiqueta": "Buscar municipio o sección",
-      "marcador": "Buscar municipio o sección",
-      "sin_resultados": "Sin resultados. Se busca por municipio (nombre o código) o por código de sección censal; no por calle, barrio ni código postal."
+      "etiqueta": "Buscar municipio o código postal",
+      "marcador": "Buscar municipio o código postal",
+      "sin_resultados": "Sin resultados. Se busca por nombre de municipio, por código postal o por código de sección censal (diez cifras); no por calle ni barrio."
     },
     "vista": {
       "region": "Qué muestra el mapa",
@@ -361,6 +363,7 @@
       "transistor": "Media de una persona: pensión media de jubilación neta en su provincia (no se publica la mediana por provincia).",
       "peon": "Cifra propia: el sueldo neto escrito, con 12 o 14 pagas y un segundo sueldo."
     },
+    "historias_titulo": "Historias",
     "cartas_titulo": "Cartas del atlas",
     "cartas": {
       "fuente": "Fuente: {fuentes} · {anio}",
@@ -655,7 +658,7 @@
       "hist-esfuerzo": {
         "corto": "Esfuerzo",
         "titulo": "Esfuerzo teórico del primer año",
-        "subtitulo": "Cuotas del primer año de un préstamo por el 80 % del valor de la vivienda tipo, en porcentaje de la renta disponible del hogar mediano, sin deducciones fiscales. Trimestral.",
+        "subtitulo": "Cuotas del primer año de un préstamo por el 80 % del valor de la vivienda tipo, en porcentaje de la renta disponible del hogar mediano, sin deducciones fiscales. Trimestral. No es la «Cuota hipotecaria sobre la renta del hogar» del mapa (indicador 17): misma cuenta, pero con un piso de 80 m² y la renta neta media de todos los hogares, más alta que la del hogar mediano, y por eso da en torno a la mitad (España, 2024: 18,1 % en el mapa; 34,6 % de media aquí).",
         "fuente": "Fuente: elaboración propia con datos extraídos del sitio web del Banco de España (www.bde.es): Síntesis de indicadores, tabla 1.5, serie D_TKB57210_IPV. Datos descargados el {version}."
       },
       "hist-tipos": {
@@ -863,14 +866,14 @@
       "unidad": "años",
       "definicion": "Años de salario bruto de referencia que costaría comprar una vivienda tipo.",
       "calculo": "Valor tasado por m² × superficie tipo (80 m² por defecto) / salario medio anual bruto por asalariado (AEAT), del mismo año; en un municipio, el salario de su provincia.",
-      "lectura": "Usa el valor de tasación, no el precio escriturado, y no tiene en cuenta la financiación ni la entrada; ver el esfuerzo hipotecario (17). Sin dato en País Vasco y Navarra, sin salario de la AEAT."
+      "lectura": "Usa el valor de tasación, no el precio escriturado, y no tiene en cuenta la financiación ni la entrada; ver la cuota hipotecaria sobre la renta del hogar (17). Sin dato en País Vasco y Navarra, sin salario de la AEAT."
     },
     "esfuerzo_hipotecario": {
-      "nombre": "Esfuerzo hipotecario teórico",
-      "unidad": "% del ingreso",
-      "definicion": "Parte del ingreso que se iría en la cuota del primer año de una hipoteca sobre una vivienda tipo.",
+      "nombre": "Cuota hipotecaria sobre la renta del hogar",
+      "unidad": "% de la renta del hogar",
+      "definicion": "Parte de la renta neta media de los hogares del territorio que se iría en la cuota del primer año de una hipoteca sobre un piso de 80 m².",
       "calculo": "Cuota anual del primer año de un préstamo francés sobre el 80 % del valor tasado de 80 m², a 25 años y al tipo de los préstamos nuevos para adquisición de vivienda del Banco de España (media de los doce meses del año), dividida entre la renta neta media por hogar del ADRH (INE) del mismo año y territorio, × 100. La renta es la publicada en cada nivel; donde el INE no la publica, sin dato en la provincia y la comunidad (Navarra hasta 2020, Álava y el País Vasco hasta 2019, Gipuzkoa en 2015) y, en España hasta 2020, la media de los municipios ponderada por hogares, estimada.",
-      "lectura": "Es un esfuerzo teórico: supone que se tiene el 20 % restante y los gastos de compra."
+      "lectura": "Es una cuenta teórica: supone que se tiene el 20 % restante y los gastos de compra. No es el «esfuerzo teórico del primer año» del Banco de España de la Máquina del tiempo: la cuenta es la misma, pero el Banco de España usa la vivienda tipo que define y la renta del hogar mediano, y aquí van un piso de 80 m² y la renta neta media de todos los hogares del territorio, que es más alta. Por eso esta cifra da en torno a la mitad (España, 2024: 18,1 % aquí y 34,6 % de media en el Banco de España)."
     },
     "hogares_alquiler": {
       "nombre": "Hogares en alquiler",

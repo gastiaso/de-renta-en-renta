@@ -5,7 +5,8 @@
 //   - la línea de la familia bajo el título de la leyenda («Quedarse · quien ya vive de alquiler»):
 //     la del mapa del manifiesto, «quedarse» en «¿te llega?» y nada sin familia;
 //   - la ficha y la evolución de «¿te llega?» con los euros al lado del porcentaje;
-//   - la portada: gancho, pregunta y familias en el centro, con su lectura literal, y el dicho al pie.
+//   - la portada: gancho y pregunta en el centro, sin la línea de las familias ni sus lecturas
+//     (decisión del autor, 12-nov-2026), y el dicho al pie.
 // La leyenda y la ficha se pintan con un DOM mínimo de pega (solo lo que usan).
 // Se ejecutan desde la raíz del proyecto, sin paquetes:
 //   node --test pruebas/web/familias.test.mjs
@@ -246,20 +247,19 @@ test('evolución de «¿te llega?»: una columna con los euros; sin ellos, como 
 
 // --- Portada --------------------------------------------------------------------------------------
 
-test('portada: gancho, pregunta y familias en el centro, con su lectura literal; el dicho, al pie', () => {
+test('portada: gancho y pregunta en el centro, sin la línea de las familias ni sus lecturas; el dicho, al pie', () => {
   const html = leerTexto('web', 'index.html');
   const centro = html.split('<section class="portada-centro"')[1].split('</section>')[0];
-  const orden = ['sitio.titulo', 'sitio.subtitulo', 'sitio.gancho', 'sitio.lema', 'sitio.familias'].map((c) => centro.indexOf(`data-i18n="${c}"`));
+  const orden = ['sitio.titulo', 'sitio.subtitulo', 'sitio.gancho', 'sitio.lema'].map((c) => centro.indexOf(`data-i18n="${c}"`));
   assert.ok(orden.every((i) => i > 0), 'faltan textos en el centro');
   assert.deepEqual([...orden].sort((a, b) => a - b), orden, 'orden del centro');
-  assert.ok(centro.indexOf('id="portada-lecturas"') > orden.at(-1), 'la lectura literal, bajo las familias');
+  // Decisión del autor (12-nov-2026): ningún lector entendió las familias en el centro
+  assert.ok(!centro.includes('sitio.familias') && !centro.includes('portada-lecturas'), 'sin las familias en el centro');
+  assert.equal(t.es.existe('sitio.familias'), false);
+  assert.equal('lecturasFamilias' in portada, false);
   assert.ok(!centro.includes('sitio.dicho'), 'el dicho ya no va en el centro');
   const pie = html.split('<footer class="portada-pie">')[1].split('</footer>')[0];
   assert.match(pie, /<p class="portada-dicho" data-i18n="sitio\.dicho">/);
-  // Sin JavaScript, la lectura literal en castellano; con él, la de la leyenda en cada idioma
-  // «Entrar», próximamente mientras no tenga mapa (FAMILIAS_PROXIMAMENTE; plan §11, pregunta 52)
-  assert.match(centro, /<li>Quedarse · quien ya vive de alquiler<\/li>\s*<li>Entrar · quien busca piso hoy \(próximamente\)<\/li>/);
-  assert.deepEqual(portada.lecturasFamilias(t.en), ['Staying · those already renting', 'Moving in · those looking for a home today (coming soon)']);
 });
 
 // --- La oferta de Idealista, «próximamente» ---------------------------------------------------------

@@ -385,6 +385,13 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 **58. Reproducir en limpio.** Ejecutar el pipeline en otra máquina, desde `renv::restore()`, con la lista de descargas manuales. Anotar lo que falle.
 - **Aplazada (11-nov-2026), decisión del autor.** Desde cero son unos 9 GB de descargas (Catastro, 4 GB; ADRH, 2,9 GB) y varias horas de cálculo. Quedan por decidir dos cosas: dónde se hace (una copia limpia en el mismo equipo, otro equipo con una guía, o las dos) y si los ficheros que vinieron de fuera del repositorio (ECV de 2025, seccionado de 2025 y Registradores) se descargan de la fuente o se copian como descarga manual.
 
+**62. Carga inicial del mapa.** Abrir `mapa.html` cuesta unas 68 peticiones y 1,2 MB comprimidos (medido el 12-nov-2026).
+- 29 módulos sin `modulepreload`, que el navegador descubre uno detrás de otro; MapLibre pesa 293 KB y su *worker*, 147 KB.
+- Se cargan los cuatro niveles (comunidad, provincia, municipio y sección) aunque no se vean secciones: unos 370 KB.
+- El primer clic en una sección pide 20 ficheros nacionales de contratos y margen (0,77 MB), que la ficha lee de los ficheros de cada periodo, más el fichero de fichas de su municipio (el de Madrid, 2,6 MB; 0,6 comprimido).
+- Propuesta: el nivel `sc` (su índice y sus valores) solo con zoom ≥ 7, cuando el mapa base ya trae secciones; los contratos y el margen dentro de `fichas/<municipio>.json`, para no bajar los nacionales; partir las fichas de los municipios grandes (por distrito o por serie); `modulepreload` de los módulos en `mapa.html`.
+- **Hecho cuando:** abrir `mapa.html` sin vista en la dirección no pide el índice `sc` ni ningún fichero de valores de sección; el primer clic en una sección de Madrid baja menos de 0,3 MB comprimidos y ningún fichero nacional; el total de la carga inicial (peticiones y bytes comprimidos, medido igual) baja y queda anotado aquí, con las pruebas de la web y `comprobar_web_navegador()` en verde.
+
 ## Bloque G · Verificación y v1.0
 
 **59. Rederivar a mano** diez cifras de F4–F6 y cinco de «Entrar», desde los ficheros de la fuente. · **HECHA (11-nov-2026).**
@@ -399,7 +406,7 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 
 ## Orden
 
-33 → 34 → 35 y 36 (en paralelo) → 37 → 38 y 39 → 40 a 45 → 46 → 50 a 53 → 47 a 49 → 54 a 58 → 59 a 61.
+33 → 34 → 35 y 36 (en paralelo) → 37 → 38 y 39 → 40 a 45 → 46 → 50 a 53 → 47 a 49 → 54 a 58 → 59 a 61. La 62 (carga inicial del mapa), después de la v1.0, sin fecha.
 
 Los bloques B y C van antes que la web porque cambian las cifras que la web enseña.
 

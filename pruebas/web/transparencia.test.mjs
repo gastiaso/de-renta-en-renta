@@ -9,7 +9,8 @@
 //   - la fe de erratas (inventario/erratas.csv; web/herramientas/pagina_metodo_corto.mjs): CSV
 //     válido, tabla de la más reciente a la más antigua y, sin filas, una línea que lo dice;
 //   - la portada (tarea 52): las cartas de «entrar» salen «próximamente», sin cifras ni enlace,
-//     mientras la familia esté en FAMILIAS_PROXIMAMENTE; «Zona tensionada» y «Tasación», activas.
+//     mientras la familia esté en FAMILIAS_PROXIMAMENTE; «Zona tensionada», «Ley de Vivienda» y «Tope de
+//     alquileres», activas (12-nov-2026: «Tasación» sale del tablero).
 // Se ejecutan desde la raíz del proyecto, sin paquetes:
 //   node --test pruebas/web/transparencia.test.mjs
 
@@ -209,16 +210,21 @@ test('portada: las cartas de «entrar» salen «próximamente», sin cifras ni e
   assert.deepEqual(portada.cartasProximamente(sinTextos), []);
 });
 
-test('portada: «Zona tensionada» y «Tasación», activas y con su mapa', () => {
+test('portada: «Zona tensionada», «Ley de Vivienda» y «Tope de alquileres», activas y con su mapa', () => {
   const csv = leerTexto('inventario', 'casillas_portada.csv').trim().split('\n').slice(1).map((l) => l.split(','));
   const fila = (id) => csv.find((f) => f[1] === id);
   assert.equal(fila('zona_tensionada').at(-1), 'TRUE');
   assert.match(fila('zona_tensionada')[5], /^mapa\.html\?mapa=zona_tensionada&vista=/);
-  assert.equal(fila('tasacion').at(-1), 'TRUE');
-  assert.equal(fila('tasacion')[5], 'mapa.html?mapa=valor_tasado_m2');
+  // 12-nov-2026: la Ley de Vivienda lleva, de momento, al mismo mapa; «Tasación» sale del tablero
+  assert.equal(fila('ley_vivienda').at(-1), 'TRUE');
+  assert.equal(fila('ley_vivienda')[5], fila('zona_tensionada')[5]);
+  assert.equal(fila('tope_alquileres')[5], 'mapa.html?mapa=var_alquiler');
+  assert.equal(fila('tasacion'), undefined);
   const ruta = join(raiz, 'web', 'datos', 'manifiesto.json');
   if (existsSync(ruta)) {
     const m = JSON.parse(readFileSync(ruta, 'utf8'));
-    if (!m.ejemplo) for (const id of ['zona_tensionada', 'valor_tasado_m2']) assert.ok(m.mapas[id], id);
+    if (!m.ejemplo) for (const id of ['zona_tensionada', 'var_alquiler']) assert.ok(m.mapas[id], id);
+    // Sin el mapa de la variación del alquiler, el tope sale inactivo
+    assert.equal(fila('tope_alquileres').at(-1), m.ejemplo || m.mapas.var_alquiler ? 'TRUE' : 'FALSE');
   }
 });

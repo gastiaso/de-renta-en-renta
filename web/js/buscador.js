@@ -1,9 +1,58 @@
-// Buscador de municipio (por nombre o código) o de sección (por código). Lista desplegable con
-// teclado: flechas para moverse, Intro para elegir, Escape para cerrar.
+// Buscador de municipio (por nombre o por código postal) o de sección (por su código de diez
+// cifras). Lista desplegable con teclado: flechas para moverse, Intro para elegir, Escape para cerrar.
+//
+// Decisión del autor (12-nov-2026): nadie busca por código INE. Un texto de cifras es un código
+// postal (cinco cifras: sus municipios; menos de cinco: los códigos postales que empiezan así) y,
+// desde seis cifras, el principio de un código de sección (lo usan los enlaces y la ficha). Ya no se
+// busca un municipio por su código INE. La tabla código postal → municipios (ordenados por su peso
+// en tramos de vía del callejero de 2021) es datos/cp.json (`codigos_postales` del manifiesto), que
+// la página pide solo cuando se escriben cifras (`hayCifras`).
 
 import { ordenNatural } from './nombres.js';
 
 const normalizar = (s) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+
+// ¿Pide el texto la tabla de códigos postales? (solo cifras)
+export const hayCifras = (texto) => /^\d+$/.test(normalizar(String(texto ?? '')));
+const CIFRAS_CP = 5;
+
+// Etiqueta de un municipio en la lista: «28013 · Madrid» si sale de un código postal; si no, su
+// nombre en orden natural con la provincia entre paréntesis, que distingue los homónimos («Mieres
+// (Asturias)», «Mieres (Girona)»). Sin el código INE: nadie busca por él y, con cinco cifras, se
+// confunde con un código postal. `provincias`: nombres por código de provincia (territorios.json);
+// si la provincia se llama igual que el municipio, o no se conoce, solo el nombre.
+export function etiquetaMunicipio(o, provincias = null) {
+  const nombre = ordenNatural(o.nombre);
+  if (o.cp) return `${o.cp} · ${nombre}`;
+  const provincia = provincias?.[String(o.codigo).slice(0, 2)];
+  const natural = provincia ? ordenNatural(provincia) : null;
+  return natural && natural !== nombre ? `${nombre} (${natural})` : nombre;
+}
+
+// Nombres de los municipios por código, una vez por lista de municipios.
+const nombresPorLista = new WeakMap();
+function nombreDe(municipios, codigo) {
+  if (!nombresPorLista.has(municipios)) nombresPorLista.set(municipios, new Map(municipios.map(([c, n]) => [c, n])));
+  return nombresPorLista.get(municipios).get(codigo);
+}
+
+// Opciones de un código postal (o del principio de uno): una por municipio de cada código postal
+// que empieza por las cifras, en orden de código postal y, dentro de él, de peso. Un municipio que
+// no está en la lista de nombres se salta.
+function buscarCodigoPostal(q, { municipios, codigosPostales }, limite) {
+  const resultado = [];
+  if (!codigosPostales || q.length > CIFRAS_CP) return resultado;
+  const claves = q.length === CIFRAS_CP ? (q in codigosPostales ? [q] : [])
+    : Object.keys(codigosPostales).filter((cp) => cp.startsWith(q)).sort();
+  for (const cp of claves) {
+    for (const codigo of codigosPostales[cp] ?? []) {
+      const nombre = nombreDe(municipios, codigo);
+      if (nombre !== undefined) resultado.push({ tipo: 'municipio', codigo, nombre, cp });
+      if (resultado.length >= limite) return resultado;
+    }
+  }
+  return resultado;
+}
 
 // Los nombres del INE llevan el artículo detrás («Palmas de Gran Canaria, Las»): se busca
 // también en orden natural («Las Palmas de Gran Canaria»).
@@ -13,15 +62,20 @@ export function formasDeNombre(nombre) {
 }
 
 // Opciones para un texto: municipios cuyo nombre contiene el texto (primero los que empiezan
-// por él) o cuyo código empieza por él; secciones cuyo código empieza por él (desde 5 cifras).
-export function buscar(texto, { municipios, secciones, limite = 8 }) {
+// por él); con cifras, los municipios de los códigos postales que empiezan por ellas (hasta cinco
+// cifras; `codigosPostales`: { cp: [municipio, …] }, o nada) y, desde seis, las secciones cuyo
+// código empieza por ellas.
+export function buscar(texto, { municipios, secciones, codigosPostales = null, limite = 8 }) {
   const q = normalizar(texto);
   if (q.length < 2) return [];
-  const resultado = [];
   if (/^\d+$/.test(q)) {
-    for (const [codigo, nombre] of municipios) if (codigo.startsWith(q)) resultado.push({ tipo: 'municipio', codigo, nombre });
-    if (q.length >= 5) for (const codigo of secciones) if (codigo.startsWith(q)) resultado.push({ tipo: 'seccion', codigo });
-    return resultado.slice(0, limite);
+    if (q.length <= CIFRAS_CP) return buscarCodigoPostal(q, { municipios, codigosPostales }, limite);
+    const resultado = [];
+    for (const codigo of secciones ?? []) {
+      if (codigo.startsWith(q)) resultado.push({ tipo: 'seccion', codigo });
+      if (resultado.length >= limite) break;
+    }
+    return resultado;
   }
   const empiezan = [];
   const contienen = [];
@@ -33,7 +87,9 @@ export function buscar(texto, { municipios, secciones, limite = 8 }) {
 }
 
 // `sinResultados`: función que da el texto de «sin resultados» en el idioma activo (dice por qué se
-// puede buscar: municipio o código de sección, no calle ni barrio); sin ella, no hay aviso.
+// puede buscar: municipio o código postal, no calle ni barrio); sin ella, no hay aviso.
+// `obtenerFuentes(texto)`: las fuentes de buscar() para ese texto (con cifras, también los códigos
+// postales; hayCifras()).
 export function crearBuscador({ entrada, lista, obtenerFuentes, etiqueta, alElegir, sinResultados = null }) {
   let opciones = [];
   let activa = -1;
@@ -72,8 +128,10 @@ export function crearBuscador({ entrada, lista, obtenerFuentes, etiqueta, alEleg
   };
 
   entrada.addEventListener('input', async () => {
-    const fuentes = await obtenerFuentes();
-    opciones = buscar(entrada.value, fuentes);
+    const texto = entrada.value;
+    const fuentes = await obtenerFuentes(texto);
+    if (texto !== entrada.value) return;   // ya se ha escrito otra cosa: manda la búsqueda nueva
+    opciones = buscar(texto, fuentes);
     lista.replaceChildren(...opciones.map((opcion, i) => {
       const li = document.createElement('li');
       li.id = `buscador-opcion-${i}`;

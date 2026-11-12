@@ -117,6 +117,84 @@ test_that("prefijo de territorio, panel constante, IPC y cifras derivadas", {
   expect_true(is.na(sin_ipc$calculado))
 })
 
+test_that("salario minimo: secciones por encima de un umbral (también de una provincia), ingreso de la ficha, carta de la portada y derivada por un número", {
+  sc <- c(sprintf("0200301%03d", 1:4), sprintf("2807901%03d", 1:4))
+  peso <- function(anio, v) tibble::tibble(geo_id = sc, nivel = "sc", anio = anio, indicador = "peso_alquiler_ingreso",
+                                           corte = "ficha", grupo = "tartera", valor = v)
+  alquiler <- function(anio, v) tibble::tibble(geo_id = sc, nivel = "sc", anio = anio, indicador = "alquiler_mes",
+                                               corte = "tipologia", grupo = "VC", valor = v)
+  sueldo <- function(anio) tibble::tibble(geo_id = sc, nivel = "sc", anio = anio, indicador = "sueldo_necesario",
+                                          corte = "total", grupo = "total", valor = 2000)
+  l <- dplyr::bind_rows(peso(2015L, c(20, 30, 31, 40, 50, 60, 70, 80)), peso(2024L, c(10, 12, 14, 16, 31, 40, 50, 60)),
+                        alquiler(2015L, c(200, 210, 220, 230, 400, 500, 600, 700)),
+                        alquiler(2024L, c(300, 400, 500, 600, 700, 800, 900, 1000)), sueldo(2015L), sueldo(2024L)) |>
+    dplyr::mutate(estado = "dato", fuente = "x")
+  perfiles <- tibble::tibble(ficha = "tartera", geo_id = "00", nivel = "nacional", anio = c(2015L, 2024L),
+                             ingreso = c(700, 1000), estado = "dato", superficie_m2 = 50)
+  s <- function(consulta, geo_id, anio, parametro = "30", id = consulta, ...) {
+    cifra(consulta, indicador = "peso_alquiler_ingreso", geo_id = geo_id, anio = anio, grupo = "ficha:tartera",
+          parametro = parametro, id = id, ...)
+  }
+  cf <- dplyr::bind_rows(
+    s("secciones_cuota_mayor", "02", "2015", id = "mayor_02"),                # 31 y 40 de 20, 30, 31, 40: el 30 no cuenta
+    s("secciones_cuota_desde", "02", "2015", id = "desde_02"),                # con el 30
+    s("secciones_cuota_mayor", "28079", "2024", id = "mayor_mad"),
+    cifra("perfil_ingreso", indicador = "tartera", nivel = "nacional", geo_id = "00", anio = "2024", grupo = "", id = "neto", decimales = 1L),
+    cifra("perfil_ingreso", indicador = "tartera", nivel = "nacional", geo_id = "00", anio = "2030", grupo = "", id = "neto_sin"),
+    s("portada_smi", "00", "2015", parametro = "pct_30", id = "carta_2015"),
+    s("portada_smi", "00", "2024", parametro = "pct_30", id = "carta_2024"),
+    s("portada_smi", "00", "2024", parametro = "pct_30_real", id = "carta_real"),
+    s("portada_smi", "00", "2020", parametro = "pct_30", id = "carta_sin_anio"),
+    cifra("derivada_por", indicador = "", nivel = "", geo_id = "", anio = "", grupo = "", parametro = "neto;2.4", id = "por"),
+    cifra("derivada_por", indicador = "", nivel = "", geo_id = "", anio = "", grupo = "", parametro = "neto;x", id = "por_mal"))
+  v <- stats::setNames(historias_calcular(cf, l, historico_historias(), NULL, perfiles = perfiles)$calculado, cf$id)
+  expect_equal(v[["mayor_02"]], 50)
+  expect_equal(v[["desde_02"]], 75)
+  expect_equal(v[["mayor_mad"]], 100)
+  expect_equal(v[["neto"]], 1000)
+  expect_true(is.na(v[["neto_sin"]]))
+  # La carta de la portada, para cada año: la misma definición (más del 30 %), calculada por cifras_portada()
+  expect_equal(v[["carta_2015"]], 75)
+  expect_equal(v[["carta_2024"]], 50)
+  expect_equal(v[["carta_2024"]], suppressWarnings(cifras_portada(l, perfiles = perfiles))$smi$pct_30)   # sin sobrecarga: avisa
+  expect_equal(v[["carta_real"]], 100 * mean(c(300, 400, 500, 600, 700, 800, 900, 1000) / 1000 > 0.3))
+  expect_true(is.na(v[["carta_sin_anio"]]))   # 2020 no tiene dato: la carta sería la de 2015, y no vale
+  expect_equal(v[["por"]], 2400)
+  expect_true(is.na(v[["por_mal"]]))
+  # Sin perfiles, sin esas cifras (y la compuerta las para)
+  sin <- historias_calcular(cf[cf$id %in% c("neto", "carta_2024"), ], l, historico_historias(), NULL)
+  expect_true(all(is.na(sin$calculado)))
+})
+
+test_that("un paso puede fijar una ficha de perfil, nunca el peón; se exporta en su estado y el enlace a otra historia vale", {
+  historias <- tibble::tibble(
+    historia = "h", paso = 1:3, historia_titulo_es = c("T", "", ""), historia_titulo_en = c("T", "", ""),
+    entradilla_es = c("E", "", ""), entradilla_en = c("E", "", ""), titulo_es = "t", titulo_en = "t",
+    texto_es = "x", texto_en = "x", fuente_es = "f", fuente_en = "f",
+    mapa = "m1", anio = "2024", vista = "5/40/-3", territorio = "", escala = "",
+    enlace = c("mapa.html?historia=centro", "", ""), enlace_es = c("ver", "", ""), enlace_en = c("see", "", ""),
+    nota_es = "", nota_en = "", ficha = c("tartera", "", "peon"))
+  cf <- tibble::tibble(id = character(), historia = character(), consulta = character(), indicador = character(),
+                       calculado = numeric(), decimales = integer(), redactado = numeric())
+  manifiesto <- list(mapas = list(m1 = list(base = "s1")),
+                     indicadores = list(s1 = list(anios = list(2024L), niveles = list("municipio"), fuente = "mivau_serpavi")))
+  comprobar <- function(h, claves = c("mapa", "anio", "vista", "territorio", "escala", "historia", "paso", "ficha")) {
+    comprobar_historias(h, cf, manifiesto, claves_estado = claves, anclas = list(), larga = tibble::tibble(indicador = character(), fuente = character()),
+                        indicadores = tibble::tibble(codigo = character(), fuentes = character()))
+  }
+  mal <- function(r, texto) r$calculado[r$id == "historias_estado" & grepl(texto, r$detalle, fixed = TRUE)]
+  r <- comprobar(historias)
+  expect_equal(mal(r, "fichas que no son de perfil"), 1)   # el peon
+  expect_equal(mal(r, "enlaces"), 0)                       # mapa.html con consulta
+  expect_equal(mal(r, "claves del recorrido"), 0)
+  expect_equal(mal(comprobar(historias, claves = c("mapa", "anio", "vista", "territorio", "escala", "historia", "paso")), "claves del recorrido"), 1)
+  bien <- historias[1:2, ]
+  expect_equal(sum(comprobar(bien)$calculado[comprobar(bien)$id == "historias_estado"]), 0)
+  pasos <- historias_web(bien, cf)[[1]]$pasos
+  expect_equal(pasos[[1]]$estado$ficha, "tartera")
+  expect_null(pasos[[2]]$estado$ficha)
+})
+
 test_that("cifras con los separadores de cada idioma y empates hacia arriba", {
   expect_equal(historias_formatear(2421, 0, "es"), "2.421")
   expect_equal(historias_formatear(2421, 0, "en"), "2,421")
@@ -192,7 +270,8 @@ test_that("la nota del paso se rellena y se exporta, y la compuerta también la 
 test_that("los CSV de inventario/ tienen la forma que esperan la exportación y la compuerta", {
   h <- leer_historias(raiz("inventario", "historias.csv"))
   cf <- leer_historias_cifras(raiz("inventario", "historias_cifras.csv"))
-  expect_setequal(unique(h$historia), c("centro", "anios"))
+  expect_setequal(unique(h$historia), c("centro", "anios", "minimo", "padres"))
+  expect_true(all(h$ficha %in% c("", HISTORIAS_FICHAS)))   # solo fichas de perfil, nunca el peon
   expect_false(any(grepl("entrar", c(h$mapa, cf$indicador))))   # la brecha queda aplazada
   expect_true(all(cf$consulta %in% HISTORIAS_CONSULTAS))
   expect_false(anyDuplicated(cf$id) > 0)
@@ -202,17 +281,26 @@ test_that("los CSV de inventario/ tienen la forma que esperan la exportación y 
   sin_relleno <- c(h$historia_titulo_es, h$historia_titulo_en, h$entradilla_es, h$entradilla_en, h$titulo_es, h$titulo_en)
   expect_false(any(grepl("{", sin_relleno, fixed = TRUE)))   # títulos y entradilla no llevan marcas
   # Las derivadas salen de dos cifras de su misma historia que no son derivadas
+  # (derivada_por: una cifra y un numero)
   d <- cf[startsWith(cf$consulta, "derivada_"), ]
   for (i in seq_len(nrow(d))) {
     terminos <- strsplit(d$parametro[i], ";", fixed = TRUE)[[1]]
     expect_length(terminos, 2)
+    if (d$consulta[i] == "derivada_por") {
+      terminos <- terminos[1]
+      expect_false(is.na(suppressWarnings(as.numeric(strsplit(d$parametro[i], ";", fixed = TRUE)[[1]][2]))))
+    }
     expect_true(all(terminos %in% cf$id[cf$historia == d$historia[i] & !startsWith(cf$consulta, "derivada_")]))
   }
   # Exportación con las cifras redactadas: misma forma que lee web/js/historias.js
   cf$calculado <- cf$redactado
   d <- withr::local_tempdir()
   j <- jsonlite::read_json(exportar_historias(h, cf, d))
-  expect_equal(vapply(j$historias, `[[`, "", "id"), c("centro", "anios"))
+  expect_equal(vapply(j$historias, `[[`, "", "id"), c("centro", "anios", "minimo", "padres"))
+  # Un paso con ficha la lleva en su estado; uno sin ella, no
+  minimo <- j$historias[[3]]$pasos
+  expect_equal(minimo[[1]]$estado$ficha, "tartera")
+  expect_null(minimo[[4]]$estado$ficha)
   paso <- j$historias[[1]]$pasos[[3]]
   expect_setequal(names(paso$estado), c("mapa", "anio", "vista", "territorio", "escala"))
   expect_false(grepl("{", paso$texto$es, fixed = TRUE))

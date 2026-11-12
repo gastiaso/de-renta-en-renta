@@ -667,7 +667,7 @@ bloque_derivados <- list(
 #   targets::tar_make(names = c(larga_compraventa, fichero_cp_municipio))
 ANIOS_VALOR_TASADO <- 2015:2025
 ADRH_RENTA_TOTALES <- "53689"   # ADRH: renta media de España, comunidades, provincias e islas (17)
-bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL)) else list(
+bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL), tar_target(cp_buscador, NULL)) else list(
   tar_target(ficheros_ipva, vapply(TABLAS_IPVA, descargar_ine_ipva, character(1)), format = "file"),
   tar_target(ipva, leer_ine_ipva_tablas(ficheros_ipva)),
   tar_target(validacion_ipva, validar_referencias(comprobar_ine_ipva(ipva, territorios_2021), referencias)),
@@ -764,7 +764,12 @@ bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL)
     validacion_cp_municipio
     exportar_cp_municipio(cp_municipio)
   }, format = "file"),
-  tar_target(resumen_cp, resumen_cp_municipio(cp_municipio))
+  tar_target(resumen_cp, resumen_cp_municipio(cp_municipio)),
+  # La tabla, para el buscador de la web (datos/cp.json; 12-nov-2026), con su compuerta pasada
+  tar_target(cp_buscador, {
+    validacion_cp_municipio
+    cp_municipio
+  })
 )
 
 # F5, indicador 20: zonas de mercado residencial tensionado declaradas (R/fuente_zonas_tensionadas.R).
@@ -888,8 +893,14 @@ bloque_web <- list(
                  perfiles = perfiles, cajas = cajas_municipios, salarios = salarios_web(curvas_salariales_aeat),
                  dir_web = DIR_WEB,
                  vocabulario = vocabulario, zonas = zonas_tensionadas,   # F5: categorías y declaraciones del 20
-                 cortes_niveles = cortes_niveles)                        # tarea 51: juegos de cortes por escala
+                 cortes_niveles = cortes_niveles,                        # tarea 51: juegos de cortes por escala
+                 cp = cp_buscador)                                       # buscador por código postal (12-nov-2026)
   }, format = "file"),
+  # Buscador por código postal (datos/cp.json): ida y vuelta con la tabla cp_municipio
+  if (AMBITO == "") tar_target(validacion_web_cp, {
+    ficheros_web
+    validar_referencias(comprobar_cp_web(cp_municipio, DIR_WEB), referencias)
+  }),
   # Tarea 51: reparto de los territorios entre los tramos de cada juego en el último año (alerta)
   tar_target(validacion_web_tramos, {
     ficheros_web
@@ -1008,7 +1019,7 @@ bloque_historias <- if (AMBITO != "") list() else list(
   tar_target(fichero_historico_html, "web/historico.html", format = "file"),
   tar_target(historias_inventario, leer_historias(fichero_historias)),
   tar_target(historias_cifras, historias_calcular(leer_historias_cifras(fichero_historias_cifras), tabla_larga,
-                                                  historico, cortes_niveles, ipc = ipc)),
+                                                  historico, cortes_niveles, ipc = ipc, perfiles = perfiles)),
   tar_target(validacion_historias, {
     ficheros_web; fichero_historico_html
     validar_referencias(comprobar_historias(

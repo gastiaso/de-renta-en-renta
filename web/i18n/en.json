@@ -4,8 +4,7 @@
     "subtitulo": "Housing costs and wages, tract by tract",
     "dicho": "De renta en renta, y pago porque me toca",
     "gancho": "Who has any pay left after paying for housing?",
-    "lema": "Where, since when and for whom the link between housing costs and pay has changed",
-    "familias": "For those already on the board and for those just joining the game"
+    "lema": "Where, since when and for whom the link between housing costs and pay has changed"
   },
   "nav": {
     "mapa": "Map",
@@ -46,12 +45,15 @@
       "alejar": "Zoom out",
       "sin_dato_escala": "This map has no data at this scale: zoom in.",
       "cargando": "Loading the map…",
-      "lienzo": "Map. Arrow keys move it; plus and minus zoom in and out; Enter picks the area at the centre."
+      "lienzo": "Map. Arrow keys move it; plus and minus zoom in and out; Enter picks the area at the centre.",
+      "gesto_windows": "Ctrl + scroll to zoom the map",
+      "gesto_mac": "⌘ + scroll to zoom the map",
+      "gesto_movil": "Two fingers to move the map"
     },
     "buscador": {
-      "etiqueta": "Search municipality or tract",
-      "marcador": "Search municipality or tract",
-      "sin_resultados": "No results. Search by municipality (name or code) or by census tract code; not by street, neighbourhood or postcode."
+      "etiqueta": "Search municipality or postcode",
+      "marcador": "Search municipality or postcode",
+      "sin_resultados": "No results. Search by municipality name, by postcode or by census tract code (ten digits); not by street or neighbourhood."
     },
     "vista": {
       "region": "What the map shows",
@@ -361,6 +363,7 @@
       "transistor": "Individual mean: average net retirement pension in their province (the median is not published by province).",
       "peon": "Own figure: the net pay typed in, with 12 or 14 payments a year and a second pay."
     },
+    "historias_titulo": "Stories",
     "cartas_titulo": "Atlas cards",
     "cartas": {
       "fuente": "Source: {fuentes} · {anio}",
@@ -655,7 +658,7 @@
       "hist-esfuerzo": {
         "corto": "Burden",
         "titulo": "Theoretical first-year burden",
-        "subtitulo": "First-year payments on a loan for 80% of the value of the standard home, as a percentage of the disposable income of the median household, without tax deductions. Quarterly.",
+        "subtitulo": "First-year payments on a loan for 80% of the value of the standard home, as a percentage of the disposable income of the median household, without tax deductions. Quarterly. This is not the map's «Mortgage payment over household income» (indicator 17): same calculation, but with an 80 m² flat and the average net income of all households, which is higher than the median household's, so it comes out at about half (Spain, 2024: 18.1% on the map; 34.6% on average here).",
         "fuente": "Source: own elaboration with data extracted from the Banco de España website (www.bde.es): Summary indicators, table 1.5, series D_TKB57210_IPV. Data downloaded on {version}."
       },
       "hist-tipos": {
@@ -863,14 +866,14 @@
       "unidad": "years",
       "definicion": "Years of reference gross pay needed to buy a standard dwelling.",
       "calculo": "Appraised value per m² × standard floor area (80 m² by default) / average gross annual wage per employee (Tax Agency), same year; for a municipality, the wage of its province.",
-      "lectura": "Uses the appraised value, not the deed price, and ignores financing and down payment; see the theoretical mortgage burden (17). No data for the Basque Country and Navarre, which lack Tax Agency wages."
+      "lectura": "Uses the appraised value, not the deed price, and ignores financing and down payment; see mortgage payment over household income (17). No data for the Basque Country and Navarre, which lack Tax Agency wages."
     },
     "esfuerzo_hipotecario": {
-      "nombre": "Theoretical mortgage burden",
-      "unidad": "% of income",
-      "definicion": "Share of income taken by the first-year payment of a mortgage on a standard dwelling.",
+      "nombre": "Mortgage payment over household income",
+      "unidad": "% of household income",
+      "definicion": "Share of the average net income of the area's households taken by the first-year payment of a mortgage on an 80 m² flat.",
       "calculo": "First-year annual payment of a French-amortisation loan for 80% of the appraised value of 80 m², over 25 years at the Bank of Spain's rate on new home-purchase loans (average of the year's twelve months), divided by the average net household income from the ADRH (INE) for the same year and area, × 100. The income is the one published at each level; where INE does not publish it, no value for the province and the region (Navarre until 2020, Álava and the Basque Country until 2019, Gipuzkoa in 2015) and, for Spain until 2020, the household-weighted mean of the municipalities, estimated.",
-      "lectura": "A theoretical burden: it assumes the remaining 20% and purchase costs are available."
+      "lectura": "A theoretical calculation: it assumes the remaining 20% and purchase costs are available. It is not the Banco de España's «theoretical first-year burden» shown in the Time machine: the calculation is the same, but the Banco de España uses the standard home it defines and the income of the median household, while here it is an 80 m² flat and the average net income of all households in the area, which is higher. That is why this figure comes out at about half (Spain, 2024: 18.1% here and 34.6% on average for the Banco de España)."
     },
     "hogares_alquiler": {
       "nombre": "Renting households",

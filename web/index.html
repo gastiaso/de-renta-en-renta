@@ -50,20 +50,15 @@
     </header>
 
     <main class="portada">
-      <!-- Centro del tablero: identidad, gancho, pregunta y familias (con su lectura literal, tarea 34),
-           «Tu sueldo», buscador y dado. En escritorio va encima del centro de las casillas; en el
-           móvil, lo primero. El dicho va al pie. -->
+      <!-- Una sola columna centrada (decisión del autor, 12-nov-2026): el tablero, y debajo, con su
+           ancho, «¿Para quién?», «Historias» y «Cartas del atlas». Centro del tablero: identidad,
+           gancho, pregunta, «Tu sueldo», buscador y dado, encima del hueco de las casillas; en el
+           móvil, lo primero, y las casillas, al final. El dicho va al pie. -->
       <section class="portada-centro" aria-labelledby="portada-titulo">
         <h1 id="portada-titulo" class="portada-titulo" data-i18n="sitio.titulo">De renta en renta</h1>
         <p class="portada-subtitulo" data-i18n="sitio.subtitulo">Vivienda y sueldos, sección a sección</p>
         <p class="portada-gancho" data-i18n="sitio.gancho">¿A quién le queda sueldo después de pagar la vivienda?</p>
         <p class="portada-lema" data-i18n="sitio.lema">Dónde, desde cuándo y para quién ha cambiado la relación entre lo que cuesta la vivienda y lo que se cobra</p>
-        <p class="portada-familias" data-i18n="sitio.familias">Para quien ya está en el tablero y para quien entra nuevo en la partida</p>
-        <!-- Lectura literal de las familias, como en la leyenda del mapa (familias.js) -->
-        <ul id="portada-lecturas" class="portada-lecturas">
-          <li>Quedarse · quien ya vive de alquiler</li>
-          <li>Entrar · quien busca piso hoy (próximamente)</li>
-        </ul>
         <p id="aviso-ejemplo" class="etiqueta-ejemplo" hidden data-i18n="avisos.ejemplo" data-i18n-title="interfaz.ejemplo_nota">Datos de ejemplo</p>
 
         <!-- Sin «name» en el campo: sin JavaScript, el formulario lleva a «Tu sueldo» del mapa sin el sueldo. -->
@@ -82,7 +77,7 @@
 
         <div class="portada-acciones" data-js hidden>
           <div class="buscador portada-buscador" role="search">
-            <label class="oculto" for="buscador-entrada" data-i18n="interfaz.buscador.etiqueta">Buscar municipio o sección</label>
+            <label class="oculto" for="buscador-entrada" data-i18n="interfaz.buscador.etiqueta">Buscar municipio o código postal</label>
             <input id="buscador-entrada" type="search" role="combobox" autocomplete="off" spellcheck="false"
                    aria-autocomplete="list" aria-expanded="false" aria-controls="buscador-lista"
                    data-i18n-placeholder="interfaz.buscador.marcador">
@@ -101,7 +96,10 @@
         </div>
       </section>
 
-      <!-- Fichas: para quién. Cada una abre el mapa en «¿te llega?» con su ingreso. -->
+      <!-- Fichas: para quién. Cada una abre el mapa en «¿te llega?» con su ingreso. En una fila, con
+           el icono y el nombre; la línea de método (.ficha-desc) va dentro del enlace, oculta a la
+           vista salvo al pasar el ratón o enfocar, y la leen los lectores de pantalla. En el móvil,
+           lista con la línea a la vista. -->
       <section class="portada-fichas" aria-labelledby="portada-fichas-titulo">
         <h2 id="portada-fichas-titulo" class="portada-h2" data-i18n="portada.fichas_titulo">¿Para quién?</h2>
         <ul class="fichas-lista">
@@ -128,6 +126,13 @@
         </ul>
       </section>
 
+      <!-- Historias: los títulos de datos/historias.json (y su entradilla), cada uno a
+           mapa.html?historia=<id>. Sin el fichero, o si no cumple su contrato (historias.js), no se ve. -->
+      <section id="portada-historias" class="portada-historias" aria-labelledby="portada-historias-titulo" hidden>
+        <h2 id="portada-historias-titulo" class="portada-h2" data-i18n="portada.historias_titulo">Historias</h2>
+        <ul id="portada-historias-lista" class="historias-lista"></ul>
+      </section>
+
       <!-- Cartas: tres cifras reales del pipeline (datos/portada.json). Sin el fichero, no se ven. -->
       <section id="portada-cartas" class="portada-cartas" aria-labelledby="portada-cartas-titulo" hidden>
         <h2 id="portada-cartas-titulo" class="portada-h2" data-i18n="portada.cartas_titulo">Cartas del atlas</h2>
@@ -135,35 +140,37 @@
       </section>
 
       <!-- Casillas: una lista ordenada en el sentido de las agujas del reloj desde la esquina de
-           arriba a la izquierda, colocada con CSS en el borde de un tablero de 7 × 7. -->
+           arriba a la izquierda, colocada con CSS en el borde de un tablero de 7 × 7. Las esquinas son
+           casillas especiales, fuera de las cuatro familias de la leyenda: la de inicio, en rojo; las
+           otras tres, en beige. -->
       <section class="portada-tablero" aria-labelledby="portada-casillas-titulo">
         <h2 id="portada-casillas-titulo" class="oculto" data-i18n="portada.casillas_titulo">Casillas del tablero</h2>
         <ol class="casillas">
           <!-- casillas:inicio (escribir_casillas_portada(), desde inventario/casillas_portada.csv; no editar a mano) -->
-          <li class="casilla casilla-alquiler casilla-esquina" data-casilla="firma_contrato"><a href="mapa.html?mapa=sueldo_necesario" data-href-es="mapa.html?mapa=sueldo_necesario" data-href-en="mapa.html?mapa=sueldo_necesario&amp;idioma=en"><span class="casilla-texto" data-texto-es="Firma el contrato" data-texto-en="Sign the lease">Firma el contrato</span></a></li>
-          <li class="casilla casilla-ingresos" data-casilla="cobra_nomina"><a href="mapa.html#tu-sueldo" data-href-es="mapa.html#tu-sueldo" data-href-en="mapa.html?idioma=en#tu-sueldo"><span class="casilla-texto" data-texto-es="Cobra la nómina" data-texto-en="Get paid">Cobra la nómina</span></a></li>
+          <li class="casilla casilla-especial casilla-esquina casilla-inicio" data-casilla="cobra_nomina"><a href="mapa.html#tu-sueldo" data-href-es="mapa.html#tu-sueldo" data-href-en="mapa.html?idioma=en#tu-sueldo"><span class="casilla-texto" data-texto-es="Cobra la nómina" data-texto-en="Collect your wages">Cobra la nómina</span></a></li>
+          <li class="casilla casilla-alquiler" data-casilla="firma_contrato"><a href="mapa.html?mapa=sueldo_necesario" data-href-es="mapa.html?mapa=sueldo_necesario" data-href-en="mapa.html?mapa=sueldo_necesario&amp;idioma=en"><span class="casilla-texto" data-texto-es="Firma el contrato" data-texto-en="Sign the lease">Firma el contrato</span></a></li>
           <li class="casilla casilla-alquiler" data-casilla="fianza"><a href="metodo.html#71-alquiler-indicadores-8-y-9" data-href-es="metodo.html#71-alquiler-indicadores-8-y-9" data-href-en="method.html#71-rent-indicators-8-and-9"><span class="casilla-texto" data-texto-es="Fianza: un mes" data-texto-en="Deposit: one month">Fianza: un mes</span></a></li>
           <li class="casilla casilla-alquiler" data-casilla="paga_alquiler"><a href="mapa.html?mapa=alquiler_mes" data-href-es="mapa.html?mapa=alquiler_mes" data-href-en="mapa.html?mapa=alquiler_mes&amp;idioma=en"><span class="casilla-texto" data-texto-es="Paga el alquiler" data-texto-en="Pay the rent">Paga el alquiler</span></a></li>
           <li class="casilla casilla-barrio" data-casilla="pisos_turisticos"><a href="mapa.html?mapa=viviendas_turisticas" data-href-es="mapa.html?mapa=viviendas_turisticas" data-href-en="mapa.html?mapa=viviendas_turisticas&amp;idioma=en"><span class="casilla-texto" data-texto-es="Pisos turísticos en el portal" data-texto-en="Tourist flats in the building">Pisos turísticos en el portal</span></a></li>
           <li class="casilla casilla-barrio" data-casilla="zona_tensionada"><a href="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000" data-href-es="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000" data-href-en="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000&amp;idioma=en"><span class="casilla-texto" data-texto-es="Zona tensionada" data-texto-en="Stressed housing market area">Zona tensionada</span></a></li>
-          <li class="casilla casilla-alquiler casilla-esquina" data-casilla="renueva_contrato"><a href="mapa.html?ficha=llave" data-href-es="mapa.html?ficha=llave" data-href-en="mapa.html?ficha=llave&amp;idioma=en"><span class="casilla-texto" data-texto-es="Renueva el contrato" data-texto-en="Renew the lease">Renueva el contrato</span></a></li>
-          <li class="casilla casilla-alquiler casilla-inactiva" data-casilla="actualizacion_renta" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Actualización de la renta" data-texto-en="Rent update">Actualización de la renta</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-especial casilla-esquina" data-casilla="ley_vivienda"><a href="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000" data-href-es="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000" data-href-en="mapa.html?mapa=zona_tensionada&amp;vista=5.20/40.20000/-3.70000&amp;idioma=en"><span class="casilla-texto" data-texto-es="Ley de Vivienda" data-texto-en="Housing Act">Ley de Vivienda</span></a></li>
+          <li class="casilla casilla-alquiler" data-casilla="tope_alquileres"><a href="mapa.html?mapa=var_alquiler" data-href-es="mapa.html?mapa=var_alquiler" data-href-en="mapa.html?mapa=var_alquiler&amp;idioma=en"><span class="casilla-texto" data-texto-es="Tope de alquileres" data-texto-en="Rent cap">Tope de alquileres</span></a></li>
+          <li class="casilla casilla-alquiler" data-casilla="renueva_contrato"><a href="mapa.html?ficha=llave" data-href-es="mapa.html?ficha=llave" data-href-en="mapa.html?ficha=llave&amp;idioma=en"><span class="casilla-texto" data-texto-es="Renueva el contrato" data-texto-en="Renew the lease">Renueva el contrato</span></a></li>
+          <li class="casilla casilla-alquiler casilla-inactiva" data-casilla="actualizacion_renta" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Actualización de la renta" data-texto-en="Rent review">Actualización de la renta</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
           <li class="casilla casilla-barrio" data-casilla="vecinos_alquiler"><a href="mapa.html?mapa=hogares_alquiler" data-href-es="mapa.html?mapa=hogares_alquiler" data-href-en="mapa.html?mapa=hogares_alquiler&amp;idioma=en"><span class="casilla-texto" data-texto-es="Vecinos de alquiler" data-texto-en="Neighbours who rent">Vecinos de alquiler</span></a></li>
           <li class="casilla casilla-ingresos" data-casilla="compartir_piso"><a href="mapa.html?superficie=70#tu-sueldo" data-href-es="mapa.html?superficie=70#tu-sueldo" data-href-en="mapa.html?superficie=70&amp;idioma=en#tu-sueldo"><span class="casilla-texto" data-texto-es="Compartir piso" data-texto-en="Share a flat">Compartir piso</span></a></li>
+          <li class="casilla casilla-especial casilla-esquina" data-casilla="casa_padres"><a href="sobrecarga.html#sc-acceso-titulo" data-href-es="sobrecarga.html#sc-acceso-titulo" data-href-en="sobrecarga.html?idioma=en#sc-acceso-titulo"><span class="casilla-texto" data-texto-es="Vuelve a casa de tus padres" data-texto-en="Move back in with your parents">Vuelve a casa de tus padres</span></a></li>
           <li class="casilla casilla-alquiler" data-casilla="mudanza"><a href="mapa.html?comparar=municipio" data-href-es="mapa.html?comparar=municipio" data-href-en="mapa.html?comparar=municipio&amp;idioma=en"><span class="casilla-texto" data-texto-es="Mudanza" data-texto-en="Moving house">Mudanza</span></a></li>
-          <li class="casilla casilla-ingresos" data-casilla="cobra_smi"><a href="mapa.html?ficha=tartera" data-href-es="mapa.html?ficha=tartera" data-href-en="mapa.html?ficha=tartera&amp;idioma=en"><span class="casilla-texto" data-texto-es="Cobra el salario mínimo" data-texto-en="Earn the minimum wage">Cobra el salario mínimo</span></a></li>
-          <li class="casilla casilla-barrio casilla-esquina" data-casilla="casa_padres"><a href="sobrecarga.html#sc-acceso-titulo" data-href-es="sobrecarga.html#sc-acceso-titulo" data-href-en="sobrecarga.html?idioma=en#sc-acceso-titulo"><span class="casilla-texto" data-texto-es="Vuelve a casa de tus padres" data-texto-en="Move back in with your parents">Vuelve a casa de tus padres</span></a></li>
-          <li class="casilla casilla-compra casilla-inactiva" data-casilla="ahorra_entrada" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Ahorra la entrada" data-texto-en="Save for the down payment">Ahorra la entrada</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-ingresos" data-casilla="cobra_smi"><a href="mapa.html?ficha=tartera" data-href-es="mapa.html?ficha=tartera" data-href-en="mapa.html?ficha=tartera&amp;idioma=en"><span class="casilla-texto" data-texto-es="Sube el salario mínimo" data-texto-en="The minimum wage goes up">Sube el salario mínimo</span></a></li>
+          <li class="casilla casilla-compra" data-casilla="ahorra_entrada"><a href="mapa.html?mapa=anios_salario_compra" data-href-es="mapa.html?mapa=anios_salario_compra" data-href-en="mapa.html?mapa=anios_salario_compra&amp;idioma=en"><span class="casilla-texto" data-texto-es="Ahorra la entrada" data-texto-en="Save for the down payment">Ahorra la entrada</span></a></li>
           <li class="casilla casilla-compra casilla-inactiva" data-casilla="aval_padres" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Aval de tus padres" data-texto-en="Parents as guarantors">Aval de tus padres</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
-          <li class="casilla casilla-compra casilla-inactiva" data-casilla="hipoteca_variable" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Hipoteca variable" data-texto-en="Variable-rate mortgage">Hipoteca variable</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-compra" data-casilla="hipoteca_variable"><a href="mapa.html?mapa=esfuerzo_hipotecario" data-href-es="mapa.html?mapa=esfuerzo_hipotecario" data-href-en="mapa.html?mapa=esfuerzo_hipotecario&amp;idioma=en"><span class="casilla-texto" data-texto-es="Hipoteca variable" data-texto-en="Variable-rate mortgage">Hipoteca variable</span></a></li>
+          <li class="casilla casilla-especial casilla-esquina casilla-inactiva" data-casilla="parque_publico" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Parque público" data-texto-en="Public housing">Parque público</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
           <li class="casilla casilla-compra" data-casilla="sube_euribor"><a href="historico.html#hist-tipos" data-href-es="historico.html#hist-tipos" data-href-en="historico.html?idioma=en#hist-tipos"><span class="casilla-texto" data-texto-es="Sube el euríbor" data-texto-en="The Euribor goes up">Sube el euríbor</span></a></li>
-          <li class="casilla casilla-barrio casilla-inactiva" data-casilla="derramas" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Comunidad y derramas" data-texto-en="Service charges and levies">Comunidad y derramas</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
-          <li class="casilla casilla-compra casilla-esquina" data-casilla="tasacion"><a href="mapa.html?mapa=valor_tasado_m2" data-href-es="mapa.html?mapa=valor_tasado_m2" data-href-en="mapa.html?mapa=valor_tasado_m2&amp;idioma=en"><span class="casilla-texto" data-texto-es="Tasación" data-texto-en="Valuation">Tasación</span></a></li>
           <li class="casilla casilla-compra casilla-inactiva" data-casilla="notaria" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Notaría" data-texto-en="Notary">Notaría</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
-          <li class="casilla casilla-barrio casilla-inactiva" data-casilla="sorteo_vpo" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Sorteo de vivienda protegida" data-texto-en="Social housing draw">Sorteo de vivienda protegida</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
+          <li class="casilla casilla-barrio casilla-inactiva" data-casilla="derramas" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Comunidad y derramas" data-texto-en="Service charges and levies">Comunidad y derramas</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
           <li class="casilla casilla-compra casilla-inactiva" data-casilla="herencia" title="próximamente" data-i18n-title="portada.proximamente"><span class="casilla-texto" data-texto-es="Herencia" data-texto-en="Inheritance">Herencia</span> <span class="casilla-pronto" data-i18n="portada.proximamente">próximamente</span></li>
-          <li class="casilla casilla-ingresos" data-casilla="cobra_pension"><a href="mapa.html?ficha=transistor" data-href-es="mapa.html?ficha=transistor" data-href-en="mapa.html?ficha=transistor&amp;idioma=en"><span class="casilla-texto" data-texto-es="Cobra la pensión" data-texto-en="Draw your pension">Cobra la pensión</span></a></li>
-          <li class="casilla casilla-barrio" data-casilla="sobrecarga_europa"><a href="sobrecarga.html" data-href-es="sobrecarga.html" data-href-en="sobrecarga.html?idioma=en"><span class="casilla-texto" data-texto-es="Sobrecarga en Europa" data-texto-en="Overburden in Europe">Sobrecarga en Europa</span></a></li>
+          <li class="casilla casilla-ingresos" data-casilla="cobra_pension"><a href="mapa.html?ficha=transistor" data-href-es="mapa.html?ficha=transistor" data-href-en="mapa.html?ficha=transistor&amp;idioma=en"><span class="casilla-texto" data-texto-es="Suben las pensiones" data-texto-en="Pensions go up">Suben las pensiones</span></a></li>
           <!-- casillas:fin -->
         </ol>
         <ul class="familias" data-i18n-aria="portada.familias_titulo">

@@ -24,8 +24,27 @@
 import * as maplibregl from 'maplibre-gl';
 import { paletaDe, paletaContorno, rampaDeCss } from './colores.js';
 import { atributosSinSeccion, elegirSinSeccion } from './datos.js';
+import { esPantallaEstrecha } from './movil.js';
 
-const css = (nombre) => getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
+// Gestos cooperativos en pantallas estrechas (decisión del autor, 12-nov-2026; web/LEEME.md): por
+// debajo de ANCHO_MOVIL (js/movil.js), un dedo desplaza la página y el mapa se mueve con dos, con
+// el aviso de MapLibre en el idioma de la página. En escritorio no cambia nada. Para quitarlo, false.
+export const GESTOS_COOPERATIVOS_MOVIL = true;
+
+// Opciones de MapLibre de los gestos cooperativos: vacías en escritorio (o con la constante en false).
+export function opcionesGestos(t, estrecha = esPantallaEstrecha()) {
+  if (!GESTOS_COOPERATIVOS_MOVIL || !estrecha) return { opciones: {}, textos: {} };
+  return {
+    opciones: { cooperativeGestures: true },
+    textos: {
+      'CooperativeGesturesHandler.WindowsHelpText': t('interfaz.mapa.gesto_windows'),
+      'CooperativeGesturesHandler.MacHelpText': t('interfaz.mapa.gesto_mac'),
+      'CooperativeGesturesHandler.MobileHelpText': t('interfaz.mapa.gesto_movil'),
+    },
+  };
+}
+
+const css =(nombre) => getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
 const absoluta = (ruta) => new URL(ruta, document.baseURI).href;
 let pmtilesRegistrado = false;
 
@@ -78,6 +97,7 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
   if (!capas?.secciones) throw new Error('El mapa base no tiene capa de secciones');
   const idSeccion = capas.secciones.id;
 
+  const gestos = opcionesGestos(t);
   const opciones = {
     container: contenedor,
     style: { version: 8, sources: {}, layers: [{ id: 'mar', type: 'background', paint: { 'background-color': css('--color-mar') } }] },
@@ -85,9 +105,11 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
     dragRotate: false,
     pitchWithRotate: false,
     maxPitch: 0,
+    ...gestos.opciones,
     locale: {
       'NavigationControl.ZoomIn': t('interfaz.mapa.acercar'),
       'NavigationControl.ZoomOut': t('interfaz.mapa.alejar'),
+      ...gestos.textos,
     },
   };
   if (vista) Object.assign(opciones, vista);

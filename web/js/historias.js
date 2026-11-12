@@ -3,18 +3,23 @@
 //   { generado, historias: [{ id, titulo, entradilla, pasos: [{ titulo, texto, nota, estado, enlace, fuente }] }] }
 // con los textos en { es, en }, sin HTML y con las cifras ya escritas. `nota` (opcional, o null) es el
 // desplegable «Cómo se mide» del paso: los matices de método, fuera del cuerpo del texto. `estado` lleva claves de
-// estado.js (mapa, anio, vista, territorio, escala; `vista` siempre): aplicar un paso pone esas y
-// quita las que falten, y también la sección, la comparación, la ficha de perfil, la tipología, la
-// superficie y el umbral, para que el mapa quede en el modo «necesario», con los supuestos por
-// defecto y con lo que cuenta el texto. El panel lo pinta
-// panel_historia.js y lo coordina principal.js.
+// estado.js (mapa, anio, vista, territorio, escala, ficha; `vista` siempre): aplicar un paso pone esas y
+// quita las que falten, y también la sección, la comparación, la tipología, la superficie y el
+// umbral, para que el mapa quede con los supuestos por defecto y con lo que cuenta el texto. Sin
+// `ficha`, el mapa queda en el modo «necesario»; con ella (solo las fichas de perfil del pipeline:
+// llave, mochila, tartera o transistor; nunca el peón, que es el sueldo de quien visita), en «¿te
+// llega?» con esa ficha y el año del paso. El panel lo pinta panel_historia.js y lo coordina principal.js.
 
 import { esValida } from './estado.js';
 
 export const RUTA_HISTORIAS = 'datos/historias.json';
-// Claves del estado que puede traer un paso y las que aplicar un paso quita siempre.
-export const CLAVES_PASO = ['mapa', 'anio', 'vista', 'territorio', 'escala'];
-export const CLAVES_QUITADAS = ['seccion', 'comparar', 'ficha', 'tipologia', 'superficie', 'umbral'];
+// Claves del estado que puede traer un paso (las que no trae se quitan) y las que aplicar un paso
+// quita siempre.
+export const CLAVES_PASO = ['mapa', 'anio', 'vista', 'territorio', 'escala', 'ficha'];
+export const CLAVES_QUITADAS = ['seccion', 'comparar', 'tipologia', 'superficie', 'umbral'];
+// Fichas que puede fijar un paso: las de perfil (HISTORIAS_FICHAS en R/web_historias.R)
+export const FICHAS_PASO = ['llave', 'mochila', 'tartera', 'transistor'];
+const valeEnPaso = (clave, valor) => esValida(clave, valor) && (clave !== 'ficha' || FICHAS_PASO.includes(String(valor)));
 export const MAXIMO_PASOS = 20;   // el de la clave `paso` (estado.js)
 const IDIOMAS = ['es', 'en'];
 const ID = /^[a-z0-9_]{1,30}$/;
@@ -48,7 +53,7 @@ function erroresEstado(estado, donde, mapas) {
   const errores = [];
   for (const [clave, valor] of Object.entries(estado)) {
     if (!CLAVES_PASO.includes(clave)) errores.push(`${donde}: clave de estado no admitida «${clave}»`);
-    else if (valor !== null && !esValida(clave, valor)) errores.push(`${donde}: valor no válido de «${clave}» (${valor})`);
+    else if (valor !== null && !valeEnPaso(clave, valor)) errores.push(`${donde}: valor no válido de «${clave}» (${valor})`);
   }
   if (estado.vista === undefined || estado.vista === null) errores.push(`${donde}: falta la vista`);
   if (mapas && estado.mapa != null && !mapas.includes(estado.mapa)) errores.push(`${donde}: el mapa «${estado.mapa}» no está en el manifiesto`);
@@ -139,7 +144,7 @@ export function cambiosDePaso(paso) {
   for (const clave of [...CLAVES_PASO, ...CLAVES_QUITADAS]) cambios[clave] = undefined;
   for (const clave of CLAVES_PASO) {
     const valor = paso?.estado?.[clave];
-    if (valor === undefined || valor === null || !esValida(clave, valor)) continue;
+    if (valor === undefined || valor === null || !valeEnPaso(clave, valor)) continue;
     cambios[clave] = clave === 'anio' && /^\d{4}$/.test(String(valor)) ? Number(valor) : String(valor);
   }
   return cambios;

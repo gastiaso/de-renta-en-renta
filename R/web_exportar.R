@@ -13,7 +13,8 @@
 #   - fichas/<municipio>.json: series de todos los periodos de las secciones del municipio y, en
 #     `series_municipio`, las del propio municipio, con el mismo par v/e;
 #   - territorios.json (nombres y comunidad de cada provincia), cajas.json (rectángulo de cada
-#     municipio, para el buscador) y perfiles.json (ingresos de las fichas).
+#     municipio, para el buscador), cp.json (municipios de cada código postal, para el buscador) y
+#     perfiles.json (ingresos de las fichas).
 #
 # Qué se exporta: los indicadores del núcleo de la v0.1 (inventario/indicadores.csv, nucleo_v01)
 # y los que tienen mapa (cortes_web y cifras de sección, como los 4–6 de F3, desde el 9-nov-2026)
@@ -305,6 +306,36 @@ cajas_web <- function(secciones, jerarquia) {
   municipio <- jerarquia$municipio[match(secciones$seccion, jerarquia$seccion)]
   cajas <- lapply(split(seq_along(g), municipio), function(i) round(unname(as.numeric(sf::st_bbox(g[i]))), 5))
   list(municipio = cajas)
+}
+
+# Códigos postales para el buscador (decisión del autor, 12-nov-2026: se busca por código postal y no
+# por código INE): {"28013": ["28079"], …}, cada código postal con sus municipios de más a menos peso
+# (parte de sus tramos de vía en el callejero de 2021; R/geo_codigos_postales.R), desde la tabla
+# cp_municipio. Ordenado por código postal.
+cp_web <- function(cp_municipio) {
+  t <- cp_municipio[order(cp_municipio$cp, -cp_municipio$peso, cp_municipio$municipio), ]
+  lapply(split(t$municipio, t$cp), I)
+}
+
+# Compuerta web_cp (bloqueo): datos/cp.json reproduce la tabla cp_municipio (pares código postal y
+# municipio que faltan o sobran, y códigos postales con otro orden de municipios) y el manifiesto
+# apunta al fichero.
+comprobar_cp_web <- function(cp_municipio, dir_web = "web") {
+  ruta <- file.path(dir_web, "datos", "cp.json")
+  leido <- if (file.exists(ruta)) jsonlite::fromJSON(ruta, simplifyVector = FALSE) else list()
+  esperado <- cp_web(cp_municipio)
+  plano <- function(x) unlist(lapply(names(x), function(cp) paste(cp, unlist(x[[cp]]))))
+  pares <- length(union(setdiff(plano(esperado), plano(leido)), setdiff(plano(leido), plano(esperado))))
+  comunes <- intersect(names(esperado), names(leido))
+  orden <- sum(!vapply(comunes, function(cp) identical(as.character(esperado[[cp]]), as.character(unlist(leido[[cp]]))), TRUE))
+  manifiesto <- jsonlite::fromJSON(file.path(dir_web, "datos", "manifiesto.json"), simplifyVector = FALSE)
+  tibble::tibble(
+    id = "web_cp",
+    detalle = c("pares código postal y municipio que faltan o sobran", "códigos postales con otro orden",
+                "manifiesto sin la ruta del fichero"),
+    calculado = c(pares, orden, as.numeric(!identical(manifiesto$codigos_postales, "datos/cp.json"))),
+    referencia = 0
+  )
 }
 
 # Ingresos de las fichas en el formato de la web, desde la tabla `perfiles` (perfiles_fichas()):
@@ -616,13 +647,14 @@ indicadores_manifiesto_web <- function(catalogo, indicadores) {
 # F5: `vocabulario` (inventario/vocabulario.csv) da las categorías de los mapas que las tienen
 # (categorias_web(), indicador 20); `zonas` (inventario/zonas_tensionadas.csv), las declaraciones de
 # cada municipio para la ficha del indicador 20, en datos/zonas_tensionadas.json (zonas_web()), con
-# su ruta en el mapa (`detalle`).
+# su ruta en el mapa (`detalle`). `cp` (12-nov-2026): la tabla cp_municipio, que va al buscador en
+# datos/cp.json (cp_web()) con su ruta en el manifiesto (`codigos_postales`).
 exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = NULL, perfiles = NULL, cajas = NULL,
                          salarios = NULL, dir_web = "web", fecha = format(Sys.Date()), vocabulario = NULL, zonas = NULL,
-                         cortes_niveles = NULL) {
+                         cortes_niveles = NULL, cp = NULL) {
   datos <- file.path(dir_web, "datos")
   dir.create(datos, recursive = TRUE, showWarnings = FALSE)
-  unlink(file.path(datos, c("manifiesto.json", "territorios.json", "cajas.json", "perfiles.json", "salarios.json", "indices", "fichas",
+  unlink(file.path(datos, c("manifiesto.json", "territorios.json", "cajas.json", "cp.json", "perfiles.json", "salarios.json", "indices", "fichas",
                             "zonas_tensionadas.json", NIVELES_WEB)), recursive = TRUE)
 
   indices <- indices_web(jerarquia, territorios)
@@ -642,6 +674,7 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
   }
   otros <- c(escribir_json(territorios_web(territorios), "territorios.json"),
              if (!is.null(cajas)) escribir_json(cajas, "cajas.json"),
+             if (!is.null(cp)) escribir_json(cp_web(cp), "cp.json"),   # buscador por código postal
              if (!is.null(perfiles)) escribir_json(perfiles_web(perfiles), "perfiles.json"),
              if (!is.null(salarios)) escribir_json(salarios, "salarios.json"),   # percentil salarial (salarios_web())
              if (!is.null(zonas)) escribir_json(zonas_web(zonas), "zonas_tensionadas.json"))   # F5, indicador 20
@@ -668,6 +701,7 @@ exportar_web <- function(larga, indicadores, jerarquia, territorios, pmtiles = N
     indices = stats::setNames(as.list(rutas_indices), names(indices)),
     territorios = "datos/territorios.json",
     cajas = if (!is.null(cajas)) "datos/cajas.json",
+    codigos_postales = if (!is.null(cp)) "datos/cp.json",
     fichas = "datos/fichas/{municipio}.json",
     perfiles = if (!is.null(perfiles)) "datos/perfiles.json",
     salarios = if (!is.null(salarios)) "datos/salarios.json",

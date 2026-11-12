@@ -1,30 +1,32 @@
 /* De renta en renta · portada (index.html): el tablero completo (docs/especificacion_portada.md, §4).
-   Solo variables de tokens.css. Escritorio: tablero cuadrado de hasta 720 px, con el centro encima
-   de sus casillas, y una columna con las fichas y las cartas. De 700 a 1159 px, todo en una columna
-   (tarea 34: con el gancho y las familias, el centro necesita un tablero de 720 px).
-   Móvil (menos de 700 px): el centro, las fichas, las cartas y las casillas como recorrido vertical. */
+   Solo variables de tokens.css. Una sola columna centrada en todos los anchos (decisión del autor,
+   12-nov-2026): el tablero cuadrado de hasta 720 px, con el centro encima del hueco de sus casillas,
+   y debajo, con su mismo ancho, «¿Para quién?», «Historias» y «Cartas del atlas».
+   Móvil (menos de 700 px): el centro, las fichas, las historias, las cartas y las casillas como
+   recorrido vertical, sin tablero comprimido. */
 
 /* Página larga, con desplazamiento (como «Sobrecarga») */
 .tablero-largo { height: auto; min-height: calc(100vh - 24px); overflow: visible; }
 .cabecera-portada { justify-content: space-between; }
 
 .portada {
-  --lado: min(720px, calc(100vw - 440px));    /* lado del tablero */
+  --lado: min(720px, calc(100vw - 64px));    /* lado del tablero y ancho de la columna */
   --casilla: calc(var(--lado) / 7);
   display: grid;
-  grid-template-columns: var(--lado) minmax(280px, 1fr);
-  grid-template-rows: auto auto 1fr;
+  grid-template-columns: var(--lado);
+  justify-content: center;
   align-items: start;
-  gap: 16px 24px;
+  gap: 24px;
   padding: 16px;
 }
 
 /* El centro ocupa el hueco de 5 × 5 casillas del tablero: misma celda de la rejilla, desplazado
-   una casilla hacia dentro. */
-.portada-tablero { grid-column: 1; grid-row: 1 / span 3; min-width: 0; }
+   una casilla hacia dentro. Los demás bloques van debajo, cada uno en su fila (uno oculto no deja
+   hueco). */
+.portada-tablero { grid-column: 1; grid-row: 1; min-width: 0; }
 .portada-centro {
   grid-column: 1;
-  grid-row: 1 / span 3;
+  grid-row: 1;
   z-index: 1;
   box-sizing: border-box;
   width: calc(var(--casilla) * 5);
@@ -40,9 +42,8 @@
   gap: 7px;
   text-align: center;
 }
-.portada-fichas { grid-column: 2; grid-row: 1; }
-.portada-cartas { grid-column: 2; grid-row: 2; }
-.portada-cartas[hidden] { display: none; }
+.portada-fichas, .portada-historias, .portada-cartas { grid-column: 1; min-width: 0; }
+.portada-historias[hidden], .portada-cartas[hidden] { display: none; }
 
 /* Centro */
 .portada-titulo {
@@ -53,12 +54,9 @@
   color: var(--color-rojo);
 }
 .portada-subtitulo { margin: 0; font: 400 1.05rem var(--fuente-escritura); letter-spacing: 0.06em; }
-/* Tarea 34: el gancho, con la pregunta, las familias y su lectura literal debajo */
+/* Tarea 34: el gancho, con la pregunta debajo */
 .portada-gancho { margin: 4px 0 0; max-width: 22em; font: 700 clamp(1.2rem, 2vw, 1.5rem)/1.2 var(--fuente-tablero); text-wrap: balance; }
 .portada-lema { margin: 0; max-width: 34em; color: var(--color-tenue); font-size: 0.95rem; line-height: 1.3; text-wrap: balance; }
-.portada-familias { margin: 0; max-width: 34em; color: var(--color-mesa); font: 600 0.95rem/1.3 var(--fuente-carta); text-wrap: balance; }
-.portada-lecturas { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 16px; margin: -4px 0 0; padding: 0; list-style: none; color: var(--color-tenue); font-size: 0.8rem; line-height: 1.3; }
-.portada-lecturas[hidden] { display: none; }
 
 .portada-sueldo {
   display: flex;
@@ -190,19 +188,21 @@
 .casilla > a:hover { background: var(--color-tinta); color: var(--color-crema); }
 .casilla > a:focus-visible { outline-offset: -3px; }
 .casilla-esquina { font-weight: 700; font-size: 0.85rem; }
-/* Las cuatro esquinas, en rojo y con el texto en blanco (5,95:1), como la esquina de inicio de la
-   maqueta original del tablero (decisión del autor, 11-nov-2026). Solo con el tablero montado: por
-   debajo de 700 px las casillas son una lista y no hay esquinas. La banda de su familia se conserva,
-   con una línea de tinta que la separa del rojo. */
-@media (min-width: 700px) {
-  .casilla-esquina { background: var(--color-rojo); font-weight: 800; letter-spacing: 0.02em; }
-  .casilla-esquina > a { color: #fff; }
-  .casilla-esquina > a:focus-visible { outline-color: #fff; }
-  .casilla-esquina::before { outline: 1px solid var(--color-tinta); }
-}
 .casilla-inactiva { color: var(--color-tenue); }
 .casilla-inactiva { flex-direction: column; justify-content: center; align-items: center; padding-inline: 4px; }
 .casilla-pronto { display: block; margin-top: 2px; font: italic 400 0.72rem var(--fuente-carta); }
+
+/* Esquinas: casillas especiales, fuera de las cuatro familias (sin banda ni leyenda), en beige con
+   el texto en tinta (10,43:1; «próximamente», en tenue, 5,41:1). Solo la de inicio, «Cobra la
+   nómina», en rojo con el texto en blanco (5,95:1), como en la maqueta original (decisión del autor,
+   12-nov-2026). */
+.casilla-especial { background: var(--color-beige); }
+.casilla.casilla-especial::before { content: none; }
+.casillas > .casilla-especial:nth-child(n) { padding: 0; }
+.casillas > .casilla-especial.casilla-inactiva:nth-child(n) { padding: 4px; }
+.casilla-inicio { background: var(--color-rojo); font-weight: 800; letter-spacing: 0.02em; }
+.casilla-inicio > a { color: #fff; }
+.casilla-inicio > a:focus-visible { outline-color: #fff; }
 
 /* Leyenda de las familias */
 .familias { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 0.9rem; }
@@ -213,38 +213,91 @@
 .familia-compra { --banda: var(--ficha-transistor); }
 .familia-barrio { --banda: var(--color-mesa); }
 
-/* Columna: fichas y cartas */
-.portada-h2 { margin: 0 0 8px; font: 400 1.3rem var(--fuente-escritura); letter-spacing: 0.06em; }
-.fichas-lista { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+/* Bajo el tablero: fichas, historias y cartas */
+.portada-h2 { margin: 0 0 8px; font: 400 1.3rem var(--fuente-escritura); letter-spacing: 0.06em; text-align: center; }
+
+/* Fichas: una fila compacta, con el icono y el nombre. La línea de método, oculta a la vista (no a
+   los lectores de pantalla) salvo al pasar el ratón o enfocar, en una etiqueta bajo la ficha. */
+.fichas-lista { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
 .ficha-enlace {
-  display: grid;
-  grid-template-columns: 40px 1fr;
-  grid-template-rows: auto auto;
-  column-gap: 10px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  height: 100%;
+  box-sizing: border-box;
   min-height: var(--objetivo-tactil);
-  padding: 6px 10px;
+  padding: 8px 6px;
   background: var(--color-placa);
   border: var(--borde);
-  border-left-width: 8px;
+  border-top-width: 6px;
   border-radius: var(--radio-control);
   color: var(--color-tinta);
+  text-align: center;
   text-decoration: none;
 }
-.ficha-enlace .ficha-icono { grid-row: 1 / span 2; }
-.ficha-nombre { font: 600 1rem var(--fuente-tablero); }
-.ficha-desc { color: var(--color-tenue); font-size: 0.85rem; line-height: 1.25; }
+.ficha-nombre { font: 600 0.95rem/1.15 var(--fuente-tablero); }
+.ficha-desc {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ficha-enlace:hover .ficha-desc, .ficha-enlace:focus-visible .ficha-desc {
+  top: calc(100% + 6px);
+  left: 50%;
+  z-index: 2;
+  width: 15rem;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  transform: translateX(-50%);
+  padding: 6px 9px;
+  background: var(--color-tinta);
+  color: var(--color-crema);
+  border-radius: var(--radio-control);
+  font: 400 0.85rem/1.3 var(--fuente-carta);
+  text-align: left;
+}
+/* La primera y la última, alineadas con su borde para no salirse de la columna */
+.fichas-lista > li:first-child .ficha-enlace:is(:hover, :focus-visible) .ficha-desc { left: 0; transform: none; }
+.fichas-lista > li:last-child .ficha-enlace:is(:hover, :focus-visible) .ficha-desc { left: auto; right: 0; transform: none; }
 .ficha-desc:empty { display: none; }
 a.ficha-enlace:hover { background: var(--color-crema); }
-.ficha-enlace-llave { border-left-color: var(--ficha-llave); }
-.ficha-enlace-mochila { border-left-color: var(--ficha-mochila); }
-.ficha-enlace-tartera { border-left-color: var(--ficha-tartera); }
-.ficha-enlace-transistor { border-left-color: var(--ficha-transistor); }
-.ficha-enlace-peon { border-left-color: var(--ficha-peon); }
+.ficha-enlace-llave { border-top-color: var(--ficha-llave); }
+.ficha-enlace-mochila { border-top-color: var(--ficha-mochila); }
+.ficha-enlace-tartera { border-top-color: var(--ficha-tartera); }
+.ficha-enlace-transistor { border-top-color: var(--ficha-transistor); }
+.ficha-enlace-peon { border-top-color: var(--ficha-peon); }
 .ficha-enlace[aria-disabled="true"] { border-style: dashed; color: var(--color-tenue); cursor: not-allowed; }
 .ficha-enlace[aria-disabled="true"] .ficha-icono { opacity: 0.5; }
+/* Desactivada, su línea es «próximamente»: a la vista, como en las casillas */
+.ficha-enlace[aria-disabled="true"] .ficha-desc,
+.ficha-enlace[aria-disabled="true"]:is(:hover, :focus-visible) .ficha-desc {
+  position: static; width: auto; height: auto; clip-path: none; white-space: normal; transform: none;
+  padding: 0; background: none; color: var(--color-tenue); font: italic 400 0.8rem var(--fuente-carta);
+}
 
-.cartas-lista { display: grid; gap: 10px; }
+/* Historias: título (enlace al mapa con la historia) y entradilla, en dos columnas */
+.historias-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.portada-historia {
+  padding: 10px 14px 12px;
+  background: var(--color-placa);
+  border: var(--borde);
+  border-left: 8px solid var(--color-mesa);
+  border-radius: var(--radio-tarjeta);
+}
+.portada-historia-enlace { color: var(--color-tinta); font: 600 1.02rem/1.25 var(--fuente-tablero); text-wrap: balance; }
+.portada-historia-enlace:hover { color: var(--color-rojo); }
+.portada-historia-entradilla { margin: 6px 0 0; color: var(--color-tenue); font-size: 0.88rem; line-height: 1.35; }
+
+/* Cartas, en dos columnas */
+.cartas-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .carta {
   padding: 10px 14px 12px;
   background: var(--color-placa);
@@ -269,27 +322,38 @@ a.ficha-enlace:hover { background: var(--color-crema); }
 .portada-pie p[hidden] { display: none; }
 .portada-pie a { color: var(--color-tinta); }
 
-/* De 700 a 1159 px: una columna, con el tablero de ancho completo */
-@media (max-width: 1159px) {
-  .portada { --lado: min(720px, calc(100vw - 64px)); grid-template-columns: var(--lado); grid-template-rows: auto auto auto; }
-  .portada-tablero, .portada-centro { grid-row: 1; }
-  .portada-fichas { grid-column: 1; grid-row: 2; }
-  .portada-cartas { grid-column: 1; grid-row: 3; }
-}
-
-/* Móvil: recorrido vertical, sin tablero comprimido */
+/* Móvil: recorrido vertical, sin tablero comprimido; fichas, historias y cartas en lista */
 @media (max-width: 699px) {
   .tablero-largo { min-height: 100vh; }
-  .portada { display: flex; flex-direction: column; gap: 18px; padding: 12px; }
+  .portada { display: flex; flex-direction: column; align-items: stretch; gap: 18px; padding: 12px; }
   .portada-centro { width: auto; height: auto; margin: 0; padding: 4px 0; overflow: visible; }
   .portada-acciones, .portada-sueldo { width: 100%; }
   .portada-buscador { flex-basis: 100%; }
   .portada-sueldo-fila .campo-euros input, .portada-buscador input { font-size: 16px; }   /* sin el zoom de iOS */
+  .portada-h2 { text-align: left; }
+  .fichas-lista, .historias-lista, .cartas-lista { grid-template-columns: minmax(0, 1fr); }
+  .ficha-enlace {
+    display: grid; grid-template-columns: 40px 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center;
+    padding: 6px 10px; border-top-width: 2px; border-left-width: 8px; text-align: left;
+  }
+  .ficha-enlace .ficha-icono { grid-row: 1 / span 2; }
+  .ficha-enlace-llave { border-left-color: var(--ficha-llave); }
+  .ficha-enlace-mochila { border-left-color: var(--ficha-mochila); }
+  .ficha-enlace-tartera { border-left-color: var(--ficha-tartera); }
+  .ficha-enlace-transistor { border-left-color: var(--ficha-transistor); }
+  .ficha-enlace-peon { border-left-color: var(--ficha-peon); }
+  .ficha-enlace .ficha-desc, .ficha-enlace:is(:hover, :focus-visible) .ficha-desc,
+  .fichas-lista > li .ficha-enlace:is(:hover, :focus-visible) .ficha-desc {
+    position: static; width: auto; height: auto; clip-path: none; white-space: normal; transform: none;
+    padding: 0; background: none; color: var(--color-tenue); font: 400 0.85rem/1.25 var(--fuente-carta);
+  }
   .casillas { display: block; width: auto; height: auto; background: none; border: 0; border-radius: 0; overflow: visible; }
   .casillas > .casilla:nth-child(n) { margin: 0 0 6px; padding: 0 0 0 var(--grosor); min-height: var(--objetivo-tactil); outline: 0; border: var(--borde); border-radius: var(--radio-control); text-align: left; }
   .casillas > .casilla:nth-child(n)::before { inset: 0 auto 0 0; width: var(--grosor); height: auto; }
   .casillas > .casilla:nth-child(n) > a { align-items: flex-start; padding: 8px 10px; }
   .casillas > .casilla-inactiva:nth-child(n) { justify-content: flex-start; align-items: baseline; padding: 8px 10px 8px calc(var(--grosor) + 10px); }
+  .casillas > .casilla-especial:nth-child(n) { padding-left: 0; }
+  .casillas > .casilla-especial.casilla-inactiva:nth-child(n) { padding-left: 10px; }
   .casilla-inactiva { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
   .casilla, .casilla-esquina { font-size: 0.95rem; }
 }

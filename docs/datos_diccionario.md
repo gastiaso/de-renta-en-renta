@@ -139,7 +139,7 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 | 14 | [`esfuerzo_residentes`](#esfuerzo_residentes) | Alquiler mediano sobre renta media del barrio | % de la renta del hogar | v0.1 |
 | 15 | [`peso_alquiler_ingreso`](#peso_alquiler_ingreso) | Peso del alquiler en el ingreso | % del ingreso de referencia | v0.1 |
 | 16 | [`anios_salario_compra`](#anios_salario_compra) | Años de salario para comprar | años | v0.3 |
-| 17 | [`esfuerzo_hipotecario`](#esfuerzo_hipotecario) | Esfuerzo hipotecario teórico | % del ingreso | v0.3 |
+| 17 | [`esfuerzo_hipotecario`](#esfuerzo_hipotecario) | Cuota hipotecaria sobre la renta del hogar | % de la renta del hogar | v0.3 |
 | 18 | [`hogares_alquiler`](#hogares_alquiler) | Hogares en alquiler | % de los hogares | v0.1 |
 | 19 | [`viviendas_turisticas`](#viviendas_turisticas) | Viviendas de uso turístico sobre el total de viviendas | % de las viviendas | v0.1 |
 | 20 | [`zona_tensionada`](#zona_tensionada) | Zona de mercado residencial tensionado declarada | categoría (2 todo el municipio, 1 una parte, 0 ninguna) | v0.4 |
@@ -340,19 +340,19 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Versión:** v0.3
 - **Definición:** Años de salario bruto de referencia que costaría comprar una vivienda tipo.
 - **Cálculo:** Valor tasado por m² × superficie tipo (80 m² por defecto) / salario medio anual bruto por asalariado (AEAT), del mismo año; en un municipio, el salario de su provincia.
-- **Lectura:** Usa el valor de tasación, no el precio escriturado, y no tiene en cuenta la financiación ni la entrada; ver el esfuerzo hipotecario (17). Sin dato en País Vasco y Navarra, sin salario de la AEAT.
+- **Lectura:** Usa el valor de tasación, no el precio escriturado, y no tiene en cuenta la financiación ni la entrada; ver la cuota hipotecaria sobre la renta del hogar (17). Sin dato en País Vasco y Navarra, sin salario de la AEAT.
 
 ### `esfuerzo_hipotecario`
 
-**17 · Esfuerzo hipotecario teórico**
+**17 · Cuota hipotecaria sobre la renta del hogar**
 
-- **Unidad:** % del ingreso
+- **Unidad:** % de la renta del hogar
 - **Familia:** Esfuerzo
 - **Fuentes:** `mivau_valor_tasado`, `ine_adrh`, `bde_accesibilidad`
 - **Versión:** v0.3
-- **Definición:** Parte del ingreso que se iría en la cuota del primer año de una hipoteca sobre una vivienda tipo.
+- **Definición:** Parte de la renta neta media de los hogares del territorio que se iría en la cuota del primer año de una hipoteca sobre un piso de 80 m².
 - **Cálculo:** Cuota anual del primer año de un préstamo francés sobre el 80 % del valor tasado de 80 m², a 25 años y al tipo de los préstamos nuevos para adquisición de vivienda del Banco de España (media de los doce meses del año), dividida entre la renta neta media por hogar del ADRH (INE) del mismo año y territorio, × 100. La renta es la publicada en cada nivel; donde el INE no la publica, sin dato en la provincia y la comunidad (Navarra hasta 2020, Álava y el País Vasco hasta 2019, Gipuzkoa en 2015) y, en España hasta 2020, la media de los municipios ponderada por hogares, estimada.
-- **Lectura:** Es un esfuerzo teórico: supone que se tiene el 20 % restante y los gastos de compra.
+- **Lectura:** Es una cuenta teórica: supone que se tiene el 20 % restante y los gastos de compra. No es el «esfuerzo teórico del primer año» del Banco de España de la Máquina del tiempo: la cuenta es la misma, pero el Banco de España usa la vivienda tipo que define y la renta del hogar mediano, y aquí van un piso de 80 m² y la renta neta media de todos los hogares del territorio, que es más alta. Por eso esta cifra da en torno a la mitad (España, 2024: 18,1 % aquí y 34,6 % de media en el Banco de España).
 
 ### `hogares_alquiler`
 

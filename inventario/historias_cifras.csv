@@ -69,3 +69,68 @@ a16_p10_2015,anios,panel_cuantil,anios_salario_compra,municipio,,2015,,0.1;2024;
 a16_p10_2024,anios,panel_cuantil,anios_salario_compra,municipio,,2024,,0.1;2015;1,1,3.1,
 a16_p90_2015,anios,panel_cuantil,anios_salario_compra,municipio,,2015,,0.9;2024;1,1,7.2,Percentil 90 de los municipios del panel
 a16_p90_2024,anios,panel_cuantil,anios_salario_compra,municipio,,2024,,0.9;2015;1,1,9.2,
+smi_p30_2015,minimo,portada_smi,peso_alquiler_ingreso,sc,00,2015,ficha:tartera,pct_30,1,69.2,Carta del salario mínimo de la portada (cifras_portada()) calculada para 2015: % de secciones donde 50 m² pasan del 30 % del salario mínimo neto
+smi_n_2015,minimo,portada_smi,peso_alquiler_ingreso,sc,00,2015,ficha:tartera,secciones,0,21627,Secciones con dato en 2015 (las de la carta)
+smi_neto_2015,minimo,perfil_ingreso,tartera,nacional,00,2015,,,1,708.6,Salario mínimo neto de 2015 en doce pagas: ingreso de la tartera que recibe la web (perfiles_web())
+smi_p30_2020,minimo,portada_smi,peso_alquiler_ingreso,sc,00,2020,ficha:tartera,pct_30,1,46.2,«menos de la mitad»
+smi_n_2020,minimo,portada_smi,peso_alquiler_ingreso,sc,00,2020,ficha:tartera,secciones,0,23415,
+smi_neto_2020,minimo,perfil_ingreso,tartera,nacional,00,2020,,,1,1038,
+smi_p30_2024,minimo,portada_smi,peso_alquiler_ingreso,sc,00,2024,ficha:tartera,pct_30,1,48.4,«algo más que en 2020»: la misma cifra que la carta de la portada
+smi_n_2024,minimo,portada_smi,peso_alquiler_ingreso,sc,00,2024,ficha:tartera,secciones,0,26137,
+smi_neto_2024,minimo,perfil_ingreso,tartera,nacional,00,2024,,,1,1237.4,
+smi_var,minimo,derivada_variacion,,,,,,smi_neto_2024;smi_neto_2015,0,75,"Subida del salario mínimo neto de 2015 a 2024 (%), en euros de cada año"
+smi_eur_2015,minimo,perfil_ingreso,tartera,nacional,00,2015,,,0,709,"Salario mínimo neto de 2015 en doce pagas, en euros enteros como se escribe; con un decimal (smi_neto_2015), para las subidas"
+smi_eur_2020,minimo,perfil_ingreso,tartera,nacional,00,2020,,,0,1038,"Salario mínimo neto de 2020 en doce pagas, en euros enteros como se escribe; con un decimal (smi_neto_2020), para las subidas"
+smi_eur_2024,minimo,perfil_ingreso,tartera,nacional,00,2024,,,0,1237,"Salario mínimo neto de 2024 en doce pagas, en euros enteros como se escribe; con un decimal (smi_neto_2024), para las subidas"
+ipc_15_24,minimo,ipc_variacion,ipc,,,2024,,2015,0,23,IPC de 2015 a 2024 (medias anuales): no deflacta ninguna cifra
+smi_var_20_24,minimo,derivada_variacion,,,,,,smi_neto_2024;smi_neto_2020,0,19,Subida del salario mínimo neto de 2020 a 2024 (%)
+ipc_20_24,minimo,ipc_variacion,ipc,,,2024,,2020,0,19,«lo mismo que los precios en general»
+m2_med_2020,minimo,secciones_mediana,alquiler_m2,sc,00,2020,tipologia:VC,,2,6,Alquiler por m² de la sección de en medio de España (pisos)
+m2_med_2024,minimo,secciones_mediana,alquiler_m2,sc,00,2024,tipologia:VC,,2,7.32,
+m2_var,minimo,derivada_variacion,,,,,,m2_med_2024;m2_med_2020,0,22,«El alquiler por metro cuadrado subió más»
+alb_2015,minimo,secciones_cuota_mayor,peso_alquiler_ingreso,sc,02003,2015,ficha:tartera,30,1,46.3,Ciudad de Albacete (02003): % de secciones donde 50 m² pasan del 30 % del salario mínimo
+bad_2015,minimo,secciones_cuota_mayor,peso_alquiler_ingreso,sc,06015,2015,ficha:tartera,30,1,47.5,Ciudad de Badajoz (06015)
+prov02_2024,minimo,secciones_cuota_mayor,peso_alquiler_ingreso,sc,02,2024,ficha:tartera,30,1,0,«en todas las secciones con dato»: provincia de Albacete
+prov06_2024,minimo,secciones_cuota_mayor,peso_alquiler_ingreso,sc,06,2024,ficha:tartera,30,1,0,Provincia de Badajoz
+prov10_2024,minimo,secciones_cuota_mayor,peso_alquiler_ingreso,sc,10,2024,ficha:tartera,30,1,0,Provincia de Cáceres
+prov27_2024,minimo,secciones_cuota_mayor,peso_alquiler_ingreso,sc,27,2024,ficha:tartera,30,1,0,Provincia de Lugo
+mad_p30_2024,minimo,secciones_cuota_mayor,peso_alquiler_ingreso,sc,28079,2024,ficha:tartera,30,1,99.8,Madrid (28079)
+bcn_p30_2024,minimo,secciones_cuota_mayor,peso_alquiler_ingreso,sc,08019,2024,ficha:tartera,30,1,99.8,Barcelona (08019): la misma cifra que Madrid
+mad_p30_2015,minimo,secciones_cuota_mayor,peso_alquiler_ingreso,sc,28079,2015,ficha:tartera,30,1,100,"«en 2015, en todas»"
+bcn_p30_2015,minimo,secciones_cuota_mayor,peso_alquiler_ingreso,sc,08019,2015,ficha:tartera,30,1,100,
+mad_sc_2024,minimo,secciones_n,peso_alquiler_ingreso,sc,28079,2024,ficha:tartera,,0,2421,
+bcn_sc_2024,minimo,secciones_n,peso_alquiler_ingreso,sc,08019,2024,ficha:tartera,,0,1061,
+smi_real_2024,minimo,portada_smi,peso_alquiler_ingreso,sc,00,2024,ficha:tartera,pct_30_real,1,89.9,Carta de la portada: con el alquiler mensual mediano real de cada sección
+smi_real_2020,minimo,portada_smi,peso_alquiler_ingreso,sc,00,2020,ficha:tartera,pct_30_real,1,89.9,
+pa_a_1987,padres,hist_valor,anios_renta,nacional,00,1987,,1,1,2.9,"Años de renta, primer trimestre de 1987 (Banco de España)"
+pa_ent_1987,padres,derivada_por,,,,,,pa_a_1987;2.4,0,7,"Entrada del 20 % en meses de ingresos del hogar: años × 0,2 × 12"
+pa_tipo_1987,padres,hist_valor,mibor_euribor,nacional,00,1987,,1,1,11.9,"Míbor a un año, enero de 1987"
+pa_tp_1989,padres,hist_valor,tipo_prestamos,nacional,00,1989,,1,1,14.3,"Tipo de los préstamos para vivienda, enero de 1989 (primer mes de la serie)"
+pa_e_max,padres,hist_maximo,esfuerzo_teorico,nacional,00,,,,0,72,Máximo del esfuerzo teórico: «el punto más alto de toda la serie»
+pa_e_max_anio,padres,hist_maximo_anio,esfuerzo_teorico,nacional,00,,,,0,1990,
+pa_e_max_trim,padres,hist_maximo_subperiodo,esfuerzo_teorico,nacional,00,,,,0,2,«en la primavera de 1990»
+pa_tp_1990,padres,hist_valor,tipo_prestamos,nacional,00,1990,,4,1,16.8,"Abril de 1990, primer mes del trimestre del máximo"
+pa_tp_1997,padres,hist_valor,tipo_prestamos,nacional,00,1997,,1,1,8.1,Enero de 1997
+pa_e_1997,padres,hist_valor,esfuerzo_teorico,nacional,00,1997,,1,0,31,Primer trimestre de 1997
+pa_a_1997,padres,hist_valor,anios_renta,nacional,00,1997,,1,1,3.5,
+pa_ent_1997,padres,derivada_por,,,,,,pa_a_1997;2.4,0,8,
+pa_e_min,padres,hist_minimo_desde,esfuerzo_teorico,nacional,00,1987,,,0,25,Mínimo de la serie
+pa_e_min_anio,padres,hist_minimo_desde_anio,esfuerzo_teorico,nacional,00,1987,,,0,1999,"«Dos años después, la cuota tocó su punto más bajo»"
+pa_e_min_trim,padres,hist_minimo_desde_subperiodo,esfuerzo_teorico,nacional,00,1987,,,0,3,
+pa_a_2007,padres,hist_valor,anios_renta,nacional,00,2007,,1,1,9.3,Primer trimestre de 2007
+pa_ent_2007,padres,derivada_por,,,,,,pa_a_2007;2.4,0,22,
+pa_e_2007,padres,hist_valor,esfuerzo_teorico,nacional,00,2007,,1,0,51,
+pa_tp_2007,padres,hist_valor,tipo_prestamos,nacional,00,2007,,1,1,4.9,Enero de 2007: «el interés era más bajo» que en 1997
+pa_a_ultimo,padres,hist_ultimo,anios_renta,nacional,00,,,,1,8.4,Último trimestre publicado
+pa_a_ultimo_anio,padres,hist_ultimo_anio,anios_renta,nacional,00,,,,0,2026,
+pa_a_ultimo_trim,padres,hist_ultimo_subperiodo,anios_renta,nacional,00,,,,0,2,«segundo trimestre de 2026»
+pa_ent_ultimo,padres,derivada_por,,,,,,pa_a_ultimo;2.4,0,20,«casi el triple que en 1987»
+pa_tp_ultimo,padres,hist_ultimo,tipo_prestamos,nacional,00,,,,1,3,«menos de la cuarta parte que en 1990»
+pa_tp_ultimo_anio,padres,hist_ultimo_anio,tipo_prestamos,nacional,00,,,,0,2026,
+pa_tp_ultimo_mes,padres,hist_ultimo_subperiodo,tipo_prestamos,nacional,00,,,,0,9,«septiembre de 2026»
+pa_eh_min,padres,minimo,esfuerzo_hipotecario,provincia,,2024,,,1,8.4,"Cuota hipotecaria sobre la renta del hogar (indicador 17), provincia más baja"
+pa_eh_min_geo,padres,minimo_geo,esfuerzo_hipotecario,provincia,,2024,,,0,13,«Ciudad Real» (13)
+pa_eh_max,padres,maximo,esfuerzo_hipotecario,provincia,,2024,,,1,25.9,
+pa_eh_max_geo,padres,maximo_geo,esfuerzo_hipotecario,provincia,,2024,,,0,29,«Málaga» (29)
+pa_eh_es,padres,valor,esfuerzo_hipotecario,nacional,00,2024,,,1,18.1,España en 2024 (indicador 17)
+pa_e_2024,padres,hist_valor,esfuerzo_teorico,nacional,00,2024,,3,1,34.6,"Esfuerzo teórico del Banco de España, tercer trimestre de 2024: no mide lo mismo que el 17"

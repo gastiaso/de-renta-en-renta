@@ -56,6 +56,13 @@
           "estado": { "mapa": "anios_salario_compra", "anio": 2024, "vista": "8.20/39.20000/2.00000", "territorio": "municipio:07054" },
           "enlace": null,
           "fuente": { "es": "Fuente inventada", "en": "Made-up source" }
+        },
+        {
+          "titulo": { "es": "Paso B3", "en": "Step B3" },
+          "texto": { "es": "Texto inventado con el mapa en «¿te llega?» y la ficha del salario mínimo.", "en": "Made-up text with the map in “can you afford it?” and the minimum-wage token." },
+          "estado": { "mapa": "anios_salario_compra", "anio": 2020, "vista": "4.60/39.80000/-3.70000", "ficha": "tartera" },
+          "enlace": { "href": "mapa.html?historia=centro", "texto": { "es": "Otra historia", "en": "Another story" } },
+          "fuente": { "es": "Fuente inventada", "en": "Made-up source" }
         }
       ]
     }

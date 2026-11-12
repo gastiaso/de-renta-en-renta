@@ -139,7 +139,7 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 | 14 | [`esfuerzo_residentes`](#esfuerzo_residentes) | Median rent over the area's average household income | % of household income | v0.1 |
 | 15 | [`peso_alquiler_ingreso`](#peso_alquiler_ingreso) | Rent share of income | % of reference income | v0.1 |
 | 16 | [`anios_salario_compra`](#anios_salario_compra) | Years of wages to buy a home | years | v0.3 |
-| 17 | [`esfuerzo_hipotecario`](#esfuerzo_hipotecario) | Theoretical mortgage burden | % of income | v0.3 |
+| 17 | [`esfuerzo_hipotecario`](#esfuerzo_hipotecario) | Mortgage payment over household income | % of household income | v0.3 |
 | 18 | [`hogares_alquiler`](#hogares_alquiler) | Renting households | % of households | v0.1 |
 | 19 | [`viviendas_turisticas`](#viviendas_turisticas) | Tourist dwellings as a share of all dwellings | % of dwellings | v0.1 |
 | 20 | [`zona_tensionada`](#zona_tensionada) | Declared stressed housing market area | category (2 whole municipality, 1 part of it, 0 none) | v0.4 |
@@ -340,19 +340,19 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Version:** v0.3
 - **Definition:** Years of reference gross pay needed to buy a standard dwelling.
 - **Calculation:** Appraised value per m² × standard floor area (80 m² by default) / average gross annual wage per employee (Tax Agency), same year; for a municipality, the wage of its province.
-- **Reading:** Uses the appraised value, not the deed price, and ignores financing and down payment; see the theoretical mortgage burden (17). No data for the Basque Country and Navarre, which lack Tax Agency wages.
+- **Reading:** Uses the appraised value, not the deed price, and ignores financing and down payment; see mortgage payment over household income (17). No data for the Basque Country and Navarre, which lack Tax Agency wages.
 
 ### `esfuerzo_hipotecario`
 
-**17 · Theoretical mortgage burden**
+**17 · Mortgage payment over household income**
 
-- **Unit:** % of income
+- **Unit:** % of household income
 - **Family:** Burden
 - **Sources:** `mivau_valor_tasado`, `ine_adrh`, `bde_accesibilidad`
 - **Version:** v0.3
-- **Definition:** Share of income taken by the first-year payment of a mortgage on a standard dwelling.
+- **Definition:** Share of the average net income of the area's households taken by the first-year payment of a mortgage on an 80 m² flat.
 - **Calculation:** First-year annual payment of a French-amortisation loan for 80% of the appraised value of 80 m², over 25 years at the Bank of Spain's rate on new home-purchase loans (average of the year's twelve months), divided by the average net household income from the ADRH (INE) for the same year and area, × 100. The income is the one published at each level; where INE does not publish it, no value for the province and the region (Navarre until 2020, Álava and the Basque Country until 2019, Gipuzkoa in 2015) and, for Spain until 2020, the household-weighted mean of the municipalities, estimated.
-- **Reading:** A theoretical burden: it assumes the remaining 20% and purchase costs are available.
+- **Reading:** A theoretical calculation: it assumes the remaining 20% and purchase costs are available. It is not the Banco de España's «theoretical first-year burden» shown in the Time machine: the calculation is the same, but the Banco de España uses the standard home it defines and the income of the median household, while here it is an 80 m² flat and the average net income of all households in the area, which is higher. That is why this figure comes out at about half (Spain, 2024: 18.1% here and 34.6% on average for the Banco de España).
 
 ### `hogares_alquiler`
 

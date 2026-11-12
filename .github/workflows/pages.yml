@@ -97,6 +97,12 @@ jobs:
           fi
           tar -xzf "$rel/datos_web.tar.gz" -C "$sitio" --no-same-owner --no-same-permissions
 
+          # Historias (menú «Historias»): sin datos/historias.json el mapa abre con un aviso. No para
+          # la publicación: solo avisa.
+          if [ ! -f "$sitio/datos/historias.json" ]; then
+            echo "::warning::datos_web.tar.gz no trae datos/historias.json: el menú «Historias» abrirá el mapa con un aviso."
+          fi
+
           # Capa de portales (indicador 13): no viaja en el release. Mientras no se decida cómo se
           # monta (docs/publicacion.md, «Capa de portales»), el sitio la lleva apagada: la web lee
           # este manifiesto y no pide nada más.

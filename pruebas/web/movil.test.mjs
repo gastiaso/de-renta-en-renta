@@ -124,3 +124,34 @@ test('principal.js: los tres clics del mapa bajan hasta la ficha', () => {
   assert.equal((cuerpo('function alPulsar(codigo)').match(/mostrarFicha\(el\.ficha\)/g) ?? []).length, 2);
   assert.match(cuerpo('function alPulsarSinSeccion('), /mostrarFicha\(el\.ficha\)/);
 });
+
+// Decisión del autor (12-nov-2026): en pantallas estrechas el mapa pide dos dedos para moverse
+// (cooperativeGestures de MapLibre) y un dedo desplaza la página; en escritorio, nada. mapa.js
+// importa maplibre-gl por su nombre (import map), así que aquí se lee como texto.
+test('mapa.js: gestos cooperativos solo en pantallas estrechas, con sus textos', () => {
+  const js = leerTexto('web', 'js', 'mapa.js');
+  assert.match(js, /import \{ esPantallaEstrecha \} from '\.\/movil\.js';/);
+  assert.match(js, /export const GESTOS_COOPERATIVOS_MOVIL = (true|false);/);
+  const cuerpo = js.split('export function opcionesGestos(')[1].split('\n}\n')[0];
+  assert.match(cuerpo, /if \(!GESTOS_COOPERATIVOS_MOVIL \|\| !estrecha\) return \{ opciones: \{\}, textos: \{\} \};/);
+  assert.match(cuerpo, /cooperativeGestures: true/);
+  for (const clave of ['WindowsHelpText', 'MacHelpText', 'MobileHelpText']) {
+    assert.match(cuerpo, new RegExp(`'CooperativeGesturesHandler\.${clave}'`));
+  }
+  // Las opciones entran en el mapa (y en ningún otro sitio se enciende el gesto)
+  assert.match(js, /\.\.\.gestos\.opciones,/);
+  assert.match(js, /\.\.\.gestos\.textos,/);
+  assert.equal((js.match(/cooperativeGestures/g) ?? []).length, 1);
+  // Los textos de la ayuda, en los dos idiomas
+  for (const idioma of ['es', 'en']) {
+    const dic = JSON.parse(leerTexto('web', 'i18n', `${idioma}.json`));
+    for (const clave of ['gesto_windows', 'gesto_mac', 'gesto_movil']) {
+      assert.equal(typeof dic.interfaz.mapa[clave], 'string', `${idioma}: interfaz.mapa.${clave}`);
+    }
+  }
+  // La misma versión de MapLibre trae esas claves en su locale
+  const maplibre = leerTexto('web', 'vendor', 'maplibre-gl', 'maplibre-gl.mjs');
+  for (const clave of ['WindowsHelpText', 'MacHelpText', 'MobileHelpText']) {
+    assert.ok(maplibre.includes(`"CooperativeGesturesHandler.${clave}"`), clave);
+  }
+});

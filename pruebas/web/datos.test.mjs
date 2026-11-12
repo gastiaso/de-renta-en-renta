@@ -24,7 +24,7 @@ const exportar = await modulo('web/js/exportar.js');
 const { FORMULAS, formulaDe, daSueldo, minimoDe, textoSupuestos } = await modulo('web/js/formulas.js');
 const sueldo = await modulo('web/js/sueldo.js');
 const { codigoComparado, filasComparador } = await modulo('web/js/comparador.js');
-const { buscar, formasDeNombre } = await modulo('web/js/buscador.js');
+const { buscar, formasDeNombre, etiquetaMunicipio, hayCifras } = await modulo('web/js/buscador.js');
 const { ordenNatural } = await modulo('web/js/nombres.js');
 const { consulta, leerEstado } = await modulo('web/js/estado.js');
 const colores = await modulo('web/js/colores.js');
@@ -392,7 +392,7 @@ test('nombres del INE en orden natural', () => {
   assert.equal(ordenNatural(undefined), undefined);
 });
 
-test('buscador: nombres sin tildes, con el artículo delante y códigos', () => {
+test('buscador: nombres sin tildes, con el artículo delante, y secciones por código', () => {
   assert.deepEqual(formasDeNombre('Palmas de Gran Canaria, Las'), ['palmas de gran canaria, las', 'las palmas de gran canaria']);
   assert.deepEqual(formasDeNombre("Hospitalet de Llobregat, L'"), ["hospitalet de llobregat, l'", "l'hospitalet de llobregat"]);
   const municipios = [['28079', 'Madrid'], ['35016', 'Palmas de Gran Canaria, Las'], ['28006', 'Alcobendas'], ['01059', 'Vitoria-Gasteiz']]
@@ -401,9 +401,61 @@ test('buscador: nombres sin tildes, con el artículo delante y códigos', () => 
   assert.deepEqual(buscar('las palmas', fuentes).map((o) => o.codigo), ['35016']);
   assert.deepEqual(buscar('MADRID', fuentes).map((o) => o.codigo), ['28079']);
   assert.deepEqual(buscar('gasteiz', fuentes).map((o) => o.codigo), ['01059']);   // contiene
-  assert.deepEqual(buscar('280', fuentes).map((o) => o.codigo), ['28079', '28006']);
+  // Desde seis cifras, secciones; ya no se busca un municipio por su código INE
   assert.deepEqual(buscar('2807901', fuentes).map((o) => [o.tipo, o.codigo]), [['seccion', '2807901001'], ['seccion', '2807901002']]);
+  assert.deepEqual(buscar('2807901001', fuentes).map((o) => o.codigo), ['2807901001']);
+  assert.deepEqual(buscar('280', fuentes), []);      // sin tabla de códigos postales, nada
+  assert.deepEqual(buscar('28079', fuentes), []);    // el código INE de Madrid no es un código postal
   assert.deepEqual(buscar('m', fuentes), []);
+});
+
+test('buscador: código postal (decisión del autor, 12-nov-2026)', () => {
+  const municipios = [['28079', 'Madrid'], ['28013', 'Aranjuez'], ['28006', 'Alcobendas'], ['28134', 'Sotos de Alcobendas'],
+    ['09059', 'Burgos'], ['01055', 'Treviño'], ['09192', 'Condado de Treviño']].map(([c, n]) => [c, n, formasDeNombre(n)]);
+  // Municipios de cada código postal, de más a menos peso (datos/cp.json)
+  const codigosPostales = { 28013: ['28079'], 28108: ['28006', '28134'], 28300: ['28013'], 28012: ['28079'], 28014: ['28079'],
+    '01427': ['09192', '01055'] };
+  const fuentes = { municipios, secciones: ['2801301001', '2807901001'], codigosPostales };
+  const etiquetas = (texto) => buscar(texto, fuentes).map(etiquetaMunicipio);
+  // Un municipio
+  assert.deepEqual(buscar('28300', fuentes).map((o) => [o.tipo, o.codigo, o.cp]), [['municipio', '28013', '28300']]);
+  assert.deepEqual(etiquetas('28300'), ['28300 · Aranjuez']);
+  // Varios municipios, en el orden del peso
+  assert.deepEqual(etiquetas('28108'), ['28108 · Alcobendas', '28108 · Sotos de Alcobendas']);
+  assert.deepEqual(etiquetas('01427'), ['01427 · Condado de Treviño', '01427 · Treviño']);
+  // El 28013 es el código postal del centro de Madrid, no Aranjuez (código INE 28013)
+  assert.deepEqual(etiquetas('28013'), ['28013 · Madrid']);
+  assert.deepEqual(etiquetas(' 28013 '), ['28013 · Madrid']);
+  // Un código postal que no existe: nada
+  assert.deepEqual(buscar('28999', fuentes), []);
+  assert.deepEqual(buscar('99999', fuentes), []);
+  // Menos de cinco cifras: los códigos postales que empiezan así, en orden y con límite
+  assert.deepEqual(etiquetas('2801'), ['28012 · Madrid', '28013 · Madrid', '28014 · Madrid']);
+  assert.deepEqual(buscar('28', { ...fuentes, limite: 3 }).map((o) => o.cp), ['28012', '28013', '28014']);
+  assert.deepEqual(buscar('4', fuentes), []);   // una cifra: nada
+  // Un municipio del código postal que no está en los nombres se salta
+  assert.deepEqual(buscar('28300', { ...fuentes, municipios: municipios.slice(0, 1) }), []);
+  // Seis cifras o más: secciones, nunca códigos postales
+  assert.deepEqual(buscar('280130', fuentes).map((o) => o.tipo), ['seccion']);
+  assert.deepEqual(buscar('283001', fuentes), []);
+  assert.deepEqual(buscar('2801301', fuentes).map((o) => [o.tipo, o.codigo]), [['seccion', '2801301001']]);
+  // Etiqueta por nombre, sin código postal: el código entre paréntesis distingue los homónimos
+  // Por nombre: con la provincia, que distingue los homónimos, y sin el código INE (se confundía con un código postal)
+  const provincias = { '28': 'Madrid', '13': 'Ciudad Real', '33': 'Asturias', '17': 'Girona', '35': 'Palmas, Las' };
+  assert.equal(etiquetaMunicipio({ tipo: 'municipio', codigo: '13071', nombre: 'Puertollano' }, provincias), 'Puertollano (Ciudad Real)');
+  assert.equal(etiquetaMunicipio({ tipo: 'municipio', codigo: '33037', nombre: 'Mieres' }, provincias), 'Mieres (Asturias)');
+  assert.equal(etiquetaMunicipio({ tipo: 'municipio', codigo: '17105', nombre: 'Mieres' }, provincias), 'Mieres (Girona)');
+  assert.equal(etiquetaMunicipio({ tipo: 'municipio', codigo: '35016', nombre: 'Palmas de Gran Canaria, Las' }, provincias), 'Las Palmas de Gran Canaria (Las Palmas)');
+  assert.equal(etiquetaMunicipio({ tipo: 'municipio', codigo: '28079', nombre: 'Madrid' }, provincias), 'Madrid');
+  assert.equal(etiquetaMunicipio({ tipo: 'municipio', codigo: '28079', nombre: 'Madrid' }), 'Madrid');
+  assert.equal(etiquetaMunicipio({ tipo: 'municipio', codigo: '35016', nombre: 'Palmas de Gran Canaria, Las', cp: '35001' }),
+    '35001 · Las Palmas de Gran Canaria');
+  // La tabla se pide solo con cifras
+  assert.equal(hayCifras('28013'), true);
+  assert.equal(hayCifras(' 280 '), true);
+  assert.equal(hayCifras('madrid'), false);
+  assert.equal(hayCifras('28013 madrid'), false);
+  assert.equal(hayCifras(''), false);
 });
 
 test('URL: solo las claves válidas y nunca el sueldo', () => {
