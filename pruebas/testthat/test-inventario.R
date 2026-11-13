@@ -54,14 +54,15 @@ test_that("cada indicador tiene su ficha completa en castellano e inglés (tarea
 test_that("los indicadores auxiliares van sin número, fuera del núcleo y acompañan a indicadores que existen", {
   indicadores <- leer_inventario("indicadores.csv")
   aux <- indicadores[!is.na(indicadores$auxiliar_de), ]
-  expect_setequal(aux$codigo, c("contratos_alquiler", "margen_alquiler_mes", "margen_alquiler_m2"))
+  expect_setequal(aux$codigo, c("contratos_alquiler", "margen_alquiler_mes", "margen_alquiler_m2",
+                                "linea_imv", "linea_pobreza_ecv"))   # tarea 65: líneas de ingreso residual
   expect_true(all(is.na(aux$id)))
   expect_true(all(!is.na(indicadores$id[is.na(indicadores$auxiliar_de)])))
   expect_true(all(aux$nucleo_v01 == "FALSE"))
   expect_true(all(is.na(aux$cortes_web)))                     # sin mapa propio: van a la ficha y al CSV
   acompanados <- separar(aux$auxiliar_de)
   expect_equal(setdiff(acompanados, indicadores$codigo[is.na(indicadores$auxiliar_de)]), character(0))
-  expect_true(all(sub("_.*$", "", aux$codigo) %in% c("contratos", "margen")))   # su papel en la web
+  expect_true(all(sub("_.*$", "", aux$codigo) %in% c("contratos", "margen", "linea")))   # su papel en la web (linea: su JSON)
 })
 
 test_that("fuentes y vocabulario tienen su texto en los dos idiomas", {

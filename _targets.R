@@ -872,7 +872,8 @@ bloque_tabla_larga <- list(
       larga_derivados,    # 14 y 21 sin desglose (el mínimo de 50 m² del 21, con el corte superficie); 15 con la ficha como corte
       armonizar_sobrecarga_ecv(sobrecarga_ecv, sobrecarga_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)),
       armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa)),
-      armonizar_ine_ecv_modulo_cortes(modulo_edad, modulo_tenencia, version = version_de(fichero_modulo_edad))
+      armonizar_ine_ecv_modulo_cortes(modulo_edad, modulo_tenencia, version = version_de(fichero_modulo_edad)),
+      larga_residual      # tarea 65: líneas de ingreso residual (nivel nacional, corte hogar)
     ) |>
       validar_tabla_larga(indicadores, fuentes, vocabulario)
   }),
@@ -1153,6 +1154,38 @@ bloque_otros_gastos <- list(
              validar_referencias(comprobar_web_otros_gastos(otros_gastos, fichero_web_otros_gastos), referencias))
 )
 
+# Tarea 65, línea de ingreso residual (R/linea_residual.R; docs/especificacion_ingreso_residual.md, parte A):
+# renta garantizada del IMV (antes de 2020, la pensión no contributiva anual / 12) y umbral de riesgo de
+# pobreza de la ECV, por año y tipo de hogar, a la tabla larga (larga_residual) y a la web
+# (datos/lineas_residual.json); muestra de los supuestos con el ingreso residual (pruebas/datos/residual_muestra.json).
+#   targets::tar_make(names = c(fichero_web_lineas_residual, validacion_web_residual, validacion_residual_muestra))
+bloque_residual <- list(
+  tar_target(fichero_cuantias_imv, "inventario/cuantias_imv.csv", format = "file"),
+  tar_target(cuantias_imv, leer_cuantias_imv(fichero_cuantias_imv)),
+  tar_target(xml_boe_imv, descargar_boe_imv(cuantias_imv), format = "file"),
+  tar_target(json_ine_ecv_umbral, descargar_ine_ecv_umbral(), format = "file"),
+  tar_target(umbral_ecv, leer_ine_ecv_umbral(json_ine_ecv_umbral)),
+  tar_target(lineas_residual, calcular_lineas_residual(cuantias_imv, umbral_ecv)),
+  tar_target(validacion_residual, validar_referencias(
+    comprobar_lineas_residual(lineas_residual, cuantias_imv, leer_boe_pnc(xml_boe_imv), umbral_ecv), referencias)),
+  tar_target(larga_residual, {
+    validacion_residual   # la compuerta va antes que la tabla larga
+    armonizar_lineas_residual(lineas_residual, version_de(fichero_cuantias_imv), version_de(json_ine_ecv_umbral)) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  }),
+  tar_target(fichero_web_lineas_residual, {
+    validacion_residual
+    exportar_web_lineas_residual(lineas_residual, dir_web = DIR_WEB, limites = supuesto("limites_residual", supuestos_inventario))
+  }, format = "file"),
+  tar_target(validacion_web_residual,
+             validar_referencias(comprobar_web_lineas_residual(lineas_residual, fichero_web_lineas_residual), referencias)),
+  tar_target(muestra_residual, calcular_muestra_residual(terminos_supuestos, lineas_residual, otros_gastos, territorios_2021,
+                                                         supuestos = supuestos_inventario)),
+  tar_target(fichero_muestra_residual, "pruebas/datos/residual_muestra.json", format = "file"),
+  tar_target(validacion_residual_muestra,
+             validar_referencias(comprobar_muestra_residual(muestra_residual, fichero_muestra_residual), referencias))
+)
+
 # Tarea 45: IPC del INE (medias anuales del índice general, tabla 76144; R/fuente_ine_ipc.R) para el
 # aviso de euros corrientes de la evolución de la ficha y los euros constantes de la web (decisión del
 # autor, 12-nov-2026: «Euros de {año base}» en la Máquina del tiempo y en la ficha; datos/ipc.json).
@@ -1204,6 +1237,7 @@ list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adr
      bloque_cis, bloque_calendario,   # F6, CIS y calendario
      bloque_cis_ccaa,                 # tarea 63, CIS por comunidad
      bloque_otros_gastos,             # otros gastos de vivienda de la ECV (12-nov-2026)
+     bloque_residual,                 # tarea 65, línea de ingreso residual
      bloque_ipc,                      # tarea 45, IPC
      bloque_historias,                # tarea 49, primeras historias
      bloque_reglas)                   # tarea 64, reglas del juego

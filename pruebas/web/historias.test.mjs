@@ -132,6 +132,7 @@ test('un paso pasa a cambios de estado: sus claves, las ausentes quitadas y sin 
     mapa: 'alquiler_mes', anio: 2024, vista: '11.30/40.42000/-3.70000', territorio: 'municipio:28079', escala: 'municipio',
     seccion: undefined, comparar: undefined, ficha: undefined, tipologia: undefined, superficie: undefined, umbral: undefined,
     gastos: undefined,   // otros gastos de vivienda (12-nov-2026): un paso los apaga
+    regla: undefined, linea: undefined,   // tarea 65: un paso vuelve a la regla del porcentaje y a la línea del IMV
   });
   // Sin territorio ni escala en el paso: se quitan los que hubiera (escala nacional, sin ficha de territorio),
   // y también la superficie y el umbral elegidos antes: el mapa del paso, con los supuestos por defecto

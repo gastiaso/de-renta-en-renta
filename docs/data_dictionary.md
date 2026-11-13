@@ -43,6 +43,7 @@ Breakdown variable. Without a breakdown, `corte` and `grupo` are both `total`.
 | `oferta_privada` | Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE) |
 | `contrato` | Age of the rental contract (IPVA) |
 | `superficie` | Assumed floor area (theoretical minimum of the pay needed) |
+| `hogar` | Household type (residual income line) |
 
 ### `grupo`
 
@@ -89,6 +90,8 @@ Breakdown value, by `corte`.
 | `contrato` | `nuevo` | New contract (signed in the reference year) |
 | `contrato` | `existente` | Existing contract (signed before the reference year) |
 | `superficie` | `50` | Notional 50 m² flat |
+| `hogar` | `una_persona` | One person |
+| `hogar` | `dos_adultos` | Two adults without children |
 
 ### `fuente`
 
@@ -116,10 +119,12 @@ Sources cited by the indicator inventory; `calculo_propio` marks derived figures
 | `eurostat_ilc_lvho07_r` | Housing cost overburden rate by NUTS 2 region (ilc\_lvho07\_r) |
 | `bde_accesibilidad` | Housing affordability indicators (years of income, theoretical burden) |
 | `calculo_propio` | Own calculation from the sources of each term |
+| `boe_imv` | Minimum living income and non-contributory pension: annual amounts (uprating rules) |
+| `ine_ecv_umbral` | Living Conditions Survey: at-risk-of-poverty threshold (illustrative values) |
 
 ## Indicator dictionary
 
-The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `inventario/indicadores.csv`. The `indicador` column of the long table holds the code. «Version» is the atlas version in which each indicator is added: those added in a version later than the release are not in the long table yet.
+The 23 indicators of the plan and 5 auxiliaries (rent reliability and residual income lines), in the order of `inventario/indicadores.csv`. The `indicador` column of the long table holds the code. «Version» is the atlas version in which each indicator is added: those added in a version later than the release are not in the long table yet.
 
 | No. | Code | Name | Unit | Version |
 | --- | --- | --- | --- | --- |
@@ -149,6 +154,8 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 | Auxiliary | [`contratos_alquiler`](#contratos_alquiler) | Rental contracts behind the median | contracts | v0.1 |
 | Auxiliary | [`margen_alquiler_mes`](#margen_alquiler_mes) | Approximate margin of the median monthly rent | % of the median | v0.1 |
 | Auxiliary | [`margen_alquiler_m2`](#margen_alquiler_m2) | Approximate margin of the median rent per m² | % of the median | v0.1 |
+| Auxiliary | [`linea_imv`](#linea_imv) | Residual income line: minimum living income | € per month | v1.2 |
+| Auxiliary | [`linea_pobreza_ecv`](#linea_pobreza_ecv) | Residual income line: at-risk-of-poverty threshold | € per month | v1.2 |
 
 ### `renta_persona`
 
@@ -464,4 +471,30 @@ The 23 indicators of the plan and 3 reliability auxiliaries, in the order of `in
 - **Definition:** Approximate standard error of the median rent per square metre (9), as a percentage of the median, by building type.
 - **Calculation:** 0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI rent-per-m² quartiles and tenancies (n); only where the median is published (10 or more tenancies).
 - **Reading:** It also applies to 15 and to the 50 m² minimum of 21, which are rent per m² in another unit: the profile warns when «Can you make rent?» sits on the edge between two bands.
+
+### `linea_imv`
+
+**Auxiliary · Residual income line: minimum living income**
+
+- **Unit:** € per month
+- **Family:** Ability to pay
+- **Sources:** `boe_imv`
+- **Version:** v1.2
+- **Auxiliary of:** [`peso_alquiler_ingreso`](#peso_alquiler_ingreso), [`sueldo_necesario`](#sueldo_necesario)
+- **Definition:** Guaranteed income of the minimum living income scheme (IMV) for a one-person household or a household of two adults without children: what the law guarantees such a household for all its expenses, housing included. From 2015 to 2019, before the IMV, the annual non-contributory pension divided by 12.
+- **Calculation:** 100% of each year's annual non-contributory pension (BOE uprating rules) divided by 12; two adults, + 30% (Law 19/2021, art. 13). 2020: €5,538 a year, from June; 2022: month-weighted mean of the January–March amount and the April–December amount (+15%). To the cent.
+- **Reading:** Line against which the website compares what is left each month after paying for housing (residual income). It is not a budget for other expenses: as a residual line it is low. No households with children.
+
+### `linea_pobreza_ecv`
+
+**Auxiliary · Residual income line: at-risk-of-poverty threshold**
+
+- **Unit:** € per month
+- **Family:** Ability to pay
+- **Sources:** `ine_ecv_umbral`
+- **Version:** v1.2
+- **Auxiliary of:** [`peso_alquiler_ingreso`](#peso_alquiler_ingreso), [`sueldo_necesario`](#sueldo_necesario)
+- **Definition:** At-risk-of-poverty threshold of the Living Conditions Survey (60% of median equivalised income) for a one-person household or a household of two adults without children, for the income year.
+- **Calculation:** Annual threshold for a one-person household published by INE (without imputed rent) divided by 12; two adults, × 1.5 (modified OECD scale). Year = income year: the 2025 survey gives 2024. To the cent.
+- **Reading:** Line against which the website compares what is left each month after paying for housing, as in Eurostat's at-risk-of-poverty rate after housing costs. It is a threshold for total income, not for non-housing expenses: as a residual line it is high.
 

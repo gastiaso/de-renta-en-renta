@@ -2,7 +2,7 @@
 
 *Borrador para la v1.2 (12-nov-2026), por decidir. Encargo: backlog, «Para la v1.2», «Línea de ingreso residual»; nota metodológica, §7.4 («La misma proporción para todos los ingresos») y §8. Provisional, como todo el plan.*
 
-**Estado: decidido (13-nov-2026), por hacer.** Las siete preguntas del final se cerraron con la opción recomendada (decisión del autor). Nada de esto está en el pipeline ni en la web. Las cifras de las fuentes se consultaron en la web el 12-nov-2026, sin descargar ficheros; las marcadas «por verificar» no se han contrastado con la fuente primaria.
+**Estado: parte A hecha (13-nov-2026, tarea 65 del backlog); parte B, por hacer.** Las siete preguntas del final se cerraron con la opción recomendada (decisión del autor). Lo que se hizo y lo que queda, en la tarea 65 de `docs/backlog.md`. Las cifras de las fuentes se consultaron en la web el 12-nov-2026, sin descargar ficheros; las marcadas «por verificar» no se han contrastado con la fuente primaria.
 
 ## Por qué
 

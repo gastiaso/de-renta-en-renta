@@ -158,6 +158,7 @@ auxiliares_web <- function(indicadores) {
   vacio <- tibble::tibble(codigo = character(), papel = character(), de = list())
   if (!"auxiliar_de" %in% names(indicadores)) return(vacio)
   a <- indicadores[!is.na(indicadores$auxiliar_de) & nzchar(trimws(indicadores$auxiliar_de)), ]
+  a <- a[!startsWith(a$codigo, "linea_"), ]   # tarea 65: las lineas de ingreso residual van en su JSON
   if (!nrow(a)) return(vacio)
   papel <- sub("_.*$", "", a$codigo)
   if (!all(papel %in% PAPELES_AUXILIARES_WEB)) {

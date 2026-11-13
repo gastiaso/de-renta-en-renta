@@ -16,7 +16,8 @@ FICHEROS_DICCIONARIO_DATOS <- c(es = "datos_diccionario.md", en = "data_dictiona
 
 # Version del atlas en que entra cada fase del plan (plan, 7). F1b no tuvo version propia: la
 # sobrecarga se publico con la v0.1 (backlog, F2).
-VERSION_DE_FASE <- c(F1b = "v0.1", F2 = "v0.1", F3 = "v0.2", F4 = "v0.3", F5 = "v0.4", F6 = "v1.0")
+# Las lineas de ingreso residual (tarea 65) entran sin fase del plan, con la v1.2.
+VERSION_DE_FASE <- c(F1b = "v0.1", F2 = "v0.1", F3 = "v0.2", F4 = "v0.3", F5 = "v0.4", F6 = "v1.0", v1.2 = "v1.2")
 
 TEXTOS_DICCIONARIO_DATOS <- list(
   es = list(
@@ -32,7 +33,7 @@ TEXTOS_DICCIONARIO_DATOS <- list(
     fuente_intro = "Fuentes que cita el inventario de indicadores; `calculo_propio` marca los derivados. Su enlace y su licencia est\u00e1n en `inventario/fuentes.csv` (columnas `url` y `licencia`).",
     fuente = "Fuente",
     diccionario = "Diccionario de indicadores",
-    diccionario_intro = "Los {n} indicadores del plan y {m} auxiliares de fiabilidad, en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el c\u00f3digo. \u00abVersi\u00f3n\u00bb es la del atlas en que entra cada indicador: los que entran en una versi\u00f3n posterior a la del release todav\u00eda no est\u00e1n en la tabla larga.",
+    diccionario_intro = "Los {n} indicadores del plan y {m} auxiliares (de fiabilidad del alquiler y l\u00edneas de ingreso residual), en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el c\u00f3digo. \u00abVersi\u00f3n\u00bb es la del atlas en que entra cada indicador: los que entran en una versi\u00f3n posterior a la del release todav\u00eda no est\u00e1n en la tabla larga.",
     numero = "N\u00ba",
     nombre = "Nombre",
     unidad = "Unidad",
@@ -58,7 +59,7 @@ TEXTOS_DICCIONARIO_DATOS <- list(
     fuente_intro = "Sources cited by the indicator inventory; `calculo_propio` marks derived figures. Their link and licence are in `inventario/fuentes.csv` (columns `url` and `licencia`).",
     fuente = "Source",
     diccionario = "Indicator dictionary",
-    diccionario_intro = "The {n} indicators of the plan and {m} reliability auxiliaries, in the order of `inventario/indicadores.csv`. The `indicador` column of the long table holds the code. \u00abVersion\u00bb is the atlas version in which each indicator is added: those added in a version later than the release are not in the long table yet.",
+    diccionario_intro = "The {n} indicators of the plan and {m} auxiliaries (rent reliability and residual income lines), in the order of `inventario/indicadores.csv`. The `indicador` column of the long table holds the code. \u00abVersion\u00bb is the atlas version in which each indicator is added: those added in a version later than the release are not in the long table yet.",
     numero = "No.",
     nombre = "Name",
     unidad = "Unit",

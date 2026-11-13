@@ -31,6 +31,8 @@ const VALIDAS = {
   superficie: (v) => SUPUESTOS.superficies.map(String).includes(v) || v === 'tipica',
   umbral: (v) => SUPUESTOS.umbrales.map(String).includes(v),
   gastos: (v) => v === '1',   // «Añadir otros gastos de vivienda» encendido (12-nov-2026)
+  regla: (v) => v !== SUPUESTOS.regla_llega && SUPUESTOS.reglas_llega.includes(v),          // tarea 65: «Lo que queda»
+  linea: (v) => v !== SUPUESTOS.linea_residual && SUPUESTOS.lineas_residual.includes(v),    // tarea 65: línea de ingreso residual
   seccion: (v) => /^\d{10}$/.test(v),
   comparar: (v) => /^\d{10}$/.test(v) || NIVELES_COMPARAR.includes(v),
   // zoom/latitud/longitud, dentro de lo que admite el mapa (una latitud de 95 lo haría fallar)

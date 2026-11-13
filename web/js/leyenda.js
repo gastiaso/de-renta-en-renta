@@ -159,10 +159,13 @@ export function listaCategorias(t, mapaDef) {
   return [lista];
 }
 
-function tramosLlega(t) {
+// Con la regla residual (tarea 65), sus tres tramos: por encima de 1,25 × la línea, hasta 1,25 × y por debajo.
+const CLAVES_LLEGA = ['interfaz.leyenda.llega_1', 'interfaz.leyenda.llega_2', 'interfaz.leyenda.llega_3'];
+const CLAVES_RESIDUAL = ['interfaz.residual.tramo_1', 'interfaz.residual.tramo_2', 'interfaz.residual.tramo_3'];
+function tramosLlega(t, residual = false) {
   const lista = crear('ul', 'leyenda-llega');
   const clases = clasesTramos(TRAMOS_LLEGA, rampaDeCss().length);
-  ['interfaz.leyenda.llega_1', 'interfaz.leyenda.llega_2', 'interfaz.leyenda.llega_3'].forEach((clave, i) => {
+  (residual ? CLAVES_RESIDUAL : CLAVES_LLEGA).forEach((clave, i) => {
     const item = crear('li');
     item.append(crear('span', `leyenda-muestra ${clases[i]}`), crear('span', null, t(clave)));
     lista.append(item);
@@ -213,8 +216,9 @@ export function pintarLeyenda(contenedor, t, datos) {
   if (datos.fuera) cuerpo.push(crear('p', 'leyenda-fuera', datos.fuera));
   const categorias = necesario && datos.mapaDef?.categorias;   // F5: mapa de categorías (indicador 20)
   if (necesario && !categorias) cuerpo.push(...controlRelativa(t, datos), ...lineasJuego(t, datos));   // tarea 51
-  cuerpo.push(...(categorias ? listaCategorias(t, datos.mapaDef) : necesario ? reglaNecesario(t, datos) : tramosLlega(t)));
-  let supuestos = t('interfaz.leyenda.llega_nota');
+  cuerpo.push(...(categorias ? listaCategorias(t, datos.mapaDef) : necesario ? reglaNecesario(t, datos) : tramosLlega(t, Boolean(datos.residual))));
+  // Tarea 65: con la regla residual, la línea con su cifra en lugar de la nota del umbral
+  let supuestos = datos.residual ? datos.residual.texto : t('interfaz.leyenda.llega_nota');
   if (necesario) {
     // Tarea 40: en el sueldo necesario, el alquiler real y el umbral, y la superficie del mínimo de la ficha
     supuestos = datos.conSupuestos

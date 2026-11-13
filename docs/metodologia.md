@@ -1291,7 +1291,7 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 - El mapa del 21 se pinta en seis tramos, con cortes nacionales iguales todos los años: 1.000, 1.300, 1.600, 2.000 y 2.600 € con el alquiler mensual real (tarea 40; hasta entonces, 700, 900, 1.100, 1.500 y 2.000 € con 50 m²; plan §11, pregunta 20). La rampa de colores tiene seis pasos que se distinguen también con daltonismo (`rampa_daltonismo`).
 - El 15 y el 21 cambian con el umbral; el 15 y el mínimo del 21, con la superficie, y el 15, con el sueldo de «Tu ficha»: la web los recalcula en el navegador (plan §6.6).
 - **El 14, solo en la ficha** (decisión 10 del backlog; tarea 41). Divide el alquiler de quien alquila entre la renta media de todos los hogares de la sección, propietarios incluidos, y apenas distingue barrios: en 2024, la mediana es del 18,3 % en el quintil de secciones con menos renta por hogar y del 17,5 % en el de más, y los percentiles 5 y 95 son 11,6 y 25,3 %. Por eso sale del selector del mapa y queda en la ficha de la sección y del municipio, renombrado («alquiler mediano sobre renta media del barrio») y con ese aviso, que lleva también la llave, el mismo cociente (§6.4). Los tramos calculados para un mapa, en el backlog, quedan como referencia.
-- **La misma proporción para todos los ingresos** (backlog, tarea 45). El umbral del 30 % trata igual un ingreso bajo y uno alto, y no dice si lo que queda tras pagar la vivienda alcanza para lo demás. Con un ingreso bajo, el resto puede no cubrir los gastos básicos aunque el alquiler no llegue al 30 %; con uno alto, pasar del 30 % aún deja mucho. El enfoque de ingreso residual compara lo que queda con un presupuesto mínimo de los demás gastos según el tamaño y la composición del hogar (Stone, M. E. (2006). «What is housing affordability? The case for the residual income approach». *Housing Policy Debate*, 17(1), 151–184). El atlas da los euros que quedan (§6.1), pero no fija ese presupuesto: la línea de ingreso residual queda para la v1.1 (backlog).
+- **La misma proporción para todos los ingresos** (backlog, tarea 45). El umbral del 30 % trata igual un ingreso bajo y uno alto, y no dice si lo que queda tras pagar la vivienda alcanza para lo demás. Con un ingreso bajo, el resto puede no cubrir los gastos básicos aunque el alquiler no llegue al 30 %; con uno alto, pasar del 30 % aún deja mucho. El enfoque de ingreso residual compara lo que queda con un presupuesto mínimo de los demás gastos según el tamaño y la composición del hogar (Stone, M. E. (2006). «What is housing affordability? The case for the residual income approach». *Housing Policy Debate*, 17(1), 151–184). El atlas da los euros que quedan (§6.1), pero no fija ese presupuesto. La línea de ingreso residual (abajo) compara lo que queda con dos líneas legales o estadísticas, no con un presupuesto propio.
 
 **Cálculo** (`armonizar_derivados()`; objetivo `larga_derivados`, 2.644.824 filas, fuente `calculo_propio`):
 - **14** (`calcular_esfuerzo_residentes()`): en las secciones y los municipios, los niveles en que el SERPAVI y el ADRH publican los dos términos (`NIVELES_ESFUERZO`), y en los años con los dos, 2015–2024. Sin desglose.
@@ -1348,6 +1348,32 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 Con la mochila, 7.616 secciones quedan `ausente` en 2024: todas las de País Vasco, Navarra, Ceuta y Melilla, donde la ficha no tiene ingreso, y las que no tienen alquiler.
 
 **Compuerta** (`comprobar_derivados()`, `validacion_derivados`; §4.1): `derivados_terminos`, `derivados_estado`, `derivados_rango`, `perfiles_mochila` y `smi_neto` (bloqueo), y `derivados_rango_detalle` (alerta). Antes, la tartera pasa por `smi_boe`, la mochila por `mochila_cobertura` y el transistor por las del INSS (§6.2, §6.3 y §6.5).
+
+**Línea de ingreso residual** (backlog, tarea 65; `docs/especificacion_ingreso_residual.md`, parte A; decisión del autor, 13-nov-2026). Lo que queda al mes tras pagar la vivienda (el ingreso de la ficha menos el alquiler y, con el selector, los otros gastos de vivienda; §6.7) se compara con una línea mensual del tipo de hogar y del año del alquiler (regla 4). Dos líneas, con selector, la primera por defecto (`R/linea_residual.R`; `calcular_lineas_residual()`):
+
+- **Renta garantizada del ingreso mínimo vital** (`linea_imv`, fuente `boe_imv`): el 100 % de la pensión no contributiva anual entre 12 (Ley 19/2021, art. 13); dos adultos, + 30 %. De 2015 a 2019, antes del IMV, la pensión no contributiva anual entre 12, rotulada como tal. En 2020, 5.538 € al año (sin los 40 céntimos de la pensión); en 2022, la media ponderada por meses de la cuantía de enero a marzo y la de abril a diciembre, un 15 % más alta. Una persona: 428,05 € al mes en 2015, 604,22 € en 2024 y 733,60 € en 2026; dos adultos, 953,68 € en 2026. Las cuantías están en `inventario/cuantias_imv.csv`, con su norma del BOE.
+- **Umbral de riesgo de pobreza de la ECV** (`linea_pobreza_ecv`, fuente `ine_ecv_umbral`): el del hogar unipersonal sin alquiler imputado (tabla 9964 del INE) entre 12; dos adultos, × 1,5 (escala de la OCDE modificada). El año es el de los ingresos: el alquiler de 2024 va con la ECV 2025, 1.018,37 € al mes para una persona. El alquiler de 2025 no tendrá umbral hasta la ECV 2026.
+
+Tipos de hogar: una persona (las tres fichas de una persona y «Tu ficha» con un sueldo) y dos adultos («Tu ficha» con segundo sueldo); sin hogares con menores. La llave queda fuera: su ingreso es la renta de todos los hogares de la sección, de tamaño desconocido. Las líneas, al céntimo, van a la tabla larga (nivel nacional, corte `hogar`; `armonizar_lineas_residual()`) y a la web (`datos/lineas_residual.json`). La página calcula el ingreso residual de cada sección con los términos que ya exporta, sin redondear, como la proporción.
+
+**En la web.** En «¿te llega?», la ficha dice, bajo los euros que quedan, a qué distancia de la línea queda lo que queda. El selector «Regla» (apagado: el porcentaje del ingreso) pinta el mapa con «Lo que queda» en tres tramos: por debajo de la línea, de la línea a 1,25 veces la línea y por encima (`limites_residual`, `inventario/supuestos.csv`). El resultado de «Tu sueldo» dice en qué parte de las secciones con dato lo que queda no baja de la línea.
+
+**Punto de cruce con el 30 %.** Con un ingreso mensual *I*, una línea *N* y otros gastos de vivienda *G*, el 30 % admite un alquiler de hasta 0,30 × *I*; la línea residual, de hasta *I* − *G* − *N*. La residual es la más exigente cuando *I* < (*N* + *G*) / 0,70. Sin otros gastos, eso pasa por debajo de 1.048 € al mes con el IMV de 2026 y de 1.455 € con el umbral de la ECV 2025. Con el salario mínimo neto de 2026 (1.331,91 €; años distintos, solo para ilustrar), el 30 % admite 400 € de alquiler; el IMV, 598 €; el umbral de la ECV, 314 €.
+
+**Compuerta** (`comprobar_lineas_residual()`, `validacion_residual`; `comprobar_web_lineas_residual()`, `validacion_web_residual`; `comprobar_muestra_residual()`, `validacion_residual_muestra`). La muestra es la de los supuestos (§6.7) con el tipo de hogar, los otros gastos de vivienda de la comunidad y las dos líneas de 2024 (`calcular_muestra_residual()`); la comprueban también las pruebas de la página.
+
+| Comprobación | Tipo | Resultado (13-nov-2026) |
+|---|---|---|
+| `residual_pnc_boe` | bloqueo | 0 en los 7 años con XML |
+| `residual_imv_publicada` | bloqueo | 0 en las 3 cifras |
+| `residual_umbral_ecv` | bloqueo | 0,06 € como máximo |
+| `residual_umbral_ecv_2025` | bloqueo | 12.220,4 € |
+| `residual_escala` | bloqueo | 0,01 € como máximo |
+| `residual_escala_ine` | alerta | 0,05 € como máximo |
+| `residual_serie` | bloqueo | ningún año sin línea |
+| `residual_muestra` | bloqueo | al día |
+| `residual_coherencia` | alerta | 0 casos |
+| `web_residual` | bloqueo | 0 cifras distintas |
 
 ### 7.5 Sobrecarga y acceso (indicadores 22 y 23, v0.0)
 
@@ -1606,6 +1632,7 @@ La serie con la deducción por vivienda habitual (vigente hasta diciembre de 201
 - **Vulnerabilidad, no entrada.** El esfuerzo divide el alquiler entre la renta media de todos los hogares de la sección, no solo la de los que alquilan (`inventario/indicadores.csv`).
 - **El peso del alquiler de la tabla larga es un control.** Con la tartera, la mochila y el transistor de 2015 a 2024; la web la calcula con la ficha elegida (§7.4).
 - **La misma proporción para todos los ingresos.** El umbral del 30 % del 15 y el 21 no dice si lo que queda alcanza para los demás gastos, y pesa más con ingresos bajos (enfoque de ingreso residual; §7.4).
+- **La línea residual no es un presupuesto.** La del IMV es lo que la ley garantiza para todos los gastos, vivienda incluida: como línea residual es baja. El umbral de la ECV es un umbral de la renta total: como línea residual es alta. Ninguna es un presupuesto de los gastos que no son vivienda por tipo de hogar, como el de Stone; es una sola para toda España, sin diferencias de precios entre territorios; deja fuera los hogares con menores y la llave, y antes de 2020 es la pensión no contributiva (§7.4).
 
 **Salarios (indicador 7):**
 - **Sin País Vasco ni Navarra.** La AEAT no los cubre, y de las haciendas forales solo Gipuzkoa publica una cifra comparable (§5.6).
@@ -1743,6 +1770,7 @@ El mapa base tarda unos 9 minutos: 7 min 29 s el PMTiles (`fichero_mapa_base`) y
 - **Tabla de paso desde el Censo 2011 (tarea 47):** `secciones_censo2011`, `tramos_2012`, `grupos_2011`, `paso2011_descasados`, `edificios_censo2011`, `paso_final_2011`, `paso_final_2011_vut`, `resumen_paso2011`, `censo2011`, `censo2011_tenencia`, `censo2011_2021`, `vut_2011_2021`, `comprobaciones_paso2011`, `validacion_paso2011`, `larga_paso2011`.
 - **Salarios y mochila:** `salarios_aeat`, `larga_salarios`, `modulos_sme`, `formas_mochila`, `mochila`, `mochila_neta`, `retenciones_mochila`, `ecv_mochila`, `correccion_mochila`, `tramos_salariales`, `curvas_salariales_aeat`.
 - **Fichas y derivados:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`, `inss_mensual`, `inss_anual`, `retenciones_transistor`, `transistor`, `fichero_supuestos`, `supuestos_inventario`, `fichero_supuestos_js`, `superficie_tipica`, `terminos_supuestos`, `validacion_supuestos`, `ecv_gastos_hogares`, `otros_gastos`.
+- **Línea de ingreso residual (tarea 65):** `cuantias_imv`, `xml_boe_imv`, `json_ine_ecv_umbral`, `umbral_ecv`, `lineas_residual`, `validacion_residual`, `larga_residual`, `fichero_web_lineas_residual`, `validacion_web_residual`, `muestra_residual`, `validacion_residual_muestra`.
 - **Sobrecarga:** `sobrecarga_agrupada`, `comprobaciones_sobrecarga`, `sobrecarga_quintil`, `eurostat_quintil`.
 - **Compraventa:** `ipva`, `larga_ipva`, `valor_tasado_trim`, `larga_valor_tasado`, `tipo_hipotecario_anual`, `tipo_bde_anual`, `renta_hogar_publicada`, `validacion_renta_hogar_publicada`, `renta_hogar_17`, `derivados_compraventa`, `registradores`, `validacion_registradores`, `larga_registradores`, `larga_compraventa`, `cp_municipio`, `fichero_cp_municipio`.
 - **Presión:** `zonas_tensionadas`, `boe_zonas_tensionadas`, `larga_zonas_tensionadas`, `resumen_larga_zonas_tensionadas`, `portales`, `portales_anual`, `larga_portales`, `resumen_portales`, `ficheros_web_portales`, `tramos_entrar`, `terminos_entrar`, `indicadores_entrar`, `tramos_web_entrar`, `resumen_entrar`.

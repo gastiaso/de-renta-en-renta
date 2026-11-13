@@ -114,6 +114,49 @@
         "entrar": "quien busca piso hoy"
       }
     },
+    "residual": {
+      "regla": "Regla",
+      "regla_porcentaje": "{umbral} del ingreso",
+      "regla_residual": "Lo que queda",
+      "linea": "Línea",
+      "linea_imv": "Ingreso mínimo vital",
+      "linea_ecv": "Umbral de pobreza",
+      "nombre": {
+        "imv": "la renta garantizada del ingreso mínimo vital para {hogar}",
+        "pnc": "la pensión no contributiva anual entre 12 para {hogar} (antes del ingreso mínimo vital)",
+        "ecv": "la línea del umbral de riesgo de pobreza de la ECV de {ola} para {hogar}"
+      },
+      "corto": {
+        "imv": "la línea del ingreso mínimo vital",
+        "ecv": "la línea del umbral de riesgo de pobreza de la ECV"
+      },
+      "hogar": {
+        "una_persona": "un hogar de una persona",
+        "dos_adultos": "un hogar de dos adultos"
+      },
+      "con_cifra": "{linea} ({euros} € al mes en {anio})",
+      "nota_linea": "Línea: {linea}.",
+      "frente": "Frente a {linea}",
+      "frase_debajo": "Lo que queda está {distancia} € por debajo de {linea}.",
+      "frase_encima": "Lo que queda está {distancia} € por encima de {linea}.",
+      "frase_igual": "Lo que queda iguala {linea}.",
+      "no_aplica": "La línea de ingreso residual no se aplica a «Hogar del barrio»: su ingreso es la renta de todos los hogares de la sección, de tamaño desconocido.",
+      "sin_linea": "Sin {linea} para {anio}: el último año con cifra es {ultimo}.",
+      "sin_linea_corto": "Sin línea de ingreso residual para este año.",
+      "sin_fichero": "Las líneas de ingreso residual no están disponibles en esta vista.",
+      "nota": {
+        "imv": "Es el 100 % de la pensión no contributiva anual entre 12 (Ley 19/2021, art. 13); dos adultos, + 30 %. Es lo que la ley garantiza a un hogar para todos sus gastos, vivienda incluida, no un presupuesto de los demás gastos.",
+        "pnc": "Antes del ingreso mínimo vital (junio de 2020), la misma cuenta con la pensión no contributiva; dos adultos, + 30 %.",
+        "ecv": "Es el 60 % de la mediana de la renta por unidad de consumo, con los ingresos de {anio} (ECV de {ola}); dos adultos, × 1,5. Es un umbral de la renta total, no de los demás gastos."
+      },
+      "tramo_1": "Queda más de 1,25 veces la línea",
+      "tramo_2": "Queda entre la línea y 1,25 veces",
+      "tramo_3": "Queda menos que la línea",
+      "leyenda": "Lo que queda tras pagar la vivienda frente a {linea}.",
+      "resumen": "Tras pagar el alquiler de {vivienda}, lo que queda no baja de {linea} en el {pct} de las secciones con dato ({encima} de {total}).",
+      "resumen_gastos": "Tras pagar el alquiler de {vivienda} y los otros gastos de vivienda, lo que queda no baja de {linea} en el {pct} de las secciones con dato ({encima} de {total}).",
+      "resumen_real": "Con el piso mediano que se alquila en cada sección en lugar de {vivienda}, en el {pct} ({encima} de {total})."
+    },
     "sueldo": {
       "intro_necesario": "Sueldo neto necesario para que el alquiler no pase del umbral. Con unos ingresos o una ficha, el mapa pasa a «¿te llega?».",
       "intro_llega": "Parte del ingreso que se va en alquiler, sección a sección.",
@@ -1070,6 +1113,20 @@
       "definicion": "Error típico aproximado de la mediana del alquiler por metro cuadrado (9), en porcentaje de la mediana, por tipología.",
       "calculo": "0,929 × (P75 − P25) / (P50 × √n), con los cuartiles del alquiler por m² y los contratos (n) del SERPAVI; solo donde se publica la mediana (10 o más contratos).",
       "lectura": "Vale también para el 15 y para el mínimo de 50 m² del 21, que son el alquiler por m² en otra unidad: la ficha avisa cuando «¿te llega?» queda en el límite entre dos tramos."
+    },
+    "linea_imv": {
+      "nombre": "Línea de ingreso residual: ingreso mínimo vital",
+      "unidad": "€ al mes",
+      "definicion": "Renta garantizada del ingreso mínimo vital (IMV) para un hogar de una persona o de dos adultos sin menores: lo que la ley garantiza a un hogar como ese para todos sus gastos, vivienda incluida. De 2015 a 2019, antes del IMV, la pensión no contributiva anual entre 12.",
+      "calculo": "100 % de la pensión no contributiva anual de cada año (normas de revalorización del BOE) entre 12; dos adultos, + 30 % (Ley 19/2021, art. 13). 2020: 5.538 € al año, desde junio; 2022: media ponderada por meses de la cuantía de enero a marzo y la de abril a diciembre (+15 %). Al céntimo.",
+      "lectura": "Línea con que la web compara lo que queda al mes tras pagar la vivienda (ingreso residual). No es un presupuesto de los demás gastos: es baja como línea residual. Sin hogares con menores."
+    },
+    "linea_pobreza_ecv": {
+      "nombre": "Línea de ingreso residual: umbral de riesgo de pobreza",
+      "unidad": "€ al mes",
+      "definicion": "Umbral de riesgo de pobreza de la Encuesta de Condiciones de Vida (60 % de la mediana de la renta por unidad de consumo) para un hogar de una persona o de dos adultos sin menores, con los ingresos del año.",
+      "calculo": "Umbral anual del hogar unipersonal publicado por el INE (sin alquiler imputado) entre 12; dos adultos, × 1,5 (escala de la OCDE modificada). Año = el de los ingresos: la ECV de 2025 da el de 2024. Al céntimo.",
+      "lectura": "Línea con que la web compara lo que queda al mes tras pagar la vivienda, como la tasa de riesgo de pobreza tras los gastos de vivienda de Eurostat. Es un umbral de la renta total, no de los gastos que no son vivienda: es alta como línea residual."
     }
   },
   "fuentes": {
@@ -1112,6 +1169,8 @@
     "cis_barometros": "Barómetros mensuales del CIS: la vivienda entre los principales problemas",
     "ine_ipc": "Índice de Precios de Consumo (IPC): medias anuales del índice general (base 2025)",
     "cis_ccaa": "Barómetros mensuales del CIS por comunidad autónoma: microdatos armonizados de Barómetro a barómetro",
+    "boe_imv": "Ingreso mínimo vital y pensión no contributiva: cuantías anuales (normas de revalorización)",
+    "ine_ecv_umbral": "Encuesta de Condiciones de Vida: umbral de riesgo de pobreza (valores ilustrativos)",
     "boe_legislacion": "BOE, legislación consolidada (API de datos abiertos)"
   },
   "vocabulario": {
@@ -1131,7 +1190,8 @@
       "ficha": "Ficha (ingreso de referencia)",
       "oferta_privada": "Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE)",
       "contrato": "Antigüedad del contrato de alquiler (IPVA)",
-      "superficie": "Superficie supuesta (mínimo teórico del sueldo necesario)"
+      "superficie": "Superficie supuesta (mínimo teórico del sueldo necesario)",
+      "hogar": "Tipo de hogar (línea de ingreso residual)"
     },
     "edad": {
       "Y_LT18": "Menos de 18 años",
@@ -1172,6 +1232,10 @@
       "tartera": "Salario mínimo",
       "mochila": "Joven de 26 a 35",
       "transistor": "Pensionista"
+    },
+    "hogar": {
+      "una_persona": "Una persona",
+      "dos_adultos": "Dos adultos sin menores"
     },
     "mes": {
       "M02": "Febrero",

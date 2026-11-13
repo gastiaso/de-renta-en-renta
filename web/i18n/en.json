@@ -114,6 +114,49 @@
         "entrar": "those looking for a home today"
       }
     },
+    "residual": {
+      "regla": "Rule",
+      "regla_porcentaje": "{umbral} of income",
+      "regla_residual": "What is left",
+      "linea": "Line",
+      "linea_imv": "Minimum living income",
+      "linea_ecv": "Poverty threshold",
+      "nombre": {
+        "imv": "the guaranteed income of the minimum living income scheme (IMV) for {hogar}",
+        "pnc": "the annual non-contributory pension divided by 12 for {hogar} (before the minimum living income)",
+        "ecv": "the at-risk-of-poverty threshold of the {ola} Living Conditions Survey for {hogar}"
+      },
+      "corto": {
+        "imv": "minimum living income line",
+        "ecv": "Living Conditions Survey at-risk-of-poverty threshold"
+      },
+      "hogar": {
+        "una_persona": "a one-person household",
+        "dos_adultos": "a two-adult household"
+      },
+      "con_cifra": "{linea} (€{euros} a month in {anio})",
+      "nota_linea": "Line: {linea}.",
+      "frente": "Against {linea}",
+      "frase_debajo": "What is left is €{distancia} below {linea}.",
+      "frase_encima": "What is left is €{distancia} above {linea}.",
+      "frase_igual": "What is left equals {linea}.",
+      "no_aplica": "The residual income line does not apply to «Neighbourhood household»: its income is the income of all the households in the tract, of unknown size.",
+      "sin_linea": "No {linea} for {anio}: the latest year with a figure is {ultimo}.",
+      "sin_linea_corto": "No residual income line for this year.",
+      "sin_fichero": "The residual income lines are not available in this view.",
+      "nota": {
+        "imv": "It is 100% of the annual non-contributory pension divided by 12 (Law 19/2021, art. 13); two adults, + 30%. It is what the law guarantees a household for all its expenses, housing included, not a budget for the other expenses.",
+        "pnc": "Before the minimum living income (June 2020), the same calculation with the non-contributory pension; two adults, + 30%.",
+        "ecv": "It is 60% of median equivalised income, for {anio} income (the {ola} survey); two adults, × 1.5. It is a threshold for total income, not for the other expenses."
+      },
+      "tramo_1": "More than 1.25 times the line is left",
+      "tramo_2": "Between the line and 1.25 times is left",
+      "tramo_3": "Less than the line is left",
+      "leyenda": "What is left after paying for housing, against {linea}.",
+      "resumen": "After paying the rent for {vivienda}, what is left does not fall below {linea} in {pct} of tracts with data ({encima} of {total}).",
+      "resumen_gastos": "After paying the rent for {vivienda} and the other housing costs, what is left does not fall below {linea} in {pct} of tracts with data ({encima} of {total}).",
+      "resumen_real": "With the median flat rented in each tract instead of {vivienda}, in {pct} ({encima} of {total})."
+    },
     "sueldo": {
       "intro_necesario": "Net pay needed so that rent stays under the threshold. With an income figure or a token, the map switches to “Can you make rent?”.",
       "intro_llega": "Share of income that goes on rent, tract by tract.",
@@ -1070,6 +1113,20 @@
       "definicion": "Approximate standard error of the median rent per square metre (9), as a percentage of the median, by building type.",
       "calculo": "0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI rent-per-m² quartiles and tenancies (n); only where the median is published (10 or more tenancies).",
       "lectura": "It also applies to 15 and to the 50 m² minimum of 21, which are rent per m² in another unit: the profile warns when «Can you make rent?» sits on the edge between two bands."
+    },
+    "linea_imv": {
+      "nombre": "Residual income line: minimum living income",
+      "unidad": "€ per month",
+      "definicion": "Guaranteed income of the minimum living income scheme (IMV) for a one-person household or a household of two adults without children: what the law guarantees such a household for all its expenses, housing included. From 2015 to 2019, before the IMV, the annual non-contributory pension divided by 12.",
+      "calculo": "100% of each year's annual non-contributory pension (BOE uprating rules) divided by 12; two adults, + 30% (Law 19/2021, art. 13). 2020: €5,538 a year, from June; 2022: month-weighted mean of the January–March amount and the April–December amount (+15%). To the cent.",
+      "lectura": "Line against which the website compares what is left each month after paying for housing (residual income). It is not a budget for other expenses: as a residual line it is low. No households with children."
+    },
+    "linea_pobreza_ecv": {
+      "nombre": "Residual income line: at-risk-of-poverty threshold",
+      "unidad": "€ per month",
+      "definicion": "At-risk-of-poverty threshold of the Living Conditions Survey (60% of median equivalised income) for a one-person household or a household of two adults without children, for the income year.",
+      "calculo": "Annual threshold for a one-person household published by INE (without imputed rent) divided by 12; two adults, × 1.5 (modified OECD scale). Year = income year: the 2025 survey gives 2024. To the cent.",
+      "lectura": "Line against which the website compares what is left each month after paying for housing, as in Eurostat's at-risk-of-poverty rate after housing costs. It is a threshold for total income, not for non-housing expenses: as a residual line it is high."
     }
   },
   "fuentes": {
@@ -1112,6 +1169,8 @@
     "cis_barometros": "CIS monthly barometers: housing among the main problems",
     "ine_ipc": "Consumer Price Index (CPI): annual averages of the general index (base 2025)",
     "cis_ccaa": "CIS monthly barometers by autonomous community: harmonised microdata from Barómetro a barómetro",
+    "boe_imv": "Minimum living income and non-contributory pension: annual amounts (uprating rules)",
+    "ine_ecv_umbral": "Living Conditions Survey: at-risk-of-poverty threshold (illustrative values)",
     "boe_legislacion": "Official State Gazette (BOE), consolidated legislation (open data API)"
   },
   "vocabulario": {
@@ -1131,7 +1190,8 @@
       "ficha": "Token (reference income)",
       "oferta_privada": "Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE)",
       "contrato": "Age of the rental contract (IPVA)",
-      "superficie": "Assumed floor area (theoretical minimum of the pay needed)"
+      "superficie": "Assumed floor area (theoretical minimum of the pay needed)",
+      "hogar": "Household type (residual income line)"
     },
     "edad": {
       "Y_LT18": "Under 18",
@@ -1172,6 +1232,10 @@
       "tartera": "Minimum wage",
       "mochila": "Young adult, 26 to 35",
       "transistor": "Pensioner"
+    },
+    "hogar": {
+      "una_persona": "One person",
+      "dos_adultos": "Two adults without children"
     },
     "mes": {
       "M02": "February",

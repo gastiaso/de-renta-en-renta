@@ -340,7 +340,8 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
              comprobar_municipales_navegador(b, evaluar, url, larga, raiz, espera),   # F5
              comprobar_historias_navegador(b, evaluar, url, espera,   # tarea 49
                                            hay_fichero = if (is.null(servidor)) NA else file.exists(file.path(raiz, "web", "datos", "historias.json"))),
-             comprobar_carga_navegador(b, evaluar, url, espera))   # tarea 62
+             comprobar_carga_navegador(b, evaluar, url, espera),   # tarea 62
+             comprobar_residual_navegador(b, evaluar, url, espera))   # tarea 65 (R/linea_residual.R)
 
   # Sample recomputed with the page modules
   sc <- unique(larga$geo_id[larga$nivel == "sc" & larga$indicador == "sueldo_necesario"])

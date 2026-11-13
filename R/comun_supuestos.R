@@ -63,6 +63,15 @@ supuesto_opciones <- function(id, supuestos = SUPUESTOS_INVENTARIO) {
   if (nrow(f) != 1L) stop("inventario/supuestos.csv: falta el supuesto ", id, call. = FALSE)
   supuestos_numeros(f$opciones)
 }
+# Supuestos de texto (tarea 65: regla de «¿te llega?», línea de ingreso residual y tipo de hogar):
+# el valor o, con `opciones`, las opciones, separados por «;».
+supuesto_texto <- function(id, supuestos = SUPUESTOS_INVENTARIO, opciones = FALSE) {
+  f <- supuestos[supuestos$id == id, ]
+  if (nrow(f) != 1L) stop("inventario/supuestos.csv: falta el supuesto ", id, call. = FALSE)
+  x <- if (opciones) f$opciones else f$valor
+  if (is.na(x) || !nzchar(x)) return(character(0))
+  strsplit(x, ";", fixed = TRUE)[[1]]
+}
 
 # Territorios de la muestra (2024): ocho municipios grandes de distinta superficie típica, cuatro
 # secciones de Madrid, Barcelona y Sevilla, una provincia (Madrid) y una comunidad (Madrid).
@@ -179,9 +188,11 @@ calcular_muestra_supuestos <- function(terminos, supuestos = SUPUESTOS_INVENTARI
 texto_supuestos_js <- function(supuestos = SUPUESTOS_INVENTARIO) {
   lista <- function(x) paste0("[", paste(format(x, trim = TRUE, scientific = FALSE), collapse = ", "), "]")
   num <- function(x) format(x, trim = TRUE, scientific = FALSE)
+  textos <- function(x) paste0("[", paste0("'", x, "'", collapse = ", "), "]")
   c("// Generado por generar_supuestos_js() (R/comun_supuestos.R) desde inventario/supuestos.csv: no se",
     "// edita a mano. Supuestos de \u00abTu sueldo\u00bb (backlog, tarea 48): superficies en m\u00b2, umbrales en %,",
-    "// tramos de \u00ab\u00bfte llega?\u00bb como proporci\u00f3n del ingreso, pagas al a\u00f1o y sueldo m\u00e1ximo en euros.",
+    "// tramos de \u00ab\u00bfte llega?\u00bb como proporci\u00f3n del ingreso, pagas al a\u00f1o y sueldo m\u00e1ximo en euros;",
+    "// regla de \u00ab\u00bfte llega?\u00bb, l\u00edneas de ingreso residual y sus tramos en m\u00faltiplos de la l\u00ednea (tarea 65).",
     "export const SUPUESTOS = Object.freeze({",
     sprintf("  superficies: Object.freeze(%s),", lista(supuesto_opciones("superficie_una_persona", supuestos))),
     sprintf("  superficie_una_persona: %s,", num(supuesto("superficie_una_persona", supuestos))),
@@ -193,6 +204,11 @@ texto_supuestos_js <- function(supuestos = SUPUESTOS_INVENTARIO) {
     sprintf("  pagas_defecto: %s,", num(supuesto("pagas", supuestos))),
     sprintf("  divisor_llave: %s,", num(supuesto("divisor_llave", supuestos))),
     sprintf("  sueldo_maximo: %s,", num(supuesto("sueldo_maximo", supuestos))),
+    sprintf("  reglas_llega: Object.freeze(%s),", textos(supuesto_texto("regla_llega", supuestos, opciones = TRUE))),
+    sprintf("  regla_llega: '%s',", supuesto_texto("regla_llega", supuestos)),
+    sprintf("  lineas_residual: Object.freeze(%s),", textos(supuesto_texto("linea_residual", supuestos, opciones = TRUE))),
+    sprintf("  linea_residual: '%s',", supuesto_texto("linea_residual", supuestos)),
+    sprintf("  limites_residual: Object.freeze(%s),", lista(supuesto("limites_residual", supuestos))),
     "});")
 }
 
@@ -237,8 +253,9 @@ comprobar_supuestos <- function(supuestos, terminos, larga_derivados, superficie
                     "segundo_sueldo", "sueldo_maximo", "divisor_llave", "superficie_tipica", "superficie_compra",
                     "financiacion_compra", "plazo_hipoteca")
   con_opciones <- supuestos[nzchar(supuestos$opciones), ]
+  # Como texto: los de la tarea 65 (regla, linea y hogar) no son numeros
   fuera <- sum(!vapply(seq_len(nrow(con_opciones)), function(i) {
-    all(supuestos_numeros(con_opciones$valor[i]) %in% supuestos_numeros(con_opciones$opciones[i]))
+    all(strsplit(con_opciones$valor[i], ";", fixed = TRUE)[[1]] %in% strsplit(con_opciones$opciones[i], ";", fixed = TRUE)[[1]])
   }, logical(1)))
   incompletos <- sum(!nzchar(supuestos$unidad) | !nzchar(supuestos$uso) | !nzchar(supuestos$decision))
   inventario <- fila("supuestos_inventario", "fuera de sus opciones, sin unidad, uso o decisi\u00f3n, obligatorios que faltan o duplicados",

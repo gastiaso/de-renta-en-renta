@@ -1,0 +1,212 @@
+// Línea de ingreso residual (backlog, tarea 65; docs/especificacion_ingreso_residual.md, parte A):
+// línea del año y del tipo de hogar, ingreso residual, tramos de la regla residual, color del mapa,
+// resumen, estado en la dirección y, con la muestra de pruebas/datos/residual_muestra.json (la que
+// escribe R, escribir_muestra_residual()), que la página da el mismo ingreso residual y el mismo tramo
+// que R. Con la exportación del pipeline, datos/lineas_residual.json cumple su contrato. Desde la raíz:
+//   node --test pruebas/web/residual.test.mjs
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const raiz = process.cwd();
+const modulo = (ruta) => import(pathToFileURL(join(raiz, ruta)).href);
+const R = await modulo('web/js/residual.js');
+const sueldo = await modulo('web/js/sueldo.js');
+const { leerEstado, consulta } = await modulo('web/js/estado.js');
+const { SUPUESTOS } = await modulo('web/js/supuestos.js');
+const leer = (...ruta) => readFileSync(join(raiz, ...ruta), 'utf8');
+const cerca = (a, b) => Math.abs(a - b) < 1e-9 * Math.max(1, Math.abs(b));
+
+// Tabla inventada con el formato de datos/lineas_residual.json
+const TABLA = {
+  limites: [1, 1.25],
+  imv: { anios: {
+    2019: { una_persona: 500, dos_adultos: 650, tipo: 'pnc' },
+    2024: { una_persona: 600, dos_adultos: 780, tipo: 'imv' },
+  } },
+  ecv: { anios: { 2024: { una_persona: 1000, dos_adultos: 1500, ola: 2025 } } },
+};
+const COLORES = { fuera: 'gris', llega: ['verde', 'ambar', 'rojo'] };
+
+test('supuestos: regla apagada por defecto, IMV por defecto y tramos en 1 y 1,25 × la línea', () => {
+  assert.deepEqual([...R.REGLAS], ['porcentaje', 'residual']);
+  assert.equal(R.REGLA_POR_DEFECTO, 'porcentaje');
+  assert.deepEqual([...R.LINEAS], ['imv', 'ecv']);
+  assert.equal(R.LINEA_POR_DEFECTO, 'imv');
+  assert.deepEqual([...R.LIMITES_RESIDUAL], [1, 1.25]);
+  assert.equal(R.reglaDe({}), 'porcentaje');
+  assert.equal(R.reglaDe({ regla: 'residual' }), 'residual');
+  assert.equal(R.reglaDe({ regla: 'otra' }), 'porcentaje');
+  assert.equal(R.lineaDe({ linea: 'ecv' }), 'ecv');
+  assert.equal(R.lineaDe({ linea: 'smi' }), 'imv');
+  assert.equal(SUPUESTOS.linea_residual, 'imv');
+});
+
+test('tipo de hogar: una persona, dos adultos con segundo sueldo y la llave sin línea', () => {
+  assert.equal(R.hogarDe('tartera'), 'una_persona');
+  assert.equal(R.hogarDe('mochila'), 'una_persona');
+  assert.equal(R.hogarDe('transistor'), 'una_persona');
+  assert.equal(R.hogarDe('peon', { neto: 1500, pagas: 12 }), 'una_persona');
+  assert.equal(R.hogarDe('peon', { neto: 1500, pagas: 12, segundo: 1000 }), 'dos_adultos');
+  assert.equal(R.hogarDe('peon', { neto: 1500, pagas: 12, segundo: 0 }), 'una_persona');
+  assert.equal(R.hogarDe('llave'), null);
+  assert.equal(R.hogarDe(undefined), null);
+});
+
+test('línea del año del alquiler: IMV, PNC antes del IMV, ola de la ECV y año sin línea', () => {
+  assert.deepEqual(R.lineaDelAnio(TABLA, 'imv', 2024, 'una_persona'), { linea: 'imv', hogar: 'una_persona', valor: 600, anio: 2024, tipo: 'imv' });
+  assert.equal(R.lineaDelAnio(TABLA, 'imv', '2024-05', 'dos_adultos').valor, 780);
+  assert.equal(R.lineaDelAnio(TABLA, 'imv', 2019, 'una_persona').tipo, 'pnc');
+  const ecv = R.lineaDelAnio(TABLA, 'ecv', 2024, 'dos_adultos');
+  assert.equal(ecv.valor, 1500);
+  assert.equal(ecv.ola, 2025);
+  assert.equal(ecv.tipo, 'ecv');
+  // Sin umbral para los ingresos de 2025: lo dice, con el último año que lo tiene
+  assert.deepEqual(R.lineaDelAnio(TABLA, 'ecv', 2025, 'una_persona'), { linea: 'ecv', hogar: 'una_persona', sin: true, anio: 2025, ultimo: 2024 });
+  assert.equal(R.lineaDelAnio(TABLA, 'imv', 2024, null), null);
+  assert.equal(R.lineaDelAnio(null, 'imv', 2024, 'una_persona'), null);
+  assert.equal(R.lineaDelAnio(TABLA, 'imv', null, 'una_persona'), null);
+});
+
+test('ingreso residual: ingreso − alquiler − otros gastos, sin redondear; tramos con sus límites', () => {
+  assert.equal(R.ingresoResidual({ ingreso: 1331.91, alquiler: 700 }), 1331.91 - 700);
+  assert.equal(R.ingresoResidual({ ingreso: 1331.91, alquiler: 700, otros: 120.4 }), 1331.91 - 700 - 120.4);
+  assert.equal(R.ingresoResidual({ ingreso: 0, alquiler: 700 }), null);
+  assert.equal(R.ingresoResidual({ ingreso: 1000, alquiler: null }), null);
+  assert.equal(R.ingresoResidual(null), null);
+  // Ejemplo de la especificación: la tartera de 2026 con 700 € de alquiler queda por debajo del IMV de 2026
+  const r = R.ingresoResidual({ ingreso: 1331.91, alquiler: 700 });
+  assert.ok(cerca(r, 631.91));
+  assert.equal(R.tramoResidual(r, 733.6), 2);
+  // Límites: por debajo de la línea, 2; justo en la línea y hasta 1,25 ×, 1; por encima, 0
+  assert.equal(R.tramoResidual(599.99, 600), 2);
+  assert.equal(R.tramoResidual(600, 600), 1);
+  assert.equal(R.tramoResidual(750, 600), 1);
+  assert.equal(R.tramoResidual(750.01, 600), 0);
+  assert.equal(R.tramoResidual(null, 600), null);
+  // Negativo (el alquiler pasa del ingreso): por debajo
+  assert.equal(R.tramoResidual(-50, 600), 2);
+});
+
+test('ficha: distancia a la línea, año sin línea y la llave «no aplica»', () => {
+  const linea = R.lineaDelAnio(TABLA, 'imv', 2024, 'una_persona');
+  const f = R.residualFicha({ ingreso: 1500, alquiler: 700, otros: 100 }, 'tartera', linea);
+  assert.equal(f.residual, 700);
+  assert.equal(f.distancia, 100);
+  assert.equal(f.tramo, 1);
+  assert.deepEqual(R.residualFicha({ ingreso: 1500, alquiler: 700 }, 'llave', null), { noAplica: true });
+  const sin = R.lineaDelAnio(TABLA, 'ecv', 2025, 'una_persona');
+  assert.deepEqual(R.residualFicha({ ingreso: 1500, alquiler: 700 }, 'tartera', sin), { linea: sin });
+  assert.equal(R.residualFicha(null, 'tartera', linea), null);
+  assert.equal(R.claveLinea(linea), 'interfaz.residual.nombre.imv');
+  assert.equal(R.claveLinea(R.lineaDelAnio(TABLA, 'imv', 2019, 'una_persona')), 'interfaz.residual.nombre.pnc');
+  assert.equal(R.claveLinea(R.lineaDelAnio(TABLA, 'ecv', 2024, 'una_persona')), 'interfaz.residual.nombre.ecv');
+});
+
+test('en el límite: el margen de la mediana del alquiler cruza un corte de la regla residual', () => {
+  // 1.500 − 800 = 700 (tramo 1, entre 600 y 750); con ±10 %: de 620 a 780, cruza 750
+  assert.equal(R.enLimiteResidual({ ingreso: 1500, alquiler: 800 }, 10, 600), true);
+  assert.equal(R.enLimiteResidual({ ingreso: 1500, alquiler: 800 }, 1, 600), false);
+  assert.equal(R.enLimiteResidual({ ingreso: 1500, alquiler: 800 }, null, 600), false);
+});
+
+// Con calculoLlega() de sueldo.js: «Tu ficha» con 1.500 € y 50 m², y otros gastos de 100 € en toda España
+const GASTOS = { espana: { v: 100 }, ccaa: {}, provincia: {}, ccaaDeProvincia: {} };
+const calculoPeon = (gastos = null) => sueldo.calculoLlega({
+  ficha: 'peon', perfiles: {}, sueldo: { neto: 1500, pagas: 12 }, superficie: 50, gastos,
+});
+
+test('mapa: el color de la regla residual resta el gasto de vivienda del ingreso, con los otros gastos', () => {
+  const calculo = calculoPeon(GASTOS);
+  const color = R.colorResidual(calculo, 'id', COLORES, null, 600);
+  assert.equal(color[0], 'case');
+  // ['case', ['!', valido], fuera, ['<', resto, 600], rojo, ['<=', resto, 750], ámbar, verde]
+  assert.equal(color[2], 'gris');
+  assert.deepEqual(color[3][0], '<');
+  assert.equal(color[3][2], 600);
+  assert.equal(color[5][2], 750);
+  assert.deepEqual(color.slice(4).filter((x) => typeof x === 'string'), ['rojo', 'ambar', 'verde']);
+  const resto = color[3][1];
+  assert.equal(resto[0], '-');
+  assert.equal(resto[1], 1500);                                  // el ingreso de «Tu ficha»
+  assert.deepEqual(resto[2][0], '+');                            // alquiler + otros gastos de vivienda
+  assert.equal(resto[2][2], 100);
+  // Sin línea o con la llave: sin color
+  assert.equal(R.colorResidual(calculo, 'id', COLORES, null, null), 'gris');
+  assert.equal(R.colorResidual({ ficha: 'llave' }, 'id', COLORES, null, 600), 'gris');
+});
+
+test('resumen: proporción de secciones donde lo que queda no baja de la línea, y con el alquiler real', () => {
+  const calculo = calculoPeon();
+  // Alquiler por m² de 4 secciones: 50 m² → 400, 900, 1.000 y sin dato; queda 1.100, 600, 500 y nada
+  const m2 = [8, 18, 20, null];
+  const mes = [500, 1200, null, null];
+  const x = (serie, i) => (serie === 'alquiler_m2' ? m2[i] : serie === 'alquiler_mes' ? mes[i] : null);
+  const r = R.resumenResidual(calculo, ['a', 'b', 'c', 'd'], x, 600);
+  assert.deepEqual(r, { con: 3, encima: 2, proporcion: 2 / 3 });
+  const real = R.resumenResidual(calculo, ['a', 'b', 'c', 'd'], x, 600, { real: true });
+  assert.deepEqual(real, { con: 2, encima: 1, proporcion: 1 / 2 });
+  // Con los otros gastos, también se restan: 1.000, 500, 400 → una por encima
+  const conGastos = R.resumenResidual(calculoPeon(GASTOS), ['a', 'b', 'c', 'd'], x, 600);
+  assert.equal(conGastos.encima, 1);
+  assert.equal(R.resumenResidual(calculo, ['a'], x, null).proporcion, null);
+});
+
+test('dirección: regla=residual y linea=ecv entran y salen; lo demás no', () => {
+  assert.deepEqual(leerEstado('?regla=residual&linea=ecv'), { regla: 'residual', linea: 'ecv' });
+  assert.deepEqual(leerEstado('?regla=otra&linea=smi'), {});
+  assert.equal(consulta({ ficha: 'tartera', regla: 'residual', linea: 'ecv' }), '?ficha=tartera&regla=residual&linea=ecv');
+  assert.equal(consulta({ regla: undefined, linea: undefined }), '');
+});
+
+// R y la página coinciden: los casos de la muestra (los catorce territorios de 2024 × las combinaciones de
+// «Tu ficha» y las tres fichas de una persona), con las líneas de 2024, sin y con los otros gastos
+const ruta = join(raiz, 'pruebas', 'datos', 'residual_muestra.json');
+test('muestra de R (pruebas/datos/residual_muestra.json): mismo ingreso residual y mismo tramo', { skip: !existsSync(ruta) }, () => {
+  const j = JSON.parse(readFileSync(ruta, 'utf8'));
+  assert.ok(j.casos.length > 500);
+  let comprobados = 0;
+  for (const c of j.casos) {
+    const ficha = c.ficha;
+    const sueldoC = ficha === 'peon' ? { neto: j.peon.neto, pagas: c.pagas, segundo: c.segundo ? j.peon.segundo : 0 } : null;
+    assert.equal(R.hogarDe(ficha, sueldoC), c.hogar);
+    for (const conGastos of [false, true]) {
+      const r = { ingreso: c.ingreso, alquiler: c.alquiler, ...(conGastos ? { otros: c.otros } : {}) };
+      const residual = R.ingresoResidual(r);
+      const esperado = conGastos ? c.residual_gastos : c.residual;
+      if (esperado === null) { assert.equal(residual, null); continue; }
+      assert.ok(cerca(residual, esperado), `${c.geo_id} ${ficha} ${residual} ≠ ${esperado}`);
+      for (const linea of ['imv', 'ecv']) {
+        const l = R.lineaDelAnio(j.lineas, linea, j.anio, c.hogar);
+        assert.equal(l.valor, c[`linea_${linea}`]);
+        assert.equal(R.tramoResidual(residual, l.valor), c[`tramo_${linea}${conGastos ? '_gastos' : ''}`]);
+        comprobados++;
+      }
+    }
+  }
+  assert.ok(comprobados > 1000);
+});
+
+// Con la exportación del pipeline: datos/lineas_residual.json
+const exportado = join(raiz, 'web', 'datos', 'lineas_residual.json');
+test('datos/lineas_residual.json: las dos líneas, de 2015 en adelante, con la escala de dos adultos', { skip: !existsSync(exportado) }, () => {
+  const j = JSON.parse(readFileSync(exportado, 'utf8'));
+  assert.deepEqual(j.limites, [1, 1.25]);
+  for (const linea of ['imv', 'ecv']) {
+    const anios = Object.keys(j[linea].anios).map(Number);
+    assert.ok(Math.min(...anios) <= 2015, linea);
+    for (const [a, x] of Object.entries(j[linea].anios)) {
+      const escala = linea === 'imv' ? 1.3 : 1.5;
+      assert.ok(Math.abs(x.dos_adultos - x.una_persona * escala) < 0.013, `${linea} ${a}`);
+      assert.ok(x.una_persona > 300 && x.una_persona < 1500, `${linea} ${a}`);
+    }
+  }
+  // Antes del IMV, la pensión no contributiva, rotulada
+  assert.equal(j.imv.anios['2015'].tipo, 'pnc');
+  assert.equal(j.imv.anios['2019'].tipo, 'pnc');
+  assert.equal(j.imv.anios['2021'].tipo, 'imv');
+  assert.equal(j.ecv.anios['2024'].ola, 2025);
+});

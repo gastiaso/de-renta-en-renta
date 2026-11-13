@@ -21,6 +21,9 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
     umbralTitulo: $('sueldo-umbral-titulo'),
     gastos: $('sueldo-gastos'),
     gastosNota: $('sueldo-gastos-nota'),
+    regla: $('sueldo-regla'),          // tarea 65: «Regla» y «Línea» de la línea de ingreso residual
+    linea: $('sueldo-linea'),
+    lineaNota: $('sueldo-linea-nota'),
     aviso: $('sueldo-aviso'),
     intro: $('sueldo-intro'),
     resumen: $('sueldo-resumen'),
@@ -84,6 +87,15 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
   });
   // Otros gastos de vivienda (decisión del autor, 12-nov-2026): apagado por defecto
   el.gastos?.addEventListener('change', () => alCambiar({ gastos: el.gastos.checked }));
+  // Línea de ingreso residual (tarea 65): la regla de «¿te llega?» (apagada, la del porcentaje) y la línea
+  el.regla?.addEventListener('click', (e) => {
+    const boton = e.target.closest('button[data-regla]');
+    if (boton && !boton.disabled) alCambiar({ regla: boton.dataset.regla });
+  });
+  el.linea?.addEventListener('click', (e) => {
+    const boton = e.target.closest('button[data-linea]');
+    if (boton && !boton.disabled) alCambiar({ linea: boton.dataset.linea });
+  });
   el.volver.addEventListener('click', () => {
     el.neto.value = '';
     el.segundo.value = '';
@@ -117,7 +129,9 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
     // cambia el mínimo teórico de la ficha). `tipica`: con la superficie típica elegida, el texto que
     // dice de qué territorio es (o por qué no la hay). `gastos`: { activo, disponible, nota }, el
     // selector de otros gastos de vivienda y el texto con su cifra (o por qué no la hay).
-    pintar({ t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle, sinEfecto = false, soloMinimo = false, tipica = null, gastos = null }) {
+    // `residual` (tarea 65): { regla, linea, disponible, nota }, los selectores «Regla» y «Línea», solo en
+    // «¿te llega?», y el texto con la línea de la vista.
+    pintar({ t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle, sinEfecto = false, soloMinimo = false, tipica = null, gastos = null, residual = null }) {
       // Fichas: las que tienen ingreso en perfiles.json, y «Tu ficha» si hay sueldo escrito.
       const disponibles = [...FICHAS_PERFIL.filter((f) => perfiles?.[f]), 'peon'];
       el.fichas.querySelector('.fichas-botones').replaceChildren(...disponibles.map((ficha) => {
@@ -163,6 +177,22 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
       if (el.gastosNota) {
         el.gastosNota.textContent = gastos?.nota ?? '';
         el.gastosNota.hidden = !gastos?.nota;
+      }
+      // Regla y línea de ingreso residual (tarea 65): solo en «¿te llega?»; sin el fichero, desactivadas
+      const enLlega = modo === 'llega' && Boolean(residual);
+      for (const [grupo, dato, valor] of [[el.regla, 'regla', residual?.regla], [el.linea, 'linea', residual?.linea]]) {
+        if (!grupo) continue;
+        grupo.hidden = !enLlega;
+        for (const b of grupo.querySelectorAll(`button[data-${dato}]`)) {
+          b.setAttribute('aria-pressed', String(b.dataset[dato] === valor));
+          b.disabled = !residual?.disponible;
+        }
+      }
+      const botonPorcentaje = el.regla?.querySelector('button[data-regla="porcentaje"]');
+      if (botonPorcentaje) botonPorcentaje.textContent = t('interfaz.residual.regla_porcentaje', { umbral: t.porcentaje(umbral) });
+      if (el.lineaNota) {
+        el.lineaNota.textContent = enLlega ? residual?.nota ?? '' : '';
+        el.lineaNota.hidden = !el.lineaNota.textContent;
       }
       // Rótulos con el formato del idioma («30 %» en castellano, «30%» en inglés)
       for (const b of el.umbral.querySelectorAll('button[data-umbral]')) b.textContent = t.porcentaje(Number(b.dataset.umbral) / 100);

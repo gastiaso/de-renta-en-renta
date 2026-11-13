@@ -109,6 +109,13 @@ export const RUTA_OTROS_GASTOS = 'datos/otros_gastos.json';
 export const cargarOtrosGastos = (m) => (m?.ejemplo
   ? Promise.resolve(null)
   : recordar(RUTA_OTROS_GASTOS, () => pedir(RUTA_OTROS_GASTOS)).catch(() => null));
+// Líneas de ingreso residual (backlog, tarea 65; R/linea_residual.R): datos/lineas_residual.json, fuera
+// del manifiesto, como otros_gastos.json. Sin él (la muestra de datos/ejemplo/ o si no llega), null, y
+// «Tu sueldo» ofrece los selectores de la regla y la línea desactivados.
+export const RUTA_LINEAS_RESIDUAL = 'datos/lineas_residual.json';
+export const cargarLineasResidual = (m) => (m?.ejemplo
+  ? Promise.resolve(null)
+  : recordar(RUTA_LINEAS_RESIDUAL, () => pedir(RUTA_LINEAS_RESIDUAL)).catch(() => null));
 // F5: fichero de detalle de un mapa (`detalle` en el manifiesto; las declaraciones del indicador 20,
 // { municipio: [...] }), o null.
 export const cargarDetalle = (ruta) => opcional(ruta, null);

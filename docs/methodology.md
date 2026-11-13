@@ -1291,7 +1291,7 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 - The map of indicator 21 is drawn in six bands, with national cut-offs that are the same every year: €1,000, 1,300, 1,600, 2,000 and 2,600 with actual monthly rent (task 40; until then, €700, 900, 1,100, 1,500 and 2,000 with 50 m²; plan §11, question 20). The colour ramp has six steps that can also be told apart with colour blindness (`rampa_daltonismo`).
 - Indicators 15 and 21 change with the threshold; 15 and the minimum of 21, with the floor area; and 15, with the pay of «Your token»: the website recomputes them in the browser (plan §6.6).
 - **Indicator 14, profile only** (backlog decision 10; task 41). It divides renters' rent by the average income of all households in the tract, owners included, and barely tells areas apart: in 2024, the median is 18.3% in the fifth of tracts with the lowest household income and 17.5% in the highest, and the 5th and 95th percentiles are 11.6 and 25.3%. That is why it leaves the map selector and stays in the tract and municipality profile, renamed («median rent over the area's average household income») and with that note, which the neighbourhood household token carries too, being the same ratio (§6.4). The bands computed for a map, in the backlog, are kept as a reference.
-- **The same share for every income** (backlog, task 45). The 30% threshold treats a low and a high income alike, and does not say whether what is left after paying for housing covers everything else. With a low income, the remainder may not cover basic expenses even if rent stays below 30%; with a high one, going over 30% still leaves a lot. The residual income approach compares what is left with a minimum budget for other expenses by household size and composition (Stone, M. E. (2006). «What is housing affordability? The case for the residual income approach». *Housing Policy Debate*, 17(1), 151–184). The atlas gives the money left over (§6.1), but does not set that budget: the residual income line is left for v1.1 (backlog).
+- **The same share for every income** (backlog, task 45). The 30% threshold treats a low and a high income alike, and does not say whether what is left after paying for housing covers everything else. With a low income, the remainder may not cover basic expenses even if rent stays below 30%; with a high one, going over 30% still leaves a lot. The residual income approach compares what is left with a minimum budget for other expenses by household size and composition (Stone, M. E. (2006). «What is housing affordability? The case for the residual income approach». *Housing Policy Debate*, 17(1), 151–184). The atlas gives the money left over (§6.1), but does not set that budget. The residual income line (below) compares what is left with two legal or statistical lines, not with a budget of its own.
 
 **Computation** (`armonizar_derivados()`; target `larga_derivados`, 2,644,824 rows, source `calculo_propio`):
 - **14** (`calcular_esfuerzo_residentes()`): in tracts and municipalities, the levels at which SERPAVI and ADRH publish both terms (`NIVELES_ESFUERZO`), and in the years with both, 2015–2024. No breakdown.
@@ -1348,6 +1348,32 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 With the Young adult token, 7,616 tracts are `ausente` in 2024: all those in the Basque Country, Navarre, Ceuta and Melilla, where the token has no income, and those without rent.
 
 **Gate** (`comprobar_derivados()`, `validacion_derivados`; §4.1): `derivados_terminos`, `derivados_estado`, `derivados_rango`, `perfiles_mochila` and `smi_neto` (blocking), and `derivados_rango_detalle` (warning). Before that, the Minimum wage token goes through `smi_boe`, the Young adult token through `mochila_cobertura` and the Pensioner token through the INSS ones (§6.2, §6.3 and §6.5).
+
+**Residual income line** (backlog, task 65; `docs/especificacion_ingreso_residual.md`, part A; author's decision, 13 November 2026). What is left each month after paying for housing (the token's income minus the rent and, with the selector, the other housing costs; §6.7) is compared with a monthly line for the household type and the rent year (rule 4). Two lines, with a selector, the first by default (`R/linea_residual.R`; `calcular_lineas_residual()`):
+
+- **Guaranteed income of the minimum living income scheme (IMV)** (`linea_imv`, source `boe_imv`): 100% of the annual non-contributory pension divided by 12 (Law 19/2021, art. 13); two adults, + 30%. From 2015 to 2019, before the IMV, the annual non-contributory pension divided by 12, labelled as such. In 2020, €5,538 a year (without the pension's 40 cents); in 2022, the month-weighted mean of the January–March amount and the April–December amount, 15% higher. One person: €428.05 a month in 2015, €604.22 in 2024 and €733.60 in 2026; two adults, €953.68 in 2026. The amounts are in `inventario/cuantias_imv.csv`, with their BOE rule.
+- **Living Conditions Survey at-risk-of-poverty threshold** (`linea_pobreza_ecv`, source `ine_ecv_umbral`): that of the one-person household without imputed rent (INE table 9964) divided by 12; two adults, × 1.5 (modified OECD scale). The year is the income year: the 2024 rent goes with the 2025 survey, €1,018.37 a month for one person. The 2025 rent will have no threshold until the 2026 survey.
+
+Household types: one person (the three one-person tokens and «Your token» with one wage) and two adults («Your token» with a second wage); no households with children. The key is left out: its income is the income of all the households in the tract, of unknown size. The lines, to the cent, go to the long table (national level, cut `hogar`; `armonizar_lineas_residual()`) and to the website (`datos/lineas_residual.json`). The page computes each tract's residual income from the terms it already exports, unrounded, like the share.
+
+**On the website.** In «Can you afford it?», the profile states, below the money left over, how far what is left is from the line. The «Rule» selector (off: the share of income) colours the map with «What is left» in three bands: below the line, from the line to 1.25 times the line, and above (`limites_residual`, `inventario/supuestos.csv`). The «Your wage» result states in what share of tracts with data what is left does not fall below the line.
+
+**Crossing point with 30%.** With a monthly income *I*, a line *N* and other housing costs *G*, the 30% rule allows a rent of up to 0.30 × *I*; the residual line, up to *I* − *G* − *N*. The residual line is the stricter one when *I* < (*N* + *G*) / 0.70. Without other costs, that happens below €1,048 a month with the 2026 IMV and below €1,455 with the 2025 survey threshold. With the 2026 net minimum wage (€1,331.91; different years, for illustration only), the 30% rule allows €400 of rent; the IMV, €598; the survey threshold, €314.
+
+**Gate** (`comprobar_lineas_residual()`, `validacion_residual`; `comprobar_web_lineas_residual()`, `validacion_web_residual`; `comprobar_muestra_residual()`, `validacion_residual_muestra`). The sample is that of the assumptions (§6.7) with the household type, the region's other housing costs and the two 2024 lines (`calcular_muestra_residual()`); the page tests check it too.
+
+| Check | Type | Result (13 November 2026) |
+|---|---|---|
+| `residual_pnc_boe` | block | 0 in the 7 years with XML |
+| `residual_imv_publicada` | block | 0 in the 3 figures |
+| `residual_umbral_ecv` | block | €0.06 at most |
+| `residual_umbral_ecv_2025` | block | €12,220.4 |
+| `residual_escala` | block | €0.01 at most |
+| `residual_escala_ine` | warning | €0.05 at most |
+| `residual_serie` | block | no year without a line |
+| `residual_muestra` | block | up to date |
+| `residual_coherencia` | warning | 0 cases |
+| `web_residual` | block | 0 differing figures |
 
 ### 7.5 Overburden and access (indicators 22 and 23, v0.0)
 
@@ -1606,6 +1632,7 @@ The series with the main-residence tax deduction (in force until December 2012),
 - **Vulnerability, not moving in.** The burden divides rent by the average income of all households in the tract, not only of those who rent (`inventario/indicadores.csv`).
 - **The rent share in the long table is a check.** With the Minimum wage, Young adult and Pensioner tokens from 2015 to 2024; the website computes it with the chosen token (§7.4).
 - **The same share for every income.** The 30% threshold of indicators 15 and 21 does not say whether what is left covers other expenses, and it weighs more on low incomes (residual income approach; §7.4).
+- **The residual line is not a budget.** The IMV line is what the law guarantees for all expenses, housing included: as a residual line it is low. The survey threshold is a threshold for total income: as a residual line it is high. Neither is a budget for non-housing expenses by household type, like Stone's; there is a single one for all of Spain, with no price differences between areas; it leaves out households with children and the key, and before 2020 it is the non-contributory pension (§7.4).
 
 **Wages (indicator 7):**
 - **No Basque Country or Navarre.** AEAT does not cover them, and of the foral tax authorities only Gipuzkoa publishes a comparable figure (§5.6).
@@ -1743,6 +1770,7 @@ The base map takes about 9 minutes: 7 min 29 s for the PMTiles file (`fichero_ma
 - **Conversion table from the 2011 Census (task 47):** `secciones_censo2011`, `tramos_2012`, `grupos_2011`, `paso2011_descasados`, `edificios_censo2011`, `paso_final_2011`, `paso_final_2011_vut`, `resumen_paso2011`, `censo2011`, `censo2011_tenencia`, `censo2011_2021`, `vut_2011_2021`, `comprobaciones_paso2011`, `validacion_paso2011`, `larga_paso2011`.
 - **Wages and Young adult token:** `salarios_aeat`, `larga_salarios`, `modulos_sme`, `formas_mochila`, `mochila`, `mochila_neta`, `retenciones_mochila`, `ecv_mochila`, `correccion_mochila`, `tramos_salariales`, `curvas_salariales_aeat`.
 - **Tokens and derived indicators:** `perfiles`, `resumen_perfiles_llave`, `larga_derivados`, `inss_mensual`, `inss_anual`, `retenciones_transistor`, `transistor`, `fichero_supuestos`, `supuestos_inventario`, `fichero_supuestos_js`, `superficie_tipica`, `terminos_supuestos`, `validacion_supuestos`, `ecv_gastos_hogares`, `otros_gastos`.
+- **Residual income line (task 65):** `cuantias_imv`, `xml_boe_imv`, `json_ine_ecv_umbral`, `umbral_ecv`, `lineas_residual`, `validacion_residual`, `larga_residual`, `fichero_web_lineas_residual`, `validacion_web_residual`, `muestra_residual`, `validacion_residual_muestra`.
 - **Overburden:** `sobrecarga_agrupada`, `comprobaciones_sobrecarga`, `sobrecarga_quintil`, `eurostat_quintil`.
 - **Home purchase:** `ipva`, `larga_ipva`, `valor_tasado_trim`, `larga_valor_tasado`, `tipo_hipotecario_anual`, `tipo_bde_anual`, `renta_hogar_publicada`, `validacion_renta_hogar_publicada`, `renta_hogar_17`, `derivados_compraventa`, `registradores`, `validacion_registradores`, `larga_registradores`, `larga_compraventa`, `cp_municipio`, `fichero_cp_municipio`.
 - **Pressure:** `zonas_tensionadas`, `boe_zonas_tensionadas`, `larga_zonas_tensionadas`, `resumen_larga_zonas_tensionadas`, `portales`, `portales_anual`, `larga_portales`, `resumen_portales`, `ficheros_web_portales`, `tramos_entrar`, `terminos_entrar`, `indicadores_entrar`, `tramos_web_entrar`, `resumen_entrar`.

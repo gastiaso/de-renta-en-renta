@@ -43,6 +43,7 @@
   <link rel="modulepreload" href="js/movil.js">
   <link rel="modulepreload" href="js/leyenda.js">
   <link rel="modulepreload" href="js/sueldo.js">
+  <link rel="modulepreload" href="js/residual.js">
   <link rel="modulepreload" href="js/formulas.js">
   <link rel="modulepreload" href="js/familias.js">
   <link rel="modulepreload" href="js/ficha.js">
@@ -236,6 +237,17 @@
               </label>
               <p id="sueldo-gastos-nota" class="nota"></p>
             </div>
+            <div id="sueldo-regla" class="selector" role="group" aria-labelledby="sueldo-regla-titulo" hidden>
+              <span id="sueldo-regla-titulo" class="selector-titulo" data-i18n="interfaz.residual.regla">Regla</span>
+              <button type="button" data-regla="porcentaje" aria-pressed="true">30 % del ingreso</button>
+              <button type="button" data-regla="residual" aria-pressed="false" data-i18n="interfaz.residual.regla_residual">Lo que queda</button>
+            </div>
+            <div id="sueldo-linea" class="selector" role="group" aria-labelledby="sueldo-linea-titulo" hidden>
+              <span id="sueldo-linea-titulo" class="selector-titulo" data-i18n="interfaz.residual.linea">Línea</span>
+              <button type="button" data-linea="imv" aria-pressed="true" data-i18n="interfaz.residual.linea_imv">Ingreso mínimo vital</button>
+              <button type="button" data-linea="ecv" aria-pressed="false" data-i18n="interfaz.residual.linea_ecv">Umbral de pobreza</button>
+            </div>
+            <p id="sueldo-linea-nota" class="nota" hidden></p>
             <p id="sueldo-resumen" class="sueldo-resumen" aria-live="polite" hidden></p>
             <p id="sueldo-aviso" class="sueldo-aviso" hidden data-i18n="interfaz.sueldo.aviso_parque">Es el alquiler de quien ya tiene contrato; quien busca piso hoy suele pagar más.</p>
             <p id="sueldo-detalle" class="nota" hidden></p>

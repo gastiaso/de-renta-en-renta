@@ -1,0 +1,14 @@
+anio,desde,tipo,linea_anual,norma_linea,pnc_anual,norma_pnc,boe_pnc,xml_pnc,imv_mes_publicado,imv_dos_mes_publicado,nota
+2015,1,pnc,5136.60,"RD 1107/2014, art. 17.1 (pensión no contributiva; antes del IMV)",5136.60,"RD 1107/2014, art. 17.1",BOE-A-2014-13680,TRUE,,,
+2016,1,pnc,5150.60,"RD 1170/2015, art. 17.1 (pensión no contributiva; antes del IMV)",5150.60,"RD 1170/2015, art. 17.1",BOE-A-2015-14272,TRUE,,,
+2017,1,pnc,5164.60,"RD 746/2016, anexo I (pensión no contributiva; antes del IMV)",5164.60,"RD 746/2016, anexo I",BOE-A-2016-12605,TRUE,,,
+2018,1,pnc,5321.40,"Ley 6/2018, disposición adicional quincuagésima primera, apartado cuatro (pensión no contributiva; antes del IMV)",5321.40,"Ley 6/2018, disposición adicional quincuagésima primera, apartado cuatro",BOE-A-2018-9268,FALSE,,,"Sube un 2,75 % la cifra inicial del año, 5.178,60 € (RD 1079/2017, anexo I, BOE-A-2017-15854), para todo 2018, con atrasos. Base consolidada tras la paga por la desviación del IPC: 5.327,00 € (RDL 28/2018, anexo II). XML de 2,9 MB: sin caché"
+2019,1,pnc,5488.00,"RDL 28/2018, anexo I (pensión no contributiva; antes del IMV)",5488.00,"RDL 28/2018, anexo I",BOE-A-2018-17992,FALSE,,,XML de 464 KB: sin caché
+2020,1,imv,5538.00,"RDL 20/2020, art. 10.5 y anexo I (IMV desde el 1 de junio de 2020; BOE-A-2020-5493)",5538.40,"RDL 1/2020, anexo",BOE-A-2020-501,TRUE,461.50,,"La renta garantizada del IMV de 2020 es de 5.538 € al año (art. 10.5), sin los 40 céntimos de la pensión no contributiva"
+2021,1,imv,5639.20,"RDL 20/2020, art. 10.2.a (100 % de la pensión no contributiva anual)",5639.20,"RD 46/2021, art. 17.1",BOE-A-2021-1135,TRUE,,,
+2022,1,imv,5899.60,"Ley 19/2021, art. 13.2.a (BOE-A-2021-21007); enero a marzo",5899.60,"RD 65/2022, art. 17.1",BOE-A-2022-1189,TRUE,,,
+2022,4,imv,6784.54,"RDL 6/2022, art. 45, en la redacción del RDL 11/2022 (BOE-A-2022-10557): +15 % de abril a diciembre",,,,FALSE,,,"5.899,60 × 1,15. La pensión no contributiva subió el 15 % solo de julio a diciembre (art. 45 bis), sin cambiar la de referencia del IMV"
+2023,1,imv,6784.54,"RDL 20/2022, art. 79 (el IMV guarda con la pensión no contributiva la relación del art. 13 de la Ley 19/2021)",6784.54,"RDL 20/2022, art. 77 (5.899,60 × 1,15: la norma no escribe la cifra)",BOE-A-2022-22685,FALSE,,,XML de 596 KB: sin caché
+2024,1,imv,7250.60,"Ley 19/2021, art. 13.2.a; RDL 8/2023, art. 78.5",7250.60,"RDL 8/2023, art. 78.5",BOE-A-2023-26452,FALSE,,,XML de 777 KB: sin caché
+2025,1,imv,7905.80,"Ley 19/2021, art. 13.2.a",7905.80,"RDL 1/2025, art. 65.5",BOE-A-2025-1560,FALSE,,,"XML de 415 KB: sin caché. La misma cifra estaba en el RDL 9/2024, no convalidado"
+2026,1,imv,8803.20,"Ley 19/2021, art. 13.2.a",8803.20,"RDL 3/2026, art. 2.5",BOE-A-2026-2548,TRUE,733.60,953.68,"La misma cifra estaba en el RDL 16/2025, no convalidado. IMV de una persona y de dos adultos: página del IMV de la Seguridad Social (consulta del 12-nov-2026)"

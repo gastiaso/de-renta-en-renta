@@ -36,7 +36,8 @@ test_that("inventario/supuestos.csv: completo, sin repetidos y con cada valor en
   s <- leer_supuestos(raiz("inventario", "supuestos.csv"))
   expect_false(anyDuplicated(s$id) > 0)
   for (id in s$id[nzchar(s$opciones)]) {
-    expect_true(all(supuestos_numeros(s$valor[s$id == id]) %in% supuesto_opciones(id, s)), info = id)
+    # Como texto: la regla, la línea y el hogar de la tarea 65 no son números
+    expect_true(all(supuesto_texto(id, s) %in% supuesto_texto(id, s, opciones = TRUE)), info = id)
   }
   expect_true(all(nzchar(s$unidad) & nzchar(s$uso) & nzchar(s$decision) & nzchar(s$descripcion)))
   expect_error(supuesto("no_existe", s), "falta el supuesto")

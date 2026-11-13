@@ -236,9 +236,11 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
       },
       expresion(idSeccion, nivelCapa = nivel) {
         const ing = ['/', numero(ingreso.serie), divisor];
+        const gasto = conOtros(numero(vivienda.serie), idSeccion, nivelCapa);
         return {
           valido: ['all', ['!', falta(vivienda.serie)], ['!', falta(ingreso.serie)], ['>', numero(ingreso.serie), 0]],
-          ratio: ['/', conOtros(numero(vivienda.serie), idSeccion, nivelCapa), ing],
+          ratio: ['/', gasto, ing],
+          ingreso: ing, gasto,   // tarea 65: la regla residual (residual.js) resta uno de otro
         };
       },
     };
@@ -268,9 +270,11 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
     },
     expresion(idSeccion, nivelCapa = nivel) {
       const ingreso = sinIngresoEn(nivelCapa) ? 0 : perfil ? expresionIngresoPerfil(perfil, idSeccion) : fijo;
+      const gasto = conOtros(['*', numero(m2Serie), superficie], idSeccion, nivelCapa);
       return {
         valido: ['all', ['!', falta(m2Serie)], ['>', ingreso, 0]],
-        ratio: ['/', conOtros(['*', numero(m2Serie), superficie], idSeccion, nivelCapa), ingreso],
+        ratio: ['/', gasto, ingreso],
+        ingreso, gasto,   // tarea 65: la regla residual (residual.js) resta uno de otro
       };
     },
   };

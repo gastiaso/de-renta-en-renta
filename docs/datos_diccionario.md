@@ -43,6 +43,7 @@ Variable del desglose. Sin desglose, `corte` y `grupo` valen `total`.
 | `oferta_privada` | Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE) |
 | `contrato` | Antigüedad del contrato de alquiler (IPVA) |
 | `superficie` | Superficie supuesta (mínimo teórico del sueldo necesario) |
+| `hogar` | Tipo de hogar (línea de ingreso residual) |
 
 ### `grupo`
 
@@ -89,6 +90,8 @@ Valor del desglose, según el corte.
 | `contrato` | `nuevo` | Contrato nuevo (firmado en el año de referencia) |
 | `contrato` | `existente` | Contrato existente (firmado antes del año de referencia) |
 | `superficie` | `50` | Piso teórico de 50 m² |
+| `hogar` | `una_persona` | Una persona |
+| `hogar` | `dos_adultos` | Dos adultos sin menores |
 
 ### `fuente`
 
@@ -116,10 +119,12 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 | `eurostat_ilc_lvho07_r` | Tasa de sobrecarga por regiones NUTS 2 (ilc\_lvho07\_r) |
 | `bde_accesibilidad` | Indicadores de accesibilidad a la vivienda (años de renta, esfuerzo teórico) |
 | `calculo_propio` | Cálculo propio a partir de las fuentes de cada término |
+| `boe_imv` | Ingreso mínimo vital y pensión no contributiva: cuantías anuales (normas de revalorización) |
+| `ine_ecv_umbral` | Encuesta de Condiciones de Vida: umbral de riesgo de pobreza (valores ilustrativos) |
 
 ## Diccionario de indicadores
 
-Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el código. «Versión» es la del atlas en que entra cada indicador: los que entran en una versión posterior a la del release todavía no están en la tabla larga.
+Los 23 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas de ingreso residual), en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el código. «Versión» es la del atlas en que entra cada indicador: los que entran en una versión posterior a la del release todavía no están en la tabla larga.
 
 | Nº | Código | Nombre | Unidad | Versión |
 | --- | --- | --- | --- | --- |
@@ -149,6 +154,8 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 | Auxiliar | [`contratos_alquiler`](#contratos_alquiler) | Contratos de alquiler de la mediana | contratos | v0.1 |
 | Auxiliar | [`margen_alquiler_mes`](#margen_alquiler_mes) | Margen aproximado de la mediana del alquiler mensual | % de la mediana | v0.1 |
 | Auxiliar | [`margen_alquiler_m2`](#margen_alquiler_m2) | Margen aproximado de la mediana del alquiler por m² | % de la mediana | v0.1 |
+| Auxiliar | [`linea_imv`](#linea_imv) | Línea de ingreso residual: ingreso mínimo vital | € al mes | v1.2 |
+| Auxiliar | [`linea_pobreza_ecv`](#linea_pobreza_ecv) | Línea de ingreso residual: umbral de riesgo de pobreza | € al mes | v1.2 |
 
 ### `renta_persona`
 
@@ -464,4 +471,30 @@ Los 23 indicadores del plan y 3 auxiliares de fiabilidad, en el orden de `invent
 - **Definición:** Error típico aproximado de la mediana del alquiler por metro cuadrado (9), en porcentaje de la mediana, por tipología.
 - **Cálculo:** 0,929 × (P75 − P25) / (P50 × √n), con los cuartiles del alquiler por m² y los contratos (n) del SERPAVI; solo donde se publica la mediana (10 o más contratos).
 - **Lectura:** Vale también para el 15 y para el mínimo de 50 m² del 21, que son el alquiler por m² en otra unidad: la ficha avisa cuando «¿te llega?» queda en el límite entre dos tramos.
+
+### `linea_imv`
+
+**Auxiliar · Línea de ingreso residual: ingreso mínimo vital**
+
+- **Unidad:** € al mes
+- **Familia:** Capacidad de pago
+- **Fuentes:** `boe_imv`
+- **Versión:** v1.2
+- **Auxiliar de:** [`peso_alquiler_ingreso`](#peso_alquiler_ingreso), [`sueldo_necesario`](#sueldo_necesario)
+- **Definición:** Renta garantizada del ingreso mínimo vital (IMV) para un hogar de una persona o de dos adultos sin menores: lo que la ley garantiza a un hogar como ese para todos sus gastos, vivienda incluida. De 2015 a 2019, antes del IMV, la pensión no contributiva anual entre 12.
+- **Cálculo:** 100 % de la pensión no contributiva anual de cada año (normas de revalorización del BOE) entre 12; dos adultos, + 30 % (Ley 19/2021, art. 13). 2020: 5.538 € al año, desde junio; 2022: media ponderada por meses de la cuantía de enero a marzo y la de abril a diciembre (+15 %). Al céntimo.
+- **Lectura:** Línea con que la web compara lo que queda al mes tras pagar la vivienda (ingreso residual). No es un presupuesto de los demás gastos: es baja como línea residual. Sin hogares con menores.
+
+### `linea_pobreza_ecv`
+
+**Auxiliar · Línea de ingreso residual: umbral de riesgo de pobreza**
+
+- **Unidad:** € al mes
+- **Familia:** Capacidad de pago
+- **Fuentes:** `ine_ecv_umbral`
+- **Versión:** v1.2
+- **Auxiliar de:** [`peso_alquiler_ingreso`](#peso_alquiler_ingreso), [`sueldo_necesario`](#sueldo_necesario)
+- **Definición:** Umbral de riesgo de pobreza de la Encuesta de Condiciones de Vida (60 % de la mediana de la renta por unidad de consumo) para un hogar de una persona o de dos adultos sin menores, con los ingresos del año.
+- **Cálculo:** Umbral anual del hogar unipersonal publicado por el INE (sin alquiler imputado) entre 12; dos adultos, × 1,5 (escala de la OCDE modificada). Año = el de los ingresos: la ECV de 2025 da el de 2024. Al céntimo.
+- **Lectura:** Línea con que la web compara lo que queda al mes tras pagar la vivienda, como la tasa de riesgo de pobreza tras los gastos de vivienda de Eurostat. Es un umbral de la renta total, no de los gastos que no son vivienda: es alta como línea residual.
 

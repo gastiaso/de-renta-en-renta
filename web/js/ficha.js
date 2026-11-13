@@ -23,6 +23,7 @@
 import { ordenNatural } from './nombres.js';
 import { clasesTramos, rampaDeCss, TRAMOS_LLEGA } from './colores.js';
 import { eurosQueQuedan, SUPERFICIE_DOS_SUELDOS, SUPERFICIES } from './sueldo.js';
+import { claveLinea } from './residual.js';
 import { daSueldo, textoSupuestos } from './formulas.js';
 import { lineaTransparencia } from './transparencia.js';
 
@@ -102,6 +103,34 @@ export function fichaError(contenedor, { t, error }) {
 }
 
 const TEXTOS_LLEGA = ['interfaz.leyenda.llega_1', 'interfaz.leyenda.llega_2', 'interfaz.leyenda.llega_3'];
+// Tarea 65: tramos de la regla residual (por encima de 1,25 × la línea, hasta 1,25 × y por debajo)
+export const TEXTOS_RESIDUAL = ['interfaz.residual.tramo_1', 'interfaz.residual.tramo_2', 'interfaz.residual.tramo_3'];
+
+// Nombre de la línea de ingreso residual de lineaDelAnio() (residual.js), con la cifra («la renta
+// garantizada del ingreso mínimo vital para un hogar de una persona (733,60 € al mes en 2026)») o sin
+// ella; sin línea ese año, por qué; null sin datos.
+export function textoLineaResidual(t, datos, { conCifra = false } = {}) {
+  if (!datos) return null;
+  if (datos.sin) {
+    return t('interfaz.residual.sin_linea', { linea: t(`interfaz.residual.corto.${datos.linea}`), anio: datos.anio, ultimo: datos.ultimo ?? '—' });
+  }
+  const nombre = t(claveLinea(datos), { hogar: t(`interfaz.residual.hogar.${datos.hogar}`), anio: datos.anio, ola: datos.ola ?? '' });
+  return conCifra ? t('interfaz.residual.con_cifra', { linea: nombre, euros: t.numero(datos.valor, 2), anio: datos.anio }) : nombre;
+}
+
+// Lo que queda tras pagar la vivienda frente a la línea (tarea 65; residualFicha() de residual.js), bajo
+// los euros que quedan: «Lo que queda está 102 € por debajo de la renta garantizada del ingreso mínimo
+// vital para un hogar de una persona (733,60 € al mes en 2026)». La llave, «no aplica». null sin nada.
+export function textoResidualFicha(t, residual) {
+  if (!residual) return null;
+  if (residual.noAplica) return t('interfaz.residual.no_aplica');
+  if (!Number.isFinite(residual.distancia)) return textoLineaResidual(t, residual.linea);
+  const distancia = Math.round(Math.abs(residual.distancia));
+  const clave = distancia === 0 ? 'frase_igual' : residual.distancia < 0 ? 'frase_debajo' : 'frase_encima';
+  return t(`interfaz.residual.${clave}`, {
+    linea: textoLineaResidual(t, residual.linea, { conCifra: true }), distancia: t.numero(distancia),
+  });
+}
 
 // Línea de fiabilidad bajo la cifra: «Mediana de N contratos · margen aproximado ±X %», con la
 // marca «pocos contratos»; en secreto, cuántos contratos hay. `f`: fiabilidadFicha() o null.
@@ -295,6 +324,9 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
       // Al lado del porcentaje, los euros que quedan al mes con los mismos términos (tarea 34)
       const resto = textoResto(t, eurosQueQuedan(valor), { gastos: conGastos });
       if (resto) bloque.append(lineaResto(t, resto));
+      // Tarea 65: lo que queda frente a la línea de ingreso residual del año y del tipo de hogar
+      const frase = textoResidualFicha(t, valor.residual);
+      if (frase) bloque.append(crear('p', 'ficha-residual', frase));
       // Tarea 40: con el alquiler mensual mediano real de la sección (las fichas de una persona)
       if (valor.real) {
         bloque.append(crear('p', 'ficha-real', t('interfaz.ficha.real_llega', {
@@ -303,7 +335,7 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
       }
       const tramo = crear('p', 'ficha-tramo');
       const clase = clasesTramos(TRAMOS_LLEGA, rampaDeCss().length)[valor.tramo];
-      tramo.append(crear('span', `leyenda-muestra ${clase}`), crear('span', null, t(TEXTOS_LLEGA[valor.tramo])));
+      tramo.append(crear('span', `leyenda-muestra ${clase}`), crear('span', null, t((valor.reglaResidual ? TEXTOS_RESIDUAL : TEXTOS_LLEGA)[valor.tramo])));
       bloque.append(
         crear('p', 'ficha-estado', t('interfaz.ficha.alquiler_ingreso', { alquiler: t.numero(valor.alquiler), ingreso: t.numero(valor.ingreso) })),
         tramo,

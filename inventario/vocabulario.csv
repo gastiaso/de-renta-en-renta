@@ -74,3 +74,6 @@ etiqueta,portales,Dato privado de oferta,Private asking-price data
 zona_tensionada,0,Sin declaración en vigor,No declaration in force
 zona_tensionada,1,Declarada en parte del municipio,Declared in part of the municipality
 zona_tensionada,2,Declarada en todo el municipio,Declared in the whole municipality
+corte,hogar,Tipo de hogar (línea de ingreso residual),Household type (residual income line)
+hogar,una_persona,Una persona,One person
+hogar,dos_adultos,Dos adultos sin menores,Two adults without children
