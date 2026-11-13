@@ -36,6 +36,11 @@
 #     datos/portales/ en el .tar.gz, ni series de los portales en el manifiesto, ni el corte
 #     oferta_privada o la fuente portales en la tabla larga. La capa sale de web/datos/portales/
 #     y se monta en el sitio por su cuenta (docs/publicacion.md, «Capa de portales»).
+#   - reglas_sin_borrador (tarea 64; decisión del autor, 13-nov-2026): ningún resumen de «Reglas del
+#     juego» en borrador (sin la revisión jurídica del autor) lleva texto en el datos/reglas.json del
+#     .tar.gz. Al empaquetar, ese fichero se sustituye un momento por su versión publicable
+#     (reglas_para_publicar(), R/reglas.R: los borradores quedan con su título y `en_revision`, sin
+#     texto ni normas) y después se restaura el de la web local, que los enseña marcados.
 
 LIMITES_PUBLICACION <- c(
   release_fichero = 2 * 1024^3,    # «Each file included in a release must be under 2 GiB»
@@ -99,7 +104,7 @@ empaquetar_publicacion <- function(dir_web = "web",
   correcto <- FALSE
   on.exit(if (!correcto) unlink(salida), add = TRUE)
 
-  tar_datos_publicacion(dir_web, datos, salida[["datos"]])
+  reglas_publicables(dir_web, function() tar_datos_publicacion(dir_web, datos, salida[["datos"]]))
   copiar <- function(de, a) if (!file.copy(de, a, overwrite = TRUE)) stop("No se ha podido copiar ", de, call. = FALSE)
   copiar(pmtiles, salida[["mapa"]])
   copiar(tabla_larga, salida[["tabla"]])
@@ -134,6 +139,33 @@ empaquetar_publicacion <- function(dir_web = "web",
     message("Aviso: hay cambios sin commit; version.json lo anota (commit$cambios_sin_commit).")
   }
   invisible(list(ficheros = unname(salida), comprobaciones = comprobaciones, version = version, sitio = sitio))
+}
+
+# Tarea 64: ejecuta `empaquetar` con datos/reglas.json en su versión publicable (sin el texto de los
+# resúmenes en borrador; reglas_para_publicar(), R/reglas.R) y restaura después el original. Sin el
+# fichero, solo ejecuta `empaquetar`.
+reglas_publicables <- function(dir_web, empaquetar) {
+  ruta <- file.path(dir_web, "datos", FICHERO_REGLAS_WEB)
+  if (!file.exists(ruta)) return(empaquetar())
+  copia <- tempfile(fileext = ".json")
+  if (!file.copy(ruta, copia)) stop("No se ha podido copiar ", ruta, call. = FALSE)
+  on.exit({
+    file.copy(copia, ruta, overwrite = TRUE)
+    unlink(copia)
+  }, add = TRUE)
+  reglas_escribir_json(reglas_para_publicar(jsonlite::read_json(ruta)), ruta)
+  empaquetar()
+}
+
+# Resúmenes de «Reglas del juego» en borrador con texto en el datos/reglas.json de un .tar.gz (0 si no
+# lo lleva).
+reglas_borradores_en_tar <- function(tar) {
+  dir <- tempfile()
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  utils::untar(tar, files = file.path("datos", FICHERO_REGLAS_WEB), exdir = dir, tar = "internal")
+  ruta <- file.path(dir, "datos", FICHERO_REGLAS_WEB)
+  if (!file.exists(ruta)) return(0)
+  reglas_borradores_con_texto(jsonlite::read_json(ruta))
 }
 
 # Ficheros de web/datos/ que van al release, con la ruta desde web/: todo menos la muestra y la capa
@@ -290,6 +322,8 @@ comprobar_publicacion <- function(manifiesto, salida, datos, sitio, tabla_larga,
     dplyr::count() |>
     dplyr::collect()
   portales_larga <- if (nrow(portales_larga)) as.numeric(portales_larga$n[1]) else 0
+  # Tarea 64: ningún resumen de «Reglas del juego» en borrador con texto
+  reglas_borrador <- if (file.path("datos", FICHERO_REGLAS_WEB) %in% en_tar) reglas_borradores_en_tar(salida[["datos"]]) else 0
 
   rbind(
     fila("release_fichero", basename(release), tam, limites[["release_fichero"]], tam < limites[["release_fichero"]]),
@@ -311,7 +345,8 @@ comprobar_publicacion <- function(manifiesto, salida, datos, sitio, tabla_larga,
     fila("versiones", "fuente y versión del manifiesto que no están en la tabla larga", sin_par, 0, sin_par == 0L),
     fila("sin_portales", "ficheros de datos/portales/ en el .tar.gz", portales_tar, 0, portales_tar == 0),
     fila("sin_portales", "series de los portales en el manifiesto", portales_manifiesto, 0, portales_manifiesto == 0),
-    fila("sin_portales", "filas de los portales en la tabla larga", portales_larga, 0, portales_larga == 0)
+    fila("sin_portales", "filas de los portales en la tabla larga", portales_larga, 0, portales_larga == 0),
+    fila("reglas_sin_borrador", "res\u00famenes de datos/reglas.json en borrador con texto", reglas_borrador, 0, reglas_borrador == 0)
   )
 }
 

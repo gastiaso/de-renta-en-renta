@@ -156,7 +156,7 @@ test('casillas: cada destino existe (claves del mapa, mapas del manifiesto, ancl
   for (const c of casillasHtml().filter((x) => x.href)) {
     for (const destino of [c.href, c.hrefEn]) {
       const { pagina, busqueda, ancla } = partes(destino);
-      assert.ok(['mapa.html', 'sobrecarga.html', 'historico.html', 'metodo.html', 'method.html', 'datos.html', 'data.html'].includes(pagina), `${c.id}: ${destino}`);
+      assert.ok(['mapa.html', 'sobrecarga.html', 'historico.html', 'reglas.html', 'metodo.html', 'method.html', 'datos.html', 'data.html'].includes(pagina), `${c.id}: ${destino}`);   // tarea 64, reglas
       if (pagina === 'mapa.html') {
         const p = new URLSearchParams(busqueda);
         const leido = leerEstado(busqueda);
@@ -165,7 +165,7 @@ test('casillas: cada destino existe (claves del mapa, mapas del manifiesto, ancl
       }
       if (ancla && paginas[pagina]) assert.ok(paginas[pagina].has(ancla), `${c.id}: ancla #${ancla} no está en ${pagina}`);
     }
-    if (['mapa.html', 'sobrecarga.html', 'historico.html'].includes(partes(c.href).pagina)) {
+    if (['mapa.html', 'sobrecarga.html', 'historico.html', 'reglas.html'].includes(partes(c.href).pagina)) {
       assert.equal(new URLSearchParams(partes(c.hrefEn).busqueda).get('idioma'), 'en', `${c.id}: el enlace inglés lleva el idioma`);
     }
   }

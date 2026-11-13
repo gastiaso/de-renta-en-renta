@@ -324,6 +324,7 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
   if (sinNivel) {
     bloque.append(crear('p', 'nota', t('interfaz.ficha.sin_dato_nivel_nota', { nivel: sinNivel })));
     for (const nota of notas) bloque.append(crear('p', 'nota', nota));
+    if (modo === 'necesario' && REGLA_DE_MAPA[mapaId]) bloque.append(enlaceRegla(t, REGLA_DE_MAPA[mapaId], 'interfaz.ficha.zonas.regla_tope'));   // tarea 64
     if (ejemplo) bloque.append(crear('p', 'etiqueta-ejemplo', t('avisos.ejemplo')));
     return bloque;
   }
@@ -336,6 +337,7 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
   bloque.append(crear('p', 'ficha-estado', partes.join(' · ')));
   if (aviso) bloque.append(crear('p', 'nota', aviso));
   for (const nota of notas) bloque.append(crear('p', 'nota', nota));
+  if (modo === 'necesario' && REGLA_DE_MAPA[mapaId]) bloque.append(enlaceRegla(t, REGLA_DE_MAPA[mapaId], 'interfaz.ficha.zonas.regla_tope'));   // tarea 64
   if (ejemplo) bloque.append(crear('p', 'etiqueta-ejemplo', t('avisos.ejemplo')));
   return bloque;
 }
@@ -462,7 +464,23 @@ export function fichaDeclaraciones(contenedor, { t, declaraciones, fecha }) {
     bloque.append(lista);
   }
   bloque.append(crear('p', 'nota', t('interfaz.ficha.zonas.nota')));
+  // Tarea 64: qué supone la declaración, en «Reglas del juego»
+  bloque.append(enlaceRegla(t, 'zonas-tensionadas', 'interfaz.ficha.zonas.que_supone'));
   contenedor.replaceChildren(bloque);
+}
+
+// Tarea 64: resumen de «Reglas del juego» que corresponde a un mapa (la casilla «Tope de alquileres»
+// de la portada lleva a la variación del alquiler; la regla, desde su ficha). Las anclas existen en
+// inventario/reglas.csv (compuerta reglas_enlaces, REGLAS_ANCLAS_WEB en R/reglas.R).
+export const REGLA_DE_MAPA = { var_alquiler: 'zonas-tensionadas' };
+
+// Párrafo con el enlace a un resumen de reglas.html, en el idioma de la página.
+export function enlaceRegla(t, ancla, clave) {
+  const p = crear('p', 'nota ficha-regla');
+  const a = crear('a', null, t(clave));
+  a.href = `reglas.html${t.idioma === 'en' ? '?idioma=en' : ''}#${ancla}`;
+  p.append(a);
+  return p;
 }
 
 // Contexto de una sección sin mediana del alquiler de la tipología del mapa: la mediana de la

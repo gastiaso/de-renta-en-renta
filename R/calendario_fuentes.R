@@ -20,6 +20,19 @@ CAL_RUTA <- file.path("inventario", "calendario_fuentes.csv")
 CAL_ESTADO <- file.path("datos", "intermedios", "calendario", "pendientes.csv")
 CAL_CADENCIAS <- c("mensual", "trimestral", "semestral", "anual", "decenal", "unica", "continua")
 CAL_RENOVAR <- c("mover", "invalidar", "codigo", "manual", "fija")
+# Señales de fuera del calendario (tarea 64): por fuente, una función sin red que devuelve el motivo
+# por el que toca (texto) o "" si no toca. boe_legislacion: normas citadas en «Reglas del juego» que
+# el BOE ha actualizado después de la consulta, según los metadatos de la caché (R/reglas.R).
+CAL_SENALES <- c(boe_legislacion = "reglas_senal_calendario")
+
+cal_senal_externa <- function(id, raiz = ".") {
+  f <- CAL_SENALES[id]
+  if (is.na(f) || !exists(f, mode = "function")) return("")
+  tryCatch({
+    x <- as.character(do.call(f, list(raiz = raiz)))
+    if (length(x) && !is.na(x[1])) x[1] else ""
+  }, error = function(e) "")
+}
 
 cal_leer_calendario <- function(ruta = CAL_RUTA) {
   readr::read_csv(ruta, col_types = readr::cols(.default = readr::col_character(),
@@ -144,10 +157,11 @@ cal_fuentes_pendientes <- function(calendario, hoy = Sys.Date(), ultimas = NULL,
     fija <- "fija" %in% renovar
     edicion <- !fija && !is.na(proxima) && proxima <= hoy
     atrasada <- !fija && !is.na(esperado) && !identical(esperado, f$ultimo_dato)
+    aviso <- cal_senal_externa(f$id, raiz)   # tarea 64: CAL_SENALES
     tibble::tibble(id = f$id, ultima_descarga = ultima, proxima_edicion = proxima,
                    ultimo_dato = f$ultimo_dato, dato_esperado = esperado,
-                   edicion_nueva = edicion, dato_nuevo = atrasada, toca = edicion | atrasada,
-                   renovar = f$renovar, objetivos = f$objetivos, cambio_codigo = f$cambio_codigo)
+                   edicion_nueva = edicion, dato_nuevo = atrasada, toca = edicion | atrasada | nzchar(aviso),
+                   renovar = f$renovar, objetivos = f$objetivos, cambio_codigo = f$cambio_codigo, aviso = aviso)
   })
   dplyr::bind_rows(filas)
 }
@@ -166,7 +180,8 @@ cal_toca <- function(id, ruta = CAL_RUTA, hoy = Sys.Date()) {
 cal_firma <- function(pendientes) {
   p <- pendientes[pendientes$toca, ]
   if (nrow(p) == 0) return(character(0))
-  sort(paste0(p$id, ":", ifelse(p$edicion_nueva, "edicion", ""), ifelse(p$dato_nuevo, paste0("dato ", p$dato_esperado), "")))
+  aviso <- if ("aviso" %in% names(p)) ifelse(nzchar(p$aviso), paste0("aviso ", p$aviso), "") else ""
+  sort(paste0(p$id, ":", ifelse(p$edicion_nueva, "edicion", ""), ifelse(p$dato_nuevo, paste0("dato ", p$dato_esperado), ""), aviso))
 }
 
 # Señal del objetivo fuentes_pendientes: TRUE si el conjunto de fuentes que tocan hoy no es el que
@@ -191,6 +206,7 @@ cal_avisar_pendientes <- function(pendientes, estado = CAL_ESTADO) {
                      ifelse(p$edicion_nueva, paste0("edici\u00f3n esperable desde el ", format(p$proxima_edicion)), ""),
                      ifelse(p$edicion_nueva & p$dato_nuevo, "; ", ""),
                      ifelse(p$dato_nuevo, paste0("deber\u00eda haber dato de ", p$dato_esperado, " (el atlas llega a ", p$ultimo_dato, ")"), ""),
+                     if ("aviso" %in% names(p)) ifelse(nzchar(p$aviso), paste0(ifelse(p$edicion_nueva | p$dato_nuevo, "; ", ""), p$aviso), "") else "",
                      " [", p$renovar, "]",
                      ifelse(is.na(p$cambio_codigo), "", paste0("; c\u00f3digo: ", p$cambio_codigo)))
     warning("Calendario de fuentes: tocan ", nrow(p), " fuentes (docs/actualizacion.md):\n",

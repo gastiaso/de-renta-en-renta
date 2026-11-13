@@ -1,0 +1,95 @@
+/* De renta en renta · «Reglas del juego» (reglas.html, tarea 64). Sobre tokens.css y sitio.css: solo
+   usa sus variables. Página larga que se desplaza entera, como la Máquina del tiempo. */
+
+html, body { height: auto; min-height: 100%; }
+.tablero-largo { height: auto; min-height: calc(100vh - 24px); overflow: visible; }
+.marca-titulo { margin: 0; }
+
+.reglas { display: flex; flex-direction: column; gap: 16px; padding: 16px; min-width: 0; }
+.rg-contenido { display: flex; flex-direction: column; gap: 16px; }
+.rg-contenido[hidden] { display: none; }
+.rg-estado { margin: 0; padding: 12px 14px; border: 2px dashed var(--color-tinta); border-radius: var(--radio-control); }
+.rg-estado[hidden] { display: none; }
+.rg-estado-error { color: var(--color-rojo); border-color: var(--color-rojo); }
+
+/* Cabecera */
+.rg-intro { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 24px; }
+.rg-intro-texto { flex: 1 1 520px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rg-antetitulo { margin: 0; font: 400 0.95rem var(--fuente-escritura); letter-spacing: 0.12em; }
+.rg-titulo { margin: 0; font: 800 clamp(1.4rem, 3vw, 1.75rem)/1.1 var(--fuente-tablero); letter-spacing: 0.02em; text-transform: uppercase; }
+.rg-entradilla { margin: 4px 0 0; max-width: 68ch; font-size: 1.05rem; }
+.rg-distintivo {
+  flex: 0 1 34ch;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: var(--color-tinta);
+  color: var(--color-crema);
+  font: 600 0.8rem/1.35 var(--fuente-tablero);
+  letter-spacing: 0.02em;
+}
+
+/* Aviso de la vista local con borradores */
+.rg-aviso-borrador {
+  margin: 0;
+  padding: 10px 14px;
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  background: var(--color-aviso);
+  color: var(--color-tinta);
+  font-weight: 600;
+}
+.rg-aviso-borrador[hidden] { display: none; }
+
+/* Índice */
+.rg-indice { display: flex; flex-wrap: wrap; gap: 6px; }
+.rg-indice a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--objetivo-tactil);
+  padding: 0 12px;
+  border: var(--borde);
+  border-radius: var(--radio-control);
+  background: var(--color-placa);
+  color: var(--color-tinta);
+  font: 600 0.9rem var(--fuente-tablero);
+  text-decoration: none;
+}
+.rg-indice a:hover { background: var(--color-crema); }
+
+/* Resúmenes */
+.rg-resumenes { display: flex; flex-direction: column; gap: 16px; }
+.rg-regla { min-width: 0; scroll-margin-top: 12px; }
+.rg-borrador { border-style: dashed; }
+.rg-h2 { margin: 0; font: 800 1.05rem/1.25 var(--fuente-tablero); letter-spacing: 0.02em; text-transform: uppercase; }
+.rg-h3 { margin: 12px 0 4px; font: 700 0.95rem var(--fuente-tablero); }
+.rg-h4 { margin: 10px 0 2px; font: 700 0.9rem var(--fuente-tablero); }
+.rg-marca-borrador {
+  display: inline-block;
+  margin: 6px 0 0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--color-aviso);
+  color: var(--color-tinta);
+  font: 700 0.8rem/1.4 var(--fuente-tablero);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.rg-linea-estado { margin: 6px 0 0; padding-left: 10px; border-left: 3px solid var(--color-rojo); font-size: 0.95rem; }
+.rg-bloque p { margin: 0 0 6px; max-width: 80ch; }
+.rg-lista { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; max-width: 80ch; }
+.rg-lista-normas { gap: 4px; }
+.rg-norma-nombre { color: var(--color-tenue); font-size: 0.9rem; }
+.rg-consulta { margin: 12px 0 0; }
+.rg-plegable { margin-top: 8px; }
+.rg-plegable summary { min-height: var(--objetivo-tactil); display: flex; align-items: center; font: 600 0.9rem var(--fuente-tablero); cursor: pointer; }
+.rg-bloque a, .rg-pie a { overflow-wrap: anywhere; }
+
+/* Pie: aviso legal y atribución al BOE */
+.rg-pie { padding: 10px 16px 14px; border-top: var(--borde); color: var(--color-tenue); font-size: 0.85rem; }
+.rg-pie p { margin: 0 0 4px; }
+
+@media (max-width: 760px) {
+  .tablero-largo { min-height: 100vh; }
+  .reglas { padding: 12px; gap: 12px; }
+}

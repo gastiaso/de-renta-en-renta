@@ -13,7 +13,8 @@
     "datos": "Data",
     "metodo": "Method",
     "historico": "Time machine",
-    "historias": "Stories"
+    "historias": "Stories",
+    "reglas": "Rules of the game"
   },
   "fichas": {
     "llave": "Neighbourhood household",
@@ -309,6 +310,8 @@
         "vigencia": "In force from {inicio} to {fin}",
         "resolucion": "BOE resolution {boe}",
         "ninguna": "No declarations published in the BOE.",
+        "que_supone": "What the declaration entails",
+        "regla_tope": "Limits on the rent of new leases in stressed areas",
         "nota": "List published every quarter in the BOE by the Ministry of Housing and Urban Agenda (Law 12/2023, art. 18): in force for three years from the day after publication. For declarations covering part of a municipality, the map paints the whole municipality with its own category; the exact area is the one in the declaration."
       },
       "superficie_tipica": "Typical size of rented flats: {superficie} m² in {anio} (median monthly rent / median rent per m², multi-family housing; SERPAVI).",
@@ -851,6 +854,40 @@
       "licencia": "Data and texts: CC BY-SA 4.0."
     }
   },
+  "reglas": {
+    "titulo_pagina": "Rules of the game · De renta en renta",
+    "descripcion": "Summaries of the state rules on renting and buying a home, with their articles linked to the consolidated BOE and the date of the text consulted",
+    "antetitulo": "Rules in force",
+    "titulo": "Rules of the game",
+    "entradilla": "Summaries of the state rules that set the conditions for renting and buying a main residence: what they say, who they apply to, how they have changed and how they relate to the atlas figures. Each summary links the articles of the consolidated Official State Gazette (BOE) and gives the date of the text consulted. Regional rules, except the declarations of stressed areas, are left out. Legal names are given in Spanish, with a gloss.",
+    "distintivo": "Summaries for information only, with no legal value and not advice. The official text is the one in the BOE.",
+    "carga": "Loading the summaries…",
+    "error_carga": "The summaries could not be loaded (datos/reglas.json).",
+    "indice": "Summaries",
+    "aviso_borradores": "Local view: {n} draft summaries, without legal review. On the published site their text does not appear, only their title and a note that they are under review.",
+    "borrador": "Draft · no legal review",
+    "secciones": {
+      "que_dice": "What it says",
+      "a_quien": "Who and since when",
+      "cambios": "Changes",
+      "en_el_atlas": "In the atlas",
+      "normas": "Rules (BOE)"
+    },
+    "estado": {
+      "vigente_desde": "Text in force since {fecha}.",
+      "pendiente": "Depends on {normas}, pending ratification by Congress: the BOE has not published the resolution.",
+      "en_revision": "Summary under legal review: it will be published when the review ends."
+    },
+    "consultado": "Text consulted in the consolidated BOE on {fecha}.",
+    "revisado": "Reviewed on {fecha}.",
+    "sin_revisar": "No legal review.",
+    "declaraciones": "Declarations by the autonomous communities",
+    "pie": {
+      "informativo": "Summaries for information only, with no legal value. The official text is the one published in the BOE; according to its legal notice, the BOE consolidated texts are for information only and only the electronic edition of the official gazette is authentic.",
+      "boe": "Based on data from the Agencia Estatal Boletín Oficial del Estado (www.boe.es), consulted on {fecha}.",
+      "patrocinio": "The AEBOE does not take part in or sponsor this atlas."
+    }
+  },
   "indicadores": {
     "renta_persona": {
       "nombre": "Average net income per person",
@@ -1074,7 +1111,8 @@
     "ine_cne": "Annual Spanish National Accounts: aggregates by industry (base 2020)",
     "cis_barometros": "CIS monthly barometers: housing among the main problems",
     "ine_ipc": "Consumer Price Index (CPI): annual averages of the general index (base 2025)",
-    "cis_ccaa": "CIS monthly barometers by autonomous community: harmonised microdata from Barómetro a barómetro"
+    "cis_ccaa": "CIS monthly barometers by autonomous community: harmonised microdata from Barómetro a barómetro",
+    "boe_legislacion": "Official State Gazette (BOE), consolidated legislation (open data API)"
   },
   "vocabulario": {
     "contrato": {

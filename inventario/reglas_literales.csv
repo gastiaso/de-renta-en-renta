@@ -1,0 +1,59 @@
+id,ambito,objeto,norma,bloque,fragmento,sostiene,notas
+casilla_fianza,casilla,fianza,BOE-A-1994-26003,a36,fianza en metálico en cantidad equivalente a una mensualidad de renta en el arrendamiento de viviendas,«Fianza: un mes»,Casilla 3 de la portada (destino: nota metodológica; enlace a la regla desde allí)
+casilla_aval,casilla,aval_padres,BOE-A-1994-26003,a36,Las partes podrán pactar una garantía del cumplimiento por el arrendatario de sus obligaciones arrendaticias adicional a la fianza en metálico.,«Aval de tus padres»,Casilla 17: el aval es una de las formas de la garantía adicional
+casilla_ley,casilla,ley_vivienda,BOE-A-2023-12203,a1,"Esta ley tiene por objeto regular, en el ámbito de competencias del Estado",«Ley de Vivienda»,Casilla 7
+casilla_zona,casilla,zona_tensionada,BOE-A-2023-12203,a1-10,zonas de mercado residencial tensionado,«Zona tensionada»,Casilla 6 (destino: mapa del indicador 20)
+casilla_tope,casilla,tope_alquileres,BOE-A-1994-26003,a17,la renta pactada al inicio del nuevo contrato no podrá exceder de la última renta de contrato de arrendamiento de vivienda,«Tope de alquileres»,Casilla 8 (destino: mapa de la variación del alquiler; enlace a la regla desde su ficha)
+casilla_renueva,casilla,renueva_contrato,BOE-A-1994-26003,a10,se prorrogará obligatoriamente por plazos anuales hasta un máximo de tres años más,«Renueva el contrato»,Casilla 9 (destino: «¿te llega?» con la llave)
+casilla_actualizacion,casilla,actualizacion_renta,BOE-A-1994-26003,a18,la renta sólo podrá ser actualizada por el arrendador o el arrendatario en la fecha en que se cumpla cada año de vigencia del contrato,«Actualización de la renta»,Casilla 10
+casilla_derramas,casilla,derramas,BOE-A-1994-26003,a20,los gastos serán los que correspondan a la finca arrendada en función de su cuota de participación,«Comunidad y derramas»,Casilla 22: la ley trata los gastos generales del inmueble; las derramas no tienen regla propia en la LAU
+ley_30,regla,ley_vivienda,BOE-A-2023-12203,a3,no debiendo superar con carácter general el 30 por ciento de los ingresos de la unidad de convivencia,30 %,
+ley_gran_tenedor,regla,ley_vivienda,BOE-A-2023-12203,a3,titular de más de diez inmuebles urbanos de uso residencial o una superficie construida de más de 1.500 m² de uso residencial,más de diez inmuebles o más de 1.500 m²,Redacción del Real Decreto-ley 29/2026
+ley_gran_tenedor_cinco,regla,ley_vivienda,BOE-A-2023-12203,a3,hasta aquellos titulares de cinco o más inmuebles de uso residencial,cinco o más inmuebles,Redacción del Real Decreto-ley 29/2026
+ley_constitucion,regla,ley_vivienda,BOE-A-1978-31229,a47,Todos los españoles tienen derecho a disfrutar de una vivienda digna y adecuada.,derecho a una vivienda digna y adecuada,
+zt_30,regla,zonas_tensionadas,BOE-A-2023-12203,a1-10,supere el treinta por ciento de los ingresos medios o de la renta media de los hogares,30 %,
+zt_tres_puntos,regla,zonas_tensionadas,BOE-A-2023-12203,a1-10,al menos tres puntos porcentuales superior al porcentaje de crecimiento acumulado del índice de precios de consumo,tres puntos sobre el IPC,
+zt_cinco_anios,regla,zonas_tensionadas,BOE-A-2023-12203,a1-10,haya experimentado en los cinco años anteriores a la declaración,cinco años anteriores,
+zt_tres_anios,regla,zonas_tensionadas,BOE-A-2023-12203,a1-10,"será de tres años, pudiendo prorrogarse anualmente",tres años,
+zt_trimestral,regla,zonas_tensionadas,BOE-A-2023-12203,a1-10,con carácter trimestral el Ministerio de Transportes,resolución trimestral,La ley cita el Ministerio de Transportes; las resoluciones las publica el de Vivienda
+zt_prorroga,regla,zonas_tensionadas,BOE-A-1994-26003,a10,"por plazos anuales, por un periodo máximo de tres años",hasta tres años de prórroga extraordinaria,Artículo 10.3
+zt_diez,regla,zonas_tensionadas,BOE-A-1994-26003,a17,en un máximo del 10 por ciento sobre la última renta,10 %,
+zt_cinco_renta,regla,zonas_tensionadas,BOE-A-1994-26003,a17,que hubiese estado vigente en los últimos cinco años en la misma vivienda,últimos cinco años,
+zt_diez_anios,regla,zonas_tensionadas,BOE-A-1994-26003,a17,Cuando el contrato de arrendamiento se firme por un periodo de diez o más años,diez años o más,
+zt_habitaciones,regla,zonas_tensionadas,BOE-A-1994-26003,a17,la suma de las rentas pactadas en los contratos parciales que se encuentren vigentes de forma simultánea sobre la misma vivienda no podrá exceder el importe de la renta del contrato de arrendamiento unitario,habitaciones,Artículo 17.9 (Real Decreto-ley 29/2026)
+zt_informacion,regla,zonas_tensionadas,BOE-A-2023-12203,a3-3,de la cuantía de la última renta del contrato de arrendamiento de vivienda habitual que hubiese estado vigente en los últimos cinco años en la misma vivienda,información de la última renta,Artículo 31.3
+ir_limite,regla,indice_referencia,BOE-A-1994-26003,a17,no podrá exceder del límite máximo del precio aplicable conforme al sistema de índices de precios de referencia,límite del índice,
+ir_sin_contrato,regla,indice_referencia,BOE-A-1994-26003,a17,sobre el que no hubiese estado vigente ningún contrato de arrendamiento de vivienda en los últimos cinco años,viviendas sin contrato en cinco años,
+ir_datos,regla,indice_referencia,BOE-A-2019-3108,da-2,Anualmente se ofrecerá una relación de valores medios de la renta mensual en euros por metro cuadrado de superficie de la vivienda,valores medios por m²,
+ir_transitoria,regla,indice_referencia,BOE-A-1994-26003,dt,una vez se encuentre aprobado el referido sistema de índices de precios de referencia,desde la aprobación del sistema,
+du_cinco_siete,regla,duracion_prorroga,BOE-A-1994-26003,a9,"hasta que el arrendamiento alcance una duración mínima de cinco años, o de siete años si el arrendador fuese persona jurídica",cinco o siete años,
+du_treinta,regla,duracion_prorroga,BOE-A-1994-26003,a9,con treinta días de antelación como mínimo,30 días,
+du_tacita,regla,duracion_prorroga,BOE-A-1994-26003,a10,se prorrogará obligatoriamente por plazos anuales hasta un máximo de tres años más,tres años más,
+du_preavisos,regla,duracion_prorroga,BOE-A-1994-26003,a10,al menos con cuatro meses de antelación a aquella fecha en el caso del arrendador y al menos con dos meses de antelación en el caso del arrendatario,cuatro y dos meses,
+du_vulnerable,regla,duracion_prorroga,BOE-A-1994-26003,a10,una prórroga extraordinaria del plazo del contrato de arrendamiento por un periodo máximo de un año,un año,Artículo 10.2
+du_necesidad,regla,duracion_prorroga,BOE-A-1994-26003,a9,al menos con dos meses de antelación a la fecha en la que la vivienda se vaya a necesitar,dos meses,Artículo 9.3
+du_temporal,regla,duracion_prorroga,BOE-A-1994-26003,a9-2,"debiendo ser superior a treinta y un días, y no exceder como regla general de doce meses",de 31 días a doce meses,Artículo 9 bis
+du_df5_2028,regla,duracion_prorroga,BOE-A-2026-20823,df-5,finalice antes del 31 de diciembre de 2028,31-dic-2028,
+du_df5_dos,regla,duracion_prorroga,BOE-A-2026-20823,df-5,hasta un máximo de dos años adicionales,dos años,
+du_df5_ocho,regla,duracion_prorroga,BOE-A-2026-20823,df-5,lo haya estado mensualmente durante los ocho meses anteriores,ocho meses,
+du_df5_cinco,regla,duracion_prorroga,BOE-A-2026-20823,df-5,con una renta inferior en al menos un cinco por ciento,5 %,
+du_convalidacion,regla,duracion_prorroga,BOE-A-1978-31229,a86,en el plazo de los treinta días siguientes a su promulgación,30 días para la convalidación,Plazo de los decretos-leyes (compuerta reglas_vigencia)
+ac_anual,regla,actualizacion_renta,BOE-A-1994-26003,a18,la renta sólo podrá ser actualizada por el arrendador o el arrendatario en la fecha en que se cumpla cada año de vigencia del contrato,cada año,
+ac_sin_pacto,regla,actualizacion_renta,BOE-A-1994-26003,a18,"En defecto de pacto expreso, no se aplicará actualización de rentas a los contratos.",sin pacto no hay actualización,
+ac_irav,regla,actualizacion_renta,BOE-A-1994-26003,a18,no podrá exceder del resultado de aplicar la variación porcentual experimentada por el Índice de Referencia para la Actualización Anual de los Contratos de Arrendamiento de Vivienda (IRAV),límite del IRAV,
+ac_notificacion,regla,actualizacion_renta,BOE-A-1994-26003,a18,a partir del mes siguiente a aquel en que la parte interesada lo notifique a la otra parte por escrito,desde el mes siguiente,
+ac_ine,regla,actualizacion_renta,BOE-A-1994-26003,da,El Instituto Nacional de Estadística definirá,el INE define el IRAV,
+ac_2024,regla,actualizacion_renta,BOE-A-2023-12203,df-6,sin que la variación anual de la renta pueda exceder del tres por ciento,3 % en 2024,
+fi_mensualidad,regla,fianza_garantias,BOE-A-1994-26003,a36,fianza en metálico en cantidad equivalente a una mensualidad de renta en el arrendamiento de viviendas,una mensualidad,
+fi_dos,regla,fianza_garantias,BOE-A-1994-26003,a36,el valor de esta garantía adicional no podrá exceder de dos mensualidades de renta,dos mensualidades,
+fi_temporal,regla,fianza_garantias,BOE-A-1994-26003,a36,En el caso de los arrendamientos temporales el valor de esta garantía no podrá exceder de una mensualidad de la renta.,una mensualidad en temporada,
+fi_seguros,regla,fianza_garantias,BOE-A-1994-26003,a36,En ningún caso podrá exigirse al arrendatario la contratación de seguros de impago de renta u otras coberturas análogas.,sin seguros de impago,
+fi_documento,regla,fianza_garantias,BOE-A-1994-26003,a36,mediante un documento de finalización del arrendamiento firmado por ambas partes,documento de finalización,
+fi_interes,regla,fianza_garantias,BOE-A-1994-26003,a36,"devengará el interés legal, transcurrido un mes desde la entrega de las llaves",interés legal al mes,
+fi_deposito,regla,fianza_garantias,BOE-A-1994-26003,datercera,Las comunidades autónomas podrán establecer la obligación de que los arrendadores de finca urbana sujetos a la presente ley depositen el importe de la fianza,depósito autonómico,
+ga_gestion,regla,gastos_contrato,BOE-A-1994-26003,a20,"Los gastos de gestión inmobiliaria y de formalización del contrato no podrán ser repercutidos al arrendatario, ni directa ni indirectamente",gastos de gestión a cargo del arrendador,
+ga_tributos,regla,gastos_contrato,BOE-A-1994-26003,a20,En ningún caso podrán imponerse los tributos asociados a la vivienda a la parte arrendataria,tributos,
+ga_doble,regla,gastos_contrato,BOE-A-1994-26003,a20,nunca en un porcentaje superior al doble de aquel en que pueda incrementarse la renta,el doble de la subida de la renta,
+ga_escrito,regla,gastos_contrato,BOE-A-1994-26003,a20,este pacto deberá constar por escrito y determinar el importe anual de dichos gastos a la fecha del contrato,pacto por escrito,
+ga_contadores,regla,gastos_contrato,BOE-A-1994-26003,a20,se individualicen mediante aparatos contadores serán en todo caso de cuenta del arrendatario,contadores,
+ga_sin_ph,regla,gastos_contrato,BOE-A-1994-26003,a20,"En edificios que no se encuentren en régimen de propiedad horizontal, no se podrán imputar los gastos de comunidad a la parte arrendataria.",sin propiedad horizontal,

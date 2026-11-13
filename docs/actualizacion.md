@@ -51,6 +51,18 @@ La AEAT (`aeat_mercado_trabajo`) publica en noviembre el año anterior, y el INS
 
 Si una descarga falla, el pipeline se detiene en ese objetivo. Los ficheros apartados vuelven a su sitio con `cal_restaurar("AAAA-MM-DD")` (la fecha de la carpeta de `_anteriores`), que solo devuelve los que no se han vuelto a bajar.
 
+### «Reglas del juego» (`boe_legislacion`, tarea 64)
+
+Los resúmenes de `inventario/reglas.csv` dependen de normas que cambian por artículos sueltos. Tres avisos llevan a revisarlos: la fila `boe_legislacion` del calendario toca cada mes; los metadatos de la API de legislación consolidada del BOE (`fecha_actualizacion`) se renuevan solos con `tar_make()` cuando tienen más de 7 días, y la alerta `reglas_al_dia` y `fuentes_pendientes` (`reglas_senal_calendario()`) avisan cuando el BOE ha actualizado una norma citada después de la consulta anotada en `inventario/reglas_normas.csv`. La revisión de cada resolución trimestral de zonas tensionadas (`zonas_tensionadas`) incluye la del resumen de las zonas. Las compuertas de bloqueo `reglas_vigencia` y `reglas_literal` paran el pipeline si un resumen se apoya en una norma derogada, si un decreto-ley pasa su plazo de convalidación sin resolución anotada, si llega la fecha de efectos de una norma con efectos futuros o si una cifra legal de `inventario/reglas_literales.csv` ya no está en el texto vigente.
+
+Con el aviso:
+
+1. Releer en el BOE consolidado los artículos afectados (el enlace de cada norma está en la página y en `inventario/reglas_normas.csv`). Un decreto-ley: buscar en el diario del BOE la resolución del Congreso de convalidación o derogación y anotar su identificador en `resolucion_congreso`, con el estado nuevo (`vigente` o `derogada`).
+2. Rehacer el resumen en `inventario/reglas.csv` (castellano e inglés) y los fragmentos de `inventario/reglas_literales.csv` que hayan cambiado. Las versiones con efectos futuros no se resumen como vigentes: van en «Cambios», con su fecha.
+3. Anotar en `inventario/reglas_normas.csv` la fecha de la consulta (`texto_consultado`) y la `fecha_actualizacion` que dan entonces los metadatos (`targets::tar_read(boe_reglas)$metadatos`), y en `inventario/reglas.csv` la nueva `texto_consultado` y `revisado` = `borrador`.
+4. Revisión jurídica del autor: `revisado` pasa a la fecha de la revisión. Hasta entonces, `empaquetar_publicacion()` no publica el texto de ese resumen (comprobación `reglas_sin_borrador`).
+5. Anotar el cambio en `CHANGELOG.md`.
+
 ## 3. Comprobar
 
 ```r

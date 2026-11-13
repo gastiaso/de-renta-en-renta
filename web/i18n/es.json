@@ -13,7 +13,8 @@
     "datos": "Datos",
     "metodo": "Método",
     "historico": "Máquina del tiempo",
-    "historias": "Historias"
+    "historias": "Historias",
+    "reglas": "Reglas del juego"
   },
   "fichas": {
     "llave": "Hogar del barrio",
@@ -309,6 +310,8 @@
         "vigencia": "En vigor del {inicio} al {fin}",
         "resolucion": "Resolución del BOE {boe}",
         "ninguna": "Sin declaraciones publicadas en el BOE.",
+        "que_supone": "Qué supone la declaración",
+        "regla_tope": "Límites a la renta de los contratos nuevos en zona tensionada",
         "nota": "Relación que publica el Ministerio de Vivienda y Agenda Urbana en el BOE cada trimestre (Ley 12/2023, art. 18): tres años de vigencia desde el día siguiente a la publicación. En las declaraciones de una parte del municipio, el mapa pinta el municipio entero con su propia categoría; el ámbito exacto es el de la declaración."
       },
       "superficie_tipica": "Superficie típica de los pisos alquilados: {superficie} m² en {anio} (alquiler mensual mediano / alquiler por m² mediano, vivienda colectiva; SERPAVI).",
@@ -851,6 +854,40 @@
       "licencia": "Datos y textos: CC BY-SA 4.0."
     }
   },
+  "reglas": {
+    "titulo_pagina": "Reglas del juego · De renta en renta",
+    "descripcion": "Resúmenes de las normas estatales del alquiler y la compra de vivienda, con sus artículos enlazados al BOE consolidado y la fecha del texto consultado",
+    "antetitulo": "Normativa vigente",
+    "titulo": "Reglas del juego",
+    "entradilla": "Resúmenes de las normas estatales que fijan las condiciones del alquiler y la compra de vivienda habitual: qué dicen, a quién se aplican, cómo han cambiado y qué relación tienen con las cifras del atlas. Cada resumen enlaza los artículos del BOE consolidado y da la fecha del texto consultado. Las normas autonómicas, salvo las declaraciones de zonas tensionadas, quedan fuera.",
+    "distintivo": "Resúmenes informativos, sin valor jurídico ni carácter de asesoramiento. El texto oficial es el del BOE.",
+    "carga": "Cargando los resúmenes…",
+    "error_carga": "No se han podido cargar los resúmenes (datos/reglas.json).",
+    "indice": "Resúmenes",
+    "aviso_borradores": "Vista local: {n} resúmenes en borrador, sin revisión jurídica. En el sitio publicado no aparece su texto, solo su título y la indicación de que están en revisión.",
+    "borrador": "Borrador · sin revisión jurídica",
+    "secciones": {
+      "que_dice": "Qué dice",
+      "a_quien": "A quién y desde cuándo",
+      "cambios": "Cambios",
+      "en_el_atlas": "En el atlas",
+      "normas": "Normas (BOE)"
+    },
+    "estado": {
+      "vigente_desde": "Texto en vigor desde el {fecha}.",
+      "pendiente": "Depende de {normas}, pendiente de convalidación por el Congreso: el BOE no ha publicado la resolución.",
+      "en_revision": "Resumen en revisión jurídica: se publica cuando termine."
+    },
+    "consultado": "Texto consultado en el BOE consolidado el {fecha}.",
+    "revisado": "Revisado el {fecha}.",
+    "sin_revisar": "Sin revisión jurídica.",
+    "declaraciones": "Declaraciones de las comunidades autónomas",
+    "pie": {
+      "informativo": "Resúmenes informativos, sin valor jurídico. El texto oficial es el publicado en el BOE; según su aviso legal, los textos consolidados del BOE tienen carácter meramente informativo y solo la edición electrónica del diario oficial da fe.",
+      "boe": "Basado en datos de la Agencia Estatal Boletín Oficial del Estado (www.boe.es), consultados el {fecha}.",
+      "patrocinio": "La AEBOE no participa en este atlas ni lo patrocina."
+    }
+  },
   "indicadores": {
     "renta_persona": {
       "nombre": "Renta neta media por persona",
@@ -1074,7 +1111,8 @@
     "ine_cne": "Contabilidad Nacional Anual de España: agregados por rama de actividad (base 2020)",
     "cis_barometros": "Barómetros mensuales del CIS: la vivienda entre los principales problemas",
     "ine_ipc": "Índice de Precios de Consumo (IPC): medias anuales del índice general (base 2025)",
-    "cis_ccaa": "Barómetros mensuales del CIS por comunidad autónoma: microdatos armonizados de Barómetro a barómetro"
+    "cis_ccaa": "Barómetros mensuales del CIS por comunidad autónoma: microdatos armonizados de Barómetro a barómetro",
+    "boe_legislacion": "BOE, legislación consolidada (API de datos abiertos)"
   },
   "vocabulario": {
     "contrato": {

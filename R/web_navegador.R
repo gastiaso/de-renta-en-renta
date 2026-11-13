@@ -176,7 +176,12 @@ JS_DESTINOS_NAVEGADOR <- r"(
     const res = await fetch(u, { cache: 'no-cache' });
     const html = res.ok ? await res.text() : '';
     const ancla = decodeURIComponent(u.hash.slice(1));
-    r.push([d, res.status, !ancla || html.includes(`id="${ancla}"`)]);
+    // Tarea 64: las anclas de reglas.html las pinta su JavaScript desde datos/reglas.json
+    const reglas = u.pathname.endsWith('/reglas.html') && ancla
+      ? await fetch(new URL('datos/reglas.json', u), { cache: 'no-cache' }).then((x) => (x.ok ? x.json() : null)).catch(() => null)
+      : null;
+    const enReglas = Boolean(reglas?.reglas?.some((x) => x.ancla === ancla));
+    r.push([d, res.status, !ancla || html.includes(`id="${ancla}"`) || enReglas]);
   }
   return JSON.stringify(r);
 })

@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.52 · 12 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.53 · 13 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.53:** tarea 64 del backlog (13-nov-2026): «Reglas del juego». Decisiones del autor del 13-nov-2026 en `docs/especificacion_reglas_del_juego.md`: los resúmenes no se publican sin su revisión jurídica (`revisado` = `borrador`; alerta `reglas_borrador` en el pipeline y bloqueo `reglas_sin_borrador` al empaquetar; mientras tanto, el sitio da solo los títulos, «en revisión»); las normas citadas van en su propio CSV (`inventario/reglas_normas.csv`), con la fecha de consulta y la `fecha_actualizacion` del BOE de cada una; un decreto-ley sin convalidar cuenta como vigente hasta 30 días hábiles después de su promulgación (más 10 días naturales de margen para que salga la resolución).
 
 **Cambios en la v0.52:** tarea 62 del backlog (12-nov-2026): carga inicial del mapa; las fichas llevan los contratos y el margen, los municipios grandes van por distrito y la web pide las secciones solo desde el zoom 7 (§6.6 y §11, pregunta 17).
 

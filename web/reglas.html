@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reglas del juego · De renta en renta</title>
+  <meta name="description" content="Resúmenes de las normas estatales del alquiler y la compra de vivienda, con sus artículos enlazados al BOE consolidado y la fecha del texto consultado">
+  <link rel="icon" href="estilo/fichas/llave.svg" type="image/svg+xml">
+  <!-- Dirección de la página, sus dos idiomas y la tarjeta que enseñan la mensajería y las redes al
+       pegar un enlace (estilo/tarjeta.png; web/herramientas/tarjeta.html). Direcciones absolutas: las
+       piden quienes leen estas etiquetas. -->
+  <link rel="canonical" href="https://gastiaso.github.io/de-renta-en-renta/reglas.html">
+  <link rel="alternate" hreflang="es" href="https://gastiaso.github.io/de-renta-en-renta/reglas.html">
+  <link rel="alternate" hreflang="en" href="https://gastiaso.github.io/de-renta-en-renta/reglas.html?idioma=en">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="De renta en renta">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:title" content="Reglas del juego · De renta en renta">
+  <meta property="og:description" content="Resúmenes de las normas estatales del alquiler y la compra de vivienda, con sus artículos enlazados al BOE consolidado y la fecha del texto consultado">
+  <meta property="og:url" content="https://gastiaso.github.io/de-renta-en-renta/reglas.html">
+  <meta property="og:image" content="https://gastiaso.github.io/de-renta-en-renta/estilo/tarjeta.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="De renta en renta: vivienda y sueldos, sección a sección">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="estilo/tokens.css">
+  <link rel="stylesheet" href="estilo/sitio.css">
+  <link rel="stylesheet" href="estilo/reglas.css">
+  <script type="module" src="js/reglas.js"></script>
+</head>
+<body>
+  <div class="tablero tablero-largo">
+    <header class="cabecera">
+      <div class="marca">
+        <p class="marca-titulo"><a href="./" data-pagina="./" data-enlace="" data-i18n="sitio.titulo">De renta en renta</a></p>
+        <p class="marca-subtitulo" data-i18n="sitio.subtitulo">Vivienda y sueldos, sección a sección</p>
+      </div>
+      <nav class="navegacion" data-i18n-aria="interfaz.navegacion">
+        <a href="mapa.html" data-pagina="mapa.html" data-enlace="" data-i18n="nav.mapa">Mapa</a>
+        <a href="mapa.html#tu-sueldo" data-pagina="mapa.html" data-enlace="#tu-sueldo" data-i18n="nav.tu_sueldo">Tu sueldo</a>
+        <a href="mapa.html?historia=centro" data-href-es="mapa.html?historia=centro" data-href-en="mapa.html?historia=centro&amp;idioma=en" data-i18n="nav.historias">Historias</a>
+        <a href="sobrecarga.html" data-pagina="sobrecarga.html" data-enlace="" data-i18n="nav.sobrecarga">Sobrecarga</a>
+        <a href="reglas.html" aria-current="page" data-i18n="nav.reglas">Reglas del juego</a>
+        <a href="datos.html" data-href-es="datos.html" data-href-en="data.html" data-i18n="nav.datos">Datos</a>
+        <a href="metodo.html" data-href-es="metodo.html" data-href-en="method.html" data-i18n="nav.metodo">Método</a>
+        <a href="historico.html" data-pagina="historico.html" data-enlace="" data-i18n="nav.historico">Máquina del tiempo</a>
+      </nav>
+      <div class="idioma" role="group" data-i18n-aria="interfaz.idioma">
+        <button type="button" data-idioma="es" aria-pressed="true" lang="es">ES</button>
+        <button type="button" data-idioma="en" aria-pressed="false" lang="en">EN</button>
+      </div>
+    </header>
+
+    <main class="reglas">
+      <section class="rg-intro">
+        <div class="rg-intro-texto">
+          <p class="rg-antetitulo" data-i18n="reglas.antetitulo">Normativa vigente</p>
+          <h1 class="rg-titulo" data-i18n="reglas.titulo">Reglas del juego</h1>
+          <p class="rg-entradilla" data-i18n="reglas.entradilla"></p>
+        </div>
+        <p class="rg-distintivo" data-i18n="reglas.distintivo"></p>
+      </section>
+
+      <p id="rg-estado" class="rg-estado" role="status" data-i18n="reglas.carga">Cargando los resúmenes…</p>
+
+      <div id="rg-contenido" class="rg-contenido" hidden>
+        <!-- Solo en local: el sitio publicado no lleva resúmenes en borrador (R/publicar.R) -->
+        <p id="rg-aviso-borrador" class="rg-aviso-borrador" role="note" hidden></p>
+        <nav id="rg-indice" class="rg-indice" data-i18n-aria="reglas.indice"></nav>
+        <div id="rg-resumenes" class="rg-resumenes"></div>
+      </div>
+    </main>
+
+    <footer class="rg-pie">
+      <p data-i18n="reglas.pie.informativo"></p>
+      <p id="rg-pie-boe"></p>
+      <p data-i18n="reglas.pie.patrocinio"></p>
+    </footer>
+  </div>
+
+  <noscript>
+    <p class="sin-js">Esta página necesita JavaScript para mostrar los resúmenes. · This page needs JavaScript to show the summaries.</p>
+  </noscript>
+</body>
+</html>

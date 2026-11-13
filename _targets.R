@@ -1170,9 +1170,40 @@ bloque_ipc <- list(
   tar_target(validacion_web_ipc, validar_referencias(ipc_comprobar_web(ipc, ficheros_web_ipc), referencias))
 )
 
+# Tarea 64: «Reglas del juego» (R/reglas.R; docs/especificacion_reglas_del_juego.md): resúmenes de las
+# normas estatales del alquiler y la compra de vivienda (inventario/reglas.csv, reglas_normas.csv y
+# reglas_literales.csv), comprobados contra la API de legislación consolidada del BOE (caché en
+# datos/brutos/boe_legislacion/; los metadatos se renuevan si tienen más de 7 días), y datos/reglas.json
+# para web/reglas.html. Los resúmenes en borrador pasan el pipeline (alerta reglas_borrador) y no se
+# publican (empaquetar_publicacion()). La compuerta depende de la fecha (plazos de convalidación,
+# efectos futuros): HOY_REGLAS la repite una vez al día.
+#   targets::tar_make(names = c(fichero_web_reglas, validacion_web_reglas))
+HOY_REGLAS <- Sys.Date()
+bloque_reglas <- list(
+  tar_target(fichero_reglas, "inventario/reglas.csv", format = "file"),
+  tar_target(fichero_reglas_normas, "inventario/reglas_normas.csv", format = "file"),
+  tar_target(fichero_reglas_literales, "inventario/reglas_literales.csv", format = "file"),
+  tar_target(reglas, reglas_leer(fichero_reglas)),
+  tar_target(reglas_normas, reglas_leer_normas(fichero_reglas_normas)),
+  tar_target(reglas_literales, reglas_leer_literales(fichero_reglas_literales)),
+  tar_target(metadatos_boe_reglas, reglas_descargar_boe(reglas_normas, reglas_literales), format = "file",
+             cue = tarchetypes::tar_cue_force(reglas_boe_caducado())),
+  tar_target(boe_reglas, reglas_leer_boe(metadatos_boe_reglas)),
+  tar_target(validacion_reglas, validar_referencias(
+    reglas_comprobar(reglas, reglas_normas, reglas_literales, boe_reglas, casillas_portada, indicadores, hoy = HOY_REGLAS),
+    referencias)),
+  tar_target(fichero_web_reglas, {
+    validacion_reglas   # la compuerta va antes
+    reglas_exportar_web(reglas, reglas_normas, boe_reglas, zonas_tensionadas, ccaa, dir_web = DIR_WEB)
+  }, format = "file"),
+  tar_target(validacion_web_reglas,
+             validar_referencias(reglas_comprobar_web(reglas, reglas_normas, fichero_web_reglas), referencias))
+)
+
 list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, bloque_paso2011, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_zonas_tensionadas, bloque_portales, bloque_tabla_larga, bloque_web, bloque_historico,
      bloque_cis, bloque_calendario,   # F6, CIS y calendario
      bloque_cis_ccaa,                 # tarea 63, CIS por comunidad
      bloque_otros_gastos,             # otros gastos de vivienda de la ECV (12-nov-2026)
      bloque_ipc,                      # tarea 45, IPC
-     bloque_historias)                # tarea 49, primeras historias
+     bloque_historias,                # tarea 49, primeras historias
+     bloque_reglas)                   # tarea 64, reglas del juego

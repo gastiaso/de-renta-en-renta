@@ -10,6 +10,7 @@ mapa: "mapa.html"
 tu_sueldo: "mapa.html#tu-sueldo"
 historias: "mapa.html?historia=centro"
 sobrecarga: "sobrecarga.html"
+reglas: "reglas.html"
 datos: datos.html
 metodo: metodo.html
 historico: "historico.html"

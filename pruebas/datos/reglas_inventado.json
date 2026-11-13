@@ -1,0 +1,57 @@
+{
+  "generado": "2099-03-05",
+  "consultado": "2099-03-01",
+  "borradores": 1,
+  "normas": {
+    "BOE-A-2099-1": {
+      "nombre": { "es": "Ley 1/2099, de prueba", "en": "Ley 1/2099 (Test Act)" },
+      "abreviatura": { "es": "Ley 1/2099", "en": "Test Act" },
+      "rango": "Ley", "fecha_disposicion": "2099-01-01", "consolidada": true, "estado": "vigente",
+      "efectos_desde": "2099-01-02", "resolucion_congreso": "", "texto_consultado": "2099-03-01",
+      "fecha_actualizacion": "2099-02-01T10:00:00Z", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2099-1"
+    },
+    "BOE-A-2099-2": {
+      "nombre": { "es": "Real Decreto-ley 2/2099, de prueba", "en": "Real Decreto-ley 2/2099 (Test decree)" },
+      "abreviatura": { "es": "Real Decreto-ley 2/2099", "en": "Royal Decree-law 2/2099" },
+      "rango": "Real Decreto-ley", "fecha_disposicion": "2099-02-02", "consolidada": true,
+      "estado": "vigente_pendiente_convalidacion", "efectos_desde": "2099-02-04", "resolucion_congreso": "",
+      "texto_consultado": "2099-03-01", "fecha_actualizacion": "2099-02-10T10:00:00Z",
+      "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2099-2"
+    }
+  },
+  "reglas": [
+    {
+      "id": "duracion_prueba", "ancla": "duracion-prueba", "orden": 2,
+      "titulo": { "es": "Duración de prueba", "en": "Test duration" },
+      "que_dice": { "es": ["Cinco años (art. 1)."], "en": ["Five years (art. 1)."] },
+      "a_quien": { "es": ["Contratos inventados."], "en": ["Invented leases."] },
+      "cambios": { "es": ["Real Decreto-ley 2/2099."], "en": ["Royal Decree-law 2/2099."] },
+      "en_el_atlas": { "es": ["Ver [el mapa](mapa.html?mapa=alquiler_mes) y [el BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2099-1#a1)."],
+                       "en": ["See [the map](mapa.html?mapa=alquiler_mes) and [the BOE](https://www.boe.es/buscar/act.php?id=BOE-A-2099-1#a1)."] },
+      "normas": [
+        { "norma": "BOE-A-2099-1", "bloque": "a1", "titulo": "Artículo 1", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2099-1#a1" },
+        { "norma": "BOE-A-2099-2", "bloque": "a1", "titulo": "Artículo 1", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2099-2#a1" }
+      ],
+      "indicadores": ["9"], "casillas": [],
+      "estado": "vigente_pendiente_convalidacion", "vigente_desde": "2099-02-04", "texto_consultado": "2099-03-01",
+      "revisado": "borrador", "borrador": true
+    },
+    {
+      "id": "fianza_prueba", "ancla": "fianza-prueba", "orden": 1,
+      "titulo": { "es": "Fianza de prueba", "en": "Test deposit" },
+      "que_dice": { "es": ["Una mensualidad.", "Enlace no permitido: [fuera](https://example.com/)."], "en": ["One month.", "Not allowed: [out](https://example.com/)."] },
+      "a_quien": { "es": ["Contratos inventados."], "en": ["Invented leases."] },
+      "cambios": { "es": ["Sin cambios."], "en": ["No changes."] },
+      "en_el_atlas": { "es": ["Ver [Método](metodo.html#71-alquiler-indicadores-8-y-9)."], "en": ["See [Method](method.html#71-rent-indicators-8-and-9)."] },
+      "normas": [
+        { "norma": "BOE-A-2099-1", "bloque": "a2", "titulo": "Artículo 2", "url": "https://www.boe.es/buscar/act.php?id=BOE-A-2099-1#a2" }
+      ],
+      "indicadores": ["8"], "casillas": ["fianza"],
+      "estado": "vigente", "vigente_desde": "2099-01-02", "texto_consultado": "2099-03-01",
+      "revisado": "2099-03-02", "borrador": false
+    }
+  ],
+  "declaraciones": [
+    { "ccaa": "99", "nombre": "Comunidad inventada", "declaraciones": [{ "texto": "Orden de prueba", "url": "https://diario.example/orden" }] }
+  ]
+}

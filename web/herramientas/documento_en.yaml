@@ -10,6 +10,7 @@ mapa: "mapa.html?idioma=en"
 tu_sueldo: "mapa.html?idioma=en#tu-sueldo"
 historias: "mapa.html?historia=centro&idioma=en"
 sobrecarga: "sobrecarga.html?idioma=en"
+reglas: "reglas.html?idioma=en"
 datos: data.html
 metodo: method.html
 historico: "historico.html?idioma=en"
