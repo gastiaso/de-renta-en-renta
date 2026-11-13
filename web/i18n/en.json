@@ -799,6 +799,9 @@
     "cis_aviso": "Opinion, not a register: the series measures how many people name housing as a problem, not its price or what it costs to pay for it.",
     "cis_fuente": "Source: own elaboration with data from the Centro de Investigaciones Sociológicas (CIS, www.cis.es), monthly barometers, under a CC BY 4.0 licence. Changes: figures rounded to one decimal; the six months published only as PDF (July 2014 and five in 2025), transcribed by hand. The CIS neither takes part in nor sponsors this atlas.",
     "cis_fecha": "Barometers published up to {fecha}.",
+    "cis_mas": "More, from the barometer microdata since 2021 (in Spanish):",
+    "cis_mas_historia": "“How housing became Spain’s top problem” (by age, ideology and sex)",
+    "cis_mas_barometros": "Barómetro a barómetro (series and breakdowns by profile and region)",
     "cis_sin_datos": "There are no CIS data in this copy of the website (datos/cis_vivienda.json). They are generated with targets::tar_make(names = ficheros_web_cis).",
     "cis_metodo": "Housing as a problem (CIS): in the monthly barometer, share of respondents who name housing, without a list of answers, among Spain’s three main problems or among the three that affect them most personally. It is an opinion survey, not a register. Since January 2014; no barometer in August. The months whose results are only in PDF (July 2014 and February, April, May, June and July 2025) are transcribed by hand, with the link to each PDF and its check. Validation: the series reproduces the figures the CIS gives in its press releases.",
     "metodo": {

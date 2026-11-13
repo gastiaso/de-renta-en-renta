@@ -127,6 +127,9 @@ html, body { height: auto; min-height: 100%; }
 .hi-aviso { margin: 8px 0 0; max-width: 80ch; padding-left: 10px; border-left: 3px solid var(--color-rojo); font-size: 0.9rem; }
 .hi-sin-datos { margin: 0; }
 .hi-fuente[hidden], .hi-plegable[hidden] { display: none; }
+/* Más sobre la vivienda en los barómetros: la historia y Barómetro a barómetro, en el color del texto */
+.hi-mas { margin: 6px 0 0; }
+.hi-mas a { color: var(--color-tinta); }
 
 .hi-lectura { margin: 10px 0 0; max-width: 80ch; }
 .hi-lectura-serie { display: block; }

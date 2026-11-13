@@ -2,7 +2,7 @@
 
 *Borrador para la v1.2 (12-nov-2026), por decidir. Encargo: backlog, «Para la v1.2», «Microdatos del CIS por comunidad»; nota metodológica, §7.10 («Lo que no se usa»: los microdatos darían la cifra por comunidad y el contraste por comunidad sigue pendiente). Provisional, como todo el plan.*
 
-**Estado: borrador, revisado el 13-nov-2026.** La fuente cambia: en lugar de los microdatos del CIS, que piden un formulario, los microdatos armonizados de *Barómetro a barómetro*, publicados con licencia CC BY 4.0 y sin registro (apartado «Revisión del 13-nov-2026»). Lo que sigue a ese apartado queda como antecedente. Nada de esto está en el pipeline.
+**Estado: decidido (13-nov-2026), por hacer: las ocho preguntas del final, con la opción recomendada (decisión del autor).** Revisado el 13-nov-2026. La fuente cambia: en lugar de los microdatos del CIS, que piden un formulario, los microdatos armonizados de *Barómetro a barómetro*, publicados con licencia CC BY 4.0 y sin registro (apartado «Revisión del 13-nov-2026»). Lo que sigue a ese apartado queda como antecedente. Nada de esto está en el pipeline.
 
 ## Revisión del 13-nov-2026: los microdatos armonizados
 
@@ -162,7 +162,7 @@ Porcentaje de entrevistados de la comunidad que cita «La vivienda» en alguna d
 
 ## Preguntas para el autor
 
-Revisadas el 13-nov-2026, con la fuente nueva. Las del 12-nov-2026 (formulario, periodo, agregación, Ceuta y Melilla, dónde se guarda, dónde se ve y Barómetro de Vivienda) quedan absorbidas aquí.
+**Cerradas (13-nov-2026), decisión del autor: las ocho con la opción recomendada.** Además, el bloque del CIS de la «Máquina del tiempo» enlaza ya a la historia «Cómo la vivienda se convirtió en el primer problema de España» (<https://gastiaso.github.io/historias/vivienda/>) y a *Barómetro a barómetro* (<https://gastiaso.github.io/barometros/#vivienda>). Revisadas el 13-nov-2026, con la fuente nueva. Las del 12-nov-2026 (formulario, periodo, agregación, Ceuta y Melilla, dónde se guarda, dónde se ve y Barómetro de Vivienda) quedan absorbidas aquí.
 
 1. **Fuente.** Los microdatos armonizados de *Barómetro a barómetro* (edición fechada, CC BY 4.0, citando la armonización y al CIS), desde 2021; de 2014 a 2020, fuera hasta que se decida bajar los del CIS con su formulario. Recomendada: **sí**.
 2. **Peso.** `peso`, el de las tabulaciones del CIS, que reproduce la serie nacional publicada; no `peso_ccaa`. Recomendado: **`peso`**.

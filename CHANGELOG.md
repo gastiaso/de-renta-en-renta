@@ -8,7 +8,11 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 - **Línea de ingreso residual** (`docs/especificacion_ingreso_residual.md`): las siete preguntas, con la opción recomendada (IMV y umbral de pobreza de la ECV con selector, el IMV por defecto; en «Tu sueldo», la ficha y «¿te llega?»; PNC rotulada de 2015 a 2019; tres tramos; hogares con menores, fuera).
 - **«Reglas del juego»** (`docs/especificacion_reglas_del_juego.md`): formato, alcance, decretos-leyes, casillas y compuerta, como se recomendaron; la revisión jurídica la hace el autor; subtítulo «Normativa vigente».
-- **CIS por comunidad** (`docs/especificacion_cis_comunidad.md`), revisado: la fuente pasa a ser los microdatos armonizados de *Barómetro a barómetro* (CC BY 4.0, sin formulario, desde 2021), con el peso del CIS; reproducen la media anual de la serie nacional publicada (1,6 % en 2021; 32,3 % en 2025). Ocho preguntas nuevas, por decidir.
+- **CIS por comunidad** (`docs/especificacion_cis_comunidad.md`), revisado: la fuente pasa a ser los microdatos armonizados de *Barómetro a barómetro* (CC BY 4.0, sin formulario, desde 2021), con el peso del CIS; reproducen la media anual de la serie nacional publicada (1,6 % en 2021; 32,3 % en 2025). Las ocho preguntas nuevas, con la opción recomendada: `peso` y no `peso_ccaa`, tabla anual desde 2021 con 2023 marcado por la ruptura R10, Ceuta y Melilla de dos en dos años, problema de España y personal, tabla propia en la «Máquina del tiempo» y en la ficha de comunidad, y el Barómetro de Vivienda 2026 cuando tenga microdatos.
+
+### Añadido (13-nov-2026, enlaces del bloque del CIS)
+
+- En la «Máquina del tiempo», el bloque «La vivienda como problema (CIS)» enlaza a la historia «Cómo la vivienda se convirtió en el primer problema de España» (<https://gastiaso.github.io/historias/vivienda/>) y a *Barómetro a barómetro* (<https://gastiaso.github.io/barometros/#vivienda>), con los textos en castellano e inglés y su prueba en `pruebas/web/historico.test.mjs`.
 
 ### Añadido (12-nov-2026, borradores para la v1.2: por decidir)
 

@@ -799,6 +799,9 @@
     "cis_aviso": "Opinión, no registro: la serie mide cuánta gente nombra la vivienda como problema, no su precio ni lo que cuesta pagarla.",
     "cis_fuente": "Fuente: elaboración propia con datos del Centro de Investigaciones Sociológicas (CIS, www.cis.es), barómetros mensuales, con licencia CC BY 4.0. Cambios: cifras redondeadas a un decimal; los seis meses publicados solo en PDF (julio de 2014 y cinco de 2025), transcritos a mano. El CIS no participa en este atlas ni lo patrocina.",
     "cis_fecha": "Barómetros publicados hasta el {fecha}.",
+    "cis_mas": "Más, con los microdatos de los barómetros desde 2021:",
+    "cis_mas_historia": "«Cómo la vivienda se convirtió en el primer problema de España» (por edad, ideología y sexo)",
+    "cis_mas_barometros": "Barómetro a barómetro (series y cruces por perfil y comunidad autónoma)",
     "cis_sin_datos": "No hay datos del CIS en esta copia de la web (datos/cis_vivienda.json). Se generan con targets::tar_make(names = ficheros_web_cis).",
     "cis_metodo": "La vivienda como problema (CIS): en el barómetro mensual, porcentaje de entrevistados que nombra la vivienda, sin lista de respuestas, entre los tres principales problemas de España o entre los tres que más le afectan personalmente. Es una encuesta de opinión, no un registro. Desde enero de 2014; sin barómetro en agosto. Los meses cuyos resultados solo están en PDF (julio de 2014 y febrero, abril, mayo, junio y julio de 2025) se transcriben a mano, con el enlace a cada PDF y su comprobación. Compuerta: la serie reproduce las cifras que el CIS da en sus notas de prensa.",
     "metodo": {

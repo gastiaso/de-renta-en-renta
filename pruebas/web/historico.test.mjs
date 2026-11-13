@@ -401,11 +401,15 @@ test('CIS: bloque con su ancla, entrada del índice y textos cis_* en los dos id
   for (const idioma of ['es', 'en']) {
     const t = traductor(idioma);
     for (const k of ['corto', 'titulo', 'subtitulo', 'espana', 'personal', 'huecos', 'estudio', 'entrevistas', 'estudio_col',
-      'entrevistas_col', 'aviso', 'fuente', 'fecha', 'sin_datos', 'metodo']) assert.ok(t(`historico.cis_${k}`), `${k} (${idioma})`);
+      'entrevistas_col', 'aviso', 'fuente', 'fecha', 'sin_datos', 'metodo', 'mas', 'mas_historia', 'mas_barometros']) assert.ok(t(`historico.cis_${k}`), `${k} (${idioma})`);
     assert.match(t('historico.cis_fuente'), /CIS/);
     assert.match(t('historico.cis_fuente'), /CC BY 4\.0/);
     assert.match(t('historico.cis_fecha', { fecha: '2026-10-20' }), /2026-10-20/);
   }
+  // Enlaces a la historia de la vivienda y a Barómetro a barómetro, dentro del bloque del CIS
+  const bloque = html.slice(html.indexOf(`id="${H.CIS_ID}"`), html.indexOf('id="hi-metodo-titulo"'));
+  assert.ok(bloque.includes('<a href="https://gastiaso.github.io/historias/vivienda/" hreflang="es" data-i18n="historico.cis_mas_historia">'));
+  assert.ok(bloque.includes('<a href="https://gastiaso.github.io/barometros/#vivienda" hreflang="es" data-i18n="historico.cis_mas_barometros">'));
   assert.match(traductor('es')('historico.cis_aviso'), /^Opinión, no registro/);
   assert.match(traductor('en')('historico.cis_aviso'), /^Opinion, not a register/);
 });
