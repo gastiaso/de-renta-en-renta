@@ -312,6 +312,11 @@
         "nota": "List published every quarter in the BOE by the Ministry of Housing and Urban Agenda (Law 12/2023, art. 18): in force for three years from the day after publication. For declarations covering part of a municipality, the map paints the whole municipality with its own category; the exact area is the one in the declaration."
       },
       "superficie_tipica": "Typical size of rented flats: {superficie} m² in {anio} (median monthly rent / median rent per m², multi-family housing; SERPAVI).",
+      "cis_ccaa": {
+        "titulo": "Housing as a problem (CIS)",
+        "linea": "Housing among Spain’s three main problems: {cifra}% ({periodo}; ±{margen} points; {entrevistas} interviews).",
+        "nota": "Opinion, not a register. CIS barometers harmonised by Barómetro a barómetro (CC BY 4.0). By year and community, with their intervals:"
+      },
       "resto": {
         "euros": "€{euros}",
         "queda": "{cifra} left each month after rent",
@@ -804,6 +809,31 @@
     "cis_mas_barometros": "Barómetro a barómetro (series and breakdowns by profile and region)",
     "cis_sin_datos": "There are no CIS data in this copy of the website (datos/cis_vivienda.json). They are generated with targets::tar_make(names = ficheros_web_cis).",
     "cis_metodo": "Housing as a problem (CIS): in the monthly barometer, share of respondents who name housing, without a list of answers, among Spain’s three main problems or among the three that affect them most personally. It is an opinion survey, not a register. Since January 2014; no barometer in August. The months whose results are only in PDF (July 2014 and February, April, May, June and July 2025) are transcribed by hand, with the link to each PDF and its check. Validation: the series reproduces the figures the CIS gives in its press releases.",
+    "cis_ccaa": {
+      "titulo": "By autonomous community",
+      "subtitulo": "Share of respondents in each community who name housing among the three problems in the question, pooling all the year’s interviews, with its 95% interval. Since 2021, from the barometers’ microdata.",
+      "anio": "Year",
+      "pregunta": "Question",
+      "tabla": "Housing as a problem by autonomous community, {periodo}: {pregunta}",
+      "col_comunidad": "Community",
+      "col_cifra": "Figure",
+      "col_intervalo": "95% interval (scale from 0 to {max}%)",
+      "col_margen": "Margin",
+      "col_entrevistas": "Interviews",
+      "periodo_dos": "{desde}–{hasta}",
+      "periodo_en_curso": "{periodo}, up to {mes}",
+      "sin_cifra": "fewer than {minimo} interviews",
+      "margen": "±{m} points",
+      "intervalo": "95% interval: {inf}% to {sup}%",
+      "marca_ruptura": "weighting change",
+      "nota_en_curso": "Current year: barometers published up to {mes}.",
+      "nota_ruptura": "Weighting change: since November 2023 the CIS also weights by education level; the marked periods mix both methods and are not compared with those before or after.",
+      "nota_agrupadas": "Ceuta and Melilla, with fewer than 200 interviews a year, are pooled two years at a time: the selected year and the one before.",
+      "nota_margen": "The interval reflects sampling error and the effect of weighting: two communities whose intervals overlap cannot be told apart. The dashed line marks the figure for Spain.",
+      "fuente": "Source: own elaboration with the microdata of the barometers of the Centro de Investigaciones Sociológicas (CIS, www.cis.es) harmonised by Barómetro a barómetro (gastiaso.github.io/barometros, CC BY 4.0), edition {edicion}. Changes: figures by community and year computed with the CIS weight and rounded to one decimal. The CIS neither takes part in nor sponsors this atlas.",
+      "csv": "Download the table by community (CSV)",
+      "metodo": "Housing as a problem by community (CIS): from the microdata of the barometers from 2021 onwards, harmonised by Barómetro a barómetro, with the CIS weight. Base: all respondents asked the question (don’t know and no answer count). Each year pools the interviews of its barometers (in 2025, from about 1,000 to 7,600 per community); 95% Wilson interval with the design effect of the weighting; nothing with fewer than 50 interviews. Validation: each month for Spain computed this way reproduces the CIS figure to one decimal."
+    },
     "metodo": {
       "titulo": "How to read these series",
       "renta": "Years of income (Banco de España): average price of a standard open-market home (93.75 m² until 2004; afterwards, the average floor area of registered sales) divided by the estimated gross annual income of the median household, based on the Survey of Household Finances, the National Accounts and the Labour Force Survey.",
@@ -1043,7 +1073,8 @@
     "bde_tipos_referencia": "Official mortgage market reference interest rates",
     "ine_cne": "Annual Spanish National Accounts: aggregates by industry (base 2020)",
     "cis_barometros": "CIS monthly barometers: housing among the main problems",
-    "ine_ipc": "Consumer Price Index (CPI): annual averages of the general index (base 2025)"
+    "ine_ipc": "Consumer Price Index (CPI): annual averages of the general index (base 2025)",
+    "cis_ccaa": "CIS monthly barometers by autonomous community: harmonised microdata from Barómetro a barómetro"
   },
   "vocabulario": {
     "contrato": {

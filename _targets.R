@@ -1078,6 +1078,43 @@ bloque_cis <- list(
   tar_target(validacion_web_cis, validar_referencias(cis_comprobar_web(cis_vivienda, ficheros_web_cis), referencias))
 )
 
+# Tarea 63, CIS por comunidad autónoma (R/fuente_cis_ccaa.R; docs/especificacion_cis_comunidad.md): la
+# vivienda entre los tres principales problemas de España y entre los que más afectan personalmente, por
+# comunidad y año desde 2021, con su intervalo de Wilson al 95 %, desde los microdatos armonizados de
+# Barómetro a barómetro (edición fechada de inventario/cis_ccaa_ficheros.csv, con su SHA-256). Tabla
+# propia cis_vivienda_ccaa (no va a la tabla larga), CSV y JSON para la Máquina del tiempo y la ficha de
+# comunidad del mapa. Compuerta cis_ccaa_*: cada mes de España frente a la serie nacional (cis_vivienda).
+#   targets::tar_make(names = c(fichero_cis_vivienda_ccaa, validacion_web_cis_ccaa))
+bloque_cis_ccaa <- list(
+  tar_target(fichero_cis_ccaa_ficheros, "inventario/cis_ccaa_ficheros.csv", format = "file"),
+  tar_target(cis_ccaa_ficheros, cis_ccaa_leer_ficheros(fichero_cis_ccaa_ficheros)),
+  tar_target(fichero_cis_ccaa_comunidades, "inventario/cis_ccaa_comunidades.csv", format = "file"),
+  tar_target(cis_ccaa_comunidades, cis_ccaa_leer_comunidades(fichero_cis_ccaa_comunidades)),
+  tar_target(ficheros_cis_ccaa, cis_ccaa_descargar(cis_ccaa_ficheros), format = "file"),
+  tar_target(cis_ccaa_leido, cis_ccaa_leer(ficheros_cis_ccaa)),
+  tar_target(cis_ccaa_largo, cis_ccaa_menciones(cis_ccaa_leido, cis_ccaa_comunidades)),
+  tar_target(cis_ccaa_espana_mensual, cis_ccaa_mensual(cis_ccaa_largo)),
+  tar_target(cis_ccaa_anual, cis_ccaa_por_anio(cis_ccaa_largo)),
+  tar_target(cis_ccaa_calculada, cis_ccaa_tabla(cis_ccaa_largo, cis_ccaa_comunidades, cis_ccaa_leido$rupturas, ccaa)),
+  tar_target(validacion_cis_ccaa, validar_referencias(bind_rows(
+    cis_ccaa_comprobar_ficheros(ficheros_cis_ccaa, cis_ccaa_ficheros),
+    cis_ccaa_comprobar(cis_ccaa_leido, cis_ccaa_largo, cis_ccaa_espana_mensual, cis_ccaa_anual, cis_ccaa_calculada,
+                       cis_ccaa_comunidades, cis_vivienda)), referencias)),
+  tar_target(cis_vivienda_ccaa, {
+    validacion_cis_ccaa   # la compuerta va antes
+    cis_ccaa_calculada
+  }),
+  tar_target(fichero_cis_vivienda_ccaa, {
+    ruta <- file.path("datos", "intermedios", "cis", "cis_vivienda_ccaa.csv")
+    dir.create(dirname(ruta), recursive = TRUE, showWarnings = FALSE)
+    readr::write_csv(cis_vivienda_ccaa, ruta, na = "")
+    ruta
+  }, format = "file"),
+  tar_target(ficheros_web_cis_ccaa, cis_ccaa_exportar(cis_vivienda_ccaa, cis_ccaa_leido$rupturas, cis_ccaa_ficheros, dir_web = DIR_WEB),
+             format = "file"),
+  tar_target(validacion_web_cis_ccaa, validar_referencias(cis_ccaa_comprobar_web(cis_vivienda_ccaa, ficheros_web_cis_ccaa), referencias))
+)
+
 # F6, calendario de fuentes (R/calendario_fuentes.R; inventario/calendario_fuentes.csv; procedimiento en
 # docs/actualizacion.md). fuentes_pendientes se vuelve a ejecutar cuando cambia el conjunto de fuentes que
 # tocan (edición nueva esperable desde la última descarga, o periodo posterior al último del atlas ya
@@ -1135,6 +1172,7 @@ bloque_ipc <- list(
 
 list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adrh_distribucion, bloque_serpavi, bloque_censo2021, bloque_vut, bloque_paso2011, modulo_acceso, bloque_salarios, bloque_mochila, bloque_percentil, bloque_transistor, bloque_derivados, bloque_compraventa, bloque_zonas_tensionadas, bloque_portales, bloque_tabla_larga, bloque_web, bloque_historico,
      bloque_cis, bloque_calendario,   # F6, CIS y calendario
+     bloque_cis_ccaa,                 # tarea 63, CIS por comunidad
      bloque_otros_gastos,             # otros gastos de vivienda de la ECV (12-nov-2026)
      bloque_ipc,                      # tarea 45, IPC
      bloque_historias)                # tarea 49, primeras historias

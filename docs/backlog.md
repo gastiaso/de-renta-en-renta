@@ -414,6 +414,21 @@ El parque dice que nada ha cambiado; la oferta dice otra cosa. La v1.0 tiene que
 
 Los bloques B y C van antes que la web porque cambian las cifras que la web enseña.
 
+## Bloque H · v1.2 (13-nov-2026)
+
+Tres tareas desde las especificaciones decididas el 13-nov-2026 (decisiones del autor). Descargas aprobadas: el release `v2026-10` de *Barómetro a barómetro*, los textos consolidados del BOE y las cuantías del IMV, de las pensiones no contributivas y el umbral de pobreza de la ECV.
+
+**63. CIS por comunidad autónoma · HECHA (13-nov-2026).** `docs/especificacion_cis_comunidad.md`: microdatos armonizados de *Barómetro a barómetro* (release `v2026-10`, con su SHA-256), `peso`, tabla `cis_vivienda_ccaa` desde 2021 con 2023 marcado (R10), Ceuta y Melilla de dos en dos años, problema de España y personal.
+- **Hecho cuando:** se cumple el «Hecho cuando» de la especificación; las compuertas `cis_ccaa_*` en verde, con `cis_ccaa_espana` reproduciendo la serie nacional publicada mes a mes; la tabla en la «Máquina del tiempo» y una línea en la ficha de comunidad, en los dos idiomas.
+- **Hecho (13-nov-2026):** `R/fuente_cis_ccaa.R`, `inventario/cis_ccaa_ficheros.csv` y `inventario/cis_ccaa_comunidades.csv`; 240 filas (19 comunidades y España, 2021–2026, dos preguntas), todas con cifra. `cis_ccaa_espana`: 124 cifras mensuales de España, exactas a un decimal; alertas: nueve márgenes de Ceuta y Melilla de más de ±5 puntos y junio y septiembre de 2023 sin cifra nacional. Bloque «Por comunidad autónoma» en `historico.html` y línea en la ficha de comunidad (`web/js/cis_ccaa.js`), en los dos idiomas; nota §7.10.
+- **Por revisar:** (a) Ceuta y Melilla van en ventana móvil (cada año con el anterior), no en parejas fijas; (b) la web de *Barómetro a barómetro* da el margen con Wald y el efecto de diseño del estudio, y aquí va Wilson con el de Kish de la base, como se decidió: las cifras centrales coinciden y los márgenes pueden diferir algo; (c) junio y septiembre de 2023 están en los microdatos y no en la serie nacional del atlas; (d) el CSV va en los datos del sitio, no en las descargas del release; (e) la ficha del mapa da el año en curso y la tabla abre en el último año completo.
+
+**64. «Reglas del juego».** `docs/especificacion_reglas_del_juego.md`: inventario de normas y resúmenes (CSV → JSON → página), los siete temas estatales con lo autonómico como enlaces, comprobación de vigencia con la API del BOE, casillas 7, 10, 17 y 22 de la portada activas, `reglas_literal` de bloqueo; subtítulo «Normativa vigente». Los resúmenes quedan en `borrador` hasta la revisión jurídica del autor, y la compuerta no deja publicarlos antes.
+- **Hecho cuando:** se cumple el «Hecho cuando» de la especificación, con los resúmenes en `borrador` y la página lista para cuando el autor los dé por buenos.
+
+**65. Línea de ingreso residual.** `docs/especificacion_ingreso_residual.md`, parte A: líneas del IMV y del umbral de pobreza de la ECV con selector (IMV por defecto), PNC rotulada de 2015 a 2019, en «Tu sueldo», la ficha y como regla de «¿te llega?» (selector apagado por defecto), tres tramos y sin hogares con menores. La parte B (riesgo de pobreza tras los gastos de vivienda, ECV), después.
+- **Hecho cuando:** se cumple el «Hecho cuando» de la especificación; R y la página coinciden en la muestra.
+
 ## Para la v1.2
 
 La v1.1.0 (12-nov-2026) salió con la revisión de las seis lecturas, «Tu sueldo» y los datos de 2025; lo que esta lista reservaba «para la v1.1» pasa a la siguiente.

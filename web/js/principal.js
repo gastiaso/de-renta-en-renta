@@ -45,6 +45,7 @@ import { crearAvisoImagen } from './aviso_imagen.js';
 import { opcionProximamente } from './familias.js';
 import { mostrarFicha, mostrarHistoria, esPantallaEstrecha, prepararPlegado } from './movil.js';
 import { lineaTransparencia } from './transparencia.js';
+import { pintarCisFicha } from './cis_ccaa.js';   // tarea 63: la vivienda como problema por comunidad (CIS)
 import {
   variaciones, bandaMargen, pocosContratos, variacionIpc, enEuros, textosVariacion, notasEvolucion, graficoEvolucion, cargarIpc,
   anioBaseIpc, deflactarSerie,
@@ -1084,6 +1085,8 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
       .then((d) => { if (yo === turnoFicha) fichaDeclaraciones(huecoDetalle, { t, declaraciones: d?.[codigo] ?? [], fecha: fechaLarga }); })
       .catch((error) => console.error(error));
   }
+  // Tarea 63: en la ficha de comunidad, la vivienda como problema (CIS por comunidad; cis_ccaa.js)
+  if (nivel === 'ccaa') pintarCisFicha(huecoDetalle, codigo, t, () => yo === turnoFicha).catch((error) => console.error(error));
   if (tieneNivel) {
     seriesDeTerritorio(nivel, codigo, v)
       .then((s) => { if (yo === turnoFicha) pintarEvolucion(huecoSerie, s, v, codigo, nivel); })

@@ -4,6 +4,13 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (13-nov-2026, tarea 63: CIS por comunidad autónoma)
+
+- **La vivienda como problema, por comunidad autónoma** (`R/fuente_cis_ccaa.R`; fuente `cis_ccaa`): porcentaje de entrevistados que cita la vivienda entre los tres principales problemas de España y entre los tres que más le afectan, por comunidad y año desde 2021, con los microdatos de los barómetros del CIS armonizados por *Barómetro a barómetro* (edición `v2026-10`, CC BY 4.0; descarga automática con su SHA-256 desde `inventario/cis_ccaa_ficheros.csv`). Peso del CIS (`peso`), todas las entrevistas del año juntas, intervalo de Wilson al 95 % con el efecto de diseño de Kish de cada base, nada con menos de 50 entrevistas, Ceuta y Melilla de dos en dos años (el año y el anterior), 2023 marcado por el cambio de ponderación de noviembre (R10) y el año en curso rotulado «hasta {mes}». Tabla propia `cis_vivienda_ccaa`, fuera de la tabla larga, y `datos/cis_vivienda_ccaa.json` y `.csv`. En 2025: España, 32,3 % (±0,6); de 24,2 % en Castilla y León a 41,0 % en Illes Balears.
+- **Compuerta `cis_ccaa_*`**: cada mes de España calculado desde los microdatos reproduce la serie nacional publicada a un decimal (124 cifras, exactas; `cis_ccaa_espana`, bloqueo); las comunidades suman España (`cis_ccaa_suma`); entrevistas, códigos y ficheros (`cis_ccaa_muestra`, `cis_ccaa_codigos`, `cis_ccaa_fichero`); alertas de márgenes de más de ±5 puntos (Ceuta y Melilla) y de meses sin cifra nacional (junio y septiembre de 2023); ida y vuelta de la web (`web_cis_ccaa`).
+- **Máquina del tiempo**: «Por comunidad autónoma», bajo el bloque nacional del CIS: año y pregunta, comunidades ordenadas por la cifra con el intervalo como barra y España de referencia, notas y descarga del CSV, en castellano e inglés. **Mapa**: la ficha de comunidad da la cifra más reciente con su margen y enlaza a la Máquina del tiempo.
+- Nota metodológica, §7.10 (castellano e inglés): cálculo, márgenes, resultado y compuerta por comunidad; `docs/actualizacion.md`, cómo renovar la edición.
+
 ### Corregido (13-nov-2026)
 
 - **Triángulo de «Cómo se mide»** (`web/estilo/sitio.css`): las dos reglas del marcador de la nota de las historias llevaban un carácter de control (U+0015) seguido de «B8» y «BE» en lugar de los escapes `\25B8` y `\25BE`, y la página enseñaba «B8 Cómo se mide». El sitio publicado lo arrastra hasta la próxima publicación. Prueba nueva en `pruebas/web/robustez.test.mjs`: ningún HTML, CSS, JS ni diccionario de la web lleva caracteres de control.

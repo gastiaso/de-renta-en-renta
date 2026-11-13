@@ -1,0 +1,3 @@
+edicion,tipo,fichero,url,bytes,sha256,notas
+v2026-10,microdatos,barometros_armonizados_v2026-10.parquet,https://github.com/gastiaso/barometros/releases/download/v2026-10/barometros_armonizados_v2026-10.parquet,10192204,c91a7e8e0a0440d60b737811c833f53daf63166816b6eb3cf511fd51797913b9,"64 barómetros (enero de 2021 a octubre de 2026), 264.081 entrevistas; release del 7-11-2026"
+v2026-10,metadatos,metadatos_v2026-10.json,https://github.com/gastiaso/barometros/releases/download/v2026-10/metadatos_v2026-10.json,358992,0eb49087e5ce2a658e46411b22448791761ae19be42eec2aa0a2a88e329bbf63,"Estudios (entrevistas, efecto de diseño, trabajo de campo), categorías y rupturas de serie"

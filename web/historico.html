@@ -147,6 +147,25 @@
           <p class="nota hi-fuente"></p>
           <p class="nota hi-mas"><span data-i18n="historico.cis_mas"></span> <a href="https://gastiaso.github.io/historias/vivienda/" hreflang="es" data-i18n="historico.cis_mas_historia"></a> · <a href="https://gastiaso.github.io/barometros/#vivienda" hreflang="es" data-i18n="historico.cis_mas_barometros"></a></p>
           <details class="hi-plegable"><summary data-i18n="historico.tabla"></summary><div class="hi-tabla-marco"></div></details>
+          <!-- Tarea 63: por comunidad autónoma (datos/cis_vivienda_ccaa.json, que puede faltar; js/cis_ccaa.js) -->
+          <div id="hi-cis-ccaa" class="hi-cis-ccaa" role="region" aria-labelledby="hi-cis-ccaa-titulo" hidden>
+            <h3 id="hi-cis-ccaa-titulo" class="hi-h3" data-i18n="historico.cis_ccaa.titulo"></h3>
+            <p class="nota" data-i18n="historico.cis_ccaa.subtitulo"></p>
+            <div class="hi-cis-ccaa-controles">
+              <label class="hi-selector">
+                <span data-i18n="historico.cis_ccaa.anio"></span>
+                <select id="hi-cis-ccaa-anio"></select>
+              </label>
+              <div class="hi-euros" role="group" data-i18n-aria="historico.cis_ccaa.pregunta">
+                <button type="button" data-cis-pregunta="espana" aria-pressed="true" data-i18n="historico.cis_espana"></button>
+                <button type="button" data-cis-pregunta="personal" aria-pressed="false" data-i18n="historico.cis_personal"></button>
+              </div>
+            </div>
+            <div class="hi-tabla-marco hi-cis-ccaa-marco"></div>
+            <ul class="nota hi-cis-ccaa-notas"></ul>
+            <p class="nota hi-cis-ccaa-fuente"></p>
+            <p class="nota"><a id="hi-cis-ccaa-csv" href="datos/cis_vivienda_ccaa.csv" download data-i18n="historico.cis_ccaa.csv"></a></p>
+          </div>
         </section>
 
         <section class="tarjeta hi-caja" aria-labelledby="hi-metodo-titulo">
@@ -159,6 +178,7 @@
             <li data-i18n="historico.metodo.sueldo"></li>
             <li data-i18n="historico.metodo.euros"></li>
             <li data-i18n="historico.cis_metodo"></li>
+            <li data-i18n="historico.cis_ccaa.metodo"></li>
             <li data-i18n="historico.metodo.mezcla"></li>
             <li data-i18n="historico.metodo.compuerta"></li>
           </ul>

@@ -13,6 +13,7 @@ import { cargarIdioma, traducirPagina } from './i18n.js';
 import { ordenNatural } from './nombres.js';
 import { fechaLarga } from './transparencia.js';
 import * as H from './historico_datos.js';
+import * as C from './cis_ccaa.js';
 
 const $ = (id) => document.getElementById(id);
 const SVG = 'http://www.w3.org/2000/svg';
@@ -21,6 +22,8 @@ const CLASES = ['serie-a', 'serie-b'];
 let t;          // traductor del idioma activo
 let datos;      // historico.json
 let cis = null; // cis_vivienda.json (null si no está)
+let cisCcaa = null;   // cis_vivienda_ccaa.json (tarea 63; null si no está)
+const vistaCcaa = { anio: null, pregunta: 'espana' };   // año y pregunta de la tabla por comunidad
 let deflactados = null;   // historico.json con las series en euros del año base (null sin IPC)
 let estado;     // { idioma, ccaa, euros }
 let rango;      // años del eje común
@@ -61,6 +64,7 @@ async function iniciar() {
   const nav = document.querySelector('.navegacion');
   if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = nav.scrollWidth;
   const pedidoCis = leerOpcional(H.RUTA_CIS);
+  const pedidoCisCcaa = leerOpcional(C.RUTA_CIS_CCAA);
   const pedidoIpc = leerOpcional(H.RUTA_IPC);
   try {
     const respuesta = await fetch(H.RUTA_DATOS);
@@ -75,6 +79,7 @@ async function iniciar() {
     return;
   }
   cis = await pedidoCis;
+  cisCcaa = C.filasCis(await pedidoCisCcaa).length ? await pedidoCisCcaa : null;
   deflactados = H.deflactarDatos(datos, await pedidoIpc);
   estado = H.leerEstado(location.search, datos);
   rango = H.rangoAnios(datos, H.CIS_SERIES.map((p) => H.puntosCis(cis, p)));
@@ -85,6 +90,16 @@ async function iniciar() {
     guardarEstado();
     pintarBloque(H.BLOQUES.find((b) => b.territorial));
   });
+  $('hi-cis-ccaa-anio').addEventListener('change', (e) => {
+    vistaCcaa.anio = Number(e.target.value);
+    pintarCisCcaa();
+  });
+  for (const boton of document.querySelectorAll('[data-cis-pregunta]')) {
+    boton.addEventListener('click', () => {
+      vistaCcaa.pregunta = boton.dataset.cisPregunta;
+      pintarCisCcaa();
+    });
+  }
   for (const boton of document.querySelectorAll('[data-euros]')) {
     boton.addEventListener('click', () => {
       if (boton.dataset.euros === estado.euros) return;
@@ -425,6 +440,60 @@ function pintarCis() {
   fuente.hidden = !hay;
   seccion.querySelector('.hi-plegable').hidden = !hay;
   if (hay) pintarTablaCis(series, seccion.querySelector('.hi-tabla-marco'));
+  pintarCisCcaa();
+}
+
+// --- Por comunidad autónoma (tarea 63) ----------------------------------------------------------
+// Tabla de un año y una pregunta: comunidades ordenadas por la cifra, con el intervalo al 95 % como
+// barra horizontal en una escala común, el margen y las entrevistas; España, la primera, como
+// referencia (su cifra es una línea vertical en todas las barras). Sin el JSON, el bloque no sale.
+function pintarCisCcaa() {
+  const caja = $('hi-cis-ccaa');
+  const filas = C.filasCis(cisCcaa);
+  caja.hidden = !filas.length;
+  if (!filas.length) return;
+  const anios = C.aniosCis(filas);
+  if (!anios.includes(vistaCcaa.anio)) vistaCcaa.anio = C.anioInicial(filas);
+  const selector = $('hi-cis-ccaa-anio');
+  selector.replaceChildren(...anios.slice().reverse().map((a) => {
+    const muestra = filas.find((f) => f.anio === a && f.codigo === C.ESPANA_CIS) ?? { anio: a, anios: 1, en_curso: false };
+    return el('option', { value: a, selected: a === vistaCcaa.anio }, C.textoPeriodoCis(muestra, t));
+  }));
+  for (const boton of caja.querySelectorAll('[data-cis-pregunta]')) {
+    boton.setAttribute('aria-pressed', String(boton.dataset.cisPregunta === vistaCcaa.pregunta));
+  }
+  const nombre = (codigo) => (codigo === C.ESPANA_CIS ? t('historico.espana')
+    : ordenNatural(cisCcaa.nombres?.[codigo] ?? datos?.territorios?.[codigo] ?? codigo));
+  const tabla = C.tablaAnio(filas, vistaCcaa.anio, vistaCcaa.pregunta, nombre);
+  const todas = [tabla.espana, ...tabla.comunidades].filter(Boolean);
+  const escala = C.escalaCis(todas);
+  const ref = tabla.espana?.valor ?? null;
+  const barra = (f) => {
+    if (f.valor === null) return el('span', { class: 'hi-intervalo hi-intervalo-vacio' });
+    const izq = C.posicion(f.inferior, escala);
+    return el('span', { class: 'hi-intervalo', 'aria-hidden': 'true' },
+      ref !== null ? el('span', { class: 'hi-intervalo-ref', style: `left:${C.posicion(ref, escala)}%` }) : null,
+      el('span', { class: 'hi-intervalo-tramo', style: `left:${izq}%;width:${Math.max(0.5, C.posicion(f.superior, escala) - izq)}%` }),
+      el('span', { class: 'hi-intervalo-punto', style: `left:${C.posicion(f.valor, escala)}%` }));
+  };
+  const fila = (f) => el('tr', { class: f.codigo === C.ESPANA_CIS ? 'hi-cis-ccaa-espana' : null },
+    el('th', { scope: 'row' }, f.nombre, f.anios > 1 || f.ruptura
+      ? el('span', { class: 'hi-cis-ccaa-marca' }, ` (${[f.anios > 1 ? C.textoPeriodoCis(f, t) : null, f.ruptura ? t('historico.cis_ccaa.marca_ruptura') : null].filter(Boolean).join('; ')})`)
+      : null),
+    el('td', {}, C.textoCifraCis(f, t)),
+    el('td', { class: 'hi-cis-ccaa-barra', title: C.textoIntervaloCis(f, t) }, barra(f)),
+    el('td', {}, C.textoMargenCis(f, t)),
+    el('td', {}, t.numero(f.entrevistas)));
+  $('hi-cis-ccaa').querySelector('.hi-cis-ccaa-marco').replaceChildren(el('table', { class: 'hi-tabla hi-tabla-ccaa',
+    'aria-label': t('historico.cis_ccaa.tabla', { periodo: C.textoPeriodoCis(tabla.espana ?? todas[0], t), pregunta: t(`historico.cis_${vistaCcaa.pregunta}`) }) },
+  el('thead', {}, el('tr', {}, el('th', { scope: 'col' }, t('historico.cis_ccaa.col_comunidad')),
+    el('th', { scope: 'col' }, t('historico.cis_ccaa.col_cifra')),
+    el('th', { scope: 'col' }, t('historico.cis_ccaa.col_intervalo', { max: t.numero(escala.max) })),
+    el('th', { scope: 'col' }, t('historico.cis_ccaa.col_margen')),
+    el('th', { scope: 'col' }, t('historico.cis_ccaa.col_entrevistas')))),
+  el('tbody', {}, todas.map(fila))));
+  caja.querySelector('.hi-cis-ccaa-notas').replaceChildren(...[...C.notasCis(tabla, t), t('historico.cis_ccaa.nota_margen')].map((n) => el('li', {}, n)));
+  caja.querySelector('.hi-cis-ccaa-fuente').textContent = t('historico.cis_ccaa.fuente', { edicion: cisCcaa.edicion ?? '' });
 }
 
 function pintarGraficoCis() {

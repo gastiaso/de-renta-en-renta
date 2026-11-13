@@ -312,6 +312,11 @@
         "nota": "Relación que publica el Ministerio de Vivienda y Agenda Urbana en el BOE cada trimestre (Ley 12/2023, art. 18): tres años de vigencia desde el día siguiente a la publicación. En las declaraciones de una parte del municipio, el mapa pinta el municipio entero con su propia categoría; el ámbito exacto es el de la declaración."
       },
       "superficie_tipica": "Superficie típica de los pisos alquilados: {superficie} m² en {anio} (alquiler mensual mediano / alquiler por m² mediano, vivienda colectiva; SERPAVI).",
+      "cis_ccaa": {
+        "titulo": "La vivienda como problema (CIS)",
+        "linea": "La vivienda, entre los tres principales problemas de España: {cifra} % ({periodo}; ±{margen} puntos; {entrevistas} entrevistas).",
+        "nota": "Opinión, no registro. Barómetros del CIS armonizados por Barómetro a barómetro (CC BY 4.0). Por año y comunidad, con sus intervalos:"
+      },
       "resto": {
         "euros": "{euros} €",
         "queda": "Quedan {cifra} al mes después del alquiler",
@@ -804,6 +809,31 @@
     "cis_mas_barometros": "Barómetro a barómetro (series y cruces por perfil y comunidad autónoma)",
     "cis_sin_datos": "No hay datos del CIS en esta copia de la web (datos/cis_vivienda.json). Se generan con targets::tar_make(names = ficheros_web_cis).",
     "cis_metodo": "La vivienda como problema (CIS): en el barómetro mensual, porcentaje de entrevistados que nombra la vivienda, sin lista de respuestas, entre los tres principales problemas de España o entre los tres que más le afectan personalmente. Es una encuesta de opinión, no un registro. Desde enero de 2014; sin barómetro en agosto. Los meses cuyos resultados solo están en PDF (julio de 2014 y febrero, abril, mayo, junio y julio de 2025) se transcriben a mano, con el enlace a cada PDF y su comprobación. Compuerta: la serie reproduce las cifras que el CIS da en sus notas de prensa.",
+    "cis_ccaa": {
+      "titulo": "Por comunidad autónoma",
+      "subtitulo": "Porcentaje de entrevistados de cada comunidad que nombra la vivienda entre los tres problemas de la pregunta, con todas las entrevistas del año juntas, y su intervalo al 95 %. Desde 2021, con los microdatos de los barómetros.",
+      "anio": "Año",
+      "pregunta": "Pregunta",
+      "tabla": "La vivienda como problema por comunidad autónoma, {periodo}: {pregunta}",
+      "col_comunidad": "Comunidad",
+      "col_cifra": "Cifra",
+      "col_intervalo": "Intervalo al 95 % (escala de 0 a {max} %)",
+      "col_margen": "Margen",
+      "col_entrevistas": "Entrevistas",
+      "periodo_dos": "{desde}–{hasta}",
+      "periodo_en_curso": "{periodo}, hasta {mes}",
+      "sin_cifra": "menos de {minimo} entrevistas",
+      "margen": "±{m} puntos",
+      "intervalo": "Intervalo al 95 %: de {inf} a {sup} %",
+      "marca_ruptura": "cambio de ponderación",
+      "nota_en_curso": "Año en curso: barómetros publicados hasta {mes}.",
+      "nota_ruptura": "Cambio de ponderación: desde noviembre de 2023 el CIS ajusta también por nivel de estudios; los periodos marcados mezclan los dos métodos y no se comparan con los de antes ni con los de después.",
+      "nota_agrupadas": "Ceuta y Melilla, con menos de 200 entrevistas al año, van de dos en dos años: el elegido y el anterior.",
+      "nota_margen": "El intervalo recoge el error de muestreo y el efecto de la ponderación: dos comunidades cuyos intervalos se solapan no se distinguen. La línea discontinua marca la cifra de España.",
+      "fuente": "Fuente: elaboración propia con los microdatos de los barómetros del Centro de Investigaciones Sociológicas (CIS, www.cis.es) armonizados por Barómetro a barómetro (gastiaso.github.io/barometros, CC BY 4.0), edición {edicion}. Cambios: cifras por comunidad y año calculadas con el peso del CIS y redondeadas a un decimal. El CIS no participa en este atlas ni lo patrocina.",
+      "csv": "Descargar la tabla por comunidad (CSV)",
+      "metodo": "La vivienda como problema por comunidad (CIS): desde los microdatos de los barómetros de 2021 en adelante, armonizados por Barómetro a barómetro, con el peso del CIS. Base: todos los entrevistados a los que se hace la pregunta (los que no saben o no contestan cuentan). Cada año junta las entrevistas de sus barómetros (en 2025, de unas 1.000 a 7.600 por comunidad); intervalo de Wilson al 95 % con el efecto de diseño de la ponderación; nada con menos de 50 entrevistas. Compuerta: cada mes de España calculado así reproduce la cifra del CIS a un decimal."
+    },
     "metodo": {
       "titulo": "Cómo se leen estas series",
       "renta": "Años de renta (Banco de España): precio medio de una vivienda libre tipo (93,75 m² hasta 2004; después, la superficie media de las compraventas registradas) entre la renta bruta anual estimada del hogar mediano, que sale de la Encuesta Financiera de las Familias, la Contabilidad Nacional y la EPA.",
@@ -1043,7 +1073,8 @@
     "bde_tipos_referencia": "Tipos de interés de referencia oficiales del mercado hipotecario",
     "ine_cne": "Contabilidad Nacional Anual de España: agregados por rama de actividad (base 2020)",
     "cis_barometros": "Barómetros mensuales del CIS: la vivienda entre los principales problemas",
-    "ine_ipc": "Índice de Precios de Consumo (IPC): medias anuales del índice general (base 2025)"
+    "ine_ipc": "Índice de Precios de Consumo (IPC): medias anuales del índice general (base 2025)",
+    "cis_ccaa": "Barómetros mensuales del CIS por comunidad autónoma: microdatos armonizados de Barómetro a barómetro"
   },
   "vocabulario": {
     "contrato": {
