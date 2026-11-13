@@ -2,7 +2,40 @@
 
 *Borrador para la v1.2 (12-nov-2026), por decidir. Encargo: backlog, «Para la v1.2», «Microdatos del CIS por comunidad»; nota metodológica, §7.10 («Lo que no se usa»: los microdatos darían la cifra por comunidad y el contraste por comunidad sigue pendiente). Provisional, como todo el plan.*
 
-**Estado: borrador. La descarga de los microdatos pide un formulario: decide el autor (pregunta 1).** Nada de esto está en el pipeline. Las condiciones y las fichas técnicas se consultaron en la web del CIS el 12-nov-2026, sin descargar ningún fichero de datos.
+**Estado: borrador, revisado el 13-nov-2026.** La fuente cambia: en lugar de los microdatos del CIS, que piden un formulario, los microdatos armonizados de *Barómetro a barómetro*, publicados con licencia CC BY 4.0 y sin registro (apartado «Revisión del 13-nov-2026»). Lo que sigue a ese apartado queda como antecedente. Nada de esto está en el pipeline.
+
+## Revisión del 13-nov-2026: los microdatos armonizados
+
+*Barómetro a barómetro* (<https://gastiaso.github.io/barometros/>, repositorio `gastiaso/barometros`) publica los barómetros mensuales del CIS de enero de 2021 a octubre de 2026 armonizados en un solo fichero: `barometros_armonizados.parquet`, una fila por entrevista (64 barómetros, 264.081 entrevistas, unos 19 MB), con `metadatos.json` (rupturas, fechas de campo y efecto de diseño de cada estudio). Licencia CC BY 4.0 para la armonización; los datos de origen, con las condiciones del CIS. Se descarga sin formulario desde su sitio y en ediciones fechadas (release `vAAAA-MM`; la primera, `v2026-10`). Eso resuelve la pregunta del formulario para 2021 en adelante.
+
+**Lo que trae** (leído de la edición `v2026-10` el 13-nov-2026): `estudio`, `mes`, `peso` (el peso del CIS), `peso_ccaa` (`PESOCCAA`), `ccaa` (las 19 comunidades y ciudades autónomas), `provincia`, `prob_esp_1` a `prob_esp_3` y `prob_per_1` a `prob_per_3` (códigos armonizados; «La vivienda» es `PROB_007`; «ocupación de viviendas», `PROB_081`, va aparte y no se suma), además de sexo, edad, estudios y el resto de variables de perfil. `peso_ccaa` está en los 64 barómetros.
+
+**Método de la herramienta**, el mismo que se propone aquí: porcentaje de entrevistados que citan `PROB_007` entre sus hasta tres menciones, con `peso`; base, quien tiene una primera mención distinta de «no procede» (NS y NC cuentan en la base); margen al 95 % con el intervalo de Wilson sobre el tamaño efectivo (efecto de diseño de Kish en cada base); ningún dato con menos de 50 entrevistas; las rupturas de tipo C se marcan y no se calculan variaciones a través de ellas (R10, noviembre de 2023: ponderación con ajuste por nivel educativo, que lleva el efecto de diseño de 1,1 a 2).
+
+**Contraste con la serie nacional del atlas.** Con `peso`, la media anual de España calculada desde el Parquet coincide con la media de las cifras mensuales publicadas que ya tiene `cis_vivienda`: 1,6 % en 2021 y 32,3 % en 2025 (once barómetros cada año).
+
+**`peso` y no `peso_ccaa`.** Antes de R10 dan lo mismo dentro de cada comunidad (comprobado en 2021: diferencias de una décima, salvo Melilla, con 89 entrevistas). Desde R10, `peso_ccaa` da entre 0,2 y 6,7 puntos más en todas las comunidades (2025: Andalucía, 32,3 frente a 28,5; Illes Balears, 47,4 frente a 41,0), y su suma no reproduce la cifra nacional publicada. `peso` es el que usan las tabulaciones del CIS y la herramienta.
+
+**Muestra por comunidad, 2025** (problema de España; entrevistas en la base, porcentaje y efecto de diseño):
+
+| Comunidad | Entrevistas | % | Efecto de diseño |
+|---|---|---|---|
+| Andalucía | 7.630 | 28,5 | 2,1 |
+| Madrid | 6.187 | 39,2 | 1,9 |
+| Cataluña | 6.184 | 35,3 | 2,0 |
+| Comunitat Valenciana | 4.368 | 32,9 | 2,1 |
+| Illes Balears | 1.151 | 41,0 | 2,5 |
+| País Vasco | 1.981 | 39,0 | 2,0 |
+| La Rioja | 1.025 | 25,0 | 2,1 |
+| Ceuta | 192 | 30,8 | 2,4 |
+| Melilla | 198 | 25,6 | 1,9 |
+| España | 44.336 | 32,3 | 2,1 |
+
+Con unas mil entrevistas al año y un efecto de diseño de 2, el margen de las comunidades pequeñas ronda ±4 puntos; el de Ceuta y Melilla, ±9 (unos ±7 si se agrupan dos años).
+
+**Lo que no cubre:** de 2014 a 2020 (la serie nacional empieza en 2014). Para esos años seguirían haciendo falta los microdatos del CIS, con su formulario. El Barómetro de Vivienda 2026 (estudio 3532) solo tiene avance, sin microdatos.
+
+**Encaje que cambia respecto a lo de abajo:** la descarga es automática (`descargar_con_cache()` de la edición fechada, con su SHA-256), no manual; la fuente nueva va en `inventario/fuentes.csv` y en el calendario (una edición por barómetro); la compuerta `cis_ccaa_espana` (bloqueo) compara cada mes de España calculado desde el Parquet con la cifra publicada de `cis_vivienda`, a ±0,1 puntos, y `cis_ccaa_suma`, que las comunidades ponderadas den España.
 
 ## Lo que ya hay
 
@@ -129,16 +162,19 @@ Porcentaje de entrevistados de la comunidad que cita «La vivienda» en alguna d
 
 ## Preguntas para el autor
 
-1. **Descarga con formulario.** El fichero de datos de cada barómetro exige rellenar un formulario (y el FID, registrarse); el §7.10 los dejó fuera por eso. Opciones: (a) aceptar el formulario y bajar cada zip a mano, como Registradores; (b) registrarse en el FID; (c) quedarse con el Barómetro de Vivienda 2026 cuando el CIS publique sus resultados; (d) dejarlo. Recomendada: **(a)**, desde 2023. Decide el autor.
-2. **Periodo.** Desde el primer año con `PESOCCAA` y mínimo por comunidad (a más tardar, 2023; por comprobar), o toda la serie desde 2014. Recomendado: **desde 2023**.
-3. **Agregación.** Media anual (B) o móvil de doce meses (C). Recomendada: **B**.
-4. **Ceuta y Melilla.** Agrupadas de dos en dos años, solo con margen, o fuera. Recomendado: **agrupadas**.
-5. **Dónde se guarda.** Tabla propia (recomendado) o indicador auxiliar de la tabla larga a nivel de comunidad.
-6. **Dónde se ve.** Solo en la «Máquina del tiempo» o también en la ficha de comunidad del mapa. Recomendado: **las dos**, la ficha con una línea.
-7. **Barómetro de Vivienda 2026.** Incorporarlo cuando se publique (finales de noviembre de 2026), tras leer su cuestionario, o esperar. Recomendado: **leer el cuestionario y decidir entonces**; las preguntas de coyuntura, como las de octubre de 2026, sin serie, quedan fuera.
+Revisadas el 13-nov-2026, con la fuente nueva. Las del 12-nov-2026 (formulario, periodo, agregación, Ceuta y Melilla, dónde se guarda, dónde se ve y Barómetro de Vivienda) quedan absorbidas aquí.
+
+1. **Fuente.** Los microdatos armonizados de *Barómetro a barómetro* (edición fechada, CC BY 4.0, citando la armonización y al CIS), desde 2021; de 2014 a 2020, fuera hasta que se decida bajar los del CIS con su formulario. Recomendada: **sí**.
+2. **Peso.** `peso`, el de las tabulaciones del CIS, que reproduce la serie nacional publicada; no `peso_ccaa`. Recomendado: **`peso`**.
+3. **Ruptura R10 (noviembre de 2023).** Tabla anual desde 2021 con 2023 marcado (mezcla los dos métodos) y sin variaciones a través de él. Recomendado: **sí**.
+4. **Agregación.** Media anual de las entrevistas del año, con el año en curso rotulado «hasta {mes}». Recomendada: **sí**.
+5. **Ceuta y Melilla.** Agrupadas de dos en dos años. Recomendado: **sí**.
+6. **Problema personal.** Además del problema de España, la serie del problema que afecta personalmente, como en la serie nacional. Recomendado: **las dos**.
+7. **Dónde se guarda y se ve.** Tabla propia (`cis_vivienda_ccaa`), fuera de la tabla larga; en la «Máquina del tiempo» y con una línea en la ficha de comunidad. Recomendado: **sí**.
+8. **Barómetro de Vivienda 2026.** Esperar a sus microdatos; el avance no da cifras por comunidad. Recomendado: **esperar**.
 
 ## Hecho cuando
 
-- La tabla `cis_vivienda_ccaa` trae las 19 comunidades por año desde el primero decidido, con cifra, margen y entrevistas, y pasan las compuertas `cis_ccaa_*`.
+- La tabla `cis_vivienda_ccaa` trae las 19 comunidades por año desde 2021, con cifra, margen y entrevistas, y pasan las compuertas `cis_ccaa_*`.
 - La «Máquina del tiempo» muestra la tabla por comunidad con sus intervalos, en castellano e inglés, y la nota (§7.10) explica el cálculo y los márgenes.
-- La lista de descargas manuales dice qué estudios faltan y cómo bajarlos.
+- El Parquet se descarga solo, de una edición fechada, y la compuerta `cis_ccaa_espana` reproduce la serie nacional publicada mes a mes.

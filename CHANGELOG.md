@@ -4,6 +4,12 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Decidido (13-nov-2026, borradores de la v1.2: decisiones del autor)
+
+- **Línea de ingreso residual** (`docs/especificacion_ingreso_residual.md`): las siete preguntas, con la opción recomendada (IMV y umbral de pobreza de la ECV con selector, el IMV por defecto; en «Tu sueldo», la ficha y «¿te llega?»; PNC rotulada de 2015 a 2019; tres tramos; hogares con menores, fuera).
+- **«Reglas del juego»** (`docs/especificacion_reglas_del_juego.md`): formato, alcance, decretos-leyes, casillas y compuerta, como se recomendaron; la revisión jurídica la hace el autor; subtítulo «Normativa vigente».
+- **CIS por comunidad** (`docs/especificacion_cis_comunidad.md`), revisado: la fuente pasa a ser los microdatos armonizados de *Barómetro a barómetro* (CC BY 4.0, sin formulario, desde 2021), con el peso del CIS; reproducen la media anual de la serie nacional publicada (1,6 % en 2021; 32,3 % en 2025). Ocho preguntas nuevas, por decidir.
+
 ### Añadido (12-nov-2026, borradores para la v1.2: por decidir)
 
 - **Tres especificaciones-borrador** para lo que el backlog reserva «para la v1.2», con fuentes, método y alternativas, encaje en la tabla larga, la web y las compuertas, esfuerzo y preguntas: `docs/especificacion_ingreso_residual.md` (línea de ingreso residual frente a la renta garantizada del IMV o el umbral de pobreza de la ECV, en «Tu sueldo» y como regla de «¿te llega?»), `docs/especificacion_reglas_del_juego.md` (pestaña con resúmenes de las normas del alquiler, enlazados al BOE consolidado; muestra de la ficha de zonas tensionadas, por revisar) y `docs/especificacion_cis_comunidad.md` (la vivienda como problema por comunidad, con los microdatos de los barómetros: media anual desde 2023 y márgenes; la descarga pide un formulario). Sin cambios en el pipeline ni en la web.

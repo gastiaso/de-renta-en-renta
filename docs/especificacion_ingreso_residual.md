@@ -2,7 +2,7 @@
 
 *Borrador para la v1.2 (12-nov-2026), por decidir. Encargo: backlog, «Para la v1.2», «Línea de ingreso residual»; nota metodológica, §7.4 («La misma proporción para todos los ingresos») y §8. Provisional, como todo el plan.*
 
-**Estado: borrador.** Nada de esto está en el pipeline ni en la web. Las cifras de las fuentes se consultaron en la web el 12-nov-2026, sin descargar ficheros; las marcadas «por verificar» no se han contrastado con la fuente primaria.
+**Estado: decidido (13-nov-2026), por hacer.** Las siete preguntas del final se cerraron con la opción recomendada (decisión del autor). Nada de esto está en el pipeline ni en la web. Las cifras de las fuentes se consultaron en la web el 12-nov-2026, sin descargar ficheros; las marcadas «por verificar» no se han contrastado con la fuente primaria.
 
 ## Por qué
 
@@ -108,6 +108,8 @@ Supuestos (`inventario/supuestos.csv`): `linea_residual` (valor `imv`, opciones 
 **M.** Fuente del IMV y del umbral de la ECV con su compuerta, S; web («Tu sueldo», selector, tramos, textos, pruebas), M; nota en dos idiomas, S. Parte B: M aparte (definición de Eurostat, olas agrupadas, compuerta). Alternativa C: L.
 
 ## Preguntas para el autor
+
+**Cerradas (13-nov-2026), decisión del autor: las siete con la opción recomendada.** Umbral D (IMV y umbral de pobreza de la ECV con selector, el IMV por defecto); en «Tu sueldo», la ficha y como regla de «¿te llega?», con el selector apagado por defecto; PNC anual / 12 rotulada de 2015 a 2019; sin control por sección en la tabla larga; parte B después de la A; tres tramos; hogares con menores, fuera.
 
 1. **Umbral.** A (IMV), B (umbral de pobreza de la ECV), C (presupuesto propio) o D (A y B con selector). Recomendada: **D, con el IMV por defecto**.
 2. **Dónde va.** Solo en «Tu sueldo» y la ficha, o también como regla del mapa en «¿te llega?». Recomendada: **las dos**, con el selector apagado por defecto.

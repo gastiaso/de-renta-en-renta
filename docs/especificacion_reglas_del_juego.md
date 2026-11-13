@@ -2,7 +2,7 @@
 
 *Borrador para la v1.2 (12-nov-2026), por decidir. Encargo: backlog, «Para la v1.2», «Pestaña "Reglas del juego", con resúmenes de las leyes vigentes»; hasta entonces, la casilla 7 de la portada, «Ley de Vivienda», va sin enlace («próximamente»; decisión del autor, 12-nov-2026; `docs/especificacion_portada.md`). Provisional, como todo el plan.*
 
-**Estado: borrador.** Nada de esto está en el pipeline ni en la web. Los textos legales se consultaron en el BOE consolidado el 12-nov-2026, sin descargar ficheros.
+**Estado: decidido (13-nov-2026), por hacer.** Preguntas del final cerradas por el autor; la revisión jurídica de cada resumen la hace él. Nada de esto está en el pipeline ni en la web. Los textos legales se consultaron en el BOE consolidado el 12-nov-2026, sin descargar ficheros.
 
 ## Por qué
 
@@ -54,7 +54,7 @@ Segunda tanda (después de la v1.2, pregunta 2): `vulnerabilidad_desahucios` (Le
 | `normas` | Identificadores del BOE y artículos (`BOE-A-1994-26003#a36`), separados por `;` |
 | `estado` | `vigente`, `vigente_pendiente_convalidacion`, `con_efectos_futuros`, `derogada`, `anulada_tc` |
 | `texto_consultado` | Fecha en que se leyó el texto consolidado, y `fecha_actualizacion` del BOE en ese momento, por norma |
-| `revisado` | Fecha de la última revisión del resumen; `borrador` hasta que el autor lo da por bueno |
+| `revisado` | Fecha de la última revisión del resumen; `borrador` hasta que el autor, que hace la revisión jurídica, lo da por bueno |
 
 Al pie de la página, fijo: «Resúmenes informativos, sin valor jurídico. El texto oficial es el publicado en el BOE. Basado en datos de la Agencia Estatal Boletín Oficial del Estado (www.boe.es), consultados el {fecha}. La AEBOE no participa en este atlas ni lo patrocina.»
 
@@ -136,6 +136,8 @@ Al pie de la página, fijo: «Resúmenes informativos, sin valor jurídico. El t
 **M** para la infraestructura (CSV, exportación, página, menú, casillas, compuertas y API del BOE). **M** para los siete resúmenes de la primera tanda en dos idiomas, más el tiempo de revisión del autor. La segunda tanda, sobre todo la autonómica, **L**.
 
 ## Preguntas para el autor
+
+**Cerradas (13-nov-2026), decisión del autor.** De la 1 a la 5, con la opción recomendada: CSV → JSON → página; los siete temas estatales y lo autonómico como enlaces; el texto en vigor con su estado; las casillas 7, 10, 17 y 22 activas, y la 3 y la 8 sin cambios, con enlace a la regla desde su destino; `reglas_literal` de bloqueo también para las casillas. 6: la revisión jurídica la hace el autor; `revisado` queda en `borrador` hasta que él da cada resumen por bueno. 7: «Reglas del juego» en el menú y en la página, con el subtítulo «Normativa vigente».
 
 1. **Formato.** CSV → JSON → página (A), Markdown con pandoc (B) o HTML a mano (C). Recomendada: **A**.
 2. **Alcance de la v1.2.** Los siete temas estatales de la tabla, con lo autonómico como enlaces a las declaraciones ya inventariadas. Recomendado: **sí**; desahucios, temporada, fiscalidad y depósito de fianzas, después.
