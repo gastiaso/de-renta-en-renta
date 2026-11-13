@@ -4,6 +4,17 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (13-nov-2026)
+
+- **Triángulo de «Cómo se mide»** (`web/estilo/sitio.css`): las dos reglas del marcador de la nota de las historias llevaban un carácter de control (U+0015) seguido de «B8» y «BE» en lugar de los escapes `\25B8` y `\25BE`, y la página enseñaba «B8 Cómo se mide». El sitio publicado lo arrastra hasta la próxima publicación. Prueba nueva en `pruebas/web/robustez.test.mjs`: ningún HTML, CSS, JS ni diccionario de la web lleva caracteres de control.
+- **Cita de la página «Datos»** (`web/herramientas/pagina_datos.mjs`): la que sale de `CITATION.cff` toma el formato de la atribución, con la versión: «Astiaso Llamazares, G. (2026). *De renta en renta: …* (versión 1.1.0) [software y datos]. <https://gastiaso.github.io/de-renta-en-renta/>. CC BY-SA 4.0.» (en inglés, «[software and data]»), con su prueba en `pruebas/web/pagina_datos.test.mjs`.
+
+### Cambiado (13-nov-2026, README y cita: decisiones del autor)
+
+- **README nuevo, como reglamento de juego de mesa y manual de uso** (`README.md`): objeto del juego, contenido de la caja, las fichas, partida rápida, cómo se juega (portada y guía de casillas, mapa, «Tu sueldo», ficha, comparador, historias, máquina del tiempo, sobrecarga, buscar, compartir y descargar, móvil; en bloques desplegables), reglas de la casa, lo que el tablero no ve, casillas en obras, datos, cómo está hecho y cómo reproducirlo, fuentes, cita y licencias. Describe la v1.1.0. Versión inglesa completa en `README.en.md` (nuevo).
+- **Capturas** (`docs/capturas/` y `docs/capturas/en/`, nuevas): diez por idioma, de la web con los datos del release `v1.1.0`, en PNG de 256 colores. Hay que rehacerlas cuando cambie la interfaz.
+- **Fórmula de atribución, al formato de los otros proyectos del autor**: «Astiaso Llamazares, G. (2026). *De renta en renta: atlas de vivienda y salarios por sección censal* [software y datos]. https://gastiaso.github.io/de-renta-en-renta/. CC BY-SA 4.0. Origen de los datos: [fuente original].», con la fecha de los datos y la de consulta, en lugar de «De renta en renta (Guillermo Astiaso Llamazares), a partir de [fuente original]». En `LICENCIA_DATOS.md` (también la de Registradores, con ODbL 1.0), la nota metodológica (§2.3), «Método en dos páginas», la página «Datos» y sus versiones inglesas, y el README. La prueba que comprueba que la página «Datos» y `LICENCIA_DATOS.md` dan la misma atribución busca la línea nueva (`pruebas/testthat/test-pagina-datos.R`).
+
 ### Decidido (13-nov-2026, borradores de la v1.2: decisiones del autor)
 
 - **Línea de ingreso residual** (`docs/especificacion_ingreso_residual.md`): las siete preguntas, con la opción recomendada (IMV y umbral de pobreza de la ECV con selector, el IMV por defecto; en «Tu sueldo», la ficha y «¿te llega?»; PNC rotulada de 2015 a 2019; tres tramos; hogares con menores, fuera).

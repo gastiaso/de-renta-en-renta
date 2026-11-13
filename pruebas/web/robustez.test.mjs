@@ -11,7 +11,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -171,4 +171,15 @@ test('el mapa: una carga superada no pinta, un fallo se dice sobre el mapa y se 
     assert.equal(typeof dic.interfaz.mapa.lienzo, 'string');
     assert.equal(typeof dic.interfaz.buscador.sin_resultados, 'string');
   }
+});
+
+test('ningún HTML, CSS, JS ni diccionario de la web lleva caracteres de control (un \\25B8 mal escapado salía como «B8»)', () => {
+  const malos = [];
+  for (const carpeta of ['web', 'web/estilo', 'web/js', 'web/i18n', 'web/herramientas']) {
+    for (const nombre of readdirSync(join(raiz, carpeta))) {
+      if (!/\.(html|css|js|mjs|json)$/.test(nombre)) continue;
+      if (/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(leerTexto(carpeta, nombre))) malos.push(`${carpeta}/${nombre}`);
+    }
+  }
+  assert.deepEqual(malos, []);
 });

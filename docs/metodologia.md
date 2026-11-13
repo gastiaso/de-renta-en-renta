@@ -143,7 +143,11 @@ CompartirIgual admite las fuentes con licencia CC BY y las que piden compartir i
 - Las bibliotecas de la web, MapLibre GL JS 6.15.0 y PMTiles 4.5.0 (`web/vendor/`), conservan su licencia BSD-3 (plan §6.6).
 - El código tiene licencia MIT (`LICENSE`).
 
-**Atribución sugerida:** «De renta en renta (Guillermo Astiaso Llamazares), a partir de [fuente original]» (`LICENCIA_DATOS.md`).
+**Atribución sugerida** (`LICENCIA_DATOS.md`):
+
+> Astiaso Llamazares, G. (2026). *De renta en renta: atlas de vivienda y salarios por sección censal* [software y datos]. https://gastiaso.github.io/de-renta-en-renta/. CC BY-SA 4.0. Origen de los datos: [fuente original].
+
+Se añade la fecha de los datos (aparece bajo el mapa) y la fecha de consulta. Las cifras de Registradores (indicador 11) llevan la ODbL en lugar de CC BY-SA 4.0 (§2.2).
 
 ### 2.4 Plan de retirada por fuente
 

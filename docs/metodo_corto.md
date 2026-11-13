@@ -67,7 +67,7 @@ La tabla completa, con lo que obliga cada fuente y el plan de retirada, está en
 
 ## Citar y corregir
 
-- **Cita:** «De renta en renta (Guillermo Astiaso Llamazares), a partir de [fuente original]», con la fecha de los datos, que el mapa da bajo el propio mapa.
+- **Cita:** Astiaso Llamazares, G. (2026). *De renta en renta: atlas de vivienda y salarios por sección censal* [software y datos]. https://gastiaso.github.io/de-renta-en-renta/. CC BY-SA 4.0. Origen de los datos: [fuente original]. Se añade la fecha de los datos, que el mapa da bajo el propio mapa, y la fecha de consulta.
 - **Errores:** se avisan en las incidencias del repositorio público (<https://github.com/gastiaso/de-renta-en-renta/issues>), con el indicador, el territorio, el año y la fuente con la que se compara (`CONTRIBUTING.md`). Las correcciones se anotan con fecha en la fe de erratas de abajo y en el registro de cambios (`CHANGELOG.md`).
 
 ## Fe de erratas

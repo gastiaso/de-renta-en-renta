@@ -117,9 +117,9 @@ test('cita: autores con iniciales, año, título, versión y enlaces de CITATION
   assert.equal(cita.title, 'Atlas: de prueba');
   assert.deepEqual(cita.autores, [{ apellidos: 'Pérez Gómez', nombre: 'Ana María' }, { apellidos: 'Ruiz', nombre: 'Luis' }]);
   const md = montar();
-  assert.ok(md.includes('> Pérez Gómez, A. M. y Ruiz, L. (2027). *Atlas: de prueba* (versión 0.2.0). <https://ejemplo.org/atlas/>'));
+  assert.ok(md.includes('> Pérez Gómez, A. M. y Ruiz, L. (2027). *Atlas: de prueba* (versión 0.2.0) [software y datos]. <https://ejemplo.org/atlas/>. CC BY-SA 4.0.'));
   assert.ok(md.includes('[repositorio](https://ejemplo.org/codigo)'));
-  assert.ok(montar({ idioma: 'en' }).includes('> Pérez Gómez, A. M. & Ruiz, L. (2027). *Atlas: de prueba* (version 0.2.0).'));
+  assert.ok(montar({ idioma: 'en' }).includes('> Pérez Gómez, A. M. & Ruiz, L. (2027). *Atlas: de prueba* (version 0.2.0) [software and data]. <https://ejemplo.org/atlas/>. CC BY-SA 4.0.'));
   assert.throws(() => montar({ cita: P.leerCita('authors:\n') }), /CITATION/);
 });
 

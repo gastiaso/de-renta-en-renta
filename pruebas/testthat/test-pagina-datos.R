@@ -168,11 +168,13 @@ test_that("el modelo de datos nombra las columnas, la clave y los tipos de la ta
 })
 
 test_that("la atribución y la dirección de la descarga son las de LICENCIA_DATOS.md y CITATION.cff", {
+  # La fórmula de atribución (formato de 13-nov-2026: «Astiaso Llamazares, G. (2026). *De renta en
+  # renta…* [software y datos]…») es la misma línea en la página «Datos» y en LICENCIA_DATOS.md
   es <- leer_nota_datos("es")
-  atribucion <- regmatches(es, regexpr("«De renta en renta \\([^»]+»", es))
+  atribucion <- grep("^> Astiaso Llamazares, G\\. \\(\\d{4}\\)\\. \\*De renta en renta.*\\[software y datos\\]", es, value = TRUE)
   expect_length(atribucion, 1)
-  licencia <- paste(readLines(raiz_proyecto("LICENCIA_DATOS.md"), encoding = "UTF-8", warn = FALSE), collapse = "\n")
-  expect_true(grepl(atribucion, licencia, fixed = TRUE))
+  licencia <- readLines(raiz_proyecto("LICENCIA_DATOS.md"), encoding = "UTF-8", warn = FALSE)
+  expect_true(atribucion %in% licencia)
   sitio <- yaml::read_yaml(raiz_proyecto("CITATION.cff"))$url
   esperada <- paste0(sub("/?$", "/", sitio), "descargas/tabla_larga.parquet")
   for (idioma in names(NOTAS_DATOS)) {

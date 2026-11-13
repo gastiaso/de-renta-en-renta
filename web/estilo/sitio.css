@@ -726,8 +726,8 @@ body {
 .historia-nota { margin: 8px 0 0; }
 .historia-nota[hidden] { display: none; }
 .historia-nota > summary { display: inline-flex; align-items: center; min-height: 32px; color: var(--color-tenue); font: 600 0.85rem var(--fuente-tablero); cursor: pointer; }
-.historia-nota > summary::before { content: "B8"; margin-right: 6px; }
-.historia-nota[open] > summary::before { content: "BE"; }
+.historia-nota > summary::before { content: "\25B8"; margin-right: 6px; }
+.historia-nota[open] > summary::before { content: "\25BE"; }
 .historia-nota > summary::-webkit-details-marker { display: none; }
 .historia-nota > summary { list-style: none; }
 .historia-nota .nota { margin: 0 0 4px; line-height: 1.4; }

@@ -28,7 +28,11 @@ Get-FileHash tabla_larga.parquet -Algorithm SHA256
 - **Base map:** INE 2021 census tract geometries.
 - **Eurostat NUTS geometries (GISCO)** of the European overburden map, which the site publishes as files (`datos/sobrecarga/nuts_2021.geojson` and `datos/sobrecarga/nuts_2024.geojson`): they are not covered by CC BY-SA 4.0. Their use is non-commercial and carries the notice «© EuroGeographics for the administrative boundaries»; commercial use requires a EuroGeographics licence.
 
-Attribution of the data: «De renta en renta (Guillermo Astiaso Llamazares), based on [original source]».
+Attribution of the data:
+
+> Astiaso Llamazares, G. (2026). *De renta en renta: atlas de vivienda y salarios por sección censal* [software and data]. https://gastiaso.github.io/de-renta-en-renta/. CC BY-SA 4.0. Data source: [original source].
+
+Add the date of the data (shown below the map) and the date of access.
 
 Citation of the atlas (`CITATION.cff`):
 

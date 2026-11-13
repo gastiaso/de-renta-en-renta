@@ -28,7 +28,11 @@ Get-FileHash tabla_larga.parquet -Algorithm SHA256
 - **Mapa base:** geometrías de las secciones censales de 2021 del INE.
 - **Geometrías NUTS de Eurostat (GISCO)** del mapa europeo de sobrecarga, que el sitio publica como ficheros (`datos/sobrecarga/nuts_2021.geojson` y `datos/sobrecarga/nuts_2024.geojson`): no se rigen por CC BY-SA 4.0. Su uso es no comercial y lleva el aviso «© EuroGeographics para los límites administrativos»; el uso comercial exige una licencia de EuroGeographics.
 
-Atribución de los datos: «De renta en renta (Guillermo Astiaso Llamazares), a partir de [fuente original]».
+Atribución de los datos:
+
+> Astiaso Llamazares, G. (2026). *De renta en renta: atlas de vivienda y salarios por sección censal* [software y datos]. https://gastiaso.github.io/de-renta-en-renta/. CC BY-SA 4.0. Origen de los datos: [fuente original].
+
+Añade la fecha de los datos (aparece bajo el mapa) y la fecha de consulta.
 
 Cita del atlas (`CITATION.cff`):
 

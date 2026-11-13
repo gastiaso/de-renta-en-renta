@@ -50,6 +50,8 @@ export const TEXTOS = {
     sin_cobertura: 'El `version.json` de este release no trae la cobertura por indicador.',
     sin_version_cobertura: 'La cobertura por indicador sale de `version.json`, que no se ha encontrado.',
     version_cita: 'versión',
+    tipo_cita: 'software y datos',
+    licencia_cita: 'CC BY-SA 4.0',
     y: 'y',
     cita_github: (url) => `GitHub la ofrece también en APA y BibTeX desde el [repositorio](${url}) («Cite this repository»).`,
   },
@@ -75,6 +77,8 @@ export const TEXTOS = {
     sin_cobertura: 'The `version.json` of this release does not include the coverage by indicator.',
     sin_version_cobertura: 'The coverage by indicator comes from `version.json`, which was not found.',
     version_cita: 'version',
+    tipo_cita: 'software and data',
+    licencia_cita: 'CC BY-SA 4.0',
     y: '&',
     cita_github: (url) => `GitHub also offers it in APA and BibTeX from the [repository](${url}) («Cite this repository»).`,
   },
@@ -188,8 +192,10 @@ export function bloqueCita({ cita, idioma }) {
   const nombres = autores.length > 1 ? `${autores.slice(0, -1).join(', ')} ${tx.y} ${autores.at(-1)}` : autores[0];
   const anio = /^\d{4}/.exec(cita['date-released'] ?? '')?.[0] ?? 's. f.';
   const version = cita.version ? ` (${tx.version_cita} ${cita.version})` : '';
-  const url = cita.url ? ` <${cita.url}>` : '';
-  const lineas = [`> ${escaparMd(nombres)} (${anio}). *${escaparMd(cita.title)}*${version}.${url}`];
+  const url = cita.url ? ` <${cita.url}>.` : '';
+  // Mismo formato que la atribución de LICENCIA_DATOS.md y del README (13-nov-2026): título, versión,
+  // tipo entre corchetes, dirección y licencia de los datos
+  const lineas = [`> ${escaparMd(nombres)} (${anio}). *${escaparMd(cita.title)}*${version} [${tx.tipo_cita}].${url} ${tx.licencia_cita}.`];
   if (cita['repository-code']) lineas.push('', tx.cita_github(cita['repository-code']));
   return lineas;
 }

@@ -143,7 +143,11 @@ ShareAlike accepts sources under CC BY and those that require sharing alike, suc
 - The web libraries, MapLibre GL JS 6.15.0 and PMTiles 4.5.0 (`web/vendor/`), keep their BSD-3 licence (plan §6.6).
 - The code is under the MIT licence (`LICENSE`).
 
-**Suggested attribution:** «De renta en renta (Guillermo Astiaso Llamazares), from [original source]» (`LICENCIA_DATOS.md`).
+**Suggested attribution** (`LICENCIA_DATOS.md`):
+
+> Astiaso Llamazares, G. (2026). *De renta en renta: atlas de vivienda y salarios por sección censal* [software and data]. https://gastiaso.github.io/de-renta-en-renta/. CC BY-SA 4.0. Data source: [original source].
+
+The date of the data (shown below the map) and the date of access are added. The Land Registrars' figures (indicator 11) carry the ODbL instead of CC BY-SA 4.0 (§2.2).
 
 ### 2.4 Withdrawal plan by source
 

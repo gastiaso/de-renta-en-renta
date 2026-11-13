@@ -4,10 +4,14 @@ Los **datos derivados** que produce este proyecto (la tabla larga y los datos de
 
 Decisión del autor (8-nov-2026): las fuentes se tratan como datos abiertos y los derivados se publican en CC BY-SA 4.0, que admite las fuentes con licencia CC BY y las que piden compartir igual (el catastro de Gipuzkoa).
 
-Atribución sugerida: «De renta en renta (Guillermo Astiaso Llamazares), a partir de [fuente original]».
+Atribución sugerida:
+
+> Astiaso Llamazares, G. (2026). *De renta en renta: atlas de vivienda y salarios por sección censal* [software y datos]. https://gastiaso.github.io/de-renta-en-renta/. CC BY-SA 4.0. Origen de los datos: [fuente original].
+
+Añade la fecha de los datos (aparece bajo el mapa) y la fecha de consulta.
 
 - Los **datos de origen** mantienen las condiciones de cada fuente. Están en `inventario/fuentes.csv` (columna `licencia`). Citar siempre también la fuente original. Qué licencia tiene cada fuente, qué obliga y qué se retira si alguna cambia: tabla única y plan de retirada de la nota metodológica (`docs/metodologia.md`, §2.2 y §2.4).
 - Las **geometrías NUTS de Eurostat (GISCO)** del mapa europeo no entran en la licencia CC BY-SA 4.0: su uso es no comercial y lleva el aviso «© EuroGeographics para los límites administrativos».
-- El **precio de compraventa por metro cuadrado** (indicador 11), que sale de la Estadística Registral Inmobiliaria del Colegio de Registradores (fuente `registradores`), se publica con la licencia de su fuente, la **Open Database License (ODbL) 1.0**: <https://opendatacommons.org/licenses/odbl/1-0/>. Sus filas de la tabla larga (`fuente` = `registradores`) y las bases de datos que deriven de ellas se reutilizan citando al Colegio de Registradores y, si se publican, con la misma licencia y abiertas. El paquete del *release* lo dice en `version.json` (`licencia`). Atribución sugerida: «Colegio de Registradores, Estadística Registral Inmobiliaria (datos abiertos, ODbL 1.0); elaboración: De renta en renta». No se mezcla con las cifras del Notariado.
+- El **precio de compraventa por metro cuadrado** (indicador 11), que sale de la Estadística Registral Inmobiliaria del Colegio de Registradores (fuente `registradores`), se publica con la licencia de su fuente, la **Open Database License (ODbL) 1.0**: <https://opendatacommons.org/licenses/odbl/1-0/>. Sus filas de la tabla larga (`fuente` = `registradores`) y las bases de datos que deriven de ellas se reutilizan citando al Colegio de Registradores y, si se publican, con la misma licencia y abiertas. El paquete del *release* lo dice en `version.json` (`licencia`). Atribución sugerida, con la misma fórmula: «Astiaso Llamazares, G. (2026). *De renta en renta: atlas de vivienda y salarios por sección censal* [software y datos]. https://gastiaso.github.io/de-renta-en-renta/. ODbL 1.0. Origen de los datos: Colegio de Registradores, Estadística Registral Inmobiliaria (datos abiertos)». No se mezcla con las cifras del Notariado.
 - La **capa de precios de oferta de los portales** (Idealista) no se redistribuye: no entra en la tabla larga, ni en las descargas, ni en los *releases*. Solo la web la muestra, con su fuente, y está apagada («próximamente», `PORTALES=FALSE`) hasta que Idealista lo autorice por escrito.
 - El **código** tiene su propia licencia (MIT, `LICENSE`).

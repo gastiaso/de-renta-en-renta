@@ -67,7 +67,7 @@ The full table, with what each source requires and the withdrawal plan, is in th
 
 ## Citing and correcting
 
-- **Citation:** «De renta en renta (Guillermo Astiaso Llamazares), based on [original source]», with the date of the data, which the map gives right below the map.
+- **Citation:** Astiaso Llamazares, G. (2026). *De renta en renta: atlas de vivienda y salarios por sección censal* [software and data]. https://gastiaso.github.io/de-renta-en-renta/. CC BY-SA 4.0. Data source: [original source]. Add the date of the data, which the map gives right below the map, and the date of access.
 - **Errors:** they are reported in the issues of the public repository (<https://github.com/gastiaso/de-renta-en-renta/issues>), with the indicator, the area, the year and the source used for comparison (`CONTRIBUTING.md`). Corrections are recorded with their date in the errata below and in the changelog (`CHANGELOG.md`).
 
 ## Errata
