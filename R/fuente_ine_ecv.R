@@ -14,6 +14,9 @@ descargar_ine_ecv <- function(anio, dir = file.path("datos", "brutos", "ine_ecv"
 # El zip anual del INE contiene un zip por fichero (ECV_Td_2025.zip, ECV_Tr_…, ECV_Th_…,
 # ECV_Tp_…) y cada uno, el CSV separado por comas en CSV/esudb<aa><letra>.csv.
 # Extrae los CSV de los ficheros pedidos y devuelve sus rutas, con nombre (d, r, h, p).
+# De 2016 a 2020, el Tr no trae CSV/esudb<aa>r.csv sino CSV/esudb<aa>r_AROPE.csv (las mismas
+# personas y variables, más las del indicador AROPE) y CSV/ECV_Tr_<año>.csv (separado por
+# tabuladores): se toma el primero y se guarda como esudb<aa>r.csv.
 extraer_ine_ecv <- function(zip, anio, ficheros = c("d", "r", "h"),
                             dir = file.path("datos", "intermedios", "ine_ecv")) {
   destino <- file.path(dir, anio)
@@ -23,8 +26,9 @@ extraer_ine_ecv <- function(zip, anio, ficheros = c("d", "r", "h"),
   contenido <- utils::unzip(zip, list = TRUE)$Name
 
   rutas <- vapply(ficheros, function(f) {
-    patron_csv <- sprintf("(^|/)CSV/esudb%02d%s\\.csv$", anio %% 100, f)
-    directo <- grep(patron_csv, contenido, value = TRUE, ignore.case = TRUE)
+    patron_csv <- sprintf("(^|/)CSV/esudb%02d%s(_AROPE)?\\.csv$", anio %% 100, f)
+    sin_arope <- function(x) if (length(x) > 1) x[!grepl("_AROPE", x, ignore.case = TRUE)] else x
+    directo <- sin_arope(grep(patron_csv, contenido, value = TRUE, ignore.case = TRUE))
     if (length(directo) == 1) {
       utils::unzip(zip, files = directo, exdir = temporal, junkpaths = TRUE)
     } else {
@@ -36,14 +40,15 @@ extraer_ine_ecv <- function(zip, anio, ficheros = c("d", "r", "h"),
       }
       utils::unzip(zip, files = interno, exdir = temporal, junkpaths = TRUE)
       zip_interno <- file.path(temporal, basename(interno))
-      csv <- grep(patron_csv, utils::unzip(zip_interno, list = TRUE)$Name,
-                  value = TRUE, ignore.case = TRUE)
+      csv <- sin_arope(grep(patron_csv, utils::unzip(zip_interno, list = TRUE)$Name,
+                            value = TRUE, ignore.case = TRUE))
       if (length(csv) != 1) stop("No encuentro el CSV dentro de ", interno, call. = FALSE)
       utils::unzip(zip_interno, files = csv, exdir = temporal, junkpaths = TRUE)
     }
-    origen <- list.files(temporal, pattern = sprintf("^esudb%02d%s\\.csv$", anio %% 100, f),
+    origen <- list.files(temporal, pattern = sprintf("^esudb%02d%s(_AROPE)?\\.csv$", anio %% 100, f),
                          full.names = TRUE, ignore.case = TRUE)
-    final <- file.path(destino, basename(origen))
+    if (length(origen) != 1) stop("No encuentro el CSV del fichero T", toupper(f), " de ", anio, call. = FALSE)
+    final <- file.path(destino, sprintf("esudb%02d%s.csv", anio %% 100, f))
     file.copy(origen, final, overwrite = TRUE)
     final
   }, character(1))
@@ -63,8 +68,12 @@ obtener_csv_ine_ecv <- function(anio, ficheros = c("d", "r", "h"),
 # Hogar (Td + Th): DB040 región NUTS 2, DB090 factor del hogar, HH021 tenencia,
 #   HH070 gasto total mensual en vivienda (de la hipoteca, solo intereses),
 #   HY020 renta disponible del año anterior, HY070G ayudas a la vivienda, HX240 unidades de
-#   consumo (escala de la OCDE modificada; solo para los quintiles de renta).
-# Persona (Tr): RB030 identificador (hogar + dos dígitos de orden), RB050 factor de la persona.
+#   consumo (escala de la OCDE modificada; solo para los quintiles de renta), DB100 grado de
+#   urbanización (1 ciudades, 2 pueblos y zonas suburbanas, 3 rural; el deg_urb de Eurostat).
+# Persona (Tr): RB030 identificador (hogar + dos dígitos de orden), RB050 factor de la persona,
+#   RB081 edad al final del año de ingresos. Las olas de 2016 a 2020 no traen RB081 (llega con el
+#   reglamento de EU-SILC de 2021): la edad es la misma, RB010 − RB080 − 1 (año de la encuesta menos
+#   año de nacimiento, menos uno), la que trae RB081 desde 2021.
 leer_ine_ecv <- function(rutas) {
   ruta <- function(letra) {
     r <- rutas[grepl(sprintf("esudb\\d{2}%s\\.csv$", letra), rutas, ignore.case = TRUE)]
@@ -76,9 +85,14 @@ leer_ine_ecv <- function(rutas) {
                     col_types = readr::cols(.default = readr::col_character()),
                     progress = FALSE)
   }
-  d <- leer(ruta("d"), c("DB010", "DB030", "DB040", "DB090"))
+  d <- leer(ruta("d"), c("DB010", "DB030", "DB040", "DB090", "DB100"))
   h <- leer(ruta("h"), c("HB030", "HH021", "HH070", "HY020", "HY070G", "HX240"))
-  r <- leer(ruta("r"), c("RB030", "RB050", "RB081"))
+  cabecera_r <- names(readr::read_csv(ruta("r"), n_max = 0, col_types = readr::cols(.default = "c"), progress = FALSE))
+  r <- leer(ruta("r"), intersect(c("RB010", "RB030", "RB050", "RB080", "RB081"), cabecera_r))
+  if (!"RB081" %in% names(r)) {
+    if (!all(c("RB010", "RB080") %in% names(r))) stop("El Tr no trae RB081 ni RB010 y RB080", call. = FALSE)
+    r$RB081 <- as.character(as.integer(r$RB010) - as.integer(r$RB080) - 1L)
+  }
 
   hogares <- d |>
     inner_join(h, by = c("DB030" = "HB030")) |>
@@ -87,6 +101,7 @@ leer_ine_ecv <- function(rutas) {
       id_hogar           = DB030,
       region             = DB040,
       peso_hogar         = as.numeric(DB090),
+      grado_urbanizacion = DB100,
       tenencia           = as.integer(HH021),
       gasto_vivienda_mes = as.numeric(HH070),
       renta_disponible   = as.numeric(HY020),
@@ -144,6 +159,10 @@ personas_sobrecarga <- function(ecv, umbral = 0.40) {
            grupo_edad = grupo_edad_eurostat(edad))
 }
 
+# Personas con tenencia: las de los cortes por tenencia. Un hogar sin HH021 (uno en 2016) cuenta en
+# el total y en los demás cortes, pero en ninguna tenencia (ni en propiedad ni en alquiler).
+con_tenencia <- function(p) filter(p, !is.na(tenencia_eurostat))
+
 # Tasa ponderada por grupos, con el tamaño de la muestra detrás.
 tasa_sobrecarga <- function(datos, corte, grupo, ambito = "ES") {
   datos |>
@@ -163,10 +182,11 @@ tasa_sobrecarga <- function(datos, corte, grupo, ambito = "ES") {
 calcular_sobrecarga_ecv <- function(ecv, umbral = 0.40) {
   p <- personas_sobrecarga(ecv, umbral)
   jovenes <- filter(p, !is.na(edad), edad >= 15, edad <= 29)
+  pt <- con_tenencia(p)
   bind_rows(
     tasa_sobrecarga(p, "total", "TOTAL"),
-    tasa_sobrecarga(p, "tenencia", p$tenencia_eurostat),
-    tasa_sobrecarga(p, "tenencia", ifelse(p$propietario, "OWN", "RENT")),
+    tasa_sobrecarga(pt, "tenencia", pt$tenencia_eurostat),
+    tasa_sobrecarga(pt, "tenencia", ifelse(pt$propietario, "OWN", "RENT")),
     tasa_sobrecarga(filter(p, !is.na(grupo_edad)), "edad", filter(p, !is.na(grupo_edad))$grupo_edad),
     tasa_sobrecarga(jovenes, "edad", "Y15-29"),
     tasa_sobrecarga(p, "region", p$region)
@@ -264,9 +284,10 @@ calcular_sobrecarga_agrupada <- function(olas, umbral = 0.40) {
   p <- bind_rows(lapply(olas, personas_sobrecarga, umbral = umbral)) |>
     mutate(peso_persona = peso_persona / length(olas), id_hogar = paste(anio, id_hogar))
   anios <- range(p$anio)
+  pt <- con_tenencia(p)
   bind_rows(
-    tasa_sobrecarga(p, "tenencia", p$tenencia_eurostat, ambito = p$region),
-    tasa_sobrecarga(p, "tenencia", ifelse(p$propietario, "OWN", "RENT"), ambito = p$region),
+    tasa_sobrecarga(pt, "tenencia", pt$tenencia_eurostat, ambito = pt$region),
+    tasa_sobrecarga(pt, "tenencia", ifelse(pt$propietario, "OWN", "RENT"), ambito = pt$region),
     tasa_sobrecarga(filter(p, !is.na(grupo_edad)), "edad", filter(p, !is.na(grupo_edad))$grupo_edad,
                     ambito = filter(p, !is.na(grupo_edad))$region)
   ) |>
@@ -277,6 +298,24 @@ calcular_sobrecarga_agrupada <- function(olas, umbral = 0.40) {
       indicador = "sobrecarga", umbral = umbral, .before = 1
     )
 }
+
+# Trienios de olas (decisión del 17-nov-2026, con las olas 2016–2025): los cruces agrupados se
+# calculan para cada ola que tiene las dos anteriores, con ella y esas dos (trienios móviles: 2016–2018,
+# 2017–2019… 2023–2025), y en la tabla larga llevan en `anio` la última. La web pinta el último
+# (ultima_agrupacion()). Una ola nueva añade un trienio y no cambia los anteriores. La regla está
+# anotada en la columna `notas` del 22 y el 24 (inventario/indicadores.csv). `calcular`:
+# calcular_sobrecarga_agrupada() o calcular_pobreza_vivienda_agrupada(); `olas`: lista de leer_ine_ecv().
+OLAS_POR_AGRUPACION <- 3L
+
+agrupar_trienios <- function(olas, calcular, n = OLAS_POR_AGRUPACION) {
+  anios <- vapply(olas, function(o) unique(o$hogares$anio), 0L)
+  finales <- anios[vapply(anios, function(a) all(seq(a - n + 1L, a) %in% anios), TRUE)]
+  if (!length(finales)) stop("No hay ", n, " olas seguidas de la ECV para agrupar", call. = FALSE)
+  bind_rows(lapply(sort(finales), function(a) calcular(olas[anios %in% seq(a - n + 1L, a)])))
+}
+
+# El trienio más reciente de unos cruces agrupados (el que pinta la web).
+ultima_agrupacion <- function(agrupada) agrupada[agrupada$anio_fin == max(agrupada$anio_fin), ]
 
 # Empareja lo calculado con las cifras de Eurostat para la compuerta, año a año
 # (referencias sobrecarga_es_total, sobrecarga_es_mercado, sobrecarga_ccaa y, si se da
@@ -340,8 +379,8 @@ fiabilidad_eusilc <- function(n) {
 # Indicador 22 en la tabla larga (comunidades con el código del INE, desde la región NUTS 2):
 # - España («00»), cada año, en total y por tenencia y edad;
 # - comunidades, cada año, en total;
-# - comunidad × tenencia y comunidad × edad con varias olas agrupadas (`agrupada`): `anio` es
-#   la última ola (2023–2025 → 2025), y la ficha lo dice.
+# - comunidad × tenencia y comunidad × edad con varias olas agrupadas (`agrupada`, un trienio por
+#   ola desde 2018 con agrupar_trienios()): `anio` es la última ola (2023–2025 → 2025), y la ficha lo dice.
 # Lo que EU-SILC no deja publicar queda como «secreto». El número de observaciones y la marca
 # de fiabilidad van en los ficheros de la sobrecarga (exportar_sobrecarga; pregunta abierta 9).
 armonizar_sobrecarga_ecv <- function(sobrecarga, agrupada, ccaa, version) {

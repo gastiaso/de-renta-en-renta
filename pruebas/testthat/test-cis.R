@@ -201,3 +201,41 @@ test_that("la transcripción del inventario: seis meses, dos preguntas, sumas y 
   expect_true(all(mapply(grepl, tr$estudio, basename(tr$url_pdf), fixed = TRUE)))
   expect_true(all(nchar(tr$sha256_pdf) == 64L))
 })
+
+test_that("excepciones de dirección: la tabla del inventario y la página de un estudio de título alargado", {
+  ex <- cis_leer_url_excepciones(file.path("..", "..", "inventario", "cis_url_excepciones.csv"))
+  expect_setequal(ex$mes, c("2016-07", "2019-03", "2019-12", "2023-06", "2023-09"))
+  expect_setequal(ex$estudio, c("3146", "3242", "3269", "3410", "3420"))
+  expect_true(all(grepl("^https://www[.]cis[.]es/es/estudios/(macro)?barometro-de-", ex$url)))
+  expect_true(all(mapply(grepl, ex$estudio, ex$nota, fixed = TRUE)))   # la nota nombra su estudio
+  expect_equal(cis_url_estudio(2023, 6, ex), ex$url[ex$mes == "2023-06"])
+  expect_equal(cis_url_estudio(2023, 7, ex), "https://www.cis.es/es/estudios/barometro-de-julio-2023")
+  expect_equal(cis_url_estudio(2023, 6), "https://www.cis.es/es/estudios/barometro-de-junio-2023")
+  # una fila con otra web, un mes mal escrito o repetido no se acepta
+  mal <- tempfile(fileext = ".csv")
+  readr::write_csv(dplyr::bind_rows(ex, dplyr::mutate(ex[1, ], url = "https://ejemplo.invalid/x")), mal)
+  expect_error(cis_leer_url_excepciones(mal), "no v\u00e1lidos")
+  # la página de la excepción se pide aunque el mes tenga marca .sin_estudio, y tiene que ser de su estudio
+  dir <- tempfile("cis"); dir.create(file.path(dir, "estudios"), recursive = TRUE)
+  writeLines("2026-11-10", file.path(dir, "estudios", "2023-06.sin_estudio"))
+  pedidas <- character(0)
+  pagina <- function(estudio) function(req) {
+    pedidas <<- c(pedidas, req$url)
+    httr2::response(200, headers = list(`Content-Type` = "text/html; charset=utf-8"),
+                    body = charToRaw(enc2utf8(paste0("<html><script type=\"application/ld+json\">",
+                                                     ld_inventado(estudio), "</script></html>"))))
+  }
+  ruta <- httr2::with_mocked_responses(pagina("3410"),
+    cis_descargar_estudio(2023, 6, dir = dir, hoy = as.Date("2026-11-17"), pausa = 0, excepciones = ex))
+  expect_equal(pedidas, ex$url[ex$mes == "2023-06"])
+  expect_equal(unique(cis_documentos(ruta)$estudio), "3410")
+  expect_error(httr2::with_mocked_responses(pagina("3999"),
+    cis_descargar_estudio(2023, 9, dir = dir, hoy = as.Date("2026-11-17"), pausa = 0, excepciones = ex)),
+    "estudio 3999, no del 3420")
+  expect_false(file.exists(file.path(dir, "estudios", "2023-09.json")))
+  # sin excepciones, la marca .sin_estudio sigue valiendo (no se pide nada)
+  unlink(ruta); pedidas <- character(0)
+  expect_true(is.na(httr2::with_mocked_responses(pagina("3410"),
+    cis_descargar_estudio(2023, 6, dir = dir, hoy = as.Date("2026-11-17"), pausa = 0))))
+  expect_length(pedidas, 0L)
+})

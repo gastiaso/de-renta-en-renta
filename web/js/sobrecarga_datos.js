@@ -7,66 +7,118 @@
 // escalera ordena: la escalera muestra lo mismo que el mapa. Las cifras van × 10 en enteros
 // (`escala`), como en el resto de la web; las del INE llevan su muestra (`n`, `hogares`) y la
 // marca de fiabilidad de EU-SILC; las de Eurostat, su tabla.
+//
+// Dos medidas (tarea 65, parte B): la sobrecarga (indicador 22), con sus años, olas, cortes y grupos
+// en la raíz del fichero, y el riesgo de pobreza tras los gastos de vivienda (24), con los mismos
+// campos en `pobreza`. Cada vista lleva su `medida` (sin ella, la sobrecarga).
 
 export const RUTA_DATOS = 'datos/sobrecarga/sobrecarga.json';
 export const CORTES = ['total', 'tenencia', 'edad'];
+export const MEDIDAS = ['sobrecarga', 'pobreza'];
+
+// Años, olas, cortes y grupos de una medida: la raíz para la sobrecarga; `pobreza` para la otra.
+export const confMedida = (datos, medida = 'sobrecarga') => (medida === 'pobreza' && datos?.pobreza ? datos.pobreza : datos);
+export const medidaDe = (vista) => vista?.medida ?? 'sobrecarga';
+// Medidas que ofrece el fichero (sin el bloque `pobreza`, solo la sobrecarga).
+export const medidasCon = (datos) => MEDIDAS.filter((m) => m === 'sobrecarga' || datos?.pobreza);
+
+// Serie de España de cada medida: la de la sobrecarga (ilc_lvho07a e ilc_lvho07c: toda la población e
+// inquilinos a precio de mercado, España y UE-27) o, con la pobreza, la de ilc_li48 (toda la población,
+// España y UE-27; `pobreza.serie`). Sin `pobreza.serie`, la de la sobrecarga.
+export const LINEAS_SERIE = {
+  sobrecarga: [
+    { clave: 'ES_TOTAL', grupo: 'total', zona: 'espana' },
+    { clave: 'ES_RENT_MKT', grupo: 'mercado', zona: 'espana' },
+    { clave: 'EU27_TOTAL', grupo: 'total', zona: 'ue27' },
+    { clave: 'EU27_RENT_MKT', grupo: 'mercado', zona: 'ue27' },
+  ],
+  pobreza: [
+    { clave: 'ES_TOTAL', grupo: 'total', zona: 'espana' },
+    { clave: 'EU27_TOTAL', grupo: 'total', zona: 'ue27' },
+  ],
+};
+const conSeriePropia = (datos, medida) => medida === 'pobreza' && Boolean(datos?.pobreza?.serie);
+export const serieDe = (datos, medida = 'sobrecarga') => (conSeriePropia(datos, medida) ? datos.pobreza.serie : datos.espana.serie);
+export const lineasSerie = (datos, medida = 'sobrecarga') => LINEAS_SERIE[conSeriePropia(datos, medida) ? 'pobreza' : 'sobrecarga'];
+
+// Grupos de los desgloses de España, en orden, por corte. La pobreza tras la vivienda (24) trae
+// edad (los grupos de ilc_li45, con 18 y más) y grado de urbanización; la sobrecarga, edad (con 15 a
+// 29) y quintil. Cada medida pinta los cortes que traen sus filas.
+export const ORDEN_DESGLOSES = {
+  tenencia: ['OWN_NL', 'OWN_L', 'OWN', 'RENT_MKT', 'RENT_FR', 'RENT'],
+  edad: ['Y_LT18', 'Y18-64', 'Y_GE65', 'Y_GE18', 'Y15-29'],
+  urbanizacion: ['DEG1', 'DEG2', 'DEG3'],
+  quintil: ['QU1', 'QU2', 'QU3', 'QU4', 'QU5'],
+};
+// Filas de los desgloses de España de una medida y una ola.
+export const filasDesgloses = (datos, medida, anio) =>
+  ((medida === 'pobreza' ? datos.pobreza?.espana : datos.espana.anual) ?? []).filter((f) => f.anio === anio);
+// Cortes con alguna fila, en el orden de ORDEN_DESGLOSES.
+export const cortesDesgloses = (filas) =>
+  Object.keys(ORDEN_DESGLOSES).filter((c) => filas.some((f) => f.corte === c && ORDEN_DESGLOSES[c].includes(f.grupo)));
 
 // Valor real de una cifra (null si no hay).
 export const valorDe = (fila, escala = 10) => (fila?.v === null || fila?.v === undefined ? null : fila.v / escala);
 
-// --- Estado de la URL: ?idioma=en&corte=tenencia&grupo=RENT_MKT&anio=2024&geo=ES30 ---------------
+// --- Estado de la URL: ?idioma=en&medida=pobreza&corte=tenencia&grupo=RENT_MKT&anio=2024&geo=ES30 ---
 
 const GEO = /^[A-Z]{2}[A-Z0-9_]{0,7}$/;
 
 // Lee y valida el estado contra los datos (sin datos, solo el idioma).
 export function leerEstado(busqueda, datos = null) {
   const p = new URLSearchParams(busqueda);
-  const estado = { idioma: p.get('idioma') === 'en' ? 'en' : 'es', corte: 'total', grupo: 'total', anio: null, geo: null };
+  const estado = { idioma: p.get('idioma') === 'en' ? 'en' : 'es', medida: 'sobrecarga', corte: 'total', grupo: 'total', anio: null, geo: null };
   if (!datos) return estado;
+  if (p.get('medida') === 'pobreza' && datos.pobreza) estado.medida = 'pobreza';
+  const c = confMedida(datos, estado.medida);
   const corte = p.get('corte');
   const grupo = p.get('grupo');
-  if (CORTES.includes(corte) && corte !== 'total' && datos.grupos_mapa?.[corte]?.includes(grupo)) {
+  if (CORTES.includes(corte) && corte !== 'total' && c.grupos_mapa?.[corte]?.includes(grupo)) {
     estado.corte = corte;
     estado.grupo = grupo;
   }
   const anio = Number(p.get('anio'));
-  estado.anio = estado.corte === 'total' && datos.anios.includes(anio) ? anio : ultimoAnio(datos);
+  estado.anio = estado.corte === 'total' && c.anios.includes(anio) ? anio : ultimoAnio(datos, estado.medida);
   const geo = p.get('geo');
   if (geo && GEO.test(geo)) estado.geo = geo;
-  if (!vistaDe(datos, estado)) Object.assign(estado, { corte: 'total', grupo: 'total', anio: ultimoAnio(datos) });
+  if (!vistaDe(datos, estado)) Object.assign(estado, { corte: 'total', grupo: 'total', anio: ultimoAnio(datos, estado.medida) });
   return estado;
 }
 
 // Consulta de la URL, sin lo que vale por defecto.
 export function consulta(estado, datos) {
   const partes = [];
+  const medida = estado.medida ?? 'sobrecarga';
   if (estado.idioma === 'en') partes.push('idioma=en');
+  if (medida === 'pobreza') partes.push('medida=pobreza');
   if (estado.corte !== 'total') partes.push(`corte=${estado.corte}`, `grupo=${estado.grupo}`);
-  else if (datos && estado.anio !== ultimoAnio(datos)) partes.push(`anio=${estado.anio}`);
+  else if (datos && estado.anio !== ultimoAnio(datos, medida)) partes.push(`anio=${estado.anio}`);
   if (estado.geo && GEO.test(estado.geo)) partes.push(`geo=${estado.geo}`);
   return partes.length ? `?${partes.join('&')}` : '';
 }
 
-export const ultimoAnio = (datos) => Math.max(...datos.anios);
+export const ultimoAnio = (datos, medida = 'sobrecarga') => Math.max(...confMedida(datos, medida).anios);
 
 // --- Vistas -----------------------------------------------------------------------------------
 
 // Vista del estado: toda la población, el año elegido; con tenencia o edad, el año de los desgloses.
-export function vistaDe(datos, { corte = 'total', grupo = 'total', anio = null } = {}) {
-  const a = corte === 'total' ? anio ?? ultimoAnio(datos) : datos.anio_desgloses;
-  return datos.vistas.find((v) => v.corte === corte && v.grupo === grupo && v.anio === a) ?? null;
+// Cada medida, con sus vistas.
+export function vistaDe(datos, { medida = 'sobrecarga', corte = 'total', grupo = 'total', anio = null } = {}) {
+  const a = corte === 'total' ? anio ?? ultimoAnio(datos, medida) : confMedida(datos, medida).anio_desgloses;
+  return datos.vistas.find((v) => medidaDe(v) === medida && v.corte === corte && v.grupo === grupo && v.anio === a) ?? null;
 }
 
 // Grupos con vista (los botones que se ofrecen).
-export const gruposCon = (datos, corte) =>
-  (datos.grupos_mapa?.[corte] ?? []).filter((g) => vistaDe(datos, { corte, grupo: g }));
+export const gruposCon = (datos, corte, medida = 'sobrecarga') =>
+  (confMedida(datos, medida).grupos_mapa?.[corte] ?? []).filter((g) => vistaDe(datos, { medida, corte, grupo: g }));
 
 // Filas que pinta el mapa (las referencias, UE-27 y España, no tienen geometría propia).
 export const pintables = (vista) => vista.filas.filter((f) => f.bloque !== 'referencia');
 
-// Territorios con el dato de un nivel más grueso que NUTS 2 (país o NUTS 1): van con trama.
+// Territorios con el dato de un nivel más grueso que NUTS 2 (país o NUTS 1): van con trama. Solo
+// en la sobrecarga de toda la población, la única que Eurostat publica por regiones.
 export const conTramaGruesa = (vista) =>
-  vista.corte === 'total' ? pintables(vista).filter((f) => f.nivel < 2).map((f) => f.geo) : [];
+  vista.corte === 'total' && medidaDe(vista) === 'sobrecarga' ? pintables(vista).filter((f) => f.nivel < 2).map((f) => f.geo) : [];
 
 // Marcas de Eurostat de una cifra, una letra cada una («bu» → ['b', 'u']); sin marca, [].
 export const marcasDe = (bandera) => (typeof bandera === 'string' ? [...bandera.replace(/[^a-z]/g, '')] : []);
@@ -103,7 +155,13 @@ export const puestos = (vista) => vista.filas.filter((f) => f.puesto !== null &&
 
 // --- Tramos -----------------------------------------------------------------------------------
 
-export const cortesDe = (datos, grupo) => datos.cortes[grupo] ?? datos.cortes.general;
+export const cortesDe = (datos, grupo, medida = 'sobrecarga') => {
+  const c = confMedida(datos, medida).cortes;
+  return c[grupo] ?? c.general;
+};
+
+// Umbral de riesgo de pobreza de una ola (euros al año por unidad de consumo); null si no está.
+export const umbralDe = (datos, anio) => datos?.pobreza?.umbrales?.find((u) => u.anio === anio)?.euros ?? null;
 
 // Tramo de un valor (0 = por debajo del primer corte); null sin valor.
 export function tramoDe(valor, cortes) {

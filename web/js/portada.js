@@ -7,12 +7,14 @@
 
 import { cargarIdioma, traducirPagina } from './i18n.js';
 import { leerEstado, fragmentoSueldo } from './estado.js';
-import { cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarValores, periodosDe, periodoPara, serieDeTipologia } from './datos.js';
+import { cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarValores, periodosDe, periodoPara, serieDeTipologia, cargarLineasResidual } from './datos.js';
 import { crearBuscador, formasDeNombre, etiquetaMunicipio } from './buscador.js';
 import { FICHAS_PERFIL, leerSueldo, calculoLlega, resumenLlegaReal, superficieDe, umbralDe } from './sueldo.js';
 import { FAMILIAS_PROXIMAMENTE, textoFamilia } from './familias.js';
 import { fechaLarga, lineaTransparencia } from './transparencia.js';
 import { cargarHistorias, textoEn } from './historias.js';
+import { LINEA_POR_DEFECTO, lineaDelAnio, resumenResidual } from './residual.js';
+import { textoLineaResidual } from './ficha.js';
 
 const $ = (id) => document.getElementById(id);
 const estado = { idioma: leerEstado(globalThis.location?.search ?? '').idioma ?? 'es' };
@@ -219,7 +221,19 @@ export function cuentaIngresos(neto, secciones, columnas, serie = (s) => s) {
   return resumenLlegaReal(calculo, secciones, (s, i) => columnas[s]?.valores[i] ?? null, umbralDe(estado));
 }
 
-let datosCuenta = null;   // promesa de { secciones, columnas, serie } (o null si no hay)
+// Tarea 65 (remates): la cuenta con la línea de ingreso residual: en cuántas de esas secciones lo que
+// queda tras pagar el alquiler mensual mediano real no baja de la línea del año del alquiler (la de por
+// defecto, el ingreso mínimo vital, para un hogar de una persona; resumenResidual() de residual.js con el
+// alquiler real, como la segunda frase del resultado del mapa con «Lo que queda»). `linea`: lineaDelAnio().
+// { con, encima, proporcion } o null sin línea o sin secciones con dato.
+export function cuentaLinea(neto, secciones, columnas, serie, linea) {
+  if (!linea || linea.sin || !Number.isFinite(linea.valor)) return null;
+  const sueldo = { neto, pagas: 12 };
+  const calculo = calculoLlega({ ficha: 'peon', perfiles: {}, sueldo, superficie: superficieDe({ ficha: 'peon' }, sueldo, {}), serie });
+  return resumenResidual(calculo, secciones, (s, i) => columnas[s]?.valores[i] ?? null, linea.valor, { real: true });
+}
+
+let datosCuenta = null;   // promesa de { secciones, columnas, serie, linea } (o null si no hay)
 let cuenta = null;        // lo último pintado: { neto, r } | { error: true } | null
 let turnoCuenta = 0;
 let esperaCuenta = null;
@@ -228,9 +242,12 @@ function pedirDatosCuenta() {
   datosCuenta ??= (async () => {
     const s = seriesCuenta(m);
     if (!s) return null;
-    const [secciones, ...cols] = await Promise.all([cargarSecciones(m), ...s.pedidos.map(([serie, p]) => cargarValores(m, serie, 'sc', p))]);
+    const [secciones, lineas, ...cols] = await Promise.all([cargarSecciones(m), cargarLineasResidual(m),
+      ...s.pedidos.map(([serie, p]) => cargarValores(m, serie, 'sc', p))]);
     if (!secciones || cols.some((c) => !c)) return null;
-    return { secciones, columnas: Object.fromEntries(s.pedidos.map(([serie], i) => [serie, cols[i]])), serie: s.serie };
+    // Tarea 65 (remates): la línea del año del alquiler de la cuenta (sin el fichero, la cuenta sin línea)
+    const linea = lineas ? lineaDelAnio(lineas, LINEA_POR_DEFECTO, s.periodo, 'una_persona') : null;
+    return { secciones, columnas: Object.fromEntries(s.pedidos.map(([serie], i) => [serie, cols[i]])), serie: s.serie, linea };
   })().catch((error) => {
     console.error(error);
     datosCuenta = null;   // se reintenta con la siguiente tecla
@@ -246,11 +263,20 @@ function pintarCuenta() {
   if (!cuenta) return caja.replaceChildren();
   if (cuenta.error) return caja.replaceChildren(t('portada.cuenta.error'));
   if (!cuenta.r) return caja.replaceChildren(t('portada.cuenta.sin_datos'));
-  const { neto, r } = cuenta;
+  const { neto, r, l } = cuenta;
   rellenar(caja, t('portada.cuenta.resultado'), {
     neto: t.numero(neto, Number.isInteger(neto) ? 0 : 2), umbral: t.porcentaje(umbralDe({})),
     pct: t.porcentaje(r.proporcion), caben: t.numero(r.caben), total: t.numero(r.con),
   }, ['pct']);
+  // Tarea 65 (remates): detrás, la misma cuenta con la línea de ingreso residual
+  if (l?.r?.con) {
+    const frase = crear('span', 'portada-cuenta-linea');
+    rellenar(frase, t('portada.cuenta.linea'), {
+      linea: textoLineaResidual(t, l.linea, { conCifra: true }), pct: t.porcentaje(l.r.proporcion),
+      encima: t.numero(l.r.encima), total: t.numero(l.r.con),
+    }, ['pct']);
+    caja.append(' ', frase);
+  }
 }
 
 // Cuenta con lo escrito (sin datos reales, la muestra de ejemplo, o con algo que no se entiende, nada).
@@ -263,7 +289,10 @@ async function actualizarCuenta() {
   }
   const d = await pedirDatosCuenta();
   if (yo !== turnoCuenta) return;   // ya se ha escrito otra cosa
-  cuenta = d ? { neto, r: cuentaIngresos(neto, d.secciones, d.columnas, d.serie) } : d === null ? null : { error: true };
+  cuenta = d ? {
+    neto, r: cuentaIngresos(neto, d.secciones, d.columnas, d.serie),
+    l: d.linea ? { linea: d.linea, r: cuentaLinea(neto, d.secciones, d.columnas, d.serie, d.linea) } : null,   // tarea 65
+  } : d === null ? null : { error: true };
   pintarCuenta();
 }
 

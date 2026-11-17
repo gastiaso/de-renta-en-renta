@@ -30,8 +30,8 @@
 #
 # Texto vigente de un bloque: la última versión que trae la API, sin las notas al pie
 # (clase «nota_pie*») y sin la redacción futura que el BOE intercala como «Téngase en cuenta que, con
-# efectos de …» (el Real Decreto-ley 28/2026 en el artículo 10 de la LAU, desde el 15-nov-2026): nunca
-# se resume ni se comprueba como vigente una versión con efectos futuros.
+# efectos de …» (así iba el Real Decreto-ley 28/2026 en el artículo 10 de la LAU hasta que el BOE lo dio
+# por derogado, 13-nov-2026): nunca se resume ni se comprueba como vigente una versión con efectos futuros.
 #
 # Compuertas (inventario/referencias_validacion.csv):
 #   reglas_completo (bloqueo)  campos en los dos idiomas, identificadores y anclas válidos y únicos,

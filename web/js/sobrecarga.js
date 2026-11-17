@@ -1,6 +1,7 @@
 // Sección «Sobrecarga» (sobrecarga.html, v0.0): un solo mapa de Europa con MapLibre que cambia de
 // escala según el corte, «la escalera», la serie y los desgloses de España, el módulo de acceso y
-// la caja de método. Datos: datos/sobrecarga/ (R/web_sobrecarga.R); lógica sin DOM en
+// la caja de método. El mapa, la escalera, la tabla de comunidades y los desgloses cambian con la
+// medida: la sobrecarga (22) o el riesgo de pobreza tras los gastos de vivienda (24; tarea 65, parte B). Datos: datos/sobrecarga/ (R/web_sobrecarga.R); lógica sin DOM en
 // sobrecarga_datos.js.
 //
 // El mapa no lleva teselas de fondo: el mar es el color de fondo y la tierra, las geometrías NUTS
@@ -20,7 +21,7 @@ const SVG = 'http://www.w3.org/2000/svg';
 
 let t;                      // traductor del idioma activo
 let datos;                  // sobrecarga.json
-let estado;                 // { idioma, corte, grupo, anio, geo }
+let estado;                 // { idioma, medida, corte, grupo, anio, geo }
 let anioTotal;              // último año elegido con toda la población (para volver a él)
 let anioDesgloses;          // ola de los desgloses de España
 let escaleraCompleta = false;
@@ -61,7 +62,9 @@ const vista = () => S.vistaDe(datos, estado);
 const esc = (fila) => S.valorDe(fila, datos.escala);
 const pct = (v) => S.porcentaje(v, t);
 const nombre = (geo, opciones) => S.nombreDe(geo, datos, t, ordenNatural, opciones);
-const olas = () => ({ desde: datos.olas.agrupadas[0], hasta: datos.olas.agrupadas[1] });
+const conf = () => S.confMedida(datos, estado.medida);
+const pobreza = () => estado.medida === 'pobreza';
+const olas = () => ({ desde: conf().olas.agrupadas[0], hasta: conf().olas.agrupadas[1] });
 // Marcas de Eurostat con su significado: «b (ruptura de serie), u (poca fiabilidad)»
 const textoMarcas = (bandera) => S.marcasDe(bandera)
   .map((l) => (t.existe(`sobrecarga.marcas.${l}`) ? `${l} (${t(`sobrecarga.marcas.${l}`)})` : l)).join(', ');
@@ -90,8 +93,8 @@ async function iniciar() {
     return;
   }
   estado = S.leerEstado(location.search, datos);
-  anioTotal = estado.corte === 'total' ? estado.anio : S.ultimoAnio(datos);
-  anioDesgloses = Math.max(...datos.olas.anuales);
+  anioTotal = estado.corte === 'total' ? estado.anio : S.ultimoAnio(datos, estado.medida);
+  anioDesgloses = Math.max(...conf().olas.anuales);
   $('sc-estado').hidden = true;
   $('sc-contenido').hidden = false;
   $('sc-escalera-modo').addEventListener('click', () => {
@@ -173,23 +176,44 @@ function elegir(corte, grupo) {
     if (estado.corte !== corte) return;
     Object.assign(estado, { corte: 'total', grupo: 'total', anio: anioTotal });
   } else {
-    Object.assign(estado, { corte, grupo, anio: datos.anio_desgloses });
+    Object.assign(estado, { corte, grupo, anio: conf().anio_desgloses });
   }
   pintarTodo();
 }
 
+// Cambio de medida: se conservan el corte y el grupo si la otra medida los tiene; si no, toda la
+// población. El año de toda la población, si la otra medida no lo tiene, pasa al último.
+function elegirMedida(medida) {
+  if (medida === estado.medida) return;
+  estado.medida = medida;
+  const c = conf();
+  if (!c.anios.includes(anioTotal)) anioTotal = S.ultimoAnio(datos, medida);
+  if (estado.corte !== 'total' && !S.gruposCon(datos, estado.corte, medida).includes(estado.grupo)) {
+    Object.assign(estado, { corte: 'total', grupo: 'total' });
+  }
+  estado.anio = estado.corte === 'total' ? anioTotal : c.anio_desgloses;
+  if (!c.olas.anuales.includes(anioDesgloses)) anioDesgloses = Math.max(...c.olas.anuales);
+  pintarTodo();
+}
+
 function pintarControles() {
+  const medidas = S.medidasCon(datos);
+  $('sc-medida-grupo').hidden = medidas.length < 2;
+  botones($('sc-medida'), medidas.map((m) => ({
+    valor: m, texto: t(`sobrecarga.controles.medidas.${m}`), activo: m === estado.medida,
+  })), elegirMedida);
   const opcionesDe = (corte, textoTodos) => [
     { valor: 'total', texto: t(textoTodos), activo: estado.corte !== corte },
-    ...S.gruposCon(datos, corte).map((g) => ({
+    ...S.gruposCon(datos, corte, estado.medida).map((g) => ({
       valor: g, texto: t(`sobrecarga.controles.grupos.${g}`), titulo: t(`vocabulario.${corte}.${g}`),
       activo: estado.corte === corte && estado.grupo === g,
     })),
   ];
   botones($('sc-tenencia'), opcionesDe('tenencia', 'sobrecarga.controles.toda_poblacion'), (g) => elegir('tenencia', g));
   botones($('sc-edad'), opcionesDe('edad', 'sobrecarga.controles.todas_edades'), (g) => elegir('edad', g));
+  $('sc-edad-grupo').hidden = !S.gruposCon(datos, 'edad', estado.medida).length;   // la pobreza tras la vivienda, sin edad
   const total = estado.corte === 'total';
-  botones($('sc-anio'), datos.anios.map((a) => ({
+  botones($('sc-anio'), conf().anios.map((a) => ({
     valor: a, texto: String(a), activo: a === estado.anio, desactivado: !total && a !== estado.anio,
   })), (a) => {
     if (!total) return;
@@ -197,7 +221,12 @@ function pintarControles() {
     pintarTodo();
   });
   const notas = [t('sobrecarga.controles.nota_rentas', { anio: estado.anio, anterior: estado.anio - 1 })];
-  if (!total) notas.push(t('sobrecarga.controles.nota_desglose', { anio: datos.anio_desgloses }));
+  if (pobreza()) {
+    const umbral = S.umbralDe(datos, estado.anio);
+    if (umbral !== null) notas.push(t('sobrecarga.controles.nota_pobreza', { umbral: t.numero(umbral), anio: estado.anio }));
+  }
+  if (!total) notas.push(t(pobreza() ? 'sobrecarga.controles.nota_desglose_pobreza' : 'sobrecarga.controles.nota_desglose',
+    { anio: conf().anio_desgloses, ...olas() }));
   $('sc-nota-controles').textContent = notas.join(' ');
 }
 
@@ -353,7 +382,7 @@ async function pintarMapa() {
     versionPintada = v.nuts;
   }
   mapa.removeFeatureState({ source: 'nuts' });
-  const cortes = S.cortesDe(datos, v.grupo);
+  const cortes = S.cortesDe(datos, v.grupo, estado.medida);
   const ids = [];
   for (const fila of S.pintables(v)) {
     ids.push(fila.geo);
@@ -387,6 +416,13 @@ function seleccionar(geo) {
 function pintarCabeceraMapa() {
   const v = vista();
   const total = v.corte === 'total';
+  if (pobreza()) {
+    // Eurostat publica la pobreza tras la vivienda solo por país y sin tenencia
+    $('sc-mapa-titulo').textContent = t(total ? 'sobrecarga.mapa.titulo_paises' : 'sobrecarga.mapa.titulo_pobreza_tenencia');
+    $('sc-mapa-fuente').textContent = t(total ? 'sobrecarga.mapa.fuente_pobreza' : 'sobrecarga.mapa.fuente_pobreza_tenencia',
+      { anio: v.anio, ...olas() });
+    return;
+  }
   $('sc-mapa-titulo').textContent = t(total ? 'sobrecarga.mapa.titulo_regiones' : 'sobrecarga.mapa.titulo_paises');
   const conIne = v.filas.some((f) => f.fuente === 'ine_ecv');
   const tabla = v.filas.find((f) => f.tabla && f.bloque === 'europa')?.tabla ?? '';
@@ -401,14 +437,17 @@ function pintarNotaMapa(geojson) {
   const v = vista();
   const ids = new Set(geojson.features.map((f) => f.properties.id));
   const sinMapa = S.pintables(v).filter((f) => !ids.has(f.geo)).map((f) => nombre(f.geo));
-  const partes = [t(v.corte === 'total' ? 'sobrecarga.mapa.nota_regiones' : 'sobrecarga.mapa.nota_paises', olas())];
+  const clave = pobreza()
+    ? (v.corte === 'total' ? 'sobrecarga.mapa.nota_pobreza' : 'sobrecarga.mapa.nota_pobreza_tenencia')
+    : (v.corte === 'total' ? 'sobrecarga.mapa.nota_regiones' : 'sobrecarga.mapa.nota_paises');
+  const partes = [t(clave, olas())];
   if (sinMapa.length) partes.push(t('sobrecarga.mapa.sin_mapa', { lista: sinMapa.join(', ') }));
   $('sc-nota-mapa').textContent = partes.join(' ');
 }
 
 function pintarLeyenda() {
   const v = vista();
-  const cortes = S.cortesDe(datos, v.grupo);
+  const cortes = S.cortesDe(datos, v.grupo, estado.medida);
   const colores = coloresTramos(cortes.length + 1);
   const etiquetas = S.etiquetasTramos(cortes, t, t.numero);
   const muestra = (clase, estilo = null) => el('span', { class: `sc-muestra ${clase}`, style: estilo, 'aria-hidden': 'true' });
@@ -430,7 +469,7 @@ function pintarLeyenda() {
 // edad, los países y España con el último año y las comunidades con las olas agrupadas de la ECV.
 const notaPuesto = (v) => (v.corte === 'total'
   ? t('sobrecarga.detalle.puesto_nota', { anio: v.anio })
-  : t('sobrecarga.detalle.puesto_nota_olas', { anio: v.anio, ...olas() }));
+  : t(pobreza() ? 'sobrecarga.detalle.puesto_nota_pobreza_olas' : 'sobrecarga.detalle.puesto_nota_olas', { anio: v.anio, ...olas() }));
 
 function pintarDetalle() {
   const v = vista();
@@ -451,8 +490,8 @@ function pintarDetalle() {
     lineas.push(`${t('sobrecarga.detalle.fuente_eurostat', { tabla: fila.tabla })} · ${t('sobrecarga.detalle.anio', { anio: v.anio })}`);
     if (fila.bandera) lineas.push(t('sobrecarga.detalle.bandera', { b: textoMarcas(fila.bandera) }));
   }
-  if (v.corte === 'total' && fila.nivel === 0) lineas.push(t('sobrecarga.detalle.nivel_pais'));
-  if (v.corte === 'total' && fila.nivel === 1) lineas.push(t('sobrecarga.detalle.nivel_nuts1'));
+  if (v.corte === 'total' && !pobreza() && fila.nivel === 0) lineas.push(t('sobrecarga.detalle.nivel_pais'));
+  if (v.corte === 'total' && !pobreza() && fila.nivel === 1) lineas.push(t('sobrecarga.detalle.nivel_nuts1'));
   if (valor === null) lineas.unshift(t('sobrecarga.detalle.sin_valor'));
   caja.replaceChildren(
     el('div', { class: 'sc-detalle-cabecera' },
@@ -485,11 +524,12 @@ function pintarComunidades() {
 
 function pintarEscalera() {
   const v = vista();
-  const cortes = S.cortesDe(datos, v.grupo);
+  const cortes = S.cortesDe(datos, v.grupo, estado.medida);
   const colores = coloresTramos(cortes.length + 1);
   const valores = v.filas.map(esc).filter((x) => x !== null);
   const maximo = Math.max(...valores, 1);
-  const periodo = v.corte === 'total' ? String(v.anio) : t('sobrecarga.escalera.periodo_paises', { anio: v.anio, ...olas() });
+  const periodo = v.corte === 'total' ? String(v.anio)
+    : t(pobreza() ? 'sobrecarga.escalera.periodo_pobreza' : 'sobrecarga.escalera.periodo_paises', { anio: v.anio, ...olas() });
   $('sc-escalera-sub').textContent = t('sobrecarga.escalera.subtitulo', { n: t.numero(S.puestos(v)), periodo });
 
   const peldano = (fila) => {
@@ -517,7 +557,7 @@ function pintarEscalera() {
       ? [el('h3', { class: 'sc-bloque-titulo' }, t(`sobrecarga.escalera.${clave}`)), el('ol', { class: 'sc-peldanos' }, filas.map(peldano))]
       : []);
     cuerpo.replaceChildren(
-      ...bloque(v.corte === 'total' ? 'europa_regiones' : 'europa_paises', b.europa),
+      ...bloque(v.corte === 'total' && !pobreza() ? 'europa_regiones' : 'europa_paises', b.europa),
       ...bloque('referencias', b.referencias),
       ...bloque('comunidades', b.comunidades));
   }
@@ -526,16 +566,21 @@ function pintarEscalera() {
 
 // --- Serie de España ----------------------------------------------------------------------------
 
+// Con la pobreza tras la vivienda, la serie de ilc_li48 (España y UE-27, toda la población), con sus
+// propios textos; con la sobrecarga, la de ilc_lvho07a e ilc_lvho07c.
 function pintarSerie() {
-  const s = datos.espana.serie;
+  const s = S.serieDe(datos, estado.medida);
+  const conPobreza = s !== datos.espana.serie;
+  const texto = (clave, parametros) => t(conPobreza ? `${clave}_pobreza` : clave, parametros);
+  for (const clave of ['sobrecarga.serie.subtitulo', 'sobrecarga.serie.fuente']) {
+    const nodo = document.querySelector(`[data-i18n="${clave}"]`);
+    if (nodo) nodo.textContent = texto(clave);
+  }
   const anios = s.anios;
-  const series = [
-    { clave: 'ES_TOTAL', clase: 'serie-total', ue: false, grupo: 'total', zona: 'espana' },
-    { clave: 'ES_RENT_MKT', clase: 'serie-mercado', ue: false, grupo: 'mercado', zona: 'espana' },
-    { clave: 'EU27_TOTAL', clase: 'serie-total', ue: true, grupo: 'total', zona: 'ue27' },
-    { clave: 'EU27_RENT_MKT', clase: 'serie-mercado', ue: true, grupo: 'mercado', zona: 'ue27' },
-  ].map((x) => ({
+  const series = S.lineasSerie(datos, estado.medida).map((x) => ({
     ...x,
+    clase: x.grupo === 'mercado' ? 'serie-mercado' : 'serie-total',
+    ue: x.zona === 'ue27',
     valores: s.valores[x.clave].map((v) => (v === null ? null : v / datos.escala)),
     marcas: s.marcas?.[x.clave] ?? [],
     rupturas: S.rupturasSerie(anios, s.marcas?.[x.clave], s.rupturas_atlas?.[x.clave]),
@@ -552,7 +597,7 @@ function pintarSerie() {
   const x = S.escalaLineal(anios[0], anios.at(-1), m.izq, ancho - m.der);
   const y = S.escalaLineal(0, techo, alto - m.aba, m.arr);
   const grafico = svg('svg', { viewBox: `0 0 ${ancho} ${alto}`, role: 'img',
-    'aria-label': t('sobrecarga.serie.grafico', { desde: anios[0], hasta: anios.at(-1) }) });
+    'aria-label': texto('sobrecarga.serie.grafico', { desde: anios[0], hasta: anios.at(-1) }) });
   for (let v = 0; v <= techo; v += 10) {
     grafico.append(svg('line', { class: v === 0 ? 'eje' : 'rejilla', x1: m.izq, x2: ancho - m.der, y1: y(v), y2: y(v) }));
     grafico.append(svg('text', { class: 'texto-eje', x: m.izq - 6, y: y(v) + 4, 'text-anchor': 'end' },
@@ -627,7 +672,8 @@ function pintarSerie() {
     .filter(([, a]) => a.length).map(([serie, a]) => `${serie.nombre}, ${a.join(', ')}`);
   const estimados = series.map((serie) => [serie, S.tramosConMarca(anios, serie.marcas, 'e')]).filter(([, tr]) => tr.length)
     .map(([serie, tr]) => `${serie.nombre}, ${tr.map(([a, b]) => (a === b ? a : `${a}–${b}`)).join(', ')}`);
-  $('sc-serie-notas').textContent = [lista('sobrecarga.serie.rupturas', rupturas), lista('sobrecarga.serie.rupturas_atlas', delAtlas),
+  $('sc-serie-notas').textContent = [lista('sobrecarga.serie.rupturas', rupturas),
+    lista(conPobreza ? 'sobrecarga.serie.rupturas_atlas_pobreza' : 'sobrecarga.serie.rupturas_atlas', delAtlas),
     lista('sobrecarga.serie.estimados', estimados)].filter(Boolean).join(' ');
 
   // Tabla con todas las cifras
@@ -639,11 +685,6 @@ function pintarSerie() {
 
 // --- Desgloses de España ------------------------------------------------------------------------
 
-const ORDEN_DESGLOSES = {
-  tenencia: ['OWN_NL', 'OWN_L', 'OWN', 'RENT_MKT', 'RENT_FR', 'RENT'],
-  edad: ['Y_LT18', 'Y18-64', 'Y_GE65', 'Y15-29'],
-  quintil: ['QU1', 'QU2', 'QU3', 'QU4', 'QU5'],
-};
 const etiquetaDesglose = (corte, grupo) =>
   (corte === 'quintil' ? t(`sobrecarga.desgloses.quintiles.${grupo}`) : t(`vocabulario.${corte}.${grupo}`));
 
@@ -657,11 +698,17 @@ function barras(items, maximo) {
 }
 
 function pintarDesgloses() {
-  botones($('sc-desgloses-anio'), datos.olas.anuales.map((a) => ({ valor: a, texto: String(a), activo: a === anioDesgloses })), (a) => {
+  botones($('sc-desgloses-anio'), conf().olas.anuales.map((a) => ({ valor: a, texto: String(a), activo: a === anioDesgloses })), (a) => {
     anioDesgloses = a;
     pintarDesgloses();
   });
-  const filas = datos.espana.anual.filter((f) => f.anio === anioDesgloses);
+  // Con la pobreza tras la vivienda, España en total y por tenencia, edad (ilc_li45) y grado de
+  // urbanización, sin quintil; cada medida con su nota de los grupos
+  $('sc-desgloses-titulo').textContent = t(pobreza() ? 'sobrecarga.desgloses.titulo_pobreza' : 'sobrecarga.desgloses.titulo');
+  document.querySelector('[data-i18n="sobrecarga.desgloses.nota_quintil"]').hidden = pobreza();
+  document.querySelector('[data-i18n="sobrecarga.desgloses.nota"]').hidden = pobreza();
+  document.querySelector('[data-i18n="sobrecarga.desgloses.nota_pobreza"]').hidden = !pobreza();
+  const filas = S.filasDesgloses(datos, estado.medida, anioDesgloses);
   const total = filas.find((f) => f.corte === 'total');
   const item = (f, texto, clase) => ({
     texto, valor: esc(f), clase, fiabilidad: f.fiabilidad,
@@ -670,7 +717,7 @@ function pintarDesgloses() {
   });
   const maximo = Math.max(...filas.map(esc).filter((v) => v !== null), 1);
   const bloque = (corte) => {
-    const grupos = ORDEN_DESGLOSES[corte]
+    const grupos = S.ORDEN_DESGLOSES[corte]
       .map((g) => filas.find((f) => f.corte === corte && f.grupo === g))
       .filter(Boolean)
       .map((f) => item(f, etiquetaDesglose(corte, f.grupo), f.grupo === 'RENT_MKT' ? 'sc-barras-mercado' : null));
@@ -679,7 +726,7 @@ function pintarDesgloses() {
       el('h3', {}, t(`sobrecarga.desgloses.${corte}`)),
       barras([...(total ? [item(total, t('sobrecarga.desgloses.total'), 'sc-barras-total')] : []), ...grupos], maximo));
   };
-  $('sc-desgloses').replaceChildren(...['tenencia', 'edad', 'quintil'].map(bloque).filter(Boolean));
+  $('sc-desgloses').replaceChildren(...S.cortesDesgloses(filas).map(bloque).filter(Boolean));
 }
 
 // --- Módulo de acceso (indicador 23) ------------------------------------------------------------

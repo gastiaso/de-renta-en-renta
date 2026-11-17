@@ -191,7 +191,8 @@ export function lineasJuego(t, { mapaDef, nivel = null, cambioJuego = false, rel
 }
 
 // `datos`: { modo, mapaId, mapaDef, nivel, cambioJuego, superficie, umbral, marcas, llave, ficha, vivienda, periodo,
-// tipologia, conSupuestos, fuera, relativa, alCambiarEscala, tipica }. `conSupuestos`: el mapa usa la superficie y el umbral (el
+// tipologia, conSupuestos, fuera, relativa, alCambiarEscala, tipica, residual, avisoRegla }. `avisoRegla` (tarea 65):
+// con la llave y «Lo que queda», la nota de que el mapa va con la proporción. `conSupuestos`: el mapa usa la superficie y el umbral (el
 // sueldo necesario); `tipologia`: 'VC' | 'VU' si la serie la distingue; `fuera`: con un año
 // anterior a toda la serie, el texto que dice desde cuándo hay datos. La familia del mapa de
 // alquiler sale de `mapaDef.familia` (manifiesto) o, en «¿te llega?», del modo.
@@ -226,6 +227,8 @@ export function pintarLeyenda(contenedor, t, datos) {
       : null;
   }
   pliegue.append(...cuerpo, claves(t, relativaVisible(datos)));
+  // Tarea 65 (decisiones del 17-nov-2026): «Lo que queda» con la llave; el mapa va con la proporción
+  if (!necesario && datos.avisoRegla) pliegue.append(crear('p', 'leyenda-supuestos leyenda-aviso-regla', datos.avisoRegla));
   if (supuestos) pliegue.append(crear('p', 'leyenda-supuestos', supuestos));
   // «¿Te llega?» con otros gastos de vivienda (12-nov-2026): cuáles y cuántos (en el sueldo necesario
   // lo dicen los supuestos, textoSupuestos())

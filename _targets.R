@@ -12,8 +12,9 @@ tar_option_set(packages = c("dplyr", "readr", "sf"), memory = "transient", garba
 PORTALES <- identical(toupper(Sys.getenv("PORTALES", "FALSE")), "TRUE")
 
 # Olas de la ECV (año de la encuesta; las rentas son del año anterior). Cada ola da sus cifras
-# anuales; las tres juntas, los cruces que una sola ola no sostiene (comunidad × tenencia).
-ANIOS_ECV <- c(2023L, 2024L, 2025L)
+# anuales; cada trienio de olas seguidas (agrupar_trienios(), R/fuente_ine_ecv.R), los cruces que una
+# sola ola no sostiene (comunidad × tenencia). De 2016 a 2025 desde el 17-nov-2026 (antes, 2023–2025).
+ANIOS_ECV <- 2016:2025
 
 # Funciones del proyecto (R/*.R)
 tar_source("R")
@@ -78,7 +79,7 @@ sobrecarga <- list(
              comprobar_sobrecarga_quintil(sobrecarga_quintil, sobrecarga_ecv, eurostat_quintil)),
   tar_target(validacion_quintil, validar_referencias(comprobaciones_quintil, referencias)),
   tarchetypes::tar_combine(olas_ine_ecv, olas_ecv$ine_ecv, command = list(!!!.x)),
-  tar_target(sobrecarga_agrupada, calcular_sobrecarga_agrupada(olas_ine_ecv)),
+  tar_target(sobrecarga_agrupada, agrupar_trienios(olas_ine_ecv, calcular_sobrecarga_agrupada)),   # un trienio por ola
   tar_target(fichero_eurostat_sobrecarga, descargar_eurostat_ilc_lvho07(), format = "file"),
   tar_target(eurostat_sobrecarga, leer_eurostat_ilc_lvho07(fichero_eurostat_sobrecarga)),
   tar_target(fichero_eurostat_europa, descargar_eurostat_europa(), format = "file"),
@@ -96,6 +97,27 @@ sobrecarga <- list(
     validacion_sobrecarga   # la compuerta va antes
     exportar_sobrecarga(sobrecarga_ecv, sobrecarga_agrupada, escalera)
   }, format = "file")
+)
+
+# Tarea 65, parte B: indicador 24, riesgo de pobreza tras los gastos de vivienda (R/fuente_ine_ecv_pobreza.R),
+# con las mismas olas que el 22 y su compuerta contra Eurostat (ilc_li48, también por grado de urbanización;
+# ilc_li45 por edad; R/fuente_eurostat_ilc_li48.R y R/fuente_eurostat_ilc_li45.R) y el
+# umbral del INE (umbral_ecv, bloque_residual). Va a la tabla larga y a la sección «Sobrecarga».
+#   targets::tar_make(names = c(validacion_pobreza_vivienda, ficheros_web_sobrecarga, validacion_web_sobrecarga))
+bloque_pobreza_vivienda <- list(
+  tar_target(fichero_eurostat_ahc, descargar_eurostat_ilc_li48(), format = "file"),
+  tar_target(eurostat_ahc, leer_eurostat_ilc_li48(fichero_eurostat_ahc)),
+  tar_target(fichero_eurostat_ahc_edad, descargar_eurostat_ilc_li45(), format = "file"),   # por edad (17-nov-2026)
+  tar_target(eurostat_ahc_edad, leer_eurostat_ilc_li45(fichero_eurostat_ahc_edad)),
+  tar_target(pobreza_vivienda_ecv, dplyr::bind_rows(lapply(olas_ine_ecv, calcular_pobreza_vivienda_ecv))),
+  tar_target(pobreza_vivienda_agrupada, agrupar_trienios(olas_ine_ecv, calcular_pobreza_vivienda_agrupada)),
+  tar_target(validacion_pobreza_vivienda, validar_referencias(
+    comprobar_pobreza_vivienda(pobreza_vivienda_ecv, eurostat_ahc, umbral_ecv, edad = eurostat_ahc_edad), referencias)),
+  tar_target(larga_pobreza_vivienda, {
+    validacion_pobreza_vivienda   # la compuerta va antes que la tabla larga
+    armonizar_pobreza_vivienda_ecv(pobreza_vivienda_ecv, pobreza_vivienda_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  })
 )
 
 # F1, geografía constante (backlog, tarea 6; probada en Madrid y extendida a toda España el
@@ -873,7 +895,8 @@ bloque_tabla_larga <- list(
       armonizar_sobrecarga_ecv(sobrecarga_ecv, sobrecarga_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)),
       armonizar_ine_ecv_modulo(modulo_ccaa, ccaa, version = version_de(fichero_modulo_ccaa)),
       armonizar_ine_ecv_modulo_cortes(modulo_edad, modulo_tenencia, version = version_de(fichero_modulo_edad)),
-      larga_residual      # tarea 65: líneas de ingreso residual (nivel nacional, corte hogar)
+      larga_residual,     # tarea 65: líneas de ingreso residual (nivel nacional, corte hogar)
+      larga_pobreza_vivienda   # tarea 65, parte B: 24, como el 22 (España, comunidades y comunidad × tenencia agrupada)
     ) |>
       validar_tabla_larga(indicadores, fuentes, vocabulario)
   }),
@@ -930,17 +953,22 @@ bloque_web <- list(
   tar_target(rupturas_sobrecarga, rupturas_serie_sobrecarga(rupturas)),
   tar_target(ficheros_web_sobrecarga, {
     validacion_sobrecarga; validacion_modulo; validacion_nuts; validacion_quintil    # las compuertas van antes
+    validacion_pobreza_vivienda   # tarea 65, parte B
     exportar_web_sobrecarga(sobrecarga_ecv, sobrecarga_agrupada, eurostat_europa, ccaa,
                             list(ccaa = modulo_ccaa, edad = modulo_edad, tenencia = modulo_tenencia),
                             c("2021" = fichero_nuts_2021, "2024" = fichero_nuts_2024), indicadores,
-                            quintil = sobrecarga_quintil, rupturas = rupturas_sobrecarga, dir_web = DIR_WEB)
+                            quintil = sobrecarga_quintil, rupturas = rupturas_sobrecarga, dir_web = DIR_WEB,
+                            pobreza = list(anual = pobreza_vivienda_ecv, agrupada = pobreza_vivienda_agrupada,
+                                           eurostat = eurostat_ahc, rupturas = rupturas_serie_pobreza(rupturas)))   # tarea 65, parte B
   }, format = "file"),
   tar_target(validacion_web_sobrecarga, {
     ficheros_web_sobrecarga
     validar_referencias(comprobar_web_sobrecarga(sobrecarga_ecv, sobrecarga_agrupada, eurostat_europa, escalera, ccaa,
                                                  list(ccaa = modulo_ccaa, edad = modulo_edad, tenencia = modulo_tenencia),
                                                  indicadores, quintil = sobrecarga_quintil,
-                                                 rupturas = rupturas_sobrecarga, dir_web = DIR_WEB),
+                                                 rupturas = rupturas_sobrecarga, dir_web = DIR_WEB,
+                                                 pobreza = list(anual = pobreza_vivienda_ecv, agrupada = pobreza_vivienda_agrupada,
+                                                                eurostat = eurostat_ahc, rupturas = rupturas_serie_pobreza(rupturas))),   # tarea 65, parte B
                         referencias)
   }),
   # Portada (tarea 24; R/web_portada.R): cifras de las cartas en datos/portada.json, desde la tabla
@@ -1055,7 +1083,10 @@ bloque_historias <- if (AMBITO != "") list() else list(
 #   targets::tar_make(names = c(fichero_cis_vivienda, validacion_web_cis))
 CIS_DESDE <- 2014L
 bloque_cis <- list(
-  tar_target(cis_estudios, cis_descargar_estudios(CIS_DESDE), format = "file",
+  # Barómetros cuya página no está en la dirección habitual (título alargado: postelectorales de 2023)
+  tar_target(fichero_cis_url_excepciones, "inventario/cis_url_excepciones.csv", format = "file"),
+  tar_target(cis_url_excepciones, cis_leer_url_excepciones(fichero_cis_url_excepciones)),
+  tar_target(cis_estudios, cis_descargar_estudios(CIS_DESDE, excepciones = cis_url_excepciones), format = "file",
              cue = tarchetypes::tar_cue_force(cal_toca("cis_barometros"))),
   tar_target(cis_barometros, cis_leer_barometros(cis_estudios)),
   # Meses publicados solo en PDF, transcritos a mano (plan §11, pregunta 48 a; sin lector de PDF)
@@ -1181,9 +1212,11 @@ bloque_residual <- list(
              validar_referencias(comprobar_web_lineas_residual(lineas_residual, fichero_web_lineas_residual), referencias)),
   tar_target(muestra_residual, calcular_muestra_residual(terminos_supuestos, lineas_residual, otros_gastos, territorios_2021,
                                                          supuestos = supuestos_inventario)),
+  # remates de la web: la cuenta de la portada con la línea (todas las secciones del año de la muestra)
+  tar_target(cuenta_portada_residual, calcular_cuenta_portada_residual(larga_serpavi, terminos_supuestos, lineas_residual)),
   tar_target(fichero_muestra_residual, "pruebas/datos/residual_muestra.json", format = "file"),
   tar_target(validacion_residual_muestra,
-             validar_referencias(comprobar_muestra_residual(muestra_residual, fichero_muestra_residual), referencias))
+             validar_referencias(comprobar_muestra_residual(muestra_residual, fichero_muestra_residual, cuenta_portada_residual), referencias))
 )
 
 # Tarea 45: IPC del INE (medias anuales del índice general, tabla 76144; R/fuente_ine_ipc.R) para el
@@ -1238,6 +1271,7 @@ list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adr
      bloque_cis_ccaa,                 # tarea 63, CIS por comunidad
      bloque_otros_gastos,             # otros gastos de vivienda de la ECV (12-nov-2026)
      bloque_residual,                 # tarea 65, línea de ingreso residual
+     bloque_pobreza_vivienda,         # tarea 65, parte B, riesgo de pobreza tras la vivienda (24)
      bloque_ipc,                      # tarea 45, IPC
      bloque_historias,                # tarea 49, primeras historias
      bloque_reglas)                   # tarea 64, reglas del juego

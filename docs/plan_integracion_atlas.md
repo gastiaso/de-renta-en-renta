@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.53 · 13 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.54 · 17 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.54:** tarea 65 del backlog, parte B y remates de la parte A (17-nov-2026): indicador 24, riesgo de pobreza tras los gastos de vivienda, por comunidad y por tenencia con los microdatos de la ECV y la definición de Eurostat (`ilc_li48`, compuerta `ahc_es_eurostat` de bloqueo), en la sección «Sobrecarga» con el selector «Medida»; el alcance pasa a 24 indicadores (§5). En la web, la línea de ingreso residual llega al sueldo necesario, la portada, la evolución de la ficha y el CSV de «¿te llega?». Las decisiones tomadas en la tarea quedan «por revisar» en el backlog.
 
 **Cambios en la v0.53:** tarea 64 del backlog (13-nov-2026): «Reglas del juego». Decisiones del autor del 13-nov-2026 en `docs/especificacion_reglas_del_juego.md`: los resúmenes no se publican sin su revisión jurídica (`revisado` = `borrador`; alerta `reglas_borrador` en el pipeline y bloqueo `reglas_sin_borrador` al empaquetar; mientras tanto, el sitio da solo los títulos, «en revisión»); las normas citadas van en su propio CSV (`inventario/reglas_normas.csv`), con la fecha de consulta y la `fecha_actualizacion` del BOE de cada una; un decreto-ley sin convalidar cuenta como vigente hasta 30 días hábiles después de su promulgación (más 10 días naturales de margen para que salga la resolución).
 
@@ -121,7 +123,7 @@
 | Cifras reproyectadas | `dato` si las secciones de origen caen enteras en la de 2021; `estimado` si alguna se reparte; medianas `dato` solo 1:1, `estimado` desde un origen dominante (≥ 95 % de los portales) y `ausente` si ninguno domina (§6.3) |
 | Tipología del alquiler | Vivienda colectiva por defecto (SERPAVI), con la unifamiliar como opción y sin mezclarlas; los derivados, con la colectiva (pregunta 12) |
 | Derivados | Estado: el peor de sus términos, `dato` < `estimado` < `secreto` < `ausente` (pregunta 15) |
-| Alcance | 23 indicadores: los 20 iniciales y 3 añadidos el 6-nov (catálogo en §5) |
+| Alcance | 24 indicadores: los 20 iniciales, 3 añadidos el 6-nov y el riesgo de pobreza tras los gastos de vivienda, añadido el 17-nov (catálogo en §5) |
 | Código previo | Se reutiliza el código propio que sirva (§2.1) |
 | Para quién | Cinco fichas con ingreso neto mensual y superficie propia: llave, mochila, tartera, transistor y «Tu ficha» (§3.1) |
 | Tu sueldo | Entrada en neto mensual; cálculo en el navegador; mapa por defecto: sueldo neto necesario en euros para 50 m² (§6.6) |
@@ -325,8 +327,9 @@ Las marcas ★ son el núcleo de la v0.1. «A confirmar» indica que hay que ver
 
 | # | Indicador | Fuente | Nivel nativo | Serie | Notas |
 |---|---|---|---|---|---|
-| 22 | Tasa de sobrecarga por gastos de vivienda (método Eurostat) | INE, microdatos de la ECV; Eurostat (`ilc_lvho07a`, `ilc_lvho07c`; `ilc_lvho07_r` por regiones NUTS 2, comprobada: incluye las comunidades, solo población total, 2021–2024) | Región NUTS 2 (total) y país (desgloses) en Europa; comunidad en España | España desde 2004 (alquiler a precio de mercado, desde 2007) y UE-27 desde 2010, con las rupturas que marca Eurostat; regiones desde 2021 | Personas, no hogares; hipoteca solo intereses; renta del año anterior. Cortes por tenencia, edad y quintil de renta (el quintil, solo España); sin intervalos (pregunta 9), con la muestra y las marcas de cada cifra; compuerta contra la cifra de Eurostat |
+| 22 | Tasa de sobrecarga por gastos de vivienda (método Eurostat) | INE, microdatos de la ECV; Eurostat (`ilc_lvho07a`, `ilc_lvho07c`; `ilc_lvho07_r` por regiones NUTS 2, comprobada: incluye las comunidades, solo población total, 2021–2024) | Región NUTS 2 (total) y país (desgloses) en Europa; comunidad en España | España desde 2004 (alquiler a precio de mercado, desde 2007) y UE-27 desde 2010, con las rupturas que marca Eurostat; comunidades con los microdatos, 2016–2025; regiones desde 2021 | Personas, no hogares; hipoteca solo intereses; renta del año anterior. Cortes por tenencia, edad y quintil de renta (el quintil, solo España); sin intervalos (pregunta 9), con la muestra y las marcas de cada cifra; compuerta contra la cifra de Eurostat |
 | 23 | Búsqueda de vivienda sin éxito | INE, ECV 2025, módulo de acceso a la vivienda | Comunidad | Corte único (2025) | Módulo europeo; repetición futura por confirmar |
+| 24 | Riesgo de pobreza tras los gastos de vivienda | INE, microdatos de la ECV; Eurostat (`ilc_li48`, también por grado de urbanización; `ilc_li45`, por edad) | País en Europa; comunidad en España (por tenencia, con trienios de olas agrupadas); España por edad y grado de urbanización | Olas 2016–2025; España y UE-27 de Eurostat desde 2004 | Renta disponible menos 12 × HH070, por unidad de consumo, frente al umbral de pobreza de la ola; compuerta contra `ilc_li48` y `ilc_li45` (tarea 65, parte B; `docs/especificacion_ingreso_residual.md`) |
 
 **Reserva para después de la v1.0:** viviendas vacías (Censo 2021), población y extranjeros (padrón por SC), paro registrado (SEPE, municipio), lanzamientos (CGPJ, partido judicial), viviendas arrendadas declaradas en el IRPF (AEAT), vivienda protegida. (Las pensiones medias por provincia ya entran como ingreso del transistor, §3.1.)
 

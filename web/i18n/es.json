@@ -123,6 +123,7 @@
       "linea_ecv": "Umbral de pobreza",
       "nombre": {
         "imv": "la renta garantizada del ingreso mínimo vital para {hogar}",
+        "imv_2020": "la renta garantizada del ingreso mínimo vital (IMV desde el 1 de junio de 2020) para {hogar}",
         "pnc": "la pensión no contributiva anual entre 12 para {hogar} (antes del ingreso mínimo vital)",
         "ecv": "la línea del umbral de riesgo de pobreza de la ECV de {ola} para {hogar}"
       },
@@ -141,12 +142,13 @@
       "frase_encima": "Lo que queda está {distancia} € por encima de {linea}.",
       "frase_igual": "Lo que queda iguala {linea}.",
       "no_aplica": "La línea de ingreso residual no se aplica a «Hogar del barrio»: su ingreso es la renta de todos los hogares de la sección, de tamaño desconocido.",
+      "llave_proporcion": "Con «Hogar del barrio», el mapa va con la regla del {umbral} del ingreso, no con «Lo que queda»: la llave no tiene línea de ingreso residual, porque su ingreso es la renta de todos los hogares de la sección, de tamaño desconocido.",
       "sin_linea": "Sin {linea} para {anio}: el último año con cifra es {ultimo}.",
       "sin_linea_corto": "Sin línea de ingreso residual para este año.",
       "sin_fichero": "Las líneas de ingreso residual no están disponibles en esta vista.",
       "nota": {
         "imv": "Es el 100 % de la pensión no contributiva anual entre 12 (Ley 19/2021, art. 13); dos adultos, + 30 %. Es lo que la ley garantiza a un hogar para todos sus gastos, vivienda incluida, no un presupuesto de los demás gastos.",
-        "pnc": "Antes del ingreso mínimo vital (junio de 2020), la misma cuenta con la pensión no contributiva; dos adultos, + 30 %.",
+        "pnc": "Antes del ingreso mínimo vital (IMV desde el 1 de junio de 2020), la misma cuenta con la pensión no contributiva; dos adultos, + 30 %.",
         "ecv": "Es el 60 % de la mediana de la renta por unidad de consumo, con los ingresos de {anio} (ECV de {ola}); dos adultos, × 1,5. Es un umbral de la renta total, no de los demás gastos."
       },
       "tramo_1": "Queda más de 1,25 veces la línea",
@@ -155,7 +157,21 @@
       "leyenda": "Lo que queda tras pagar la vivienda frente a {linea}.",
       "resumen": "Tras pagar el alquiler de {vivienda}, lo que queda no baja de {linea} en el {pct} de las secciones con dato ({encima} de {total}).",
       "resumen_gastos": "Tras pagar el alquiler de {vivienda} y los otros gastos de vivienda, lo que queda no baja de {linea} en el {pct} de las secciones con dato ({encima} de {total}).",
-      "resumen_real": "Con el piso mediano que se alquila en cada sección en lugar de {vivienda}, en el {pct} ({encima} de {total})."
+      "resumen_real": "Con el piso mediano que se alquila en cada sección en lugar de {vivienda}, en el {pct} ({encima} de {total}).",
+      "sueldo_linea": "Con {corto}: {cifra} € netos al mes (alquiler más {euros} € de la línea de una persona).",
+      "sueldo_linea_gastos": "Con {corto}: {cifra} € netos al mes (alquiler y otros gastos de vivienda más {euros} € de la línea de una persona).",
+      "celda": {
+        "imv": "IMV {euros} €",
+        "pnc": "PNC {euros} €",
+        "ecv": "umbral {euros} €"
+      },
+      "evolucion_nota": {
+        "imv": "Al lado, la línea del ingreso mínimo vital (IMV) de cada año para {hogar}, en euros al mes.",
+        "ecv": "Al lado, el umbral de riesgo de pobreza de la ECV con los ingresos de cada año para {hogar}, en euros al mes."
+      },
+      "evolucion_pnc": "PNC: hasta 2019, antes del ingreso mínimo vital, la pensión no contributiva anual entre 12.",
+      "evolucion_2020": "IMV desde el 1 de junio de 2020: la misma cifra para todo el año.",
+      "no_aplica_corto": "No se aplica a «Hogar del barrio»"
     },
     "sueldo": {
       "intro_necesario": "Sueldo neto necesario para que el alquiler no pase del umbral. Con unos ingresos o una ficha, el mapa pasa a «¿te llega?».",
@@ -258,7 +274,10 @@
         "margen_pct": "margen_pct",
         "valor_minimo": "valor_minimo",
         "categoria": "categoria",
-        "etiqueta": "etiqueta"
+        "etiqueta": "etiqueta",
+        "linea_residual": "linea_residual",
+        "linea_residual_euros": "linea_residual_euros_mes",
+        "queda_menos_linea": "queda_menos_linea"
       },
       "estados": {
         "dato": "dato",
@@ -444,7 +463,8 @@
       "resultado": "Con {neto} € netos al mes, el alquiler normal de cada sección no pasa del {umbral} de tus ingresos en el {pct} de las secciones con dato ({caben} de {total}).",
       "nota": "Es el alquiler de quien ya tiene contrato; quien busca piso hoy suele pagar más.",
       "sin_datos": "No hay secciones con dato para hacer la cuenta.",
-      "error": "No se ha podido hacer la cuenta aquí: «¿Te llega?» la hace en el mapa."
+      "error": "No se ha podido hacer la cuenta aquí: «¿Te llega?» la hace en el mapa.",
+      "linea": "Tras pagar ese alquiler, lo que queda no baja de {linea} en el {pct} ({encima} de {total})."
     },
     "dado": "Tira el dado",
     "dado_nota": "Una sección al azar, con alquiler publicado en {anio}.",
@@ -520,8 +540,15 @@
       "anio": "Encuesta",
       "toda_poblacion": "Toda la población",
       "todas_edades": "Todas las edades",
+      "medida": "Medida",
+      "medidas": {
+        "sobrecarga": "Sobrecarga (más del 40 %)",
+        "pobreza": "Pobreza tras pagar la vivienda"
+      },
       "nota_rentas": "Encuesta de {anio}, con las rentas de {anterior}.",
       "nota_desglose": "Con tenencia o edad, solo la encuesta de {anio}: Eurostat no publica esos desgloses por regiones.",
+      "nota_pobreza": "Riesgo de pobreza tras la vivienda: personas cuya renta por unidad de consumo, una vez pagados los gastos de vivienda, queda por debajo del umbral de riesgo de pobreza ({umbral} € al año por unidad de consumo en la encuesta de {anio}: el 60 % de la mediana antes de pagar la vivienda).",
+      "nota_desglose_pobreza": "Por tenencia, España con la encuesta de {anio} y las comunidades con tres olas agrupadas ({desde}–{hasta}): Eurostat no publica esta tasa por tenencia, y el mapa no pinta otros países.",
       "grupos": {
         "RENT_MKT": "Alquiler de mercado",
         "RENT_FR": "Alquiler reducido o cesión",
@@ -546,6 +573,11 @@
       "fuente_regiones": "Eurostat (ilc_lvho07_r), {anio}; comunidades y España, INE (microdatos de la ECV)",
       "fuente_regiones_eurostat": "Eurostat (ilc_lvho07_r), {anio}",
       "fuente_paises": "Eurostat ({tabla}), {anio}; comunidades, INE (microdatos de la ECV, {desde}–{hasta})",
+      "titulo_pobreza_tenencia": "España por comunidades",
+      "fuente_pobreza": "Eurostat (ilc_li48), {anio}; comunidades y España, INE (microdatos de la ECV)",
+      "fuente_pobreza_tenencia": "INE (microdatos de la ECV): España, {anio}; comunidades, {desde}–{hasta}",
+      "nota_pobreza": "Eurostat publica esta tasa solo por país, sin regiones. Las comunidades y España salen de los microdatos del INE con el mismo método y la misma encuesta; la cifra de España reproduce la de Eurostat (±0,1 puntos).",
+      "nota_pobreza_tenencia": "Eurostat no publica esta tasa por régimen de tenencia: solo se pintan las comunidades, con tres olas agrupadas ({desde}–{hasta}), porque una sola ola no da muestra suficiente.",
       "nota_regiones": "Eurostat publica la tasa por regiones NUTS 2 solo para toda la población. Donde no las publica se pinta el dato del país o de NUTS 1, con trama. Algunos países no tienen dato regional algunos años (Dinamarca, hasta 2024) y Eurostat publica a veces dos regiones juntas (FI19_20): quedan sin pintar.",
       "nota_paises": "Con tenencia o edad, Eurostat publica países. España va por comunidades con los microdatos del INE y tres olas agrupadas ({desde}–{hasta}), porque una sola ola no da muestra suficiente: países y comunidades no son del mismo periodo.",
       "sin_mapa": "En la escalera, sin geometría en el mapa: {lista}.",
@@ -572,6 +604,7 @@
       "puesto": "Puesto {p} de {n}",
       "puesto_nota": "Orden orientativo: sin márgenes de error; todos los territorios, con la encuesta de {anio}.",
       "puesto_nota_olas": "Orden orientativo: sin márgenes de error; los países y España, con la encuesta de {anio}, y las comunidades, con tres olas agrupadas ({desde}–{hasta}).",
+      "puesto_nota_pobreza_olas": "Orden orientativo: sin márgenes de error; España, con la encuesta de {anio}, y las comunidades, con tres olas agrupadas ({desde}–{hasta}).",
       "sin_valor": "Sin dato publicable: menos de 20 observaciones.",
       "fuente_ine": "INE, microdatos de la ECV (cálculo propio con el método de Eurostat)",
       "fuente_eurostat": "Eurostat ({tabla})",
@@ -587,6 +620,7 @@
       "titulo": "La escalera",
       "subtitulo": "Puesto entre {n} territorios y referencias, de más a menos · {periodo}",
       "periodo_paises": "países, {anio}; comunidades, {desde}–{hasta}",
+      "periodo_pobreza": "España, {anio}; comunidades, {desde}–{hasta}",
       "europa_regiones": "Lo más alto de Europa",
       "europa_paises": "Lo más alto: países",
       "referencias": "Referencias",
@@ -609,7 +643,11 @@
       "espana": "España",
       "ue27": "UE-27",
       "anio": "Encuesta",
-      "fuente": "Eurostat (ilc_lvho07a, ilc_lvho07c), desde el primer año publicado: en España, el total desde 2004 y el alquiler a precio de mercado desde 2007; la UE-27, desde 2010. De 2023 a 2025, el cálculo con los microdatos de la ECV reproduce estas cifras (±0,1 puntos).",
+      "fuente": "Eurostat (ilc_lvho07a, ilc_lvho07c), desde el primer año publicado: en España, el total desde 2004 y el alquiler a precio de mercado desde 2007; la UE-27, desde 2010. De 2016 a 2025, el cálculo con los microdatos de la ECV reproduce estas cifras (±0,1 puntos).",
+      "subtitulo_pobreza": "Riesgo de pobreza tras pagar la vivienda: toda la población, frente a la UE-27",
+      "fuente_pobreza": "Eurostat (ilc_li48), desde el primer año publicado: en España, desde 2004; la UE-27, desde 2010. De 2016 a 2025, el cálculo con los microdatos de la ECV reproduce estas cifras (±0,1 puntos).",
+      "rupturas_atlas_pobreza": "Ruptura de serie del atlas, que Eurostat no marca (punto hueco y línea cortada): {lista}. Desde la encuesta de 2013, el INE obtiene los ingresos combinando la entrevista con registros administrativos (AEAT, Seguridad Social y haciendas forales), y la renta da el umbral y lo que queda tras pagar la vivienda.",
+      "grafico_pobreza": "Tasa de riesgo de pobreza tras los gastos de vivienda en España y en la UE-27, toda la población, {desde}–{hasta}",
       "rupturas": "Ruptura de serie (marca «b» de Eurostat; punto hueco y línea cortada): {lista}. Las cifras de antes y de después no son del todo comparables.",
       "rupturas_atlas": "Ruptura de serie del atlas, que Eurostat no marca (punto hueco y línea cortada): {lista}. Desde la encuesta de 2013, el INE obtiene los ingresos combinando la entrevista con registros administrativos (AEAT, Seguridad Social y haciendas forales), y la renta es el denominador de la tasa.",
       "ruptura_atlas": "ruptura de serie del atlas (desde 2013, ingresos de registros administrativos), que Eurostat no marca",
@@ -619,14 +657,17 @@
     },
     "desgloses": {
       "titulo": "España por tenencia, edad y renta",
+      "titulo_pobreza": "España por tenencia, edad y grado de urbanización: riesgo de pobreza tras la vivienda",
       "subtitulo": "Microdatos de la ECV, cálculo propio · cada cifra con su muestra",
       "anio": "Encuesta",
       "tenencia": "Por régimen de tenencia",
       "edad": "Por edad",
       "quintil": "Por quintil de renta",
+      "urbanizacion": "Por grado de urbanización",
       "total": "Toda la población",
       "muestra_corta": "{n} pers.",
       "nota": "Los grupos de menores de 18 y de 15 a 29 años se solapan. «Propiedad» y «Alquiler o cesión gratuita» reúnen las categorías de Eurostat.",
+      "nota_pobreza": "Los grupos de edad son los de Eurostat (ilc_li45): «18 y más años» reúne los de 18 a 64 y 65 y más. El grado de urbanización es el de Eurostat (ilc_li48), según la zona donde está la vivienda. «Propiedad» y «Alquiler o cesión gratuita» reúnen las categorías de Eurostat. España reproduce las cifras de Eurostat por edad y por grado de urbanización (±0,1 puntos).",
       "nota_quintil": "Quintiles de renta disponible equivalente (la del hogar entre sus unidades de consumo, escala de la OCDE modificada) de toda la población, ponderada por persona. Solo España: sin quintil por país ni por comunidad.",
       "quintiles": {
         "QU1": "Primer quintil (20 % con menos renta)",
@@ -653,6 +694,7 @@
       "renta": "La renta es la del año anterior a la encuesta: la ECV de 2025 recoge las rentas de 2024.",
       "muestra": "Sin intervalos de confianza: los microdatos públicos no traen el diseño de la muestra. Cada cifra del INE lleva su número de observaciones y la marca de fiabilidad de EU-SILC: sin publicar con menos de 20; con trama, de 20 a 49.",
       "compuerta": "El cálculo reproduce las cifras de Eurostat de España, de cada comunidad, de los inquilinos a precio de mercado y de cada grupo de edad (±0,1 puntos).",
+      "pobreza": "Riesgo de pobreza tras la vivienda (indicador 24): (renta disponible − 12 × gasto mensual en vivienda) ÷ unidades de consumo, por debajo del 60 % de la mediana de la renta por unidad de consumo antes de pagar la vivienda. Es el método de Eurostat (ilc_li48): la cifra de España de 2016 a 2025 reproduce la suya (±0,1 puntos), también por edad (ilc_li45) y por grado de urbanización.",
       "marcas": "Las cifras de Eurostat llevan sus marcas junto al valor: b, ruptura de serie; u, poca fiabilidad (con trama en el mapa); e, estimación; p, provisional."
     },
     "acceso": {
@@ -1093,6 +1135,13 @@
       "calculo": "Cifra publicada por el INE en las tablas del módulo de 2025 de la ECV sobre dificultades de acceso a la vivienda, con la razón principal (sobre todo, el precio).",
       "lectura": "Es un corte único (2025). Ve a quien intenta entrar y no puede, al contrario que la sobrecarga."
     },
+    "pobreza_tras_vivienda": {
+      "nombre": "Tasa de riesgo de pobreza tras los gastos de vivienda",
+      "unidad": "% de las personas",
+      "definicion": "Personas cuya renta disponible por unidad de consumo, una vez restado el gasto total en vivienda, queda por debajo del umbral de riesgo de pobreza (60 % de la mediana de la renta por unidad de consumo antes de restar la vivienda).",
+      "calculo": "Microdatos de la ECV con el método de Eurostat (ilc_li48): renta disponible del año anterior menos 12 veces el gasto mensual en vivienda (de la hipoteca, solo intereses), entre las unidades de consumo de la escala de la OCDE modificada; umbral de la ola sin recalcular; ponderación por persona. Reproduce las cifras de España de Eurostat, también por edad (ilc_li45) y grado de urbanización (±0,1 puntos). Los cruces por comunidad y tenencia agrupan tres olas.",
+      "lectura": "Es la versión estadística del enfoque residual: no fija un porcentaje máximo de gasto, sino si lo que queda tras pagar la vivienda llega al umbral de pobreza. Se lee junto a la sobrecarga (22), que mide la proporción de la renta, y por tenencia, sobre todo en el alquiler."
+    },
     "contratos_alquiler": {
       "nombre": "Contratos de alquiler de la mediana",
       "unidad": "contratos",
@@ -1158,6 +1207,8 @@
     "ine_ecv_modulo": "Encuesta de Condiciones de Vida 2025: módulo sobre dificultades de acceso a la vivienda (tablas)",
     "eurostat_ilc_lvho07": "Tasa de sobrecarga por gastos de vivienda (ilc_lvho07a, ilc_lvho07b, ilc_lvho07c)",
     "eurostat_ilc_lvho07_r": "Tasa de sobrecarga por regiones NUTS 2 (ilc_lvho07_r)",
+    "eurostat_ilc_li48": "Tasa de riesgo de pobreza tras deducir los gastos de vivienda por grado de urbanización (ilc_li48)",
+    "eurostat_ilc_li45": "Tasa de riesgo de pobreza tras deducir los gastos de vivienda por edad y sexo (ilc_li45)",
     "eurostat_nuts": "Geometrías NUTS 2021 y 2024 (Nuts2json / GISCO)",
     "eustat_nastat": "Indicadores de renta del País Vasco (Eustat) y Navarra (Nastat)",
     "ine_epa_deciles": "Decil de salarios del empleo principal (EPA)",
@@ -1191,12 +1242,14 @@
       "oferta_privada": "Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE)",
       "contrato": "Antigüedad del contrato de alquiler (IPVA)",
       "superficie": "Superficie supuesta (mínimo teórico del sueldo necesario)",
+      "urbanizacion": "Grado de urbanización",
       "hogar": "Tipo de hogar (línea de ingreso residual)"
     },
     "edad": {
       "Y_LT18": "Menos de 18 años",
       "Y18-64": "De 18 a 64 años",
       "Y_GE65": "65 y más años",
+      "Y_GE18": "18 y más años",
       "Y15-29": "De 15 a 29 años",
       "Y16-29": "De 16 a 29 años",
       "Y30-44": "De 30 a 44 años",
@@ -1286,6 +1339,11 @@
     "tipologia_p75": {
       "VC": "Vivienda colectiva, tercer cuartil",
       "VU": "Vivienda unifamiliar o rural, tercer cuartil"
+    },
+    "urbanizacion": {
+      "DEG1": "Ciudades",
+      "DEG2": "Pueblos y zonas suburbanas",
+      "DEG3": "Zonas rurales"
     },
     "zona_tensionada": {
       "0": "Sin declaración en vigor",

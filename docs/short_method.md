@@ -40,6 +40,8 @@ No figure in the atlas combines the two sources. When they appear together, each
   - with the tract's actual median monthly rent: in 2024, €1,900 net a month in the median tract;
   - with a theoretical 50 m² flat, as a minimum: €1,217. Rented flats measure about 79 m² at the median.
 - **What is left.** Income minus rent, in euros a month. It is a subtraction: it does not say whether what is left is enough to live on.
+- **Residual income line.** With the «Rule» selector, what is left is compared with a monthly line for the household: the guaranteed income of the minimum living income scheme (€604.21 for one person in 2024; up to 2019, the non-contributory pension) or the Living Conditions Survey at-risk-of-poverty threshold (€1,018.37). Neither is a budget for the other expenses. The pay needed also gives the rent plus the one-person line. The neighbourhood household has no line: its income is that of all the households in the tract.
+- **Poverty after housing costs.** In the «Overburden» section, from 2016 to 2025, by region and by tenure (and Spain by age and degree of urbanisation): people whose income, once housing costs are paid, falls below the at-risk-of-poverty threshold (60% of the median, before paying for housing). It is Eurostat's definition, computed from the EU-SILC microdata: in Spain, 28.7% in the 2025 survey, the same figure Eurostat publishes.
 - **30 % threshold.** It is a convention. The same share leaves much less room to a low wage than to a high one.
 - **Profiles.** Each profile uses a different income and states it:
   - neighbourhood household: average net household income;

@@ -12,7 +12,8 @@
 //     adultos, × 1,5 (escala de la OCDE modificada).
 // Tipos de hogar: una persona (las tres fichas de una persona y «Tu ficha» con un sueldo) y dos adultos
 // («Tu ficha» con segundo sueldo); sin menores. La llave queda fuera: su ingreso es la renta de todos
-// los hogares de la sección, de tamaño desconocido («no aplica»).
+// los hogares de la sección, de tamaño desconocido («no aplica»). Con «Lo que queda» elegido, la llave
+// pinta el mapa con la regla de la proporción y lo dice (tarea 65, decisiones del 17-nov-2026: reglaEn()).
 // Regla de «¿te llega?» (`regla`, apagada por defecto): con «Lo que queda», tres tramos: por encima de
 // 1,25 × la línea (0), de la línea a 1,25 × la línea (1) y por debajo de la línea (2). Los límites y las
 // opciones salen de inventario/supuestos.csv (js/supuestos.js). Los datos, de datos/lineas_residual.json
@@ -29,6 +30,12 @@ export const LIMITES_RESIDUAL = SUPUESTOS.limites_residual; // [1, 1.25], múlti
 export const reglaDe = (estado) => (REGLAS.includes(estado?.regla) ? estado.regla : REGLA_POR_DEFECTO);
 export const lineaDe = (estado) => (LINEAS.includes(estado?.linea) ? estado.linea : LINEA_POR_DEFECTO);
 export const conResidual = (estado) => reglaDe(estado) === 'residual';
+// Regla que se aplica (tarea 65, decisiones del 17-nov-2026): la elegida, salvo con la llave, que no
+// tiene línea y va siempre con la proporción. La elección se queda en el estado (y en la dirección),
+// así que al volver a otra ficha se recupera «Lo que queda».
+export const reglaEn = (estado) => (estado?.ficha === 'llave' ? REGLA_POR_DEFECTO : reglaDe(estado));
+// «Lo que queda» elegido con la llave: el mapa va con la proporción y una nota lo dice.
+export const residualEnLlave = (estado) => estado?.ficha === 'llave' && conResidual(estado);
 
 // Tipo de hogar de la línea: null en la llave (no aplica) o sin ficha.
 export function hogarDe(ficha, sueldo) {
@@ -89,7 +96,8 @@ export function enLimiteResidual(r, margenPct, valorLinea) {
 }
 
 // Color de MapLibre con la regla residual: `calculo` de calculoLlega() (su expresion() da el ingreso y
-// el gasto de vivienda de cada elemento). Sin línea, o con la llave, todo sin color.
+// el gasto de vivienda de cada elemento). Sin línea, o con la llave (que no llega aquí: va con la
+// proporción, reglaEn()), todo sin color.
 export function colorResidual(calculo, idSeccion, colores, nivel = null, valorLinea = null, limites = LIMITES_RESIDUAL) {
   if (!calculo || calculo.ficha === 'llave' || !Number.isFinite(valorLinea)) return colores.fuera;
   const { valido, ingreso, gasto } = calculo.expresion(idSeccion, nivel);
@@ -119,6 +127,27 @@ export function resumenResidual(calculo, secciones, x, valorLinea, { real = fals
   return { con, encima, proporcion: con ? encima / con : null };
 }
 
-// Clave de i18n del nombre de la línea: la del IMV, la de la pensión no contributiva (antes del IMV) o
-// la del umbral de la ECV.
-export const claveLinea = (linea) => `interfaz.residual.nombre.${linea?.tipo ?? linea?.linea ?? 'imv'}`;
+// Remates de la web (tarea 65): sueldo necesario con la línea (indicador 21, segunda cifra de la ficha):
+// el alquiler mensual, más los otros gastos de vivienda si están, más la línea del año y del hogar de una
+// persona. Sin umbral: es el ingreso con que lo que queda iguala la línea. null si falta algún término.
+export function sueldoConLinea(alquiler, otros, valorLinea) {
+  if (!Number.isFinite(alquiler) || alquiler < 0 || !Number.isFinite(valorLinea)) return null;
+  return alquiler + (Number.isFinite(otros) ? otros : 0) + valorLinea;
+}
+
+// Lo que queda menos la línea (positivo, por encima; negativo, por debajo), sin redondear; null si falta
+// algún término. La columna del CSV de «¿te llega?» con las fichas de una persona.
+export function distanciaLinea(r, valorLinea) {
+  const residual = ingresoResidual(r);
+  return residual === null || !Number.isFinite(valorLinea) ? null : residual - valorLinea;
+}
+
+// Primer año del IMV: en vigor el 1 de junio de 2020 (RDL 20/2020), con la cifra del anexo I para todo
+// el año; se rotula «IMV desde el 1 de junio de 2020» (tarea 65, decisiones del 17-nov-2026).
+export const ANIO_INICIO_IMV = 2020;
+export const esInicioImv = (linea) => linea?.tipo === 'imv' && linea?.anio === ANIO_INICIO_IMV;
+
+// Clave de i18n del nombre de la línea: la del IMV (en 2020, con su rótulo), la de la pensión no
+// contributiva (antes del IMV) o la del umbral de la ECV.
+export const claveLinea = (linea) => (esInicioImv(linea) ? 'interfaz.residual.nombre.imv_2020'
+  : `interfaz.residual.nombre.${linea?.tipo ?? linea?.linea ?? 'imv'}`);

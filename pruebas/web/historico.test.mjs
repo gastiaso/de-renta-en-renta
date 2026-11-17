@@ -435,7 +435,9 @@ test('datos exportados por el pipeline: contrato de cis_vivienda.json', { skip: 
   assert.deepEqual([espana.primero.clave, espana.primero.v], ['2014-01', 1.5]);
   assert.equal(espana.maximo.v, 55.7);
   assert.equal(H.extremos(H.puntosCis(d, 'personal')).primero.v, 1.6);
-  // Sin los seis meses solo en PDF, que ya van transcritos (pregunta 48 a)
-  assert.equal(H.huecosCis(H.puntosCis(d, 'espana')), 9);
-  assert.equal(H.huecosCis(H.puntosCis(d, 'personal')), 7);
+  // Sin los seis meses solo en PDF, que ya van transcritos (pregunta 48 a), ni los cinco de título
+  // alargado (inventario/cis_url_excepciones.csv): abril y octubre de 2019 (macrobarómetros sin
+  // resultados en HTML) y, en España, abril y mayo de 2020
+  assert.equal(H.huecosCis(H.puntosCis(d, 'espana')), 4);
+  assert.equal(H.huecosCis(H.puntosCis(d, 'personal')), 2);
 });

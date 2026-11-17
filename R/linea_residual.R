@@ -15,7 +15,9 @@
 #     INE), hogar unipersonal / 12; dos adultos, × 1,5 (escala de la OCDE modificada: el INE publica el
 #     hogar de dos adultos y dos menores de 14, × 2,1). Año = el de los ingresos (ola − 1): el alquiler
 #     de 2024 va con la ECV 2025, como la mochila (regla 4).
-# Las dos se guardan al céntimo (empate hacia arriba); la de dos adultos, de la cifra anual × la escala.
+# Las dos se guardan al céntimo; la de dos adultos, de la cifra anual × la escala. La del IMV (y la PNC),
+# truncada, como la publica la Seguridad Social (604,21 € en 2024, no 604,22; tarea 65, decisiones del
+# 17-nov-2026: truncar_centimo()); la de la ECV, redondeada (empate hacia arriba).
 # Van a la tabla larga (nivel nacional, corte hogar) y a la web (datos/lineas_residual.json). La web
 # calcula el ingreso residual por sección con los términos que ya exporta (residual.js); R y la página
 # coinciden en la muestra de los supuestos (calcular_muestra_residual(), pruebas/datos/residual_muestra.json).
@@ -109,13 +111,19 @@ anual_ponderado <- function(desde, cuantia) {
   sum(cuantia * (hasta - desde + 1L)) / 12
 }
 
-# Lineas mensuales: linea, anio, hogar, valor (euros al mes, al centimo), tipo (imv, pnc o ecv), ola
-# (la de la ECV) y anual (la cifra anual de una persona de que salen).
+# Truncado al centimo (tarea 65, decisiones del 17-nov-2026): la Seguridad Social publica el IMV mensual
+# truncado (565,37 en 2023, 604,21 en 2024, 658,81 en 2025). La tolerancia evita que el binario baje un
+# centimo una cifra exacta (953,68 se guarda como 953,679999...).
+truncar_centimo <- function(x) floor(x * 100 + 1e-6) / 100
+
+# Lineas mensuales: linea, anio, hogar, valor (euros al mes, al centimo: el IMV y la PNC, truncados; la
+# ECV, redondeada), tipo (imv, pnc o ecv), ola (la de la ECV) y anual (la cifra anual de una persona de
+# que salen).
 calcular_lineas_residual <- function(cuantias, umbral) {
   imv <- dplyr::bind_rows(lapply(split(cuantias, cuantias$anio), function(f) {
     anual <- anual_ponderado(f$desde, f$linea_anual)
     tibble::tibble(linea = "imv", anio = f$anio[1], hogar = HOGARES_LINEA,
-                   valor = redondear_empate_arriba(anual * c(1, ESCALA_LINEA[["imv"]]) / 12, 2L),
+                   valor = truncar_centimo(anual * c(1, ESCALA_LINEA[["imv"]]) / 12),
                    tipo = f$tipo[1], ola = NA_integer_, anual = anual)
   }))
   u <- umbral[umbral$hogar == "una_persona" & !umbral$imputado & !is.na(umbral$valor), ]
@@ -138,7 +146,9 @@ armonizar_lineas_residual <- function(lineas, version_imv, version_ecv) {
 # Compuerta de las lineas (inventario/referencias_validacion.csv):
 #   residual_pnc_boe (bloqueo): PNC anual del CSV frente a la de su XML del BOE (anos con xml_pnc);
 #   residual_imv_publicada (bloqueo): IMV mensual de una persona y de dos adultos frente a las cifras
-#     publicadas del CSV (2026: 733,60 y 953,68 euros, Seguridad Social; 2020: 461,50 euros);
+#     del CSV: las publicadas por la Seguridad Social (2023 a 2025, truncadas, y 2026: 733,60 y 953,68
+#     euros) y, en 2020, la del RDL 20/2020 (anexo I, 5.538 euros al ano / 12 = 461,50; IMV desde el
+#     1 de junio de 2020);
 #   residual_umbral_ecv (bloqueo): linea de una persona x 12 frente al umbral anual del INE, cada ola;
 #   residual_umbral_ecv_2025 (bloqueo): umbral de la ECV 2025 frente a la nota de prensa del INE;
 #   residual_escala (bloqueo): dos adultos = una persona x 1,3 (IMV) o x 1,5 (ECV), al centimo;
@@ -274,13 +284,41 @@ calcular_muestra_residual <- function(terminos, lineas, otros_gastos, territorio
     x[[paste0("tramo_", l)]] <- tramo_residual(x$residual, x[[paste0("linea_", l)]], supuesto("limites_residual", supuestos))
     x[[paste0("tramo_", l, "_gastos")]] <- tramo_residual(x$residual_gastos, x[[paste0("linea_", l)]], supuesto("limites_residual", supuestos))
   }
+  # Remates de la web: sueldo necesario con la linea (indicador 21, segunda cifra de la ficha;
+  # sueldoConLinea() de residual.js): alquiler mensual mediano del territorio + la linea de una persona
+  # del ano y, con los otros gastos de vivienda, + los de su comunidad. No depende de la ficha.
+  x$alquiler_mes <- terminos$alquiler_mes[match(paste(x$geo_id, x$nivel), paste(terminos$geo_id, terminos$nivel))]
+  for (l in c("imv", "ecv")) {
+    una <- lineas$valor[lineas$linea == l & lineas$anio == anio & lineas$hogar == "una_persona"]
+    x[[paste0("sueldo_linea_", l)]] <- x$alquiler_mes + una
+    x[[paste0("sueldo_linea_", l, "_gastos")]] <- x$alquiler_mes + x$otros + una
+  }
   x
+}
+
+# Remates de la web: la cuenta de la portada con la linea (cuentaLinea() de web/js/portada.js): con unos
+# ingresos netos en 12 pagas, en cuantas secciones con el alquiler por m2 y el alquiler mensual mediano
+# de la vivienda colectiva del ano (como los recibe la web) lo que queda tras pagar el alquiler mensual
+# no baja de la linea de una persona (encima_imv, encima_ecv). Ingresos: el sueldo inventado de la
+# muestra y el de la tartera del ano (el salario minimo neto).
+calcular_cuenta_portada_residual <- function(larga_serpavi, terminos, lineas, anio = MUESTRA_SUPUESTOS_ANIO,
+                                             netos = c(MUESTRA_SUPUESTOS_PEON$neto, terminos$ingreso_tartera[1])) {
+  sc <- function(ind) {
+    x <- alquiler_vc(larga_serpavi, ind)
+    x[x$nivel == "sc" & x$anio == anio & !is.na(x$valor), c("geo_id", "valor")]
+  }
+  ambos <- dplyr::inner_join(sc("alquiler_m2"), sc("alquiler_mes"), by = "geo_id", suffix = c("_m2", "_mes"))
+  una <- function(l) lineas$valor[lineas$linea == l & lineas$anio == anio & lineas$hogar == "una_persona"]
+  dplyr::bind_rows(lapply(netos, function(neto) {
+    resto <- neto - ambos$valor_mes
+    tibble::tibble(neto = neto, con = length(resto), encima_imv = sum(resto >= una("imv")), encima_ecv = sum(resto >= una("ecv")))
+  }))
 }
 
 # pruebas/datos/residual_muestra.json, que comprueban test-linea-residual.R y pruebas/web/residual.test.mjs
 # (se escribe a mano tras cambiar la muestra, las lineas o los supuestos:
 # escribir_muestra_residual(tar_read(muestra_residual), tar_read(lineas_residual))).
-escribir_muestra_residual <- function(muestra, lineas, anio = MUESTRA_SUPUESTOS_ANIO,
+escribir_muestra_residual <- function(muestra, lineas, portada = NULL, anio = MUESTRA_SUPUESTOS_ANIO,
                                       ruta = file.path("pruebas", "datos", "residual_muestra.json")) {
   lin <- lapply(c(imv = "imv", ecv = "ecv"), function(l) {
     f <- lineas[lineas$linea == l & lineas$anio == anio, ]
@@ -293,6 +331,7 @@ escribir_muestra_residual <- function(muestra, lineas, anio = MUESTRA_SUPUESTOS_
                  "con el tipo de hogar, los otros gastos de vivienda de la comunidad y las dos l\u00edneas del a\u00f1o."),
     anio = anio, peon = MUESTRA_SUPUESTOS_PEON, lineas = lin, casos = muestra
   )
+  if (!is.null(portada)) j$portada <- portada   # calcular_cuenta_portada_residual()
   texto <- jsonlite::toJSON(j, auto_unbox = TRUE, digits = NA, na = "null", pretty = TRUE)
   con <- file(ruta, open = "wb")
   on.exit(close(con))
@@ -300,16 +339,19 @@ escribir_muestra_residual <- function(muestra, lineas, anio = MUESTRA_SUPUESTOS_
   ruta
 }
 
-# residual_muestra (bloqueo): el fichero de la muestra sigue al dia (los mismos casos, residuos, lineas
-# y tramos que la muestra del pipeline), y R da tramo a todos los casos con ingreso y alquiler;
+# residual_muestra (bloqueo): el fichero de la muestra sigue al dia (los mismos casos, residuos, lineas,
+# tramos y sueldos necesarios con la linea que la muestra del pipeline, y la misma cuenta de la portada
+# con la linea), y R da tramo a todos los casos con ingreso y alquiler;
 # residual_coherencia (alerta): el ingreso residual con otros gastos cuadra con los euros que quedan
 # menos los otros gastos (redondeados al euro como los escribe la pagina), a 1,5 euros como mucho.
-comprobar_muestra_residual <- function(muestra, ruta) {
+comprobar_muestra_residual <- function(muestra, ruta, portada = NULL) {
   j <- if (file.exists(ruta)) jsonlite::fromJSON(ruta) else NULL
-  cols <- c("residual", "residual_gastos", "linea_imv", "linea_ecv", "tramo_imv", "tramo_ecv", "tramo_imv_gastos", "tramo_ecv_gastos")
+  cols <- c("residual", "residual_gastos", "linea_imv", "linea_ecv", "tramo_imv", "tramo_ecv", "tramo_imv_gastos", "tramo_ecv_gastos",
+            "sueldo_linea_imv", "sueldo_linea_ecv", "sueldo_linea_imv_gastos", "sueldo_linea_ecv_gastos")
   al_dia <- !is.null(j) && nrow(j$casos) == nrow(muestra) &&
     all(vapply(cols, function(k) isTRUE(all.equal(as.numeric(j$casos[[k]]), as.numeric(muestra[[k]]))), logical(1))) &&
-    identical(as.character(j$casos$hogar), as.character(muestra$hogar))
+    identical(as.character(j$casos$hogar), as.character(muestra$hogar)) &&
+    (is.null(portada) || (!is.null(j$portada) && isTRUE(all.equal(as.data.frame(j$portada), as.data.frame(portada), check.attributes = FALSE))))
   sin_tramo <- sum(!is.na(muestra$residual) & (is.na(muestra$tramo_imv) | is.na(muestra$tramo_ecv)))
   dif <- abs(muestra$residual_gastos - (muestra$euros - redondear_como_js(muestra$otros)))
   dplyr::bind_rows(
@@ -326,7 +368,9 @@ comprobar_muestra_residual <- function(muestra, ruta) {
 # linea del ano y del hogar (la del IMV por defecto; la de la ECV con ?linea=ecv, en ingles) y el tramo
 # que sale de sus terminos (alquiler e ingreso, como los escribe la ficha); la leyenda, los tres tramos
 # residuales; con la regla apagada, los del porcentaje y la frase de la linea igual; con la llave, «no
-# se aplica»; y a 375 px, con los selectores a la vista, el mapa no desborda.
+# se aplica», y con «Lo que queda» elegido, los tramos de la proporcion con una nota, y al volver a otra
+# ficha, otra vez «Lo que queda» (decisiones del 17-nov-2026); y a 375 px, con los selectores a la
+# vista, el mapa no desborda.
 comprobar_residual_navegador <- function(b, evaluar, url, espera = 60, seccion = "2807901001", anio = 2024L) {
   fila <- function(detalle, mal) tibble::tibble(id = "navegador_residual", detalle = detalle, calculado = as.numeric(mal), referencia = 0)
   leer <- "JSON.stringify({ frase: document.querySelector('#ficha .ficha-residual')?.textContent ?? null,
@@ -340,12 +384,12 @@ comprobar_residual_navegador <- function(b, evaluar, url, espera = 60, seccion =
     x <- gsub("[^0-9.,]", "", x)
     as.numeric(if (idioma == "es") sub(",", ".", gsub(".", "", x, fixed = TRUE), fixed = TRUE) else gsub(",", "", x, fixed = TRUE))
   }
-  abrir <- function(consulta) {
+  abrir <- function(consulta, leer_con = leer) {
     b$Page$navigate(sprintf("%smapa.html%s", url, consulta))
     ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-tramo') && document.getElementById('mapa-cargando')?.hidden !== false", espera)
     if (!ok) return(NULL)
     Sys.sleep(1)
-    jsonlite::fromJSON(evaluar(leer), simplifyVector = TRUE)
+    jsonlite::fromJSON(evaluar(leer_con), simplifyVector = TRUE)
   }
   lineas <- tryCatch(jsonlite::fromJSON(evaluar("fetch('datos/lineas_residual.json').then((r) => r.text())")), error = function(e) NULL)
   dic <- lapply(c(es = "es", en = "en"), function(i) jsonlite::fromJSON(evaluar(sprintf("fetch('i18n/%s.json').then((r) => r.text())", i))))
@@ -376,13 +420,134 @@ comprobar_residual_navegador <- function(b, evaluar, url, espera = 60, seccion =
   llega <- unlist(dic$es$interfaz$leyenda[c("llega_1", "llega_2", "llega_3")])
   filas[[length(filas) + 1L]] <- fila("regla apagada: tramos del porcentaje y la frase de la l\u00ednea",
                                       is.null(p) || !identical(p$leyenda, unname(llega)) || is.null(p$frase) || !identical(p$regla, c("true", "false")))
-  # La llave: no se aplica
-  p <- abrir(sprintf("?ficha=llave&anio=%d&regla=residual&seccion=%s", anio, seccion))
-  filas[[length(filas) + 1L]] <- fila("la llave: \u00abno se aplica\u00bb", is.null(p) || !identical(p$frase, dic$es$interfaz$residual$no_aplica))
+  # La llave (tarea 65, decisiones del 17-nov-2026): \u00abno se aplica\u00bb en la ficha; con \u00abLo que queda\u00bb elegido,
+  # el mapa y la leyenda van con la proporcion y una nota de la leyenda lo dice, y la eleccion se queda
+  # (boton pulsado y regla=residual en la direccion); al volver a la tartera, \u00abLo que queda\u00bb otra vez
+  leer_llave <- sub("JSON.stringify({", "JSON.stringify({ aviso: document.querySelector('#leyenda .leyenda-aviso-regla')?.textContent ?? null,
+    busqueda: location.search,", leer, fixed = TRUE)
+  p <- abrir(sprintf("?ficha=llave&anio=%d&regla=residual&seccion=%s", anio, seccion), leer_llave)
+  trozos <- strsplit(dic$es$interfaz$residual$llave_proporcion, "{umbral}", fixed = TRUE)[[1]]
+  aviso_bien <- !is.null(p$aviso) && all(vapply(trozos, function(x) grepl(x, p$aviso, fixed = TRUE), TRUE))
+  mal <- is.null(p) || !identical(p$frase, dic$es$interfaz$residual$no_aplica) || !identical(p$leyenda, unname(llega)) ||
+    !aviso_bien || !identical(p$regla, c("false", "true")) || !grepl("regla=residual", p$busqueda, fixed = TRUE)
+  filas[[length(filas) + 1L]] <- fila(sprintf("la llave con \u00abLo que queda\u00bb: \u00abno se aplica\u00bb, tramos de la proporci\u00f3n y la nota (%s)",
+                                              if (is.null(p$aviso)) "sin nota" else p$aviso), mal)
+  vuelta <- NULL
+  if (!is.null(p)) {
+    evaluar("(() => { document.querySelector('button.ficha-boton-tartera')?.click(); return true; })()")
+    residuales <- jsonlite::toJSON(paste(unname(unlist(dic$es$interfaz$residual[c("tramo_1", "tramo_2", "tramo_3")])), collapse = "|"), auto_unbox = TRUE)
+    ok <- esperar_navegador(evaluar, sprintf("location.search.includes('ficha=tartera') && [...document.querySelectorAll('#leyenda .leyenda-llega li')].map((x) => x.textContent.trim()).join('|') === %s", residuales), espera)
+    if (ok) { Sys.sleep(1); vuelta <- jsonlite::fromJSON(evaluar(leer_llave), simplifyVector = TRUE) }
+  }
+  filas[[length(filas) + 1L]] <- fila("de la llave a la tartera: vuelve \u00abLo que queda\u00bb (tramos residuales, sin la nota)",
+                                      is.null(vuelta) || !is.null(vuelta$aviso) || !grepl("regla=residual", vuelta$busqueda, fixed = TRUE) ||
+                                        !identical(vuelta$regla, c("false", "true")) || identical(vuelta$frase, dic$es$interfaz$residual$no_aplica))
   # 375 px con la regla encendida
   b$Emulation$setDeviceMetricsOverride(width = 375, height = 812, deviceScaleFactor = 1, mobile = TRUE)
   p <- abrir(sprintf("?ficha=tartera&anio=%d&regla=residual&seccion=%s", anio, seccion))
   b$Emulation$setDeviceMetricsOverride(width = 1280, height = 900, deviceScaleFactor = 1, mobile = FALSE)
   filas[[length(filas) + 1L]] <- fila("375 px con la regla residual: sin desbordar", is.null(p) || p$ancho[1] > p$ancho[2])
+  c(filas, comprobar_remates_residual_navegador(b, evaluar, url, lineas, espera, seccion, anio))
+}
+
+# Remates de la web (tarea 65), en el navegador, frente a las cifras de R (pruebas/datos/residual_muestra.json):
+#   - sueldo necesario: la segunda cifra con la linea (IMV en castellano; ECV y otros gastos en ingles) es
+#     la de R para la seccion, y el selector Linea se ve (sin la Regla);
+#   - evolucion de la ficha: la linea de cada ano al lado de lo que queda (IMV del ano y PNC antes de 2020);
+#   - CSV de te llega: las columnas de la linea, con su cifra, y lo que queda menos la linea con la tartera
+#     (con Tu ficha, sin esa columna);
+#   - portada: la cuenta con la linea da las secciones de R con 1.500 euros;
+#   - 375 px con el sueldo necesario y la segunda cifra: sin desbordar.
+comprobar_remates_residual_navegador <- function(b, evaluar, url, lineas, espera = 60, seccion = "2807901001", anio = 2024L,
+                                                 ruta_muestra = file.path("pruebas", "datos", "residual_muestra.json")) {
+  fila <- function(detalle, mal) tibble::tibble(id = "navegador_residual", detalle = detalle, calculado = as.numeric(mal), referencia = 0)
+  # Desde la raiz del proyecto o desde pruebas/testthat (test-navegador.R)
+  if (!file.exists(ruta_muestra) && file.exists(file.path("..", "datos", basename(ruta_muestra)))) {
+    ruta_muestra <- file.path("..", "datos", basename(ruta_muestra))
+  }
+  if (!file.exists(ruta_muestra)) return(list(fila(paste(ruta_muestra, "no existe"), TRUE)))
+  mu <- jsonlite::fromJSON(ruta_muestra)
+  caso <- mu$casos[mu$casos$geo_id == seccion & mu$casos$nivel == "sc", ][1, ]
+  euros <- function(x, idioma) formatC(floor(x + 0.5), format = "d", big.mark = if (idioma == "es") "." else ",",
+                                       decimal.mark = if (idioma == "es") "," else ".")
+  abrir <- function(consulta, condicion, leer) {
+    b$Page$navigate(sprintf("%s%s", url, consulta))
+    ok <- esperar_navegador(evaluar, condicion, espera)
+    if (!ok) return(NULL)
+    Sys.sleep(1)
+    jsonlite::fromJSON(evaluar(leer), simplifyVector = TRUE)
+  }
+  filas <- list()
+  # Sueldo necesario con la linea
+  leer_sueldo <- "JSON.stringify({ texto: document.querySelector('#ficha .ficha-sueldo-linea')?.textContent ?? null,
+    linea: !document.getElementById('sueldo-linea').hidden, regla: !document.getElementById('sueldo-regla').hidden,
+    ancho: [document.documentElement.scrollWidth, document.documentElement.clientWidth] })"
+  listo_sueldo <- "document.querySelector('#ficha .ficha-sueldo-linea') && document.getElementById('mapa-cargando')?.hidden !== false"
+  for (k in list(list(idioma = "es", extra = "", col = "sueldo_linea_imv"),
+                 list(idioma = "en", extra = "&linea=ecv&gastos=1", col = "sueldo_linea_ecv_gastos"))) {
+    consulta <- sprintf("mapa.html?idioma=%s&anio=%d%s&seccion=%s", k$idioma, anio, k$extra, seccion)
+    p <- abrir(consulta, listo_sueldo, leer_sueldo)
+    esperado <- euros(caso[[k$col]], k$idioma)
+    mal <- is.null(p) || is.null(p$texto) || !grepl(esperado, p$texto, fixed = TRUE) || !isTRUE(p$linea) || isTRUE(p$regla)
+    filas[[length(filas) + 1L]] <- fila(sprintf("sueldo necesario con la línea, %s (R: %s): %s", consulta, esperado,
+                                                if (is.null(p$texto)) "sin cifra" else p$texto), mal)
+  }
+  # Evolucion de la ficha: la linea de cada ano
+  leer_evol <- "JSON.stringify([...document.querySelectorAll('#ficha .ficha-tabla tbody tr')].map((tr) => [tr.querySelector('th')?.textContent ?? '', tr.querySelector('.ficha-tabla-linea')?.textContent ?? '']))"
+  p <- abrir(sprintf("mapa.html?ficha=tartera&anio=%d&seccion=%s", anio, seccion), "document.querySelector('#ficha .ficha-tabla-linea')", leer_evol)
+  imv <- lineas$imv$anios
+  celda <- function(a) {
+    x <- imv[[as.character(a)]]
+    sprintf("%s %s €", if (identical(x$tipo, "pnc")) "PNC" else "IMV", euros(x$una_persona, "es"))
+  }
+  bien <- !is.null(p) && length(p) > 0 && all(vapply(seq_len(nrow(p)), function(i) {
+    a <- suppressWarnings(as.integer(p[i, 1]))
+    is.na(a) || is.null(imv[[as.character(a)]]) || identical(gsub(" ", " ", p[i, 2]), celda(a))
+  }, TRUE)) && any(grepl("^PNC", p[, 2])) && any(grepl("^IMV", p[, 2]))
+  filas[[length(filas) + 1L]] <- fila(sprintf("evolución: línea de cada año (%s)",
+                                              if (is.null(p) || !length(p)) "sin tabla" else paste(p[, 1], p[, 2], collapse = " | ")), !bien)
+  # CSV de te llega con la linea
+  csv_js <- "(async () => { let blob = null; const o = URL.createObjectURL; URL.createObjectURL = (x) => { blob = x; return o.call(URL, x); };
+    document.getElementById('exportar-csv').click();
+    for (let i = 0; i < 100 && !blob; i++) await new Promise((r) => setTimeout(r, 200));
+    URL.createObjectURL = o; return blob ? await blob.text() : null; })()"
+  for (k in list(list(idioma = "es", ficha = "tartera", col = "queda_menos_linea", euros = "linea_residual_euros_mes"),
+                 list(idioma = "en", ficha = "peon", col = NA, euros = "residual_line_eur_month"))) {
+    extra <- if (k$ficha == "peon") "#sueldo=1500" else ""
+    b$Page$navigate(sprintf("%smapa.html?idioma=%s&ficha=%s&anio=%d&seccion=%s%s", url, k$idioma, k$ficha, anio, seccion, extra))
+    ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-tramo') && document.getElementById('mapa-cargando')?.hidden !== false", espera)
+    texto <- if (ok) { Sys.sleep(1); evaluar(csv_js) } else NULL
+    if (is.null(texto)) {
+      filas[[length(filas) + 1L]] <- fila(sprintf("CSV (%s, %s): no sale", k$idioma, k$ficha), TRUE)
+      next
+    }
+    d <- utils::read.csv(text = sub("^﻿", "", texto), check.names = FALSE, encoding = "UTF-8")
+    valor <- lineas$imv$anios[[as.character(anio)]]$una_persona
+    mal <- !k$euros %in% names(d) || any(abs(d[[k$euros]] - valor) > 1e-9, na.rm = TRUE) ||
+      (if (is.na(k$col)) any(c("queda_menos_linea", "left_minus_line") %in% names(d)) else !k$col %in% names(d) || all(is.na(d[[k$col]])))
+    filas[[length(filas) + 1L]] <- fila(sprintf("CSV (%s, %s): %d filas, columnas %s", k$idioma, k$ficha, nrow(d),
+                                                paste(utils::tail(names(d), 3), collapse = ", ")), mal)
+  }
+  # Portada: la cuenta con la linea, con 1.500 euros
+  pc <- mu$portada
+  if (!is.null(pc) && any(pc$neto == 1500)) {
+    r <- pc[pc$neto == 1500, ][1, ]
+    b$Page$navigate(url)
+    esperar_navegador(evaluar, "document.getElementById('portada-dado-nota')?.textContent", espera)
+    evaluar("(() => { const e = document.getElementById('portada-neto'); e.value = '1500'; e.dispatchEvent(new Event('input', { bubbles: true })); return true; })()")
+    ok <- esperar_navegador(evaluar, "document.querySelector('#portada-cuenta .portada-cuenta-linea')", espera)
+    texto <- if (ok) evaluar("document.querySelector('#portada-cuenta .portada-cuenta-linea').textContent") else NULL
+    esperado <- c(euros(r$encima_imv, "es"), euros(r$con, "es"))
+    mal <- is.null(texto) || !all(vapply(esperado, function(e) grepl(e, texto, fixed = TRUE), TRUE))
+    filas[[length(filas) + 1L]] <- fila(sprintf("portada: cuenta con la línea, 1.500 € (R: %s de %s): %s", esperado[1], esperado[2],
+                                                if (is.null(texto)) "sin frase" else texto), mal)
+  } else {
+    filas[[length(filas) + 1L]] <- fila("portada: la muestra no trae la cuenta con 1.500 €", TRUE)
+  }
+  # 375 px con el sueldo necesario y la segunda cifra
+  b$Emulation$setDeviceMetricsOverride(width = 375, height = 812, deviceScaleFactor = 1, mobile = TRUE)
+  p <- abrir(sprintf("mapa.html?anio=%d&seccion=%s", anio, seccion), listo_sueldo, leer_sueldo)
+  b$Emulation$setDeviceMetricsOverride(width = 1280, height = 900, deviceScaleFactor = 1, mobile = FALSE)
+  filas[[length(filas) + 1L]] <- fila("375 px con el sueldo necesario y la línea: sin desbordar", is.null(p) || p$ancho[1] > p$ancho[2])
   filas
 }

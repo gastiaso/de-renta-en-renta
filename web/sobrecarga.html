@@ -70,11 +70,15 @@
 
       <div id="sc-contenido" class="sc-contenido" hidden>
         <section class="sc-controles" data-i18n-aria="sobrecarga.controles.region">
+          <fieldset id="sc-medida-grupo" class="sc-grupo">
+            <legend data-i18n="sobrecarga.controles.medida">Medida</legend>
+            <div id="sc-medida" class="sc-botones"></div>
+          </fieldset>
           <fieldset class="sc-grupo">
             <legend data-i18n="sobrecarga.controles.tenencia">Régimen de tenencia</legend>
             <div id="sc-tenencia" class="sc-botones"></div>
           </fieldset>
-          <fieldset class="sc-grupo">
+          <fieldset id="sc-edad-grupo" class="sc-grupo">
             <legend data-i18n="sobrecarga.controles.edad">Edad</legend>
             <div id="sc-edad" class="sc-botones"></div>
           </fieldset>
@@ -142,6 +146,7 @@
             </div>
             <div id="sc-desgloses" class="sc-desgloses"></div>
             <p class="nota" data-i18n="sobrecarga.desgloses.nota"></p>
+            <p class="nota" data-i18n="sobrecarga.desgloses.nota_pobreza" hidden></p>
             <p class="nota" data-i18n="sobrecarga.desgloses.nota_quintil"></p>
           </section>
         </div>
@@ -158,6 +163,7 @@
                 <li data-i18n="sobrecarga.metodo.muestra"></li>
                 <li data-i18n="sobrecarga.metodo.compuerta"></li>
                 <li data-i18n="sobrecarga.metodo.marcas"></li>
+                <li data-i18n="sobrecarga.metodo.pobreza"></li>
               </ul>
             </div>
           </section>

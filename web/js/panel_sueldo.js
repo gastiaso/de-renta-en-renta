@@ -129,8 +129,8 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
     // cambia el mínimo teórico de la ficha). `tipica`: con la superficie típica elegida, el texto que
     // dice de qué territorio es (o por qué no la hay). `gastos`: { activo, disponible, nota }, el
     // selector de otros gastos de vivienda y el texto con su cifra (o por qué no la hay).
-    // `residual` (tarea 65): { regla, linea, disponible, nota }, los selectores «Regla» y «Línea», solo en
-    // «¿te llega?», y el texto con la línea de la vista.
+    // `residual` (tarea 65): { regla, linea, disponible, nota, soloLinea }, los selectores «Regla» y «Línea»,
+    // solo en «¿te llega?» (con `soloLinea`, en el sueldo necesario, solo «Línea»), y el texto con la línea.
     pintar({ t, estado, sueldo, perfiles, modo, superficie, umbral, resumen, detalle, sinEfecto = false, soloMinimo = false, tipica = null, gastos = null, residual = null }) {
       // Fichas: las que tienen ingreso en perfiles.json, y «Tu ficha» si hay sueldo escrito.
       const disponibles = [...FICHAS_PERFIL.filter((f) => perfiles?.[f]), 'peon'];
@@ -180,9 +180,11 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
       }
       // Regla y línea de ingreso residual (tarea 65): solo en «¿te llega?»; sin el fichero, desactivadas
       const enLlega = modo === 'llega' && Boolean(residual);
+      // Remates de la tarea 65: en el sueldo necesario, solo «Línea» (la segunda cifra de la ficha)
+      const conLinea = enLlega || Boolean(residual?.soloLinea);
       for (const [grupo, dato, valor] of [[el.regla, 'regla', residual?.regla], [el.linea, 'linea', residual?.linea]]) {
         if (!grupo) continue;
-        grupo.hidden = !enLlega;
+        grupo.hidden = dato === 'regla' ? !enLlega : !conLinea;
         for (const b of grupo.querySelectorAll(`button[data-${dato}]`)) {
           b.setAttribute('aria-pressed', String(b.dataset[dato] === valor));
           b.disabled = !residual?.disponible;
@@ -191,7 +193,7 @@ export function crearPanelSueldo({ alCambiar, alCompartir }) {
       const botonPorcentaje = el.regla?.querySelector('button[data-regla="porcentaje"]');
       if (botonPorcentaje) botonPorcentaje.textContent = t('interfaz.residual.regla_porcentaje', { umbral: t.porcentaje(umbral) });
       if (el.lineaNota) {
-        el.lineaNota.textContent = enLlega ? residual?.nota ?? '' : '';
+        el.lineaNota.textContent = conLinea ? residual?.nota ?? '' : '';
         el.lineaNota.hidden = !el.lineaNota.textContent;
       }
       // Rótulos con el formato del idioma («30 %» en castellano, «30%» en inglés)

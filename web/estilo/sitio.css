@@ -625,6 +625,11 @@ body {
 .ficha-tabla th { font-family: var(--fuente-tablero); }
 .ficha-tabla-cifra { text-align: right; font-family: var(--fuente-tablero); }
 .ficha-tabla-resto { text-align: right; font-family: var(--fuente-tablero); white-space: nowrap; }
+/* Tarea 65 (remates): la línea de ingreso residual de cada año, al lado de lo que queda, y la segunda
+   cifra del sueldo necesario con la línea */
+.ficha-tabla-linea { text-align: right; color: var(--color-tenue); white-space: nowrap; }
+.ficha-sueldo-linea { margin: 2px 0 4px; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.ficha-sueldo-linea-cifra { font: 700 1.05rem var(--fuente-tablero); white-space: nowrap; }
 .ficha-tabla-estado { color: var(--color-tenue); }
 .ficha-tabla-activa th, .ficha-tabla-activa td { font-weight: 700; }
 /* Evolución (tareas 43 y 45): variación de cada año y gráfico con la banda del margen */

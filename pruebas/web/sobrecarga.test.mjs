@@ -46,18 +46,131 @@ const DATOS = {
     { clave: 'tenencia-RENT_MKT-2025', corte: 'tenencia', grupo: 'RENT_MKT', anio: 2025, nuts: '2024', filas: [fila('RO', 1, 560, 'europa', { nivel: 0 })] },
   ],
 };
+// Con la segunda medida (indicador 24): sus años, cortes, grupos y vistas
+const DATOS_P = {
+  ...DATOS,
+  pobreza: {
+    anios: [2023, 2025], anio_desgloses: 2025, olas: { anuales: [2023, 2025], agrupadas: [2023, 2025] },
+    cortes: { general: [20, 25, 30, 35, 40], RENT_MKT: [45, 50, 55, 60, 70] }, grupos_mapa: { tenencia: ['RENT_MKT', 'OWN_L'] },
+    umbrales: [{ anio: 2023, euros: 10990 }, { anio: 2025, euros: 12220 }],
+  },
+  vistas: [
+    ...DATOS.vistas,
+    { clave: 'pobreza-total-2023', medida: 'pobreza', corte: 'total', grupo: 'total', anio: 2023, nuts: '2021', filas: [fila('EL', 1, 418, 'europa', { nivel: 0 })] },
+    { clave: 'pobreza-total-2025', medida: 'pobreza', corte: 'total', grupo: 'total', anio: 2025, nuts: '2024',
+      filas: [fila('EL', 1, 418, 'europa', { nivel: 0 }), fila('ES', 2, 287, 'referencia', { nivel: undefined, n: 71161 })] },
+    { clave: 'pobreza-tenencia-RENT_MKT-2025', medida: 'pobreza', corte: 'tenencia', grupo: 'RENT_MKT', anio: 2025, nuts: '2024',
+      filas: [fila('ES42', 1, 708, 'comunidad'), fila('ES', 2, 567, 'referencia', { nivel: undefined })] },
+  ],
+};
 
 test('estado de la URL: valida corte, grupo, año y territorio contra los datos', () => {
-  assert.deepEqual(S.leerEstado('?idioma=en'), { idioma: 'en', corte: 'total', grupo: 'total', anio: null, geo: null });
-  assert.deepEqual(S.leerEstado('', DATOS), { idioma: 'es', corte: 'total', grupo: 'total', anio: 2025, geo: null });
+  assert.deepEqual(S.leerEstado('?idioma=en'), { idioma: 'en', medida: 'sobrecarga', corte: 'total', grupo: 'total', anio: null, geo: null });
+  assert.deepEqual(S.leerEstado('', DATOS), { idioma: 'es', medida: 'sobrecarga', corte: 'total', grupo: 'total', anio: 2025, geo: null });
   assert.equal(S.leerEstado('?anio=2024', DATOS).anio, 2024);
   assert.equal(S.leerEstado('?anio=1999', DATOS).anio, 2025);
   const desglose = S.leerEstado('?corte=tenencia&grupo=RENT_MKT&anio=2024&geo=ES30', DATOS);
-  assert.deepEqual(desglose, { idioma: 'es', corte: 'tenencia', grupo: 'RENT_MKT', anio: 2025, geo: 'ES30' });
+  assert.deepEqual(desglose, { idioma: 'es', medida: 'sobrecarga', corte: 'tenencia', grupo: 'RENT_MKT', anio: 2025, geo: 'ES30' });
   // Grupo que no está en el mapa, o sin vista: toda la población
   assert.equal(S.leerEstado('?corte=tenencia&grupo=RENT_FR', DATOS).corte, 'total');
   assert.equal(S.leerEstado('?corte=tenencia&grupo=OWN_L', DATOS).corte, 'total');
   assert.equal(S.leerEstado('?geo=<script>', DATOS).geo, null);
+});
+
+test('dos medidas: la pobreza tras la vivienda con sus años, grupos, cortes y vistas', () => {
+  assert.deepEqual(S.medidasCon(DATOS), ['sobrecarga']);
+  assert.deepEqual(S.medidasCon(DATOS_P), ['sobrecarga', 'pobreza']);
+  // Sin el bloque `pobreza`, la medida de la dirección no vale
+  assert.equal(S.leerEstado('?medida=pobreza', DATOS).medida, 'sobrecarga');
+  assert.deepEqual(S.leerEstado('?medida=pobreza', DATOS_P),
+    { idioma: 'es', medida: 'pobreza', corte: 'total', grupo: 'total', anio: 2025, geo: null });
+  assert.equal(S.leerEstado('?medida=pobreza&anio=2023', DATOS_P).anio, 2023);
+  assert.equal(S.leerEstado('?medida=pobreza&anio=2024', DATOS_P).anio, 2025);          // 2024 es de la sobrecarga
+  assert.equal(S.leerEstado('?medida=pobreza&corte=edad&grupo=Y_LT18', DATOS_P).corte, 'total');
+  assert.equal(S.leerEstado('?medida=pobreza&corte=tenencia&grupo=RENT_MKT', DATOS_P).grupo, 'RENT_MKT');
+  assert.equal(S.vistaDe(DATOS_P, { medida: 'pobreza' }).clave, 'pobreza-total-2025');
+  assert.equal(S.vistaDe(DATOS_P, {}).clave, 'total-2025');                               // la sobrecarga, por defecto
+  assert.equal(S.vistaDe(DATOS_P, { medida: 'pobreza', corte: 'tenencia', grupo: 'RENT_MKT' }).clave, 'pobreza-tenencia-RENT_MKT-2025');
+  assert.deepEqual(S.gruposCon(DATOS_P, 'tenencia', 'pobreza'), ['RENT_MKT']);
+  assert.deepEqual(S.gruposCon(DATOS_P, 'tenencia'), ['RENT_MKT']);
+  assert.equal(S.ultimoAnio(DATOS_P, 'pobreza'), 2025);
+  assert.deepEqual(S.cortesDe(DATOS_P, 'total', 'pobreza'), [20, 25, 30, 35, 40]);
+  assert.deepEqual(S.cortesDe(DATOS_P, 'RENT_MKT', 'pobreza'), [45, 50, 55, 60, 70]);
+  assert.deepEqual(S.cortesDe(DATOS_P, 'RENT_MKT'), [15, 20, 25, 30, 40]);
+  assert.equal(S.umbralDe(DATOS_P, 2025), 12220);
+  assert.equal(S.umbralDe(DATOS, 2025), null);
+  // Los países de la pobreza son todos de nivel país: sin trama de nivel grueso
+  assert.deepEqual(S.conTramaGruesa(S.vistaDe(DATOS_P, { medida: 'pobreza' })), []);
+  assert.equal(S.consulta({ idioma: 'en', medida: 'pobreza', corte: 'total', grupo: 'total', anio: 2025, geo: null }, DATOS_P),
+    '?idioma=en&medida=pobreza');
+  assert.equal(S.consulta({ idioma: 'es', medida: 'pobreza', corte: 'total', grupo: 'total', anio: 2023, geo: 'ES42' }, DATOS_P),
+    '?medida=pobreza&anio=2023&geo=ES42');
+  assert.equal(S.consulta({ idioma: 'es', medida: 'pobreza', corte: 'tenencia', grupo: 'RENT_MKT', anio: 2025, geo: null }, DATOS_P),
+    '?medida=pobreza&corte=tenencia&grupo=RENT_MKT');
+});
+
+test('pobreza: serie de ilc_li48 y desgloses de España por edad y grado de urbanización', () => {
+  const serie22 = { anios: [2024, 2025], valores: { ES_TOTAL: [78, 72] }, marcas: { ES_TOTAL: [null, 'b'] } };
+  const serie24 = { anios: [2004, 2025], valores: { ES_TOTAL: [275, 287], EU27_TOTAL: [null, 294] }, marcas: {} };
+  const espana = { serie: serie22, anual: [
+    { anio: 2025, corte: 'total', grupo: 'total', v: 72 }, { anio: 2025, corte: 'edad', grupo: 'Y15-29', v: 72 },
+    { anio: 2025, corte: 'quintil', grupo: 'QU1', v: 277 }, { anio: 2024, corte: 'tenencia', grupo: 'RENT_MKT', v: 281 }] };
+  const d = { ...DATOS_P, espana, pobreza: { ...DATOS_P.pobreza, serie: serie24, espana: [
+    { anio: 2025, corte: 'total', grupo: 'total', v: 287 }, { anio: 2025, corte: 'urbanizacion', grupo: 'DEG3', v: 303 },
+    { anio: 2025, corte: 'edad', grupo: 'Y_GE18', v: 267 }, { anio: 2025, corte: 'tenencia', grupo: 'RENT_MKT', v: 567 }] } };
+  // Serie: la de la sobrecarga por defecto; con la pobreza, la de ilc_li48 (España y UE-27, sin alquiler)
+  assert.equal(S.serieDe(d), serie22);
+  assert.equal(S.serieDe(d, 'pobreza'), serie24);
+  assert.deepEqual(S.lineasSerie(d, 'pobreza').map((l) => l.clave), ['ES_TOTAL', 'EU27_TOTAL']);
+  assert.equal(S.lineasSerie(d).length, 4);
+  // Sin `pobreza.serie` (exportación anterior), la de la sobrecarga
+  const sinSerie = { ...d, pobreza: { ...d.pobreza, serie: undefined } };
+  assert.equal(S.serieDe(sinSerie, 'pobreza'), serie22);
+  assert.equal(S.lineasSerie(sinSerie, 'pobreza').length, 4);
+  // Desgloses: cada medida con sus filas y sus cortes, en orden; la pobreza sin quintil
+  const fp = S.filasDesgloses(d, 'pobreza', 2025);
+  assert.deepEqual(S.cortesDesgloses(fp), ['tenencia', 'edad', 'urbanizacion']);
+  assert.deepEqual(S.cortesDesgloses(S.filasDesgloses(d, 'sobrecarga', 2025)), ['edad', 'quintil']);
+  assert.deepEqual(S.filasDesgloses(d, 'sobrecarga', 2024).map((f) => f.grupo), ['RENT_MKT']);
+  assert.ok(S.ORDEN_DESGLOSES.edad.includes('Y_GE18') && S.ORDEN_DESGLOSES.urbanizacion.length === 3);
+  // Notas de los desgloses: la de cada medida, en los dos idiomas, y la página tiene las dos
+  const html = readFileSync(join(raiz, 'web', 'sobrecarga.html'), 'utf8');
+  assert.match(html, /data-i18n="sobrecarga\.desgloses\.nota_pobreza" hidden/);
+  const js = readFileSync(join(raiz, 'web', 'js', 'sobrecarga.js'), 'utf8');
+  assert.match(js, /sobrecarga\.desgloses\.nota"\]'\)\.hidden = pobreza\(\)/);
+  assert.match(js, /sobrecarga\.desgloses\.nota_pobreza"\]'\)\.hidden = !pobreza\(\)/);
+  for (const idioma of ['es', 'en']) {
+    const s = leer('web', 'i18n', `${idioma}.json`).sobrecarga;
+    for (const k of ['nota_pobreza', 'urbanizacion']) assert.ok(s.desgloses[k]?.length, `${idioma} desgloses.${k}`);
+    assert.ok(!/15/.test(s.desgloses.nota_pobreza), `${idioma}: la nota de la pobreza no habla del grupo de 15 a 29`);
+    for (const k of ['subtitulo_pobreza', 'fuente_pobreza', 'rupturas_atlas_pobreza', 'grafico_pobreza']) {
+      assert.ok(s.serie[k]?.length, `${idioma} serie.${k}`);
+    }
+    assert.deepEqual([...s.serie.grafico_pobreza.matchAll(/\{(\w+)\}/g)].map((x) => x[1]), ['desde', 'hasta']);
+  }
+});
+
+test('textos de la pobreza tras la vivienda en los dos idiomas, con las mismas marcas', () => {
+  const marcas = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((x) => x[1]).sort();
+  const claves = ['controles.medida', 'controles.medidas.sobrecarga', 'controles.medidas.pobreza', 'controles.nota_pobreza',
+    'controles.nota_desglose_pobreza', 'mapa.titulo_pobreza_tenencia', 'mapa.fuente_pobreza', 'mapa.fuente_pobreza_tenencia',
+    'mapa.nota_pobreza', 'mapa.nota_pobreza_tenencia', 'detalle.puesto_nota_pobreza_olas', 'escalera.periodo_pobreza',
+    'desgloses.titulo_pobreza', 'metodo.pobreza'];
+  const es = leer('web', 'i18n', 'es.json').sobrecarga;
+  const en = leer('web', 'i18n', 'en.json').sobrecarga;
+  const de = (d, k) => k.split('.').reduce((x, p) => x?.[p], d);
+  for (const k of claves) {
+    assert.ok(typeof de(es, k) === 'string' && de(es, k).length, `es ${k}`);
+    assert.ok(typeof de(en, k) === 'string' && de(en, k).length, `en ${k}`);
+    assert.deepEqual(marcas(de(es, k)), marcas(de(en, k)), k);
+  }
+  const js = readFileSync(join(raiz, 'web', 'js', 'sobrecarga.js'), 'utf8');
+  for (const k of claves.filter((x) => !x.startsWith('metodo.') && !x.startsWith('controles.medida'))) {
+    assert.ok(js.includes(`'sobrecarga.${k}'`), `sobrecarga.js usa ${k}`);
+  }
+  const html = readFileSync(join(raiz, 'web', 'sobrecarga.html'), 'utf8');
+  assert.match(html, /data-i18n="sobrecarga\.metodo\.pobreza"/);
+  assert.match(html, /id="sc-medida"/);
 });
 
 test('consulta: solo lo que no vale por defecto', () => {
@@ -165,14 +278,16 @@ test('exportación del pipeline: vistas, escalera, muestra y geometrías', { ski
         assert.ok(['normal', 'baja', 'no publicable'].includes(f.fiabilidad), `${v.clave} ${f.geo}: fiabilidad`);
         if (f.fiabilidad === 'no publicable') assert.equal(f.v, null);
       } else {
-        assert.ok(f.tabla?.startsWith('ilc_lvho07'), `${v.clave} ${f.geo}: tabla de Eurostat`);
+        assert.ok(f.tabla?.startsWith(v.medida === 'pobreza' ? 'ilc_li48' : 'ilc_lvho07'), `${v.clave} ${f.geo}: tabla de Eurostat`);
         assert.equal(f.n, undefined);
       }
     }
     assert.ok(d.geometrias[v.nuts], `${v.clave}: geometría ${v.nuts}`);
     const comunidades = v.filas.filter((f) => f.bloque === 'comunidad');
     assert.equal(comunidades.length, 19, `${v.clave}: comunidades`);
-    assert.ok(S.referencia(v, 'ES') && S.referencia(v, 'EU27_2020'), `${v.clave}: referencias`);
+    // Referencias: España siempre; la UE-27, salvo en la pobreza tras la vivienda por tenencia (Eurostat no la publica)
+    assert.ok(S.referencia(v, 'ES'), `${v.clave}: España`);
+    if (!(v.medida === 'pobreza' && v.corte !== 'total')) assert.ok(S.referencia(v, 'EU27_2020'), `${v.clave}: UE-27`);
   }
   for (const ruta of Object.values(d.geometrias)) {
     const g = leer('web', ruta);
@@ -201,6 +316,31 @@ test('exportación del pipeline: vistas, escalera, muestra y geometrías', { ski
   assert.equal(quintiles.length, 5 * d.olas.anuales.length);
   assert.ok(quintiles.every((f) => Number.isInteger(f.n) && f.fiabilidad));
   assert.ok(d.modulo.ccaa.length === 19 && d.modulo.razones.some((r) => r.grupo === 'precio'));
+  // Indicador 24 (tarea 65, parte B): vistas propias, bloque `pobreza` y España en total y por tenencia
+  assert.equal(d.indicadores.pobreza_tras_vivienda, 24);
+  assert.ok(d.vistas.every((v) => ['sobrecarga', 'pobreza'].includes(v.medida)));
+  const p = d.pobreza;
+  for (const a of p.anios) assert.ok(S.vistaDe(d, { medida: 'pobreza', anio: a }), `pobreza ${a}`);
+  assert.deepEqual(S.gruposCon(d, 'tenencia', 'pobreza'), ['RENT_MKT', 'RENT_FR', 'OWN_L', 'OWN_NL']);
+  assert.deepEqual(S.gruposCon(d, 'edad', 'pobreza'), []);
+  assert.ok(p.umbrales.length === p.olas.anuales.length && p.umbrales.every((u) => u.euros > 5000 && u.euros < 20000));
+  assert.equal(p.espana.filter((f) => f.corte === 'total').length, p.olas.anuales.length);
+  const pt = S.vistaDe(d, { medida: 'pobreza' });
+  assert.ok(pt.filas.filter((f) => f.bloque === 'europa').every((f) => f.nivel === 0), 'pobreza: países');
+  assert.deepEqual(S.conTramaGruesa(pt), []);
+  // Olas 2016–2025 (17-nov-2026): las del 24 en el mapa, todas con su vista; España por edad y
+  // grado de urbanización cada ola; la serie de ilc_li48 de España y de la UE-27
+  assert.ok(p.anios.length >= 10 && p.anios[0] <= 2016, 'pobreza: olas desde 2016');
+  assert.ok(d.olas.anuales[0] <= 2016, 'sobrecarga: olas anuales desde 2016');
+  for (const a of p.olas.anuales) {
+    const f = S.filasDesgloses(d, 'pobreza', a);
+    assert.deepEqual(S.cortesDesgloses(f), ['tenencia', 'edad', 'urbanizacion'], `pobreza ${a}`);
+    assert.deepEqual(f.filter((x) => x.corte === 'edad').map((x) => x.grupo).sort(), ['Y18-64', 'Y_GE18', 'Y_GE65', 'Y_LT18']);
+  }
+  assert.equal(p.serie.fuente, 'eurostat_ilc_li48');
+  assert.deepEqual(Object.keys(p.serie.valores).sort(), ['ES_TOTAL', 'EU27_TOTAL']);
+  for (const k of Object.keys(p.serie.valores)) assert.equal(p.serie.valores[k].length, p.serie.anios.length, k);
+  assert.ok(p.serie.anios[0] <= 2004 && p.serie.anios.at(-1) >= 2025);
 });
 
 test('«Puesto X de N»: debajo, en letra de nota, qué vale ese orden, en los dos idiomas', () => {

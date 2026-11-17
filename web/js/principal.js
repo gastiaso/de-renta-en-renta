@@ -14,13 +14,14 @@ import {
   zoomSecciones, cuartilesSc, cargarLineasResidual,
 } from './datos.js';
 import {
-  reglaDe, lineaDe, conResidual, hogarDe, lineaDelAnio, residualFicha, enLimiteResidual, colorResidual, resumenResidual,
+  reglaDe, lineaDe, reglaEn, residualEnLlave, hogarDe, lineaDelAnio, residualFicha, enLimiteResidual, colorResidual, resumenResidual,
+  sueldoConLinea, distanciaLinea, esInicioImv,
 } from './residual.js';
 import { crearMapa, coloresMapa, coloresContorno } from './mapa.js';
 import { pintarLeyenda, plegarLeyenda } from './leyenda.js';
 import {
   fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fichaContexto, fichaTerritorio, nombresTerritorio,
-  fichaDeclaraciones, textoResto, fichaResidentes, textoLineaResidual, TEXTOS_RESIDUAL,
+  fichaDeclaraciones, textoResto, fichaResidentes, textoLineaResidual, TEXTOS_RESIDUAL, celdaLinea,
 } from './ficha.js';
 import { formulaDe, daSueldo, minimoDe, textoSupuestos, textoOtrosGastos } from './formulas.js';
 import {
@@ -163,10 +164,12 @@ function vista() {
   const gastos = gastosEnAnio(periodo ?? fuera?.anio ?? estado.anio);
   const supuestos = { superficie_m2: superficie ?? m.supuestos.superficie_m2, umbral, gastos };
   if (calculo) calculo = calculoLlega({ ficha: estado.ficha, perfiles: perfilesAnio, sueldo, superficie, serie: serieTipo, gastos });
-  // Tarea 65: línea de ingreso residual del año del alquiler (regla 4) y del tipo de hogar de la ficha
-  const residual = calculo ? residualDeVista(periodo ?? fuera?.anio ?? estado.anio) : null;
   // En el sueldo necesario, las fichas de una persona y la llave van en la regla de la leyenda.
   const enSueldo = !calculo && daSueldo(def);
+  // Tarea 65: línea de ingreso residual del año del alquiler (regla 4) y del tipo de hogar de la ficha;
+  // en el sueldo necesario (remates), la de una persona, para la segunda cifra de la ficha
+  const anioLinea = periodo ?? fuera?.anio ?? estado.anio;
+  const residual = calculo ? residualDeVista(anioLinea) : enSueldo ? residualDeVista(anioLinea, 'una_persona') : null;
   const series = [...seriesColor];
   const renta = perfiles.llave?.ingreso.serie;
   // Banda de la llave en la regla: de los cuartiles del manifiesto (tarea 62) o, sin ellos, de los valores
@@ -186,14 +189,22 @@ function vista() {
 }
 
 // Línea de ingreso residual (tarea 65; residual.js) de un año del alquiler: { regla, linea, hogar,
-// activa (la regla residual pinta el mapa), datos (lineaDelAnio(): la cifra, o `sin` si ese año no la
-// tiene; null en la llave) }. Sin el fichero de las líneas, la regla del porcentaje.
-function residualDeVista(anio) {
+// activa (la regla residual pinta el mapa), enLlave («Lo que queda» elegido con la llave: el mapa va con
+// la proporción y una nota lo dice; decisiones del 17-nov-2026), datos (lineaDelAnio(): la cifra, o
+// `sin` si ese año no la tiene; null en la llave) }. Sin el fichero de las líneas, la regla del porcentaje.
+function residualDeVista(anio, hogar = hogarDe(estado.ficha, sueldo)) {
   const linea = lineaDe(estado);
-  const hogar = hogarDe(estado.ficha, sueldo);
   const datos = lineasResidual ? lineaDelAnio(lineasResidual, linea, anio, hogar) : null;
-  return { regla: reglaDe(estado), linea, hogar, activa: Boolean(lineasResidual) && conResidual(estado), datos };
+  return {
+    regla: reglaDe(estado), linea, hogar, datos,
+    activa: Boolean(lineasResidual) && reglaEn(estado) === 'residual',
+    enLlave: Boolean(lineasResidual) && residualEnLlave(estado),
+  };
 }
+
+// Tarea 65 (decisiones del 17-nov-2026): con la llave y «Lo que queda», la nota que dice que el mapa va
+// con la proporción y por qué (la llave no tiene línea).
+const textoReglaLlave = (v) => t('interfaz.residual.llave_proporcion', { umbral: t.porcentaje(v.umbral) });
 
 // Valor de la ficha en «¿te llega?» (sección o territorio): los términos de calcular(), el tramo de la
 // regla que pinta el mapa (con «Lo que queda», el de la regla residual), lo que queda frente a la línea
@@ -206,6 +217,18 @@ function valorLlega(v, r, margen) {
   const valor = { ...r, tramo: porResidual ? linea.tramo : tramoLlega(r.ratio), residual: linea, reglaResidual: porResidual };
   const enLimite = porResidual ? enLimiteResidual(r, margen, linea.linea.valor) : enLimiteLlega(r.ratio, margen);
   return { valor, enLimite };
+}
+
+// Tarea 65 (remates): segunda cifra del sueldo necesario (indicador 21) con la línea de ingreso residual de
+// una persona: el alquiler mensual de la cifra principal (`alquiler`), más los otros gastos de vivienda si
+// están (los de su comunidad, `supuestos.otros`), más la línea del año. { valor, linea, gastos }; sin la
+// línea de ese año, { linea }; fuera de esa cifra o sin el fichero de las líneas, null.
+function sueldoLineaDe(v, alquiler, supuestos) {
+  const datos = v.residual?.datos;
+  if (v.modo !== 'necesario' || v.mapa.formula !== 'alquiler_mes_a_sueldo' || v.fuera || !datos) return null;
+  if (datos.sin) return { linea: datos };
+  const valor = sueldoConLinea(alquiler, supuestos?.otros, datos.valor);
+  return valor === null ? null : { valor, linea: datos, gastos: Number.isFinite(supuestos?.otros) };
 }
 
 // Otros gastos de vivienda de un año del alquiler (gastosDelAnio() de sueldo.js), con el selector
@@ -601,9 +624,8 @@ async function actualizar() {
       // Tarea 65: con «Lo que queda», los tramos, la línea y el resultado son los de la regla residual
       const d = v.residual.datos;
       leyenda.residual = {
-        texto: estado.ficha === 'llave' ? t('interfaz.residual.no_aplica')
-          : d && !d.sin ? t('interfaz.residual.leyenda', { linea: textoLinea(d, { conCifra: true }) })
-            : textoLinea(d) ?? t('interfaz.residual.sin_linea_corto'),
+        texto: d && !d.sin ? t('interfaz.residual.leyenda', { linea: textoLinea(d, { conCifra: true }) })
+          : textoLinea(d) ?? t('interfaz.residual.sin_linea_corto'),
       };
       resumen = resumenConResidual(v, vivienda);
     } else {
@@ -616,6 +638,8 @@ async function actualizar() {
       // Tarea 40: al lado, la misma proporción con el alquiler mensual mediano real de cada sección
       const real = r.con ? resumenLlegaReal(v.calculo, secciones ?? [], valorEn, v.umbral) : null;
       if (real) resumen += ` ${t('interfaz.sueldo.resumen_real', { vivienda, pct: t.porcentaje(real.proporcion), caben: t.numero(real.caben), total: t.numero(real.con) })}`;
+      // Tarea 65 (decisiones del 17-nov-2026): «Lo que queda» con la llave va con la proporción y lo dice
+      if (v.residual?.enLlave) leyenda.avisoRegla = textoReglaLlave(v);
     }
     // Tarea 44: qué estadístico usa la ficha y de quién, en una línea
     const metodo = t.existe(`fichas_metodo.${estado.ficha}`) ? t(`fichas_metodo.${estado.ficha}`) : null;
@@ -631,7 +655,8 @@ async function actualizar() {
     soloMinimo: v.modo === 'necesario' && Boolean(v.mapa.minimo),   // tarea 40: la superficie solo cambia el mínimo
     tipica: textoTipica(v),
     gastos: { activo: Boolean(v.gastos), disponible: Boolean(otrosGastos), nota: notaGastos(v) },
-    residual: { regla: reglaDe(estado), linea: lineaDe(estado), disponible: Boolean(lineasResidual), nota: notaLinea(v) },   // tarea 65
+    residual: { regla: reglaDe(estado), linea: lineaDe(estado), disponible: Boolean(lineasResidual), nota: notaLinea(v),   // tarea 65
+      soloLinea: v.modo === 'necesario' && Boolean(v.residual) },   // remates: en el sueldo necesario, solo «Línea»
   });
   pintarFicha(v);
   guardarEstado(estado);
@@ -698,6 +723,7 @@ function pintarFicha(v = vista()) {
   let intervalo = null;
   let enLimite = false;
   let minimo = null;
+  let conLinea = null;   // tarea 65 (remates): el sueldo necesario con la línea
   const supuestos = supuestosDe(v, codigo, 'sc');   // con otros gastos de vivienda, los de su comunidad
   if (v.modo === 'necesario') {
     const base = x(v.mapa.base);
@@ -706,6 +732,7 @@ function pintarFicha(v = vista()) {
     if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen);
     // Tarea 40: al lado, el mínimo teórico con la superficie elegida (fuera de la serie, nada)
     if (!v.fuera) minimo = minimoDe(v.mapa, x, supuestos, serieTipo);
+    conLinea = sueldoLineaDe(v, base, supuestos);   // tarea 65 (remates)
   } else {
     ({ valor, enLimite } = valorLlega(v, v.calculo.calcular(codigo, x), margen));   // tarea 65: con la línea residual
   }
@@ -714,7 +741,7 @@ function pintarFicha(v = vista()) {
     supuestos, anio: v.fuera ? v.fuera.anio : columnas[v.seriesColor[0]]?.periodo ?? v.periodo,
     tipologia: v.tipologia, valor, estado: estadoCifra(v, codigo, x, estadoDe), estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirSeccion(null),
-    fiabilidad, intervalo, enLimite, sueldo, minimo,
+    fiabilidad, intervalo, enLimite, sueldo, minimo, conLinea,
     notas: [...notaPercentil(v, valor, columnas[v.seriesColor[0]]?.periodo ?? v.periodo, 'sc', codigo), ...notaGastosFicha(v, supuestos)],
   });
   if (valor === null && !v.fuera) {
@@ -821,6 +848,7 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
     let texto = '—';
     let resto = null;
     let cifra = null;   // la cifra sin formato, para el gráfico y las variaciones (tareas 43 y 45)
+    let linea = null;   // tarea 65 (remates): la línea de ingreso residual del año, al lado de lo que queda
     if (v.modo === 'necesario') {
       const b = en(base, p).valor;
       const cat = v.mapa.categorias;   // F5: en los mapas de categorías, su texto
@@ -830,12 +858,15 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
       const r = calculoDe(p).calcular(codigo, (serie) => en(serie, p).valor);
       if (r) { texto = t.porcentaje(r.ratio); cifra = r.ratio; }
       resto = textoResto(t, eurosQueQuedan(r), { corto: true })?.texto ?? null;   // tarea 34
+      linea = celdaLinea(t, lineaEvolucion(v, p));
     }
-    return { periodo: p, texto, estado: estadoPeor, resto, cifra };
+    return { periodo: p, texto, estado: estadoPeor, resto, cifra, linea };
   });
   let nota = null;
   if (v.modo === 'llega' && ficha !== 'llave') {
     nota = periodos.every(conSerie) ? t('interfaz.ficha.ingreso_anio') : t('interfaz.ficha.ingreso_fijo');
+    const notaL = notaLineaEvolucion(v, periodos);   // tarea 65 (remates)
+    if (notaL) nota = `${nota} ${notaL}`;
   }
   const datosSerie = {
     t, filas, estados: m.codificacion.estados, periodo: columnas[base]?.periodo,
@@ -846,6 +877,24 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
   // Tareas 43 y 45: cuando llegan los contratos y el margen de cada año y el IPC, el gráfico con la
   // banda, las variaciones con la regla de los contratos y el aviso de euros corrientes.
   completarEvolucion(hueco, datosSerie, v, codigo, nivel, periodos, series).catch((error) => console.error(error));
+}
+
+// Tarea 65 (remates): la línea de ingreso residual de un año de la evolución (lineaDelAnio(); la línea
+// cambia por año, y antes de 2020 es la pensión no contributiva), con la línea y el hogar de la vista. En
+// la llave (no se aplica) o sin el fichero de las líneas, null.
+const lineaEvolucion = (v, p) => (lineasResidual && v.residual?.hogar
+  ? lineaDelAnio(lineasResidual, v.residual.linea, p, v.residual.hogar) : null);
+
+// Nota de la columna de la línea en la evolución: qué línea es, para qué hogar y, si sale algún año
+// anterior al ingreso mínimo vital, que esos años llevan la pensión no contributiva; si sale 2020, que
+// el IMV va desde el 1 de junio de ese año, con la misma cifra (decisiones del 17-nov-2026).
+function notaLineaEvolucion(v, periodos) {
+  const datos = periodos.map((p) => lineaEvolucion(v, p)).filter(Boolean);
+  if (!datos.length) return null;
+  const partes = [t(`interfaz.residual.evolucion_nota.${v.residual.linea}`, { hogar: t(`interfaz.residual.hogar.${v.residual.hogar}`) })];
+  if (datos.some((d) => d.tipo === 'pnc')) partes.push(t('interfaz.residual.evolucion_pnc'));
+  if (datos.some(esInicioImv)) partes.push(t('interfaz.residual.evolucion_2020'));
+  return partes.join(' ');
 }
 
 // Contratos y margen de la mediana del alquiler de cada periodo en un territorio (tarea 43): de las
@@ -1044,7 +1093,6 @@ const textoLinea = (datos, opciones) => textoLineaResidual(t, datos, opciones);
 // Resultado de «Tu sueldo» con la regla residual: en cuántas secciones lo que queda tras pagar la
 // vivienda no baja de la línea, y lo mismo con el alquiler mensual mediano real (tarea 40).
 function resumenConResidual(v, vivienda) {
-  if (estado.ficha === 'llave') return t('interfaz.residual.no_aplica');
   const datos = v.residual.datos;
   if (!datos || datos.sin) return textoLinea(datos) ?? t('interfaz.residual.sin_linea_corto');
   const r = resumenResidual(v.calculo, secciones ?? [], valorEn, datos.valor);
@@ -1059,12 +1107,12 @@ function resumenConResidual(v, vivienda) {
 }
 
 // Texto bajo el selector «Línea» de «Tu sueldo»: la línea de la vista con su cifra y de dónde sale; en la
-// llave, por qué no aplica; fuera de «¿te llega?», nada.
+// llave, por qué no aplica; fuera de «¿te llega?» y del sueldo necesario (remates de la tarea 65), nada.
 function notaLinea(v) {
-  if (v.modo !== 'llega') return null;
+  if (v.modo !== 'llega' && !v.residual) return null;
   if (!lineasResidual) return t('interfaz.residual.sin_fichero');
   const datos = v.residual?.datos;
-  if (!datos) return null;   // la llave: lo dice el resultado
+  if (!datos) return v.residual?.enLlave ? textoReglaLlave(v) : null;   // la llave: va con la proporción (17-nov-2026)
   const partes = [datos.sin ? textoLinea(datos) : t('interfaz.residual.nota_linea', { linea: textoLinea(datos, { conCifra: true }) })];
   if (!datos.sin) partes.push(t(`interfaz.residual.nota.${datos.tipo}`, { ola: datos.ola ?? '', anio: datos.anio }));
   return partes.join(' ');
@@ -1119,11 +1167,13 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
   let intervalo = null;
   let enLimite = false;
   let minimo = null;
+  let conLinea = null;   // tarea 65 (remates)
   if (tieneNivel && v.modo === 'necesario') {
     const b = x(v.mapa.base);
     valor = b === null ? null : formulaDe(v.mapa).calcular(b, supuestos);
     if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen);
     if (!v.fuera) minimo = minimoDe(v.mapa, x, supuestos, serieTipo);   // tarea 40
+    conLinea = sueldoLineaDe(v, b, supuestos);   // tarea 65 (remates)
   } else if (tieneNivel) {
     ({ valor, enLimite } = valorLlega(v, calculo.calcular(codigo, x), margen));   // tarea 65: con la línea residual
   }
@@ -1147,7 +1197,7 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
     supuestos, anio: v.fuera ? v.fuera.anio : periodoBase ?? v.periodo, tipologia: v.tipologia, valor,
     estado: estadoCifraT, estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirTerritorio(null),
-    fiabilidad, intervalo, enLimite, sueldo, notas, minimo,
+    fiabilidad, intervalo, enLimite, sueldo, notas, minimo, conLinea,
   });
   pintarResidentes(huecoResidentes, v, nivel, codigo).catch((error) => console.error(error));   // tarea 41
   // F5: declaraciones de zona tensionada del municipio (indicador 20; datos/zonas_tensionadas.json)
@@ -1255,6 +1305,27 @@ function fuentesDe(series, calculado) {
   return ids.map((id) => (t.existe(`fuentes.${id}`) ? t(`fuentes.${id}`) : id)).join('; ');
 }
 
+// Tarea 65 (remates): columnas de la línea de ingreso residual del CSV de «¿te llega?» (tablaCsv(),
+// `linea`): su nombre y su cifra del año y del hogar de la ficha; en la llave, «no se aplica». Con las
+// fichas de una persona, también lo que queda menos la línea en cada fila, con los términos del mapa
+// (calcular() de calculoLlega() en el nivel del CSV); con «Tu ficha», no (despejaría el sueldo escrito).
+function lineaCsv(v, nivel, valores, serie) {
+  if (v.modo !== 'llega' || !lineasResidual || !v.residual) return null;
+  const mayuscula = (x) => (x ? x[0].toUpperCase() + x.slice(1) : x);
+  if (estado.ficha === 'llave') return { nombre: t('interfaz.residual.no_aplica_corto'), valor: null, distancia: null };
+  const datos = v.residual.datos;
+  if (!datos) return null;
+  const nombre = mayuscula(textoLinea(datos));
+  if (datos.sin) return { nombre, valor: null, distancia: null };
+  const calculo = estado.ficha !== 'peon' && !v.fuera
+    ? calculoLlega({ ficha: estado.ficha, perfiles: v.perfiles, sueldo, superficie: v.superficie, serie: serieTipo, nivel, gastos: v.gastos })
+    : null;
+  const distancia = calculo
+    ? (codigo, i) => distanciaLinea(calculo.calcular(codigo, (s) => (s === serie ? valores[i] ?? null : null)), datos.valor)
+    : null;
+  return { nombre, valor: datos.valor, distancia };
+}
+
 // CSV de la serie del mapa en el nivel que se ve. En «¿te llega?», el alquiler que usa el mapa
 // (sin el ingreso: con «Tu ficha», es el sueldo escrito por el usuario). Con un año anterior a la
 // serie, las filas van sin valor y el estado dice desde cuándo hay serie.
@@ -1297,6 +1368,7 @@ async function exportarCsv(v) {
     // Otros gastos de vivienda (12-nov-2026): la cifra sumada en cada fila (en «¿te llega?», la que
     // usa el mapa con el alquiler de la columna valor)
     otros: v.gastos && (derivado || v.modo === 'llega') ? (codigo) => otrosGastosEn(v.gastos, codigo, nivel)?.valor ?? null : null,
+    linea: lineaCsv(v, nivel, datos.valores, serie),   // tarea 65 (remates): la línea de ingreso residual
     etiqueta: etiquetaPrivada(serie),   // F5: columna «etiqueta» (dato privado de oferta)
     categoria: categorias ? (x) => t(`vocabulario.${categorias.vocabulario}.${x}`) : null,   // F5: indicador 20
   });
@@ -1328,6 +1400,7 @@ async function exportarPng(v) {
     partes.push(d && !d.sin ? t('interfaz.residual.frente', { linea: textoLinea(d, { conCifra: true }) }) : textoLinea(d) ?? t('interfaz.residual.sin_linea_corto'));
   }
   else if (llega) partes.push(t('interfaz.exportar.umbral', { umbral: t.porcentaje(v.umbral) }));
+  if (llega && v.residual?.enLlave) partes.push(textoReglaLlave(v));   // tarea 65: la llave, con la proporción
   if (llega && v.gastos) partes.push(t('interfaz.leyenda.llega_gastos', { otros: textoOtrosGastos(t, v.supuestos) }));   // 12-nov-2026
   const tipicaTexto = textoTipica(v);   // la superficie típica elegida, de qué territorio
   if (tipicaTexto) partes.push(tipicaTexto);

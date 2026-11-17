@@ -43,6 +43,7 @@ Breakdown variable. Without a breakdown, `corte` and `grupo` are both `total`.
 | `oferta_privada` | Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE) |
 | `contrato` | Age of the rental contract (IPVA) |
 | `superficie` | Assumed floor area (theoretical minimum of the pay needed) |
+| `urbanizacion` | Degree of urbanisation |
 | `hogar` | Household type (residual income line) |
 
 ### `grupo`
@@ -63,6 +64,7 @@ Breakdown value, by `corte`.
 | `edad` | `Y_LT18` | Under 18 |
 | `edad` | `Y18-64` | 18 to 64 |
 | `edad` | `Y_GE65` | 65 and over |
+| `edad` | `Y_GE18` | 18 and over |
 | `edad` | `Y15-29` | 15 to 29 |
 | `edad` | `Y16-29` | 16 to 29 |
 | `edad` | `Y30-44` | 30 to 44 |
@@ -90,6 +92,9 @@ Breakdown value, by `corte`.
 | `contrato` | `nuevo` | New contract (signed in the reference year) |
 | `contrato` | `existente` | Existing contract (signed before the reference year) |
 | `superficie` | `50` | Notional 50 m² flat |
+| `urbanizacion` | `DEG1` | Cities |
+| `urbanizacion` | `DEG2` | Towns and suburbs |
+| `urbanizacion` | `DEG3` | Rural areas |
 | `hogar` | `una_persona` | One person |
 | `hogar` | `dos_adultos` | Two adults without children |
 
@@ -117,6 +122,8 @@ Sources cited by the indicator inventory; `calculo_propio` marks derived figures
 | `ine_ecv_modulo` | Living Conditions Survey 2025: housing access difficulties module (tables) |
 | `eurostat_ilc_lvho07` | Housing cost overburden rate (ilc\_lvho07a, ilc\_lvho07b, ilc\_lvho07c) |
 | `eurostat_ilc_lvho07_r` | Housing cost overburden rate by NUTS 2 region (ilc\_lvho07\_r) |
+| `eurostat_ilc_li48` | At-risk-of-poverty rate after deducting housing costs by degree of urbanisation (ilc\_li48) |
+| `eurostat_ilc_li45` | At-risk-of-poverty rate after deducting housing costs by age and sex (ilc\_li45) |
 | `bde_accesibilidad` | Housing affordability indicators (years of income, theoretical burden) |
 | `calculo_propio` | Own calculation from the sources of each term |
 | `boe_imv` | Minimum living income and non-contributory pension: annual amounts (uprating rules) |
@@ -124,7 +131,7 @@ Sources cited by the indicator inventory; `calculo_propio` marks derived figures
 
 ## Indicator dictionary
 
-The 23 indicators of the plan and 5 auxiliaries (rent reliability and residual income lines), in the order of `inventario/indicadores.csv`. The `indicador` column of the long table holds the code. «Version» is the atlas version in which each indicator is added: those added in a version later than the release are not in the long table yet.
+The 24 indicators of the plan and 5 auxiliaries (rent reliability and residual income lines), in the order of `inventario/indicadores.csv`. The `indicador` column of the long table holds the code. «Version» is the atlas version in which each indicator is added: those added in a version later than the release are not in the long table yet.
 
 | No. | Code | Name | Unit | Version |
 | --- | --- | --- | --- | --- |
@@ -151,6 +158,7 @@ The 23 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 | 21 | [`sueldo_necesario`](#sueldo_necesario) | Net monthly pay needed to stay under the threshold | net € per month | v0.1 |
 | 22 | [`sobrecarga`](#sobrecarga) | Housing cost overburden rate (Eurostat method) | % of people | v0.1 |
 | 23 | [`busqueda_sin_exito`](#busqueda_sin_exito) | Unsuccessful housing search | % of people aged 16 and over | v0.1 |
+| 24 | [`pobreza_tras_vivienda`](#pobreza_tras_vivienda) | At-risk-of-poverty rate after housing costs | % of people | v1.2 |
 | Auxiliary | [`contratos_alquiler`](#contratos_alquiler) | Rental contracts behind the median | contracts | v0.1 |
 | Auxiliary | [`margen_alquiler_mes`](#margen_alquiler_mes) | Approximate margin of the median monthly rent | % of the median | v0.1 |
 | Auxiliary | [`margen_alquiler_m2`](#margen_alquiler_m2) | Approximate margin of the median rent per m² | % of the median | v0.1 |
@@ -432,6 +440,18 @@ The 23 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Definition:** People aged 16 and over who actively looked for housing in the last 12 months without moving.
 - **Calculation:** Published by INE in the tables of the 2025 EU-SILC module on housing access difficulties, with the main reason (mostly price).
 - **Reading:** A one-off measure (2025). It captures those trying to move in and failing, unlike the overburden rate.
+
+### `pobreza_tras_vivienda`
+
+**24 · At-risk-of-poverty rate after housing costs**
+
+- **Unit:** % of people
+- **Family:** Overburden and access (survey)
+- **Sources:** `ine_ecv`, `eurostat_ilc_li48`, `eurostat_ilc_li45`
+- **Version:** v1.2
+- **Definition:** People whose equivalised disposable income, once total housing costs are deducted, falls below the at-risk-of-poverty threshold (60% of median equivalised income before deducting housing costs).
+- **Calculation:** EU-SILC microdata (INE) with Eurostat’s method (ilc\_li48): previous-year disposable income minus 12 times monthly housing costs (only mortgage interest counts), divided by modified OECD equivalence units; the wave’s threshold is not recalculated; person weights. Reproduces Eurostat’s figures for Spain, also by age (ilc\_li45) and degree of urbanisation (±0.1 points). Region × tenure breakdowns pool three waves.
+- **Reading:** The statistical version of the residual-income approach: instead of a maximum cost share, it asks whether what is left after paying for housing reaches the poverty threshold. Read it alongside the overburden rate (22), which measures the income share, and by tenure, especially renting.
 
 ### `contratos_alquiler`
 

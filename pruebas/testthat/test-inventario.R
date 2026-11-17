@@ -48,7 +48,7 @@ test_that("cada indicador tiene su ficha completa en castellano e inglés (tarea
   vacios <- vapply(campos, function(cmp) sum(is.na(indicadores[[cmp]]) | !nzchar(trimws(indicadores[[cmp]]))), integer(1))
   expect_equal(sum(vacios), 0L, info = paste(names(vacios)[vacios > 0], collapse = ", "))
   auxiliar <- !is.na(indicadores$auxiliar_de)
-  expect_equal(sum(!auxiliar), 23L)
+  expect_equal(sum(!auxiliar), 24L)   # los 23 del plan y el 24 (tarea 65, parte B)
 })
 
 test_that("los indicadores auxiliares van sin número, fuera del núcleo y acompañan a indicadores que existen", {

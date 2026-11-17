@@ -40,6 +40,8 @@ Ninguna cifra del atlas combina las dos fuentes. Cuando aparecen juntas, cada un
   - con el alquiler mensual mediano real de la sección: en 2024, 1.900 € netos al mes en la sección mediana;
   - con un piso teórico de 50 m², como mínimo: 1.217 €. Los pisos alquilados miden unos 79 m² de mediana.
 - **Lo que queda.** Ingreso menos alquiler, en euros al mes. Es una resta: no dice si lo que queda alcanza para vivir.
+- **Línea de ingreso residual.** Con el selector «Regla», lo que queda se compara con una línea mensual del hogar: la renta garantizada del ingreso mínimo vital (604,21 € para una persona en 2024; hasta 2019, la pensión no contributiva) o el umbral de riesgo de pobreza de la ECV (1.018,37 €). Ninguna de las dos es un presupuesto de los demás gastos. El sueldo necesario da también el alquiler más la línea de una persona. El hogar del barrio no tiene línea: su ingreso es el de todos los hogares de la sección.
+- **Pobreza tras pagar la vivienda.** En la sección «Sobrecarga», de 2016 a 2025, por comunidad y por tenencia (y España por edad y grado de urbanización): personas cuya renta, una vez pagados los gastos de vivienda, queda por debajo del umbral de riesgo de pobreza (el 60 % de la mediana, antes de pagar la vivienda). Es la definición de Eurostat, con los microdatos de la ECV: en España, 28,7 % en la encuesta de 2025, la misma cifra que publica Eurostat.
 - **Umbral del 30 %.** Es una convención. La misma proporción deja mucho menos margen a un sueldo bajo que a uno alto.
 - **Fichas.** Cada perfil usa un ingreso distinto y lo declara:
   - hogar del barrio: renta neta media del hogar;

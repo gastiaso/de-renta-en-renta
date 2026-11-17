@@ -43,6 +43,7 @@ Variable del desglose. Sin desglose, `corte` y `grupo` valen `total`.
 | `oferta_privada` | Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE) |
 | `contrato` | Antigüedad del contrato de alquiler (IPVA) |
 | `superficie` | Superficie supuesta (mínimo teórico del sueldo necesario) |
+| `urbanizacion` | Grado de urbanización |
 | `hogar` | Tipo de hogar (línea de ingreso residual) |
 
 ### `grupo`
@@ -63,6 +64,7 @@ Valor del desglose, según el corte.
 | `edad` | `Y_LT18` | Menos de 18 años |
 | `edad` | `Y18-64` | De 18 a 64 años |
 | `edad` | `Y_GE65` | 65 y más años |
+| `edad` | `Y_GE18` | 18 y más años |
 | `edad` | `Y15-29` | De 15 a 29 años |
 | `edad` | `Y16-29` | De 16 a 29 años |
 | `edad` | `Y30-44` | De 30 a 44 años |
@@ -90,6 +92,9 @@ Valor del desglose, según el corte.
 | `contrato` | `nuevo` | Contrato nuevo (firmado en el año de referencia) |
 | `contrato` | `existente` | Contrato existente (firmado antes del año de referencia) |
 | `superficie` | `50` | Piso teórico de 50 m² |
+| `urbanizacion` | `DEG1` | Ciudades |
+| `urbanizacion` | `DEG2` | Pueblos y zonas suburbanas |
+| `urbanizacion` | `DEG3` | Zonas rurales |
 | `hogar` | `una_persona` | Una persona |
 | `hogar` | `dos_adultos` | Dos adultos sin menores |
 
@@ -117,6 +122,8 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 | `ine_ecv_modulo` | Encuesta de Condiciones de Vida 2025: módulo sobre dificultades de acceso a la vivienda (tablas) |
 | `eurostat_ilc_lvho07` | Tasa de sobrecarga por gastos de vivienda (ilc\_lvho07a, ilc\_lvho07b, ilc\_lvho07c) |
 | `eurostat_ilc_lvho07_r` | Tasa de sobrecarga por regiones NUTS 2 (ilc\_lvho07\_r) |
+| `eurostat_ilc_li48` | Tasa de riesgo de pobreza tras deducir los gastos de vivienda por grado de urbanización (ilc\_li48) |
+| `eurostat_ilc_li45` | Tasa de riesgo de pobreza tras deducir los gastos de vivienda por edad y sexo (ilc\_li45) |
 | `bde_accesibilidad` | Indicadores de accesibilidad a la vivienda (años de renta, esfuerzo teórico) |
 | `calculo_propio` | Cálculo propio a partir de las fuentes de cada término |
 | `boe_imv` | Ingreso mínimo vital y pensión no contributiva: cuantías anuales (normas de revalorización) |
@@ -124,7 +131,7 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 
 ## Diccionario de indicadores
 
-Los 23 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas de ingreso residual), en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el código. «Versión» es la del atlas en que entra cada indicador: los que entran en una versión posterior a la del release todavía no están en la tabla larga.
+Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas de ingreso residual), en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el código. «Versión» es la del atlas en que entra cada indicador: los que entran en una versión posterior a la del release todavía no están en la tabla larga.
 
 | Nº | Código | Nombre | Unidad | Versión |
 | --- | --- | --- | --- | --- |
@@ -151,6 +158,7 @@ Los 23 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 | 21 | [`sueldo_necesario`](#sueldo_necesario) | Sueldo neto necesario para no pasar del umbral | € netos por mes | v0.1 |
 | 22 | [`sobrecarga`](#sobrecarga) | Tasa de sobrecarga por gastos de vivienda (método Eurostat) | % de las personas | v0.1 |
 | 23 | [`busqueda_sin_exito`](#busqueda_sin_exito) | Búsqueda de vivienda sin éxito | % de las personas de 16 o más años | v0.1 |
+| 24 | [`pobreza_tras_vivienda`](#pobreza_tras_vivienda) | Tasa de riesgo de pobreza tras los gastos de vivienda | % de las personas | v1.2 |
 | Auxiliar | [`contratos_alquiler`](#contratos_alquiler) | Contratos de alquiler de la mediana | contratos | v0.1 |
 | Auxiliar | [`margen_alquiler_mes`](#margen_alquiler_mes) | Margen aproximado de la mediana del alquiler mensual | % de la mediana | v0.1 |
 | Auxiliar | [`margen_alquiler_m2`](#margen_alquiler_m2) | Margen aproximado de la mediana del alquiler por m² | % de la mediana | v0.1 |
@@ -432,6 +440,18 @@ Los 23 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Definición:** Personas de 16 o más años que han buscado vivienda activamente en los últimos 12 meses sin llegar a cambiarse.
 - **Cálculo:** Cifra publicada por el INE en las tablas del módulo de 2025 de la ECV sobre dificultades de acceso a la vivienda, con la razón principal (sobre todo, el precio).
 - **Lectura:** Es un corte único (2025). Ve a quien intenta entrar y no puede, al contrario que la sobrecarga.
+
+### `pobreza_tras_vivienda`
+
+**24 · Tasa de riesgo de pobreza tras los gastos de vivienda**
+
+- **Unidad:** % de las personas
+- **Familia:** Sobrecarga y acceso (encuesta)
+- **Fuentes:** `ine_ecv`, `eurostat_ilc_li48`, `eurostat_ilc_li45`
+- **Versión:** v1.2
+- **Definición:** Personas cuya renta disponible por unidad de consumo, una vez restado el gasto total en vivienda, queda por debajo del umbral de riesgo de pobreza (60 % de la mediana de la renta por unidad de consumo antes de restar la vivienda).
+- **Cálculo:** Microdatos de la ECV con el método de Eurostat (ilc\_li48): renta disponible del año anterior menos 12 veces el gasto mensual en vivienda (de la hipoteca, solo intereses), entre las unidades de consumo de la escala de la OCDE modificada; umbral de la ola sin recalcular; ponderación por persona. Reproduce las cifras de España de Eurostat, también por edad (ilc\_li45) y grado de urbanización (±0,1 puntos). Los cruces por comunidad y tenencia agrupan tres olas.
+- **Lectura:** Es la versión estadística del enfoque residual: no fija un porcentaje máximo de gasto, sino si lo que queda tras pagar la vivienda llega al umbral de pobreza. Se lee junto a la sobrecarga (22), que mide la proporción de la renta, y por tenencia, sobre todo en el alquiler.
 
 ### `contratos_alquiler`
 

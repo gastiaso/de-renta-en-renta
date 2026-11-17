@@ -132,6 +132,34 @@ export function textoResidualFicha(t, residual) {
   });
 }
 
+// Remates de la tarea 65: segunda cifra del sueldo necesario (indicador 21) con la línea, bajo el
+// mínimo teórico: «Con la línea del ingreso mínimo vital: 1.881 € netos al mes (alquiler más 604,21 € de
+// la línea de una persona)», con la cifra resaltada; la cola no repite el nombre de la línea (decisiones
+// del 17-nov-2026). `conLinea`: { valor, linea (lineaDelAnio()), gastos } o, sin la línea de ese año,
+// { linea }; null sin nada.
+export function lineaSueldoConLinea(t, conLinea) {
+  if (!conLinea?.linea) return null;
+  if (!Number.isFinite(conLinea.valor)) return crear('p', 'ficha-sueldo-linea', textoLineaResidual(t, conLinea.linea));
+  const p = crear('p', 'ficha-sueldo-linea');
+  const texto = t(`interfaz.residual.sueldo_linea${conLinea.gastos ? '_gastos' : ''}`, {
+    corto: t(`interfaz.residual.corto.${conLinea.linea.linea}`), euros: t.numero(conLinea.linea.valor, 2),
+  });
+  const partes = texto.split('{cifra}');
+  partes.forEach((parte, i) => {
+    if (i > 0) p.append(crear('span', 'ficha-sueldo-linea-cifra', t.numero(conLinea.valor)));
+    if (parte) p.append(parte);
+  });
+  return p;
+}
+
+// Remates de la tarea 65: celda de la línea en la evolución de la ficha («IMV 604 €»; antes de 2020,
+// «PNC 457 €»; «umbral 1.018 €»), redondeada al euro como los euros que quedan; sin línea ese año, «—».
+export function celdaLinea(t, datos) {
+  if (!datos) return null;
+  if (datos.sin || !Number.isFinite(datos.valor)) return '—';
+  return t(`interfaz.residual.celda.${datos.tipo}`, { euros: t.numero(datos.valor) });
+}
+
 // Línea de fiabilidad bajo la cifra: «Mediana de N contratos · margen aproximado ±X %», con la
 // marca «pocos contratos»; en secreto, cuántos contratos hay. `f`: fiabilidadFicha() o null.
 function lineaFiabilidad(t, f) {
@@ -266,7 +294,7 @@ function lineaDosSueldos(t, valor, opciones, decimales) {
 // (las fichas de una persona) da la proporción con el alquiler mensual mediano real.
 // Tarea 44: en «¿te llega?», bajo el título, qué estadístico usa la ficha y de quién, en una línea
 // (lineaMetodo). Tarea 41: la llave lleva el aviso de lectura del indicador 14, el mismo cociente.
-function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, tipologia = null, fiabilidad = null, intervalo = null, enLimite = false, sinNivel = null, sueldo = null, notas = [], grupo = null, etiqueta = null, minimo = null }) {
+function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, tipologia = null, fiabilidad = null, intervalo = null, enLimite = false, sinNivel = null, sueldo = null, notas = [], grupo = null, etiqueta = null, minimo = null, conLinea = null }) {
   const bloque = crear('section', 'ficha-valor');
   const cifra = crear('p', 'ficha-cifra');
   const sinCifra = sinNivel ? t('interfaz.ficha.sin_dato_nivel') : '—';
@@ -294,6 +322,9 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
     // Tarea 40: al lado de la cifra principal, el mínimo teórico con la superficie elegida
     const lineaM = lineaMinimo(t, minimo, supuestos);
     if (lineaM) bloque.append(lineaM);
+    // Tarea 65 (remates): la segunda cifra con la línea de ingreso residual (alquiler + otros gastos + línea)
+    const lineaL = lineaSueldoConLinea(t, conLinea);
+    if (lineaL) bloque.append(lineaL);
     // La superficie y el umbral, solo en los mapas que los usan (el sueldo necesario).
     const textoS = textoSupuestos(t, mapaDef, supuestos);
     if (textoS) bloque.append(crear('p', 'ficha-estado', textoS));
@@ -540,6 +571,7 @@ export function fichaContexto(contenedor, { t, filas }) {
 export function fichaSeries(contenedor, { t, titulo, nota, filas, estados, periodo, grafico = null, cabeceras = null, notas = [], selector = null }) {
   const cuerpo = crear('tbody');
   const conResto = filas.some((f) => f.resto);
+  const conLinea = filas.some((f) => f.linea);   // tarea 65 (remates): la línea de cada año
   const conVariacion = filas.some((f) => f.variacion);
   for (const fila of filas) {
     const tr = crear('tr', String(fila.periodo) === String(periodo) ? 'ficha-tabla-activa' : undefined);
@@ -551,6 +583,7 @@ export function fichaSeries(contenedor, { t, titulo, nota, filas, estados, perio
       crear('td', 'ficha-tabla-cifra', fila.texto),
       ...(conVariacion ? [crear('td', 'ficha-tabla-variacion', fila.variacion ?? '')] : []),
       ...(conResto ? [crear('td', 'ficha-tabla-resto', fila.resto ?? '')] : []),
+      ...(conLinea ? [crear('td', 'ficha-tabla-linea', fila.linea ?? '')] : []),
       crear('td', 'ficha-tabla-estado', nombre === 'dato' ? '' : t(`interfaz.estado_corto.${nombre}`)),
     );
     cuerpo.append(tr);

@@ -214,6 +214,102 @@ test_that("la exportación escribe sobrecarga.json y su geometría y pasa la com
   expect_equal(c4$calculado[c4$id == "web_sobrecarga_geometria" & c4$detalle == "total-2025"], 1)
 })
 
+# Indicador 24 (tarea 65, parte B): riesgo de pobreza tras la vivienda, segunda medida del mapa
+ahc_sc <- tibble::tibble(conjunto = "ilc_li48", geo = c("AA", "BB", "CC", "ES", "EU27_2020", "EA20", "AA", "ES"),
+                         grado = c(rep("TOTAL", 6), "DEG1", "TOTAL"), anio = c(rep(2025L, 7), 2024L),
+                         valor = c(31.26, 24, 27.5, 28.7, 29.4, 29.7, 20, 29.1), bandera = c(NA, "p", rep(NA, 6)))
+anual_p_sc <- tibble::tibble(
+  anio = 2025L, indicador = "pobreza_tras_vivienda", umbral = 12220.35,
+  corte = c("total", "tenencia", "region", "region", "region", "edad", "urbanizacion"),
+  grupo = c("TOTAL", "RENT_MKT", "ES30", "ES61", "ES70", "Y_GE18", "DEG1"),
+  valor = c(28.69, 56.75, 23.33, 36.99, 31.03, 26.71, 26.38), peso = 1,
+  n_personas = c(71161L, 8891L, 7089L, 8015L, 15L, 58890L, 36939L), n_hogares = c(27000L, 3500L, 2843L, 3100L, 9L, 27000L, 15000L)
+)
+agrupada_p_sc <- tibble::tibble(
+  fiabilidad = c("normal", "baja"), anio_inicio = 2023L, anio_fin = 2025L, olas = 3L, indicador = "pobreza_tras_vivienda",
+  region = c("ES30", "ES61"), corte = "tenencia", grupo = "RENT_MKT", valor = c(48.35, 63.01), peso = 1,
+  n_personas = c(3539L, 30L), n_hogares = c(1400L, 12L)
+)
+ind_p_sc <- tibble::tibble(codigo = c("renta_hogar", "sobrecarga", "pobreza_tras_vivienda"),
+                           cortes_web = c("1;2", "4;6;8;10;15|RENT_MKT=15;20;25;30;40", "20;25;30;35;40|RENT_MKT=45;50;55;60;70"))
+
+test_that("pobreza tras la vivienda: vistas de países y comunidades, bloque propio y compuerta de ida y vuelta", {
+  v <- vista_pobreza(ahc_sc, anual_p_sc, agrupada_p_sc, "total", "total", 2025L)
+  expect_setequal(v$geo, c("AA", "BB", "CC", "EU27_2020", "ES", "ES30", "ES61", "ES70"))   # sin agregados ni ES como país
+  expect_equal(v$geo[1:2], c("ES61", "AA"))
+  expect_equal(v$puesto[!is.na(v$valor)], seq_len(7))
+  expect_true(is.na(v$valor[v$geo == "ES70"]) && is.na(v$puesto[v$geo == "ES70"]))       # 15 observaciones
+  expect_equal(c(v$tabla[v$geo == "BB"], v$bandera[v$geo == "BB"], v$fuente[v$geo == "BB"]), c("ilc_li48", "p", "eurostat_ilc_li48"))
+  expect_equal(v$nivel[v$geo == "AA"], 0L)
+  expect_equal(c(v$fuente[v$geo == "ES"], v$n[v$geo == "ES"]), c("ine_ecv", "71161"))
+  ten <- vista_pobreza(ahc_sc, anual_p_sc, agrupada_p_sc, "tenencia", "RENT_MKT", 2025L)
+  expect_equal(ten$geo, c("ES61", "ES", "ES30"))                                          # sin países: Eurostat no publica la tenencia
+  expect_equal(ten$fiabilidad[ten$geo == "ES61"], "baja")
+
+  dir <- tempfile("web_")
+  ruta <- tempfile(fileext = ".gpkg")
+  on.exit(unlink(c(dir, ruta), recursive = TRUE))
+  sf::st_write(nuts_sc(), ruta, quiet = TRUE)
+  europa <- filter(europa_sc(), anio >= 2024)
+  # Un trienio anterior (2022–2024) en los cruces agrupados: la web pinta solo el último
+  anterior <- dplyr::mutate(agrupada_p_sc, anio_inicio = 2022L, anio_fin = 2024L, valor = valor + 10)
+  pobreza <- list(anual = anual_p_sc, agrupada = dplyr::bind_rows(anterior, agrupada_p_sc), eurostat = ahc_sc,
+                  rupturas = list(ES_TOTAL = c(2013L, 2025L), EU27_TOTAL = integer()))
+  rutas <- exportar_web_sobrecarga(anual_sc, dplyr::bind_rows(dplyr::mutate(agrupada_sc, anio_fin = 2024L), agrupada_sc),
+                                   europa, ccaa_sc, modulos_sc(), c("2024" = ruta), ind_p_sc,
+                                   quintil = quintil_sc, dir_web = dir, fecha = "2026-11-17", pobreza = pobreza)
+  x <- jsonlite::fromJSON(rutas[1], simplifyVector = FALSE)
+  claves <- vapply(x$vistas, `[[`, "", "clave")
+  expect_equal(claves[vapply(x$vistas, `[[`, "", "medida") == "pobreza"], c("pobreza-total-2025", "pobreza-tenencia-RENT_MKT-2025"))
+  pten <- x$vistas[[which(claves == "pobreza-tenencia-RENT_MKT-2025")]]$filas
+  expect_equal(pten[[which(vapply(pten, `[[`, "", "geo") == "ES30")]]$v, valor_web(48.35))   # del trienio 2023–2025, no del anterior
+  expect_equal(unlist(x$pobreza$olas$agrupadas), c(2023L, 2025L))
+  # Serie de España y de la UE-27 de ilc_li48, con sus marcas y las rupturas del atlas del 24
+  s <- x$pobreza$serie
+  expect_equal(unlist(s$anios), c(2024L, 2025L))
+  expect_equal(s$valores$ES_TOTAL, list(291L, 287L))
+  expect_equal(s$valores$EU27_TOTAL, list(NULL, 294L))
+  expect_equal(s$fuente, "eurostat_ilc_li48")
+  expect_equal(s$rupturas_atlas$ES_TOTAL, list(2025L))
+  # Desgloses de España por edad y grado de urbanización
+  d <- Filter(function(f) f$corte %in% c("edad", "urbanizacion"), x$pobreza$espana)
+  expect_equal(vapply(d, `[[`, "", "grupo"), c("Y_GE18", "DEG1"))
+  expect_equal(vapply(d, `[[`, 0L, "v"), c(267L, 264L))
+  expect_equal(unlist(x$anios), c(2024L, 2025L))                     # los años de la sobrecarga no cambian
+  expect_equal(x$indicadores$pobreza_tras_vivienda, 24L)
+  expect_equal(unlist(x$pobreza$anios), 2025L)
+  expect_equal(lapply(x$pobreza$cortes, unlist), list(general = c(20L, 25L, 30L, 35L, 40L), RENT_MKT = c(45L, 50L, 55L, 60L, 70L)))
+  expect_equal(x$pobreza$umbrales, list(list(anio = 2025L, euros = 12220L)))
+  expect_equal(x$pobreza$espana[[1]][c("anio", "corte", "grupo", "v", "n")],
+               list(anio = 2025L, corte = "total", grupo = "total", v = 287L, n = 71161L))
+  pt <- x$vistas[[which(claves == "pobreza-total-2025")]]$filas
+  expect_equal(pt[[which(vapply(pt, `[[`, "", "geo") == "AA")]]$v, 313L)                 # 31,26 → 31,3 (× 10 en entero)
+
+  comprobar <- function(p = pobreza) comprobar_web_sobrecarga(anual_sc, agrupada_sc, europa, armar_escalera(europa), ccaa_sc, modulos_sc(),
+                                                              ind_p_sc, quintil = quintil_sc, dir_web = dir, pobreza = p)
+  c1 <- comprobar()
+  expect_true(any(grepl("^pobreza: ", c1$detalle)))
+  expect_true("pobreza: serie de España y de la UE-27 (ilc_li48)" %in% c1$detalle)
+  expect_equal(sum(c1$calculado), 0)
+  # Sin las rupturas del 24, la de 2025 sobra en la serie
+  sin_r <- comprobar(pobreza[names(pobreza) != "rupturas"])
+  expect_equal(sin_r$calculado[sin_r$detalle == "pobreza: serie de España y de la UE-27 (ilc_li48)"], 1)
+  # Sin `pobreza`, las vistas de más se ven
+  sin <- comprobar_web_sobrecarga(anual_sc, agrupada_sc, europa, armar_escalera(europa), ccaa_sc, modulos_sc(),
+                                  ind_p_sc, quintil = quintil_sc, dir_web = dir)
+  expect_equal(sin$calculado[grepl("^sin la pobreza", sin$detalle)], 2)
+  # Una cifra de un país, la muestra de una comunidad y el umbral cambiados: la compuerta lo ve
+  texto <- readLines(rutas[1], warn = FALSE, encoding = "UTF-8")
+  texto <- sub('"geo":"AA","nivel":0,"bloque":"europa","v":313', '"geo":"AA","nivel":0,"bloque":"europa","v":312', texto, fixed = TRUE)
+  texto <- sub('"n":8015', '"n":8016', texto, fixed = TRUE)
+  texto <- sub('"euros":12220', '"euros":12221', texto, fixed = TRUE)
+  writeLines(texto, rutas[1], useBytes = TRUE)
+  c2 <- comprobar()
+  mal <- c2[c2$calculado > 0, ]
+  expect_equal(mal$detalle, c("pobreza: pobreza-total-2025", "pobreza: pobreza-total-2025", "pobreza: umbrales"))
+  expect_equal(mal$id, c("web_sobrecarga_valores", "web_sobrecarga_muestra", "web_sobrecarga_valores"))
+})
+
 test_that("las rupturas del atlas en la serie salen de inventario/rupturas.csv (pregunta abierta 34)", {
   r <- tibble::tibble(id = c("a", "b", "c", "d"), fuente = c("ine_ecv", "ine_ecv", "ine_ecv", "ine_vut"),
                       indicador = c("22", "22", "21;22", "19"), anio = c("2013", "2020", "2008;2009", "2024"),
@@ -225,6 +321,15 @@ test_that("las rupturas del atlas en la serie salen de inventario/rupturas.csv (
   expect_equal(s$EU27_TOTAL, integer())
   expect_equal(rupturas_en_serie(s, 2010:2025)$ES_TOTAL, 2013L)
   expect_equal(rupturas_en_serie(NULL, 2010:2025)$ES_TOTAL, integer())
+  # Las del 24 (serie de ilc_li48 con la medida de la pobreza): solo las que llevan el 24
+  r$indicador[1] <- "22;24"
+  p <- rupturas_serie_pobreza(r)
+  expect_equal(names(p), c("ES_TOTAL", "EU27_TOTAL"))
+  expect_equal(p$ES_TOTAL, 2013L)
+  expect_equal(p$EU27_TOTAL, integer())
+  # Y la del inventario lleva los dos indicadores
+  inv <- readr::read_csv(file.path("..", "..", "inventario", "rupturas.csv"), show_col_types = FALSE)
+  expect_equal(rupturas_serie_pobreza(inv)$ES_TOTAL, 2013L)
 })
 
 test_that("cortes del mapa: los generales y, tras «|», los de un grupo; como cortes_web()", {

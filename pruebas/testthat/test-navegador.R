@@ -40,7 +40,7 @@ test_that("la web en un navegador recalcula una muestra y coincide con R (plan Â
   expect_equal(sum(r$id == "navegador_clic"), 4L)
   expect_equal(sum(r$id == "navegador_municipal"), 6L)
   expect_equal(sum(r$id == "navegador_leyenda"), 3L)
-  expect_equal(sum(r$id == "navegador_residual"), 5L)
+  expect_equal(sum(r$id == "navegador_residual"), 13L)   # 5 de la parte A, 7 de los remates de la web y la vuelta de la llave (17-nov-2026)
   expect_true(sum(r$id == "navegador_historias") %in% c(1L, 3L))
   expect_true(sum(r$id == "navegador_carga") %in% c(1L, 2L))    # con una exportaciÃ³n anterior a la tarea 62, una fila que se salta
   expect_equal(r$detalle[r$calculado != r$referencia], character(0))

@@ -473,7 +473,13 @@ comprobar_portada_navegador <- function(b, evaluar, url, larga, perfiles, espera
     if (!is.null(p)) {
       d <- jsonlite::fromJSON(evaluar(paste0(JS_DESTINOS_NAVEGADOR, "(", jsonlite::toJSON(unlist(p$destinos)), ")")))
       mal <- if (is.null(dim(d))) 1 else sum(d[, 2] != "200" | d[, 3] != "TRUE")
-      filas[[length(filas) + 1L]] <- fila("navegador_casillas", sprintf("%d destinos (%s)", length(p$destinos), idioma), mal)
+      # Tarea 65: el detalle nombra los destinos que fallan y los de reglas.html sin ancla (la casilla 7,
+      # a la portada de la página: decisión pendiente del autor), que se aceptan si la página responde
+      malos <- if (is.null(dim(d))) "sin respuesta" else d[d[, 2] != "200" | d[, 3] != "TRUE", 1]
+      sin_ancla <- grep("^reglas\\.html(\\?[^#]*)?$", unlist(p$destinos), value = TRUE)
+      filas[[length(filas) + 1L]] <- fila("navegador_casillas", paste0(sprintf("%d destinos (%s)", length(p$destinos), idioma),
+        if (length(malos)) paste0("; fallan: ", paste(malos, collapse = ", ")),
+        if (length(sin_ancla)) paste0("; sin ancla, aceptado (pendiente): ", paste(sin_ancla, collapse = ", "))), mal)
     }
   }
 

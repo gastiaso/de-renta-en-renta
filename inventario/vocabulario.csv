@@ -32,6 +32,7 @@ corte,ficha,Ficha (ingreso de referencia),Token (reference income)
 corte,oferta_privada,"Dato privado de oferta: operación y portal (capa desmontable, solo con PORTALES=TRUE)","Private asking-price data: transaction and portal (removable layer, only with PORTALES=TRUE)"
 corte,contrato,Antigüedad del contrato de alquiler (IPVA),Age of the rental contract (IPVA)
 corte,superficie,Superficie supuesta (mínimo teórico del sueldo necesario),Assumed floor area (theoretical minimum of the pay needed)
+corte,urbanizacion,Grado de urbanización,Degree of urbanisation
 tenencia,OWN,Propiedad,Owner
 tenencia,OWN_NL,Propiedad sin hipoteca ni préstamo,Owner with no outstanding mortgage or housing loan
 tenencia,OWN_L,Propiedad con hipoteca o préstamo,Owner with mortgage or loan
@@ -43,11 +44,15 @@ tenencia,FREE,Cesión gratuita,Rent-free
 edad,Y_LT18,Menos de 18 años,Under 18
 edad,Y18-64,De 18 a 64 años,18 to 64
 edad,Y_GE65,65 y más años,65 and over
+edad,Y_GE18,18 y más años,18 and over
 edad,Y15-29,De 15 a 29 años,15 to 29
 edad,Y16-29,De 16 a 29 años,16 to 29
 edad,Y30-44,De 30 a 44 años,30 to 44
 edad,Y45-64,De 45 a 64 años,45 to 64
 edad,Y26-35,De 26 a 35 años,26 to 35
+urbanizacion,DEG1,Ciudades,Cities
+urbanizacion,DEG2,Pueblos y zonas suburbanas,Towns and suburbs
+urbanizacion,DEG3,Zonas rurales,Rural areas
 sexo,M,Hombres,Men
 sexo,F,Mujeres,Women
 tipologia,VC,Vivienda colectiva,Flat in a multi-dwelling building

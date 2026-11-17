@@ -54,14 +54,14 @@ Se juega con dos familias de cifras que **nunca se mezclan**:
 - **36.333 casillas de mapa**: las secciones censales de 2021, con sus 8.131 municipios, 52 provincias y 19 comunidades y ciudades autónomas.
 - **5 fichas** de perfil, cada una con su ingreso y su vivienda.
 - **17 mapas** en el selector, más un «¿te llega?» por ficha.
-- **23 indicadores**, cada uno en la escala en que lo publica su fuente.
+- **24 indicadores**, cada uno en la escala en que lo publica su fuente.
 - **4 historias** guiadas, paso a paso, dentro del mapa.
 - **1 máquina del tiempo**: series de España desde 1987.
 - **1 tablero europeo**: la sobrecarga por gastos de vivienda, con el método de Eurostat.
 - **1 tabla larga** en Parquet con todas las cifras que pasan la compuerta.
 
 <details>
-<summary><b>Los 23 indicadores</b></summary>
+<summary><b>Los 24 indicadores</b></summary>
 
 | # | Indicador | Escala más fina | Años | Dónde se ve |
 |---|---|---|---|---|
@@ -86,8 +86,9 @@ Se juega con dos familias de cifras que **nunca se mezclan**:
 | 19 | Viviendas de uso turístico sobre el total de viviendas | Sección | 2020–2026 | Mapa |
 | 20 | Zona de mercado residencial tensionado declarada | Municipio | 2024–2026 | Mapa |
 | 21 | Sueldo neto necesario para no pasar del umbral | Sección | 2015–2024 | Mapa (el de entrada) |
-| 22 | Tasa de sobrecarga por gastos de vivienda (método Eurostat) | Región europea; comunidad en España | España desde 2004; regiones, 2021–2025 | Sobrecarga |
+| 22 | Tasa de sobrecarga por gastos de vivienda (método Eurostat) | Región europea; comunidad en España | España desde 2004; comunidades, 2016–2025; regiones, 2021–2025 | Sobrecarga |
 | 23 | Búsqueda de vivienda sin éxito | Comunidad | 2025 | Sobrecarga |
+| 24 | Riesgo de pobreza tras los gastos de vivienda | Comunidad | 2016–2025; España y UE-27 desde 2004 | Sobrecarga |
 
 Definición, cálculo y lectura de cada uno: [diccionario de la página «Datos»](https://gastiaso.github.io/de-renta-en-renta/datos.html) e [`inventario/indicadores.csv`](inventario/indicadores.csv).
 

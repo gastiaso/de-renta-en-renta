@@ -7,7 +7,8 @@
 # Serie nacional y mensual (no hay barómetro en agosto). Cada mes, el estudio de su número.
 #
 # Acceso abierto y sin registro (comprobado el 10-nov-2026): la página de cada barómetro,
-# https://www.cis.es/es/estudios/barometro-de-<mes>-<año>, declara sus documentos en JSON-LD
+# https://www.cis.es/es/estudios/barometro-de-<mes>-<año> (o la de inventario/cis_url_excepciones.csv,
+# si el título del estudio es más largo), declara sus documentos en JSON-LD
 # (schema.org/Dataset, licencia CC BY 4.0). Se guarda ese bloque y se toma, por este orden:
 #   1. las tabulaciones en XLSX («Resultados y cruces verticales», hoja «Resultados»; desde
 #      febrero de 2025), con toda la precisión;
@@ -42,8 +43,26 @@ CIS_REFERENCIAS <- tibble::tribble(
   2026L, 7L,   "espana",   43.0,        "nota del CIS de 14-9-2026: 37,5 + 5,5 puntos (julio)"
 )
 
-cis_url_estudio <- function(anio, mes) {
+# Dirección de la página de un barómetro. Algunos estudios llevan un título alargado (los
+# postelectorales de junio y septiembre de 2023) y su página no está en la dirección habitual: sus
+# direcciones van en inventario/cis_url_excepciones.csv (`excepciones`, de cis_leer_url_excepciones()).
+cis_url_estudio <- function(anio, mes, excepciones = NULL) {
+  clave <- sprintf("%d-%02d", as.integer(anio), as.integer(mes))
+  if (!is.null(excepciones) && clave %in% excepciones$mes) return(excepciones$url[match(clave, excepciones$mes)])
   sprintf("%s/es/estudios/barometro-de-%s-%d", CIS_WEB, CIS_MESES[mes], as.integer(anio))
+}
+
+# Excepciones de dirección (inventario/cis_url_excepciones.csv): una fila por mes (AAAA-MM), con el
+# estudio que tiene que traer la página, su dirección en la web del CIS y una nota con el título.
+cis_leer_url_excepciones <- function(ruta) {
+  x <- readr::read_csv(ruta, col_types = readr::cols(.default = "c"), na = "", progress = FALSE)
+  falta <- setdiff(c("mes", "estudio", "url", "nota"), names(x))
+  if (length(falta)) stop("Faltan columnas en ", ruta, ": ", paste(falta, collapse = ", "), call. = FALSE)
+  mal <- !grepl("^\\d{4}-(0[1-9]|1[0-2])$", x$mes) | !grepl("^\\d+$", x$estudio) |
+    !startsWith(x$url, paste0(CIS_WEB, "/es/estudios/")) | duplicated(x$mes)
+  if (any(mal)) stop(ruta, ": filas con mes, estudio o dirección no válidos, o meses repetidos: ",
+                     paste(which(mal), collapse = ", "), call. = FALSE)
+  x
 }
 
 # Peticion HTTP sin error por estado (se decide fuera), con la identificacion del proyecto.
@@ -71,22 +90,39 @@ cis_json_ld <- function(html) {
   bloques[1]
 }
 
+# Número de estudio del Dataset de un JSON-LD (texto), o NA.
+cis_estudio_ld <- function(ld) {
+  x <- tryCatch(jsonlite::fromJSON(ld, simplifyVector = FALSE), error = function(e) NULL)
+  if (is.null(x)) return(NA_character_)
+  nodos <- if (!is.null(x[["@graph"]])) x[["@graph"]] else list(x)
+  ds <- Filter(function(n) identical(n[["@type"]], "Dataset"), nodos)
+  if (length(ds) == 0 || is.null(ds[[1]][["identifier"]])) return(NA_character_)
+  as.character(ds[[1]][["identifier"]])
+}
+
 # Pagina de un barometro: guarda su JSON-LD en datos/brutos/cis_barometros/estudios/AAAA-MM.json y
 # devuelve la ruta, o NA si ese mes no tiene barometro. Un mes sin barometro se recuerda
 # (AAAA-MM.sin_estudio) solo cuando han pasado mas de 120 dias: los recientes se vuelven a mirar.
-cis_descargar_estudio <- function(anio, mes, dir = CIS_DIR, hoy = Sys.Date(), pausa = 2) {
-  base <- file.path(dir, "estudios", sprintf("%d-%02d", as.integer(anio), as.integer(mes)))
+# Un mes con excepcion de direccion (`excepciones`) no se da nunca por vacio: si su pagina falta o
+# trae otro estudio, es un error (se avisa y se reintenta), y la marca .sin_estudio no cuenta.
+cis_descargar_estudio <- function(anio, mes, dir = CIS_DIR, hoy = Sys.Date(), pausa = 2, excepciones = NULL) {
+  clave <- sprintf("%d-%02d", as.integer(anio), as.integer(mes))
+  base <- file.path(dir, "estudios", clave)
   json <- paste0(base, ".json")
   sin <- paste0(base, ".sin_estudio")
+  excepcion <- !is.null(excepciones) && clave %in% excepciones$mes
   if (file.exists(json)) return(json)
-  if (file.exists(sin)) return(NA_character_)
+  if (file.exists(sin) && !excepcion) return(NA_character_)
   inicio <- as.Date(sprintf("%d-%02d-01", as.integer(anio), as.integer(mes)))
   if (inicio > hoy) return(NA_character_)
   dir.create(dirname(base), recursive = TRUE, showWarnings = FALSE)
-  url <- cis_url_estudio(anio, mes)
+  url <- cis_url_estudio(anio, mes, excepciones)
   resp <- cis_peticion(url)
   Sys.sleep(pausa)
   estado <- httr2::resp_status(resp)
+  if (excepcion && estado == 404) {
+    stop("CIS: la página de inventario/cis_url_excepciones.csv para ", clave, " (", url, ") responde 404.", call. = FALSE)
+  }
   if (estado == 404) {
     if (as.numeric(hoy - inicio) > 120) writeLines(format(hoy), sin)
     return(NA_character_)
@@ -100,6 +136,15 @@ cis_descargar_estudio <- function(anio, mes, dir = CIS_DIR, hoy = Sys.Date(), pa
          "Vuelve a intentarlo m\u00e1s tarde.", call. = FALSE)
   }
   ld <- cis_json_ld(html)
+  if (excepcion) {
+    esperado <- excepciones$estudio[match(clave, excepciones$mes)]
+    if (is.null(ld)) stop("CIS: la página de ", clave, " (", url, ") no trae sus documentos.", call. = FALSE)
+    encontrado <- cis_estudio_ld(ld)
+    if (!identical(encontrado, esperado)) {
+      stop("CIS: la página de ", clave, " (", url, ") es del estudio ", encontrado, ", no del ", esperado,
+           " de inventario/cis_url_excepciones.csv.", call. = FALSE)
+    }
+  }
   if (is.null(ld)) {
     # pagina sin documentos: se trata como mes sin barometro
     if (as.numeric(hoy - inicio) > 120) writeLines(format(hoy), sin)
@@ -115,12 +160,13 @@ cis_descargar_estudio <- function(anio, mes, dir = CIS_DIR, hoy = Sys.Date(), pa
 # de formato «file»). Solo pide a la web los meses que no están en la caché. Si la web del CIS no
 # responde en un mes (le pasa de noche), se avisa y se sigue: ese mes falta en la serie y sale en la
 # alerta cis_vivienda_meses hasta la siguiente pasada.
-cis_descargar_estudios <- function(desde, hoy = Sys.Date(), dir = CIS_DIR, pausa = 2) {
+cis_descargar_estudios <- function(desde, hoy = Sys.Date(), dir = CIS_DIR, pausa = 2, excepciones = NULL) {
   meses <- seq(as.Date(sprintf("%d-01-01", as.integer(desde))), hoy, by = "month")
   fallos <- character(0)
   rutas <- vapply(meses, function(m) {
     tryCatch(
-      cis_descargar_estudio(as.integer(format(m, "%Y")), as.integer(format(m, "%m")), dir = dir, hoy = hoy, pausa = pausa),
+      cis_descargar_estudio(as.integer(format(m, "%Y")), as.integer(format(m, "%m")), dir = dir, hoy = hoy, pausa = pausa,
+                            excepciones = excepciones),
       error = function(e) {
         fallos <<- c(fallos, paste0(format(m, "%Y-%m"), ": ", conditionMessage(e)))
         NA_character_

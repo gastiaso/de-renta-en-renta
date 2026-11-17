@@ -54,14 +54,14 @@ The game uses two families of figures that **never mix**:
 - **36,333 map squares**: the 2021 census tracts, with their 8,131 municipalities, 52 provinces and 19 autonomous communities and cities.
 - **5 profile tokens**, each with its own income and home.
 - **17 maps** in the selector, plus a «Can you afford it?» for each token.
-- **23 indicators**, each at the scale its source publishes.
+- **24 indicators**, each at the scale its source publishes.
 - **4 guided stories**, step by step, inside the map.
 - **1 time machine**: national series since 1987.
 - **1 European board**: housing cost overburden, with the Eurostat method.
 - **1 long table** in Parquet with every figure that passes the validation gate.
 
 <details>
-<summary><b>The 23 indicators</b></summary>
+<summary><b>The 24 indicators</b></summary>
 
 | # | Indicator | Finest scale | Years | Where to see it |
 |---|---|---|---|---|
@@ -86,8 +86,9 @@ The game uses two families of figures that **never mix**:
 | 19 | Tourist dwellings as a share of all dwellings | Tract | 2020–2026 | Map |
 | 20 | Declared stressed housing market area | Municipality | 2024–2026 | Map |
 | 21 | Net monthly pay needed to stay under the threshold | Tract | 2015–2024 | Map (the opening one) |
-| 22 | Housing cost overburden rate (Eurostat method) | European region; autonomous community in Spain | Spain since 2004; regions, 2021–2025 | Overburden |
+| 22 | Housing cost overburden rate (Eurostat method) | European region; autonomous community in Spain | Spain since 2004; autonomous communities, 2016–2025; regions, 2021–2025 | Overburden |
 | 23 | Unsuccessful housing search | Autonomous community | 2025 | Overburden |
+| 24 | At-risk-of-poverty rate after deducting housing costs | Autonomous community | 2016–2025; Spain and EU-27 since 2004 | Overburden |
 
 Definition, calculation and reading of each one: [dictionary on the «Data» page](https://gastiaso.github.io/de-renta-en-renta/data.html) and [`inventario/indicadores.csv`](inventario/indicadores.csv).
 

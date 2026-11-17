@@ -13,11 +13,12 @@ xml_norma <- function(dir, anio, id, frase) {
 
 cuantias_inventadas <- function() {
   tibble::tibble(
-    anio = c(2019L, 2020L, 2022L, 2022L, 2026L), desde = c(1L, 1L, 1L, 4L, 1L),
-    tipo = c("pnc", "imv", "imv", "imv", "imv"), linea_anual = c(5488, 5538, 5899.6, 6784.54, 8803.2),
-    norma_linea = "norma", pnc_anual = c(5488, 5538.4, 5899.6, NA, 8803.2), norma_pnc = "norma",
-    boe_pnc = c("A", "B", "C", NA, "D"), xml_pnc = c(FALSE, TRUE, TRUE, FALSE, TRUE),
-    imv_mes_publicado = c(NA, 461.5, NA, NA, 733.6), imv_dos_mes_publicado = c(NA, NA, NA, NA, 953.68), nota = NA_character_
+    anio = c(2019L, 2020L, 2022L, 2022L, 2024L, 2026L), desde = c(1L, 1L, 1L, 4L, 1L, 1L),
+    tipo = c("pnc", "imv", "imv", "imv", "imv", "imv"), linea_anual = c(5488, 5538, 5899.6, 6784.54, 7250.6, 8803.2),
+    norma_linea = "norma", pnc_anual = c(5488, 5538.4, 5899.6, NA, 7250.6, 8803.2), norma_pnc = "norma",
+    boe_pnc = c("A", "B", "C", NA, "E", "D"), xml_pnc = c(FALSE, TRUE, TRUE, FALSE, FALSE, TRUE),
+    imv_mes_publicado = c(NA, 461.5, NA, NA, 604.21, 733.6), imv_dos_mes_publicado = c(NA, NA, NA, NA, 785.48, 953.68),
+    nota = NA_character_
   )
 }
 
@@ -47,7 +48,7 @@ test_that("leer_boe_pnc: año del nombre del fichero, identificador y cifra", {
   expect_equal(b$pnc_anual, c(5164.6, 8803.2))
 })
 
-test_that("inventario/cuantias_imv.csv: de 2015 a 2026, PNC antes de 2020, IMV de 2026 publicado", {
+test_that("inventario/cuantias_imv.csv: de 2015 a 2026, PNC antes de 2020, IMV de 2023 a 2026 publicado", {
   cu <- leer_cuantias_imv()
   expect_equal(sort(unique(cu$anio)), 2015:2026)
   expect_true(all(cu$tipo[cu$anio < 2020] == "pnc"))
@@ -55,26 +56,39 @@ test_that("inventario/cuantias_imv.csv: de 2015 a 2026, PNC antes de 2020, IMV d
   expect_equal(cu$linea_anual[cu$anio == 2026], 8803.2)
   expect_equal(cu$imv_mes_publicado[cu$anio == 2026], 733.6)
   expect_equal(cu$imv_dos_mes_publicado[cu$anio == 2026], 953.68)
+  # Tarea 65 (decisiones del 17-nov-2026): las de la Seguridad Social de 2023 a 2025, truncadas al céntimo
+  expect_equal(cu$imv_mes_publicado[cu$anio %in% 2023:2025], c(565.37, 604.21, 658.81))
+  expect_equal(cu$imv_dos_mes_publicado[cu$anio %in% 2023:2025], c(734.99, 785.48, 856.46))
   expect_equal(cu$desde[cu$anio == 2022], c(1L, 4L))
   # Cada fila con xml_pnc lleva su identificador del BOE
   expect_true(all(!is.na(cu$boe_pnc[cu$xml_pnc])))
 })
 
-test_that("calcular_lineas_residual: IMV mensual al céntimo, 2022 ponderado, dos adultos × 1,3; ECV / 12 y × 1,5, año de ingresos", {
+test_that("calcular_lineas_residual: IMV mensual truncado al céntimo, 2022 ponderado, dos adultos × 1,3; ECV / 12 y × 1,5, año de ingresos", {
   l <- calcular_lineas_residual(cuantias_inventadas(), umbral_inventado())
   v <- function(linea, anio, hogar) l$valor[l$linea == linea & l$anio == anio & l$hogar == hogar]
   expect_equal(v("imv", 2026, "una_persona"), 733.60)
   expect_equal(v("imv", 2026, "dos_adultos"), 953.68)
   expect_equal(v("imv", 2020, "una_persona"), 461.50)
   expect_equal(v("imv", 2019, "una_persona"), 457.33)
+  # Truncado, como la Seguridad Social: 7.250,60 / 12 = 604,2166… → 604,21 (redondeado, 604,22)
+  expect_equal(v("imv", 2024, "una_persona"), 604.21)
+  expect_equal(v("imv", 2024, "dos_adultos"), 785.48)
   expect_equal(l$tipo[l$linea == "imv" & l$anio == 2019][1], "pnc")
   # 2022: tres meses de 5.899,60 y nueve de 6.784,54
-  expect_equal(v("imv", 2022, "una_persona"), redondear_empate_arriba((3 * 5899.6 + 9 * 6784.54) / 12 / 12, 2L))
+  expect_equal(v("imv", 2022, "una_persona"), truncar_centimo((3 * 5899.6 + 9 * 6784.54) / 12 / 12))
   # ECV: año de los ingresos (ola − 1); sin alquiler imputado
   expect_equal(v("ecv", 2024, "una_persona"), 1018.37)
   expect_equal(v("ecv", 2024, "dos_adultos"), 1527.55)
   expect_equal(l$ola[l$linea == "ecv" & l$anio == 2024][1], 2025L)
   expect_equal(nrow(l[l$linea == "ecv", ]), 4L)
+})
+
+test_that("truncar_centimo: baja al céntimo sin perder un céntimo por el binario", {
+  expect_equal(truncar_centimo(c(604.2166, 565.3783, 658.8166, 785.4817)), c(604.21, 565.37, 658.81, 785.48))
+  expect_equal(truncar_centimo(8803.2 * 1.3 / 12), 953.68)   # exacta en decimal, 953,679999… en binario
+  expect_equal(truncar_centimo(5538 / 12), 461.5)
+  expect_equal(truncar_centimo(5150.6 / 12), 429.21)          # PNC de 2016: redondeada, 429,22
 })
 
 test_that("ejemplo de la especificación: la tartera de 2026 con 700 € queda por debajo del IMV; sin ingreso, NA", {
@@ -148,4 +162,37 @@ test_that("pruebas/datos/residual_muestra.json: residuos y tramos que cuadran co
     expect_equal(c[[paste0("tramo_", l)]], tramo_residual(c$residual, c[[paste0("linea_", l)]], c(1, 1.25)))
     expect_equal(c[[paste0("tramo_", l, "_gastos")]], tramo_residual(c$residual_gastos, c[[paste0("linea_", l)]], c(1, 1.25)))
   }
+})
+
+test_that("remates: sueldo necesario con la línea (alquiler + otros gastos + línea de una persona) y cuenta de la portada", {
+  ruta <- file.path("..", "datos", "residual_muestra.json")
+  skip_if_not(file.exists(ruta))
+  j <- jsonlite::fromJSON(ruta)
+  c <- j$casos
+  for (l in c("imv", "ecv")) {
+    una <- j$lineas[[l]]$anios[[as.character(j$anio)]]$una_persona
+    expect_equal(c[[paste0("sueldo_linea_", l)]], c$alquiler_mes + una)
+    expect_equal(c[[paste0("sueldo_linea_", l, "_gastos")]], c$alquiler_mes + c$otros + una)
+  }
+  # No depende de la ficha: una sola cifra por territorio
+  expect_equal(nrow(unique(c[c("geo_id", "nivel", "sueldo_linea_imv")])), nrow(unique(c[c("geo_id", "nivel")])))
+  p <- j$portada
+  expect_equal(nrow(p), 2L)
+  expect_true(all(p$encima_ecv <= p$encima_imv & p$encima_imv <= p$con))
+})
+
+test_that("calcular_cuenta_portada_residual: secciones con los dos alquileres y lo que queda frente a la línea", {
+  larga <- tibble::tibble(
+    geo_id = rep(c("0100101001", "0100101002", "0100101003", "01001"), each = 2),
+    nivel = rep(c("sc", "sc", "sc", "municipio"), each = 2), anio = 2024L,
+    indicador = rep(c("alquiler_m2", "alquiler_mes"), 4), corte = "tipologia", grupo = "VC",
+    valor = c(10, 500, 12, 900, NA, 300, 10, 500), estado = "dato")
+  l <- tibble::tibble(linea = rep(c("imv", "ecv"), each = 2), anio = 2024L, hogar = rep(c("una_persona", "dos_adultos"), 2),
+                      valor = c(600, 780, 1000, 1500))
+  terminos <- tibble::tibble(ingreso_tartera = 1237.4)
+  x <- calcular_cuenta_portada_residual(larga, terminos, l, anio = 2024L, netos = c(1500, 1100))
+  # 1.500: quedan 1.000 y 600 (las dos llegan al IMV; una, a la ECV); 1.100: 600 y 200
+  expect_equal(x$con, c(2L, 2L))
+  expect_equal(x$encima_imv, c(2L, 1L))
+  expect_equal(x$encima_ecv, c(1L, 0L))
 })
