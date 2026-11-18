@@ -4,6 +4,11 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (19-nov-2026, cifras de la documentación)
+
+- Nota metodológica (las dos versiones), contra la pasada del 18-nov-2026: §5.4, los estados del ADRH con las secciones de las provincias sin ninguna publicada como `ausente` (columna nueva en las medias; 785 secciones en 2015 y 240 de 2016 a 2019, y en la mediana también 576 en 2020); §6.2, la serie de la mochila con el factor de composición (2024: 18.351 € brutos y 1.331 € netos; 2025: 19.230 y 1.382 €), su control con la ECV (`mochila_ecv` avisa en 22 de 160 cifras; España, de −7,9 a +3,7 %), la opción B y la comparación con la tartera y el transistor; §7.4, el peso del alquiler con la mochila (2024: mediana 27,4 %; 40,1 % por encima del 30 %); §3.11, §7.2 y §7.3, las tablas desde el Censo 2011 rehechas (21 secciones `ausente` y 21 excepciones por tabla; 2011: 23.656 `dato` y 35 `ausente`); §7.10, el CIS por comunidad con `peso_ccaa` (2025: de 29,1 % en Castilla y León a 47,4 % en Illes Balears; márgenes de ±1,1 a ±3,3 puntos; tres cifras con más de ±5) y el efecto de diseño de las comunidades; §8, el control de la mochila; §9.1, la tabla larga por estado; §4.1, `cobertura_destino_excepcion`, `mochila_ecv` y `cis_ccaa_margen`. Las tablas de paso ya no se dicen pendientes de rehacer. Una cita repetida en §9.1.
+- README (las dos versiones): la población en secciones con dato del SERPAVI en 2024, 84 %, como el «Método en dos páginas».
+
 ### Corregido (19-nov-2026, revisión independiente de 4354766)
 
 Ninguno de estos arreglos cambia una cifra publicada: la tabla larga, los datos de la web y el paquete de la v1.2.0 quedan como estaban.

@@ -303,7 +303,7 @@ Between 2016 and 2025 there are nine groups with 19 municipalities (`grupos_muni
 **What changes within a group:**
 - Conversion tables and the closure test cross municipalities (`agrupar_municipio()`).
 - New municipalities keep the street codes of the register very unevenly (Fuente Carreteros, 38 of 38; El Palmar de Troya, 19 of 71). That is why the Cadastre decides for sources that move to another municipality.
-- The street register only matches streets of different municipalities between a municipality that is in only one tract map and its predecessor or successor: the pair covers at least 25% of the area of the new or vanished municipality (`geo_pares_permitidos()`, `UMBRAL_CRUCE_MUNICIPIO`; review of 18 Nov 2026). Each municipality numbers its streets on its own, and matching by code two municipalities present in both tract maps joined different streets: in the table from the 2011 Census, the only tract of Rosalejo was split 41, 30 and 30% between Rosalejo, Tiétar and Pueblonuevo de Miramontes, and one in Iznalloz partly went to a neighbour that is not its successor. It affected indicators 18 and 19 (2020–2023). The gate `paso_cruce_municipios` (blocking; `comprobar_cruce_municipios()`) watches for it, which the population closure test cannot replace: it is measured by group. The tables in `geo/tablas_paso/` are rebuilt in the next run.
+- The street register only matches streets of different municipalities between a municipality that is in only one tract map and its predecessor or successor: the pair covers at least 25% of the area of the new or vanished municipality (`geo_pares_permitidos()`, `UMBRAL_CRUCE_MUNICIPIO`; review of 18 Nov 2026). Each municipality numbers its streets on its own, and matching by code two municipalities present in both tract maps joined different streets: in the table from the 2011 Census, the only tract of Rosalejo was split 41, 30 and 30% between Rosalejo, Tiétar and Pueblonuevo de Miramontes, and one in Iznalloz partly went to a neighbour that is not its successor. It affected indicators 18 and 19 (2020–2023). The gate `paso_cruce_municipios` (blocking; `comprobar_cruce_municipios()`) watches for it, which the population closure test cannot replace: it is measured by group. The tables in `geo/tablas_paso/` were rebuilt in the run of 18-nov-2026.
 
 ### 3.8 Orphan tracts and coverage exceptions
 
@@ -433,11 +433,11 @@ Municipal mergers and splits between 2011 and 2021 form 15 groups with 37 munici
 
 | Table | 2021 tracts that receive something | `estimado` | Medians `ausente` | Pairs by street register / Cadastre / code |
 |---|---|---|---|---|
-| Street register only | 36,286 | 11,043 | 4,242 | 81,344 / 0 / 3 |
-| Combined, Census (buildings up to 2011) | 36,300 | 5,446 | 1,974 | 24,465 / 15,972 / 1 |
-| Combined, tourist dwellings (up to 2020) | 36,314 | 5,497 | 1,998 | 24,464 / 16,032 / 1 |
+| Street register only | 36,285 | 11,041 | 4,243 | 81,342 / 0 / 3 |
+| Combined, Census (buildings up to 2011) | 36,298 | 5,443 | 1,974 | 24,463 / 15,972 / 1 |
+| Combined, tourist dwellings (up to 2020) | 36,312 | 5,494 | 1,998 | 24,462 / 16,032 / 1 |
 
-- There are more `estimado` tracts than in any ADRH year (from 195 to 1,665; §3.5): ten years of boundary changes, with the Cadastre read only in the F1 municipalities. Of the 5,446 in the Census table, 366 are in 179 municipalities without Cadastre, where the street register splits.
+- There are more `estimado` tracts than in any ADRH year (from 195 to 1,665; §3.5): ten years of boundary changes, with the Cadastre read only in the F1 municipalities. Of the 5,443 in the Census table, 366 are in 179 municipalities without Cadastre, where the street register splits.
 - `ausente` medians do not affect these series: 18 and 19 are ratios of counts.
 
 **Gate** (`paso2011_comprobar()`, `validacion_paso2011`; §4.1). In `anio`, 2011 for the Census table and 2020 for the tourist dwellings table.
@@ -568,7 +568,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `adrh_suma_secciones` | ADRH population by tract added up by municipality against the municipal total of the same table | ±0.5% | Warning | Warns in 160 municipality-years, all in 2015–2019 (38, 34, 30, 29 and 29) | `comprobaciones_f1` |
 | `adrh_seccion_huerfana` | ADRH tracts with no code in any tract map of 2016–2025 | Exact | Warning | 9 (§3.8) | `huerfanas_adrh` |
 | `cobertura_destino_excepcion` | 2021 tracts left empty by a known defect of the source | Exact | Warning | 2 tracts, 6 tract-years (§3.8) | `comprobaciones_f1` |
-| `cobertura_destino_excepcion` (2011 tables) | The same, in the tables from the 2011 Census | Exact | Warning | 19 tracts in each table (§3.11) | `comprobaciones_paso2011` |
+| `cobertura_destino_excepcion` (2011 tables) | The same, in the tables from the 2011 Census | Exact | Warning | 21 tracts in each table (§3.11) | `comprobaciones_paso2011` |
 | `paso2011_cobertura_posterior` | 2021 tracts with nothing from a table from the 2011 Census whose Cadastre buildings all postdate its year | Exact | Warning | 14 in the Census table; none in the tourist dwellings table | `comprobaciones_paso2011` |
 | `paso2011_sin_paso` | 2011 Census tracts with data that no route carries to 2021 | Exact | Warning | 2, in both tables | `comprobaciones_paso2011` |
 | `mapa_base_huecos` | Gaps of at least 0.01 km² in the 2021 tract map (land in no tract): number and area, in total and named after an IGN unit | Exact | Warning | Warns with 95 gaps and 1,495 km² (the largest, 418.4 km²); named after an IGN unit, 57 and 1,176.5 km² (§3.10) | `validacion_mapa_base` |
@@ -593,7 +593,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `web_tramos` | By map and set of cut-offs (tract, municipality, and province and region together), in the latest year: classes that are empty or hold more than 35% of the units with data; maps without sets that are not a declared exception | Exact | Warning | Passes: no class empty or above 35% in the 35 sets of 15 maps; the fullest, 31% (Gini, province and region, 2024) | `validacion_web_tramos` |
 | `web_sobrecarga_geometria` | Units of a view of the overburden map with no geometry in their NUTS version or in the fallback one | Exact | Warning | Passes: 0 in the 33 views (§7.5) | `validacion_web_sobrecarga` |
 | `aeat_mediana_deciles` | SME median by region interpolated from deciles against centiles | ±0.5% | Warning | Between −0.19 and +0.45% (2019–2025) | `validacion_mochila` |
-| `mochila_ecv` | Young adult token of each region and of Spain against the 95% interval of the ECV median gross pay, which comes from its sample size (how far outside, in %) | Exact | Warning | Warns on 20 of 160 figures (with ±15%, on 32); the interval goes from ±2.7% (Spain) to ±57% (regions with about 50 observations) | `validacion_mochila_ecv` |
+| `mochila_ecv` | Young adult token of each region and of Spain against the 95% interval of the ECV median gross pay, which comes from its sample size (how far outside, in %) | Exact | Warning | Warns on 22 of 160 figures (with ±15%, on 33); the interval goes from ±2.7% (Spain) to ±57% (regions with about 50 observations) | `validacion_mochila_ecv` |
 | `mochila_neto_ecv` | Gross-to-net step applied to the ECV median gross pay against the median net pay, each year | ±5% | Warning | Warns on 8 of 180 figures, all regional (from −5.0 to +19.0%); in 2024, between −2.0 and +3.4%; Spain, between −1.2 and +2.5% (+0.5% in 2024) | `validacion_mochila_neto_ecv` |
 | `mochila_forma` | Median-to-mean ratio of the SME at ages 26 to 35 of each region, from 2020 to 2025, against that of 2019, used for 2015–2018 | ±3% | Warning | Passes: between −2.7 and +1.8% | `validacion_mochila_serie` |
 | `mochila_relacion_ecv` | Median-to-mean ratio of the gross pay of those who worked the twelve months, aged 26 to 35, in the ECV for Spain, 2015 to 2018 against 2019 (points) | ±2 points | Warning | Warns in 2015 (+2.1) and 2017 (−3.1) | `validacion_mochila_relacion` |
@@ -688,7 +688,7 @@ Each block of the long table also goes through `validar_tabla_larga()`: columns,
 | `cis_ccaa_muestra` | Interviews of each study against those in the metadata and the (N) of the CIS tabulations | Exact | Blocking | No differences | `validacion_cis_ccaa` |
 | `cis_ccaa_codigos` | «La vivienda» as `PROB_007` in both questions, the 19 communities of the fixed table, positive weights (non-negative in `peso_ccaa`, where the CIS gives one person a weight of 0, left out of the estimate) and studies in the metadata | Exact | Blocking | None | `validacion_cis_ccaa` |
 | `cis_ccaa_fichero` | Size and SHA-256 checksum of the edition files against `inventario/cis_ccaa_ficheros.csv` | Exact | Blocking | They match | `validacion_cis_ccaa` |
-| `cis_ccaa_margen` | Published figures with a margin above ±5 points | Exact | Warning | Nine, for Ceuta and Melilla | `validacion_cis_ccaa` |
+| `cis_ccaa_margen` | Published figures with a margin above ±5 points | Exact | Warning | Three, for Ceuta and Melilla (2021 and 2026) | `validacion_cis_ccaa` |
 | `cis_ccaa_meses` | Closed years with fewer than nine barometers and months without a national figure to check them against | Exact | Warning | None | `validacion_cis_ccaa` |
 | `web_cis_ccaa` | `datos/cis_vivienda_ccaa.json` and `datos/cis_vivienda_ccaa.csv` against the `cis_vivienda_ccaa` table: rows, figures, intervals, interviews, months and flags | Exact | Blocking | No differences | `validacion_web_cis_ccaa` |
 | `calendario_fuentes` | `inventario/calendario_fuentes.csv`: sources in the inventory, vocabulary, months, days and periods (§9.3) | Exact | Blocking | None | `validacion_calendario` |
@@ -783,22 +783,22 @@ where:
 
 2021 tracts by status, for each year (`tabla_larga`, rows with `fuente == "ine_adrh"` and `nivel == "sc"`):
 
-| Year | Means (1 and 2): `dato` | Means: `estimado` | Means: `secreto` | Median (3): `dato` | Median: `estimado` | Median: `secreto` | Median: `ausente` |
-|---|---|---|---|---|---|---|---|
-| 2015 | 32,592 | 1,634 | 2,106 | 31,868 | 1,257 | 2,593 | 614 |
-| 2016 | 33,002 | 1,456 | 1,874 | 32,323 | 1,127 | 2,361 | 521 |
-| 2017 | 33,374 | 907 | 2,052 | 33,179 | 670 | 2,107 | 377 |
-| 2018 | 33,886 | 391 | 2,056 | 33,751 | 297 | 2,148 | 137 |
-| 2019 | 33,958 | 281 | 2,094 | 33,854 | 224 | 2,189 | 66 |
-| 2020 | 35,826 | 0 | 507 | 34,349 | 0 | 1,984 | 0 |
-| 2021 | 36,123 | 195 | 14 | 34,647 | 158 | 1,400 | 127 |
-| 2022 | 35,645 | 613 | 74 | 34,070 | 478 | 1,391 | 393 |
-| 2023 | 35,367 | 877 | 88 | 33,677 | 665 | 1,454 | 536 |
-| 2024 | 35,043 | 1,194 | 95 | 33,184 | 886 | 1,509 | 753 |
+| Year | Means (1 and 2): `dato` | Means: `estimado` | Means: `secreto` | Means: `ausente` | Median (3): `dato` | Median: `estimado` | Median: `secreto` | Median: `ausente` |
+|---|---|---|---|---|---|---|---|---|
+| 2015 | 32,592 | 1,634 | 1,321 | 785 | 31,868 | 1,257 | 1,278 | 1,929 |
+| 2016 | 33,002 | 1,456 | 1,634 | 240 | 32,323 | 1,127 | 1,585 | 1,297 |
+| 2017 | 33,374 | 907 | 1,812 | 240 | 33,179 | 670 | 1,331 | 1,153 |
+| 2018 | 33,886 | 391 | 1,816 | 240 | 33,751 | 297 | 1,336 | 949 |
+| 2019 | 33,958 | 281 | 1,854 | 240 | 33,854 | 224 | 1,378 | 877 |
+| 2020 | 35,826 | 0 | 507 | 0 | 34,349 | 0 | 1,408 | 576 |
+| 2021 | 36,123 | 195 | 14 | 0 | 34,647 | 158 | 1,400 | 127 |
+| 2022 | 35,645 | 613 | 74 | 0 | 34,070 | 478 | 1,391 | 393 |
+| 2023 | 35,367 | 877 | 88 | 0 | 33,677 | 665 | 1,454 | 536 |
+| 2024 | 35,043 | 1,194 | 95 | 0 | 33,184 | 886 | 1,509 | 753 |
 
 The two mean indicators have the same counts by status.
 
-**Why `secreto` is higher in 2015–2019.** In those years ADRH does not publish by tract between 1,327 and 1,629 codes that are in the street register, mostly in the Basque Country and Navarre (`fase_codigos`, column `callejero_sin_adrh`; plan §6.3). Since the review of 18 Nov 2026, the tracts of provinces with none published are `ausente`, not `secreto`: the table above comes from the previous run and is rebuilt in the next one.
+**Why `secreto` is higher in 2015–2019.** In those years ADRH does not publish by tract between 1,327 and 1,629 codes that are in the street register, mostly in the Basque Country and Navarre (`fase_codigos`, column `callejero_sin_adrh`; plan §6.3). Since the review of 18 Nov 2026, the tracts of provinces with none published are `ausente`, not `secreto`: in the means, 785 tracts in 2015 and 240 each year from 2016 to 2019; in the median, also 576 in 2020.
 
 **Rows in the long table.** 1,303,484 income rows (§9.1). Municipal level: 73,777 rows for each mean and 65,958 for the median. The `version` column carries the date of the source file: 7 Nov 2026.
 
@@ -933,7 +933,7 @@ The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7
 **4. Pay received in the year.** The token uses pay received in the year, not that of someone working twelve months: AEAT does not publish that wage, because its «full year» annualises by days of contribution. In the ECV, between 68.0% (2015 income) and 77.6% (2021) of employees aged 26 to 35 with a wage worked all twelve months; with 2024 income, 73.9% (`ecv_mochila`, Spain).
 
 **5. Check with the ECV of each year** (waves 2016 to 2025). Person microdata: gross wage (PY010G), net wage (PY010N), weight (PB040) and age at the end of the income year (`leer_ecv_asalariados()`, `resumir_ecv_asalariados()`).
-- `mochila_ecv`: the Young adult token of each common-regime region and of Spain (`mochila_espana()`) against the ECV median gross pay. In 2024, the 15 regions lie between −10.6% (La Rioja) and +7.2% (Castilla y León) of the median; Spain, between −5.9% (2015) and +7.2% (2020) over the series. Since 11-Nov-2026, the tolerance comes from the sample size (plan §11, question 44 g), not from a fixed ±15%: the warning measures how far the token falls outside the 95% interval of the ECV median, with the effective sample size of the weights (Kish) and Woodruff's method (`resumir_ecv_asalariados()`). The interval goes from ±2.7% (Spain) to ±57% (regions with about 50 observations). It warns on 20 of the 160 figures (with the fixed ±15%, on 32), up to 19.5% outside the interval (Valencian Community, 2016, 151 observations). Spain falls outside its own in 2019, 2020, 2022 and 2023, by at most 1.9%: with 2,733 to 4,826 observations the interval is narrow, and what is left is an underlying difference between the AEAT and the ECV.
+- `mochila_ecv`: the Young adult token of each common-regime region and of Spain (`mochila_espana()`) against the ECV median gross pay. In 2024, the 15 regions lie between −10.5% (La Rioja) and +7.3% (Castilla y León) of the median; Spain, between −7.9% (2015) and +3.7% (2018) over the series. Since 11-Nov-2026, the tolerance comes from the sample size (plan §11, question 44 g), not from a fixed ±15%: the warning measures how far the token falls outside the 95% interval of the ECV median, with the effective sample size of the weights (Kish) and Woodruff's method (`resumir_ecv_asalariados()`). The interval goes from ±2.7% (Spain) to ±57% (regions with about 50 observations). It warns on 22 of the 160 figures (with the fixed ±15%, on 33), up to 14.9% outside the interval (Castilla y León, 2017, 112 observations). Spain falls outside its own in 2015, 2019, 2021, 2022 and 2023, by at most 2.0%: with 2,733 to 4,826 observations the interval is narrow, and what is left is an underlying difference between the AEAT and the ECV.
 - `mochila_neto_ecv`: the gross-to-net step applied to the ECV median gross pay against the median net pay. In 2024, between −2.0% (Canary Islands) and +3.4% (Galicia); Spain, +0.5%. Over the series, Spain lies between −1.2 and +2.5%, and the warning goes off on 8 of the 170 regional figures.
 
 **Result** (`mochila_neta`; `datos/intermedios/mochila/mochila_neta.csv`):
@@ -942,25 +942,25 @@ The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7
 
 | Year | Gross annual (€) | Net monthly (€) | Minimum (€) | Maximum (€) |
 |---|---|---|---|---|
-| 2015 | 12,313 | 920 | 633 | 1,100 |
-| 2016 | 12,468 | 930 | 638 | 1,115 |
-| 2017 | 12,793 | 952 | 666 | 1,148 |
-| 2018 | 13,435 | 999 | 710 | 1,210 |
-| 2019 | 14,170 | 1,055 | 762 | 1,270 |
-| 2020 | 13,926 | 1,036 | 759 | 1,250 |
-| 2021 | 15,079 | 1,112 | 817 | 1,331 |
-| 2022 | 16,242 | 1,186 | 866 | 1,397 |
-| 2023 | 17,401 | 1,267 | 922 | 1,473 |
-| 2024 | 18,334 | 1,330 | 990 | 1,529 |
-| 2025 | 19,212 | 1,381 | 1,044 | 1,572 |
+| 2015 | 12,040 | 902 | 619 | 1,080 |
+| 2016 | 11,692 | 878 | 598 | 1,056 |
+| 2017 | 12,452 | 929 | 649 | 1,122 |
+| 2018 | 13,268 | 988 | 701 | 1,197 |
+| 2019 | 14,146 | 1,053 | 760 | 1,268 |
+| 2020 | 13,211 | 989 | 720 | 1,198 |
+| 2021 | 14,718 | 1,090 | 798 | 1,306 |
+| 2022 | 16,407 | 1,196 | 874 | 1,407 |
+| 2023 | 17,515 | 1,274 | 928 | 1,481 |
+| 2024 | 18,351 | 1,331 | 991 | 1,530 |
+| 2025 | 19,230 | 1,382 | 1,045 | 1,573 |
 
-- The 2024 figure is the same as before the series (differences below a thousandth of a euro). The net-to-gross ratio falls from 0.90 (2015) to 0.87 (2024 and 2025): average withholding rises from 3.7% (2015) to 6.0% (2024) and 6.8% (2025).
+- With the composition factor, gross pay moves between −6.2% (2016) and +1.0% (2022) from that of the previous run; in 2024, +0.1%. The net-to-gross ratio falls from 0.90 (2015) to 0.87 (2024) and 0.86 (2025): average withholding rises from 3.5% (2015) to 6.0% (2024) and 6.8% (2025).
 
 **Discarded options.** Options A and C are still computed for the record, in `mochila` (columns `A` and `C`; `datos/intermedios/mochila/mochila.csv`):
-- In 2024, option A comes out between 1.24 and 1.49 times B (median, 1.34). Weighted mean: €24,257 against €18,334.
-- Against the 2025 ECV, A lies 14% above the median of those working all twelve months. B lies 1.7% below the median of all employees, as a weighted mean of the regions (plan §3.1).
+- In 2024, option A comes out between 1.24 and 1.49 times B (median, 1.34). Weighted mean: €24,257 against €18,351.
+- Against the 2025 ECV, A lies 14% above the median of those working all twelve months. B lies 1.6% below the median of all employees, as a weighted mean of the regions (plan §3.1).
 
-**Composition factor** (review of 18 Nov 2026; `ecv_mochila_composicion()`, target `composicion_mochila`). The median-to-mean ratio of step 2 is that of people who worked the whole year, and it was applied to a mean that includes people who worked only a few months, whose distribution is more skewed: the median came out high. It is now also multiplied by the ratio between the median-to-mean ratio of the gross pay of all employees aged 26 to 35 and that of those who worked all twelve months, for Spain in the ECV of the same income year; the last AEAT year, still without a wave, takes the previous one. It assumes that this difference is the same in every region. The ECV check (`mochila_ecv`) measures whether it gets closer to the survey median this way. The young adult token figures in this note come from the previous run and are rebuilt in the next one.
+**Composition factor** (review of 18 Nov 2026; `ecv_mochila_composicion()`, target `composicion_mochila`). The median-to-mean ratio of step 2 is that of people who worked the whole year, and it was applied to a mean that includes people who worked only a few months, whose distribution is more skewed: the median came out high. It is now also multiplied by the ratio between the median-to-mean ratio of the gross pay of all employees aged 26 to 35 and that of those who worked all twelve months, for Spain in the ECV of the same income year; the last AEAT year, still without a wave, takes the previous one. It assumes that this difference is the same in every region. The ECV check (`mochila_ecv`) measures whether it gets closer to the survey median this way. The factor ranges from 0.938 (2016) to 1.010 (2022); in 2024, 1.001, and 2025, still without a wave, takes the 2024 one (`composicion_mochila`). The young adult token figures in this note already include it.
 
 ### 6.3 Minimum wage token
 
@@ -986,8 +986,8 @@ The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7
 - **Use.** The rent share of income in the long table (§7.4) and the website use the minimum wage of the same year as the rent (rule 4; author's decision, 9 Nov 2026): with 2024 rent, €1,237.40. Those of 2025 and 2026 have no rent of the same year; the website cites the latest next to that of the chosen year.
 
 **Comparison with the Young adult token.**
-- The 2024 Young adult token (€1,330 net on average) comes out almost equal to the Minimum wage token with the 2026 minimum wage. They are different years (rule 4).
-- With the 2024 minimum wage (€1,237 net), the Young adult token lies 7.5% above (plan §3.1).
+- The 2024 Young adult token (€1,331 net on average) comes out almost equal to the Minimum wage token with the 2026 minimum wage. They are different years (rule 4).
+- With the 2024 minimum wage (€1,237 net), the Young adult token lies 7.6% above (plan §3.1).
 - The income tax exemption of the minimum wage applies to those who earn it all year. The AEAT table gives withholding of 1.6–1.8% also below €12,000.
 
 ### 6.4 Neighbourhood household token
@@ -1029,7 +1029,7 @@ The choice of method is the author's, of 7 Nov 2026 (plan §3.1; open question 7
 | 2024 | 1,442.67 | 1,198 | 1,869 | 1,574 |
 | 2025 | 1,506.06 | 1,245 | 1,926 | 1,631 |
 
-- In 2024, the Pensioner token (€1,574 on average) lies above the Young adult token (€1,330) and the Minimum wage token (€1,237) of the same year.
+- In 2024, the Pensioner token (€1,574 on average) lies above the Young adult token (€1,331) and the Minimum wage token (€1,237) of the same year.
 - Sources, downloaded with the author's permission (9 Nov 2026): the 120 INSS Excel files from 2015 to 2024 (≈ 9.6 MB) and AEAT withholding from 2015 to 2023 (1,458 pages, ≈ 39 MB; 2024 was already there). On 12 Nov 2026, also with his permission, the 12 Excel files of 2025 (2.4 MB) and the 2025 AEAT edition (308 pages, 11 MB). AEAT editions up to 2017 have another layout and other region names («Región de Murcia»): `aeat_titulo()` and `aeat_menus()` read both.
 
 ### 6.6 Wage percentile of the required pay
@@ -1223,7 +1223,7 @@ Confidentiality is concentrated in rural provinces: Guadalajara, 173 of 394 trac
 
 **2011 Census** (plan §11, question 14; task 47). Indicators by tract from the 2011 Census (`ine_censo2011`; `paso2011_leer_censo2011()`, target `censo2011`): population (`t1_1`), dwellings (`t16_1`), main residences (`t17_1`) and rented (`t18_4`). It is a sample-based census: each figure is an estimate rounded to multiples of 5, and an empty cell is confidential (fewer than 5 sample units). Of the 35,960 Census tracts, 35,917 have a row; in 8,512 the rented or the main-residence count is missing.
 - **Calculation on the 2021 tract map** (`paso2011_reproyectar_censo()`, target `censo2011_2021`): main and rented residences are carried as counts with the Census table (§3.11), and the percentage is recomputed in each 2021 tract. Status: that of the counts; `secreto` if any of its sources lacks either count; `ausente` if it receives nothing.
-- **Result:** `dato`, 23,655 tracts; `estimado`, 3,931; `secreto`, 8,714; `ausente`, 33. Median, 9.7%; 90th percentile, 29.6%; 3,087 tracts at 0%, because small counts are rounded.
+- **Result:** `dato`, 23,656 tracts; `estimado`, 3,928; `secreto`, 8,714; `ausente`, 35. Median, 9.7%; 90th percentile, 29.6%; 3,087 tracts at 0%, because small counts are rounded.
 - **Spain, regions and provinces** (table 02003; `paso2011_leer_tenencia()`, target `censo2011_tenencia`): Spain, 100 × 2,438,574 / 18,083,692 = 13.48%. Single-province regions also give the province. Gates `paso2011_censo_alquiler`, `paso2011_censo_principales` and `paso2011_censo_paso` (§4.1).
 - **Two snapshots** (break `censo_metodo_2021`): the 2011 Census is sample-based and the 2021 one comes from registers.
 
@@ -1287,19 +1287,19 @@ Confidentiality is concentrated in rural provinces: Guadalajara, 173 of 394 trac
 
 The change of denominator in November 2024 is recorded as a break in `inventario/rupturas.csv` (`vut_denominador_2024`; plan §11, question 35): the long table carries INE's figure for each period, and in the territories with tracts under confidentiality the November 2024 figure falls slightly against August's because of the denominator alone.
 
-**August 2020 to February 2023** (task 47; `paso2011_reproyectar_vut()`, target `vut_2011_2021`). Tourist dwellings on the 2011 Census tracts are carried to 2021 as a count, with their own table (`paso_final_2011_vut`; §3.11). The denominator is the 2011 Census dwellings (`t16_1`), INE's denominator in those periods, carried with the same table. If the 2021 tract receives a single whole Census tract, INE's percentage is copied (30,250 tracts). Status: that of the counts; `secreto` if INE protects the percentage of any of its sources or the 2011 Census does not give its dwellings; `ausente` if it receives nothing.
+**August 2020 to February 2023** (task 47; `paso2011_reproyectar_vut()`, target `vut_2011_2021`). Tourist dwellings on the 2011 Census tracts are carried to 2021 as a count, with their own table (`paso_final_2011_vut`; §3.11). The denominator is the 2011 Census dwellings (`t16_1`), INE's denominator in those periods, carried with the same table. If the 2021 tract receives a single whole Census tract, INE's percentage is copied (30,251 tracts). Status: that of the counts; `secreto` if INE protects the percentage of any of its sources or the 2011 Census does not give its dwellings; `ausente` if it receives nothing.
 
 | Period | `dato` | `estimado` | `secreto` | `ausente` | Tourist dwellings (Spain) | Median (%) | 90th percentile | 99th percentile | Maximum | Tracts at 0% |
 |---|---|---|---|---|---|---|---|---|---|---|
-| August 2020 | 30,574 | 5,427 | 313 | 19 | 321,496 | 0.21 | 2.13 | 11.3 | 82.0 | 12,295 |
-| February 2021 | 30,574 | 5,427 | 313 | 19 | 294,698 | 0.19 | 1.94 | 10.1 | 82.2 | 12,740 |
-| August 2021 | 30,574 | 5,427 | 313 | 19 | 306,974 | 0.19 | 2.00 | 10.5 | 76.5 | 12,708 |
-| February 2022 | 30,574 | 5,427 | 313 | 19 | 285,868 | 0.18 | 1.89 | 9.9 | 72.3 | 13,305 |
-| August 2022 | 30,574 | 5,427 | 313 | 19 | 311,517 | 0.19 | 2.06 | 10.6 | 78.9 | 12,872 |
-| February 2023 | 30,574 | 5,427 | 313 | 19 | 305,135 | 0.20 | 2.01 | 10.4 | 84.3 | 12,660 |
+| August 2020 | 30,575 | 5,424 | 313 | 21 | 321,496 | 0.21 | 2.13 | 11.3 | 82.0 | 12,295 |
+| February 2021 | 30,575 | 5,424 | 313 | 21 | 294,698 | 0.19 | 1.94 | 10.1 | 82.2 | 12,740 |
+| August 2021 | 30,575 | 5,424 | 313 | 21 | 306,974 | 0.19 | 2.00 | 10.5 | 76.5 | 12,708 |
+| February 2022 | 30,575 | 5,424 | 313 | 21 | 285,868 | 0.18 | 1.89 | 9.9 | 72.3 | 13,303 |
+| August 2022 | 30,575 | 5,424 | 313 | 21 | 311,517 | 0.19 | 2.06 | 10.6 | 78.9 | 12,872 |
+| February 2023 | 30,575 | 5,424 | 313 | 21 | 305,135 | 0.20 | 2.01 | 10.4 | 84.3 | 12,658 |
 
 - The sum is that of table 39364, except for one tourist dwelling in August 2022 and in February 2023: that of tract 1502501002, which has no conversion (`paso2011_vut_paso`, `paso2011_sin_paso`).
-- The 19 `ausente` tracts are those the table leaves empty (§3.11).
+- The 21 `ausente` tracts are those the table leaves empty (§3.11).
 - Spain, regions and provinces: the percentage published in table 39365 (`territorios_ine_vut()`). Spain: 1.28% in August 2020, 1.17% in February 2021, 1.22% in August 2021, 1.13% in February 2022, 1.24% in August 2022 and 1.21% in February 2023. Gates `paso2011_vut_denominador` and `paso2011_vut_territorios` (§4.1).
 - **Same year** (guide, rule 4): tourist dwellings for 2020–2023 over 2011 dwellings, as at INE. In February 2024 the tract map and the denominator change at the same time (break `vut_seccionado_2024`).
 
@@ -1368,7 +1368,7 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 | Median rent over the area's average household income (%) | 26,125 | 6.2 | 12.6 | 17.6 | 24.0 | 51.3 |
 | Net pay needed, with actual monthly rent (€ a month) | 26,137 | 500 | 1,235 | 1,900 | 2,976 | 11,679 |
 | Net pay needed, 50 m² minimum (€ a month) | 26,137 | 300 | 700 | 1,217 | 2,117 | 4,283 |
-| Rent share with the Young adult token (%) | 24,117 | 7.2 | 16.8 | 27.5 | 43.7 | 87.9 |
+| Rent share with the Young adult token (%) | 24,117 | 7.2 | 16.8 | 27.4 | 43.6 | 87.8 |
 | Rent share with the Minimum wage token, 2024 minimum wage (%) | 26,137 | 7.3 | 17.0 | 29.5 | 51.3 | 103.8 |
 | Rent share with the Pensioner token (%) | 26,137 | 6.2 | 14.3 | 23.3 | 37.9 | 73.2 |
 
@@ -1376,16 +1376,16 @@ The change of denominator in November 2024 is recorded as a break in `inventario
 
 | Year | Minimum wage: median (%) | Minimum wage: above 30% | Young adult: median (%) | Young adult: above 30% | Pensioner: median (%) | Pensioner: above 30% |
 |---|---|---|---|---|---|---|
-| 2015 | 36.7 | 69.2% | 28.2 | 43.0% | 22.7 | 21.3% |
-| 2016 | 36.3 | 70.8% | 28.4 | 43.4% | 22.6 | 21.3% |
-| 2017 | 34.3 | 63.4% | 28.2 | 43.3% | 22.6 | 22.1% |
-| 2018 | 34.2 | 61.9% | 27.8 | 41.5% | 22.7 | 23.1% |
-| 2019 | 30.0 | 50.1% | 28.2 | 43.4% | 23.2 | 25.7% |
-| 2020 | 28.9 | 46.2% | 29.7 | 49.1% | 23.4 | 26.5% |
-| 2021 | 29.7 | 49.0% | 28.6 | 44.8% | 23.7 | 26.9% |
-| 2022 | 29.7 | 49.7% | 27.9 | 41.9% | 23.8 | 27.2% |
-| 2023 | 28.8 | 47.2% | 27.4 | 39.9% | 23.0 | 24.4% |
-| 2024 | 29.5 | 48.4% | 27.5 | 40.2% | 23.3 | 24.1% |
+| 2015 | 36.7 | 69.2% | 28.7 | 45.2% | 22.7 | 21.3% |
+| 2016 | 36.3 | 70.8% | 30.0 | 49.9% | 22.6 | 21.3% |
+| 2017 | 34.3 | 63.4% | 28.9 | 45.9% | 22.6 | 22.1% |
+| 2018 | 34.2 | 61.9% | 28.1 | 43.0% | 22.7 | 23.1% |
+| 2019 | 30.0 | 50.1% | 28.3 | 43.5% | 23.2 | 25.7% |
+| 2020 | 28.9 | 46.2% | 31.1 | 54.0% | 23.4 | 26.5% |
+| 2021 | 29.7 | 49.0% | 29.2 | 47.1% | 23.7 | 26.9% |
+| 2022 | 29.7 | 49.7% | 27.7 | 41.1% | 23.8 | 27.2% |
+| 2023 | 28.8 | 47.2% | 27.2 | 39.4% | 23.0 | 24.4% |
+| 2024 | 29.5 | 48.4% | 27.4 | 40.1% | 23.3 | 24.1% |
 
 With the Young adult token, 7,616 tracts are `ausente` in 2024: all those in the Basque Country, Navarre, Ceuta and Melilla, where the token has no income, and those without rent.
 
@@ -1666,13 +1666,13 @@ The series with the main-residence tax deduction (in force until December 2012),
 
 **By autonomous community** (task 63; `cis_ccaa_descargar()`, target `ficheros_cis_ccaa`). The figure by community comes from the barometer microdata harmonised by *Barómetro a barómetro* (<https://gastiaso.github.io/barometros/>), which publishes in dated editions, with a CC BY 4.0 licence for the harmonisation, one row per interview of the 64 barometers from January 2021 to October 2026 (264,081 interviews): the community, the CIS weight and the three mentions of both questions, in harmonised codes («La vivienda», housing, is `PROB_007`; «La ocupación de viviendas», squatting, is separate). The Parquet file and its metadata are downloaded from the edition set in `inventario/cis_ccaa_ficheros.csv`, with their size and SHA-256 checksum; community names are matched to INE codes through a fixed table (`inventario/cis_ccaa_comunidades.csv`).
 
-**Calculation** (`cis_ccaa_menciones()`, `cis_ccaa_tabla()`; target `cis_vivienda_ccaa`). The definition is that of the national series: share of respondents who cite housing in any of their three mentions. Communities are weighted with the weight the CIS provides for estimates by community (`peso_ccaa`, PESOCCAA) and Spain with the whole-sample weight (`peso`), which reproduces the published national figure (review of 18 Nov 2026; until then, everything with `peso`). Since November 2023 the adjustment by education level is made within each community, and with `peso` a community's figure moved between 0.2 and 6.7 points away from the one given by `peso_ccaa`, more than its margin. The community figures do not add up to Spain's: the sum gate (`cis_ccaa_suma`) checks the reading with `peso`. Base: respondents whose first mention is not «not applicable» (don’t know and no answer count). A year pools all its interviews; the current year carries the published months and is labelled «up to October» (`en_curso`). Ceuta and Melilla, with fewer than 200 interviews a year, are pooled two years at a time, the year and the one before, with the last one in `anio`. Margin: 95% Wilson interval on the effective size, the interviews divided by the Kish design effect of each base (n · Σw² / (Σw)², around 1.1 until October 2023 and around 2 afterwards); `margen` is half the interval. Nothing with fewer than 50 interviews (`ausente`). The weighting change of November 2023 (adjustment by education level; break R10 in *Barómetro a barómetro*) splits 2023 and, for Ceuta and Melilla, 2024 too: those periods are flagged (`ruptura`) and the table carries no changes over time. Own table, outside the long table: community, year, period, question, figure, interval, margin, interviews, design effect, months and status.
+**Calculation** (`cis_ccaa_menciones()`, `cis_ccaa_tabla()`; target `cis_vivienda_ccaa`). The definition is that of the national series: share of respondents who cite housing in any of their three mentions. Communities are weighted with the weight the CIS provides for estimates by community (`peso_ccaa`, PESOCCAA) and Spain with the whole-sample weight (`peso`), which reproduces the published national figure (review of 18 Nov 2026; until then, everything with `peso`). Since November 2023 the adjustment by education level is made within each community, and with `peso` a community's figure moved between 0.2 and 6.7 points away from the one given by `peso_ccaa`, more than its margin. The community figures do not add up to Spain's: the sum gate (`cis_ccaa_suma`) checks the reading with `peso`. Base: respondents whose first mention is not «not applicable» (don’t know and no answer count). A year pools all its interviews; the current year carries the published months and is labelled «up to October» (`en_curso`). Ceuta and Melilla, with fewer than 200 interviews a year, are pooled two years at a time, the year and the one before, with the last one in `anio`. Margin: 95% Wilson interval on the effective size, the interviews divided by the Kish design effect of each base (n · Σw² / (Σw)²: for Spain, around 1.1 until October 2023 and around 2 afterwards; for the communities, with `peso_ccaa`, from 1.0 to 1.3); `margen` is half the interval. Nothing with fewer than 50 interviews (`ausente`). The weighting change of November 2023 (adjustment by education level; break R10 in *Barómetro a barómetro*) splits 2023 and, for Ceuta and Melilla, 2024 too: those periods are flagged (`ruptura`) and the table carries no changes over time. Own table, outside the long table: community, year, period, question, figure, interval, margin, interviews, design effect, months and status.
 
-**Result** (13-nov-2026, edition v2026-10). In 2025, housing is among Spain’s three main problems for 32.3% of respondents (±0.6 points; 44,336 interviews): from 24.2% in Castilla y León (±2.5) and 24.9% in the Región de Murcia (±3.3) to 39.2% in the Comunidad de Madrid (±1.7) and 41.0% in the Illes Balears (±4.5); Ceuta and Melilla, in 2024–2025, 21.9 and 19.5% (±6.1 and ±5.5). The communities have from 1,025 interviews (La Rioja) to 7,630 (Andalucía) and margins from ±1.5 to ±4.5 points. In the personal question, Spain gives 22.5%, from 14.8% in Extremadura to 33.9% in the Illes Balears. Spain goes from 1.6% in 2021 to 44.4% in 2026 (up to October).
+**Result** (18-nov-2026, edition v2026-10; communities with `peso_ccaa`). In 2025, housing is among Spain’s three main problems for 32.3% of respondents (±0.6 points; 44,336 interviews): from 29.1% in Castilla y León (±2.1) and 29.7% in Extremadura (±2.9) to 43.2% in the País Vasco (±2.4) and 47.4% in the Illes Balears (±3.1); Ceuta and Melilla, in 2024–2025, 22.3 and 23.4% (±4.3 each). The communities have from 1,025 interviews (La Rioja) to 7,630 (Andalucía) and margins from ±1.1 to ±3.3 points. In the personal question, Spain gives 22.5%, from 16.9% in the Principado de Asturias to 35.3% in the Illes Balears. Spain goes from 1.6% in 2021 to 44.4% in 2026 (up to October).
 
-**Validation** (`cis_ccaa_comprobar()`; target `validacion_cis_ccaa`). Each month for Spain computed from the microdata reproduces the published figure of the national series to one decimal: all 128 figures (64 months, both questions) match exactly (`cis_ccaa_espana`, ±0.1 points); a month without a national figure to check it against would go to the warning `cis_ccaa_meses`, which has none today. The 19 communities, weighted by the sum of their weights, give the figure for Spain (`cis_ccaa_suma`). The interviews of each study are those in the metadata and the (N) of the CIS tabulations (`cis_ccaa_muestra`); «La vivienda» is `PROB_007` in both questions and the communities are the 19 of the fixed table (`cis_ccaa_codigos`); the files, those in the inventory (`cis_ccaa_fichero`). Warning `cis_ccaa_margen`: nine figures for Ceuta and Melilla with a margin above ±5 points, even when pooled.
+**Validation** (`cis_ccaa_comprobar()`; target `validacion_cis_ccaa`). Each month for Spain computed from the microdata reproduces the published figure of the national series to one decimal: all 128 figures (64 months, both questions) match exactly (`cis_ccaa_espana`, ±0.1 points); a month without a national figure to check it against would go to the warning `cis_ccaa_meses`, which has none today. The 19 communities, weighted by the sum of their weights, give the figure for Spain (`cis_ccaa_suma`). The interviews of each study are those in the metadata and the (N) of the CIS tabulations (`cis_ccaa_muestra`); «La vivienda» is `PROB_007` in both questions and the communities are the 19 of the fixed table (`cis_ccaa_codigos`); the files, those in the inventory (`cis_ccaa_fichero`). Warning `cis_ccaa_margen`: three figures for Ceuta and Melilla with a margin above ±5 points, even when pooled (the two for 2026 in the question on Spain and Melilla's for 2021 in the personal one).
 
-**Website** (`cis_ccaa_exportar()`; target `ficheros_web_cis_ccaa`). `datos/cis_vivienda_ccaa.json` and `datos/cis_vivienda_ccaa.csv`, with their round trip (`web_cis_ccaa`; target `validacion_web_cis_ccaa`). In `historico.html`, below the national block, «By autonomous community»: one year (it opens on the last complete one) and one question; one row per community, sorted by the figure, with the interval as a horizontal bar on a common scale, the figure for Spain as a reference line, the margin and the interviews, the notes on the current year, the break and Ceuta and Melilla, the credit to the CIS and to *Barómetro a barómetro* and the CSV download. No choropleth map: with margins from ±1.5 to ±4.5 points, neighbouring communities in the ranking cannot be told apart. The community card on the map gives the most recent figure for the question on Spain, with its period, margin and interviews, and links to the Time machine.
+**Website** (`cis_ccaa_exportar()`; target `ficheros_web_cis_ccaa`). `datos/cis_vivienda_ccaa.json` and `datos/cis_vivienda_ccaa.csv`, with their round trip (`web_cis_ccaa`; target `validacion_web_cis_ccaa`). In `historico.html`, below the national block, «By autonomous community»: one year (it opens on the last complete one) and one question; one row per community, sorted by the figure, with the interval as a horizontal bar on a common scale, the figure for Spain as a reference line, the margin and the interviews, the notes on the current year, the break and Ceuta and Melilla, the credit to the CIS and to *Barómetro a barómetro* and the CSV download. No choropleth map: with margins from ±1.1 to ±3.3 points, neighbouring communities in the ranking cannot be told apart. The community card on the map gives the most recent figure for the question on Spain, with its period, margin and interviews, and links to the Time machine.
 
 **What it does not cover.** From 2014 to 2020 there are no harmonised microdata, and those of the CIS require a form per study. The CIS Housing Barometer 2026, with a sample by community, only has a preview, without microdata.
 
@@ -1740,7 +1740,7 @@ The series with the main-residence tax deduction (in force until December 2012),
   - the contribution is that of a permanent contract.
 - **Coverage.** No Basque Country, Navarre, Ceuta or Melilla (§6.2).
 - **Pay received in the year.** The token uses pay received in the year, which includes people who worked only a few months; the token says so in its method line, on the home page and on the map: «pay received in the year by employees aged 26 to 35 in their province, including those who did not work all twelve months».
-- **Weak check before 2022.** The 2016 to 2022 ECV waves have smaller samples: the token of a region moves more than 15% away from the survey median in 32 figures, though that of Spain stays between −5.9 and +7.2% (§6.2).
+- **Weak check before 2022.** The 2016 to 2022 ECV waves have smaller samples: the token of a region moves more than 15% away from the survey median in 33 figures, though that of Spain stays between −7.9 and +3.7% (§6.2).
 
 **Pensioner token:**
 - **Pensions, not pensioners.** Someone with two pensions counts twice, and the province is that of the provincial office that manages the pension (§6.5).
@@ -1795,9 +1795,9 @@ The series with the main-residence tax deduction (in force until December 2012),
 | `zonas_tensionadas` | 24,393 | Municipality (24,393) | 3 Nov 2026 (the most recent BOE resolution) |
 | `calculo_propio` | 4,068,572 | Tract (2,799,716), district (672,942), municipality (588,576), province (5,648), region (1,669) and Spain (21) | 6, 7 and 12 Nov 2026 |
 
-**By status:** `dato`, 9,014,855 rows; `ausente`, 1,855,141; `secreto`, 1,335,713; `estimado`, 87,870.
+**By status:** `dato`, 9,014,862 rows; `ausente`, 1,863,711; `secreto`, 1,327,157; `estimado`, 87,849.
 
-**Publication.** The long table is published in the GitHub release of each version (since `v0.1.0`, 9 Nov 2026; currently `v1.2.0`), and the website at `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).(`docs/publicacion.md`).
+**Publication.** The long table is published in the GitHub release of each version (since `v0.1.0`, 9 Nov 2026; currently `v1.2.0`), and the website at `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).
 
 ### 9.2 Website data
 

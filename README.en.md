@@ -299,7 +299,7 @@ Everything fits in one column. The bar folds into «More options»; the map move
 
 ## 7. What the board does not see
 
-- **SERPAVI** comes from the income tax returns of landlords who are individuals: it misses dwellings owned by companies, rentals between relatives and undeclared rentals. It measures the rented stock, not what newcomers pay. In 2024, 72% of tracts have data, home to around 83% of the population. Navarre has data from 2021; Gipuzkoa, from 2022; Álava and Bizkaia, only for 2024.
+- **SERPAVI** comes from the income tax returns of landlords who are individuals: it misses dwellings owned by companies, rentals between relatives and undeclared rentals. It measures the rented stock, not what newcomers pay. In 2024, 72% of tracts have data, home to around 84% of the population. Navarre has data from 2021; Gipuzkoa, from 2022; Álava and Bizkaia, only for 2024.
 - **Household income** is that of all households in the tract, owners included, not that of renters.
 - **Tax Agency wages** are what was received in the year, including by those who worked only a few months, and do not cover the Basque Country or Navarre.
 - **«Money left over»** is a subtraction: income minus rent. It does not say whether it is enough to live on.

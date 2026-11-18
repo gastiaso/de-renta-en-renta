@@ -303,7 +303,7 @@ Entre 2016 y 2025 hay nueve grupos con 19 municipios (`grupos_municipio`, `geo_g
 **Qué cambia dentro de un grupo:**
 - Las tablas de paso y la prueba de cierre cruzan municipios (`agrupar_municipio()`).
 - Los municipios nuevos conservan de forma muy desigual los códigos de vía del callejero (Fuente Carreteros, 38 de 38; El Palmar de Troya, 19 de 71). Por eso, en los orígenes que se van a otro municipio decide el Catastro.
-- El callejero solo casa vías de municipios distintos entre un municipio que solo está en un seccionado y su predecesor o su sucesor: el par ocupa al menos el 25 % de la superficie del municipio nuevo o desaparecido (`geo_pares_permitidos()`, `UMBRAL_CRUCE_MUNICIPIO`; revisión del 18-nov-2026). Cada municipio numera sus vías por su cuenta, y casar por código dos municipios que siguen en los dos seccionados juntaba calles distintas: en la tabla desde el Censo 2011, la única sección de Rosalejo se repartía un 41, un 30 y un 30 % entre Rosalejo, Tiétar y Pueblonuevo de Miramontes, y una de Iznalloz salía en parte a un vecino que no es su sucesor. Afectaba a los indicadores 18 y 19 (2020–2023). Lo vigila la compuerta `paso_cruce_municipios` (bloqueo; `comprobar_cruce_municipios()`), que el cierre poblacional no sustituye: se mide por grupo. Las tablas de `geo/tablas_paso/` se rehacen con la próxima pasada.
+- El callejero solo casa vías de municipios distintos entre un municipio que solo está en un seccionado y su predecesor o su sucesor: el par ocupa al menos el 25 % de la superficie del municipio nuevo o desaparecido (`geo_pares_permitidos()`, `UMBRAL_CRUCE_MUNICIPIO`; revisión del 18-nov-2026). Cada municipio numera sus vías por su cuenta, y casar por código dos municipios que siguen en los dos seccionados juntaba calles distintas: en la tabla desde el Censo 2011, la única sección de Rosalejo se repartía un 41, un 30 y un 30 % entre Rosalejo, Tiétar y Pueblonuevo de Miramontes, y una de Iznalloz salía en parte a un vecino que no es su sucesor. Afectaba a los indicadores 18 y 19 (2020–2023). Lo vigila la compuerta `paso_cruce_municipios` (bloqueo; `comprobar_cruce_municipios()`), que el cierre poblacional no sustituye: se mide por grupo. Las tablas de `geo/tablas_paso/` se rehicieron con la pasada del 18-nov-2026.
 
 ### 3.8 Secciones huérfanas y excepciones de cobertura
 
@@ -433,11 +433,11 @@ Las fusiones y segregaciones de municipios entre 2011 y 2021 forman 15 grupos co
 
 | Tabla | Secciones de 2021 que reciben algo | `estimado` | Medianas `ausente` | Pares por callejero / Catastro / código |
 |---|---|---|---|---|
-| Solo callejero | 36.286 | 11.043 | 4.242 | 81.344 / 0 / 3 |
-| Combinada del Censo (edificios hasta 2011) | 36.300 | 5.446 | 1.974 | 24.465 / 15.972 / 1 |
-| Combinada de las viviendas turísticas (hasta 2020) | 36.314 | 5.497 | 1.998 | 24.464 / 16.032 / 1 |
+| Solo callejero | 36.285 | 11.041 | 4.243 | 81.342 / 0 / 3 |
+| Combinada del Censo (edificios hasta 2011) | 36.298 | 5.443 | 1.974 | 24.463 / 15.972 / 1 |
+| Combinada de las viviendas turísticas (hasta 2020) | 36.312 | 5.494 | 1.998 | 24.462 / 16.032 / 1 |
 
-- Hay más secciones `estimado` que en cualquier año del ADRH (de 195 a 1.665; §3.5): son diez años de cambios de límites, con el Catastro leído solo en los municipios de F1. De las 5.446 de la tabla del Censo, 366 están en 179 municipios sin Catastro, donde reparte el callejero.
+- Hay más secciones `estimado` que en cualquier año del ADRH (de 195 a 1.665; §3.5): son diez años de cambios de límites, con el Catastro leído solo en los municipios de F1. De las 5.443 de la tabla del Censo, 366 están en 179 municipios sin Catastro, donde reparte el callejero.
 - Las medianas `ausente` no afectan a estas series: el 18 y el 19 son cocientes de recuentos.
 
 **Compuerta** (`paso2011_comprobar()`, `validacion_paso2011`; §4.1). En `anio`, 2011 para la tabla del Censo y 2020 para la de las viviendas turísticas.
@@ -568,7 +568,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `adrh_suma_secciones` | Población por sección del ADRH sumada por municipio frente al total municipal de la misma tabla | ±0,5 % | Alerta | Avisa en 160 municipios y años, todos de 2015–2019 (38, 34, 30, 29 y 29) | `comprobaciones_f1` |
 | `adrh_seccion_huerfana` | Secciones del ADRH sin código en ningún seccionado de 2016–2025 | Exacto | Alerta | 9 (§3.8) | `huerfanas_adrh` |
 | `cobertura_destino_excepcion` | Secciones de 2021 vacías por un defecto conocido de la fuente | Exacto | Alerta | 2 secciones, 6 años-sección (§3.8) | `comprobaciones_f1` |
-| `cobertura_destino_excepcion` (tablas de 2011) | Las mismas, en las tablas desde el Censo 2011 | Exacto | Alerta | 19 secciones en cada tabla (§3.11) | `comprobaciones_paso2011` |
+| `cobertura_destino_excepcion` (tablas de 2011) | Las mismas, en las tablas desde el Censo 2011 | Exacto | Alerta | 21 secciones en cada tabla (§3.11) | `comprobaciones_paso2011` |
 | `paso2011_cobertura_posterior` | Secciones de 2021 sin nada de una tabla desde el Censo 2011 cuyos edificios del Catastro son todos posteriores a su año | Exacto | Alerta | 14 en la tabla del Censo; ninguna en la de las viviendas turísticas | `comprobaciones_paso2011` |
 | `paso2011_sin_paso` | Secciones del Censo 2011 con datos que ninguna vía lleva a 2021 | Exacto | Alerta | 2, en las dos tablas | `comprobaciones_paso2011` |
 | `mapa_base_huecos` | Huecos del seccionado de 2021 de al menos 0,01 km² (suelo que no es de ninguna sección): número y superficie, en total y con nombre del IGN | Exacto | Alerta | Avisa con 95 huecos y 1.495 km² (el mayor, 418,4 km²); con nombre del IGN, 57 y 1.176,5 km² (§3.10) | `validacion_mapa_base` |
@@ -593,7 +593,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `web_tramos` | Por mapa y juego de cortes (sección, municipio, y provincia y comunidad juntas), en el último año: tramos vacíos o con más del 35 % de los territorios con dato; mapas sin juegos que no son excepción declarada | Exacto | Alerta | Pasa: ningún tramo vacío ni por encima del 35 % en los 35 juegos de 15 mapas; el más lleno, el 31 % (Gini, provincia y comunidad, 2024) | `validacion_web_tramos` |
 | `web_sobrecarga_geometria` | Territorios de una vista del mapa de la sobrecarga sin geometría en su versión NUTS ni en la de respaldo | Exacto | Alerta | Pasa: 0 en las 33 vistas (§7.5) | `validacion_web_sobrecarga` |
 | `aeat_mediana_deciles` | Mediana del SME por comunidad interpolada desde deciles frente a centiles | ±0,5 % | Alerta | Entre −0,19 y +0,45 % (2019–2025) | `validacion_mochila` |
-| `mochila_ecv` | Mochila de cada comunidad y de España frente al intervalo del 95 % de la mediana del bruto de la ECV, que sale del tamaño de su muestra (cuánto se sale, en %) | Exacto | Alerta | Avisa en 20 de 160 cifras (con ±15 %, en 32); el intervalo va de ±2,7 % (España) a ±57 % (comunidades de unas 50 observaciones) | `validacion_mochila_ecv` |
+| `mochila_ecv` | Mochila de cada comunidad y de España frente al intervalo del 95 % de la mediana del bruto de la ECV, que sale del tamaño de su muestra (cuánto se sale, en %) | Exacto | Alerta | Avisa en 22 de 160 cifras (con ±15 %, en 33); el intervalo va de ±2,7 % (España) a ±57 % (comunidades de unas 50 observaciones) | `validacion_mochila_ecv` |
 | `mochila_neto_ecv` | Paso a neto aplicado a la mediana del bruto de la ECV frente a la mediana del neto, cada año | ±5 % | Alerta | Avisa en 8 de 180 cifras, todas de comunidades (de −5,0 a +19,0 %); en 2024, entre −2,0 y +3,4 %; España, entre −1,2 y +2,5 % (+0,5 % en 2024) | `validacion_mochila_neto_ecv` |
 | `mochila_forma` | Relación mediana/media del SME de 26 a 35 años de cada comunidad, de 2020 a 2025, frente a la de 2019, que usan 2015–2018 | ±3 % | Alerta | Pasa: entre −2,7 y +1,8 % | `validacion_mochila_serie` |
 | `mochila_relacion_ecv` | Relación mediana/media del bruto de quien trabajó los doce meses, de 26 a 35 años, en la ECV de España, de 2015 a 2018 frente a la de 2019 (puntos) | ±2 puntos | Alerta | Avisa en 2015 (+2,1) y 2017 (−3,1) | `validacion_mochila_relacion` |
@@ -688,7 +688,7 @@ Cada bloque de la tabla larga pasa además por `validar_tabla_larga()`: columnas
 | `cis_ccaa_muestra` | Entrevistas de cada estudio frente a las de los metadatos y al (N) de las tabulaciones del CIS | Exacto | Bloqueo | Ninguna diferencia | `validacion_cis_ccaa` |
 | `cis_ccaa_codigos` | «La vivienda» como `PROB_007` en las dos preguntas, las 19 comunidades de la tabla fija, pesos positivos (en `peso_ccaa`, no negativos: el CIS da peso 0 a una persona, que queda fuera de la estimación) y estudios de los metadatos | Exacto | Bloqueo | Ninguno | `validacion_cis_ccaa` |
 | `cis_ccaa_fichero` | Tamaño y suma SHA-256 de los ficheros de la edición frente a `inventario/cis_ccaa_ficheros.csv` | Exacto | Bloqueo | Coinciden | `validacion_cis_ccaa` |
-| `cis_ccaa_margen` | Cifras publicadas con un margen de más de ±5 puntos | Exacto | Alerta | Nueve, de Ceuta y Melilla | `validacion_cis_ccaa` |
+| `cis_ccaa_margen` | Cifras publicadas con un margen de más de ±5 puntos | Exacto | Alerta | Tres, de Ceuta y Melilla (2021 y 2026) | `validacion_cis_ccaa` |
 | `cis_ccaa_meses` | Años cerrados con menos de nueve barómetros y meses sin cifra nacional con que contrastarlos | Exacto | Alerta | Ninguno | `validacion_cis_ccaa` |
 | `web_cis_ccaa` | `datos/cis_vivienda_ccaa.json` y `datos/cis_vivienda_ccaa.csv` frente a la tabla `cis_vivienda_ccaa`: filas, cifras, intervalos, entrevistas, meses y marcas | Exacto | Bloqueo | Ninguna diferencia | `validacion_web_cis_ccaa` |
 | `calendario_fuentes` | `inventario/calendario_fuentes.csv`: fuentes del inventario, vocabulario, meses, días y periodos (§9.3) | Exacto | Bloqueo | Ninguno | `validacion_calendario` |
@@ -783,22 +783,22 @@ donde:
 
 Secciones de 2021 por estado, para cada año (`tabla_larga`, filas con `fuente == "ine_adrh"` y `nivel == "sc"`):
 
-| Año | Medias (1 y 2): `dato` | Medias: `estimado` | Medias: `secreto` | Mediana (3): `dato` | Mediana: `estimado` | Mediana: `secreto` | Mediana: `ausente` |
-|---|---|---|---|---|---|---|---|
-| 2015 | 32.592 | 1.634 | 2.106 | 31.868 | 1.257 | 2.593 | 614 |
-| 2016 | 33.002 | 1.456 | 1.874 | 32.323 | 1.127 | 2.361 | 521 |
-| 2017 | 33.374 | 907 | 2.052 | 33.179 | 670 | 2.107 | 377 |
-| 2018 | 33.886 | 391 | 2.056 | 33.751 | 297 | 2.148 | 137 |
-| 2019 | 33.958 | 281 | 2.094 | 33.854 | 224 | 2.189 | 66 |
-| 2020 | 35.826 | 0 | 507 | 34.349 | 0 | 1.984 | 0 |
-| 2021 | 36.123 | 195 | 14 | 34.647 | 158 | 1.400 | 127 |
-| 2022 | 35.645 | 613 | 74 | 34.070 | 478 | 1.391 | 393 |
-| 2023 | 35.367 | 877 | 88 | 33.677 | 665 | 1.454 | 536 |
-| 2024 | 35.043 | 1.194 | 95 | 33.184 | 886 | 1.509 | 753 |
+| Año | Medias (1 y 2): `dato` | Medias: `estimado` | Medias: `secreto` | Medias: `ausente` | Mediana (3): `dato` | Mediana: `estimado` | Mediana: `secreto` | Mediana: `ausente` |
+|---|---|---|---|---|---|---|---|---|
+| 2015 | 32.592 | 1.634 | 1.321 | 785 | 31.868 | 1.257 | 1.278 | 1.929 |
+| 2016 | 33.002 | 1.456 | 1.634 | 240 | 32.323 | 1.127 | 1.585 | 1.297 |
+| 2017 | 33.374 | 907 | 1.812 | 240 | 33.179 | 670 | 1.331 | 1.153 |
+| 2018 | 33.886 | 391 | 1.816 | 240 | 33.751 | 297 | 1.336 | 949 |
+| 2019 | 33.958 | 281 | 1.854 | 240 | 33.854 | 224 | 1.378 | 877 |
+| 2020 | 35.826 | 0 | 507 | 0 | 34.349 | 0 | 1.408 | 576 |
+| 2021 | 36.123 | 195 | 14 | 0 | 34.647 | 158 | 1.400 | 127 |
+| 2022 | 35.645 | 613 | 74 | 0 | 34.070 | 478 | 1.391 | 393 |
+| 2023 | 35.367 | 877 | 88 | 0 | 33.677 | 665 | 1.454 | 536 |
+| 2024 | 35.043 | 1.194 | 95 | 0 | 33.184 | 886 | 1.509 | 753 |
 
 Los dos indicadores de media tienen los mismos recuentos por estado.
 
-**Por qué el `secreto` es mayor en 2015–2019.** Esos años el ADRH no publica por sección entre 1.327 y 1.629 códigos que sí están en el callejero, sobre todo de País Vasco y Navarra (`fase_codigos`, columna `callejero_sin_adrh`; plan §6.3). Desde la revisión del 18-nov-2026, las secciones de las provincias sin ninguna publicada van como `ausente`, no como `secreto`: la tabla de arriba es de la pasada anterior y se rehace con la próxima.
+**Por qué el `secreto` es mayor en 2015–2019.** Esos años el ADRH no publica por sección entre 1.327 y 1.629 códigos que sí están en el callejero, sobre todo de País Vasco y Navarra (`fase_codigos`, columna `callejero_sin_adrh`; plan §6.3). Desde la revisión del 18-nov-2026, las secciones de las provincias sin ninguna publicada van como `ausente`, no como `secreto`: en las medias, 785 secciones en 2015 y 240 cada año de 2016 a 2019; en la mediana, también 576 en 2020.
 
 **Filas en la tabla larga.** 1.303.484 filas de la renta (§9.1). Nivel municipal: 73.777 filas por cada media y 65.958 de la mediana. La columna `version` lleva la fecha del fichero de la fuente: 7-nov-2026.
 
@@ -933,7 +933,7 @@ La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abie
 **4. Lo cobrado en el año.** La ficha usa el salario cobrado en el año, no el de quien trabaja doce meses: la AEAT no publica ese salario, porque su «año completo» anualiza por días cotizados. En la ECV, entre el 68,0 % (ingresos de 2015) y el 77,6 % (2021) de los asalariados de 26 a 35 años con salario trabajó los doce meses; con los de 2024, el 73,9 % (`ecv_mochila`, España).
 
 **5. Control con la ECV de cada año** (olas de 2016 a 2025). Microdatos de personas: salario bruto (PY010G), neto (PY010N), factor (PB040) y edad al final del año de ingresos (`leer_ecv_asalariados()`, `resumir_ecv_asalariados()`).
-- `mochila_ecv`: la mochila de cada comunidad de régimen común y de España (`mochila_espana()`) frente a la mediana del bruto de la ECV. En 2024, las 15 comunidades quedan entre un −10,6 % (La Rioja) y un +7,2 % (Castilla y León) de la mediana; España, entre un −5,9 % (2015) y un +7,2 % (2020) en la serie. Desde el 11-nov-2026, la tolerancia sale del tamaño de la muestra (plan §11, pregunta 44 g), no de un ±15 % fijo: la alerta mide cuánto se sale la mochila del intervalo del 95 % de la mediana de la ECV, con la muestra efectiva de los pesos (Kish) y el método de Woodruff (`resumir_ecv_asalariados()`). El intervalo va de ±2,7 % (España) a ±57 % (comunidades de unas 50 observaciones). Avisa en 20 de las 160 cifras (con el ±15 % fijo, en 32), hasta un 19,5 % fuera del intervalo (Comunitat Valenciana, 2016, 151 observaciones). España sale del suyo en 2019, 2020, 2022 y 2023, como mucho un 1,9 %: con 2.733 a 4.826 observaciones el intervalo es estrecho, y lo que queda es una diferencia de fondo entre la AEAT y la ECV.
+- `mochila_ecv`: la mochila de cada comunidad de régimen común y de España (`mochila_espana()`) frente a la mediana del bruto de la ECV. En 2024, las 15 comunidades quedan entre un −10,5 % (La Rioja) y un +7,3 % (Castilla y León) de la mediana; España, entre un −7,9 % (2015) y un +3,7 % (2018) en la serie. Desde el 11-nov-2026, la tolerancia sale del tamaño de la muestra (plan §11, pregunta 44 g), no de un ±15 % fijo: la alerta mide cuánto se sale la mochila del intervalo del 95 % de la mediana de la ECV, con la muestra efectiva de los pesos (Kish) y el método de Woodruff (`resumir_ecv_asalariados()`). El intervalo va de ±2,7 % (España) a ±57 % (comunidades de unas 50 observaciones). Avisa en 22 de las 160 cifras (con el ±15 % fijo, en 33), hasta un 14,9 % fuera del intervalo (Castilla y León, 2017, 112 observaciones). España sale del suyo en 2015, 2019, 2021, 2022 y 2023, como mucho un 2,0 %: con 2.733 a 4.826 observaciones el intervalo es estrecho, y lo que queda es una diferencia de fondo entre la AEAT y la ECV.
 - `mochila_neto_ecv`: el paso a neto aplicado a la mediana del bruto de la ECV frente a la mediana del neto. En 2024, entre un −2,0 % (Canarias) y un +3,4 % (Galicia); España, +0,5 %. En la serie, España queda entre un −1,2 y un +2,5 %, y la alerta salta en 8 de las 170 cifras de comunidad.
 
 **Resultado** (`mochila_neta`; `datos/intermedios/mochila/mochila_neta.csv`):
@@ -942,25 +942,25 @@ La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abie
 
 | Año | Bruto anual (€) | Neto mensual (€) | Mínimo (€) | Máximo (€) |
 |---|---|---|---|---|
-| 2015 | 12.313 | 920 | 633 | 1.100 |
-| 2016 | 12.468 | 930 | 638 | 1.115 |
-| 2017 | 12.793 | 952 | 666 | 1.148 |
-| 2018 | 13.435 | 999 | 710 | 1.210 |
-| 2019 | 14.170 | 1.055 | 762 | 1.270 |
-| 2020 | 13.926 | 1.036 | 759 | 1.250 |
-| 2021 | 15.079 | 1.112 | 817 | 1.331 |
-| 2022 | 16.242 | 1.186 | 866 | 1.397 |
-| 2023 | 17.401 | 1.267 | 922 | 1.473 |
-| 2024 | 18.334 | 1.330 | 990 | 1.529 |
-| 2025 | 19.212 | 1.381 | 1.044 | 1.572 |
+| 2015 | 12.040 | 902 | 619 | 1.080 |
+| 2016 | 11.692 | 878 | 598 | 1.056 |
+| 2017 | 12.452 | 929 | 649 | 1.122 |
+| 2018 | 13.268 | 988 | 701 | 1.197 |
+| 2019 | 14.146 | 1.053 | 760 | 1.268 |
+| 2020 | 13.211 | 989 | 720 | 1.198 |
+| 2021 | 14.718 | 1.090 | 798 | 1.306 |
+| 2022 | 16.407 | 1.196 | 874 | 1.407 |
+| 2023 | 17.515 | 1.274 | 928 | 1.481 |
+| 2024 | 18.351 | 1.331 | 991 | 1.530 |
+| 2025 | 19.230 | 1.382 | 1.045 | 1.573 |
 
-- La de 2024 es la misma que antes de la serie (diferencias de menos de una milésima de euro). La relación neto/bruto baja de 0,90 (2015) a 0,87 (2024 y 2025): la retención media pasa del 3,7 % (2015) al 6,0 % (2024) y al 6,8 % (2025).
+- Con el factor de composición, el bruto se aparta del de la pasada anterior entre un −6,2 % (2016) y un +1,0 % (2022); en 2024, un +0,1 %. La relación neto/bruto baja de 0,90 (2015) a 0,87 (2024) y 0,86 (2025): la retención media pasa del 3,5 % (2015) al 6,0 % (2024) y al 6,8 % (2025).
 
 **Opciones descartadas.** Las opciones A y C se siguen calculando como registro, en `mochila` (columnas `A` y `C`; `datos/intermedios/mochila/mochila.csv`):
-- En 2024, la opción A sale entre 1,24 y 1,49 veces la B (mediana, 1,34). Media ponderada: 24.257 € frente a 18.334 €.
-- Frente a la ECV 2025, A queda un 14 % por encima de la mediana de quienes trabajan los doce meses. B queda un 1,7 % por debajo de la mediana de todos los asalariados, en media ponderada de las comunidades (plan §3.1).
+- En 2024, la opción A sale entre 1,24 y 1,49 veces la B (mediana, 1,34). Media ponderada: 24.257 € frente a 18.351 €.
+- Frente a la ECV 2025, A queda un 14 % por encima de la mediana de quienes trabajan los doce meses. B queda un 1,6 % por debajo de la mediana de todos los asalariados, en media ponderada de las comunidades (plan §3.1).
 
-**Factor de composición** (revisión del 18-nov-2026; `ecv_mochila_composicion()`, objetivo `composicion_mochila`). La relación mediana/media del paso 2 es la de quienes trabajaron el año entero, y se aplicaba a una media que incluye a quien trabajó pocos meses, cuya distribución está más sesgada: la mediana salía alta. Ahora se multiplica además por el cociente entre la relación mediana/media del bruto de todos los asalariados de 26 a 35 años y la de quienes trabajaron los doce meses, de España en la ECV del mismo año de ingresos; el último año de la AEAT, sin ola todavía, toma el del anterior. Supone que esa diferencia es la misma en todas las comunidades. El control con la ECV (`mochila_ecv`) mide si así se acerca a la mediana de la encuesta. Las cifras de la mochila de esta nota son de la pasada anterior y se rehacen con la próxima.
+**Factor de composición** (revisión del 18-nov-2026; `ecv_mochila_composicion()`, objetivo `composicion_mochila`). La relación mediana/media del paso 2 es la de quienes trabajaron el año entero, y se aplicaba a una media que incluye a quien trabajó pocos meses, cuya distribución está más sesgada: la mediana salía alta. Ahora se multiplica además por el cociente entre la relación mediana/media del bruto de todos los asalariados de 26 a 35 años y la de quienes trabajaron los doce meses, de España en la ECV del mismo año de ingresos; el último año de la AEAT, sin ola todavía, toma el del anterior. Supone que esa diferencia es la misma en todas las comunidades. El control con la ECV (`mochila_ecv`) mide si así se acerca a la mediana de la encuesta. El factor va de 0,938 (2016) a 1,010 (2022); en 2024, 1,001, y 2025, sin ola todavía, toma el de 2024 (`composicion_mochila`). Las cifras de la mochila de esta nota ya lo llevan.
 
 ### 6.3 Tartera: salario mínimo
 
@@ -986,8 +986,8 @@ La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abie
 - **Uso.** El peso del alquiler en el ingreso de la tabla larga (§7.4) y la web usan el SMI del mismo año que el alquiler (regla 4; decisión del autor, 9-nov-2026): con el alquiler de 2024, 1.237,40 €. Los de 2025 y 2026 no tienen alquiler del mismo año; la web cita el último junto al del año elegido.
 
 **Comparación con la mochila.**
-- La mochila de 2024 (1.330 € netos de media) sale casi igual que la tartera con el SMI de 2026. Son años distintos (regla 4).
-- Con el SMI de 2024 (1.237 € netos), la mochila queda un 7,5 % por encima (plan §3.1).
+- La mochila de 2024 (1.331 € netos de media) sale casi igual que la tartera con el SMI de 2026. Son años distintos (regla 4).
+- Con el SMI de 2024 (1.237 € netos), la mochila queda un 7,6 % por encima (plan §3.1).
 - La exención de IRPF del SMI vale para quien lo cobra el año entero. La tabla de la AEAT da retenciones del 1,6–1,8 % también por debajo de 12.000 €.
 
 ### 6.4 Llave: hogar del barrio
@@ -1029,7 +1029,7 @@ La decisión del método es del autor, del 7-nov-2026 (plan §3.1; pregunta abie
 | 2024 | 1.442,67 | 1.198 | 1.869 | 1.574 |
 | 2025 | 1.506,06 | 1.245 | 1.926 | 1.631 |
 
-- En 2024, el transistor (1.574 € de media) queda por encima de la mochila (1.330 €) y de la tartera (1.237 €) del mismo año.
+- En 2024, el transistor (1.574 € de media) queda por encima de la mochila (1.331 €) y de la tartera (1.237 €) del mismo año.
 - Las fuentes, descargadas con permiso del autor (9-nov-2026): los 120 Excel del INSS de 2015 a 2024 (≈ 9,6 MB) y las retenciones de la AEAT de 2015 a 2023 (1.458 páginas, ≈ 39 MB; las de 2024 ya estaban). El 12-nov-2026, también con su permiso, los 12 Excel de 2025 (2,4 MB) y la edición de 2025 de la AEAT (308 páginas, 11 MB). Las ediciones de la AEAT hasta 2017 tienen otra maqueta y otros nombres de comunidad («Región de Murcia»): `aeat_titulo()` y `aeat_menus()` leen las dos.
 
 ### 6.6 Percentil salarial del sueldo necesario
@@ -1223,7 +1223,7 @@ El secreto se concentra en provincias rurales: Guadalajara, 173 de 394 secciones
 
 **Censo 2011** (plan §11, pregunta 14; tarea 47). Indicadores por sección del Censo 2011 (`ine_censo2011`; `paso2011_leer_censo2011()`, objetivo `censo2011`): población (`t1_1`), viviendas (`t16_1`), viviendas principales (`t17_1`) y en alquiler (`t18_4`). Es un censo muestral: cada cifra es una estimación redondeada a múltiplos de 5, y una celda vacía es secreto (menos de 5 unidades muestrales). De las 35.960 secciones del Censo, 35.917 tienen fila; en 8.512 falta el alquiler o las principales.
 - **Cálculo en el seccionado de 2021** (`paso2011_reproyectar_censo()`, objetivo `censo2011_2021`): las viviendas principales y las alquiladas pasan como recuentos con la tabla del Censo (§3.11), y el porcentaje se rehace en cada sección de 2021. Estado: el de los recuentos; `secreto` si alguno de sus orígenes no trae los dos recuentos; `ausente` si no recibe nada.
-- **Resultado:** `dato`, 23.655 secciones; `estimado`, 3.931; `secreto`, 8.714; `ausente`, 33. Mediana, 9,7 %; percentil 90, 29,6 %; 3.087 secciones con 0 %, por el redondeo de los recuentos pequeños.
+- **Resultado:** `dato`, 23.656 secciones; `estimado`, 3.928; `secreto`, 8.714; `ausente`, 35. Mediana, 9,7 %; percentil 90, 29,6 %; 3.087 secciones con 0 %, por el redondeo de los recuentos pequeños.
 - **España, comunidades y provincias** (tabla 02003; `paso2011_leer_tenencia()`, objetivo `censo2011_tenencia`): España, 100 × 2.438.574 / 18.083.692 = 13,48 %. Las comunidades de una provincia dan también la provincia. Compuertas `paso2011_censo_alquiler`, `paso2011_censo_principales` y `paso2011_censo_paso` (§4.1).
 - **Dos fotografías** (ruptura `censo_metodo_2021`): el Censo 2011 es muestral y el de 2021 sale de registros.
 
@@ -1287,19 +1287,19 @@ El secreto se concentra en provincias rurales: Guadalajara, 173 de 394 secciones
 
 El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario/rupturas.csv` (`vut_denominador_2024`; plan §11, pregunta 35): la tabla larga lleva la cifra del INE de cada periodo, y en los territorios con secciones en secreto la de noviembre de 2024 baja algo frente a la de agosto solo por el denominador.
 
-**Agosto de 2020 a febrero de 2023** (tarea 47; `paso2011_reproyectar_vut()`, objetivo `vut_2011_2021`). Las viviendas turísticas de las secciones del Censo 2011 pasan a 2021 como recuento, con su tabla (`paso_final_2011_vut`; §3.11). El denominador son las viviendas del Censo 2011 (`t16_1`), el del INE en esos periodos, llevadas con la misma tabla. Si la sección de 2021 recibe una sola sección del Censo, entera, se copia el porcentaje del INE (30.250 secciones). Estado: el de los recuentos; `secreto` si el INE protege el porcentaje de alguno de sus orígenes o el Censo 2011 no da sus viviendas; `ausente` si no recibe nada.
+**Agosto de 2020 a febrero de 2023** (tarea 47; `paso2011_reproyectar_vut()`, objetivo `vut_2011_2021`). Las viviendas turísticas de las secciones del Censo 2011 pasan a 2021 como recuento, con su tabla (`paso_final_2011_vut`; §3.11). El denominador son las viviendas del Censo 2011 (`t16_1`), el del INE en esos periodos, llevadas con la misma tabla. Si la sección de 2021 recibe una sola sección del Censo, entera, se copia el porcentaje del INE (30.251 secciones). Estado: el de los recuentos; `secreto` si el INE protege el porcentaje de alguno de sus orígenes o el Censo 2011 no da sus viviendas; `ausente` si no recibe nada.
 
 | Periodo | `dato` | `estimado` | `secreto` | `ausente` | Viviendas turísticas (España) | Mediana (%) | Percentil 90 | Percentil 99 | Máximo | Secciones con 0 % |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Agosto de 2020 | 30.574 | 5.427 | 313 | 19 | 321.496 | 0,21 | 2,13 | 11,3 | 82,0 | 12.295 |
-| Febrero de 2021 | 30.574 | 5.427 | 313 | 19 | 294.698 | 0,19 | 1,94 | 10,1 | 82,2 | 12.740 |
-| Agosto de 2021 | 30.574 | 5.427 | 313 | 19 | 306.974 | 0,19 | 2,00 | 10,5 | 76,5 | 12.708 |
-| Febrero de 2022 | 30.574 | 5.427 | 313 | 19 | 285.868 | 0,18 | 1,89 | 9,9 | 72,3 | 13.305 |
-| Agosto de 2022 | 30.574 | 5.427 | 313 | 19 | 311.517 | 0,19 | 2,06 | 10,6 | 78,9 | 12.872 |
-| Febrero de 2023 | 30.574 | 5.427 | 313 | 19 | 305.135 | 0,20 | 2,01 | 10,4 | 84,3 | 12.660 |
+| Agosto de 2020 | 30.575 | 5.424 | 313 | 21 | 321.496 | 0,21 | 2,13 | 11,3 | 82,0 | 12.295 |
+| Febrero de 2021 | 30.575 | 5.424 | 313 | 21 | 294.698 | 0,19 | 1,94 | 10,1 | 82,2 | 12.740 |
+| Agosto de 2021 | 30.575 | 5.424 | 313 | 21 | 306.974 | 0,19 | 2,00 | 10,5 | 76,5 | 12.708 |
+| Febrero de 2022 | 30.575 | 5.424 | 313 | 21 | 285.868 | 0,18 | 1,89 | 9,9 | 72,3 | 13.303 |
+| Agosto de 2022 | 30.575 | 5.424 | 313 | 21 | 311.517 | 0,19 | 2,06 | 10,6 | 78,9 | 12.872 |
+| Febrero de 2023 | 30.575 | 5.424 | 313 | 21 | 305.135 | 0,20 | 2,01 | 10,4 | 84,3 | 12.658 |
 
 - La suma es la de la tabla 39364, salvo una vivienda turística en agosto de 2022 y en febrero de 2023: la de la sección 1502501002, que no tiene paso (`paso2011_vut_paso`, `paso2011_sin_paso`).
-- Las 19 secciones `ausente` son las que la tabla deja sin nada (§3.11).
+- Las 21 secciones `ausente` son las que la tabla deja sin nada (§3.11).
 - España, comunidades y provincias: el porcentaje publicado en la tabla 39365 (`territorios_ine_vut()`). España: 1,28 % en agosto de 2020, 1,17 % en febrero de 2021, 1,22 % en agosto de 2021, 1,13 % en febrero de 2022, 1,24 % en agosto de 2022 y 1,21 % en febrero de 2023. Compuertas `paso2011_vut_denominador` y `paso2011_vut_territorios` (§4.1).
 - **Mismo año** (guía, regla 4): viviendas turísticas de 2020–2023 sobre viviendas de 2011, como en el INE. En febrero de 2024 cambian a la vez el seccionado y el denominador (ruptura `vut_seccionado_2024`).
 
@@ -1368,7 +1368,7 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 | Alquiler mediano sobre renta media del barrio (%) | 26.125 | 6,2 | 12,6 | 17,6 | 24,0 | 51,3 |
 | Sueldo neto necesario, con el alquiler mensual real (€ al mes) | 26.137 | 500 | 1.235 | 1.900 | 2.976 | 11.679 |
 | Sueldo neto necesario, mínimo de 50 m² (€ al mes) | 26.137 | 300 | 700 | 1.217 | 2.117 | 4.283 |
-| Peso del alquiler con la mochila (%) | 24.117 | 7,2 | 16,8 | 27,5 | 43,7 | 87,9 |
+| Peso del alquiler con la mochila (%) | 24.117 | 7,2 | 16,8 | 27,4 | 43,6 | 87,8 |
 | Peso del alquiler con la tartera, SMI de 2024 (%) | 26.137 | 7,3 | 17,0 | 29,5 | 51,3 | 103,8 |
 | Peso del alquiler con el transistor (%) | 26.137 | 6,2 | 14,3 | 23,3 | 37,9 | 73,2 |
 
@@ -1376,16 +1376,16 @@ El cambio de denominador de noviembre de 2024 figura como ruptura en `inventario
 
 | Año | Tartera: mediana (%) | Tartera: más del 30 % | Mochila: mediana (%) | Mochila: más del 30 % | Transistor: mediana (%) | Transistor: más del 30 % |
 |---|---|---|---|---|---|---|
-| 2015 | 36,7 | 69,2 % | 28,2 | 43,0 % | 22,7 | 21,3 % |
-| 2016 | 36,3 | 70,8 % | 28,4 | 43,4 % | 22,6 | 21,3 % |
-| 2017 | 34,3 | 63,4 % | 28,2 | 43,3 % | 22,6 | 22,1 % |
-| 2018 | 34,2 | 61,9 % | 27,8 | 41,5 % | 22,7 | 23,1 % |
-| 2019 | 30,0 | 50,1 % | 28,2 | 43,4 % | 23,2 | 25,7 % |
-| 2020 | 28,9 | 46,2 % | 29,7 | 49,1 % | 23,4 | 26,5 % |
-| 2021 | 29,7 | 49,0 % | 28,6 | 44,8 % | 23,7 | 26,9 % |
-| 2022 | 29,7 | 49,7 % | 27,9 | 41,9 % | 23,8 | 27,2 % |
-| 2023 | 28,8 | 47,2 % | 27,4 | 39,9 % | 23,0 | 24,4 % |
-| 2024 | 29,5 | 48,4 % | 27,5 | 40,2 % | 23,3 | 24,1 % |
+| 2015 | 36,7 | 69,2 % | 28,7 | 45,2 % | 22,7 | 21,3 % |
+| 2016 | 36,3 | 70,8 % | 30,0 | 49,9 % | 22,6 | 21,3 % |
+| 2017 | 34,3 | 63,4 % | 28,9 | 45,9 % | 22,6 | 22,1 % |
+| 2018 | 34,2 | 61,9 % | 28,1 | 43,0 % | 22,7 | 23,1 % |
+| 2019 | 30,0 | 50,1 % | 28,3 | 43,5 % | 23,2 | 25,7 % |
+| 2020 | 28,9 | 46,2 % | 31,1 | 54,0 % | 23,4 | 26,5 % |
+| 2021 | 29,7 | 49,0 % | 29,2 | 47,1 % | 23,7 | 26,9 % |
+| 2022 | 29,7 | 49,7 % | 27,7 | 41,1 % | 23,8 | 27,2 % |
+| 2023 | 28,8 | 47,2 % | 27,2 | 39,4 % | 23,0 | 24,4 % |
+| 2024 | 29,5 | 48,4 % | 27,4 | 40,1 % | 23,3 | 24,1 % |
 
 Con la mochila, 7.616 secciones quedan `ausente` en 2024: todas las de País Vasco, Navarra, Ceuta y Melilla, donde la ficha no tiene ingreso, y las que no tienen alquiler.
 
@@ -1666,13 +1666,13 @@ La serie con la deducción por vivienda habitual (vigente hasta diciembre de 201
 
 **Por comunidad autónoma** (tarea 63; `cis_ccaa_descargar()`, objetivo `ficheros_cis_ccaa`). La cifra por comunidad sale de los microdatos de los barómetros armonizados por *Barómetro a barómetro* (<https://gastiaso.github.io/barometros/>), que publica en ediciones fechadas, con licencia CC BY 4.0 para la armonización, una fila por entrevista de los 64 barómetros de enero de 2021 a octubre de 2026 (264.081 entrevistas): la comunidad, el peso del CIS y las tres menciones de las dos preguntas, en códigos armonizados («La vivienda» es `PROB_007`; «La ocupación de viviendas», aparte). Se baja el Parquet y sus metadatos de la edición que fija `inventario/cis_ccaa_ficheros.csv`, con su tamaño y su suma SHA-256; los nombres de las comunidades se casan con los códigos del INE por tabla fija (`inventario/cis_ccaa_comunidades.csv`).
 
-**Cálculo** (`cis_ccaa_menciones()`, `cis_ccaa_tabla()`; objetivo `cis_vivienda_ccaa`). La definición es la de la serie nacional: porcentaje de entrevistados que cita la vivienda en alguna de sus tres menciones. Las comunidades se ponderan con el peso que el CIS da para estimar por comunidad (`peso_ccaa`, PESOCCAA) y España con el de la muestra total (`peso`), que reproduce la cifra nacional publicada (revisión del 18-nov-2026; hasta entonces, todo con `peso`). Desde noviembre de 2023 el ajuste por nivel educativo se hace dentro de cada comunidad, y con `peso` la cifra de una comunidad se alejaba entre 0,2 y 6,7 puntos de la que da `peso_ccaa`, más que su margen. Las cifras de las comunidades no suman la de España: la compuerta de la suma (`cis_ccaa_suma`) mide la lectura con `peso`. Base: quien tiene una primera mención distinta de «no procede» (los que no saben o no contestan cuentan). Un año junta todas sus entrevistas; el año en curso lleva los meses publicados y se rotula «hasta octubre» (`en_curso`). Ceuta y Melilla, con menos de 200 entrevistas al año, van de dos en dos años, el año y el anterior, con el último en `anio`. Margen: intervalo de Wilson al 95 % sobre el tamaño efectivo, las entrevistas entre el efecto de diseño de Kish de cada base (n · Σw² / (Σw)², en torno a 1,1 hasta octubre de 2023 y a 2 después); `margen` es la mitad del intervalo. Nada con menos de 50 entrevistas (`ausente`). El cambio de ponderación de noviembre de 2023 (ajuste por nivel educativo; ruptura R10 de *Barómetro a barómetro*) parte 2023 y, en Ceuta y Melilla, también 2024: esos periodos se marcan (`ruptura`) y la tabla no trae variaciones. Tabla propia, fuera de la tabla larga: comunidad, año, periodo, pregunta, cifra, intervalo, margen, entrevistas, efecto de diseño, meses y estado.
+**Cálculo** (`cis_ccaa_menciones()`, `cis_ccaa_tabla()`; objetivo `cis_vivienda_ccaa`). La definición es la de la serie nacional: porcentaje de entrevistados que cita la vivienda en alguna de sus tres menciones. Las comunidades se ponderan con el peso que el CIS da para estimar por comunidad (`peso_ccaa`, PESOCCAA) y España con el de la muestra total (`peso`), que reproduce la cifra nacional publicada (revisión del 18-nov-2026; hasta entonces, todo con `peso`). Desde noviembre de 2023 el ajuste por nivel educativo se hace dentro de cada comunidad, y con `peso` la cifra de una comunidad se alejaba entre 0,2 y 6,7 puntos de la que da `peso_ccaa`, más que su margen. Las cifras de las comunidades no suman la de España: la compuerta de la suma (`cis_ccaa_suma`) mide la lectura con `peso`. Base: quien tiene una primera mención distinta de «no procede» (los que no saben o no contestan cuentan). Un año junta todas sus entrevistas; el año en curso lleva los meses publicados y se rotula «hasta octubre» (`en_curso`). Ceuta y Melilla, con menos de 200 entrevistas al año, van de dos en dos años, el año y el anterior, con el último en `anio`. Margen: intervalo de Wilson al 95 % sobre el tamaño efectivo, las entrevistas entre el efecto de diseño de Kish de cada base (n · Σw² / (Σw)²: en España, en torno a 1,1 hasta octubre de 2023 y a 2 después; en las comunidades, con `peso_ccaa`, de 1,0 a 1,3); `margen` es la mitad del intervalo. Nada con menos de 50 entrevistas (`ausente`). El cambio de ponderación de noviembre de 2023 (ajuste por nivel educativo; ruptura R10 de *Barómetro a barómetro*) parte 2023 y, en Ceuta y Melilla, también 2024: esos periodos se marcan (`ruptura`) y la tabla no trae variaciones. Tabla propia, fuera de la tabla larga: comunidad, año, periodo, pregunta, cifra, intervalo, margen, entrevistas, efecto de diseño, meses y estado.
 
-**Resultado** (13-nov-2026, edición v2026-10). En 2025, la vivienda está entre los tres principales problemas de España para el 32,3 % de los entrevistados (±0,6 puntos; 44.336 entrevistas): del 24,2 % de Castilla y León (±2,5) y el 24,9 % de la Región de Murcia (±3,3) al 39,2 % de la Comunidad de Madrid (±1,7) y el 41,0 % de Illes Balears (±4,5); Ceuta y Melilla, en 2024–2025, 21,9 y 19,5 % (±6,1 y ±5,5). Las comunidades tienen de 1.025 entrevistas (La Rioja) a 7.630 (Andalucía) y márgenes de ±1,5 a ±4,5 puntos. En la pregunta personal, España da 22,5 %, del 14,8 % de Extremadura al 33,9 % de Illes Balears. España pasa del 1,6 % de 2021 al 44,4 % de 2026 (hasta octubre).
+**Resultado** (18-nov-2026, edición v2026-10; comunidades con `peso_ccaa`). En 2025, la vivienda está entre los tres principales problemas de España para el 32,3 % de los entrevistados (±0,6 puntos; 44.336 entrevistas): del 29,1 % de Castilla y León (±2,1) y el 29,7 % de Extremadura (±2,9) al 43,2 % del País Vasco (±2,4) y el 47,4 % de Illes Balears (±3,1); Ceuta y Melilla, en 2024–2025, 22,3 y 23,4 % (±4,3 cada una). Las comunidades tienen de 1.025 entrevistas (La Rioja) a 7.630 (Andalucía) y márgenes de ±1,1 a ±3,3 puntos. En la pregunta personal, España da 22,5 %, del 16,9 % del Principado de Asturias al 35,3 % de Illes Balears. España pasa del 1,6 % de 2021 al 44,4 % de 2026 (hasta octubre).
 
-**Compuerta** (`cis_ccaa_comprobar()`; objetivo `validacion_cis_ccaa`). Cada mes de España calculado desde los microdatos reproduce la cifra publicada de la serie nacional a un decimal: las 128 cifras (64 meses, las dos preguntas) coinciden exactas (`cis_ccaa_espana`, ±0,1 puntos); un mes sin cifra nacional con que contrastarlo pasaría a la alerta `cis_ccaa_meses`, hoy sin ninguno. Las 19 comunidades, ponderadas por la suma de sus pesos, dan la cifra de España (`cis_ccaa_suma`). Las entrevistas de cada estudio son las de los metadatos y el (N) de las tabulaciones del CIS (`cis_ccaa_muestra`); «La vivienda» es `PROB_007` en las dos preguntas y las comunidades son las 19 de la tabla fija (`cis_ccaa_codigos`); los ficheros, los del inventario (`cis_ccaa_fichero`). Alerta `cis_ccaa_margen`: nueve cifras de Ceuta y Melilla con un margen de más de ±5 puntos, aun agrupadas.
+**Compuerta** (`cis_ccaa_comprobar()`; objetivo `validacion_cis_ccaa`). Cada mes de España calculado desde los microdatos reproduce la cifra publicada de la serie nacional a un decimal: las 128 cifras (64 meses, las dos preguntas) coinciden exactas (`cis_ccaa_espana`, ±0,1 puntos); un mes sin cifra nacional con que contrastarlo pasaría a la alerta `cis_ccaa_meses`, hoy sin ninguno. Las 19 comunidades, ponderadas por la suma de sus pesos, dan la cifra de España (`cis_ccaa_suma`). Las entrevistas de cada estudio son las de los metadatos y el (N) de las tabulaciones del CIS (`cis_ccaa_muestra`); «La vivienda» es `PROB_007` en las dos preguntas y las comunidades son las 19 de la tabla fija (`cis_ccaa_codigos`); los ficheros, los del inventario (`cis_ccaa_fichero`). Alerta `cis_ccaa_margen`: tres cifras de Ceuta y Melilla con un margen de más de ±5 puntos, aun agrupadas (las dos de 2026 en la pregunta de España y la de Melilla de 2021 en la personal).
 
-**Web** (`cis_ccaa_exportar()`; objetivo `ficheros_web_cis_ccaa`). `datos/cis_vivienda_ccaa.json` y `datos/cis_vivienda_ccaa.csv`, con su ida y vuelta (`web_cis_ccaa`; objetivo `validacion_web_cis_ccaa`). En `historico.html`, bajo el bloque nacional, «Por comunidad autónoma»: un año (abre en el último completo) y una pregunta; una fila por comunidad, ordenadas por la cifra, con el intervalo como barra horizontal en una escala común, la cifra de España como línea de referencia, el margen y las entrevistas, las notas del año en curso, de la ruptura y de Ceuta y Melilla, la cita del CIS y de *Barómetro a barómetro* y la descarga del CSV. Sin mapa de coropletas: con márgenes de ±1,5 a ±4,5 puntos, las comunidades vecinas en el orden no se distinguen. La ficha de comunidad del mapa da la cifra más reciente de la pregunta de España, con su periodo, su margen y sus entrevistas, y enlaza a la Máquina del tiempo.
+**Web** (`cis_ccaa_exportar()`; objetivo `ficheros_web_cis_ccaa`). `datos/cis_vivienda_ccaa.json` y `datos/cis_vivienda_ccaa.csv`, con su ida y vuelta (`web_cis_ccaa`; objetivo `validacion_web_cis_ccaa`). En `historico.html`, bajo el bloque nacional, «Por comunidad autónoma»: un año (abre en el último completo) y una pregunta; una fila por comunidad, ordenadas por la cifra, con el intervalo como barra horizontal en una escala común, la cifra de España como línea de referencia, el margen y las entrevistas, las notas del año en curso, de la ruptura y de Ceuta y Melilla, la cita del CIS y de *Barómetro a barómetro* y la descarga del CSV. Sin mapa de coropletas: con márgenes de ±1,1 a ±3,3 puntos, las comunidades vecinas en el orden no se distinguen. La ficha de comunidad del mapa da la cifra más reciente de la pregunta de España, con su periodo, su margen y sus entrevistas, y enlaza a la Máquina del tiempo.
 
 **Lo que no cubre.** De 2014 a 2020 no hay microdatos armonizados, y los del CIS piden un formulario por estudio. El Barómetro de Vivienda 2026 del CIS, con muestra por comunidad, solo tiene avance, sin microdatos.
 
@@ -1740,7 +1740,7 @@ La serie con la deducción por vivienda habitual (vigente hasta diciembre de 201
   - la cotización es la de un contrato indefinido.
 - **Cobertura.** Sin País Vasco, Navarra, Ceuta ni Melilla (§6.2).
 - **Lo cobrado en el año.** La ficha usa lo cobrado en el año, que incluye a quien trabajó pocos meses; la ficha lo dice en su línea de método, en la portada y en el mapa: «lo cobrado en el año por los asalariados de 26 a 35 años de su provincia, también quien no trabajó los doce meses».
-- **Control débil antes de 2022.** Las olas de la ECV de 2016 a 2022 tienen menos muestra: la mochila de una comunidad se aparta más de un 15 % de la mediana de la encuesta en 32 cifras, aunque la de España queda entre un −5,9 y un +7,2 % (§6.2).
+- **Control débil antes de 2022.** Las olas de la ECV de 2016 a 2022 tienen menos muestra: la mochila de una comunidad se aparta más de un 15 % de la mediana de la encuesta en 33 cifras, aunque la de España queda entre un −7,9 y un +3,7 % (§6.2).
 
 **Transistor:**
 - **Pensiones, no pensionistas.** Quien cobra dos pensiones cuenta dos veces, y la provincia es la de la dirección provincial que gestiona la pensión (§6.5).
@@ -1795,9 +1795,9 @@ La serie con la deducción por vivienda habitual (vigente hasta diciembre de 201
 | `zonas_tensionadas` | 24.393 | Municipio (24.393) | 3-nov-2026 (la resolución del BOE más reciente) |
 | `calculo_propio` | 4.068.572 | Sección (2.799.716), distrito (672.942), municipio (588.576), provincia (5.648), comunidad (1.669) y España (21) | 6, 7 y 12-nov-2026 |
 
-**Por estado:** `dato`, 9.014.855 filas; `ausente`, 1.855.141; `secreto`, 1.335.713; `estimado`, 87.870.
+**Por estado:** `dato`, 9.014.862 filas; `ausente`, 1.863.711; `secreto`, 1.327.157; `estimado`, 87.849.
 
-**Publicación.** La tabla larga se publica en el release de GitHub de cada versión (desde el `v0.1.0`, 9-nov-2026; hoy, `v1.2.0`), y la web, en `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).(`docs/publicacion.md`).
+**Publicación.** La tabla larga se publica en el release de GitHub de cada versión (desde el `v0.1.0`, 9-nov-2026; hoy, `v1.2.0`), y la web, en `https://gastiaso.github.io/de-renta-en-renta/` (`docs/publicacion.md`).
 
 ### 9.2 Datos de la web
 

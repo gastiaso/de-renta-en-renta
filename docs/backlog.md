@@ -479,3 +479,12 @@ La v1.2.0 (18-nov-2026, decisión del autor) sale con el CIS por comunidad (tare
   - (g) «con 70 m², × 1,20» junto al sueldo necesario con el alquiler real, que no lleva el factor; el CSV da `otros_gastos` sin el factor; sin prueba del cableado de `fijoDe` y `fijoLlega` en `principal.js`;
   - (h) la compuerta del método corto redondea con `round()`;
   - (i) `UMBRAL_CRUCE_MUNICIPIO` sin prueba del caso exacto.
+- **Cifras de la documentación (19-nov-2026), por revisar:**
+  - `web_tramos` avisa en 2 de 36: el 17, con los supuestos del Banco de España, deja el 44 % de los municipios y el 35 % de las provincias y comunidades en el tramo más alto (2024). Cortes nuevos para el 17 (`cortes_web_niveles.csv`) o el «Resultado» de §4.1 a «Avisa en 2 de 36…»;
+  - `supuestos_muestra_fichero` avisa: `pruebas/datos/supuestos_muestra.json` no es la muestra del pipeline; se regenera con `escribir_muestra_supuestos()` y la nota sigue diciendo «Al día»;
+  - §3.11: «366 están en 179 municipios sin Catastro» sin recalcular (el total pasó de 5.446 a 5.443);
+  - §7.10: «con `peso` … entre 0,2 y 6,7 puntos» no se puede comprobar sin recalcular con `peso`;
+  - «unos 79 m²» es la mediana, por sección, del cociente, no el cociente de las medianas nacionales (77,9): la frase del método corto, el README y §7.4 puede leerse mal;
+  - §7.7: «con 80 m² y 25 años, 18,1 %» y otras cifras de métodos anteriores, que el almacén ya no tiene, se dejan como historia;
+  - README: «tres horas y media» de pasada frente a las 3 h 56 min medidas el 18-nov;
+  - el plan (`docs/plan_integracion_atlas.md`, 257–267) repite la mochila de 2024 de antes (1.330 €); «Block» y «Blocking» mezclados en la tabla de §4.1 de `methodology.md`.

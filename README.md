@@ -299,7 +299,7 @@ Todo cabe en una columna. La barra se pliega en «Más opciones»; el mapa se mu
 
 ## 7. Lo que el tablero no ve
 
-- **El SERPAVI** sale de las declaraciones del IRPF de los caseros que son personas físicas: no recoge viviendas de sociedades, alquileres entre parientes ni alquiler no declarado. Mide el parque alquilado, no lo que paga quien entra. En 2024 tiene dato el 72 % de las secciones, donde vive en torno al 83 % de la población. En Navarra hay dato desde 2021; en Gipuzkoa, desde 2022; en Álava y Bizkaia, solo de 2024.
+- **El SERPAVI** sale de las declaraciones del IRPF de los caseros que son personas físicas: no recoge viviendas de sociedades, alquileres entre parientes ni alquiler no declarado. Mide el parque alquilado, no lo que paga quien entra. En 2024 tiene dato el 72 % de las secciones, donde vive en torno al 84 % de la población. En Navarra hay dato desde 2021; en Gipuzkoa, desde 2022; en Álava y Bizkaia, solo de 2024.
 - **La renta de los hogares** es la de todos los hogares de la sección, propietarios incluidos, no la de quienes alquilan.
 - **Los salarios de Hacienda** son lo cobrado en el año, también por quien trabajó pocos meses, y no cubren País Vasco ni Navarra.
 - **«Lo que queda»** es una resta: ingreso menos alquiler. No dice si alcanza para vivir.
