@@ -49,12 +49,17 @@ export function variaciones({ periodos, valores, contratos = null, umbral = UMBR
   });
 }
 
-// Banda de cada periodo: { desde, hasta } = cifra × (1 ∓ margen / 100), o null sin cifra o sin margen.
-export function bandaMargen(valores, margenes) {
+// Banda de cada periodo: { desde, hasta } = fijo + (cifra − fijo) × (1 ∓ margen / 100), o null sin cifra
+// o sin margen. `fijos`: la parte de cada cifra que no es el alquiler (otros gastos de vivienda; 0 o null
+// sin ellos), que el margen no toca, como intervaloMargen() de la ficha (sueldo.js; revisión
+// independiente del 19-nov-2026: la banda aplicaba el margen también a los otros gastos).
+export function bandaMargen(valores, margenes, fijos = null) {
   return valores.map((v, i) => {
     const x = numero(v);
     const m = numero(margenes?.[i]);
-    return x === null || m === null || m < 0 ? null : { desde: x * (1 - m / 100), hasta: x * (1 + m / 100) };
+    if (x === null || m === null || m < 0) return null;
+    const f = numero(fijos?.[i]) ?? 0;
+    return { desde: f + (x - f) * (1 - m / 100), hasta: f + (x - f) * (1 + m / 100) };
   });
 }
 

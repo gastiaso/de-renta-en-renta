@@ -250,4 +250,23 @@ test_that("un peso 0 deja fuera a la persona y no para la compuerta (18-nov-2026
   sin <- cis_ccaa_estimar(c(TRUE, FALSE, TRUE), c(0.5, 1.5, 0.5))
   expect_equal(con_cero, sin)
   expect_equal(con_cero$entrevistas, 3L)
+  # La compuerta de códigos admite el 0 en peso_ccaa, pero no un negativo ni un hueco (19-nov-2026:
+  # ninguna prueba lo fijaba, y cis_ccaa_estimar() deja fuera en silencio también un peso negativo)
+  le <- cis_ccaa_leer(edicion_inventada())
+  com <- comunidades_inventadas()
+  m <- cis_ccaa_menciones(le, com)
+  mens <- cis_ccaa_mensual(m)
+  pa <- cis_ccaa_por_anio(m)
+  tab <- cis_ccaa_tabla(m, com, le$rupturas, nombres_inventados())
+  cv <- tibble::tibble(periodo = character(), pregunta = character(), total = numeric(), n = numeric())
+  pesos <- function(x) {
+    l <- le
+    l$microdatos$peso_ccaa[seq_along(x)] <- x
+    k <- cis_ccaa_comprobar(l, m, mens, pa, tab, com, cv)
+    k$calculado[k$id == "cis_ccaa_codigos" & grepl("peso_ccaa", k$detalle)]
+  }
+  expect_equal(pesos(0), 0)
+  expect_equal(pesos(-1), 1)
+  expect_equal(pesos(NA_real_), 1)
+  expect_equal(pesos(c(0, -1, NA_real_)), 2)
 })

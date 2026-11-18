@@ -114,6 +114,23 @@ test('banda del margen y puntos con pocos contratos', () => {
   assert.deepEqual(E.pocosContratos([100, null, 200, 300], [12, 5, 30, null]), [true, false, false, false]);
 });
 
+test('la banda no toca los otros gastos, como el intervalo de la ficha (19-nov-2026)', async () => {
+  const S = await modulo('web/js/sueldo.js');
+  // 700 € de alquiler y 150 € de otros gastos al 30 %: 2.833,33 € de sueldo, 500 € de ellos fijos;
+  // con un margen del 5 %, ±116,67 € (antes, ±141,67 €)
+  const cifra = (700 + 150) / 0.3;
+  const [b] = E.bandaMargen([cifra], [5], [150 / 0.3]);
+  const ficha = S.intervaloMargen(cifra, 5, 150 / 0.3);
+  assert.ok(Math.abs(b.desde - ficha.desde) < 1e-9 && Math.abs(b.hasta - ficha.hasta) < 1e-9);
+  assert.ok(Math.abs((b.hasta - b.desde) / 2 - 116.6667) < 1e-3);
+  // «¿te llega?»: 2.000 € de ingreso, 500 € de alquiler y 150 € de otros gastos, al 8 %
+  const r = { ratio: 650 / 2000, otros: 150, ingreso: 2000 };
+  const [l] = E.bandaMargen([r.ratio], [8], [S.fijoLlega(r)]);
+  assert.ok(Math.abs(l.desde - 0.305) < 1e-9 && Math.abs(l.hasta - 0.345) < 1e-9);
+  // Sin parte fija (o con null), la de siempre
+  assert.deepEqual(E.bandaMargen([100], [5], [null]), [{ desde: 95, hasta: 105 }]);
+});
+
 test('variación del IPC entre el primer y el último año', () => {
   const ipc = { anios: [2014, 2015, 2024, 2025], indice: [79.281, 78.885, 97.397, 100] };
   const x = E.variacionIpc(ipc, 2015, 2024);

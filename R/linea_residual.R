@@ -271,12 +271,14 @@ calcular_muestra_residual <- function(terminos, lineas, otros_gastos, territorio
                                       anio = MUESTRA_SUPUESTOS_ANIO) {
   casos <- calcular_muestra_supuestos(terminos, supuestos)
   hogar <- ifelse(casos$ficha == "peon" & casos$segundo %in% TRUE, "dos_adultos", "una_persona")
-  # Con la superficie del caso, solo crece la parte ligada a los metros (factor_otros_gastos(); 18-nov-2026)
-  otros <- otros_gastos_territorio(casos$geo_id, casos$nivel, anio, otros_gastos, territorios) *
-    factor_otros_gastos(casos$superficie, supuestos)
+  # Con la superficie del caso, solo crece la parte ligada a los metros (factor_otros_gastos(); 18-nov-2026).
+  # `otros_sin_factor`: la cifra de la comunidad tal cual, la que se suma al alquiler real
+  otros_sin_factor <- otros_gastos_territorio(casos$geo_id, casos$nivel, anio, otros_gastos, territorios)
+  otros <- otros_sin_factor * factor_otros_gastos(casos$superficie, supuestos)
   x <- tibble::tibble(geo_id = casos$geo_id, nivel = casos$nivel, ficha = casos$ficha, eleccion = casos$eleccion,
                       umbral = casos$umbral, pagas = casos$pagas, segundo = casos$segundo, hogar = hogar,
-                      ingreso = casos$ingreso, alquiler = casos$alquiler, otros = otros, euros = casos$euros)
+                      ingreso = casos$ingreso, alquiler = casos$alquiler, otros = otros, otros_sin_factor = otros_sin_factor,
+                      euros = casos$euros)
   valido <- !is.na(x$ingreso) & x$ingreso > 0 & !is.na(x$alquiler)
   x$residual <- ifelse(valido, x$ingreso - x$alquiler, NA_real_)
   x$residual_gastos <- ifelse(valido, x$ingreso - x$alquiler - x$otros, NA_real_)
@@ -288,12 +290,14 @@ calcular_muestra_residual <- function(terminos, lineas, otros_gastos, territorio
   }
   # Remates de la web: sueldo necesario con la linea (indicador 21, segunda cifra de la ficha;
   # sueldoConLinea() de residual.js): alquiler mensual mediano del territorio + la linea de una persona
-  # del ano y, con los otros gastos de vivienda, + los de su comunidad. No depende de la ficha.
+  # del ano y, con los otros gastos de vivienda, + los de su comunidad. No depende de la ficha: es el
+  # alquiler real, y los otros gastos van sin el factor de la superficie, como en la pagina
+  # (revision independiente del 19-nov-2026: llevaban el de la superficie de cada ficha).
   x$alquiler_mes <- terminos$alquiler_mes[match(paste(x$geo_id, x$nivel), paste(terminos$geo_id, terminos$nivel))]
   for (l in c("imv", "ecv")) {
     una <- lineas$valor[lineas$linea == l & lineas$anio == anio & lineas$hogar == "una_persona"]
     x[[paste0("sueldo_linea_", l)]] <- x$alquiler_mes + una
-    x[[paste0("sueldo_linea_", l, "_gastos")]] <- x$alquiler_mes + x$otros + una
+    x[[paste0("sueldo_linea_", l, "_gastos")]] <- x$alquiler_mes + x$otros_sin_factor + una
   }
   x
 }
@@ -349,7 +353,7 @@ escribir_muestra_residual <- function(muestra, lineas, portada = NULL, anio = MU
 comprobar_muestra_residual <- function(muestra, ruta, portada = NULL) {
   j <- if (file.exists(ruta)) jsonlite::fromJSON(ruta) else NULL
   cols <- c("residual", "residual_gastos", "linea_imv", "linea_ecv", "tramo_imv", "tramo_ecv", "tramo_imv_gastos", "tramo_ecv_gastos",
-            "sueldo_linea_imv", "sueldo_linea_ecv", "sueldo_linea_imv_gastos", "sueldo_linea_ecv_gastos")
+            "sueldo_linea_imv", "sueldo_linea_ecv", "sueldo_linea_imv_gastos", "sueldo_linea_ecv_gastos", "otros_sin_factor")
   al_dia <- !is.null(j) && nrow(j$casos) == nrow(muestra) &&
     all(vapply(cols, function(k) isTRUE(all.equal(as.numeric(j$casos[[k]]), as.numeric(muestra[[k]]))), logical(1))) &&
     identical(as.character(j$casos$hogar), as.character(muestra$hogar)) &&

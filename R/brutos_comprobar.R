@@ -7,7 +7,8 @@
 #   copiado     fichero que se trajo de fuera del pipeline y que el pipeline sabe bajar de la fuente
 #               (tipo «copiado»): si falta, se descarga;
 #   automatica  el resto de fuentes del calendario (inventario/calendario_fuentes.csv, columna
-#               `ficheros`): si faltan, tar_make() las descarga.
+#               `ficheros`, con una o más entradas separadas por «;»: falta si alguna entrada no
+#               tiene ningún fichero): si faltan, tar_make() las descarga.
 # Las de tipo «portales» solo cuentan con PORTALES=TRUE, y las de `con_provincia` FALSE no cuentan
 # con PROVINCIA (el bloque que las lee no entra).
 #
@@ -71,13 +72,18 @@ brutos_comprobar <- function(raiz = ".",
   # Las fuentes con descarga manual o de portales salen arriba, fichero a fichero.
   cubiertas <- unique(manuales$fuente[manuales$tipo != "copiado"])
   cal <- calendario[!calendario$id %in% cubiertas & !is.na(calendario$ficheros), ]
+  # Cada entrada de `ficheros` tiene que tener algo: los feeds del Catastro (catastro/feeds/) y sus
+  # zips van en dos entradas, y sin los feeds tar_make() los vuelve a pedir a la red
   filas_calendario <- lapply(seq_len(nrow(cal)), function(i) {
-    f <- unique(unlist(lapply(strsplit(cal$ficheros[i], ";", fixed = TRUE)[[1]],
-                              function(e) brutos_ficheros_calendario(raiz, e))))
+    entradas <- trimws(strsplit(cal$ficheros[i], ";", fixed = TRUE)[[1]])
+    por_entrada <- lapply(entradas, function(e) brutos_ficheros_calendario(raiz, e))
+    f <- unique(unlist(por_entrada))
+    vacias <- entradas[lengths(por_entrada) == 0L]
     data.frame(
       grupo = "automatica", id = cal$id[i], fuente = cal$id[i], ruta = gsub(";", " ; ", cal$ficheros[i], fixed = TRUE),
-      necesaria = TRUE, ficheros = length(f), bytes = sum(file.size(f)), presente = length(f) > 0,
-      si_falta = paste("se descarga (objetivos:", gsub(";", ", ", cal$objetivos[i], fixed = TRUE), ")"),
+      necesaria = TRUE, ficheros = length(f), bytes = sum(file.size(f)), presente = !length(vacias),
+      si_falta = paste0(if (length(vacias) && length(vacias) < length(entradas)) paste0("falta ", paste(vacias, collapse = ", "), ": "),
+                        "se descarga (objetivos: ", gsub(";", ", ", cal$objetivos[i], fixed = TRUE), ")"),
       stringsAsFactors = FALSE
     )
   })

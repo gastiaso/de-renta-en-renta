@@ -9,10 +9,11 @@
 #                     (nuevas operaciones), mensual desde 1989: el que usa el propio esfuerzo
 #                     teórico. Línea principal de los tipos (plan §11, pregunta 47 c revisada) y tipo
 #                     del indicador 17 (pregunta 45 e; compraventa_tipo_bde(), R/derivados_compraventa.R);
-#     (sin código fijo) plazo medio de las nuevas hipotecas, en años, del Colegio de Registradores,
+#     (sin código fijo) plazo medio de las nuevas hipotecas, en meses, del Colegio de Registradores,
 #                     trimestral: el plazo del esfuerzo teórico (media de doce trimestres) y, desde la
-#                     revisión del 18-nov-2026, del indicador 17 (compraventa_plazo_bde()). Su código se
-#                     busca por la descripción de la cabecera (HIST_DESCRIPCION_BDE, hist_codigo_bde()).
+#                     revisión del 18-nov-2026, del indicador 17 (compraventa_plazo_bde(), que lo pasa a
+#                     años). Su código se busca por la descripción de la cabecera (HIST_DESCRIPCION_BDE,
+#                     hist_codigo_bde()).
 #   be1901 (Boletín Estadístico, 19.1 «Tipos de interés de referencia oficiales del mercado
 #   hipotecario»), mensuales:
 #     D_1T9H0000      tipo medio de los préstamos hipotecarios a más de tres años para adquisición

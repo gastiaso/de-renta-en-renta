@@ -469,4 +469,13 @@ La v1.2.0 (18-nov-2026, decisión del autor) sale con el CIS por comunidad (tare
 
 ## Por decidir
 
-- Nada pendiente a 10-nov-2026.
+- **Revisión independiente de `4354766` (19-nov-2026), propuestas sin aplicar** (las que tocan `inventario/indicadores.csv` o `referencias_validacion.csv` rehacen todo el pipeline: mejor con la próxima pasada completa):
+  - (a) textos del margen en `inventario/indicadores.csv` aún en «error típico» (definición y cálculo «0,929 × …»), y de ahí el i18n y el diccionario de datos: «Margen aproximado al 95 % (1,96 errores típicos)» y «1,821 × (P75 − P25) / (P50 × √n)»;
+  - (b) `compraventa_esfuerzo_bde` avisa los diez años (−25 a −37 %, tolerancia ±25 %) y no vigila nada: banda en torno a la diferencia esperable o comparación con el año anterior, y la unidad «Meses» del Banco comprobada en `hist_codigo_bde()`;
+  - (c) las tablas de paso por el Catastro pueden cruzar dentro de un grupo de fusión sin vigilancia (hoy no pasa): limitarlas también a `geo_pares_permitidos()` y que `paso_cruce_municipios` mire todas las vías;
+  - (d) el detalle de `paso_cruce_municipios` dice « -> » con cero cruces (arreglo de una línea que rehace 47 objetivos);
+  - (e) `cis_ccaa_suma` ya no mira lo que se publica (comunidades con `peso_ccaa`): razón suma de `peso_ccaa` / entrevistas por estudio y comunidad, y alerta para los ceros;
+  - (f) descripciones de `metodo_corto_cifras` y `cis_ccaa_suma` en `referencias_validacion.csv`; a la larga, que el objetivo `referencias` lea solo `id`, `tolerancia` y `tipo`, para que una descripción no invalide el pipeline;
+  - (g) «con 70 m², × 1,20» junto al sueldo necesario con el alquiler real, que no lleva el factor; el CSV da `otros_gastos` sin el factor; sin prueba del cableado de `fijoDe` y `fijoLlega` en `principal.js`;
+  - (h) la compuerta del método corto redondea con `round()`;
+  - (i) `UMBRAL_CRUCE_MUNICIPIO` sin prueba del caso exacto.

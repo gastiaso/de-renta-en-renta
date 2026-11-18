@@ -418,8 +418,8 @@ test_that("17 con la vivienda tipo y el plazo del Banco de España (revisión de
 test_that("una serie del Banco de España sin código fijo se encuentra por su descripción", {
   ruta <- tempfile(fileext = ".csv")
   writeLines(c('"","D_A","D_B"', '"","1","2"', '"","a","b"',
-               '"","Tipo de interés","Plazo medio de las nuevas hipotecas (años)"', '"","%","años"', '"","MENSUAL","TRIMESTRAL"',
-               '"MAR 2024","3,2","25,3"', '"FUENTE","x","x"', '"NOTAS","x","x"'), ruta)
+               '"","Tipo de interés","Plazo medio de las hipotecas. Meses"', '"","%","Meses"', '"","MENSUAL","TRIMESTRAL"',
+               '"MAR 2024","3,2","289"', '"FUENTE","x","x"', '"NOTAS","x","x"'), ruta)
   expect_equal(hist_codigo_bde(ruta, HIST_DESCRIPCION_BDE[["plazo_hipotecas"]]), "D_B")
   expect_error(hist_codigo_bde(ruta, "superficie"), "0 series")
 })

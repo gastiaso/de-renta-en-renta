@@ -5,8 +5,9 @@
 # Fuente: los microdatos armonizados de los barómetros mensuales del CIS que publica *Barómetro a
 # barómetro* (https://gastiaso.github.io/barometros/, repositorio público gastiaso/barometros), en
 # ediciones fechadas (release vAAAA-MM) con licencia CC BY 4.0 para la armonización; los datos de
-# origen, con las condiciones del CIS. Una fila por entrevista: estudio, mes, peso (el PESO del CIS),
-# ccaa (las 19 comunidades y ciudades autónomas) y las tres menciones de las dos preguntas de
+# origen, con las condiciones del CIS. Una fila por entrevista: estudio, mes, peso (el PESO del CIS,
+# para España), peso_ccaa (el PESOCCAA, para las comunidades; revisión del 18-nov-2026), ccaa (las 19
+# comunidades y ciudades autónomas) y las tres menciones de las dos preguntas de
 # problemas (prob_esp_1 a 3 y prob_per_1 a 3, códigos armonizados: «La vivienda» es PROB_007; la
 # ocupación de viviendas, PROB_081, va aparte y no se suma). Con el Parquet, metadatos_vAAAA-MM.json:
 # entrevistas y efecto de diseño de cada estudio, categorías y rupturas de serie.
@@ -265,8 +266,9 @@ cis_ccaa_tabla <- function(menciones, comunidades, rupturas, nombres) {
 #   cis_ccaa_muestra (bloqueo): entrevistas de cada estudio en el Parquet frente a las de los
 #     metadatos, y frente al (N) de las tabulaciones del CIS de ese mes (tabla cis_vivienda);
 #   cis_ccaa_codigos (bloqueo): PROB_007 con la etiqueta «La vivienda» en las dos preguntas; las 19
-#     comunidades de los metadatos y del Parquet, todas en la tabla fija; pesos positivos y sin
-#     hueco; meses y estudios del Parquet en los metadatos;
+#     comunidades de los metadatos y del Parquet, todas en la tabla fija; `peso` positivo y sin
+#     hueco, y `peso_ccaa` sin hueco ni negativos (el 0 se admite: deja fuera a la persona, 18-nov-2026);
+#     meses y estudios del Parquet en los metadatos;
 #   cis_ccaa_margen (alerta): cifras publicadas con un margen de más de ±5 puntos;
 #   cis_ccaa_meses (alerta): años con menos de nueve barómetros (fuera del año en curso) y meses
 #     del Parquet sin cifra nacional publicada con la que contrastarlos.

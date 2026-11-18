@@ -14,7 +14,7 @@
 
 **Contraste con la serie nacional del atlas.** Con `peso`, la media anual de España calculada desde el Parquet coincide con la media de las cifras mensuales publicadas que ya tiene `cis_vivienda`: 1,6 % en 2021 y 32,3 % en 2025 (once barómetros cada año).
 
-**`peso` y no `peso_ccaa`.** Antes de R10 dan lo mismo dentro de cada comunidad (comprobado en 2021: diferencias de una décima, salvo Melilla, con 89 entrevistas). Desde R10, `peso_ccaa` da entre 0,2 y 6,7 puntos más en todas las comunidades (2025: Andalucía, 32,3 frente a 28,5; Illes Balears, 47,4 frente a 41,0), y su suma no reproduce la cifra nacional publicada. `peso` es el que usan las tabulaciones del CIS y la herramienta.
+**`peso` y no `peso_ccaa`.** Antes de R10 dan lo mismo dentro de cada comunidad (comprobado en 2021: diferencias de una décima, salvo Melilla, con 89 entrevistas). Desde R10, `peso_ccaa` da entre 0,2 y 6,7 puntos más en todas las comunidades (2025: Andalucía, 32,3 frente a 28,5; Illes Balears, 47,4 frente a 41,0), y su suma no reproduce la cifra nacional publicada. `peso` es el que usan las tabulaciones del CIS y la herramienta. **Sustituido el 18-nov-2026** (revisión del código, decisión del autor): las comunidades van con `peso_ccaa`, el peso que el CIS da para estimar por comunidad, y España con `peso`; la compuerta `cis_ccaa_suma` sigue con `peso` (nota metodológica, §7.10).
 
 **Muestra por comunidad, 2025** (problema de España; entrevistas en la base, porcentaje y efecto de diseño):
 
@@ -149,7 +149,7 @@ Las `cis_ccaa_*` de `inventario/referencias_validacion.csv` (`espana`, `suma`, `
 **Cerradas (13-nov-2026), decisión del autor: las ocho con la opción recomendada.** Además, el bloque del CIS de la «Máquina del tiempo» enlaza ya a la historia «Cómo la vivienda se convirtió en el primer problema de España» (<https://gastiaso.github.io/historias/vivienda/>) y a *Barómetro a barómetro* (<https://gastiaso.github.io/barometros/#vivienda>). Revisadas el 13-nov-2026, con la fuente nueva. Las del 12-nov-2026 (formulario, periodo, agregación, Ceuta y Melilla, dónde se guarda, dónde se ve y Barómetro de Vivienda) quedan absorbidas aquí.
 
 1. **Fuente.** Los microdatos armonizados de *Barómetro a barómetro* (edición fechada, CC BY 4.0, citando la armonización y al CIS), desde 2021; de 2014 a 2020, fuera hasta que se decida bajar los del CIS con su formulario. Recomendada: **sí**.
-2. **Peso.** `peso`, el de las tabulaciones del CIS, que reproduce la serie nacional publicada; no `peso_ccaa`. Recomendado: **`peso`**.
+2. **Peso.** `peso`, el de las tabulaciones del CIS, que reproduce la serie nacional publicada; no `peso_ccaa`. Recomendado: **`peso`**. Sustituida el 18-nov-2026: las comunidades, con `peso_ccaa`.
 3. **Ruptura R10 (noviembre de 2023).** Tabla anual desde 2021 con 2023 marcado (mezcla los dos métodos) y sin variaciones a través de él. Recomendado: **sí**.
 4. **Agregación.** Media anual de las entrevistas del año, con el año en curso rotulado «hasta {mes}». Recomendada: **sí**.
 5. **Ceuta y Melilla.** Agrupadas de dos en dos años. Recomendado: **sí**.

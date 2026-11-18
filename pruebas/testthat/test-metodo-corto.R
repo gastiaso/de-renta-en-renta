@@ -40,6 +40,14 @@ test_that("la compuerta lee las dos frases del texto y las compara con lo calcul
   writeLines(sub("67 %", "83 %", readLines(md, encoding = "UTF-8")), md, useBytes = TRUE)
   r2 <- comprobar_cifras_metodo_corto(s, c, md)
   expect_false(isTRUE(all.equal(r2$calculado, r2$referencia)))
+  # Los años de las frases también (19-nov-2026): con las cifras de 2015–2024, «De 2016 a 2024» o «en 2023» no pasan
+  ok <- sub("83 %", "67 %", readLines(md, encoding = "UTF-8"))     # el texto bueno de antes
+  writeLines(sub("De 2015 a", "De 2016 a", ok), md, useBytes = TRUE)
+  r3 <- comprobar_cifras_metodo_corto(s, c, md)
+  expect_equal(r3$detalle[r3$calculado != r3$referencia], "primer año de la subida")
+  writeLines(sub("en 2024 tiene", "en 2023 tiene", ok), md, useBytes = TRUE)
+  r4 <- comprobar_cifras_metodo_corto(s, c, md)
+  expect_equal(r4$detalle[r4$calculado != r4$referencia], "año de la cobertura")
   writeLines("Otra cosa.", md)
   expect_true(all(is.na(comprobar_cifras_metodo_corto(s, c, md)$calculado)))
   # El método corto del repositorio tiene las dos frases

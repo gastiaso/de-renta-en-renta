@@ -108,6 +108,31 @@ test_that("con PROVINCIA no cuentan las de toda España, y con PORTALES cuentan 
   expect_equal(y$grupo[y$id == "oferta"], "manual")
 })
 
+test_that("una fuente automática con varias entradas falta si alguna está vacía: los feeds del Catastro (19-nov-2026)", {
+  raiz <- brutos_inventados()
+  on.exit(unlink(raiz, recursive = TRUE))
+  cal <- data.frame(id = "catastro_inspire", objetivos = "feeds_catastro_atom;zips_catastro",
+                    ficheros = "datos/brutos/catastro/feeds/;datos/brutos/catastro/*.zip", stringsAsFactors = FALSE)
+  poner(raiz, "catastro", "A.ES.SDGC.BU.28079.zip")          # los zips sin sus feeds
+  x <- brutos_comprobar(raiz, manuales = MANUALES_INVENTADOS[0, ], calendario = cal, portales = FALSE, provincia = "")
+  expect_false(x$presente)
+  expect_equal(x$ficheros, 1L)
+  expect_match(x$si_falta, "^falta datos/brutos/catastro/feeds/: se descarga \\(objetivos: feeds_catastro_atom, zips_catastro\\)$")
+  r <- NULL
+  salida <- capture.output(r <- brutos_informe(x))
+  expect_true(r$lista)
+  expect_false(r$completa)
+  expect_true(any(grepl("falta datos/brutos/catastro/feeds/", salida, fixed = TRUE)))
+  poner(raiz, "catastro", "feeds", "ES.SDGC.BU.atom_28.xml")
+  y <- brutos_comprobar(raiz, manuales = MANUALES_INVENTADOS[0, ], calendario = cal, portales = FALSE, provincia = "")
+  expect_true(y$presente)
+  expect_equal(y$ficheros, 2L)
+  # El calendario real pide los feeds aparte de los zips, en el Catastro estatal y en el foral
+  real <- brutos_leer_csv(file.path("..", "..", "inventario", "calendario_fuentes.csv"))
+  expect_match(real$ficheros[real$id == "catastro_inspire"], "datos/brutos/catastro/feeds/", fixed = TRUE)
+  expect_match(real$ficheros[real$id == "catastro_foral"], "datos/brutos/catastro_foral/feeds/", fixed = TRUE)
+})
+
 test_that("un tipo de descarga desconocido para", {
   m <- MANUALES_INVENTADOS
   m$tipo[1] <- "a_veces"

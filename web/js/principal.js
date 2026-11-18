@@ -851,18 +851,23 @@ function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
     let resto = null;
     let cifra = null;   // la cifra sin formato, para el gráfico y las variaciones (tareas 43 y 45)
     let linea = null;   // tarea 65 (remates): la línea de ingreso residual del año, al lado de lo que queda
+    let fijo = 0;       // la parte de la cifra que no es el alquiler (otros gastos): la banda no la toca, como la ficha
     if (v.modo === 'necesario') {
       const b = en(base, p).valor;
       const cat = v.mapa.categorias;   // F5: en los mapas de categorías, su texto
-      if (b !== null && !cat) cifra = formulaDe(v.mapa).calcular(b, supuestosDe(v, codigo, nivel, p));   // otros gastos: los del año
+      if (b !== null && !cat) {
+        const s = supuestosDe(v, codigo, nivel, p);   // otros gastos: los del año
+        cifra = formulaDe(v.mapa).calcular(b, s);
+        fijo = fijoDe(v.mapa, s);
+      }
       if (b !== null) texto = cat ? t(`vocabulario.${cat.vocabulario}.${b}`) : t.numero(cifra, v.mapa.decimales ?? 0);
     } else {
       const r = calculoDe(p).calcular(codigo, (serie) => en(serie, p).valor);
-      if (r) { texto = t.porcentaje(r.ratio); cifra = r.ratio; }
+      if (r) { texto = t.porcentaje(r.ratio); cifra = r.ratio; fijo = fijoLlega(r); }
       resto = textoResto(t, eurosQueQuedan(r), { corto: true })?.texto ?? null;   // tarea 34
       linea = celdaLinea(t, lineaEvolucion(v, p));
     }
-    return { periodo: p, texto, estado: estadoPeor, resto, cifra, linea };
+    return { periodo: p, texto, estado: estadoPeor, resto, cifra, linea, fijo };
   });
   let nota = null;
   if (v.modo === 'llega' && ficha !== 'llave') {
@@ -956,7 +961,11 @@ function pintarGraficoEvolucion(hueco, datosSerie, v, periodos, fia, ipc) {
   const constantes = base !== null && eurosEvolucion === 'constantes';
   const cifras = constantes ? deflactarSerie(periodos, corrientes, ipc, base) : corrientes;
   const fuera = constantes ? periodos.filter((p, i) => corrientes[i] !== null && cifras[i] === null) : [];
-  const banda = conBanda ? bandaMargen(cifras, fia?.margen ?? null) : [];
+  // El margen solo toca el alquiler, como el intervalo de la ficha: los otros gastos (la parte fija de
+  // cada fila), aparte y en las mismas unidades que la cifra (revisión independiente del 19-nov-2026)
+  const fijosCorrientes = filas.map((f) => f.fijo ?? 0);
+  const fijos = constantes ? deflactarSerie(periodos, fijosCorrientes, ipc, base) : fijosCorrientes;
+  const banda = conBanda ? bandaMargen(cifras, fia?.margen ?? null, fijos) : [];
   const pocos = pocosContratos(cifras, fia?.contratos ?? null, umbral);
   // Variaciones de un año: solo en las series del alquiler (con contratos) y en el modo «necesario»
   const lista = v.modo === 'necesario' && fia?.contratos ? variaciones({ periodos, valores: cifras, contratos: fia.contratos, umbral }) : [];

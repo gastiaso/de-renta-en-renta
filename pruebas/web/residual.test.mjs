@@ -325,7 +325,8 @@ test('remates, muestra de R: el mismo sueldo necesario con la línea y lo que qu
       const una = R.lineaDelAnio(j.lineas, linea, j.anio, 'una_persona').valor;
       if (c.alquiler_mes === null) continue;
       assert.ok(cerca(R.sueldoConLinea(c.alquiler_mes, null, una), c[`sueldo_linea_${linea}`]), `${c.geo_id} ${linea}`);
-      assert.ok(cerca(R.sueldoConLinea(c.alquiler_mes, c.otros, una), c[`sueldo_linea_${linea}_gastos`]), `${c.geo_id} ${linea} gastos`);
+      // los otros gastos de la comunidad tal cual, sin el factor de la superficie de la ficha (19-nov-2026)
+      assert.ok(cerca(R.sueldoConLinea(c.alquiler_mes, c.otros_sin_factor, una), c[`sueldo_linea_${linea}_gastos`]), `${c.geo_id} ${linea} gastos`);
       if (c.residual !== null) {
         const l = c[`linea_${linea}`];
         assert.ok(cerca(R.distanciaLinea({ ingreso: c.ingreso, alquiler: c.alquiler }, l), c.residual - l));

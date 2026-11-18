@@ -209,4 +209,12 @@ test_that("el callejero no casa vías de dos municipios que siguen en los dos se
   t2 <- geo_tabla_paso_callejero(origen, destino, grupos = todo)
   expect_true(any(t2$origen == "1090101001" & t2$destino == "1090401001"))
   expect_equal(comprobar_cruce_municipios(t2, g, 2011L)$calculado, 2)
+  expect_match(comprobar_cruce_municipios(t2, g, 2011L)$detalle, "10901 -> 10904", fixed = TRUE)
+  # Los tramos sin número (tinum 0) siguen la misma regla (19-nov-2026: ninguna prueba los cubría):
+  # la vía 00099 de Rosalejo no casa con la 00099 de Tiétar
+  sin_num <- function(seccion, via) mutate(tramo(seccion, via, 0L, 0L), tinum = 0L)
+  t3 <- geo_tabla_paso_callejero(bind_rows(origen, sin_num("1090101001", "00099")),
+                                 bind_rows(destino, sin_num("1090401001", "00099")), grupos = g)
+  expect_false(any(t3$origen == "1090101001" & t3$destino == "1090401001"))
+  expect_equal(comprobar_cruce_municipios(t3, g, 2011L)$calculado, 0)
 })

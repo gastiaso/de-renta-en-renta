@@ -83,6 +83,11 @@ test_that("las olas agrupadas reparten el peso, cada una con su umbral, y marcan
   expect_equal(mercado$n_personas_olas, 2L)                           # la misma persona en las dos olas
   expect_equal(mercado$n_personas, 1L)                                # distintas estimadas: 1 + 0,25 × 1 → 1 (18-nov-2026)
   expect_equal(mercado$fiabilidad, "no publicable")
+  # El total de la comunidad, que se publica (corte olas, grupo trienio), también cuenta personas
+  # distintas (19-nov-2026): ES30, 3 personas en cada ola → 6 personas-ola, 3 + 0,25 × 3 → 3
+  total <- a[a$corte == "total" & a$region == "ES30", ]
+  expect_equal(total$n_personas_olas, 6L)
+  expect_equal(total$n_personas, 3L)
   expect_equal(c(unique(a$anio_inicio), unique(a$anio_fin), unique(a$olas)), c(2024L, 2025L, 2L))
 })
 

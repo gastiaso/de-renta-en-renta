@@ -52,14 +52,20 @@ leer_cifras_metodo_corto <- function(ruta = file.path("docs", "metodo_corto.md")
     anio = pilla(cobertura, 1), pct_secciones = pilla(cobertura, 2), pct_poblacion = pilla(cobertura, 3))
 }
 
+# También los años de las dos frases (revisión independiente del 19-nov-2026: un «De 2016 a 2024» o
+# un «en 2023» con las cifras de 2015–2024 pasaban).
 comprobar_cifras_metodo_corto <- function(subida, cobertura, ruta = file.path("docs", "metodo_corto.md")) {
   t <- leer_cifras_metodo_corto(ruta)
   tibble::tibble(
-    id = "metodo_corto_cifras", anio = as.integer(c(subida$hasta, subida$hasta, cobertura$anio, cobertura$anio)),
-    detalle = c("secciones con dato los dos años", "mediana de la subida del alquiler por m² (%)",
-                "secciones con dato (%)", "población en secciones con dato (%)"),
-    calculado = c(t[["secciones"]], t[["subida"]], t[["pct_secciones"]], t[["pct_poblacion"]]),
-    referencia = c(subida$secciones, round(subida$subida_mediana), round(cobertura$pct_secciones),
-                   round(cobertura$pct_poblacion))
+    id = "metodo_corto_cifras",
+    anio = as.integer(c(subida$hasta, subida$hasta, subida$hasta, subida$hasta, cobertura$anio, cobertura$anio,
+                        cobertura$anio)),
+    detalle = c("primer año de la subida", "último año de la subida", "secciones con dato los dos años",
+                "mediana de la subida del alquiler por m² (%)", "año de la cobertura", "secciones con dato (%)",
+                "población en secciones con dato (%)"),
+    calculado = c(t[["desde"]], t[["hasta"]], t[["secciones"]], t[["subida"]], t[["anio"]], t[["pct_secciones"]],
+                  t[["pct_poblacion"]]),
+    referencia = c(subida$desde, subida$hasta, subida$secciones, round(subida$subida_mediana), cobertura$anio,
+                   round(cobertura$pct_secciones), round(cobertura$pct_poblacion))
   )
 }

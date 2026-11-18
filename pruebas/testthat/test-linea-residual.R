@@ -172,10 +172,13 @@ test_that("remates: sueldo necesario con la línea (alquiler + otros gastos + l�
   for (l in c("imv", "ecv")) {
     una <- j$lineas[[l]]$anios[[as.character(j$anio)]]$una_persona
     expect_equal(c[[paste0("sueldo_linea_", l)]], c$alquiler_mes + una)
-    expect_equal(c[[paste0("sueldo_linea_", l, "_gastos")]], c$alquiler_mes + c$otros + una)
+    expect_equal(c[[paste0("sueldo_linea_", l, "_gastos")]], c$alquiler_mes + c$otros_sin_factor + una)
   }
-  # No depende de la ficha: una sola cifra por territorio
+  # No depende de la ficha: una sola cifra por territorio, también con los otros gastos, que van sin el
+  # factor de la superficie (19-nov-2026: llevaban el de cada ficha)
   expect_equal(nrow(unique(c[c("geo_id", "nivel", "sueldo_linea_imv")])), nrow(unique(c[c("geo_id", "nivel")])))
+  expect_equal(nrow(unique(c[c("geo_id", "nivel", "sueldo_linea_imv_gastos")])), nrow(unique(c[c("geo_id", "nivel")])))
+  expect_equal(nrow(unique(c[c("geo_id", "nivel", "otros_sin_factor")])), nrow(unique(c[c("geo_id", "nivel")])))
   p <- j$portada
   expect_equal(nrow(p), 2L)
   expect_true(all(p$encima_ecv <= p$encima_imv & p$encima_imv <= p$con))

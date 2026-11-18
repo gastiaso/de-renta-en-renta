@@ -124,6 +124,14 @@ test_that("comunidad × grado de urbanización con las olas agrupadas y su compu
   con_grado$hogares$grado_urbanizacion[6] <- "1"
   cg <- comprobar_sobrecarga_urbanizacion_ccaa(calcular_sobrecarga_agrupada(list(con_grado)))
   expect_equal(cg$calculado, cg$referencia)
+  # Dos grados de distinto peso en una comunidad (19-nov-2026): con el 4 (DEG3, 3 personas, sin
+  # sobrecarga), ES51 queda en DEG2 50 % (peso 2) y DEG3 0 % (peso 3); la media ponderada, 20, rehace el
+  # total, y sin ponderar daría 25
+  dos <- con_grado
+  dos$hogares$gasto_vivienda_mes[4] <- 100
+  cd <- comprobar_sobrecarga_urbanizacion_ccaa(calcular_sobrecarga_agrupada(list(dos)))
+  expect_equal(cd$calculado[startsWith(cd$detalle, "ES51")], 20)
+  expect_equal(cd$calculado, cd$referencia)
   # Sin el total de una comunidad, sin cifra (falla)
   expect_true(is.na(comprobar_sobrecarga_urbanizacion_ccaa(a[a$corte != "total", ])$referencia[1]))
   # Desde comprobar_sobrecarga_ecv(), con `agrupada`
@@ -238,4 +246,8 @@ test_that("las olas agrupadas cuentan personas distintas, no personas-ola (18-no
   # 3 olas de 20 personas: 60 personas-ola («normal») pero 30 distintas («baja»)
   expect_equal(fiabilidad_eusilc(60), "normal")
   expect_equal(fiabilidad_eusilc(floor(n_distintas_rotacion(c(20, 20, 20)))), "baja")
+  # contar_distintas() ordena las olas: la primera, entera, aunque llegue después (19-nov-2026).
+  # 4 personas en 2024 y 8 en 2025: 4 + 0,25 × 8 = 6 (en el orden de llegada, 8 + 0,25 × 4 = 9)
+  d <- tibble::tibble(anio = c(rep(2025L, 8), rep(2024L, 4)))
+  expect_equal(contar_distintas(d, "total", "TOTAL", "ES30")$n_distintas, 6)
 })

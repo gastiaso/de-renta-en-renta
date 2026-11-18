@@ -4,6 +4,17 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (19-nov-2026, revisión independiente de 4354766)
+
+Ninguno de estos arreglos cambia una cifra publicada: la tabla larga, los datos de la web y el paquete de la v1.2.0 quedan como estaban.
+
+- **Evolución de la ficha:** la banda del margen solo toca el alquiler, como el intervalo de la ficha. Con los otros gastos de vivienda los ensanchaba: con 700 € de alquiler, 150 € de otros gastos, un margen del 5 % y el umbral del 30 %, ±142 € en lugar de ±117 € (`bandaMargen()` recibe la parte fija de cada año, deflactada como la cifra).
+- **Muestra de la línea de ingreso residual** (`pruebas/datos/residual_muestra.json`): el sueldo necesario con la línea y los otros gastos llevaba el factor de la superficie de cada ficha, y la página, como se decidió, suma los otros gastos de la comunidad tal cual al alquiler real (`otros_sin_factor`, que vigila `residual_muestra`). La prueba de la página comparaba R consigo mismo.
+- **Compuerta `metodo_corto_cifras`:** compara también los años de las dos frases del método corto.
+- `brutos_informe()` avisa si faltan los feeds del Catastro y de los forales: una fuente del calendario con varias entradas falta si alguna está vacía, y el calendario da los feeds aparte de los zips. La nota del calendario dice que se renuevan solos a los 90 días.
+- CIS por comunidad: la especificación y los comentarios de `R/fuente_cis_ccaa.R` dicen que las comunidades van con `peso_ccaa` y España con `peso`; la cabecera de `R/fuente_bde.R`, que el plazo del Banco llega en meses.
+- **Pruebas nuevas:** la compuerta de códigos del CIS con `peso_ccaa` a 0, negativo o vacío; `sobrecarga_ccaa_urbanizacion_total` con dos grados de distinto peso en una comunidad; las personas distintas del total agrupado del 24; `contar_distintas()` con las olas en desorden; los tramos sin número del callejero entre municipios no emparentados; la cabecera real del plazo del Banco, en meses.
+
 ## [1.2.0] · 18-nov-2026
 
 Lo hecho desde la v1.1.0 (decisión del autor, 18-nov-2026). Novedades principales:
