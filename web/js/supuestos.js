@@ -1,7 +1,8 @@
 // Generado por generar_supuestos_js() (R/comun_supuestos.R) desde inventario/supuestos.csv: no se
 // edita a mano. Supuestos de «Tu sueldo» (backlog, tarea 48): superficies en m², umbrales en %,
 // tramos de «¿te llega?» como proporción del ingreso, pagas al año y sueldo máximo en euros;
-// regla de «¿te llega?», líneas de ingreso residual y sus tramos en múltiplos de la línea (tarea 65).
+// regla de «¿te llega?», líneas de ingreso residual y sus tramos en múltiplos de la línea (tarea 65);
+// parte de los otros gastos de vivienda ligada a la superficie y superficie con la que se suman tal cual.
 export const SUPUESTOS = Object.freeze({
   superficies: Object.freeze([50, 70, 90]),
   superficie_una_persona: 50,
@@ -18,4 +19,6 @@ export const SUPUESTOS = Object.freeze({
   lineas_residual: Object.freeze(['imv', 'ecv']),
   linea_residual: 'imv',
   limites_residual: Object.freeze([1.00, 1.25]),
+  otros_parte_superficie: 0.5,
+  otros_superficie_referencia: 50,
 });

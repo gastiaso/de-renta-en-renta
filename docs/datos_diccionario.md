@@ -45,10 +45,11 @@ Variable del desglose. Sin desglose, `corte` y `grupo` valen `total`.
 | `superficie` | Superficie supuesta (mínimo teórico del sueldo necesario) |
 | `urbanizacion` | Grado de urbanización |
 | `hogar` | Tipo de hogar (línea de ingreso residual) |
+| `olas` | Olas de la encuesta agrupadas, toda la población (anio, la última) |
 
 ### `grupo`
 
-Valor del desglose, según el corte.
+Valor del desglose, según el `corte`.
 
 | `corte` | Código | Significado |
 | --- | --- | --- |
@@ -97,6 +98,7 @@ Valor del desglose, según el corte.
 | `urbanizacion` | `DEG3` | Zonas rurales |
 | `hogar` | `una_persona` | Una persona |
 | `hogar` | `dos_adultos` | Dos adultos sin menores |
+| `olas` | `trienio` | Tres olas: la del año y las dos anteriores |
 
 ### `fuente`
 
@@ -248,7 +250,7 @@ Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Versión:** v0.2
 - **Definición:** Salario medio anual bruto de los asalariados con domicilio fiscal en la provincia, en total y de 26 a 35 años.
 - **Cálculo:** Cifra publicada por la AEAT (Mercado de trabajo y pensiones en las fuentes tributarias, tabla por provincia, edad y sexo): salarios / asalariados, en total y del tramo de 26 a 35 años; la comunidad y España, con su cifra publicada. El País Vasco y Navarra no están en la estadística (domicilio fiscal foral) y van sin dato.
-- **Lectura:** Es salario real del año: incluye a quien trabajó pocos meses. Es una media, no una mediana; la ficha «joven de 26 a 35» la pasa a mediana con la relación mediana/media del salario medio estimado de su comunidad y después a neto mensual repartido en 12, con la cotización del trabajador y la retención media de la AEAT por comunidad y tramo de renta (plan §3.1, método B).
+- **Lectura:** Es salario real del año: incluye a quien trabajó pocos meses. Es una media, no una mediana; la ficha «joven de 26 a 35» la pasa a mediana con la relación mediana/media del salario medio estimado de su comunidad, corregida con la ECV para lo cobrado en el año (también quien trabajó pocos meses), y después a neto mensual repartido en 12, con la cotización del trabajador y la retención media de la AEAT por comunidad y tramo de renta (plan §3.1, método B).
 
 ### `alquiler_mes`
 
@@ -364,11 +366,11 @@ Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 
 - **Unidad:** % de la renta del hogar
 - **Familia:** Esfuerzo
-- **Fuentes:** `mivau_valor_tasado`, `ine_adrh`, `bde_accesibilidad`
+- **Fuentes:** `mivau_valor_tasado`, `ine_adrh`, `bde_accesibilidad`, `registradores`
 - **Versión:** v0.3
-- **Definición:** Parte de la renta neta media de los hogares del territorio que se iría en la cuota del primer año de una hipoteca sobre un piso de 80 m².
-- **Cálculo:** Cuota anual del primer año de un préstamo francés sobre el 80 % del valor tasado de 80 m², a 25 años y al tipo de los préstamos nuevos para adquisición de vivienda del Banco de España (media de los doce meses del año), dividida entre la renta neta media por hogar del ADRH (INE) del mismo año y territorio, × 100. La renta es la publicada en cada nivel; donde el INE no la publica, sin dato en la provincia y la comunidad (Navarra hasta 2020, Álava y el País Vasco hasta 2019, Gipuzkoa en 2015) y, en España hasta 2020, la media de los municipios ponderada por hogares, estimada.
-- **Lectura:** Es una cuenta teórica: supone que se tiene el 20 % restante y los gastos de compra. No es el «esfuerzo teórico del primer año» del Banco de España de la Máquina del tiempo: la cuenta es la misma, pero el Banco de España usa la vivienda tipo que define y la renta del hogar mediano, y aquí van un piso de 80 m² y la renta neta media de todos los hogares del territorio, que es más alta. Por eso esta cifra da en torno a la mitad (España, 2024: 18,1 % aquí y 34,6 % de media en el Banco de España).
+- **Definición:** Parte de la renta neta media de los hogares del territorio que se iría en la cuota del primer año de una hipoteca sobre la vivienda tipo: la superficie media de las compraventas de vivienda en España.
+- **Cálculo:** Cuota anual del primer año de un préstamo francés sobre el 80 % del valor tasado de la vivienda tipo, al tipo de los préstamos nuevos para adquisición de vivienda del Banco de España (media de los doce meses del año) y al plazo medio de las hipotecas nuevas (media de doce trimestres), dividida entre la renta neta media por hogar del ADRH (INE) del mismo año y territorio, × 100. La vivienda tipo y el plazo son los del esfuerzo teórico del Banco de España: la superficie media de las compraventas de vivienda en España según Registradores (media de tres años) y el plazo medio de sus hipotecas nuevas. La renta es la publicada en cada nivel; donde el INE no la publica, sin dato en la provincia y la comunidad (Navarra hasta 2020, Álava y el País Vasco hasta 2019, Gipuzkoa en 2015) y, en España hasta 2020, la media de los municipios ponderada por hogares, estimada.
+- **Lectura:** Es una cuenta teórica: supone que se tiene el 20 % restante y los gastos de compra. Usa los supuestos del «esfuerzo teórico del primer año» del Banco de España de la Máquina del tiempo (vivienda tipo, préstamo, tipo y plazo), pero no su renta ni su precio: el Banco divide por la renta disponible del hogar mediano, que no se publica por territorio, y aquí va la renta neta media de todos los hogares del territorio, que es más alta, con el valor tasado. Por eso esta cifra queda por debajo de la del Banco.
 
 ### `hogares_alquiler`
 
@@ -416,7 +418,7 @@ Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Versión:** v0.1
 - **Definición:** Sueldo neto mensual necesario para que el alquiler mensual mediano de la sección no pase del 30 % del sueldo. Al lado, el mínimo teórico: el mismo cálculo con un piso de 50 m².
 - **Cálculo:** Alquiler mensual mediano de la vivienda colectiva / 0,30 (umbral cambiable al 40 %). Mínimo teórico (corte superficie, grupo 50): alquiler mediano por m² de la vivienda colectiva × 50 / 0,30 (superficie cambiable a 70 y 90 m² en la web). Cada cifra lleva el estado de su alquiler.
-- **Lectura:** Es el alquiler expresado en otra unidad, no un indicador nuevo. La cifra principal paga la vivienda alquilada mediana de la sección, de unos 79 m² de mediana; el mínimo de 50 m² queda por debajo y no se da sin ella. El 30 % es una convención y solo cuenta el alquiler: la Ley 12/2023 y Eurostat cuentan además los suministros y usan la renta del hogar. En la web se pueden añadir los otros gastos de vivienda de los inquilinos (ECV).
+- **Lectura:** Es el alquiler expresado en otra unidad, no un indicador nuevo. La cifra principal paga la vivienda alquilada mediana de la sección, de unos 79 m² (cociente entre la mediana del alquiler mensual y la del alquiler por m², no la mediana de las superficies); el mínimo de 50 m² queda por debajo y no se da sin ella. El 30 % es una convención y solo cuenta el alquiler: la Ley 12/2023 y Eurostat cuentan además los suministros y usan la renta del hogar. En la web se pueden añadir los otros gastos de vivienda de los inquilinos (ECV).
 
 ### `sobrecarga`
 
@@ -427,7 +429,7 @@ Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Fuentes:** `ine_ecv`, `eurostat_ilc_lvho07`, `eurostat_ilc_lvho07_r`, `eurostat_ilc_lvho07d`
 - **Versión:** v0.1
 - **Definición:** Personas que viven en hogares cuyo gasto total en vivienda, neto de ayudas, supera el 40 % de su renta disponible, también neta de ayudas.
-- **Cálculo:** Microdatos de la ECV con el método de Eurostat: de la hipoteca, solo los intereses; renta del año anterior; ponderación por persona. Reproduce las cifras de Eurostat (±0,1 puntos), también las de España por grado de urbanización (ilc\_lvho07d). Los cruces por comunidad, tenencia y edad agrupan tres olas.
+- **Cálculo:** Microdatos de la ECV con el método de Eurostat: de la hipoteca, solo los intereses; renta del año anterior; ponderación por persona. Reproduce las cifras de Eurostat (±0,1 puntos), también las de España por grado de urbanización (ilc\_lvho07d). Los cruces por comunidad, tenencia, edad y grado de urbanización agrupan tres olas.
 - **Lectura:** Mide la carga de quien ya tiene casa; la dominan los propietarios sin hipoteca y no ve a quien no ha podido emanciparse. Se lee junto a la búsqueda de vivienda sin éxito (23) y por tenencia, sobre todo en el alquiler a precio de mercado.
 
 ### `busqueda_sin_exito`

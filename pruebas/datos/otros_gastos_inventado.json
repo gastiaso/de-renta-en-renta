@@ -1,5 +1,5 @@
 {
-  "nota": "Casos inventados de los otros gastos de vivienda (decisión del autor, 12-nov-2026): los comprueban test-otros-gastos.R y pruebas/web/otros_gastos.test.mjs, para que R y la página den la misma cuenta.",
+  "nota": "Casos inventados de los otros gastos de vivienda (decisión del autor, 12-nov-2026): los comprueban test-otros-gastos.R y pruebas/web/otros_gastos.test.mjs, para que R y la página den la misma cuenta. Desde el 18-nov-2026, con otra superficie que la de referencia (50 m²), solo crece la parte de los otros gastos ligada a los metros (otros_gastos_parte_superficie).",
   "sueldo": [
     {
       "alquiler_mes": 800,
@@ -33,7 +33,14 @@
       "superficie": 70,
       "otros": 113.9,
       "umbral": 0.4,
-      "esperado": 3399.75
+      "esperado": 3456.7
+    },
+    {
+      "alquiler_m2": 13.2,
+      "superficie": 90,
+      "otros": 162.4,
+      "umbral": 0.3,
+      "esperado": 4717.866666666667
     }
   ],
   "llega": [

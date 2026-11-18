@@ -257,3 +257,60 @@ test('exportación del pipeline: datos/otros_gastos.json', { skip: !existsSync(R
     for (const p of Object.keys(territorios.provincia)) assert.ok(Number.isFinite(g.provincia[p]), `${anio} provincia ${p}`);
   }
 });
+
+// Revisión del 18-nov-2026: el margen de la mediana del alquiler solo toca el alquiler, y con otra
+// superficie solo crece la parte de los otros gastos ligada a los metros (otros_gastos_parte_superficie).
+const { equivalenciasSueldo } = await modulo('web/js/ficha.js');
+const { factorOtrosGastos, fijoDe } = await modulo('web/js/formulas.js');
+
+test('el margen no toca los otros gastos: intervalo del sueldo necesario y «en el límite»', () => {
+  // 700 € de alquiler, 150 € de otros gastos, margen del 5 %, umbral del 30 %: ±116,67 €, no ±141,67 €
+  const s = { umbral: 0.3, otros: 150 };
+  const valor = FORMULAS.alquiler_mes_a_sueldo.calcular(700, s);
+  const fijo = fijoDe({ formula: 'alquiler_mes_a_sueldo' }, s);
+  const i = sueldo.intervaloMargen(valor, 5, fijo);
+  assert.ok(cerca(i.hasta - valor, 700 * 0.05 / 0.3) && cerca(valor - i.desde, 700 * 0.05 / 0.3));
+  assert.ok(cerca((i.hasta - i.desde) / 2, 116.66666666666667));
+  // Sin otros gastos, como antes
+  assert.deepEqual(sueldo.intervaloMargen(2000, 10), { desde: 1800, hasta: 2200 });
+  // Mínimo teórico con 70 m²: la parte fija lleva el factor de la superficie
+  const s70 = { umbral: 0.3, otros: 150, superficie_m2: 70 };
+  assert.ok(cerca(fijoDe({ formula: 'alquiler_m2_a_sueldo' }, s70), (150 * 1.2) / 0.3));
+  // 2.000 € de ingreso, 500 € de alquiler, 150 € de otros gastos, margen del 8 %: 30,5–34,5 %, sin
+  // cruzar el corte del 30 % (con el margen sobre todo, 29,9–35,1 %, salía «en el límite»)
+  const r = { alquiler: 500, otros: 150, ingreso: 2000, ratio: 650 / 2000 };
+  assert.equal(sueldo.enLimiteLlega(r.ratio, 8), true);                          // la cuenta de antes
+  assert.equal(sueldo.enLimiteLlega(r.ratio, 8, sueldo.fijoLlega(r)), false);   // la de ahora
+  assert.equal(sueldo.fijoLlega({ alquiler: 500, ingreso: 2000, ratio: 0.25 }), 0);
+});
+
+test('con otra superficie solo crecen los otros gastos ligados a los metros', () => {
+  assert.equal(factorOtrosGastos(50), 1);
+  assert.ok(cerca(factorOtrosGastos(70), 1.2));
+  assert.ok(cerca(factorOtrosGastos(90), 1.4));
+  assert.equal(factorOtrosGastos(null), 1);   // el piso real y la llave: la cifra tal cual
+  // Entre dos sueldos, de 50 a 70 m², con 14 €/m² y 150 € de otros gastos: (980 + 180) / 0,3 / 2 cada uno
+  const base = FORMULAS.alquiler_m2_a_sueldo.calcular(14, { umbral: 0.3, otros: 150, superficie_m2: 50 });
+  const eq = equivalenciasSueldo(base, { base, superficie: 50, superficieDos: 70, otros: 150, umbral: 0.3 });
+  assert.ok(cerca(eq.cadaUno, (980 + 180) / 0.3 / 2));
+  // Sin los otros gastos en las opciones, la cuenta de siempre (todo en proporción a los metros)
+  assert.ok(cerca(equivalenciasSueldo(base, { base, superficie: 50, superficieDos: 70 }).cadaUno, (base * 70) / 50 / 2));
+  // Mapa: la expresión multiplica los otros gastos por el factor
+  const otrosExpr = ['match', 'x', 1, 2, 3];
+  assert.deepEqual(FORMULAS.alquiler_m2_a_sueldo.expresion('v', { umbral: 0.3, superficie_m2: 70, otros: otrosExpr }),
+    ['/', ['+', ['*', 'v', 70], ['*', otrosExpr, factorOtrosGastos(70)]], 0.3]);
+  assert.deepEqual(FORMULAS.alquiler_m2_a_sueldo.expresion('v', { umbral: 0.3, superficie_m2: 50, otros: otrosExpr }),
+    ['/', ['+', ['*', 'v', 50], otrosExpr], 0.3]);
+  // «¿te llega?» de «Tu ficha» con 70 m²: la proporción con los otros gastos × 1,2; el piso real, tal cual
+  const g = sueldo.gastosDelAnio(TABLA, 2024, CCAA_DE_PROVINCIA, NOMBRES);
+  const c = sueldo.calculoLlega({ ficha: 'peon', perfiles: {}, sueldo: { neto: 2000, pagas: 12 }, superficie: 70, gastos: g });
+  const x = (serie) => (serie === 'alquiler_m2' ? 12 : serie === 'alquiler_mes' ? 900 : null);
+  const r = c.calcular('5029701001', x);
+  assert.ok(cerca(r.otros, 162.4 * factorOtrosGastos(70)));
+  assert.ok(cerca(r.ratio, (12 * 70 + 162.4 * factorOtrosGastos(70)) / 2000));
+  assert.equal(r.real.otros, 162.4);
+  assert.ok(cerca(r.real.ratio, (900 + 162.4) / 2000));
+  const e = c.expresion('id');
+  assert.deepEqual(e.gasto[2][0], '*');
+  assert.ok(cerca(e.gasto[2][2], factorOtrosGastos(70)));
+});

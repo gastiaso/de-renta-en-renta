@@ -2,10 +2,18 @@
 #   16 anios_salario_compra: valor tasado por m² × superficie tipo (80 m²) / salario medio anual
 #      bruto por asalariado (indicador 7, AEAT), en años;
 #   17 esfuerzo_hipotecario: cuota del primer año de una hipoteca francesa sobre el 80 % del valor
-#      de la vivienda tipo, a 25 años y al tipo de los préstamos nuevos para vivienda del Banco de
-#      España del año (D_IMVTIPLV, media de sus doce meses), dividida entre la renta neta media por
-#      hogar del ADRH (indicador 2), en % (plan §11, pregunta 45 d y e revisadas, 10-nov-2026).
-#      Sin `renta_hogar`, el salario del 16 y el tipo que se pase (antes, el del INE).
+#      de la vivienda tipo, al tipo de los préstamos nuevos para vivienda del Banco de España del año
+#      (D_IMVTIPLV, media de sus doce meses), dividida entre la renta neta media por hogar del ADRH
+#      (indicador 2), en % (plan §11, pregunta 45 d y e revisadas, 10-nov-2026). Desde la revisión del
+#      18-nov-2026 (decisión del autor: copiar los supuestos del esfuerzo teórico del Banco de
+#      España), la vivienda tipo y el plazo son los del Banco (`terminos_17`): superficie media de las
+#      compraventas de vivienda de Registradores en España, media de tres años
+#      (compraventa_superficie_registradores()), y plazo medio de las hipotecas nuevas, media de doce
+#      trimestres (compraventa_plazo_bde()). La renta sigue siendo la neta: el Banco usa la renta
+#      bruta disponible (después de impuestos), y la neta del ADRH es la que más se le parece; el
+#      Banco toma la del hogar mediano y aquí es la media (no hay mediana por hogar en el ADRH), así
+#      que el atlas queda por debajo (compraventa_esfuerzo_bde(), alerta). Sin `terminos_17`, 80 m² y
+#      25 años (supuestos superficie_compra y plazo_hipoteca). Sin `renta_hogar`, el salario del 16.
 # El precio es el valor tasado del MIVAU (indicador 12): las webs del Notariado reservan sus
 # derechos y piden autorización expresa (inventario/fuentes.csv, notariado), y el 11 sale de
 # Registradores, por provincia. Niveles: municipio (de más de 25.000 habitantes,
@@ -140,10 +148,51 @@ comprobar_renta_hogar_publicada <- function(renta_adrh, pesos, territorios, publ
   dplyr::bind_rows(cobertura, resumen, detalle)
 }
 
+# Superficie de la vivienda tipo del 17 (revisión del 18-nov-2026), como la del Banco de España:
+# tamaño medio de las viviendas compraventadas de Registradores en España, aquí el importe medio por
+# operación / el precio medio por m² del cuarto trimestre (que acumula el año), y de cada año la media
+# de ese año y los dos anteriores (`anios_media`; sin los tres, NA). `registradores`: registradores_leer().
+compraventa_superficie_registradores <- function(registradores, anios_media = 3L) {
+  a <- registradores_anual(registradores)
+  a <- a[a$nivel == "nacional" & !is.na(a$importe_medio) & !is.na(a$precio_m2) & a$precio_m2 > 0, ]
+  a <- a[order(a$anio), ]
+  s <- stats::setNames(a$importe_medio / a$precio_m2, a$anio)
+  anios <- sort(unique(a$anio))
+  tibble::tibble(anio = as.integer(anios), superficie = vapply(anios, function(t) {
+    v <- s[as.character(seq(t - anios_media + 1L, t))]
+    if (anyNA(v)) NA_real_ else round(mean(v), 2)
+  }, numeric(1)))
+}
+
+# Plazo del 17 (revisión del 18-nov-2026), como el del Banco de España: plazo medio de las hipotecas
+# nuevas (Registradores, serie plazo_hipotecas de series_bde), media de los doce trimestres que
+# acaban en el cuarto del año; sin los doce, NA. El Banco lo publica en meses («Plazo medio de las
+# hipotecas. Meses»; 294,58 de media en 2022–2024): se pasa a años, que es lo que pide
+# cuota_hipoteca(). A dos decimales.
+compraventa_plazo_bde <- function(series_bde, serie = "plazo_hipotecas", trimestres = 12L) {
+  d <- series_bde[series_bde$serie == serie, ]
+  if (!nrow(d)) return(tibble::tibble(anio = integer(), plazo = numeric()))
+  d <- d[order(d$anio, d$subperiodo), ]
+  clave <- d$anio * 4L + d$subperiodo
+  anios <- sort(unique(d$anio[d$subperiodo == 4L]))
+  tibble::tibble(anio = as.integer(anios), plazo = vapply(anios, function(t) {
+    fin <- t * 4L + 4L
+    v <- d$valor[match(seq(fin - trimestres + 1L, fin), clave)]
+    if (anyNA(v)) NA_real_ else round(mean(v) / 12, 2)
+  }, numeric(1)))
+}
+
+# Superficie y plazo del 17 por año (las dos funciones de arriba).
+compraventa_terminos_17 <- function(superficie, plazo) {
+  dplyr::full_join(superficie, plazo, by = "anio") |> dplyr::arrange(anio)
+}
+
 # Términos de los dos derivados: valor tasado de cada territorio y año, con el salario del mismo
 # nivel (el municipio, el de su provincia), el tipo del año y, para el 17, la renta por hogar del
-# mismo territorio (compraventa_renta_hogar(); sin ella, el salario).
-terminos_compraventa <- function(larga_valor_tasado, larga_salarios, tipo, renta_hogar = NULL) {
+# mismo territorio (compraventa_renta_hogar(); sin ella, el salario) y, con `terminos_17`, la
+# superficie y el plazo del año (sup17, plazo17; sin ellos, los supuestos).
+terminos_compraventa <- function(larga_valor_tasado, larga_salarios, tipo, renta_hogar = NULL, terminos_17 = NULL,
+                                 superficie = SUPERFICIE_COMPRA, plazo = PLAZO_HIPOTECA) {
   sal <- salario_referencia(larga_salarios)
   vt <- larga_valor_tasado |>
     dplyr::filter(indicador == "valor_tasado_m2", corte == "total") |>
@@ -157,7 +206,10 @@ terminos_compraventa <- function(larga_valor_tasado, larga_salarios, tipo, renta
       dplyr::left_join(x, dplyr::transmute(renta_hogar, nivel, geo_id, anio, renta = termino_publicado(renta), e_renta),
                        by = c("nivel", "geo_id", "anio")))() |>
     dplyr::mutate(e_renta = dplyr::coalesce(e_renta, "ausente")) |>
-    dplyr::select(geo_id, nivel, anio, valor_m2, e_valor, salario, e_salario, tipo, renta, e_renta)
+    (\(x) if (is.null(terminos_17)) dplyr::mutate(x, sup17 = superficie, plazo17 = plazo) else
+      dplyr::left_join(x, dplyr::transmute(terminos_17, anio = as.integer(anio), sup17 = superficie, plazo17 = plazo),
+                       by = "anio"))() |>
+    dplyr::select(geo_id, nivel, anio, valor_m2, e_valor, salario, e_salario, tipo, renta, e_renta, sup17, plazo17)
 }
 
 # Los dos derivados en el formato de la tabla larga, en los años con salario (los demás no entran).
@@ -166,8 +218,8 @@ terminos_compraventa <- function(larga_valor_tasado, larga_salarios, tipo, renta
 armonizar_derivados_compraventa <- function(larga_valor_tasado, larga_salarios, tipo, renta_hogar = NULL,
                                             version_renta = NULL,
                                             superficie = SUPERFICIE_COMPRA, financiacion = FINANCIACION_COMPRA,
-                                            plazo = PLAZO_HIPOTECA) {
-  t <- terminos_compraventa(larga_valor_tasado, larga_salarios, tipo, renta_hogar) |>
+                                            plazo = PLAZO_HIPOTECA, terminos_17 = NULL) {
+  t <- terminos_compraventa(larga_valor_tasado, larga_salarios, tipo, renta_hogar, terminos_17, superficie, plazo) |>
     dplyr::filter(anio %in% unique(salario_referencia(larga_salarios)$anio))
   version <- max(c(unique(larga_valor_tasado$version), unique(larga_salarios$version), version_renta))
   t <- t |> dplyr::mutate(estado = peor_estado(e_valor, e_salario), con = con_valor(estado))
@@ -177,9 +229,10 @@ armonizar_derivados_compraventa <- function(larga_valor_tasado, larga_salarios, 
   anios_renta <- if (is.null(renta_hogar)) unique(t$anio) else unique(renta_hogar$anio[!is.na(renta_hogar$renta)])
   esfuerzo <- t |>
     dplyr::filter(anio %in% anios_renta) |>
-    dplyr::mutate(estado = dplyr::if_else(is.na(tipo), "ausente", peor_estado(e_valor, e_renta)), con = con_valor(estado)) |>
+    dplyr::mutate(estado = dplyr::if_else(is.na(tipo) | is.na(sup17) | is.na(plazo17), "ausente", peor_estado(e_valor, e_renta)),
+                  con = con_valor(estado)) |>
     dplyr::transmute(geo_id, nivel, anio, indicador = "esfuerzo_hipotecario",
-                     valor = dplyr::if_else(con, 100 * 12 * cuota_hipoteca(financiacion * valor_m2 * superficie, tipo, plazo) /
+                     valor = dplyr::if_else(con, 100 * 12 * cuota_hipoteca(financiacion * valor_m2 * sup17, tipo, plazo17) /
                                               renta, NA_real_), estado)
   dplyr::bind_rows(anios, esfuerzo) |>
     dplyr::mutate(corte = "total", grupo = "total", fuente = "calculo_propio", geo_ref = "2021", version = version) |>
@@ -201,18 +254,18 @@ RANGOS_COMPRAVENTA <- tibble::tribble(
 #   compraventa_rango (bloqueo) y compraventa_rango_detalle (alerta): RANGOS_COMPRAVENTA.
 comprobar_derivados_compraventa <- function(derivados, larga_valor_tasado, larga_salarios, tipo, renta_hogar = NULL,
                                             superficie = SUPERFICIE_COMPRA, financiacion = FINANCIACION_COMPRA,
-                                            plazo = PLAZO_HIPOTECA, rangos = RANGOS_COMPRAVENTA) {
-  t <- terminos_compraventa(larga_valor_tasado, larga_salarios, tipo, renta_hogar)
+                                            plazo = PLAZO_HIPOTECA, rangos = RANGOS_COMPRAVENTA, terminos_17 = NULL) {
+  t <- terminos_compraventa(larga_valor_tasado, larga_salarios, tipo, renta_hogar, terminos_17, superficie, plazo)
   x <- derivados |>
     dplyr::left_join(t, by = c("geo_id", "nivel", "anio")) |>
     dplyr::mutate(
-      capital = financiacion * valor_m2 * superficie,
+      capital = financiacion * valor_m2 * sup17,
       r = tipo / 100 / 12,
       # comprobacion independiente de la cuota: el capital es el valor actual de las cuotas
       recalculado = dplyr::if_else(indicador == "anios_salario_compra", valor_m2 * superficie / salario,
-                                   100 * 12 * capital * r * (1 + r)^(plazo * 12) / ((1 + r)^(plazo * 12) - 1) / renta),
+                                   100 * 12 * capital * r * (1 + r)^(plazo17 * 12) / ((1 + r)^(plazo17 * 12) - 1) / renta),
       esperado = dplyr::if_else(indicador == "esfuerzo_hipotecario",
-                                dplyr::if_else(is.na(tipo), "ausente", peor_estado(e_valor, e_renta)),
+                                dplyr::if_else(is.na(tipo) | is.na(sup17) | is.na(plazo17), "ausente", peor_estado(e_valor, e_renta)),
                                 peor_estado(e_valor, e_salario)),
       desviacion = 100 * abs(valor - recalculado) / abs(recalculado))
   terminos <- x |> dplyr::filter(!is.na(valor)) |>
@@ -233,6 +286,23 @@ comprobar_derivados_compraventa <- function(derivados, larga_valor_tasado, larga
                      calculado = 1, referencia = 0)
   dplyr::bind_rows(terminos, estado, fuera, aviso) |>
     dplyr::mutate(calculado = as.numeric(calculado), referencia = as.numeric(referencia))
+}
+
+# Contraste con el esfuerzo teórico del Banco de España (compraventa_esfuerzo_bde, alerta; revisión
+# del 18-nov-2026): el 17 de España de cada año frente a la media de los cuatro trimestres del
+# esfuerzo teórico (serie esfuerzo_teorico de series_bde). Mismos supuestos (80 % financiado, préstamo
+# francés, tipo de las operaciones nuevas, superficie de Registradores y plazo medio de doce
+# trimestres), pero el Banco divide por la renta bruta disponible del hogar mediano (Encuesta
+# Financiera de las Familias) y valora la vivienda con su precio medio, y el atlas, por la renta neta
+# media por hogar del ADRH con el valor tasado: no cuadra, y la alerta mide cuánto se separa (en %).
+compraventa_esfuerzo_bde <- function(derivados, series_bde) {
+  e <- derivados[derivados$indicador == "esfuerzo_hipotecario" & derivados$nivel == "nacional" & !is.na(derivados$valor), ]
+  if (!nrow(e)) return(tibble::tibble(id = character(), anio = integer(), detalle = character(), calculado = numeric(),
+                                      referencia = numeric()))
+  bde <- vapply(e$anio, function(a) hist_valor_en(series_bde, "esfuerzo_teorico", "00", as.character(a)), numeric(1))
+  tibble::tibble(id = "compraventa_esfuerzo_bde", anio = as.integer(e$anio),
+                 detalle = sprintf("Espa\u00f1a: atlas %.1f %% frente a %.1f %% del Banco de Espa\u00f1a (media del a\u00f1o)", e$valor, bde),
+                 calculado = 100 * (e$valor / bde - 1), referencia = 0)
 }
 
 # Compuerta de coherencia entre la tasación y las escrituras (el «hecho cuando» de F4). Las webs

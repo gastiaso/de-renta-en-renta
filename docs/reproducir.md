@@ -1,12 +1,12 @@
 # Reproducir en limpio
 
-Cómo rehacer el atlas desde cero, en una copia limpia del repositorio y sin nada de `datos/` ni de `_targets/` (backlog, tarea 58). Preparada el 12-nov-2026 sobre la v1.1.0; la prueba no se ha hecho todavía. Lo que falle se anota en la tarea 58.
+Cómo rehacer el atlas desde cero, en una copia limpia del repositorio y sin nada de `datos/` ni de `_targets/` (backlog, tarea 58). Preparada el 12-nov-2026 sobre la v1.1.0. Prueba parcial el 17 y 18-nov-2026, en el mismo equipo, con una copia de `datos/brutos/` y sin red: los tiempos y los avisos de abajo son de ella. Lo que falle se anota en la tarea 58.
 
 ## Qué hace falta
 
 | Requisito | Detalle |
 |---|---|
-| R 4.6.1 | La versión de `renv.lock`. En Windows, Rtools 4.6 solo si algún paquete no tiene binario y hay que compilarlo |
+| R 4.6.1 | La versión de `renv.lock`. En Windows, **Rtools 4.6**: `renv.lock` fija `diffobj` 0.3.9 y `arrow` 26.0.0, que CRAN ya no sirve en binario para R 4.6, y sin compilador `renv::restore()` no instala ningún paquete (deshace los que ya había instalado; comprobado el 18-nov-2026) |
 | `renv` | `renv::restore()` instala las versiones de `renv.lock`. En un equipo que ya tiene el proyecto, `renv` reutiliza su caché global y apenas descarga: para probar también la instalación, se apunta `RENV_PATHS_CACHE` a una carpeta vacía (abajo) |
 | GDAL ≥ 3.8 con el controlador PMTiles | El mapa base sale de `sf::gdal_utils()` (`generar_pmtiles()`). El binario de `sf` para Windows trae el suyo (GDAL 3.12.1 el 12-nov-2026); se comprueba con `"PMTiles" %in% sf::st_drivers()$name` |
 | Node 18 o posterior | Pruebas de la web y `web/servir.mjs`, sin paquetes. El flujo de pruebas de GitHub usa Node 24, que además expande el comodín de `node --test "pruebas/web/*.test.mjs"` |
@@ -47,14 +47,14 @@ Las baja `tar_make()` la primera vez y las guarda en `datos/brutos/` (`descargar
 
 | Fuente (`inventario/fuentes.csv`) | Carpeta | Tamaño | Notas |
 |---|---|---|---|
-| `catastro_inspire` | `catastro/` | 4,2 GB | 1.421 zips de edificios, uno por municipio, del servicio ATOM del Catastro; solo los municipios que reparte la tabla de paso. Madrid (28): 73 zips, 0,36 GB |
+| `catastro_inspire` | `catastro/` | 4,2 GB | 1.421 zips de edificios, uno por municipio, del servicio ATOM del Catastro; solo los municipios que reparte la tabla de paso. Madrid (28): 73 zips, 0,36 GB. Los 52 feeds ATOM de las provincias y gerencias, con la lista de zips, en `catastro/feeds/` (13 MB); se renuevan solos a los 90 días |
 | `ine_adrh` | `ine_adrh/` | 3,0 GB | Tablas de toda España aunque se pida una provincia; la 30829, sola, 1,6 GB |
 | `ine_seccionado` | `ine_seccionado/` | 0,72 GB | Once seccionados, de 2015 a 2025 |
 | `ine_callejero` | `ine_callejero/` | 0,59 GB | Doce callejeros de enero, de 2012 y de 2015 a 2025 |
 | `ine_ecv` | `ine_ecv/` | 0,44 GB | Microdatos de 2016 a 2024 (y el de 2025 si faltan sus CSV) |
 | `aeat_mercado_trabajo` | `aeat_mercado/` | 97 MB | 3.220 páginas HTML recorridas desde el mapa de la estadística; el nombre de cada página cambia cada año |
 | `ine_censo2011` | `ine_censo2011/` | 70 MB | Indicadores, cartografía y tablas de 2011 |
-| `catastro_foral` | `catastro_foral/` | 69 MB | Álava, Bizkaia, Gipuzkoa y Navarra; con `PROVINCIA` de fuera, nada |
+| `catastro_foral` | `catastro_foral/` | 69 MB | Álava, Bizkaia, Gipuzkoa y Navarra; con `PROVINCIA` de fuera, nada. Los feeds de Bizkaia y Navarra, en `catastro_foral/feeds/` (1,2 MB) |
 | `ine_vut` | `ine_vut/` | 58 MB | |
 | `inss_pensiones` | `inss_pensiones/` | 12 MB | 132 Excel mensuales; el enlace de cada uno se saca de la página |
 | `ine_cne` | `ine_cne/` | 11 MB | |
@@ -64,7 +64,9 @@ Las baja `tar_make()` la primera vez y las guarda en `datos/brutos/` (`descargar
 
 Las tipografías de la web (`descargar_tipografias()`) están en git, en `web/estilo/fuentes/`: no se descargan.
 
-**Ediciones.** Una copia limpia baja la edición vigente de cada fuente, que puede no ser la de la v1.1.0 (12-nov-2026). Si una fuente ha publicado desde entonces, sus cifras cambian y alguna compuerta puede pararse porque su referencia ya no es la publicada: antes de comparar, `cal_fuentes_pendientes(cal_leer_calendario())` dice cuáles tocan (`docs/actualizacion.md`). Con las manuales pasa lo mismo: si el MIVAU o Registradores ya no sirven la edición del nombre de arriba, la reproducción de la v1.1.0 necesita la copia del fichero que usó.
+**Red con `datos/brutos/` completo.** Los feeds ATOM del Catastro y de los forales se guardan con sus zips desde el 18-nov-2026 (antes se pedían en cada pasada desde cero), y el GML de Gipuzkoa se lee sin buscar el esquema que cita. Aun así, `tar_make()` consulta la red en tres casos: `cis_barometros` pide los XLSX de cinco estudios del CIS que responden 404 (avisan; `docs/actualizacion.md`); `metadatos_boe_reglas` renueva los metadatos del BOE de «Reglas del juego» cuando tienen más de 7 días (`REGLAS_DIAS_METADATOS`; una copia con las fechas de los ficheros conservadas los renueva si la original los tenía viejos), y `cis_estudios` busca los barómetros nuevos cuando el calendario dice que toca (`cal_toca("cis_barometros")`) o falta un mes sin JSON ni marca `.sin_estudio`. Sin red, los tres avisan y se sigue con lo que hay en `datos/brutos/`.
+
+**Ediciones.** Una copia limpia baja la edición vigente de cada fuente, que puede no ser la de la v1.2.0 (18-nov-2026). Si una fuente ha publicado desde entonces, sus cifras cambian y alguna compuerta puede pararse porque su referencia ya no es la publicada: antes de comparar, `cal_fuentes_pendientes(cal_leer_calendario())` dice cuáles tocan (`docs/actualizacion.md`). Con las manuales pasa lo mismo: si el MIVAU o Registradores ya no sirven la edición del nombre de arriba, la reproducción de la v1.1.0 necesita la copia del fichero que usó.
 
 ## Pasos
 
@@ -128,17 +130,18 @@ Rehace lo que dependía del ámbito; las descargas de la pasada corta no se repi
 |---|---|
 | Pasada completa desde cero | Unas 3 h 30 min. La nota metodológica (§10) da unas tres horas y cuarto de cálculo, sobre todo la lectura de los edificios del Catastro estatal (2 h 16 min), la comparación de límites (21 min) y los catastros forales (unos 17 min); las descargas dependen de la línea |
 | Mapa base (`fichero_mapa_base` y su compuerta) | Unos 9 min, dentro de lo anterior |
+| Pasada completa sin descargas | 3 h 56 min de cálculo con `datos/brutos/` completo (18-nov-2026, en el equipo del autor con otras sesiones abiertas); el Catastro estatal (`edificios_municipio`), 2 h 12 min |
 | Pasada corta con `PROVINCIA=28` | Sin medir. Mucho menos que la completa: del Catastro solo lee Madrid (73 de 1.421 municipios) y no lee los forales. Se anota en la tarea 58 |
-| `renv::restore()` con la caché vacía | Sin medir: se anota en la tarea 58 |
+| `renv::restore()` con la caché vacía | 97 paquetes, unos 17 min de descarga (18-nov-2026); con Rtools, más la compilación de `arrow`, sin medir. Con la caché global de un equipo que ya tiene el proyecto, 1,4 min |
 
 ## Cómo comprobar el resultado
 
 1. `tar_make()` acaba sin errores. Los avisos que quedan son los de `docs/actualizacion.md` («Avisos de `tar_make()`»), y las alertas de las compuertas, las de la guía («Cómo verificar»): mismas comprobaciones y mismos recuentos. Una compuerta se lee con `targets::tar_read(validacion_<nombre>)`; los avisos, con `targets::tar_meta(fields = warnings, complete_only = TRUE)`.
 2. `targets::tar_outdated()` sale vacío.
-3. `testthat::test_dir("pruebas/testthat")` en verde.
+3. `testthat::test_dir("pruebas/testthat")` en verde, con una prueba saltada sin `PYTHON_PARQUET` (el ejemplo de Python de la página «Datos»). En una copia limpia faltan `web/metodo.html`, `web/method.html` y `web/descargas/version.json`, que no salen de `tar_make()` (los montan el flujo de Pages y `empaquetar_publicacion()`): `test-navegador.R` los da por pendientes y lo dice en el detalle de `navegador_casillas` y `navegador_errores`; si existen, los comprueba.
 4. Pruebas de la web: `node --test "pruebas/web/*.test.mjs"` (Node 21 o posterior; con uno anterior, fichero a fichero, `web/LEEME.md`).
 5. `git status --short` sale vacío: lo que el pipeline escribe en ficheros versionados (tablas de paso de `geo/`, diccionarios de `docs/` y de `web/i18n/`, `web/estilo/tokens.css`, `web/js/supuestos.js`, las casillas de `web/index.html`) sale idéntico al del repositorio.
-6. La tabla larga coincide con la del release `v1.1.0` (`tabla_larga.parquet`) salvo la columna `version`, que es la fecha de cada fichero descargado (`version_de()`) y cambia en una descarga nueva. Vale si el código que calcula no ha cambiado desde la etiqueta: `git diff --stat v1.1.0 -- R _targets.R inventario geo` no lista nada más que lo que no toca cifras (como `R/brutos_comprobar.R` e `inventario/descargas_manuales.csv`).
+6. La tabla larga coincide con la del release `v1.2.0` (`tabla_larga.parquet`) salvo la columna `version`, que es la fecha de cada fichero descargado (`version_de()`) y cambia en una descarga nueva. En el indicador 20 (zonas tensionadas) es, desde el 18-nov-2026, la fecha del BOE más reciente de `inventario/zonas_tensionadas.csv` (`version_zonas_tensionadas()`); en la v1.1.0 era la fecha de modificación del CSV, que en una copia limpia es la del checkout. Vale si el código que calcula no ha cambiado desde la etiqueta: `git diff --stat v1.1.0 -- R _targets.R inventario geo` no lista nada más que lo que no toca cifras (como `R/brutos_comprobar.R` e `inventario/descargas_manuales.csv`).
 
 ```r
 nueva <- arrow::read_parquet(targets::tar_read(fichero_tabla_larga))

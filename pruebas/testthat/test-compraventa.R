@@ -374,3 +374,52 @@ test_that("código postal ↔ municipio: pesos, principal y compuerta", {
   expect_equal(c0$calculado[c0$detalle == "tramos sin código postal"], 1)
   expect_equal(c0$calculado[c0$id == "cp_municipio_codigos"], 1)    # 01001 no está en la jerarquía de prueba
 })
+
+test_that("17 con la vivienda tipo y el plazo del Banco de España (revisión del 18-nov-2026)", {
+  # Superficie: importe medio / precio por m² de España del cuarto trimestre, media de tres años
+  reg <- tibble::tibble(anio = rep(2021:2024, each = 2), trimestre = rep(c(3L, 4L), 4), nivel = "nacional", geo_id = "00",
+                        compraventas = 1, importe_medio = c(1, 180000, 1, 190000, 1, 200000, 1, 210000),
+                        precio_m2 = c(1, 2000, 1, 2000, 1, 2000, 1, 2000))
+  s <- compraventa_superficie_registradores(reg)
+  expect_equal(s$superficie[s$anio == 2023], 95)              # (90 + 95 + 100) / 3
+  expect_equal(s$superficie[s$anio == 2024], 100)
+  expect_true(is.na(s$superficie[s$anio == 2022]))            # sin los tres años
+  # Plazo: media de los doce trimestres que acaban en el cuarto del año, en meses como lo publica el
+  # Banco, pasada a años
+  bde <- tibble::tibble(serie = "plazo_hipotecas", anio = rep(2022:2024, each = 4), subperiodo = rep(1:4, 3),
+                        valor = 12 * c(rep(24, 4), rep(25, 4), rep(26, 4)))
+  p <- compraventa_plazo_bde(bde)
+  expect_equal(p$plazo[p$anio == 2024], 25)
+  expect_true(all(is.na(p$plazo[p$anio != 2024])))
+  t17 <- compraventa_terminos_17(s, p)
+  tipo <- tibble::tibble(anio = 2024L, tipo = 3.26)
+  d <- armonizar_derivados_compraventa(larga_vt_prueba(), larga_sal_prueba(), tipo, terminos_17 = t17)
+  e <- d[d$indicador == "esfuerzo_hipotecario", ]
+  expect_equal(e$valor[e$geo_id == "28079"], 100 * 12 * cuota_hipoteca(0.8 * 4000 * 100, 3.26, 25) / 32000)
+  # El 16 sigue con 80 m²
+  a <- d[d$indicador == "anios_salario_compra", ]
+  expect_equal(a$valor[a$geo_id == "28079"], 4000 * 80 / 32000)
+  c0 <- comprobar_derivados_compraventa(d, larga_vt_prueba(), larga_sal_prueba(), tipo, terminos_17 = t17)
+  expect_true(all(c0$calculado[c0$id %in% c("compraventa_estado", "compraventa_rango")] == 0))
+  expect_true(all(c0$calculado[c0$id == "compraventa_terminos"] < 1e-9))
+  # Sin superficie o sin plazo del año, el 17 queda «ausente»
+  sin <- armonizar_derivados_compraventa(larga_vt_prueba(), larga_sal_prueba(), tipo,
+                                         terminos_17 = tibble::tibble(anio = 2024L, superficie = NA_real_, plazo = 25))
+  expect_true(all(sin$estado[sin$indicador == "esfuerzo_hipotecario"] == "ausente"))
+  # Contraste con el esfuerzo teórico del Banco: España del atlas frente a la media de sus cuatro trimestres
+  ef <- tibble::tibble(serie = "esfuerzo_teorico", geo_id = "00", nivel = "nacional", frecuencia = "trimestral",
+                       anio = 2024L, subperiodo = 1:4, valor = c(34, 35, 35, 36))
+  k <- compraventa_esfuerzo_bde(d, ef)
+  esp <- e$valor[e$geo_id == "00"]
+  expect_equal(k$calculado, 100 * (esp / 35 - 1))
+  expect_equal(k$id, "compraventa_esfuerzo_bde")
+})
+
+test_that("una serie del Banco de España sin código fijo se encuentra por su descripción", {
+  ruta <- tempfile(fileext = ".csv")
+  writeLines(c('"","D_A","D_B"', '"","1","2"', '"","a","b"',
+               '"","Tipo de interés","Plazo medio de las nuevas hipotecas (años)"', '"","%","años"', '"","MENSUAL","TRIMESTRAL"',
+               '"MAR 2024","3,2","25,3"', '"FUENTE","x","x"', '"NOTAS","x","x"'), ruta)
+  expect_equal(hist_codigo_bde(ruta, HIST_DESCRIPCION_BDE[["plazo_hipotecas"]]), "D_B")
+  expect_error(hist_codigo_bde(ruta, "superficie"), "0 series")
+})

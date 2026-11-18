@@ -32,7 +32,7 @@ Tolerancia: la mitad de la última cifra publicada (0,05 en los porcentajes a un
 | 12 · Valor tasado, España, 2024 (€/m²) | MIVAU | `mivau_valor_tasado/35101000.xls` y `35103000.xls` | 1.913,857 | 1.913,857 | 0 |
 | 12 · Valor tasado, Madrid (municipio), 2024 (€/m²) | MIVAU | `mivau_valor_tasado/35103500.xls` | 4.225,130 | 4.225,130 | 0 |
 | 16 · Años de salario para comprar 80 m², Madrid (municipio), 2024 | MIVAU y AEAT | `35103500.xls` y `aeat_mercado/2024/` | 10,592 | 10,592 | 0 |
-| 17 · Cuota hipotecaria sobre la renta del hogar, Madrid (municipio), 2024 (%) | MIVAU, Banco de España e INE (ADRH) | `35103500.xls`, `bde/si_1_5.csv` y `ine_adrh/30824.csv` | 30,430 | 30,430 ¹ | 0 |
+| 17 · Cuota hipotecaria sobre la renta del hogar, Madrid (municipio), 2024 (%) | MIVAU, Banco de España, Registradores e INE (ADRH) | `35103500.xls`, `bde/si_1_5.csv`, `registradores/` y `ine_adrh/30824.csv` | 30,430 ² | 30,430 ¹ | 0 |
 | 20 · Municipios con zona tensionada declarada, 31-12-2025 | MIVAU, resoluciones en el BOE | `zonas_tensionadas/BOE-A-*.xml` | 304 | 304 | 0 |
 | 20 · Barcelona, categoría a 31-12-2025 | MIVAU, resolución en el BOE | `zonas_tensionadas/BOE-A-2024-5214.xml` | 2 | 2 | 0 |
 | Histórico · Sueldo bruto medio por asalariado, España, 2024 (€ al año) | INE, Contabilidad Nacional | `ine_cne/71129.csv` y `71133.csv` | 31.199,74 | 31.199,74 | 0 |
@@ -72,5 +72,7 @@ Cifras exactas, solo en `datos/intermedios/rederivar/entrar.csv`. Criterio: dife
 La cifra del atlas sale de `targets::tar_read(indicadores_entrar)`, las cifras exactas que no salen del pipeline (última pasada con `PORTALES=TRUE`: 10-nov-2026). El ingreso de la tartera de 2023 se rederiva del real decreto (1.080 € × 14 × (1 − 6,45 %) / 12).
 
 ## Resultado
+
+² **Vivienda tipo y plazo del Banco de España** (revisión del 18-nov-2026, decisión del autor). Desde entonces el 17 usa la superficie media de las compraventas de Registradores en España (media de tres años) y el plazo medio de las hipotecas nuevas (media de doce trimestres) en lugar de 80 m² y 25 años, y `rederivar.R` los calcula desde sus ficheros. La cifra de esta tabla es la de antes del cambio: se rehace con la próxima pasada y la próxima rederivación.
 
 Las dieciséis cifras de F4 a F6 coinciden con el atlas (11-nov-2026, tras corregir el redondeo del tipo del 17 en un empate, nota ¹; antes, 15 de 16). Las cinco de «Entrar» y la auxiliar coinciden.

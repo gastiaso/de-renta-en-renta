@@ -20,6 +20,31 @@ test_that("los enlaces de Bizkaia y Navarra dan el municipio del INE", {
   expect_equal(n$municipio, c("31016", "31201", "31001"))
 })
 
+test_that("los feeds forales se guardan con la provincia delante y la segunda vez no se piden (tarea 58)", {
+  dir <- tempfile("feeds")
+  pedidas <- character(0)
+  simulado <- function(req) {
+    pedidas <<- c(pedidas, req$url)
+    cuerpo <- if (grepl("bizkaia", req$url)) '<link href="https://apli.bizkaia.eus/apps/Danok/INSPIRE/ES.BFA.BU.020.zip"/>'
+              else '<link href="https://filescartografia.navarra.es/x/files/BU_Navarra_201.gml.zip"/>'
+    httr2::response(200, body = charToRaw(enc2utf8(cuerpo)))
+  }
+  rutas <- httr2::with_mocked_responses(simulado, descargar_feeds_forales(PROVINCIAS_FORALES, dir = dir, pausa = 0))
+  expect_equal(basename(rutas), c("48_buildings.xml", "31_Buildings_ServiceATOM_Navarra.xml"))
+  expect_equal(pedidas, FEEDS_CATASTRO_FORAL$feed)
+  z <- zips_catastro_forales(PROVINCIAS_FORALES, rutas)
+  expect_equal(z$provincia, c("01", "20", "48", "31"))
+  expect_equal(z$municipio, c(NA, NA, "48020", "31201"))
+  # Con los ficheros en la carpeta, ninguna petición
+  pedidas <- character(0)
+  expect_equal(httr2::with_mocked_responses(simulado, descargar_feeds_forales(PROVINCIAS_FORALES, dir = dir, pausa = 0)), rutas)
+  expect_length(pedidas, 0L)
+  # Álava y Gipuzkoa no tienen feed: ninguna ruta y sus dos zips del territorio entero
+  expect_length(descargar_feeds_forales(c("01", "20"), dir = dir, pausa = 0), 0L)
+  expect_equal(zips_catastro_forales(c("01", "20"), character(0))$url, unname(ZIPS_CATASTRO_FORAL))
+  expect_error(zips_catastro_forales("48", character(0)), "Falta el feed foral de la provincia 48")
+})
+
 test_that("se piden el zip del territorio entero y los de cada municipio que hace falta", {
   zips <- tibble::tribble(
     ~provincia, ~municipio, ~url,

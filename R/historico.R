@@ -209,7 +209,9 @@ hist_comprobar <- function(historico, series_bde, valor_tasado_trim, territorios
     p <- hist_periodo(f$periodo)
     d <- historico[historico$serie == f$serie & historico$geo_id == f$geo_id, ]
     if (!nrow(d) || p$frecuencia != d$frecuencia[1]) return(TRUE)
-    clave <- p$anio * 100L + p$subperiodo
+    # Un año lleva subperiodo NA en hist_periodo() y 0 en la tabla (revisión del 18-nov-2026: con NA,
+    # la clave daba NA y la compuerta también)
+    clave <- p$anio * 100L + if (is.na(p$subperiodo)) 0L else p$subperiodo
     clave < min(d$anio * 100L + d$subperiodo) || clave > max(d$anio * 100L + d$subperiodo)
   }, TRUE)
   anota("hist_fechas", paste0("fechas clave mal situadas", if (any(mal)) paste0(": ", paste(fechas$id[mal], collapse = ", ")) else ""),

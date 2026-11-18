@@ -183,8 +183,8 @@ test('portada y ficha del 20: llevan a anclas que existen en el inventario', () 
   assert.match(ficha, /REGLA_DE_MAPA = \{ var_alquiler: 'zonas-tensionadas' \}/);
   assert.ok(anclas.has('zonas-tensionadas'));
   // Y la nota metodológica, destino de la casilla 3, enlaza la regla de la fianza
-  assert.match(leerTexto('docs', 'metodologia.md'), /\(reglas\.html#fianza-garantias\)/);
-  assert.match(leerTexto('docs', 'methodology.md'), /\(reglas\.html\?idioma=en#fianza-garantias\)/);
+  assert.match(leerTexto('docs', 'metodologia.md'), /\(https:\/\/gastiaso\.github\.io\/de-renta-en-renta\/reglas\.html#fianza-garantias\)/);
+  assert.match(leerTexto('docs', 'methodology.md'), /\(https:\/\/gastiaso\.github\.io\/de-renta-en-renta\/reglas\.html\?idioma=en#fianza-garantias\)/);
 });
 
 test('datos/reglas.json real: mismos resúmenes que el inventario, con sus textos en los dos idiomas', { skip: !existsSync(join(raiz, 'web', 'datos', 'reglas.json')) }, () => {

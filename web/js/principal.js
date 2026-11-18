@@ -23,10 +23,10 @@ import {
   fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fichaContexto, fichaTerritorio, nombresTerritorio,
   fichaDeclaraciones, textoResto, fichaResidentes, textoLineaResidual, TEXTOS_RESIDUAL, celdaLinea,
 } from './ficha.js';
-import { formulaDe, daSueldo, minimoDe, textoSupuestos, textoOtrosGastos } from './formulas.js';
+import { formulaDe, daSueldo, minimoDe, textoSupuestos, textoOtrosGastos, fijoDe } from './formulas.js';
 import {
   modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega, resumenLlegaReal,
-  marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, estadoLlega, perfilesDelAnio,
+  marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, fijoLlega, estadoLlega, perfilesDelAnio,
   eurosQueQuedan, superficieTipica, SUPERFICIE_TIPICA, gastosDelAnio, supuestosEn, otrosGastosEn, rangoOtrosGastos,
 } from './sueldo.js';
 import {
@@ -215,7 +215,8 @@ function valorLlega(v, r, margen) {
   const linea = res ? residualFicha(r, estado.ficha, res.datos) : null;
   const porResidual = Boolean(res?.activa) && Number.isFinite(linea?.tramo);
   const valor = { ...r, tramo: porResidual ? linea.tramo : tramoLlega(r.ratio), residual: linea, reglaResidual: porResidual };
-  const enLimite = porResidual ? enLimiteResidual(r, margen, linea.linea.valor) : enLimiteLlega(r.ratio, margen);
+  // El margen solo toca el alquiler: los otros gastos, fijos (fijoLlega())
+  const enLimite = porResidual ? enLimiteResidual(r, margen, linea.linea.valor) : enLimiteLlega(r.ratio, margen, fijoLlega(r));
   return { valor, enLimite };
 }
 
@@ -729,7 +730,8 @@ function pintarFicha(v = vista()) {
     const base = x(v.mapa.base);
     valor = base === null ? null : formulaDe(v.mapa).calcular(base, supuestos);
     // El intervalo, en los mapas que son el alquiler en alguna unidad (no en el esfuerzo, con la renta)
-    if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen);
+    // El margen solo toca el alquiler, no los otros gastos de vivienda (fijoDe())
+    if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen, fijoDe(v.mapa, supuestos));
     // Tarea 40: al lado, el mínimo teórico con la superficie elegida (fuera de la serie, nada)
     if (!v.fuera) minimo = minimoDe(v.mapa, x, supuestos, serieTipo);
     conLinea = sueldoLineaDe(v, base, supuestos);   // tarea 65 (remates)
@@ -1171,7 +1173,7 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
   if (tieneNivel && v.modo === 'necesario') {
     const b = x(v.mapa.base);
     valor = b === null ? null : formulaDe(v.mapa).calcular(b, supuestos);
-    if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen);
+    if (tieneTipologia(m, v.mapa.base)) intervalo = intervaloMargen(valor, margen, fijoDe(v.mapa, supuestos));
     if (!v.fuera) minimo = minimoDe(v.mapa, x, supuestos, serieTipo);   // tarea 40
     conLinea = sueldoLineaDe(v, b, supuestos);   // tarea 65 (remates)
   } else if (tieneNivel) {

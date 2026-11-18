@@ -4,8 +4,8 @@
 // El manifiesto liga cada serie de alquiler (y las que salen de ella: sueldo necesario,
 // esfuerzo) con dos series auxiliares de su misma tipología: `fiabilidad`: {"contratos":
 // "contratos_alquiler", "margen": "margen_alquiler_m2"}. Los contratos son el recuento de
-// testigos del SERPAVI (0 incluido); el margen, el error típico aproximado de la mediana en %
-// (R/fuente_mivau_serpavi.R, margen_mediana()), redondeado a una décima como lo exporta R.
+// testigos del SERPAVI (0 incluido); el margen, el aproximado de la mediana al 95 % (1,96 errores
+// típicos; R/fuente_mivau_serpavi.R, margen_mediana()), en %, redondeado a una décima como lo exporta R.
 
 // Por debajo, «pocos contratos». El manifiesto trae el de R (umbral_pocos_contratos).
 export const UMBRAL_POCOS_CONTRATOS = 30;

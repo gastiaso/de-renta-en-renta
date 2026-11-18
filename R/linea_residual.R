@@ -271,7 +271,9 @@ calcular_muestra_residual <- function(terminos, lineas, otros_gastos, territorio
                                       anio = MUESTRA_SUPUESTOS_ANIO) {
   casos <- calcular_muestra_supuestos(terminos, supuestos)
   hogar <- ifelse(casos$ficha == "peon" & casos$segundo %in% TRUE, "dos_adultos", "una_persona")
-  otros <- otros_gastos_territorio(casos$geo_id, casos$nivel, anio, otros_gastos, territorios)
+  # Con la superficie del caso, solo crece la parte ligada a los metros (factor_otros_gastos(); 18-nov-2026)
+  otros <- otros_gastos_territorio(casos$geo_id, casos$nivel, anio, otros_gastos, territorios) *
+    factor_otros_gastos(casos$superficie, supuestos)
   x <- tibble::tibble(geo_id = casos$geo_id, nivel = casos$nivel, ficha = casos$ficha, eleccion = casos$eleccion,
                       umbral = casos$umbral, pagas = casos$pagas, segundo = casos$segundo, hogar = hogar,
                       ingreso = casos$ingreso, alquiler = casos$alquiler, otros = otros, euros = casos$euros)

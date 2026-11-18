@@ -24,7 +24,7 @@ import { ordenNatural } from './nombres.js';
 import { clasesTramos, rampaDeCss, TRAMOS_LLEGA } from './colores.js';
 import { eurosQueQuedan, SUPERFICIE_DOS_SUELDOS, SUPERFICIES } from './sueldo.js';
 import { claveLinea, esInicioImv } from './residual.js';
-import { daSueldo, textoSupuestos } from './formulas.js';
+import { daSueldo, textoSupuestos, factorOtrosGastos } from './formulas.js';
 import { lineaTransparencia } from './transparencia.js';
 
 const crear = (etiqueta, clase, texto) => {
@@ -243,12 +243,20 @@ let superficieDosElegida = SUPERFICIE_DOS_SUELDOS;
 // entre dos sueldos iguales, cada uno con la vivienda de dos: `base` (sueldo necesario de
 // `superficie` m², el mínimo teórico) llevado a `superficieDos` m² y ÷ 2. Sin base, la cifra ÷ 2 y
 // `superficieDos` null. Solo en los mapas que dan un sueldo.
-export function equivalenciasSueldo(valor, { base = null, superficie = null, superficieDos = SUPERFICIE_DOS_SUELDOS } = {}) {
+// Con los otros gastos de vivienda (`otros`, la cifra del territorio, y `umbral`): el alquiler crece con
+// la superficie, y de los otros gastos solo la parte ligada a los metros (factorOtrosGastos(); decisión
+// del autor, 18-nov-2026), no la cifra entera.
+export function equivalenciasSueldo(valor, { base = null, superficie = null, superficieDos = SUPERFICIE_DOS_SUELDOS, otros = null, umbral = null } = {}) {
   if (valor === null || valor === undefined || !Number.isFinite(valor)) return null;
   const conBase = Number.isFinite(base) && Number.isFinite(superficie) && superficie > 0 && SUPERFICIES.includes(superficieDos);
+  const conOtros = Number.isFinite(otros) && Number.isFinite(umbral) && umbral > 0;
+  const otrosSueldo = (m2) => (conOtros ? (otros * factorOtrosGastos(m2)) / umbral : 0);
+  const cadaUno = conBase
+    ? ((base - otrosSueldo(superficie)) * superficieDos / superficie + otrosSueldo(superficieDos)) / 2
+    : valor / 2;
   return {
     paga14: (valor * 12) / 14,
-    cadaUno: conBase ? (base * superficieDos) / superficie / 2 : valor / 2,
+    cadaUno,
     superficieDos: conBase ? superficieDos : null,
   };
 }
@@ -335,7 +343,7 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
     // Entre dos sueldos, con la vivienda de dos (70 m² por defecto; pregunta 43 h): desde el mínimo
     // teórico o, si no lo hay, desde la cifra cuando la calcula la superficie elegida
     const baseDos = Number.isFinite(minimo) ? minimo : mapaDef.formula === 'alquiler_m2_a_sueldo' ? valor : null;
-    const opcionesDos = { base: baseDos, superficie: supuestos?.superficie_m2 ?? null };
+    const opcionesDos = { base: baseDos, superficie: supuestos?.superficie_m2 ?? null, otros: supuestos?.otros ?? null, umbral: supuestos?.umbral ?? null };
     const eq = daSueldo(mapaDef) ? equivalenciasSueldo(valor, opcionesDos) : null;
     if (eq) {
       const d = mapaDef.decimales ?? 0;

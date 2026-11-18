@@ -12,7 +12,7 @@ Who has pay left after paying for housing? Where, since when and for whom the re
 |---|---|---|
 | Whom it measures | Those already renting | Those looking for a home today |
 | Source | SERPAVI (Ministry of Housing), with Tax Agency and Cadastre data | Idealista asking prices; INE index for new leases |
-| What the figure is | Median rent of existing leases | Average price asked in listings |
+| What the figure is | Median rent of existing leases | Median price asked in listings |
 | Scale | Census tract | Municipalities with published listings, province, autonomous community and Spain |
 | Period | 2015–2024 | 2006–2026 (municipalities, mostly since 2011) |
 | On the site | Maps, profiles and downloads | Coming soon: Idealista asking prices are not published until it authorises it; their derivatives, only in bands and never in the downloads |
@@ -25,7 +25,7 @@ No figure in the atlas combines the two sources. When they appear together, each
   - it comes from the income tax returns of landlords who are natural persons: it does not cover dwellings owned by companies, lets to relatives or undeclared rent (Ministry methodology of 18 March 2026);
   - there are data for Navarre from 2021; for Gipuzkoa, from 2022; for Álava and Bizkaia, only for 2024;
   - it measures the existing stock, not what those moving in pay;
-  - with fewer than 10 leases there is no figure: in 2024, 72 % of tracts have data, home to around 83 % of the population.
+  - with fewer than 10 leases there is no figure: in 2024, 72 % of tracts have data, home to around 84 % of the population.
 - **Idealista:**
   - it is an asking price, not the rent of a signed lease;
   - it only covers the municipalities where it publishes its report;
@@ -38,17 +38,17 @@ No figure in the atlas combines the two sources. When they appear together, each
 
 - **Pay needed.** Always two figures:
   - with the tract's actual median monthly rent: in 2024, €1,900 net a month in the median tract;
-  - with a theoretical 50 m² flat, as a minimum: €1,217. Rented flats measure about 79 m² at the median.
+  - with a theoretical 50 m² flat, as a minimum: €1,217. Rented flats measure about 79 m²: the ratio of median monthly rent to median rent per m², not the median of floor areas.
 - **What is left.** Income minus rent, in euros a month. It is a subtraction: it does not say whether what is left is enough to live on.
 - **Residual income line.** With the «Rule» selector, what is left is compared with a monthly line for the household: the guaranteed income of the minimum living income scheme (€604.21 for one person in 2024; up to 2019, the non-contributory pension) or the Living Conditions Survey at-risk-of-poverty threshold (€1,018.37). Neither is a budget for the other expenses. The pay needed also gives the rent plus the one-person line. The neighbourhood household has no line: its income is that of all the households in the tract.
-- **Poverty after housing costs.** In the «Overburden» section, from 2016 to 2025, by region, by tenure and by age, alongside European countries in total and by age (and Spain by degree of urbanisation): people whose income, once housing costs are paid, falls below the at-risk-of-poverty threshold (60% of the median, before paying for housing). It is Eurostat's definition, computed from the EU-SILC microdata: in Spain, 28.7% in the 2025 survey, the same figure Eurostat publishes.
+- **Poverty after housing costs.** In the «Overburden» section, from 2016 to 2025, by region, by tenure and by age, alongside European countries in total and by age (and Spain by degree of urbanisation): people whose income, once housing costs are paid, falls below the at-risk-of-poverty threshold (60% of the median, before paying for housing). It is Eurostat's definition, computed from the EU-SILC microdata: in Spain, 28.7% in the 2025 survey, the same figure Eurostat publishes. The region crossed with tenure or with age, and the region's total alongside them, use rolling three-wave periods (each survey with the two before it), so that the sample is large enough.
 - **30 % threshold.** It is a convention. The same share leaves much less room to a low wage than to a high one.
 - **Profiles.** Each profile uses a different income and states it:
   - neighbourhood household: average net household income;
   - young adult, 26 to 35: estimated median of one person;
   - minimum wage: the legal amount;
   - pensioner: average retirement pension (the median is not published by province).
-- **Margin.** Each median rent carries its number of leases and an approximate margin. With fewer than 30 leases, the figure is indicative and one-year changes are not interpreted.
+- **Margin.** Each median rent carries its number of leases and an approximate 95% margin. It is the margin of one figure: comparing two years calls for the margin of the difference, which is larger. With fewer than 30 leases, the figure is indicative and one-year changes are not interpreted.
 - **Euros.** Series are in current euros unless stated otherwise.
 - **Statuses.** «Published or computed value», «estimated» (rebuilt with a written rule), «statistical confidentiality» (there is rent, but fewer than 10 leases) and «no data».
 

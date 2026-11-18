@@ -15,7 +15,7 @@
 // Cada cálculo tiene dos caras que deben coincidir: la expresión de estilo de MapLibre (color
 // del mapa, sin volver a descargar teselas) y la función en JS (ficha, resumen, leyenda).
 
-import { formulaDe } from './formulas.js';
+import { formulaDe, factorOtrosGastos } from './formulas.js';
 import { pasosDeRampa, juegoDe } from './colores.js';
 import { SUPUESTOS } from './supuestos.js';
 
@@ -211,10 +211,16 @@ const falta = (serie) => ['==', estadoMapa(serie), null];
 // para toda la comunidad, y queda sin dato (tarea 26).
 // `gastos` (gastosDelAnio(), con el selector de otros gastos encendido): la cifra de cada territorio
 // se suma al alquiler de la ficha y al real; `calcular()` la devuelve en `otros` (el alquiler sigue
-// siendo solo el alquiler) y la proporción es (alquiler + otros) / ingreso.
+// siendo solo el alquiler) y la proporción es (alquiler + otros) / ingreso. Con la superficie de la
+// ficha, solo crece la parte ligada a los metros (factorOtrosGastos() de formulas.js; decisión del
+// autor, 18-nov-2026); la cifra con el alquiler real y la llave, que no eligen superficie, la suman tal cual.
 export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) => s, nivel = null, gastos = null }) {
-  const otrosDe = (seccion) => (gastos ? otrosGastosEn(gastos, seccion, nivel).valor : 0);
-  const conOtros = (expresion, idSeccion, nivelCapa) => (gastos ? ['+', expresion, expresionOtrosGastos(gastos, idSeccion, nivelCapa)] : expresion);
+  const otrosDe = (seccion, factor = 1) => (gastos ? otrosGastosEn(gastos, seccion, nivel).valor * factor : 0);
+  const conOtros = (expresion, idSeccion, nivelCapa, factor = 1) => {
+    if (!gastos) return expresion;
+    const otros = expresionOtrosGastos(gastos, idSeccion, nivelCapa);
+    return ['+', expresion, factor === 1 ? otros : typeof otros === 'number' ? otros * factor : ['*', otros, factor]];
+  };
   const conGastos = (r, otros) => (gastos ? { ...r, otros } : r);
   if (ficha === 'llave') {
     const { ingreso } = perfiles.llave;
@@ -263,14 +269,16 @@ export function calculoLlega({ ficha, perfiles, sueldo, superficie, serie = (s) 
       const ingreso = ingresoDe(seccion);
       if (m2 === null || !ingreso) return null;
       const alquiler = m2 * superficie;
-      const otros = otrosDe(seccion);
+      const otros = otrosDe(seccion, factorOtrosGastos(superficie));
+      const otrosReal = otrosDe(seccion);   // el piso real no elige superficie: la cifra tal cual
       const mes = x(realSerie);
-      const real = mes === null || mes === undefined ? null : { alquiler: mes, ratio: (mes + otros) / ingreso };
+      const real = mes === null || mes === undefined ? null
+        : { alquiler: mes, ratio: (mes + otrosReal) / ingreso, ...(gastos ? { otros: otrosReal } : {}) };
       return conGastos({ alquiler, ingreso, ratio: (alquiler + otros) / ingreso, ...(real ? { real } : {}) }, otros);
     },
     expresion(idSeccion, nivelCapa = nivel) {
       const ingreso = sinIngresoEn(nivelCapa) ? 0 : perfil ? expresionIngresoPerfil(perfil, idSeccion) : fijo;
-      const gasto = conOtros(['*', numero(m2Serie), superficie], idSeccion, nivelCapa);
+      const gasto = conOtros(['*', numero(m2Serie), superficie], idSeccion, nivelCapa, factorOtrosGastos(superficie));
       return {
         valido: ['all', ['!', falta(m2Serie)], ['>', ingreso, 0]],
         ratio: ['/', gasto, ingreso],
@@ -297,21 +305,31 @@ export function eurosQueQuedan(terminos) {
 export const tramoLlega = (ratio) => (ratio <= LIMITES_LLEGA[0] ? 0 : ratio <= LIMITES_LLEGA[1] ? 1 : 2);
 
 // Intervalo de una cifra con el margen aproximado de la mediana del alquiler (en %, el que
-// exporta R; plan §11, pregunta 15 ampliada): cifra × (1 ± margen). Vale para el alquiler, el
-// sueldo necesario y la proporción de «¿te llega?», que son el alquiler en otra unidad. Sin
-// cifra o sin margen, null.
-export function intervaloMargen(valor, margenPct) {
+// exporta R; plan §11, pregunta 15 ampliada). Vale para el alquiler, el sueldo necesario y la
+// proporción de «¿te llega?», que son el alquiler en otra unidad. El margen solo toca la parte
+// de la cifra que viene del alquiler: `fijo` es la que no (los otros gastos de vivienda en la
+// misma unidad: otros / umbral en el sueldo necesario, otros / ingreso en la proporción), que
+// no es una mediana del SERPAVI y no lleva su error. Cifra = fijo + alquiler; intervalo =
+// fijo + alquiler × (1 ± margen), como enLimiteResidual() (residual.js). Sin cifra o sin margen, null.
+export function intervaloMargen(valor, margenPct, fijo = 0) {
   if (valor === null || valor === undefined || !Number.isFinite(valor)) return null;
   if (margenPct === null || margenPct === undefined || !Number.isFinite(margenPct) || margenPct < 0) return null;
-  return { desde: valor * (1 - margenPct / 100), hasta: valor * (1 + margenPct / 100) };
+  const f = Number.isFinite(fijo) ? fijo : 0;
+  const alquiler = valor - f;
+  return { desde: f + alquiler * (1 - margenPct / 100), hasta: f + alquiler * (1 + margenPct / 100) };
 }
 
 // «En el límite entre dos tramos» de «¿te llega?»: el intervalo de la proporción cruza el corte
-// del 30 o del 40 %. Los tramos son fijos: no cambian con el umbral elegido.
-export function enLimiteLlega(ratio, margenPct) {
-  const i = intervaloMargen(ratio, margenPct);
+// del 30 o del 40 %. Los tramos son fijos: no cambian con el umbral elegido. `fijo`: la parte de
+// la proporción que no viene del alquiler (otros gastos / ingreso), que el margen no toca.
+export function enLimiteLlega(ratio, margenPct, fijo = 0) {
+  const i = intervaloMargen(ratio, margenPct, fijo);
   return i !== null && tramoLlega(i.desde) !== tramoLlega(i.hasta);
 }
+
+// Parte fija de la proporción de «¿te llega?» (calcular() de calculoLlega()): otros gastos / ingreso,
+// o 0 sin otros gastos.
+export const fijoLlega = (r) => (Number.isFinite(r?.otros) && r.ingreso > 0 ? r.otros / r.ingreso : 0);
 
 // Estado de «¿te llega?» (indicador 15): el del alquiler; si falta el ingreso de la ficha, el de
 // «ausente» (pregunta 15 ampliada: la calidad del ingreso no rebaja cada cifra).

@@ -8,7 +8,8 @@
 # Comprobaciones (id, detalle, calculado, referencia; todas deben dar 0):
 #   navegador_arranque: la página arranca con los datos del pipeline (no la muestra de ejemplo)
 #     y abre la ficha de una sección;
-#   navegador_errores: errores de JavaScript o de carga durante toda la prueba;
+#   navegador_errores: errores de JavaScript o de carga durante toda la prueba (en la web local, sin
+#     el 404 de las páginas que no salen de tar_make() si no existen: PAGINAS_FUERA_DE_TAR_MAKE);
 #   navegador_sueldo: en una muestra de secciones y en todos los años, el sueldo necesario que
 #     calcula la página con sus propios módulos (datos.js, formulas.js) frente al de la tabla
 #     larga, redondeados a una décima, con su estado;
@@ -187,6 +188,30 @@ JS_DESTINOS_NAVEGADOR <- r"(
 })
 )"
 
+# Tarea 58: páginas que no salen de tar_make() (las montan el flujo de Pages y
+# empaquetar_publicacion(); fuera de git). En la web local, si no existen (una copia limpia), su 404
+# se da por pendiente en navegador_casillas y navegador_errores, como reglas.html sin ancla; si
+# existen, se comprueban como el resto.
+PAGINAS_FUERA_DE_TAR_MAKE <- c("metodo.html", "method.html", "descargas/version.json")
+
+paginas_pendientes_navegador <- function(raiz = ".") {
+  PAGINAS_FUERA_DE_TAR_MAKE[!file.exists(file.path(raiz, "web", PAGINAS_FUERA_DE_TAR_MAKE))]
+}
+
+# Ruta de un destino o de una dirección de la web, sin consulta ni ancla y sin `url` delante.
+ruta_destino_navegador <- function(x, url = "") {
+  x <- sub("[?#].*$", "", x)
+  ifelse(nzchar(url) & startsWith(x, url), substring(x, nchar(url) + 1L), x)
+}
+
+# Errores de carga (navegador_errores) que son el 404 de una página pendiente: «carga: <texto> <url>».
+error_pendiente_navegador <- function(errores, pendientes, url) {
+  if (!length(errores) || !length(pendientes)) return(rep(FALSE, length(errores)))
+  direccion <- sub("^.* ", "", errores)
+  startsWith(errores, "carga:") & grepl("404", errores, fixed = TRUE) &
+    ruta_destino_navegador(direccion, url) %in% pendientes
+}
+
 # Servidor local de la web (node web/servir.mjs) en un puerto libre; devuelve el proceso y la URL.
 servir_web_local <- function(raiz = ".", espera = 15) {
   for (intento in 1:5) {
@@ -246,10 +271,12 @@ tramo_llega <- function(r) ifelse(r <= 0.3, 0L, ifelse(r <= 0.4, 1L, 2L))
 comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L, raiz = ".", semilla = 20261109L,
                                     espera = 60) {
   servidor <- NULL
+  pendientes <- character(0)   # tarea 58: en la publicada, todas se comprueban
   if (is.null(url)) {
     servidor <- servir_web_local(raiz)
     on.exit(servidor$proceso$kill(), add = TRUE)
     url <- servidor$url
+    pendientes <- paginas_pendientes_navegador(raiz)
   }
   if (!endsWith(url, "/")) url <- paste0(url, "/")
   b <- chromote::ChromoteSession$new(width = 1280, height = 900)
@@ -333,7 +360,7 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
     calculado = as.numeric(!ok || grepl("1500", paste(dir, collapse = "")) || nzchar(dir[2])), referencia = 0)
 
   # Front page, map by levels (tasks 24-26) and phone width
-  filas <- c(filas, comprobar_portada_navegador(b, evaluar, url, larga, perfiles, espera),
+  filas <- c(filas, comprobar_portada_navegador(b, evaluar, url, larga, perfiles, espera, pendientes = pendientes),
              comprobar_territorios_navegador(b, evaluar, url, larga, espera),
              comprobar_leyenda_navegador(b, evaluar, url, espera),   # tarea 51
              comprobar_escala_municipio_navegador(b, evaluar, url, larga, espera),   # decisiones del 11-nov-2026
@@ -378,8 +405,14 @@ comprobar_web_navegador <- function(url = NULL, larga, perfiles, muestra = 300L,
 
   # Errors of the whole check (collected while the browser messages are processed)
   b$Runtime$evaluate("1")
-  filas[[length(filas) + 1L]] <- tibble::tibble(id = "navegador_errores", detalle = paste(utils::head(errores, 5), collapse = " | "),
-                                                calculado = length(errores), referencia = 0)
+  pendiente <- error_pendiente_navegador(errores, pendientes, url)   # tarea 58
+  aceptados <- unique(ruta_destino_navegador(sub("^.* ", "", errores[pendiente]), url))
+  filas[[length(filas) + 1L]] <- tibble::tibble(
+    id = "navegador_errores",
+    detalle = paste0(paste(utils::head(errores[!pendiente], 5), collapse = " | "),
+                     if (length(aceptados)) paste0(if (any(!pendiente)) "; " else "",
+                                                   "404 aceptado (pendiente, fuera de tar_make()): ", paste(aceptados, collapse = ", "))),
+    calculado = sum(!pendiente), referencia = 0)
   bind_rows(filas) |> mutate(calculado = as.numeric(calculado), referencia = as.numeric(referencia))
 }
 
@@ -445,7 +478,7 @@ textos_cartas_navegador <- function(cifras) {
 # Portada (tarea 24): carga en los dos idiomas, sus cartas con las cifras de la tabla larga, los
 # destinos de las casillas, «Tu sueldo» hasta el mapa sin el sueldo en la consulta y el ancho de
 # un movil. Devuelve una lista de filas (tibbles) de comprobaciones.
-comprobar_portada_navegador <- function(b, evaluar, url, larga, perfiles, espera = 60) {
+comprobar_portada_navegador <- function(b, evaluar, url, larga, perfiles, espera = 60, pendientes = character(0)) {
   filas <- list()
   fila <- function(id, detalle, mal) tibble::tibble(id = id, detalle = detalle, calculado = as.numeric(mal), referencia = 0)
   b$Page$navigate(url)
@@ -472,14 +505,18 @@ comprobar_portada_navegador <- function(b, evaluar, url, larga, perfiles, espera
     }
     if (!is.null(p)) {
       d <- jsonlite::fromJSON(evaluar(paste0(JS_DESTINOS_NAVEGADOR, "(", jsonlite::toJSON(unlist(p$destinos)), ")")))
-      mal <- if (is.null(dim(d))) 1 else sum(d[, 2] != "200" | d[, 3] != "TRUE")
+      # Tarea 58: el 404 de una página que no sale de tar_make() y no existe en la web local, pendiente
+      pend <- if (is.null(dim(d))) logical(0) else d[, 2] == "404" & ruta_destino_navegador(d[, 1]) %in% pendientes
+      fallo <- if (is.null(dim(d))) logical(0) else (d[, 2] != "200" | d[, 3] != "TRUE") & !pend
+      mal <- if (is.null(dim(d))) 1 else sum(fallo)
       # Tarea 65: el detalle nombra los destinos que fallan y los de reglas.html sin ancla (la casilla 7,
       # a la portada de la página: decisión pendiente del autor), que se aceptan si la página responde
-      malos <- if (is.null(dim(d))) "sin respuesta" else d[d[, 2] != "200" | d[, 3] != "TRUE", 1]
+      malos <- if (is.null(dim(d))) "sin respuesta" else d[fallo, 1]
       sin_ancla <- grep("^reglas\\.html(\\?[^#]*)?$", unlist(p$destinos), value = TRUE)
       filas[[length(filas) + 1L]] <- fila("navegador_casillas", paste0(sprintf("%d destinos (%s)", length(p$destinos), idioma),
         if (length(malos)) paste0("; fallan: ", paste(malos, collapse = ", ")),
-        if (length(sin_ancla)) paste0("; sin ancla, aceptado (pendiente): ", paste(sin_ancla, collapse = ", "))), mal)
+        if (length(sin_ancla)) paste0("; sin ancla, aceptado (pendiente): ", paste(sin_ancla, collapse = ", ")),
+        if (any(pend)) paste0("; sin la página (fuera de tar_make()), aceptado (pendiente): ", paste(d[pend, 1], collapse = ", "))), mal)
     }
   }
 

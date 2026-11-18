@@ -18,8 +18,13 @@
 # (inventario/cis_ccaa_comunidades.csv), que dice también qué comunidades se agrupan de dos en dos años.
 #
 # Método (decisiones del autor, 13-nov-2026; el mismo que describe la herramienta):
-#   - cifra: % de entrevistados que cita PROB_007 en alguna de sus hasta tres menciones, con `peso`
-#     (no `peso_ccaa`: desde la ruptura R10 su suma no reproduce la cifra nacional publicada);
+#   - cifra: % de entrevistados que cita PROB_007 en alguna de sus hasta tres menciones. Las
+#     comunidades, con `peso_ccaa` (PESOCCAA, el peso que el CIS da para estimar por comunidad;
+#     revisión del 18-nov-2026: con `peso`, desde la ruptura R10 la cifra de una comunidad se alejaba
+#     hasta 6,7 puntos, más que su margen, porque el ajuste por nivel educativo se hace dentro de
+#     cada comunidad); España, con `peso`, que reproduce la serie nacional publicada. Las cifras de
+#     las comunidades así ponderadas no suman la de España, ni tienen por qué: la compuerta de la
+#     suma (cis_ccaa_suma) mide la lectura con `peso` (cis_ccaa_por_anio());
 #   - base: quien tiene una primera mención distinta de «no procede» (NP); NS y NC cuentan;
 #   - año: todas las entrevistas del año juntas (no la media de los meses); el año en curso, con los
 #     meses publicados y rotulado «hasta {mes}»;
@@ -115,9 +120,10 @@ cis_ccaa_leer_comunidades <- function(ruta) {
 # metadatos, los estudios (estudio, mes, n, deff), las rupturas, la etiqueta de PROB_007 y las
 # categorías de la comunidad.
 cis_ccaa_leer <- function(rutas) {
-  columnas <- c("estudio", "mes", "peso", "ccaa", paste0(rep(CIS_CCAA_COLUMNAS, each = 3), 1:3))
+  columnas <- c("estudio", "mes", "peso", "peso_ccaa", "ccaa", paste0(rep(CIS_CCAA_COLUMNAS, each = 3), 1:3))
   d <- arrow::read_parquet(cis_ccaa_ruta(rutas, "microdatos"), col_select = tidyselect::all_of(columnas))
-  d <- dplyr::mutate(tibble::as_tibble(d), dplyr::across(-peso, as.character), peso = as.numeric(peso))
+  d <- dplyr::mutate(tibble::as_tibble(d), dplyr::across(-c(peso, peso_ccaa), as.character),
+                     peso = as.numeric(peso), peso_ccaa = as.numeric(peso_ccaa))
   m <- jsonlite::read_json(cis_ccaa_ruta(rutas, "metadatos"))
   texto <- function(x) if (is.null(x)) NA_character_ else as.character(x)
   estudios <- dplyr::bind_rows(lapply(m$estudios, function(e) tibble::tibble(
@@ -152,8 +158,8 @@ cis_ccaa_menciones <- function(leido, comunidades) {
     primera <- d[[col[1]]]
     cita <- Reduce(`|`, lapply(col, function(k) d[[k]] %in% CIS_CCAA_VIVIENDA))
     tibble::tibble(estudio = d$estudio, mes = d$mes, anio = as.integer(substr(d$mes, 1, 4)), codigo = codigo,
-                   pregunta = p, peso = d$peso, en_base = !is.na(primera) & primera != CIS_CCAA_NO_PROCEDE,
-                   menciona = cita)
+                   pregunta = p, peso = d$peso, peso_ccaa = d$peso_ccaa,
+                   en_base = !is.na(primera) & primera != CIS_CCAA_NO_PROCEDE, menciona = cita)
   })
   dplyr::bind_rows(filas)
 }
@@ -169,6 +175,11 @@ cis_ccaa_wilson <- function(p, n_ef, z = CIS_CCAA_Z) {
 # Cifra de un grupo de entrevistas de la base: % ponderado, entrevistas, suma de pesos, efecto de
 # diseno de Kish, tamano efectivo e intervalo de Wilson (en %).
 cis_ccaa_estimar <- function(menciona, peso) {
+  # Un peso 0 deja fuera a la persona (en `peso_ccaa` hay uno: estudio 3366, Asturias): no cuenta
+  # en las entrevistas ni en el efecto de diseño
+  dentro <- peso > 0
+  menciona <- menciona[dentro]
+  peso <- peso[dentro]
   n <- length(peso)
   if (n == 0) {
     return(tibble::tibble(valor = NA_real_, entrevistas = 0L, suma_pesos = 0, deff = NA_real_, n_efectivo = NA_real_,
@@ -229,7 +240,9 @@ cis_ccaa_tabla <- function(menciones, comunidades, rupturas, nombres) {
       tibble::tibble(codigo = g$codigo, anio = g$anio,
                      desde = if (nrow(x)) min(x$mes) else NA_character_, hasta = if (nrow(x)) max(x$mes) else NA_character_,
                      anios = length(intersect(ventana, anios)), pregunta = g$pregunta),
-      cis_ccaa_estimar(x$menciona, x$peso), tibble::tibble(meses = length(unique(x$mes))))
+      # España, con `peso`; cada comunidad, con `peso_ccaa` (revisión del 18-nov-2026)
+      cis_ccaa_estimar(x$menciona, if (g$codigo == CIS_CCAA_ESPANA) x$peso else x$peso_ccaa),
+      tibble::tibble(meses = length(unique(x$mes))))
   }))
   tabla |>
     dplyr::mutate(
@@ -299,12 +312,12 @@ cis_ccaa_comprobar <- function(leido, menciones, mensual, por_anio, tabla, comun
     id = "cis_ccaa_codigos", anio = NA_integer_,
     detalle = c("preguntas sin PROB_007 = \u00abLa vivienda\u00bb", "comunidades de los metadatos que no son 19 o no est\u00e1n en la tabla fija",
                 "comunidades del Parquet sin c\u00f3digo", "comunidades de la tabla fija que no son 19 o est\u00e1n repetidas",
-                "pesos no positivos o vac\u00edos", "estudios o meses del Parquet fuera de los metadatos"),
+                "pesos vac\u00edos o no positivos en peso, o vac\u00edos o negativos en peso_ccaa", "estudios o meses del Parquet fuera de los metadatos"),
     calculado = c(sum(!etiqueta),
                   abs(length(leido$comunidades) - 19) + sum(!leido$comunidades %in% comunidades$nombre_cis),
                   sum(is.na(menciones$codigo)),
                   abs(nrow(comunidades) - 19) + sum(duplicated(comunidades$codigo)) + sum(duplicated(comunidades$nombre_cis)),
-                  sum(is.na(d$peso) | d$peso <= 0),
+                  sum(is.na(d$peso) | d$peso <= 0) + sum(is.na(d$peso_ccaa) | d$peso_ccaa < 0),
                   sum(!unique(d$mes) %in% meses_meta) + sum(!unique(d$estudio) %in% leido$estudios$estudio)),
     referencia = 0)
   # alertas

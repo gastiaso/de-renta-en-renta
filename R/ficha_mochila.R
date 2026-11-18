@@ -15,6 +15,12 @@
 #   3. De bruto a neto: × (1 − cotización del trabajador del año − retención de la AEAT de quien
 #      solo cobra salarios, interpolada en el tramo de renta anual de su comunidad y año) ÷ 12.
 #   4. Lo cobrado en el año (método B, adoptado el 7-nov-2026): incluye a quien trabajó pocos meses.
+#      Revisión del 18-nov-2026: la relación del paso 2 es la de quienes trabajaron el año entero, y
+#      se aplicaba a una media que incluye a quien trabajó pocos meses, cuya distribución está más
+#      sesgada (relación más baja): la mediana salía alta. Ahora se multiplica por el factor de
+#      composición de la ECV (ecv_mochila_composicion()): relación mediana/media de todos los
+#      asalariados de 26 a 35 años ÷ la de quienes trabajaron los doce meses, de España y del mismo
+#      año de ingresos (sin ola todavía, el del último año que la tiene).
 #   5. Control con la ECV de cada año (ingresos del mismo año que la AEAT): alertas mochila_ecv
 #      (bruto; tolerancia: el intervalo de la mediana de la ECV por el tamaño de su muestra,
 #      pregunta 44 g) y mochila_neto_ecv (paso a neto).
@@ -172,7 +178,7 @@ formas_sme <- function(modulos, edad = EDAD_MOCHILA) {
 # con `correccion` (factores de ecv_mochila_correccion(): anio y factor), esa relación × el factor
 # del año. metodo_forma: «anio» (la del mismo año), «primer_anio» (la de 2019) o «primer_anio_ecv»
 # (la de 2019 escalada con la ECV).
-calcular_mochila_serie <- function(salarios, formas, anios = ANIOS_MOCHILA, correccion = NULL) {
+calcular_mochila_serie <- function(salarios, formas, anios = ANIOS_MOCHILA, correccion = NULL, composicion = NULL) {
   joven <- salarios |> filter(edad == "Y26-35", anio %in% anios)
   real_ccaa <- joven |> filter(nivel == "ccaa") |> select(anio, ccaa = geo_id, real_ccaa = salario_medio)
   primero <- min(formas$anio)
@@ -183,6 +189,7 @@ calcular_mochila_serie <- function(salarios, formas, anios = ANIOS_MOCHILA, corr
     mutate(anio_forma = if_else(anio %in% formas$anio, anio, primero)) |>
     inner_join(select(formas, anio_forma = anio, ccaa, mediana_sme, media_sme, forma), by = c("anio_forma", "ccaa")) |>
     ecv_mochila_aplicar(correccion) |>
+    ecv_mochila_componer(composicion) |>
     mutate(bruto_anual = salario_medio * forma,
            A = mediana_sme * salario_medio / real_ccaa,
            C = mediana_sme) |>
@@ -312,7 +319,8 @@ leer_ecv_asalariados <- function(rutas, anio_ingresos, edades = c(26L, 35L)) {
 # la muestra efectiva con los pesos (Kish: (suma de pesos)^2 / suma de pesos^2), y el intervalo del
 # 95 % de la mediana del bruto (mediana_lo, mediana_hi: cuantiles ponderados en 0,5 -/+ 1,96 x
 # 0,5 / raiz(n_eff), método de Woodruff). De quienes trabajaron los doce meses (pregunta 44 f):
-# n_12, mediana y media ponderadas del bruto y su relación (relacion_12).
+# n_12, mediana y media ponderadas del bruto y su relación (relacion_12). De todos (revisión del
+# 18-nov-2026): media ponderada del bruto (media_todos) y relación mediana/media (relacion_todos).
 resumir_ecv_asalariados <- function(asalariados, anio = NA_integer_) {
   media_12 <- function(x, w, m) if (any(m >= 12)) stats::weighted.mean(x[m >= 12], w[m >= 12]) else NA_real_
   mediana_12 <- function(x, w, m) if (any(m >= 12)) mediana_ponderada(x[m >= 12], w[m >= 12]) else NA_real_
@@ -325,6 +333,7 @@ resumir_ecv_asalariados <- function(asalariados, anio = NA_integer_) {
               pct_anio_completo = 100 * sum(peso[meses >= 12]) / sum(peso),
               n_12 = sum(meses >= 12), mediana_12 = mediana_12(bruto, peso, meses), media_12 = media_12(bruto, peso, meses),
               relacion_12 = mediana_12 / media_12,
+              media_todos = stats::weighted.mean(bruto, peso), relacion_todos = mediana_bruto / media_todos,
               mediana_neto = if (all(is.na(neto))) NA_real_ else mediana_ponderada(neto[!is.na(neto)], peso[!is.na(neto)]),
               .groups = "drop") |>
     mutate(anio = as.integer(anio), .before = 1)
@@ -332,13 +341,14 @@ resumir_ecv_asalariados <- function(asalariados, anio = NA_integer_) {
 
 # Mochila de España («00») por año: salario medio real de 26 a 35 años de España × su relación
 # mediana/media (la del primer año del módulo antes de él), para el control con la ECV.
-mochila_espana <- function(salarios, formas, anios = ANIOS_MOCHILA, correccion = NULL) {
+mochila_espana <- function(salarios, formas, anios = ANIOS_MOCHILA, correccion = NULL, composicion = NULL) {
   primero <- min(formas$anio)
   salarios |>
     filter(nivel == "nacional", edad == "Y26-35", anio %in% anios) |>
     transmute(anio, ccaa = "00", real_ccaa = salario_medio, anio_forma = if_else(anio %in% formas$anio, anio, primero)) |>
     inner_join(select(formas, anio_forma = anio, ccaa, forma), by = c("anio_forma", "ccaa")) |>
     ecv_mochila_aplicar(correccion) |>
+    ecv_mochila_componer(composicion) |>
     select(anio, ccaa, real_ccaa, forma)
 }
 
@@ -349,6 +359,36 @@ ecv_mochila_aplicar <- function(x, correccion = NULL) {
   prestada <- x$anio != x$anio_forma
   x$forma <- ifelse(prestada & !is.na(f), x$forma * f, x$forma)
   x$metodo_forma <- ifelse(!prestada, "anio", ifelse(is.na(f), "primer_anio", "primer_anio_ecv"))
+  x
+}
+
+# Factor de composición por año de ingresos (revisión del 18-nov-2026): relación mediana/media del
+# bruto de todos los asalariados de 26 a 35 años (relacion_todos) ÷ la de quienes trabajaron los
+# doce meses (relacion_12), en España (`ecv`: resumir_ecv_asalariados() de cada ola). La relación
+# del módulo de «año completo» de la AEAT se lleva así a la distribución de lo cobrado en el año,
+# que es la de la media del paso 1. Una fila por año de `anios`: los que no tienen ola todavía toman
+# el factor del último que la tiene (`prestado`). Supone que la diferencia entre las dos relaciones
+# es la misma en todas las comunidades (la muestra de la ECV no da para medirla en cada una).
+ecv_mochila_composicion <- function(ecv, anios = ANIOS_MOCHILA) {
+  r <- ecv[ecv$nuts2 == "ES" & !is.na(ecv$relacion_todos) & !is.na(ecv$relacion_12), ]
+  if (!nrow(r)) stop("ECV: sin relaciones mediana/media de Espa\u00f1a para el factor de composici\u00f3n", call. = FALSE)
+  r <- r[order(r$anio), ]
+  de <- vapply(anios, function(a) { k <- r$anio[r$anio <= a]; if (length(k)) max(k) else min(r$anio) }, numeric(1))
+  i <- match(de, r$anio)
+  tibble::tibble(anio = as.integer(anios), factor = r$relacion_todos[i] / r$relacion_12[i],
+                 anio_ecv = as.integer(de), prestado = de != anios)
+}
+
+# Aplica el factor de composición a la relación de cada fila (sin `composicion`, como antes).
+ecv_mochila_componer <- function(x, composicion = NULL) {
+  if (is.null(composicion) || !nrow(composicion)) {
+    x$factor_composicion <- NA_real_
+    return(x)
+  }
+  f <- composicion$factor[match(x$anio, composicion$anio)]
+  if (anyNA(f)) stop("Sin factor de composici\u00f3n de la mochila para: ", paste(unique(x$anio[is.na(f)]), collapse = ", "), call. = FALSE)
+  x$forma <- x$forma * f
+  x$factor_composicion <- f
   x
 }
 

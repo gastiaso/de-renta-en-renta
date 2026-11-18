@@ -115,12 +115,6 @@ Porcentaje de entrevistados de la comunidad que cita «La vivienda» en alguna d
 
 **Recomendación: B, desde el primer año con `PESOCCAA` y afijación mínima por comunidad** (a más tardar, 2023), con **Ceuta y Melilla agrupadas de dos en dos años** (`anio` = el último, como los cruces de varias olas de la ECV); D como complemento cuando se publique, si sus preguntas lo justifican; E, solo si el formulario de cada estudio resulta inviable.
 
-### Lectura de los microdatos
-
-- **Desde 2023, el CSV numérico** (`xxxx_num.csv`): se lee con lo que ya usa el pipeline, sin paquetes nuevos. Antes de 2023 haría falta el `.sav` (el paquete `haven`, que `renv.lock` no tiene) o el ASCII con las posiciones del libro de códigos.
-- **Códigos de la categoría** «La vivienda» y de las comunidades: de las etiquetas de cada estudio (`xxxx_etiq.csv` o el libro de códigos), nunca fijados en el código; el inventario guarda el código de cada estudio y la compuerta comprueba su etiqueta.
-- **Descarga manual** (guía, «Datos»: ficheros que la fuente no deja descargar de forma automática): el autor rellena el formulario y guarda cada zip en `datos/brutos/cis_microdatos/MDxxxx.zip`; el pipeline se detiene y dice qué estudio falta, su página y el nombre del fichero. Volumen: un zip de unos 3 MB al mes, unos 40 desde 2023 (unos 120 MB, fuera de git). Cada fichero lleva su tamaño y su SHA-256 en un inventario nuevo, `inventario/cis_microdatos.csv` (estudio, mes, fichero, tamaño, suma, fecha de descarga, código de «La vivienda»), como `cis_transcripcion_pdf.csv`.
-
 ## Encaje
 
 ### Tabla larga
@@ -129,8 +123,7 @@ Porcentaje de entrevistados de la comunidad que cita «La vivienda» en alguna d
 
 ### Fuente y calendario
 
-- `inventario/fuentes.csv`: `cis_microdatos` (CIS; https://www.cis.es, página de cada barómetro; acceso: descarga manual con formulario; condiciones: las de arriba; mensual; comunidad autónoma; desde 2023).
-- `inventario/calendario_fuentes.csv`: misma cadencia que `cis_barometros` (el fichero de datos llega unos días después de los resultados: el de octubre de 2026, el 22-oct, dos días después). Objetivo `fichero_cis_microdatos`, `renovar` manual.
+Fuente `cis_ccaa` en `inventario/fuentes.csv` y `calendario_fuentes.csv` (la edición de *Barómetro a barómetro*), sin descarga manual.
 
 ### Web
 
@@ -140,16 +133,7 @@ Porcentaje de entrevistados de la comunidad que cita «La vivienda» en alguna d
 
 ### Compuertas (`inventario/referencias_validacion.csv`)
 
-| Id | Tipo | Comprueba |
-|---|---|---|
-| `cis_ccaa_espana` | bloqueo | Con `PESO` y toda la muestra, cada mes reproduce la cifra nacional de la tabla `cis_vivienda` (±0,1 puntos), las dos preguntas |
-| `cis_ccaa_muestra` | bloqueo | Entrevistas por comunidad = las «realizadas» de la ficha técnica de cada estudio |
-| `cis_ccaa_codigos` | bloqueo | En cada estudio, el código guardado en el inventario tiene la etiqueta «La vivienda» y las comunidades son las 19 |
-| `cis_ccaa_fichero` | bloqueo | Tamaño y SHA-256 de cada zip = los del inventario |
-| `cis_ccaa_pesos` | bloqueo | `PESOCCAA` presente y positivo; la media de `PESO` por comunidad, la de la tabla de ponderaciones de la ficha técnica |
-| `cis_ccaa_margen` | alerta | Comunidades y años con margen de más de ±5 puntos (Ceuta y Melilla sin agrupar) |
-| `cis_ccaa_meses` | alerta | Años con menos de nueve barómetros con microdatos |
-| `web_cis_ccaa` | bloqueo | Ida y vuelta del JSON de la web |
+Las `cis_ccaa_*` de `inventario/referencias_validacion.csv` (`espana`, `suma`, `muestra`, `codigos`, `fichero`, `margen` y `meses`) y `web_cis_ccaa`; nota metodológica, §7.10.
 
 ### Pruebas
 

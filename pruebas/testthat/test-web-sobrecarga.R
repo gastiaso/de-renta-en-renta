@@ -116,6 +116,64 @@ test_that("desgloses: países de Eurostat, comunidades agrupadas y referencias, 
   expect_setequal(e$geo, c("AA", "BB", "EU27_2020", "ES"))
 })
 
+test_that("grado de urbanización (18-nov-2026): países de ilc_lvho07d, comunidades agrupadas e ida y vuelta", {
+  urb <- tibble::tibble(conjunto = "ilc_lvho07d", geo = c("AA", "BB", "ES", "EU27_2020", "EA20", "AA", "AA"),
+                        grado = c("DEG1", "DEG1", "DEG1", "DEG1", "DEG1", "DEG3", "DEG1"),
+                        anio = c(rep(2025L, 6), 2024L), valor = c(11.04, 6, 8.2, 9.1, 9, 5, 99),
+                        bandera = c(NA, "u", NA, NA, NA, NA, NA))
+  anual <- dplyr::bind_rows(anual_sc, tibble::tibble(anio = 2025L, indicador = "sobrecarga", umbral = 0.4, corte = "urbanizacion",
+                                                     grupo = "DEG1", valor = 8.21, n_personas = 30000L, n_hogares = 12000L))
+  agrupada <- dplyr::bind_rows(agrupada_sc, tibble::tibble(
+    fiabilidad = c("normal", "baja", "normal", "normal"), anio_inicio = 2023L, anio_fin = 2025L, olas = 3L, indicador = "sobrecarga",
+    umbral = 0.4, region = c("ES30", "ES61", "ES30", "ES61"), corte = c("urbanizacion", "urbanizacion", "total", "total"),
+    grupo = c("DEG1", "DEG1", "TOTAL", "TOTAL"), valor = c(10.36, 7.94, 9.9, 7.1), n_personas = c(6000L, 40L, 7000L, 8000L),
+    n_hogares = c(2500L, 15L, 2900L, 3200L)))
+  v <- vista_desglose_sobrecarga(europa_sc(), agrupada, anual, "urbanizacion", "DEG1", 2025L, urb)
+  expect_equal(v$geo, c("AA", "ES30", "EU27_2020", "ES", "ES61", "BB"))   # sin ES como país, ni la EA20, ni el total agrupado
+  expect_equal(v$puesto, 1:6)
+  expect_equal(c(v$tabla[v$geo == "BB"], v$bandera[v$geo == "BB"], v$fuente[v$geo == "BB"]), c("ilc_lvho07d", "u", "eurostat_ilc_lvho07d"))
+  expect_equal(c(v$fiabilidad[v$geo == "ES61"], v$n[v$geo == "ES61"]), c("baja", "40"))   # de 20 a 49: con trama en la web
+  expect_equal(v$valor[v$geo == "ES"], 8.21)
+  # Sin la tabla de ilc_lvho07d, el grado no está en el mapa
+  expect_equal(names(grupos_mapa_sobrecarga()), c("tenencia", "edad"))
+  expect_equal(grupos_mapa_sobrecarga(urb)$urbanizacion, c("DEG1", "DEG2", "DEG3"))
+
+  dir <- tempfile("web_")
+  ruta <- tempfile(fileext = ".gpkg")
+  on.exit(unlink(c(dir, ruta), recursive = TRUE))
+  sf::st_write(nuts_sc(), ruta, quiet = TRUE)
+  europa <- filter(europa_sc(), anio >= 2024)
+  rutas <- exportar_web_sobrecarga(anual, agrupada, europa, ccaa_sc, modulos_sc(), c("2024" = ruta), ind_sc,
+                                   quintil = quintil_sc, dir_web = dir, fecha = "2026-11-18", urbanizacion = urb)
+  x <- jsonlite::fromJSON(rutas[1], simplifyVector = FALSE)
+  claves <- vapply(x$vistas, `[[`, "", "clave")
+  expect_true(all(c("urbanizacion-DEG1-2025", "urbanizacion-DEG3-2025") %in% claves))
+  expect_false("urbanizacion-DEG2-2025" %in% claves)                    # sin ninguna cifra: no se ofrece
+  expect_equal(lapply(x$grupos_mapa, unlist), grupos_mapa_sobrecarga(urb))
+  u1 <- x$vistas[[which(claves == "urbanizacion-DEG1-2025")]]$filas
+  expect_equal(u1[[which(vapply(u1, `[[`, "", "geo") == "AA")]]$v, 110L)   # 11,04 → 11,0
+  expect_equal(u1[[which(vapply(u1, `[[`, "", "geo") == "ES30")]][c("v", "n", "fiabilidad")], list(v = 104L, n = 6000L, fiabilidad = "normal"))
+
+  comprobar <- function(u = urb) comprobar_web_sobrecarga(anual, agrupada, europa, armar_escalera(europa), ccaa_sc, modulos_sc(),
+                                                           ind_sc, quintil = quintil_sc, dir_web = dir, urbanizacion = u)
+  c1 <- comprobar()
+  expect_true("urbanizacion-DEG1-2025" %in% c1$detalle)
+  expect_equal(sum(c1$calculado), 0)
+  # Sin la tabla en la compuerta, los grupos del mapa y las vistas del grado sobran
+  sin <- comprobar(NULL)
+  expect_gt(sin$calculado[sin$detalle == "sobrecarga: bloque"], 0)
+  expect_gt(sin$calculado[sin$detalle == "urbanizacion-DEG1-2025" & sin$id == "web_sobrecarga_valores"], 0)
+  # Un país cambiado, su marca quitada y una comunidad cambiada: la compuerta lo ve
+  texto <- readLines(rutas[1], warn = FALSE, encoding = "UTF-8")
+  texto <- sub('"geo":"AA","nivel":0,"bloque":"europa","v":110', '"geo":"AA","nivel":0,"bloque":"europa","v":111', texto, fixed = TRUE)
+  texto <- sub('"tabla":"ilc_lvho07d","bandera":"u"', '"tabla":"ilc_lvho07d"', texto, fixed = TRUE)
+  writeLines(texto, rutas[1], useBytes = TRUE)
+  c2 <- comprobar()
+  mal <- c2[c2$calculado > 0, ]
+  expect_equal(mal$detalle, c("urbanizacion-DEG1-2025", "urbanizacion-DEG1-2025"))
+  expect_equal(mal$id, c("web_sobrecarga_valores", "web_sobrecarga_muestra"))
+})
+
 test_that("las geometrías se recortan al marco, llevan Canarias al recuadro y salen en coordenadas del mapa", {
   ruta <- tempfile(fileext = ".gpkg")
   on.exit(unlink(ruta))
@@ -364,14 +422,25 @@ test_that("pobreza tras la vivienda por edad (18-nov-2026): países de ilc_li45,
   expect_equal(lapply(x$pobreza$grupos_mapa, unlist), grupos_mapa_pobreza(edad))
   pe <- x$vistas[[which(claves == "pobreza-edad-Y_LT18-2025")]]$filas
   expect_equal(pe[[which(vapply(pe, `[[`, "", "geo") == "AA")]]$v, 410L)   # 41,04 → 41,0
-  # El total agrupado de las comunidades (solo para la compuerta) no va a la web
+  # El total agrupado de las comunidades no es una vista del mapa: va en `pobreza.trienio` (18-nov-2026),
+  # para la tabla de comunidades y la ficha, junto a la cifra anual
   expect_false(any(vapply(x$vistas, function(w) identical(w$corte, "total") && identical(w$grupo, "TOTAL"), TRUE)))
+  expect_equal(x$pobreza$trienio, list(list(geo = "ES30", v = 230L, n = 8000L, hogares = 3000L, fiabilidad = "normal"),
+                                       list(geo = "ES61", v = 370L, n = 9000L, hogares = 3500L, fiabilidad = "normal")))
 
   comprobar <- function(p = pobreza) comprobar_web_sobrecarga(anual_sc, agrupada_sc, europa, armar_escalera(europa), ccaa_sc, modulos_sc(),
                                                               ind_p_sc, quintil = quintil_sc, dir_web = dir, pobreza = p)
   c1 <- comprobar()
   expect_true("pobreza: pobreza-edad-Y_LT18-2025" %in% c1$detalle)
+  expect_true("pobreza: total de las comunidades con el último trienio" %in% c1$detalle)
   expect_equal(sum(c1$calculado), 0)
+  # El total con el último trienio cambiado y su muestra también: la compuerta lo ve
+  original <- readLines(rutas[1], warn = FALSE, encoding = "UTF-8")
+  texto <- sub('"geo":"ES30","v":230,"n":8000', '"geo":"ES30","v":231,"n":8001', original, fixed = TRUE)
+  writeLines(texto, rutas[1], useBytes = TRUE)
+  ct <- comprobar()
+  expect_equal(ct$calculado[ct$detalle == "pobreza: total de las comunidades con el último trienio"], c(1, 1))
+  writeLines(original, rutas[1], useBytes = TRUE)
   # Sin la tabla por edad en la compuerta, la vista y los grupos de edad sobran
   sin_edad <- comprobar(pobreza[names(pobreza) != "edad"])
   expect_gt(sin_edad$calculado[sin_edad$detalle == "pobreza: vistas"], 0)

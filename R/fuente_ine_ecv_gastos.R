@@ -154,9 +154,15 @@ anio_ecv_para <- function(anio, anios_ecv) {
 }
 
 # Cuentas con otros gastos de la web (web/js/formulas.js y sueldo.js): sueldo necesario
-# (alquiler + otros) / umbral y proporción (alquiler + otros) / ingreso.
-sueldo_con_otros_gastos <- function(alquiler, otros, umbral) (alquiler + otros) / umbral
-ratio_con_otros_gastos <- function(alquiler, otros, ingreso) (alquiler + otros) / ingreso
+# (alquiler + otros) / umbral y proporción (alquiler + otros) / ingreso. Con `superficie` (la del
+# mínimo teórico o la de la ficha), los otros gastos van por factor_otros_gastos(): solo crece la
+# parte ligada a los metros (decisión del autor, 18-nov-2026); sin ella (el piso real), tal cual.
+sueldo_con_otros_gastos <- function(alquiler, otros, umbral, superficie = NA_real_) {
+  (alquiler + otros * factor_otros_gastos(superficie)) / umbral
+}
+ratio_con_otros_gastos <- function(alquiler, otros, ingreso, superficie = NA_real_) {
+  (alquiler + otros * factor_otros_gastos(superficie)) / ingreso
+}
 
 # Compuerta: comprobaciones internas (no hay cifra publicada que reproducir).
 comprobar_otros_gastos <- function(otros_gastos, ecv_gastos, ccaa, minimo = otros_gastos_minimo(), rango = OTROS_GASTOS_RANGO,

@@ -28,7 +28,7 @@ TEXTOS_DICCIONARIO_DATOS <- list(
     significado = "Significado",
     digitos = "Cifras de `geo_id`",
     corte_intro = "Variable del desglose. Sin desglose, `corte` y `grupo` valen `total`.",
-    grupo_intro = "Valor del desglose, seg\u00fan el corte.",
+    grupo_intro = "Valor del desglose, seg\u00fan el `corte`.",
     sin_desglose = "Sin desglose",
     fuente_intro = "Fuentes que cita el inventario de indicadores; `calculo_propio` marca los derivados. Su enlace y su licencia est\u00e1n en `inventario/fuentes.csv` (columnas `url` y `licencia`).",
     fuente = "Fuente",

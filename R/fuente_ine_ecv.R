@@ -286,21 +286,66 @@ comprobar_sobrecarga_quintil <- function(quintil, sobrecarga, eurostat = NULL) {
 }
 
 # Varias olas agrupadas para los cruces que una sola ola no sostiene (comunidad × tenencia,
-# comunidad × edad; plan §7, F1b). Cada ola pesa lo mismo: su factor se divide por el número
-# de olas. Fiabilidad según la convención de EU-SILC: con menos de 20 observaciones no se
-# publica; de 20 a 49, se marca como poco fiable.
+# comunidad × edad y comunidad × grado de urbanización; plan §7, F1b; el grado, decisión del autor
+# del 18-nov-2026). Cada ola pesa lo mismo: su factor se divide por el número de olas. Fiabilidad
+# según la convención de EU-SILC: con menos de 20 observaciones no se publica; de 20 a 49, se marca
+# como poco fiable. Lleva también el total de cada comunidad con las mismas olas (corte «total»),
+# solo para la compuerta sobrecarga_ccaa_urbanizacion_total: no va a la tabla larga ni a la web; y la
+# suma de los factores de cada celda (`peso`), para rehacer ese total. Sin tenencia, edad o grado, la
+# persona cuenta en el total y no en ese corte.
+#
+# Observaciones distintas (revisión del 18-nov-2026): la ECV es un panel rotatorio de cuatro
+# subgrupos y cada año se renueva uno, así que de una ola a la siguiente se repite en torno a tres
+# cuartas partes de la muestra. Sumar las personas de cada ola contaba dos o tres veces a la misma
+# persona y daba marcas de fiabilidad más optimistas. `n_personas` estima ahora las personas
+# distintas (n_distintas_rotacion(): la primera ola entera y, de cada una de las demás, la parte
+# que se renueva, RENOVACION_ECV); `n_personas_olas` guarda la suma por olas. Los ficheros
+# transversales no traen un identificador que siga a la persona de una ola a otra, así que es
+# una estimación. La cifra central no cambia.
+RENOVACION_ECV <- 0.25
+n_distintas_rotacion <- function(n_por_ola, renovacion = RENOVACION_ECV) {
+  if (length(n_por_ola) == 0L) return(0)
+  n_por_ola[1] + renovacion * sum(n_por_ola[-1])
+}
+
+# Personas distintas estimadas de cada celda (ambito × corte × grupo) de una agrupación de olas, con
+# las olas en orden. `d` lleva `anio`; `corte`, `grupo` y `ambito`, de largo 1 o el de `d`. Sirve al 22
+# y al 24 (calcular_pobreza_vivienda_agrupada(); decisión del autor del 18-nov-2026: todos los cruces
+# agrupados cuentan personas distintas).
+contar_distintas <- function(d, corte, grupo, ambito) {
+  tibble::tibble(ambito = ambito, corte = corte, grupo = grupo, anio = d$anio) |>
+    count(ambito, corte, grupo, anio) |>
+    arrange(anio) |>
+    group_by(ambito, corte, grupo) |>
+    summarise(n_distintas = floor(n_distintas_rotacion(n)), .groups = "drop")
+}
+
 calcular_sobrecarga_agrupada <- function(olas, umbral = 0.40) {
   p <- bind_rows(lapply(olas, personas_sobrecarga, umbral = umbral)) |>
     mutate(peso_persona = peso_persona / length(olas), id_hogar = paste(anio, id_hogar))
   anios <- range(p$anio)
   pt <- con_tenencia(p)
+  pe <- filter(p, !is.na(grupo_edad))
+  pg <- filter(p, !is.na(grado))
+  # Suma de los factores de cada celda (`peso`) y personas distintas estimadas, con las olas en orden
+  tasa <- function(d, corte, grupo) {
+    pesos <- tibble::tibble(ambito = d$region, corte = corte, grupo = grupo, w = d$peso_persona) |>
+      group_by(ambito, corte, grupo) |>
+      summarise(peso = sum(w), .groups = "drop")
+    tasa_sobrecarga(d, corte, grupo, ambito = d$region) |>
+      left_join(pesos, by = c("ambito", "corte", "grupo")) |>
+      left_join(contar_distintas(d, corte, grupo, d$region), by = c("ambito", "corte", "grupo"))
+  }
   bind_rows(
-    tasa_sobrecarga(pt, "tenencia", pt$tenencia_eurostat, ambito = pt$region),
-    tasa_sobrecarga(pt, "tenencia", ifelse(pt$propietario, "OWN", "RENT"), ambito = pt$region),
-    tasa_sobrecarga(filter(p, !is.na(grupo_edad)), "edad", filter(p, !is.na(grupo_edad))$grupo_edad,
-                    ambito = filter(p, !is.na(grupo_edad))$region)
+    tasa(p, "total", "TOTAL"),
+    tasa(pt, "tenencia", pt$tenencia_eurostat),
+    tasa(pt, "tenencia", ifelse(pt$propietario, "OWN", "RENT")),
+    tasa(pe, "edad", pe$grupo_edad),
+    tasa(pg, "urbanizacion", pg$grado)
   ) |>
-    rename(region = ambito) |>
+    rename(region = ambito, n_personas_olas = n_personas) |>
+    mutate(n_personas = as.integer(n_distintas), .after = n_personas_olas) |>
+    select(-n_distintas) |>
     mutate(
       fiabilidad = fiabilidad_eusilc(n_personas),
       anio_inicio = anios[1], anio_fin = anios[2], olas = length(olas),
@@ -330,11 +375,39 @@ ultima_agrupacion <- function(agrupada) agrupada[agrupada$anio_fin == max(agrupa
 # (referencias sobrecarga_es_total, sobrecarga_es_mercado, sobrecarga_ccaa y, si se dan,
 # sobrecarga_es_edad con `europa` y sobrecarga_es_urbanizacion con `urbanizacion`, la tabla de
 # leer_eurostat_ilc_lvho07d(): España por grado de urbanización; sin cifra de Eurostat de un grado
-# de una ola, para).
-comprobar_sobrecarga_ecv <- function(sobrecarga, eurostat, europa = NULL, urbanizacion = NULL) {
-  bind_rows(lapply(sort(unique(sobrecarga$anio)), function(a) {
-    comprobar_sobrecarga_anio(filter(sobrecarga, anio == a), eurostat, europa, urbanizacion)
-  }))
+# de una ola, para). Con `agrupada` (calcular_sobrecarga_agrupada(), un trienio por ola), también
+# sobrecarga_ccaa_urbanizacion_total (comprobar_sobrecarga_urbanizacion_ccaa()).
+comprobar_sobrecarga_ecv <- function(sobrecarga, eurostat, europa = NULL, urbanizacion = NULL, agrupada = NULL) {
+  bind_rows(
+    lapply(sort(unique(sobrecarga$anio)), function(a) {
+      comprobar_sobrecarga_anio(filter(sobrecarga, anio == a), eurostat, europa, urbanizacion)
+    }),
+    if (!is.null(agrupada)) comprobar_sobrecarga_urbanizacion_ccaa(agrupada)
+  )
+}
+
+# sobrecarga_ccaa_urbanizacion_total (bloqueo, ±0,01 puntos; decisión del autor del 18-nov-2026):
+# Eurostat no publica la sobrecarga por comunidad y grado de urbanización, así que es una compuerta de
+# coherencia, como ahc_ccaa_edad_total (R/fuente_ine_ecv_pobreza.R): en cada trienio y comunidad, la
+# media de las tasas de los tres grados (DEG1–DEG3), ponderada por la suma de sus factores, rehace el
+# total de la comunidad con las mismas olas (ninguna persona se pierde ni se cuenta dos veces). Un
+# grado sin personas no está y no pesa. `anio` es la última ola del trienio; sin el total o sin ningún
+# grado, sin cifra (falla).
+comprobar_sobrecarga_urbanizacion_ccaa <- function(agrupada) {
+  agrupada |>
+    group_by(anio = anio_fin, region) |>
+    summarise(
+      calculado = {
+        g <- corte == "urbanizacion" & grupo %in% GRADOS_URBANIZACION_ECV
+        if (any(g)) sum(valor[g] * peso[g]) / sum(peso[g]) else NA_real_
+      },
+      n = sum(corte == "urbanizacion" & grupo %in% GRADOS_URBANIZACION_ECV),
+      referencia = { r <- valor[corte == "total" & grupo == "TOTAL"]; if (length(r) == 1) r else NA_real_ },
+      .groups = "drop") |>
+    transmute(id = "sobrecarga_ccaa_urbanizacion_total", anio,
+              detalle = paste0(region, ", media ponderada de ", n, " grados de urbanización frente al total"),
+              calculado, referencia) |>
+    arrange(anio, detalle)
 }
 
 comprobar_sobrecarga_anio <- function(sobrecarga, eurostat, europa = NULL, urbanizacion = NULL) {
@@ -401,8 +474,10 @@ fiabilidad_eusilc <- function(n) {
 # Indicador 22 en la tabla larga (comunidades con el código del INE, desde la región NUTS 2):
 # - España («00»), cada año, en total y por tenencia, edad y grado de urbanización;
 # - comunidades, cada año, en total;
-# - comunidad × tenencia y comunidad × edad con varias olas agrupadas (`agrupada`, un trienio por
-#   ola desde 2018 con agrupar_trienios()): `anio` es la última ola (2023–2025 → 2025), y la ficha lo dice.
+# - comunidad × tenencia, comunidad × edad y comunidad × grado de urbanización con varias olas
+#   agrupadas (`agrupada`, un trienio por ola desde 2018 con agrupar_trienios()): `anio` es la última
+#   ola (2023–2025 → 2025), y la ficha lo dice. El total agrupado de cada comunidad, solo para la
+#   compuerta, no entra.
 # Lo que EU-SILC no deja publicar queda como «secreto». El número de observaciones y la marca
 # de fiabilidad van en los ficheros de la sobrecarga (exportar_sobrecarga; pregunta abierta 9).
 armonizar_sobrecarga_ecv <- function(sobrecarga, agrupada, ccaa, version) {
@@ -416,6 +491,7 @@ armonizar_sobrecarga_ecv <- function(sobrecarga, agrupada, ccaa, version) {
     left_join(nuts, by = c("grupo" = "nuts2")) |>
     transmute(geo_id = codigo, nivel = "ccaa", anio, corte = "total", grupo = "total", valor, n_personas)
   cruces <- agrupada |>
+    filter(corte != "total") |>
     left_join(nuts, by = c("region" = "nuts2")) |>
     transmute(geo_id = codigo, nivel = "ccaa", anio = anio_fin, corte, grupo, valor, n_personas)
   bind_rows(espana, comunidades, cruces) |>

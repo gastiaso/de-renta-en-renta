@@ -170,7 +170,7 @@ test_that("R y la página dan la misma cuenta (pruebas/datos/otros_gastos_invent
   s <- casos$sueldo
   expect_equal(sueldo_con_otros_gastos(s$alquiler_mes, s$otros, s$umbral), s$esperado, tolerance = 1e-12)
   m <- casos$minimo
-  expect_equal(sueldo_con_otros_gastos(m$alquiler_m2 * m$superficie, m$otros, m$umbral), m$esperado, tolerance = 1e-12)
+  expect_equal(sueldo_con_otros_gastos(m$alquiler_m2 * m$superficie, m$otros, m$umbral, m$superficie), m$esperado, tolerance = 1e-12)
   l <- casos$llega
   expect_equal(ratio_con_otros_gastos(l$alquiler, l$otros, l$ingreso), l$ratio, tolerance = 1e-12)
   # Euros que quedan, cada término redondeado como Math.round() de la página
@@ -181,4 +181,19 @@ test_that("R y la página dan la misma cuenta (pruebas/datos/otros_gastos_invent
 test_that("el supuesto del mínimo de hogares está en el inventario", {
   expect_equal(otros_gastos_minimo(), 50)
   expect_true("otros_gastos_vivienda" %in% SUPUESTOS_INVENTARIO$id)
+})
+
+test_that("con la superficie solo crece la parte de los otros gastos ligada a los metros (18-nov-2026)", {
+  # 50 % ligado a los metros y referencia de 50 m² (inventario/supuestos.csv)
+  expect_equal(factor_otros_gastos(c(50, 70, 90, NA)), c(1, 1.2, 1.4, 1))
+  # 150 € de otros gastos: con 70 m² cuentan 180 €, no 210 € (como si todo creciera con los metros)
+  expect_equal(150 * factor_otros_gastos(70), 180)
+  # Sin superficie (el piso real), la cifra tal cual
+  expect_equal(sueldo_con_otros_gastos(900, 150, 0.3), 3500)
+  expect_equal(sueldo_con_otros_gastos(14 * 70, 150, 0.3, 70), (980 + 180) / 0.3)
+  # La muestra de la línea residual: otros gastos de cada caso con el factor de su superficie
+  r <- jsonlite::fromJSON(file.path("..", "..", "pruebas", "datos", "residual_muestra.json"))$casos
+  s <- jsonlite::fromJSON(file.path("..", "..", "pruebas", "datos", "supuestos_muestra.json"))$casos
+  f <- factor_otros_gastos(s$superficie)
+  expect_true(all(abs(r$otros / f - stats::ave(r$otros / f, r$geo_id, r$nivel, FUN = function(x) x[1])) < 1e-9))
 })

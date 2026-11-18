@@ -262,6 +262,15 @@ armonizar_zonas_tensionadas <- function(zonas, territorios, version, anios = NUL
                      valor, estado = "dato", fuente = "zonas_tensionadas", geo_ref = "2021", version = version)
 }
 
+# Versión del indicador en la tabla larga: la fecha del BOE más reciente que cita el inventario
+# (tarea 58, 18-nov-2026; antes, la fecha de modificación del CSV, que en una copia limpia es la del
+# checkout).
+version_zonas_tensionadas <- function(zonas) {
+  fechas <- zonas$fecha_publicacion[!is.na(zonas$fecha_publicacion)]
+  if (length(fechas) == 0) stop("El inventario de zonas tensionadas no tiene ninguna fecha de publicación", call. = FALSE)
+  format(max(fechas), "%Y-%m-%d")
+}
+
 # Resumen para la nota metodológica: municipios por categoría y año, y declaraciones por comunidad.
 resumen_zonas_tensionadas <- function(larga, zonas) {
   list(

@@ -45,6 +45,7 @@ Breakdown variable. Without a breakdown, `corte` and `grupo` are both `total`.
 | `superficie` | Assumed floor area (theoretical minimum of the pay needed) |
 | `urbanizacion` | Degree of urbanisation |
 | `hogar` | Household type (residual income line) |
+| `olas` | Pooled survey waves, whole population (anio, the last one) |
 
 ### `grupo`
 
@@ -97,6 +98,7 @@ Breakdown value, by `corte`.
 | `urbanizacion` | `DEG3` | Rural areas |
 | `hogar` | `una_persona` | One person |
 | `hogar` | `dos_adultos` | Two adults without children |
+| `olas` | `trienio` | Three waves: the year's and the two before it |
 
 ### `fuente`
 
@@ -248,7 +250,7 @@ The 24 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Version:** v0.2
 - **Definition:** Average gross annual wage of employees with tax residence in the province, overall and aged 26 to 35.
 - **Calculation:** Published by the Spanish Tax Agency (AEAT, Labour market and pensions in tax sources, table by province, age and sex): wages / employees, overall and for the 26 to 35 age band; regions and Spain, with their published figure. The Basque Country and Navarre are not covered (foral tax residence) and have no data.
-- **Reading:** Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «young adult, 26 to 35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region, and then to monthly net pay spread over 12, with the employee's social security contribution and the average AEAT withholding by region and income band (plan §3.1, method B).
+- **Reading:** Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «young adult, 26 to 35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region, adjusted with the ECV to pay received over the year (including people who worked only a few months), and then to monthly net pay spread over 12, with the employee's social security contribution and the average AEAT withholding by region and income band (plan §3.1, method B).
 
 ### `alquiler_mes`
 
@@ -364,11 +366,11 @@ The 24 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 
 - **Unit:** % of household income
 - **Family:** Burden
-- **Sources:** `mivau_valor_tasado`, `ine_adrh`, `bde_accesibilidad`
+- **Sources:** `mivau_valor_tasado`, `ine_adrh`, `bde_accesibilidad`, `registradores`
 - **Version:** v0.3
-- **Definition:** Share of the average net income of the area's households taken by the first-year payment of a mortgage on an 80 m² flat.
-- **Calculation:** First-year annual payment of a French-amortisation loan for 80% of the appraised value of 80 m², over 25 years at the Bank of Spain's rate on new home-purchase loans (average of the year's twelve months), divided by the average net household income from the ADRH (INE) for the same year and area, × 100. The income is the one published at each level; where INE does not publish it, no value for the province and the region (Navarre until 2020, Álava and the Basque Country until 2019, Gipuzkoa in 2015) and, for Spain until 2020, the household-weighted mean of the municipalities, estimated.
-- **Reading:** A theoretical calculation: it assumes the remaining 20% and purchase costs are available. It is not the Banco de España's «theoretical first-year burden» shown in the Time machine: the calculation is the same, but the Banco de España uses the standard home it defines and the income of the median household, while here it is an 80 m² flat and the average net income of all households in the area, which is higher. That is why this figure comes out at about half (Spain, 2024: 18.1% here and 34.6% on average for the Banco de España).
+- **Definition:** Share of the average net income of the area's households taken by the first-year payment of a mortgage on the standard home: the average floor area of home sales in Spain.
+- **Calculation:** First-year annual payment of a French-amortisation loan for 80% of the appraised value of the standard home, at the Bank of Spain's rate on new home-purchase loans (average of the year's twelve months) and the average term of new mortgages (average of twelve quarters), divided by the average net household income from the ADRH (INE) for the same year and area, × 100. The standard home and the term are those of the Banco de España's theoretical burden: the average floor area of home sales in Spain according to Registradores (three-year average) and the average term of its new mortgages. The income is the one published at each level; where INE does not publish it, no value for the province and the region (Navarre until 2020, Álava and the Basque Country until 2019, Gipuzkoa in 2015) and, for Spain until 2020, the household-weighted mean of the municipalities, estimated.
+- **Reading:** A theoretical calculation: it assumes the remaining 20% and purchase costs are available. It uses the assumptions of the Banco de España's «theoretical first-year burden» shown in the Time machine (standard home, loan, rate and term), but not its income or its price: the Banco divides by the disposable income of the median household, which is not published by area, while here it is the average net income of all households in the area, which is higher, with the appraised value. That is why this figure comes out below the Banco's.
 
 ### `hogares_alquiler`
 
@@ -416,7 +418,7 @@ The 24 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Version:** v0.1
 - **Definition:** Net monthly pay needed so that the tract's median monthly rent does not exceed 30% of pay. Alongside, the theoretical minimum: the same calculation for a 50 m² flat.
 - **Calculation:** Median monthly rent of flats / 0.30 (threshold can be changed to 40%). Theoretical minimum (cut superficie, group 50): median rent per m² of flats × 50 / 0.30 (floor area can be changed to 70 or 90 m² on the website). Each figure carries the status of its rent.
-- **Reading:** It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² at the median; the 50 m² minimum falls below it and is never given without it. The 30% is a convention and counts rent only: Law 12/2023 and Eurostat also count utilities and use household income. On the website, renters' other housing costs (ECV) can be added.
+- **Reading:** It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² (the ratio of median monthly rent to median rent per m², not the median of floor areas); the 50 m² minimum falls below it and is never given without it. The 30% is a convention and counts rent only: Law 12/2023 and Eurostat also count utilities and use household income. On the website, renters' other housing costs (ECV) can be added.
 
 ### `sobrecarga`
 
@@ -427,7 +429,7 @@ The 24 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Sources:** `ine_ecv`, `eurostat_ilc_lvho07`, `eurostat_ilc_lvho07_r`, `eurostat_ilc_lvho07d`
 - **Version:** v0.1
 - **Definition:** People living in households whose total housing costs, net of housing allowances, exceed 40% of disposable income, also net of allowances.
-- **Calculation:** EU-SILC microdata (INE) with Eurostat’s method: only mortgage interest counts; previous-year income; person weights. Reproduces Eurostat figures (±0.1 points); for Spain also by degree of urbanisation (ilc\_lvho07d). Region × tenure and age breakdowns pool three waves.
+- **Calculation:** EU-SILC microdata (INE) with Eurostat’s method: only mortgage interest counts; previous-year income; person weights. Reproduces Eurostat figures (±0.1 points); for Spain also by degree of urbanisation (ilc\_lvho07d). Region × tenure, age and degree-of-urbanisation breakdowns pool three waves.
 - **Reading:** Measures the burden on those already housed; outright owners dominate it and it misses people unable to leave home. Read it alongside unsuccessful housing search (23) and by tenure, especially market-rate renting.
 
 ### `busqueda_sin_exito`

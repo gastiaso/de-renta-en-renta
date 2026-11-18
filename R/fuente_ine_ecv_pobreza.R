@@ -20,6 +20,9 @@ PROPORCION_UMBRAL_POBREZA <- 0.6
 EDADES_POBREZA <- c("Y_LT18", "Y18-64", "Y_GE65", "Y_GE18")
 # Grado de urbanización (DB100 de la ECV) → deg_urb de Eurostat: GRADOS_URBANIZACION_ECV
 # (R/fuente_ine_ecv.R), el mismo que el del 22.
+# Total agrupado de cada comunidad (trienio de olas, toda la población) en la tabla larga: corte y
+# grupo propios (inventario/vocabulario.csv), porque corte y grupo `total` son la cifra anual.
+CORTE_TOTAL_AGRUPADO <- c(corte = "olas", grupo = "trienio")
 
 # Personas con su renta equivalente, el umbral de su ola y la marca `pobre` (una fila por persona).
 personas_pobreza_vivienda <- function(ecv, proporcion = PROPORCION_UMBRAL_POBREZA) {
@@ -88,9 +91,12 @@ calcular_pobreza_vivienda_ecv <- function(ecv, proporcion = PROPORCION_UMBRAL_PO
 # (calcular_sobrecarga_agrupada()): cada persona con el umbral de su ola y cada ola con el mismo peso
 # (su factor entre el número de olas). Edades: las de ilc_li45 (EDADES_POBREZA; 18 y más reúne 18–64 y
 # 65 y más; decisión del autor del 17-nov-2026). Lleva también el total de cada comunidad con las
-# mismas olas (corte «total»), solo para la compuerta ahc_ccaa_edad_total: no va a la tabla larga ni a
-# la web. Sin tenencia o edad, la persona cuenta en el total y no en ese corte. En el pipeline, un
-# trienio por ola con agrupar_trienios() (R/fuente_ine_ecv.R).
+# mismas olas (corte «total»): sirve a la compuerta ahc_ccaa_edad_total y, desde el 18-nov-2026
+# (decisión del autor), se publica en la tabla larga (CORTE_TOTAL_AGRUPADO) y en la web. Sin tenencia
+# o edad, la persona cuenta en el total y no en ese corte. En el pipeline, un trienio por ola con
+# agrupar_trienios() (R/fuente_ine_ecv.R). Observaciones: personas distintas estimadas, como en el 22
+# (contar_distintas(), n_distintas_rotacion(); decisión del autor del 18-nov-2026); `n_personas_olas`
+# guarda la suma por olas.
 calcular_pobreza_vivienda_agrupada <- function(olas, proporcion = PROPORCION_UMBRAL_POBREZA) {
   p <- bind_rows(lapply(olas, personas_pobreza_vivienda, proporcion = proporcion)) |>
     mutate(peso_persona = peso_persona / length(olas), id_hogar = paste(anio, id_hogar))
@@ -98,14 +104,20 @@ calcular_pobreza_vivienda_agrupada <- function(olas, proporcion = PROPORCION_UMB
   pt <- con_tenencia(p)
   pe <- filter(p, !is.na(grupo_edad))
   adultos <- filter(p, !is.na(edad), edad >= 18)
+  celda <- function(d, corte, grupo) {
+    tasa_pobreza_vivienda(d, corte, grupo, ambito = d$region) |>
+      left_join(contar_distintas(d, corte, grupo, d$region), by = c("ambito", "corte", "grupo"))
+  }
   bind_rows(
-    tasa_pobreza_vivienda(p, "total", "TOTAL", ambito = p$region),
-    tasa_pobreza_vivienda(pt, "tenencia", pt$tenencia_eurostat, ambito = pt$region),
-    tasa_pobreza_vivienda(pt, "tenencia", ifelse(pt$propietario, "OWN", "RENT"), ambito = pt$region),
-    tasa_pobreza_vivienda(pe, "edad", pe$grupo_edad, ambito = pe$region),
-    tasa_pobreza_vivienda(adultos, "edad", "Y_GE18", ambito = adultos$region)
+    celda(p, "total", "TOTAL"),
+    celda(pt, "tenencia", pt$tenencia_eurostat),
+    celda(pt, "tenencia", ifelse(pt$propietario, "OWN", "RENT")),
+    celda(pe, "edad", pe$grupo_edad),
+    celda(adultos, "edad", "Y_GE18")
   ) |>
-    rename(region = ambito) |>
+    rename(region = ambito, n_personas_olas = n_personas) |>
+    mutate(n_personas = as.integer(n_distintas), .after = n_personas_olas) |>
+    select(-n_distintas) |>
     mutate(fiabilidad = fiabilidad_eusilc(n_personas), anio_inicio = anios[1], anio_fin = anios[2],
            olas = length(olas), indicador = "pobreza_tras_vivienda", .before = 1)
 }
@@ -190,8 +202,10 @@ comprobar_pobreza_edad_ccaa <- function(agrupada) {
 
 # Indicador 24 en la tabla larga, como el 22 (armonizar_sobrecarga_ecv()): España («00»), cada ola,
 # en total y por tenencia, edad y grado de urbanización; comunidades, cada ola, en total; comunidad ×
-# tenencia y comunidad × edad con las olas agrupadas (`anio`, la última; el total agrupado de cada
-# comunidad, solo para la compuerta, no entra). Con menos de 20 observaciones, «secreto».
+# tenencia y comunidad × edad con las olas agrupadas (`anio`, la última). El total agrupado de cada
+# comunidad también entra (decisión del autor del 18-nov-2026), con `anio` la última ola como los
+# cruces y el corte `olas`, grupo `trienio` (inventario/vocabulario.csv), para no chocar con el total
+# anual de la comunidad (corte y grupo `total`) del mismo año. Con menos de 20 observaciones, «secreto».
 armonizar_pobreza_vivienda_ecv <- function(anual, agrupada, ccaa, version) {
   nuts <- select(ccaa, codigo, nuts2)
   espana <- anual |>
@@ -203,9 +217,10 @@ armonizar_pobreza_vivienda_ecv <- function(anual, agrupada, ccaa, version) {
     left_join(nuts, by = c("grupo" = "nuts2")) |>
     transmute(geo_id = codigo, nivel = "ccaa", anio, corte = "total", grupo = "total", valor, n_personas)
   cruces <- agrupada |>
-    filter(corte != "total") |>
     left_join(nuts, by = c("region" = "nuts2")) |>
-    transmute(geo_id = codigo, nivel = "ccaa", anio = anio_fin, corte, grupo, valor, n_personas)
+    transmute(geo_id = codigo, nivel = "ccaa", anio = anio_fin,
+              grupo = if_else(corte == "total", CORTE_TOTAL_AGRUPADO[["grupo"]], grupo),   # antes que `corte`
+              corte = if_else(corte == "total", CORTE_TOTAL_AGRUPADO[["corte"]], corte), valor, n_personas)
   x <- bind_rows(espana, comunidades, cruces)
   if (anyNA(x$geo_id)) stop("Regiones de la ECV sin comunidad en la tabla ccaa", call. = FALSE)
   x |>

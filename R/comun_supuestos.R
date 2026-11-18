@@ -184,6 +184,15 @@ calcular_muestra_supuestos <- function(terminos, supuestos = SUPUESTOS_INVENTARI
   tibble::as_tibble(rbind(peones, fichas))
 }
 
+# Factor de los otros gastos de vivienda con una superficie (factorOtrosGastos() de web/js/formulas.js;
+# decisión del autor, 18-nov-2026): solo la parte ligada a los metros va en proporción a la superficie;
+# con la de referencia (50 m²), o sin superficie (el piso real, la llave), 1.
+factor_otros_gastos <- function(superficie, supuestos = SUPUESTOS_INVENTARIO) {
+  p <- supuesto("otros_gastos_parte_superficie", supuestos)
+  ref <- supuesto("otros_gastos_superficie_referencia", supuestos)
+  ifelse(is.na(superficie) | !(superficie > 0), 1, 1 - p + p * superficie / ref)
+}
+
 # web/js/supuestos.js: los supuestos de la página, generados desde el CSV (no se editan a mano).
 texto_supuestos_js <- function(supuestos = SUPUESTOS_INVENTARIO) {
   lista <- function(x) paste0("[", paste(format(x, trim = TRUE, scientific = FALSE), collapse = ", "), "]")
@@ -192,7 +201,8 @@ texto_supuestos_js <- function(supuestos = SUPUESTOS_INVENTARIO) {
   c("// Generado por generar_supuestos_js() (R/comun_supuestos.R) desde inventario/supuestos.csv: no se",
     "// edita a mano. Supuestos de \u00abTu sueldo\u00bb (backlog, tarea 48): superficies en m\u00b2, umbrales en %,",
     "// tramos de \u00ab\u00bfte llega?\u00bb como proporci\u00f3n del ingreso, pagas al a\u00f1o y sueldo m\u00e1ximo en euros;",
-    "// regla de \u00ab\u00bfte llega?\u00bb, l\u00edneas de ingreso residual y sus tramos en m\u00faltiplos de la l\u00ednea (tarea 65).",
+    "// regla de \u00ab\u00bfte llega?\u00bb, l\u00edneas de ingreso residual y sus tramos en m\u00faltiplos de la l\u00ednea (tarea 65);",
+    "// parte de los otros gastos de vivienda ligada a la superficie y superficie con la que se suman tal cual.",
     "export const SUPUESTOS = Object.freeze({",
     sprintf("  superficies: Object.freeze(%s),", lista(supuesto_opciones("superficie_una_persona", supuestos))),
     sprintf("  superficie_una_persona: %s,", num(supuesto("superficie_una_persona", supuestos))),
@@ -209,6 +219,8 @@ texto_supuestos_js <- function(supuestos = SUPUESTOS_INVENTARIO) {
     sprintf("  lineas_residual: Object.freeze(%s),", textos(supuesto_texto("linea_residual", supuestos, opciones = TRUE))),
     sprintf("  linea_residual: '%s',", supuesto_texto("linea_residual", supuestos)),
     sprintf("  limites_residual: Object.freeze(%s),", lista(supuesto("limites_residual", supuestos))),
+    sprintf("  otros_parte_superficie: %s,", num(supuesto("otros_gastos_parte_superficie", supuestos))),
+    sprintf("  otros_superficie_referencia: %s,", num(supuesto("otros_gastos_superficie_referencia", supuestos))),
     "});")
 }
 
@@ -251,7 +263,8 @@ comprobar_supuestos <- function(supuestos, terminos, larga_derivados, superficie
   # 1. Inventario: cada valor entre sus opciones, los obligatorios presentes, unidades y decision.
   obligatorios <- c("superficie_una_persona", "superficie_dos_sueldos", "umbral_sueldo", "limites_llega", "pagas",
                     "segundo_sueldo", "sueldo_maximo", "divisor_llave", "superficie_tipica", "superficie_compra",
-                    "financiacion_compra", "plazo_hipoteca")
+                    "financiacion_compra", "plazo_hipoteca", "otros_gastos_parte_superficie",
+                    "otros_gastos_superficie_referencia")
   con_opciones <- supuestos[nzchar(supuestos$opciones), ]
   # Como texto: los de la tarea 65 (regla, linea y hogar) no son numeros
   fuera <- sum(!vapply(seq_len(nrow(con_opciones)), function(i) {

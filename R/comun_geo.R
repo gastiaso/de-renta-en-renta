@@ -50,6 +50,14 @@ recortar_tramos <- function(tramos, topes) {
 # seccionados se junta con los del otro que ocupan al menos `umbral` de su superficie; los
 # grupos se cierran por transitividad y toman el menor de sus códigos. Las tablas de paso y la
 # prueba de cierre no cruzan municipios salvo dentro de un grupo.
+#
+# Atributo `pares` (revisión del 18-nov-2026): cada par municipio de origen (seccionado `a`) →
+# municipio de destino (`b`) en que uno de los dos solo está en un seccionado, con `cuota`, la parte
+# de la superficie de ese municipio que ocupa el otro. Un grupo junta también municipios que siguen
+# en los dos seccionados (un vecino que toca al nuevo en más del 1 %); entre ellos no hay paso, y el
+# callejero solo casa vías de municipios distintos en los pares con cuota de UMBRAL_CRUCE_MUNICIPIO o
+# más (geo_pares_permitidos()).
+UMBRAL_CRUCE_MUNICIPIO <- 0.25
 geo_grupos_municipio <- function(a, b, umbral = 0.01) {
   vacio <- tibble::tibble(municipio = character(), grupo = character())
   solo_a <- setdiff(unique(a$municipio), unique(b$municipio))
@@ -69,8 +77,14 @@ geo_grupos_municipio <- function(a, b, umbral = 0.01) {
       summarise(cuota = sum(comun) / as.numeric(sf::st_area(g)), .groups = "drop") |>
       filter(cuota >= umbral)
   }))
-  pares <- bind_rows(socios(a, b, solo_a), socios(b, a, solo_b))
+  de_a <- socios(a, b, solo_a)
+  de_b <- socios(b, a, solo_b)
+  pares <- bind_rows(de_a, de_b)
   if (nrow(pares) == 0) return(vacio)
+  orientados <- bind_rows(
+    if (NROW(de_a)) transmute(de_a, municipio_origen = nuevo, municipio_destino = socio, cuota),
+    if (NROW(de_b)) transmute(de_b, municipio_origen = socio, municipio_destino = nuevo, cuota)
+  )
   # Componentes conexas (grupos pequeños: basta con propagar el mínimo)
   grupo <- stats::setNames(unique(c(pares$nuevo, pares$socio)), unique(c(pares$nuevo, pares$socio)))
   repeat {
@@ -82,14 +96,36 @@ geo_grupos_municipio <- function(a, b, umbral = 0.01) {
     }
     if (identical(antes, grupo)) break
   }
-  tibble::tibble(municipio = names(grupo), grupo = unname(grupo)) |> arrange(grupo, municipio)
+  out <- tibble::tibble(municipio = names(grupo), grupo = unname(grupo)) |> arrange(grupo, municipio)
+  attr(out, "pares") <- orientados
+  out
+}
+
+# Pares municipio de origen → municipio de destino entre los que el callejero puede casar vías
+# (además de cada municipio consigo mismo): los de attr(grupos, "pares") con cuota de `umbral` o
+# más, es decir, un municipio nuevo o desaparecido con su predecesor o su sucesor. Los códigos de vía
+# son de cada municipio: dos municipios que siguen en los dos seccionados no comparten numeración.
+# Sin el atributo (grupos escritos a mano), todos los pares de municipios de un mismo grupo.
+geo_pares_permitidos <- function(grupos, umbral = UMBRAL_CRUCE_MUNICIPIO) {
+  vacio <- tibble::tibble(municipio_origen = character(), municipio_destino = character())
+  if (is.null(grupos) || nrow(grupos) == 0) return(vacio)
+  p <- attr(grupos, "pares")
+  if (is.null(p)) {
+    return(inner_join(rename(grupos, municipio_origen = municipio), rename(grupos, municipio_destino = municipio),
+                      by = "grupo", relationship = "many-to-many") |>
+             filter(municipio_origen != municipio_destino) |>
+             distinct(municipio_origen, municipio_destino))
+  }
+  p |> filter(cuota >= umbral) |> distinct(municipio_origen, municipio_destino)
 }
 
 # Código de grupo de cada municipio (el propio si no está en ninguno).
 agrupar_municipio <- function(municipio, grupos = NULL) {
   if (is.null(grupos) || nrow(grupos) == 0) return(municipio)
   i <- match(municipio, grupos$municipio)
-  ifelse(is.na(i), municipio, grupos$grupo[i])
+  out <- as.character(municipio)   # también con cero municipios (ifelse() daría un lógico)
+  out[!is.na(i)] <- grupos$grupo[i[!is.na(i)]]
+  out
 }
 
 # Tabla de paso sección de origen → sección de destino con los tramos de las dos fechas.
@@ -99,10 +135,16 @@ agrupar_municipio <- function(municipio, grupos = NULL) {
 # casado pasan a la sección con el mismo código si existe en el destino (`metodo = "codigo"`).
 #
 # `grupos` (geo_grupos_municipio): los tramos de los municipios de un grupo se casan entre sí
-# (tras una segregación, el municipio nuevo conserva los códigos de vía del de origen).
+# (tras una segregación, el municipio nuevo conserva los códigos de vía del de origen), pero solo
+# entre los pares de geo_pares_permitidos() (revisión del 18-nov-2026): cada municipio numera sus
+# vías por su cuenta, y casar por código dos municipios que siguen en los dos seccionados juntaba
+# calles distintas (Rosalejo, en Cáceres, repartido en 2011 entre Tiétar y Pueblonuevo de Miramontes).
 geo_tabla_paso_callejero <- function(origen, destino, topes = NULL, grupos = NULL) {
   if (is.null(topes)) topes <- tibble::tibble(municipio = character(), clave_via = character(),
                                               paridad = integer(), tope = integer())
+  permitidos <- geo_pares_permitidos(grupos)
+  origen$municipio_propio <- origen$municipio
+  destino$municipio_propio <- destino$municipio
   if (!is.null(grupos) && nrow(grupos) > 0) {
     origen$municipio <- agrupar_municipio(origen$municipio, grupos)
     destino$municipio <- agrupar_municipio(destino$municipio, grupos)
@@ -114,20 +156,29 @@ geo_tabla_paso_callejero <- function(origen, destino, topes = NULL, grupos = NUL
   o <- recortar_tramos(preparar_tramos(origen), topes)
   d <- recortar_tramos(preparar_tramos(destino), topes)
 
+  # Mismo municipio, o un par permitido de municipios distintos dentro del grupo
+  casan <- function(x) {
+    x |>
+      filter(municipio_propio_o == municipio_propio_d |
+               paste(municipio_propio_o, municipio_propio_d) %in%
+               paste(permitidos$municipio_origen, permitidos$municipio_destino))
+  }
   numerados <- inner_join(
-    filter(o, con_numero) |> select(seccion, municipio, clave_via, paridad, ein, esn),
-    filter(d, con_numero) |> select(seccion, municipio, clave_via, paridad, ein, esn),
+    filter(o, con_numero) |> select(seccion, municipio, municipio_propio, clave_via, paridad, ein, esn),
+    filter(d, con_numero) |> select(seccion, municipio, municipio_propio, clave_via, paridad, ein, esn),
     by = c("municipio", "clave_via", "paridad"), suffix = c("_o", "_d"), relationship = "many-to-many"
   ) |>
+    casan() |>
     mutate(portales = contar_portales(pmax(ein_o, ein_d), pmin(esn_o, esn_d), paridad)) |>
     filter(portales > 0) |>
     select(origen = seccion_o, destino = seccion_d, portales)
 
   sin_numero <- inner_join(
-    filter(o, !con_numero) |> distinct(seccion, municipio, clave_via),
-    filter(d, !con_numero) |> distinct(seccion, municipio, clave_via),
+    filter(o, !con_numero) |> distinct(seccion, municipio, municipio_propio, clave_via),
+    filter(d, !con_numero) |> distinct(seccion, municipio, municipio_propio, clave_via),
     by = c("municipio", "clave_via"), suffix = c("_o", "_d"), relationship = "many-to-many"
   ) |>
+    casan() |>
     transmute(origen = seccion_o, destino = seccion_d, portales = 1L)
 
   tabla <- bind_rows(numerados, sin_numero) |>
@@ -273,6 +324,22 @@ comprobar_cierre_poblacional <- function(poblacion, tabla, anio, grupos = NULL, 
   geo_cierre_poblacional(geo_reproyectar_recuento(secciones, tabla), municipios, grupos) |>
     transmute(id = "cierre_poblacional", anio = as.integer(!!anio), detalle = municipio,
               calculado = desviacion_pct, referencia = 0)
+}
+
+# Cruce de municipios en la vía del callejero (paso_cruce_municipios, bloqueo; revisión del
+# 18-nov-2026): secciones de origen que la tabla reparte, por el callejero, a otro municipio que no
+# es su sucesor ni su predecesor (geo_pares_permitidos()). El cierre poblacional no lo ve, porque se
+# mide por grupo. La vía del Catastro sí puede cruzar dentro de un grupo: es un reparto por edificios.
+comprobar_cruce_municipios <- function(tabla, grupos, anio) {
+  permitidos <- geo_pares_permitidos(grupos)
+  malos <- tabla |>
+    filter(metodo == "callejero", substr(origen, 1, 5) != substr(destino, 1, 5),
+           !paste(substr(origen, 1, 5), substr(destino, 1, 5)) %in%
+             paste(permitidos$municipio_origen, permitidos$municipio_destino))
+  pares <- unique(paste(substr(malos$origen, 1, 5), "->", substr(malos$destino, 1, 5)))
+  tibble::tibble(id = "paso_cruce_municipios", anio = as.integer(anio),
+                 detalle = if (length(pares)) paste(utils::head(sort(pares), 10), collapse = "; ") else "ninguna",
+                 calculado = length(unique(malos$origen)), referencia = 0)
 }
 
 # Secciones del ADRH cuyo código no está en ningún seccionado del pipeline (2016–2025): el ADRH

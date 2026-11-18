@@ -140,3 +140,23 @@ test_that("los diccionarios se generan del inventario y conservan lo escrito a m
   jsonlite::write_json(c(jsonlite::read_json(rutas[1]), list(extra = "x")), rutas[1], auto_unbox = TRUE)
   expect_equal(comprobar_i18n(rutas)$calculado[1], 1)
 })
+
+test_that("una provincia sin ninguna sección publicada ese año queda «ausente», no «secreto» (18-nov-2026)", {
+  # Madrid publica (con una sección en secreto); Navarra (31) no publica ninguna sección ese año
+  renta <- tibble::tribble(
+    ~anio, ~nivel,    ~codigo,      ~indicador,      ~valor,
+    2017L, "seccion", "2800101001", "renta_persona", 10000,
+    2017L, "seccion", "2800101001", "renta_hogar",   25000
+  )
+  pesos <- tibble::tibble(anio = 2017L, seccion = c("2800101001", "2800101002", "3120101001"),
+                          poblacion = c(100, 50, 80), hogares = c(40, 20, 30))
+  tabla <- tibble::tibble(origen = c("2800101001", "2800101002", "3120101001"),
+                          destino = c("2800101001", "2800101002", "3120101001"),
+                          portales = 1L, metodo = "callejero", fraccion = 1)
+  t <- armonizar_ine_adrh(renta, pesos, list("2017" = tabla), version = "prueba")
+  e <- function(g, ind) t$estado[t$geo_id == g & t$indicador == ind & t$nivel == "sc"]
+  expect_equal(e("2800101002", "renta_persona"), "secreto")    # Madrid publica: la que falta, en secreto
+  expect_equal(e("3120101001", "renta_persona"), "ausente")    # hueco foral: sin publicar
+  expect_equal(e("3120101001", "renta_hogar"), "ausente")
+  expect_equal(e("2800101001", "renta_uc_mediana"), "ausente") # ningún dato del indicador ese año
+})

@@ -199,6 +199,7 @@ anotar("16", "Años de salario para comprar 80 m², Madrid (municipio), 2024 (a�
        "Valor tasado a un decimal × 80 / salario medio de la provincia (salarios / asalariados, al euro)")
 
 # ---- 17 · Cuota hipotecaria sobre la renta del hogar: cuota del primer año / renta neta media por hogar
+# (vivienda tipo y plazo del Banco de España desde la revisión del 18-nov-2026)
 
 bde <- function(tabla) {
   l <- readLines(file.path(BRUTOS, "bde", tabla), encoding = "latin1", warn = FALSE)
@@ -227,22 +228,44 @@ renta_hogar <- function(codigo_nombre, anio) {
   NA_real_
 }
 renta_madrid <- renta_hogar("28079 Madrid", 2024)
+
+# Vivienda tipo y plazo del Banco de España (revisión del 18-nov-2026): superficie media de las
+# compraventas de España de Registradores (importe medio / precio por m² del cuarto trimestre, media de
+# 2022 a 2024) y plazo medio de las hipotecas nuevas de si_1_5 (columna cuya descripción, la cuarta fila
+# de la cabecera, dice «plazo medio … hipotecas»), media de los doce trimestres de 2022 a 2024.
+reg_fichero <- list.files(file.path(BRUTOS, "registradores"), pattern = "^RP_ComprvResid_.*\\.csv$", full.names = TRUE)
+stopifnot(length(reg_fichero) >= 1)
+reg <- read.csv2(utils::tail(sort(reg_fichero), 1), check.names = FALSE, colClasses = "character", fileEncoding = "UTF-8-BOM")
+reg_es <- reg[trimws(reg$geo) == "Nacional" & reg$trim == "4" & reg$ano %in% c("2022", "2023", "2024"), ]
+stopifnot(nrow(reg_es) == 3)
+superficie_2024 <- mean(num_es(reg_es[["viv-imp"]]) / num_es(reg_es[["viv-pm2"]]))
+si15_l <- readLines(file.path(BRUTOS, "bde", "si_1_5.csv"), encoding = "latin1", warn = FALSE)
+desc <- unlist(utils::read.csv(text = si15_l[4], header = FALSE, colClasses = "character"), use.names = FALSE)
+cods <- unlist(utils::read.csv(text = si15_l[1], header = FALSE, colClasses = "character"), use.names = FALSE)
+col_plazo <- cods[grepl("plazo medio.*hipotecas", desc, ignore.case = TRUE)]
+stopifnot(length(col_plazo) == 1)
+filas_plazo <- grepl("^(MAR|JUN|SEP|DIC) (2022|2023|2024)$", si15[, 1])
+plazos <- suppressWarnings(as.numeric(si15[filas_plazo, col_plazo]))
+stopifnot(length(plazos) == 12, !anyNA(plazos))
+plazo_2024 <- mean(plazos)
 esfuerzo <- function(tipo) {
-  capital <- 0.8 * redondear(vt_madrid, 1) * 80
+  capital <- 0.8 * redondear(vt_madrid, 1) * round(superficie_2024, 2)
   r <- tipo / 100 / 12
-  100 * 12 * capital * r / (1 - (1 + r)^(-25 * 12)) / renta_madrid
+  n <- round(plazo_2024, 2) * 12
+  100 * 12 * capital * r / (1 - (1 + r)^(-n)) / renta_madrid
 }
 # La media de 2024 es 3,465 exacta en decimal: a dos decimales, 3,47 con el empate hacia arriba, como
 # el pipeline desde el 11-nov-2026 (decisión del autor); sprintf("%.2f") da 3,46 (el binario de 3,465
 # queda por debajo). Se anota también la cifra con 3,46, la que daba el atlas antes.
 tipo_sprintf <- as.numeric(sprintf("%.2f", mean(tipos_2024)))
 anotar("17", "Cuota hipotecaria sobre la renta del hogar, Madrid (municipio), 2024 (% de la renta del hogar)",
-       "MIVAU, Banco de España e INE (ADRH)", "35103500.xls, bde/si_1_5.csv y ine_adrh/30824.csv",
+       "MIVAU, Banco de España, Registradores e INE (ADRH)", "35103500.xls, bde/si_1_5.csv, registradores y ine_adrh/30824.csv",
        esfuerzo(tipo_2024), atlas("esfuerzo_hipotecario", "municipio", "28079", 2024), 0.005, "tabla larga",
-       sprintf(paste("Préstamo del 80 %% de 80 m², 25 años, tipo D_IMVTIPLV medio de 2024 (media exacta %.3f, a dos",
+       sprintf(paste("Préstamo del 80 %% de %.2f m² (superficie media de Registradores, 2022–2024), %.2f años (plazo",
+                     "medio, doce trimestres), tipo D_IMVTIPLV medio de 2024 (media exacta %.3f, a dos",
                      "decimales con el empate hacia arriba %.2f %%), renta por hogar %s €; con el tipo a %.2f",
                      "(sprintf, el redondeo del atlas hasta el 11-nov-2026) salía %.5f"),
-               mean(tipos_2024), tipo_2024, format(renta_madrid, big.mark = ".", decimal.mark = ","),
+               superficie_2024, plazo_2024, mean(tipos_2024), tipo_2024, format(renta_madrid, big.mark = ".", decimal.mark = ","),
                tipo_sprintf, esfuerzo(tipo_sprintf)))
 
 # ---- 20 · Zonas tensionadas: municipios con declaración en vigor el 31-12-2025 --------------------

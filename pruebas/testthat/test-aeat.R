@@ -276,3 +276,27 @@ test_that("control del paso a neto con la ECV: neto calculado sobre la mediana d
   expect_equal(c$calculado, c(0, 10))
   expect_equal(unique(c$id), "mochila_neto_ecv")
 })
+
+test_that("mochila: la relación de año completo se lleva a la de lo cobrado en el año con la ECV (18-nov-2026)", {
+  # 400 asalariados de 26 a 35: la mitad, el año entero; la otra, seis meses y la mitad del salario
+  set.seed(2)
+  b <- round(stats::rlnorm(200, 10, 0.3))
+  a <- tibble::tibble(nuts2 = "ES30", peso = 1, bruto = c(b, b / 2), neto = NA_real_, meses = rep(c(12, 6), each = 200))
+  e <- resumir_ecv_asalariados(a, 2024L)
+  es <- e[e$nuts2 == "ES", ]
+  expect_equal(es$media_todos, mean(a$bruto))
+  expect_equal(es$relacion_todos, es$mediana_bruto / es$media_todos)
+  expect_lt(es$relacion_todos, es$relacion_12)   # con los de pocos meses, la distribución se sesga más
+  ecv <- tibble::tibble(anio = c(2023L, 2024L), nuts2 = "ES", relacion_12 = c(0.90, 0.88), relacion_todos = c(0.81, 0.836))
+  k <- ecv_mochila_composicion(ecv, anios = 2023:2025)
+  expect_equal(k$factor, c(0.9, 0.95, 0.95))
+  expect_equal(k$prestado, c(FALSE, FALSE, TRUE))   # 2025, sin ola: el de 2024
+  # La serie multiplica la relación por el factor de su año
+  f <- formas_sme(combinar_modulos_sme(list(modulo_inventado(2019L))))
+  s <- calcular_mochila_serie(salarios_inventados(), f, anios = 2019L,
+                              composicion = tibble::tibble(anio = 2019L, factor = 0.9))
+  expect_equal(s$bruto_anual, c(1100, 1300) * 1500 / 2000 * 0.9)
+  expect_equal(unique(s$factor_composicion), 0.9)
+  expect_error(calcular_mochila_serie(salarios_inventados(), f, anios = 2019L,
+                                      composicion = tibble::tibble(anio = 2018L, factor = 0.9)), "composici")
+})

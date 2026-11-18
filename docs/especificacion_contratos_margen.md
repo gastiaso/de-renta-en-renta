@@ -22,15 +22,16 @@
 
 ### 2. Margen de la mediana
 
-- `margen_mediana(p25, p50, p75, n)`: error típico relativo de la mediana, en %, ≈ 0,929 × (p75 − p25) / (p50 × √n). Sale de 1,2533 × σ / √n con σ ≈ (p75 − p25) / 1,349.
-- Con los cuartiles del alquiler por m² para el 9, el 21 y el 15; con los del alquiler mensual para el 8 y el 14. Solo donde hay mediana (n ≥ 10); si no, `NA`.
+- `margen_mediana(p25, p50, p75, n)`: margen al 95 % de la mediana, en %: 1,96 errores típicos relativos, ≈ 1,821 × (p75 − p25) / (p50 × √n). El error típico sale de 1,2533 × σ / √n con σ ≈ (p75 − p25) / 1,349, ≈ 0,929 × (p75 − p25) / (p50 × √n). **Revisión del 18-nov-2026:** hasta entonces el margen era ±1 error típico (en torno al 68 %), sin decirlo; ahora es al 95 %, como el intervalo del CIS (decisión del autor). Es el margen de una cifra: el de la diferencia entre dos años es √(m₁² + m₂²) con muestras independientes, y en el SERPAVI no lo son (muchos contratos siguen de un año a otro), así que esa cuenta queda del lado prudente.
+- Con los cuartiles del alquiler por m² para el 9, el 15 y el mínimo teórico del 21; con los del alquiler mensual para el 8, el 14 y la cifra principal del 21, que desde la tarea 40 paga el alquiler mensual mediano real (revisión del 18-nov-2026: este punto decía «el 21» con el del m²). Solo donde hay mediana (n ≥ 10); si no, `NA`.
+- En «¿te llega?» y en el sueldo necesario, el margen solo toca el alquiler: los otros gastos de vivienda, cuando están encendidos, no son una mediana del SERPAVI y no llevan su error (revisión del 18-nov-2026).
 - Forma de guardarlo, a elegir con el menor cambio de esquema: indicador auxiliar `margen_alquiler` o campo de la exportación web. Requisito: R y la web usan la misma cifra redondeada a un decimal (pregunta 19).
 - Es una aproximación: supone una distribución regular dentro de la sección y no corrige el sesgo de la fuente (contratos vigentes, no nuevos). Se dice así en la nota metodológica.
 
 ### 3. Estado de la barrera (15)
 
 - El estado del 15 es el del alquiler. El ingreso de la ficha solo aporta `ausente` cuando falta (mochila en los territorios forales, Ceuta y Melilla).
-- En `perfiles_fichas()`, la mochila pasa a `estimado` (el método B es una estimación) y `calcular_barrera_acceso()` deja de heredar ese estado. La calidad del ingreso se explica una vez, en el método de la ficha.
+- En `perfiles_fichas()`, la mochila pasa a `estimado` (el método B es una estimación) y el indicador 15 deja de heredar ese estado. La calidad del ingreso se explica una vez, en el método de la ficha.
 - Comprobar que `perfiles_web()`, `comprobar_web()` y la web dan lo mismo que antes, salvo la etiqueta de la mochila en `perfiles.json`.
 
 ### 4. Ficha de sección (web)
@@ -58,12 +59,12 @@ CSV de secciones: columnas `contratos` y `margen_pct`.
 |---|---|---|
 | `contratos_mediana` | bloqueo | Sobre la tabla larga: con mediana publicada, 10 o más contratos; en `secreto`, de 1 a 9; en `ausente`, 0 o sin recuento. Reutiliza la lógica de `secreto_roto` |
 | `contratos_suma` | bloqueo | Contratos de las secciones = provincia y España (como `serpavi_provincia` y `serpavi_espana`, ahora sobre la tabla larga) |
-| `margen_rango` | alerta | Margen fuera de 1–40 % |
+| `margen_rango` | alerta | Margen fuera de 1–40 % (del error típico; desde el 18-nov-2026, al 95 %: 1,96–78,4 %) |
 | `web_valores` (ampliada) | bloqueo | Contratos y margen escritos para la web = tabla larga (ida y vuelta) |
 
 ## Pruebas
 
-- R: `margen_mediana(8, 10, 12, 10)` = 11,8 %; `NA` con n < 10 o sin cuartiles.
+- R: `margen_mediana(8, 10, 12, 10)` = 23,0 % al 95 % (11,8 % de error típico); `NA` con n < 10 o sin cuartiles.
 - R: barrera de la mochila con ingreso `estimado` y alquiler `dato` → `dato`; con ingreso ausente → `ausente`.
 - Web (node): «en el límite» a los dos lados del 30 % y del 40 %, también con el umbral cambiado; ficha de una sección con 0 contratos; la página y R coinciden en contratos y margen.
 

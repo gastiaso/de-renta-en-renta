@@ -13,7 +13,8 @@
 // campos en `pobreza`. Cada vista lleva su `medida` (sin ella, la sobrecarga).
 
 export const RUTA_DATOS = 'datos/sobrecarga/sobrecarga.json';
-export const CORTES = ['total', 'tenencia', 'edad'];
+// El grado de urbanización (18-nov-2026), solo con la sobrecarga: la pobreza no lo trae en `grupos_mapa`.
+export const CORTES = ['total', 'tenencia', 'edad', 'urbanizacion'];
 export const MEDIDAS = ['sobrecarga', 'pobreza'];
 
 // Años, olas, cortes y grupos de una medida: la raíz para la sobrecarga; `pobreza` para la otra.
@@ -163,6 +164,10 @@ export const cortesDe = (datos, grupo, medida = 'sobrecarga') => {
   const c = confMedida(datos, medida).cortes;
   return c[grupo] ?? c.general;
 };
+
+// Total de una comunidad con el último trienio de olas (pobreza tras la vivienda; `pobreza.trienio`,
+// 18-nov-2026): la fila con su valor y su muestra, o null.
+export const trienioDe = (datos, geo) => datos?.pobreza?.trienio?.find((f) => f.geo === geo) ?? null;
 
 // Umbral de riesgo de pobreza de una ola (euros al año por unidad de consumo); null si no está.
 export const umbralDe = (datos, anio) => datos?.pobreza?.umbrales?.find((u) => u.anio === anio)?.euros ?? null;

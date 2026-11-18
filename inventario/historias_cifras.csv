@@ -129,9 +129,9 @@ pa_ent_ultimo,padres,derivada_por,,,,,,pa_a_ultimo;2.4,0,20,«casi el triple que
 pa_tp_ultimo,padres,hist_ultimo,tipo_prestamos,nacional,00,,,,1,3,«menos de la cuarta parte que en 1990»
 pa_tp_ultimo_anio,padres,hist_ultimo_anio,tipo_prestamos,nacional,00,,,,0,2026,
 pa_tp_ultimo_mes,padres,hist_ultimo_subperiodo,tipo_prestamos,nacional,00,,,,0,9,«septiembre de 2026»
-pa_eh_min,padres,minimo,esfuerzo_hipotecario,provincia,,2024,,,1,8.4,"Cuota hipotecaria sobre la renta del hogar (indicador 17), provincia más baja"
+pa_eh_min,padres,minimo,esfuerzo_hipotecario,provincia,,2024,,,1,10.1,"Cuota hipotecaria sobre la renta del hogar (indicador 17), provincia más baja"
 pa_eh_min_geo,padres,minimo_geo,esfuerzo_hipotecario,provincia,,2024,,,0,13,«Ciudad Real» (13)
-pa_eh_max,padres,maximo,esfuerzo_hipotecario,provincia,,2024,,,1,25.9,
+pa_eh_max,padres,maximo,esfuerzo_hipotecario,provincia,,2024,,,1,31.3,
 pa_eh_max_geo,padres,maximo_geo,esfuerzo_hipotecario,provincia,,2024,,,0,29,«Málaga» (29)
-pa_eh_es,padres,valor,esfuerzo_hipotecario,nacional,00,2024,,,1,18.1,España en 2024 (indicador 17)
+pa_eh_es,padres,valor,esfuerzo_hipotecario,nacional,00,2024,,,1,21.8,España en 2024 (indicador 17)
 pa_e_2024,padres,hist_valor,esfuerzo_teorico,nacional,00,2024,,3,1,34.6,"Esfuerzo teórico del Banco de España, tercer trimestre de 2024: no mide lo mismo que el 17"

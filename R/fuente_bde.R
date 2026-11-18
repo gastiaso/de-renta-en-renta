@@ -8,7 +8,11 @@
 #     D_IMVTIPLV      tipo de los préstamos libres para adquisición de vivienda de los hogares
 #                     (nuevas operaciones), mensual desde 1989: el que usa el propio esfuerzo
 #                     teórico. Línea principal de los tipos (plan §11, pregunta 47 c revisada) y tipo
-#                     del indicador 17 (pregunta 45 e; compraventa_tipo_bde(), R/derivados_compraventa.R).
+#                     del indicador 17 (pregunta 45 e; compraventa_tipo_bde(), R/derivados_compraventa.R);
+#     (sin código fijo) plazo medio de las nuevas hipotecas, en años, del Colegio de Registradores,
+#                     trimestral: el plazo del esfuerzo teórico (media de doce trimestres) y, desde la
+#                     revisión del 18-nov-2026, del indicador 17 (compraventa_plazo_bde()). Su código se
+#                     busca por la descripción de la cabecera (HIST_DESCRIPCION_BDE, hist_codigo_bde()).
 #   be1901 (Boletín Estadístico, 19.1 «Tipos de interés de referencia oficiales del mercado
 #   hipotecario»), mensuales:
 #     D_1T9H0000      tipo medio de los préstamos hipotecarios a más de tres años para adquisición
@@ -37,11 +41,14 @@ HIST_SERIES_BDE <- tibble::tribble(
   "tipo_hipotecas",   "be1901", "D_1T9H0000",             "mensual",    "porcentaje", "bde_tipos_referencia",
   "mibor_euribor",    "be1901", "D_1E723706.EUR",         "mensual",    "porcentaje", "bde_tipos_referencia",
   "euribor",          "be1901", "D_1NBAF472",             "mensual",    "porcentaje", "bde_tipos_referencia",
-  "tipo_prestamos",   "si_1_5", "D_IMVTIPLV",             "mensual",    "porcentaje", "bde_accesibilidad"
+  "tipo_prestamos",   "si_1_5", "D_IMVTIPLV",             "mensual",    "porcentaje", "bde_accesibilidad",
+  "plazo_hipotecas",  "si_1_5", NA_character_,            "trimestral", "meses",      "bde_accesibilidad"
 )
+# Series sin código fijo: se buscan por su descripción (cuarta fila de la cabecera del CSV)
+HIST_DESCRIPCION_BDE <- c(plazo_hipotecas = "plazo medio.*hipotecas")
 # Series del módulo que no se publican: solo sirven a una compuerta o a otra serie (el euríbor, a
 # mibor_euribor desde 1999)
-HIST_SOLO_COMPUERTA <- c("valor_tasado_bde", "euribor")
+HIST_SOLO_COMPUERTA <- c("valor_tasado_bde", "euribor", "plazo_hipotecas")
 HIST_INICIO_EURIBOR <- 1999L
 HIST_MESES_BDE <- c(ENE = 1L, FEB = 2L, MAR = 3L, ABR = 4L, MAY = 5L, JUN = 6L, JUL = 7L, AGO = 8L, SEP = 9L,
                     OCT = 10L, NOV = 11L, DIC = 12L)
@@ -94,12 +101,28 @@ hist_leer_bde <- function(ruta, codigos) {
   }))
 }
 
+# Código de la serie de una tabla del Banco de España cuya descripción (cuarta fila de la cabecera)
+# casa con `patron` (sin distinguir mayúsculas). Se para si no casa ninguna o casa más de una.
+hist_codigo_bde <- function(ruta, patron) {
+  x <- readr::read_csv(ruta, col_names = FALSE, n_max = 6L, col_types = readr::cols(.default = "c"),
+                       locale = readr::locale(encoding = "latin1"), na = character(), progress = FALSE)
+  codigos <- unlist(x[1, -1], use.names = FALSE)
+  descripciones <- unlist(x[4, -1], use.names = FALSE)
+  k <- which(grepl(patron, descripciones, ignore.case = TRUE))
+  if (length(k) != 1L) {
+    stop("Tabla del Banco de Espa\u00f1a ", basename(ruta), ": ", length(k), " series casan con \u00ab", patron,
+         "\u00bb", if (length(k)) paste0(" (", paste(descripciones[k], collapse = "; "), ")") else "", call. = FALSE)
+  }
+  codigos[k]
+}
+
 # Las series de HIST_SERIES_BDE en el formato del módulo histórico (hist_columnas()): una fila por
 # periodo (trimestre o mes) desde HIST_DESDE o desde el primer dato hasta el último; los huecos
 # intermedios quedan como NA (la compuerta los cuenta). `rutas`: las tablas, con su nombre.
 hist_leer_bde_tablas <- function(rutas, series = HIST_SERIES_BDE, desde = HIST_DESDE) {
   dplyr::bind_rows(lapply(seq_len(nrow(series)), function(i) {
     s <- series[i, ]
+    if (is.na(s$codigo)) s$codigo <- hist_codigo_bde(rutas[[s$tabla]], HIST_DESCRIPCION_BDE[[s$serie]])
     d <- hist_leer_bde(rutas[[s$tabla]], s$codigo)
     if (s$frecuencia == "trimestral") {
       fuera <- sum(!is.na(d$valor) & d$mes %% 3L != 0L)

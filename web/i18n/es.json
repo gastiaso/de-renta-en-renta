@@ -88,6 +88,7 @@
       "otros_gastos": "{euros} € al mes en {territorio}, ECV {anio}",
       "otros_gastos_espana": "{euros} € al mes, la cifra de España: la muestra de {territorio} no llega a {minimo} hogares; ECV {anio}",
       "otros_gastos_rango": "de {desde} a {hasta} € al mes según la comunidad, ECV {anio}",
+      "otros_gastos_superficie": "; con {superficie} m², × {factor}: solo la parte ligada a los metros va con la superficie",
       "minimo_ficha": "La ficha da al lado el mínimo teórico con un piso de {superficie} m².",
       "ficha_mediana": "{ficha} (mediana de las provincias)",
       "llave": "{ficha}: de {desde} a {hasta} € (cuartiles de las secciones)",
@@ -298,7 +299,7 @@
       "evolucion": "Evolución",
       "evolucion_llega": "Evolución del alquiler sobre el ingreso",
       "evolucion_grafico": "Gráfico de la evolución: {titulo}, de {desde} a {hasta}",
-      "evolucion_banda": "Banda sombreada: la cifra ± el margen aproximado de la mediana del alquiler.",
+      "evolucion_banda": "Banda sombreada: la cifra ± el margen aproximado al 95 % de la mediana del alquiler de cada año. Para comparar dos años no basta con ver si las bandas se tocan: la diferencia tiene su propio margen, mayor que el de cada año.",
       "evolucion_pocos": "Punto hueco: menos de {umbral} contratos.",
       "cabecera_periodo": "Año",
       "cabecera_variacion": "Variación",
@@ -332,7 +333,7 @@
         "territorio": "Territorio que no es de ninguna provincia"
       },
       "fuente_ign": "Nombre y tipo: Instituto Geográfico Nacional, unidades administrativas (obra derivada de BDDAE 2026 CC-BY 4.0 ign.es).",
-      "contratos": "Mediana de {contratos} contratos · margen aproximado ±{margen} %",
+      "contratos": "Mediana de {contratos} contratos · margen aproximado al 95 % ±{margen} %",
       "contratos_sin_margen": "Mediana de {contratos} contratos",
       "contratos_secreto": "{contratos} contratos: con menos de 10, la fuente no publica la mediana",
       "pocos_contratos": "pocos contratos",
@@ -542,13 +543,15 @@
       "anio": "Encuesta",
       "toda_poblacion": "Toda la población",
       "todas_edades": "Todas las edades",
+      "urbanizacion": "Grado de urbanización",
+      "todos_grados": "Todos los grados",
       "medida": "Medida",
       "medidas": {
         "sobrecarga": "Sobrecarga (más del 40 %)",
         "pobreza": "Pobreza tras pagar la vivienda"
       },
       "nota_rentas": "Encuesta de {anio}, con las rentas de {anterior}.",
-      "nota_desglose": "Con tenencia o edad, solo la encuesta de {anio}: Eurostat no publica esos desgloses por regiones.",
+      "nota_desglose": "Con tenencia, edad o grado de urbanización, solo la encuesta de {anio}: Eurostat no publica esos desgloses por regiones.",
       "nota_pobreza": "Riesgo de pobreza tras la vivienda: personas cuya renta por unidad de consumo, una vez pagados los gastos de vivienda, queda por debajo del umbral de riesgo de pobreza ({umbral} € al año por unidad de consumo en la encuesta de {anio}: el 60 % de la mediana antes de pagar la vivienda).",
       "nota_desglose_pobreza": "Por tenencia, España con la encuesta de {anio} y las comunidades con tres olas agrupadas ({desde}–{hasta}): Eurostat no publica esta tasa por tenencia, y el mapa no pinta otros países.",
       "nota_desglose_pobreza_edad": "Por edad, los países y España con la encuesta de {anio} y las comunidades con tres olas agrupadas ({desde}–{hasta}): Eurostat no publica esta tasa por regiones.",
@@ -560,7 +563,10 @@
         "Y_LT18": "Menos de 18 años",
         "Y18-64": "18 a 64 años",
         "Y_GE65": "65 y más años",
-        "Y_GE18": "18 y más años"
+        "Y_GE18": "18 y más años",
+        "DEG1": "Ciudades",
+        "DEG2": "Pueblos y suburbios",
+        "DEG3": "Zonas rurales"
       }
     },
     "cifras": {
@@ -584,7 +590,7 @@
       "nota_pobreza_tenencia": "Eurostat no publica esta tasa por régimen de tenencia: solo se pintan las comunidades, con tres olas agrupadas ({desde}–{hasta}), porque una sola ola no da muestra suficiente.",
       "nota_pobreza_edad": "Por edad, Eurostat publica esta tasa por país (ilc_li45). España va por comunidades con los microdatos del INE y tres olas agrupadas ({desde}–{hasta}), porque una sola ola no da muestra suficiente: países y comunidades no son del mismo periodo. «18 y más años» reúne los grupos de 18 a 64 y de 65 y más.",
       "nota_regiones": "Eurostat publica la tasa por regiones NUTS 2 solo para toda la población. Donde no las publica se pinta el dato del país o de NUTS 1, con trama. Algunos países no tienen dato regional algunos años (Dinamarca, hasta 2024) y Eurostat publica a veces dos regiones juntas (FI19_20): quedan sin pintar.",
-      "nota_paises": "Con tenencia o edad, Eurostat publica países. España va por comunidades con los microdatos del INE y tres olas agrupadas ({desde}–{hasta}), porque una sola ola no da muestra suficiente: países y comunidades no son del mismo periodo.",
+      "nota_paises": "Con tenencia, edad o grado de urbanización, Eurostat publica países. España va por comunidades con los microdatos del INE y tres olas agrupadas ({desde}–{hasta}), porque una sola ola no da muestra suficiente: países y comunidades no son del mismo periodo.",
       "sin_mapa": "En la escalera, sin geometría en el mapa: {lista}.",
       "recuadros": "Canarias, Madeira y Azores, en recuadro.",
       "licencia": "© EuroGeographics para los límites administrativos",
@@ -615,6 +621,7 @@
       "fuente_eurostat": "Eurostat ({tabla})",
       "muestra": "Muestra: {n} personas en {h} hogares",
       "olas": "Tres olas agrupadas, {desde}–{hasta}",
+      "trienio": "Con tres olas agrupadas ({desde}–{hasta}): {v} · {n} personas · {fiabilidad}",
       "anio": "Encuesta de {anio}",
       "bandera": "Marca de Eurostat: {b}",
       "nivel_pais": "Dato del país: Eurostat no publica sus regiones NUTS 2.",
@@ -689,7 +696,11 @@
       "puesto": "Puesto",
       "personas": "Personas",
       "hogares": "Hogares",
-      "fiabilidad": "Fiabilidad"
+      "fiabilidad": "Fiabilidad",
+      "valor_anio": "% {anio}",
+      "valor_trienio": "% {desde}–{hasta}",
+      "personas_trienio": "Personas {desde}–{hasta}",
+      "nota_trienio": "Las columnas {desde}–{hasta} agrupan tres olas de la ECV, como las cifras de las comunidades por tenencia y edad, y sus personas son distintas estimadas (la encuesta repite de un año a otro unas tres cuartas partes de la muestra); las demás son de la encuesta de {anio}, la del mapa, el puesto y la muestra."
     },
     "metodo": {
       "titulo": "Cómo se calcula",
@@ -697,9 +708,9 @@
       "personas": "Cuenta personas, no hogares.",
       "hipoteca": "De la hipoteca entran los intereses, no la devolución del capital.",
       "renta": "La renta es la del año anterior a la encuesta: la ECV de 2025 recoge las rentas de 2024.",
-      "muestra": "Sin intervalos de confianza: los microdatos públicos no traen el diseño de la muestra. Cada cifra del INE lleva su número de observaciones y la marca de fiabilidad de EU-SILC: sin publicar con menos de 20; con trama, de 20 a 49.",
-      "compuerta": "El cálculo reproduce las cifras de Eurostat de España, de cada comunidad, de los inquilinos a precio de mercado, de cada grupo de edad y de cada grado de urbanización (±0,1 puntos).",
-      "pobreza": "Riesgo de pobreza tras la vivienda (indicador 24): (renta disponible − 12 × gasto mensual en vivienda) ÷ unidades de consumo, por debajo del 60 % de la mediana de la renta por unidad de consumo antes de pagar la vivienda. Es el método de Eurostat (ilc_li48): la cifra de España de 2016 a 2025 reproduce la suya (±0,1 puntos), también por edad (ilc_li45) y por grado de urbanización. Por tenencia y por edad, las comunidades agrupan tres olas.",
+      "muestra": "Sin intervalos de confianza: los microdatos públicos no traen el diseño de la muestra. Cada cifra del INE lleva su número de observaciones y la marca de fiabilidad de EU-SILC: sin publicar con menos de 20; con trama, de 20 a 49. Con tres olas agrupadas, las observaciones son personas distintas estimadas: la encuesta repite de un año a otro unas tres cuartas partes de la muestra, y una misma persona no cuenta dos veces.",
+      "compuerta": "El cálculo reproduce las cifras de Eurostat de España, de cada comunidad, de los inquilinos a precio de mercado, de cada grupo de edad y de cada grado de urbanización (±0,1 puntos). Por comunidad, la tenencia, la edad y el grado de urbanización agrupan tres olas; Eurostat no publica comunidades por grado de urbanización, y los tres grados rehacen el total de cada comunidad con las mismas olas.",
+      "pobreza": "Riesgo de pobreza tras la vivienda (indicador 24): (renta disponible − 12 × gasto mensual en vivienda) ÷ unidades de consumo, por debajo del 60 % de la mediana de la renta por unidad de consumo antes de pagar la vivienda. Es el método de Eurostat (ilc_li48): la cifra de España de 2016 a 2025 reproduce la suya (±0,1 puntos), también por edad (ilc_li45) y por grado de urbanización. Por tenencia y por edad, las comunidades agrupan tres olas, y la tabla de comunidades da también su total con esas tres olas.",
       "marcas": "Las cifras de Eurostat llevan sus marcas junto al valor: b, ruptura de serie; u, poca fiabilidad (con trama en el mapa); e, estimación; p, provisional."
     },
     "acceso": {
@@ -801,7 +812,7 @@
       "hist-esfuerzo": {
         "corto": "Esfuerzo",
         "titulo": "Esfuerzo teórico del primer año",
-        "subtitulo": "Cuotas del primer año de un préstamo por el 80 % del valor de la vivienda tipo, en porcentaje de la renta disponible del hogar mediano, sin deducciones fiscales. Trimestral. No es la «Cuota hipotecaria sobre la renta del hogar» del mapa (indicador 17): misma cuenta, pero con un piso de 80 m² y la renta neta media de todos los hogares, más alta que la del hogar mediano, y por eso da en torno a la mitad (España, 2024: 18,1 % en el mapa; 34,6 % de media aquí).",
+        "subtitulo": "Cuotas del primer año de un préstamo por el 80 % del valor de la vivienda tipo, en porcentaje de la renta disponible del hogar mediano, sin deducciones fiscales. Trimestral. No es la «Cuota hipotecaria sobre la renta del hogar» del mapa (indicador 17): comparte la vivienda tipo, el préstamo, el tipo y el plazo, pero el mapa usa el valor tasado y la renta neta media de todos los hogares, más alta que la del hogar mediano, y por eso da menos.",
         "fuente": "Fuente: elaboración propia con datos extraídos del sitio web del Banco de España (www.bde.es): Síntesis de indicadores, tabla 1.5, serie D_TKB57210_IPV. Datos descargados el {version}."
       },
       "hist-tipos": {
@@ -924,9 +935,9 @@
       "nota_ruptura": "Cambio de ponderación: desde noviembre de 2023 el CIS ajusta también por nivel de estudios; los periodos marcados mezclan los dos métodos y no se comparan con los de antes ni con los de después.",
       "nota_agrupadas": "Ceuta y Melilla, con menos de 200 entrevistas al año, van de dos en dos años: el elegido y el anterior.",
       "nota_margen": "El intervalo recoge el error de muestreo y el efecto de la ponderación: dos comunidades cuyos intervalos se solapan no se distinguen. La línea discontinua marca la cifra de España.",
-      "fuente": "Fuente: elaboración propia con los microdatos de los barómetros del Centro de Investigaciones Sociológicas (CIS, www.cis.es) armonizados por Barómetro a barómetro (gastiaso.github.io/barometros, CC BY 4.0), edición {edicion}. Cambios: cifras por comunidad y año calculadas con el peso del CIS y redondeadas a un decimal. El CIS no participa en este atlas ni lo patrocina.",
+      "fuente": "Fuente: elaboración propia con los microdatos de los barómetros del Centro de Investigaciones Sociológicas (CIS, www.cis.es) armonizados por Barómetro a barómetro (gastiaso.github.io/barometros, CC BY 4.0), edición {edicion}. Cambios: cifras por comunidad y año calculadas con el peso del CIS para cada comunidad (PESOCCAA; España, con el de la muestra total) y redondeadas a un decimal. El CIS no participa en este atlas ni lo patrocina.",
       "csv": "Descargar la tabla por comunidad (CSV)",
-      "metodo": "La vivienda como problema por comunidad (CIS): desde los microdatos de los barómetros de 2021 en adelante, armonizados por Barómetro a barómetro, con el peso del CIS. Base: todos los entrevistados a los que se hace la pregunta (los que no saben o no contestan cuentan). Cada año junta las entrevistas de sus barómetros (en 2025, de unas 1.000 a 7.600 por comunidad); intervalo de Wilson al 95 % con el efecto de diseño de la ponderación; nada con menos de 50 entrevistas. Compuerta: cada mes de España calculado así reproduce la cifra del CIS a un decimal."
+      "metodo": "La vivienda como problema por comunidad (CIS): desde los microdatos de los barómetros de 2021 en adelante, armonizados por Barómetro a barómetro, con el peso que el CIS da para estimar por comunidad (PESOCCAA); España, con el de la muestra total (PESO). Base: todos los entrevistados a los que se hace la pregunta (los que no saben o no contestan cuentan). Cada año junta las entrevistas de sus barómetros (en 2025, de unas 1.000 a 7.600 por comunidad); intervalo de Wilson al 95 % con el efecto de diseño de la ponderación; nada con menos de 50 entrevistas. Compuerta: cada mes de España calculado así reproduce la cifra del CIS a un decimal. Las cifras de las comunidades no suman la de España: cada una lleva su propia ponderación."
     },
     "metodo": {
       "titulo": "Cómo se leen estas series",
@@ -1027,7 +1038,7 @@
       "unidad": "€ por asalariado y año (bruto)",
       "definicion": "Salario medio anual bruto de los asalariados con domicilio fiscal en la provincia, en total y de 26 a 35 años.",
       "calculo": "Cifra publicada por la AEAT (Mercado de trabajo y pensiones en las fuentes tributarias, tabla por provincia, edad y sexo): salarios / asalariados, en total y del tramo de 26 a 35 años; la comunidad y España, con su cifra publicada. El País Vasco y Navarra no están en la estadística (domicilio fiscal foral) y van sin dato.",
-      "lectura": "Es salario real del año: incluye a quien trabajó pocos meses. Es una media, no una mediana; la ficha «joven de 26 a 35» la pasa a mediana con la relación mediana/media del salario medio estimado de su comunidad y después a neto mensual repartido en 12, con la cotización del trabajador y la retención media de la AEAT por comunidad y tramo de renta (plan §3.1, método B)."
+      "lectura": "Es salario real del año: incluye a quien trabajó pocos meses. Es una media, no una mediana; la ficha «joven de 26 a 35» la pasa a mediana con la relación mediana/media del salario medio estimado de su comunidad, corregida con la ECV para lo cobrado en el año (también quien trabajó pocos meses), y después a neto mensual repartido en 12, con la cotización del trabajador y la retención media de la AEAT por comunidad y tramo de renta (plan §3.1, método B)."
     },
     "alquiler_mes": {
       "nombre": "Alquiler mensual (mediana)",
@@ -1095,9 +1106,9 @@
     "esfuerzo_hipotecario": {
       "nombre": "Cuota hipotecaria sobre la renta del hogar",
       "unidad": "% de la renta del hogar",
-      "definicion": "Parte de la renta neta media de los hogares del territorio que se iría en la cuota del primer año de una hipoteca sobre un piso de 80 m².",
-      "calculo": "Cuota anual del primer año de un préstamo francés sobre el 80 % del valor tasado de 80 m², a 25 años y al tipo de los préstamos nuevos para adquisición de vivienda del Banco de España (media de los doce meses del año), dividida entre la renta neta media por hogar del ADRH (INE) del mismo año y territorio, × 100. La renta es la publicada en cada nivel; donde el INE no la publica, sin dato en la provincia y la comunidad (Navarra hasta 2020, Álava y el País Vasco hasta 2019, Gipuzkoa en 2015) y, en España hasta 2020, la media de los municipios ponderada por hogares, estimada.",
-      "lectura": "Es una cuenta teórica: supone que se tiene el 20 % restante y los gastos de compra. No es el «esfuerzo teórico del primer año» del Banco de España de la Máquina del tiempo: la cuenta es la misma, pero el Banco de España usa la vivienda tipo que define y la renta del hogar mediano, y aquí van un piso de 80 m² y la renta neta media de todos los hogares del territorio, que es más alta. Por eso esta cifra da en torno a la mitad (España, 2024: 18,1 % aquí y 34,6 % de media en el Banco de España)."
+      "definicion": "Parte de la renta neta media de los hogares del territorio que se iría en la cuota del primer año de una hipoteca sobre la vivienda tipo: la superficie media de las compraventas de vivienda en España.",
+      "calculo": "Cuota anual del primer año de un préstamo francés sobre el 80 % del valor tasado de la vivienda tipo, al tipo de los préstamos nuevos para adquisición de vivienda del Banco de España (media de los doce meses del año) y al plazo medio de las hipotecas nuevas (media de doce trimestres), dividida entre la renta neta media por hogar del ADRH (INE) del mismo año y territorio, × 100. La vivienda tipo y el plazo son los del esfuerzo teórico del Banco de España: la superficie media de las compraventas de vivienda en España según Registradores (media de tres años) y el plazo medio de sus hipotecas nuevas. La renta es la publicada en cada nivel; donde el INE no la publica, sin dato en la provincia y la comunidad (Navarra hasta 2020, Álava y el País Vasco hasta 2019, Gipuzkoa en 2015) y, en España hasta 2020, la media de los municipios ponderada por hogares, estimada.",
+      "lectura": "Es una cuenta teórica: supone que se tiene el 20 % restante y los gastos de compra. Usa los supuestos del «esfuerzo teórico del primer año» del Banco de España de la Máquina del tiempo (vivienda tipo, préstamo, tipo y plazo), pero no su renta ni su precio: el Banco divide por la renta disponible del hogar mediano, que no se publica por territorio, y aquí va la renta neta media de todos los hogares del territorio, que es más alta, con el valor tasado. Por eso esta cifra queda por debajo de la del Banco."
     },
     "hogares_alquiler": {
       "nombre": "Hogares en alquiler",
@@ -1125,13 +1136,13 @@
       "unidad": "€ netos por mes",
       "definicion": "Sueldo neto mensual necesario para que el alquiler mensual mediano de la sección no pase del 30 % del sueldo. Al lado, el mínimo teórico: el mismo cálculo con un piso de 50 m².",
       "calculo": "Alquiler mensual mediano de la vivienda colectiva / 0,30 (umbral cambiable al 40 %). Mínimo teórico (corte superficie, grupo 50): alquiler mediano por m² de la vivienda colectiva × 50 / 0,30 (superficie cambiable a 70 y 90 m² en la web). Cada cifra lleva el estado de su alquiler.",
-      "lectura": "Es el alquiler expresado en otra unidad, no un indicador nuevo. La cifra principal paga la vivienda alquilada mediana de la sección, de unos 79 m² de mediana; el mínimo de 50 m² queda por debajo y no se da sin ella. El 30 % es una convención y solo cuenta el alquiler: la Ley 12/2023 y Eurostat cuentan además los suministros y usan la renta del hogar. En la web se pueden añadir los otros gastos de vivienda de los inquilinos (ECV)."
+      "lectura": "Es el alquiler expresado en otra unidad, no un indicador nuevo. La cifra principal paga la vivienda alquilada mediana de la sección, de unos 79 m² (cociente entre la mediana del alquiler mensual y la del alquiler por m², no la mediana de las superficies); el mínimo de 50 m² queda por debajo y no se da sin ella. El 30 % es una convención y solo cuenta el alquiler: la Ley 12/2023 y Eurostat cuentan además los suministros y usan la renta del hogar. En la web se pueden añadir los otros gastos de vivienda de los inquilinos (ECV)."
     },
     "sobrecarga": {
       "nombre": "Tasa de sobrecarga por gastos de vivienda (método Eurostat)",
       "unidad": "% de las personas",
       "definicion": "Personas que viven en hogares cuyo gasto total en vivienda, neto de ayudas, supera el 40 % de su renta disponible, también neta de ayudas.",
-      "calculo": "Microdatos de la ECV con el método de Eurostat: de la hipoteca, solo los intereses; renta del año anterior; ponderación por persona. Reproduce las cifras de Eurostat (±0,1 puntos), también las de España por grado de urbanización (ilc_lvho07d). Los cruces por comunidad, tenencia y edad agrupan tres olas.",
+      "calculo": "Microdatos de la ECV con el método de Eurostat: de la hipoteca, solo los intereses; renta del año anterior; ponderación por persona. Reproduce las cifras de Eurostat (±0,1 puntos), también las de España por grado de urbanización (ilc_lvho07d). Los cruces por comunidad, tenencia, edad y grado de urbanización agrupan tres olas.",
       "lectura": "Mide la carga de quien ya tiene casa; la dominan los propietarios sin hipoteca y no ve a quien no ha podido emanciparse. Se lee junto a la búsqueda de vivienda sin éxito (23) y por tenencia, sobre todo en el alquiler a precio de mercado."
     },
     "busqueda_sin_exito": {
@@ -1250,7 +1261,8 @@
       "contrato": "Antigüedad del contrato de alquiler (IPVA)",
       "superficie": "Superficie supuesta (mínimo teórico del sueldo necesario)",
       "urbanizacion": "Grado de urbanización",
-      "hogar": "Tipo de hogar (línea de ingreso residual)"
+      "hogar": "Tipo de hogar (línea de ingreso residual)",
+      "olas": "Olas de la encuesta agrupadas, toda la población (anio, la última)"
     },
     "edad": {
       "Y_LT18": "Menos de 18 años",
@@ -1317,6 +1329,9 @@
       "alquiler_fotocasa": "Alquiler, Fotocasa (dato privado de oferta)",
       "venta_idealista": "Venta, Idealista (dato privado de oferta)",
       "venta_fotocasa": "Venta, Fotocasa (dato privado de oferta)"
+    },
+    "olas": {
+      "trienio": "Tres olas: la del año y las dos anteriores"
     },
     "sexo": {
       "M": "Hombres",

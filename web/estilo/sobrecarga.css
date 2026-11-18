@@ -275,7 +275,8 @@ html, body { height: auto; min-height: 100%; }
 }
 
 @media (max-width: 900px) {
-  .sc-cuerpo, .sc-fila { grid-template-columns: 1fr; }
+  /* minmax(0, …): la tabla de comunidades abierta no ensancha la tarjeta (se desplaza dentro de su marco) */
+  .sc-cuerpo, .sc-fila { grid-template-columns: minmax(0, 1fr); }
   .sc-escalera-cuerpo { max-height: 70vh; }
 }
 

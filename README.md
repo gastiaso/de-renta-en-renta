@@ -14,7 +14,7 @@
 | **Edad recomendada** | A partir de la primera nómina |
 | **Duración** | De un minuto («¿te llega?») a una tarde (la tabla larga en R, Python o DuckDB) |
 | **Material** | Un navegador. No hay que instalar nada, y los ingresos que escribes no salen de tu dispositivo |
-| **Edición** | v1.1.0, 12 de noviembre de 2026 ([registro de cambios](CHANGELOG.md)) |
+| **Edición** | v1.2.0, 18 de noviembre de 2026 ([registro de cambios](CHANGELOG.md)) |
 
 > **Tablero en construcción.** Las cifras, los métodos y este reglamento son provisionales y se revisan con cada edición. Si algo no cuadra, [avisa](#contacto).
 
@@ -50,7 +50,7 @@ Se juega con dos familias de cifras que **nunca se mezclan**:
 
 ## 2. Contenido de la caja
 
-- **1 tablero de portada** con 24 casillas: 17 llevan a un mapa, a una ficha o a una página; las rayadas están en obras.
+- **1 tablero de portada** con 24 casillas: 21 llevan a un mapa, a una ficha o a una página (cuatro, a «Reglas del juego», con resúmenes provisionales); las 3 rayadas están en obras.
 - **36.333 casillas de mapa**: las secciones censales de 2021, con sus 8.131 municipios, 52 provincias y 19 comunidades y ciudades autónomas.
 - **5 fichas** de perfil, cada una con su ingreso y su vivienda.
 - **17 mapas** en el selector, más un «¿te llega?» por ficha.
@@ -88,7 +88,7 @@ Se juega con dos familias de cifras que **nunca se mezclan**:
 | 21 | Sueldo neto necesario para no pasar del umbral | Sección | 2015–2024 | Mapa (el de entrada) |
 | 22 | Tasa de sobrecarga por gastos de vivienda (método Eurostat) | Región europea; comunidad en España | España desde 2004; comunidades, 2016–2025; regiones, 2021–2025 | Sobrecarga |
 | 23 | Búsqueda de vivienda sin éxito | Comunidad | 2025 | Sobrecarga |
-| 24 | Riesgo de pobreza tras los gastos de vivienda | Comunidad | 2016–2025; España y UE-27 desde 2004 | Sobrecarga |
+| 24 | Tasa de riesgo de pobreza tras los gastos de vivienda | Comunidad | 2016–2025; España desde 2004 y UE-27 desde 2010 | Sobrecarga |
 
 Definición, cálculo y lectura de cada uno: [diccionario de la página «Datos»](https://gastiaso.github.io/de-renta-en-renta/datos.html) e [`inventario/indicadores.csv`](inventario/indicadores.csv).
 
@@ -154,7 +154,11 @@ Cada bloque se despliega. Los nombres entre comillas son los de los botones de l
 | Hipoteca variable | Mapa de la cuota hipotecaria |
 | Sube el euríbor | Máquina del tiempo: tipos de interés |
 | Suben las pensiones | «¿Te llega?» con la pensión |
-| Ley de Vivienda · Parque público · Actualización de la renta · Aval de tus padres · Notaría · Comunidad y derramas · Herencia | Próximamente |
+| Ley de Vivienda | «Reglas del juego» (resúmenes provisionales) |
+| Actualización de la renta | «Reglas del juego»: actualización de la renta |
+| Aval de tus padres | «Reglas del juego»: fianza y garantías |
+| Comunidad y derramas | «Reglas del juego»: gastos del contrato |
+| Parque público · Notaría · Herencia | Próximamente |
 
 </details>
 </details>
@@ -291,7 +295,7 @@ Todo cabe en una columna. La barra se pliega en «Más opciones»; el mapa se mu
 8. **Cuatro estados**: dato, estimado (reconstruido con una regla escrita), secreto estadístico y sin dato.
 9. **Geografía fija.** Todas las series se llevan a las secciones de 2021, para comparar años sin que cambien los límites.
 10. **Euros de cada año**, salvo donde se elige lo contrario (la evolución de la ficha y la máquina del tiempo).
-11. **Lo que no cuadra no sale.** Más de 200 comprobaciones contrastan el pipeline con las cifras que publican las fuentes y consigo mismo; si falla una de bloqueo, no se publica.
+11. **Lo que no cuadra no sale.** Más de 250 comprobaciones contrastan el pipeline con las cifras que publican las fuentes y consigo mismo; si falla una de bloqueo, no se publica.
 
 ## 7. Lo que el tablero no ve
 
@@ -307,8 +311,8 @@ Las cautelas completas, en el [«Método en dos páginas»](https://gastiaso.git
 ## 8. Casillas en obras
 
 - **«Entrar»**: la oferta de Idealista por municipio y lo que cuesta entrar frente a quedarse. El pipeline la tiene preparada como capa desmontable y apagada; sale cuando Idealista lo autorice por escrito, y nunca irá en las descargas.
-- **«Ley de Vivienda»**: una pestaña, «Reglas del juego», con resúmenes de las leyes vigentes.
-- **«Parque público»** (vivienda protegida) y las demás casillas rayadas del tablero.
+- **«Reglas del juego»**: resúmenes de las normas estatales del alquiler y la compra, con sus artículos del BOE consolidado. Las casillas «Ley de Vivienda», «Actualización de la renta», «Aval de tus padres» y «Comunidad y derramas» ya llevan a la página, pero los resúmenes son provisionales: hasta su revisión jurídica, solo se publican sus títulos.
+- **«Parque público»** (vivienda protegida), **«Notaría»** y **«Herencia»**: casillas rayadas del tablero.
 
 ## 9. Para jugar con los datos
 
@@ -323,7 +327,7 @@ geo_id | nivel | anio | indicador | corte | grupo | valor | estado | fuente | ge
 | [`tabla_larga.parquet`](https://gastiaso.github.io/de-renta-en-renta/descargas/tabla_larga.parquet) | Los indicadores, de la sección a España |
 | [`historico.parquet`](https://gastiaso.github.io/de-renta-en-renta/descargas/historico.parquet) | Las series de la máquina del tiempo |
 | [`version.json`](https://gastiaso.github.io/de-renta-en-renta/descargas/version.json) | Fecha, commit, cobertura por indicador, licencias y sumas SHA-256 |
-| [Release `v1.1.0`](https://github.com/gastiaso/de-renta-en-renta/releases/tag/v1.1.0) | Lo anterior, los datos de la web y el mapa base, con `SHA256SUMS` |
+| [Release `v1.2.0`](https://github.com/gastiaso/de-renta-en-renta/releases/tag/v1.2.0) | Lo anterior, los datos de la web y el mapa base, con `SHA256SUMS` |
 
 ```r
 library(arrow); library(dplyr)

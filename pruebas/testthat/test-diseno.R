@@ -25,6 +25,14 @@ test_that("los tramos claros de la rampa llevan contorno en el CSS y los oscuros
   expect_true(any(grepl("^rampa 7 crema$", comp$detalle[comp$id == "contraste_declarado"])))
 })
 
+test_that("tokens.css sale con finales de línea LF, también en Windows (tarea 58)", {
+  ruta <- generar_tokens_css(tokens, tempfile(fileext = ".css"))
+  bytes <- readBin(ruta, "raw", file.size(ruta))
+  expect_false(any(bytes == as.raw(13)))   # ningún retorno de carro
+  expect_equal(bytes[length(bytes)], as.raw(10))
+  expect_true(any(readLines(ruta, encoding = "UTF-8") == ":root {"))
+})
+
 test_that("la rampa tiene siete pasos que se distinguen también con daltonismo", {
   expect_length(tokens$rampa_secuencial$pasos, MAX_CORTES_WEB + 1L)   # un paso por tramo del mapa más detallado
   hex <- vapply(tokens$rampa_secuencial$pasos, `[[`, "", "hex")

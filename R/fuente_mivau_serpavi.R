@@ -372,25 +372,30 @@ armonizar_mivau_serpavi <- function(serpavi, version, entrada_forales = ENTRADA_
 #     (completar_secciones_serpavi()), la provincia foral aún no ha entrado o el municipio o el
 #     distrito no cuadra con sus secciones (los mismos casos en que la mediana va como «ausente»;
 #     preguntas 13 y 26);
-#   margen_alquiler_mes y margen_alquiler_m2: margen aproximado de la mediana del alquiler mensual
-#     (indicadores 8 y 14) y del alquiler por m² (9, 15 y 21), en %, solo donde hay mediana
+#   margen_alquiler_mes y margen_alquiler_m2: margen aproximado al 95 % de la mediana del alquiler
+#     mensual (indicadores 8 y 14, y la cifra principal del 21) y del alquiler por m² (9, 15 y el
+#     mínimo teórico del 21), en %, solo donde hay mediana
 #     (margen_mediana()). Es un cálculo del atlas: fuente calculo_propio.
 # Con menos de UMBRAL_POCOS_CONTRATOS contratos, la ficha de la web marca «pocos contratos» (va
 # en el manifiesto de la web, umbral_pocos_contratos).
 UMBRAL_POCOS_CONTRATOS <- 30L
 MINIMO_TESTIGOS_SERPAVI <- 10L       # regla de secreto del SERPAVI: con menos, solo el recuento
-RANGO_MARGEN_MEDIANA <- c(1, 40)     # alerta margen_rango (%), en las secciones
-
-# Margen aproximado de la mediana, en %: error típico relativo de la mediana de n contratos,
-# 1,2533 × σ / √n (√(π/2) σ / √n), con σ ≈ (P75 − P25) / 1,349 (2 × z de 0,75): en total,
-# ≈ 0,929 × (P75 − P25) / (P50 × √n). Supone una distribución regular dentro del territorio y no
-# corrige el sesgo de la fuente (contratos vigentes, no nuevos). NA sin cuartiles, sin mediana
-# positiva o con menos de 10 contratos.
-FACTOR_MARGEN_MEDIANA <- sqrt(pi / 2) / (2 * stats::qnorm(0.75))
+# Margen aproximado de la mediana, en %, al 95 % (decisión del autor, 18-nov-2026; antes, ±1 error
+# típico, que cubre en torno al 68 %): Z_MARGEN_MEDIANA × error típico relativo de la mediana de n
+# contratos. Error típico: 1,2533 × σ / √n (√(π/2) σ / √n), con σ ≈ (P75 − P25) / 1,349 (2 × z de
+# 0,75), ≈ 0,929 × (P75 − P25) / (P50 × √n); el margen, ≈ 1,821 × (P75 − P25) / (P50 × √n). Supone
+# una distribución regular dentro del territorio y no corrige el sesgo de la fuente (contratos
+# vigentes, no nuevos). Es el margen de una cifra: para comparar dos años, el de la diferencia es
+# √(m1² + m2²) si las muestras fueran independientes (≈ √2 × m con márgenes parecidos); en el SERPAVI
+# no lo son, porque muchos contratos siguen de un año a otro, y esa cuenta queda del lado prudente.
+# NA sin cuartiles, sin mediana positiva o con menos de 10 contratos.
+FACTOR_MARGEN_MEDIANA <- sqrt(pi / 2) / (2 * stats::qnorm(0.75))   # error típico relativo / ((P75 − P25) / (P50 √n))
+Z_MARGEN_MEDIANA <- stats::qnorm(0.975)                            # 1,96: intervalo al 95 %
+RANGO_MARGEN_MEDIANA <- c(1, 40) * Z_MARGEN_MEDIANA                # alerta margen_rango (%), en las secciones
 margen_mediana <- function(p25, p50, p75, n) {
   ok <- !is.na(p25) & !is.na(p50) & !is.na(p75) & !is.na(n) & n >= MINIMO_TESTIGOS_SERPAVI & p50 > 0
   out <- rep(NA_real_, length(ok))
-  out[ok] <- 100 * FACTOR_MARGEN_MEDIANA * (p75[ok] - p25[ok]) / (p50[ok] * sqrt(n[ok]))
+  out[ok] <- 100 * Z_MARGEN_MEDIANA * FACTOR_MARGEN_MEDIANA * (p75[ok] - p25[ok]) / (p50[ok] * sqrt(n[ok]))
   out
 }
 

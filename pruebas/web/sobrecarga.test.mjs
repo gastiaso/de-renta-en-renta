@@ -179,6 +179,49 @@ test('textos de la pobreza tras la vivienda en los dos idiomas, con las mismas m
   assert.match(html, /id="sc-medida"/);
 });
 
+test('grado de urbanización en el mapa de la sobrecarga y total con el último trienio en la pobreza (18-nov-2026)', () => {
+  const d = {
+    ...DATOS_P,
+    grupos_mapa: { ...DATOS.grupos_mapa, urbanizacion: ['DEG1', 'DEG2', 'DEG3'] },
+    pobreza: { ...DATOS_P.pobreza, trienio: [{ geo: 'ES30', v: 235, n: 21000, hogares: 8500, fiabilidad: 'normal' }] },
+    vistas: [...DATOS_P.vistas,
+      { clave: 'urbanizacion-DEG1-2025', corte: 'urbanizacion', grupo: 'DEG1', anio: 2025, nuts: '2024',
+        filas: [fila('AT', 1, 110, 'europa', { nivel: 0, tabla: 'ilc_lvho07d' }), fila('ES30', 2, 104, 'comunidad', { fiabilidad: 'baja' })] }],
+  };
+  assert.ok(S.CORTES.includes('urbanizacion'));
+  const e = S.leerEstado('?corte=urbanizacion&grupo=DEG1&geo=ES30', d);
+  assert.deepEqual(e, { idioma: 'es', medida: 'sobrecarga', corte: 'urbanizacion', grupo: 'DEG1', anio: 2025, geo: 'ES30' });
+  assert.equal(S.consulta(e, d), '?corte=urbanizacion&grupo=DEG1&geo=ES30');
+  assert.deepEqual(S.gruposCon(d, 'urbanizacion'), ['DEG1']);                 // solo los grupos con vista
+  assert.deepEqual(S.gruposCon(d, 'urbanizacion', 'pobreza'), []);             // la pobreza no lo trae en el mapa
+  assert.equal(S.leerEstado('?medida=pobreza&corte=urbanizacion&grupo=DEG1', d).corte, 'total');
+  assert.deepEqual(S.conMuestraPequena(S.vistaDe(d, { corte: 'urbanizacion', grupo: 'DEG1' })), ['ES30']);
+  assert.equal(S.valorDe(S.trienioDe(d, 'ES30')), 23.5);
+  assert.equal(S.trienioDe(d, 'ES61'), null);
+  assert.equal(S.trienioDe(DATOS, 'ES30'), null);
+  // Textos en los dos idiomas, con las mismas marcas; la página y sobrecarga.js los usan
+  const marcas = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((x) => x[1]).sort();
+  const de = (o, k) => k.split('.').reduce((x, p) => x?.[p], o);
+  const claves = ['controles.urbanizacion', 'controles.todos_grados', 'controles.grupos.DEG1', 'controles.grupos.DEG2',
+    'controles.grupos.DEG3', 'detalle.trienio', 'comunidades.valor_anio', 'comunidades.valor_trienio', 'comunidades.personas_trienio', 'comunidades.nota_trienio'];
+  const es = leer('web', 'i18n', 'es.json').sobrecarga;
+  const en = leer('web', 'i18n', 'en.json').sobrecarga;
+  for (const k of claves) {
+    assert.ok(de(es, k)?.length && de(en, k)?.length, k);
+    assert.deepEqual(marcas(de(es, k)), marcas(de(en, k)), k);
+  }
+  assert.deepEqual(marcas(es.detalle.trienio), ['desde', 'fiabilidad', 'hasta', 'n', 'v']);
+  for (const texto of [es.controles.nota_desglose, es.mapa.nota_paises]) assert.match(texto, /grado de urbanización/);
+  for (const texto of [en.controles.nota_desglose, en.mapa.nota_paises]) assert.match(texto, /degree of urbanisation/);
+  const js = readFileSync(join(raiz, 'web', 'js', 'sobrecarga.js'), 'utf8');
+  for (const k of ['controles.todos_grados', 'detalle.trienio', 'comunidades.valor_anio', 'comunidades.valor_trienio', 'comunidades.personas_trienio', 'comunidades.nota_trienio']) {
+    assert.ok(js.includes(`'sobrecarga.${k}'`), `sobrecarga.js usa ${k}`);
+  }
+  const html = readFileSync(join(raiz, 'web', 'sobrecarga.html'), 'utf8');
+  assert.match(html, /id="sc-urbanizacion-grupo"[^>]*>\s*<legend data-i18n="sobrecarga\.controles\.urbanizacion"/);
+  assert.match(html, /id="sc-comunidades-nota" class="nota" hidden/);
+});
+
 test('consulta: solo lo que no vale por defecto', () => {
   assert.equal(S.consulta({ idioma: 'es', corte: 'total', grupo: 'total', anio: 2025, geo: null }, DATOS), '');
   assert.equal(S.consulta({ idioma: 'en', corte: 'total', grupo: 'total', anio: 2024, geo: 'EL51' }, DATOS), '?idioma=en&anio=2024&geo=EL51');
@@ -291,7 +334,10 @@ test('exportación del pipeline: vistas, escalera, muestra y geometrías', { ski
     }
     assert.ok(d.geometrias[v.nuts], `${v.clave}: geometría ${v.nuts}`);
     const comunidades = v.filas.filter((f) => f.bloque === 'comunidad');
-    assert.equal(comunidades.length, 19, `${v.clave}: comunidades`);
+    // Por grado de urbanización, una comunidad sin personas de ese grado (Ceuta y Melilla no tienen
+    // zonas rurales) no tiene fila
+    if (v.corte === 'urbanizacion') assert.ok(comunidades.length >= 15 && comunidades.length <= 19, `${v.clave}: comunidades`);
+    else assert.equal(comunidades.length, 19, `${v.clave}: comunidades`);
     // Referencias: España siempre; la UE-27, salvo en la pobreza tras la vivienda por tenencia (Eurostat no la publica)
     assert.ok(S.referencia(v, 'ES'), `${v.clave}: España`);
     if (!(v.medida === 'pobreza' && v.corte === 'tenencia')) assert.ok(S.referencia(v, 'EU27_2020'), `${v.clave}: UE-27`);
@@ -350,6 +396,16 @@ test('exportación del pipeline: vistas, escalera, muestra y geometrías', { ski
   }
   // Sobrecarga de España por grado de urbanización (18-nov-2026), cada ola
   assert.equal(d.espana.anual.filter((f) => f.corte === 'urbanizacion').length, 3 * d.olas.anuales.length);
+  // Y en el mapa, con los países de ilc_lvho07d y las 19 comunidades del último trienio (18-nov-2026)
+  assert.deepEqual(S.gruposCon(d, 'urbanizacion'), ['DEG1', 'DEG2', 'DEG3']);
+  for (const g of S.gruposCon(d, 'urbanizacion')) {
+    const v = S.vistaDe(d, { corte: 'urbanizacion', grupo: g });
+    assert.ok(v.filas.filter((f) => f.bloque === 'europa').length > 20, `urbanización ${g}: países`);
+    assert.ok(v.filas.filter((f) => f.bloque === 'europa').every((f) => f.tabla === 'ilc_lvho07d'), `urbanización ${g}: tabla`);
+  }
+  // Total de las 19 comunidades con el último trienio de la pobreza (18-nov-2026), con su muestra
+  assert.equal(d.pobreza.trienio.length, 19);
+  assert.ok(d.pobreza.trienio.every((f) => Number.isInteger(f.n) && f.fiabilidad && d.comunidades[f.geo]));
   assert.ok(p.umbrales.length === p.olas.anuales.length && p.umbrales.every((u) => u.euros > 5000 && u.euros < 20000));
   assert.equal(p.espana.filter((f) => f.corte === 'total').length, p.olas.anuales.length);
   const pt = S.vistaDe(d, { medida: 'pobreza' });

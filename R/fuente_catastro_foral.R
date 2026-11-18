@@ -31,20 +31,34 @@ zips_feed_foral <- function(xml, provincia, patron) {
                  url = urls)
 }
 
+# Feeds guardados (tarea 58, 18-nov-2026), como los del Catastro estatal (CATASTRO_DIR_FEEDS): con
+# datos/brutos/ completo, tar_make() no pide la red. Se renuevan borrando la carpeta.
+CATASTRO_FORAL_DIR_FEEDS <- file.path("datos", "brutos", "catastro_foral", "feeds")
+
+# Fichero de cada feed: la provincia delante, porque el de Bizkaia se llama «buildings.xml».
+fichero_feed_foral <- function(provincia, feed) paste0(provincia, "_", basename(feed))
+
+# Feeds forales de las provincias pedidas, con caché por fichero en `dir` (objetivo
+# feeds_forales_atom, format = "file"). Álava y Gipuzkoa no tienen: ninguna ruta.
+descargar_feeds_forales <- function(provincias, dir = CATASTRO_FORAL_DIR_FEEDS, forzar = FALSE, pausa = 0.3) {
+  f <- filter(FEEDS_CATASTRO_FORAL, provincia %in% intersect(provincias, PROVINCIAS_FORALES))
+  vapply(seq_len(nrow(f)), function(i) {
+    descargar_feed(f$feed[i], file.path(dir, fichero_feed_foral(f$provincia[i], f$feed[i])), forzar, pausa)
+  }, "")
+}
+
 # Zips forales de las provincias pedidas: una fila por zip; `municipio` NA en los del territorio
-# entero.
-zips_catastro_forales <- function(provincias, pausa = 0.3) {
+# entero. Los de Bizkaia y Navarra salen de sus feeds guardados (`rutas`, de descargar_feeds_forales()).
+zips_catastro_forales <- function(provincias, rutas = descargar_feeds_forales(provincias)) {
   provincias <- intersect(provincias, PROVINCIAS_FORALES)
   enteros <- tibble::tibble(provincia = names(ZIPS_CATASTRO_FORAL), municipio = NA_character_,
                             url = unname(ZIPS_CATASTRO_FORAL)) |>
     filter(provincia %in% provincias)
   f <- filter(FEEDS_CATASTRO_FORAL, provincia %in% provincias)
   por_municipio <- bind_rows(lapply(seq_len(nrow(f)), function(i) {
-    Sys.sleep(pausa)
-    xml <- httr2::request(f$feed[i]) |>
-      httr2::req_user_agent("Mozilla/5.0 (compatible; de-renta-en-renta; R httr2)") |>
-      httr2::req_retry(max_tries = 3) |>
-      httr2::req_perform() |> httr2::resp_body_string(encoding = "UTF-8")
+    ruta <- rutas[basename(rutas) == fichero_feed_foral(f$provincia[i], f$feed[i])]
+    if (length(ruta) != 1) stop("Falta el feed foral de la provincia ", f$provincia[i], " entre los guardados", call. = FALSE)
+    xml <- iconv(rawToChar(readBin(ruta, "raw", file.size(ruta))), from = "UTF-8", to = "UTF-8")
     zips_feed_foral(xml, f$provincia[i], f$patron[i])
   }))
   bind_rows(enteros, por_municipio)
@@ -105,15 +119,22 @@ punto_interior <- function(geometria, crs_plano = 25830) {
   sf::st_transform(sf::st_point_on_surface(sf::st_transform(geometria, crs_plano)), crs)
 }
 
+# Opciones de apertura del controlador GML de GDAL (tarea 58, 18-nov-2026). El GML de Gipuzkoa cita
+# en su schemaLocation un DescribeFeatureType de un servidor interno de la Diputación (b5mdev), que
+# GDAL intentaba bajar en cada lectura («Could not resolve host: b5mdev»). Con DOWNLOAD_SCHEMA=NO no
+# lo pide. Los demás no citan un esquema WFS. Comprobado antes de usarla: con y sin la opción, los
+# zips de Gipuzkoa, Álava, Bizkaia (020) y Navarra (201) dan el mismo resultado (identical()).
+OPCIONES_GML_FORAL <- "DOWNLOAD_SCHEMA=NO"
+
 # Edificios con viviendas de un zip foral, como leer_catastro_edificios() (que no se toca para no
 # releer los zips del Catastro estatal): un punto dentro de cada edificio, viviendas y año de
 # construcción. Lee todos los GML del zip (Álava: uno por municipio).
-leer_catastro_foral <- function(zip) {
+leer_catastro_foral <- function(zip, opciones = OPCIONES_GML_FORAL) {
   contenido <- utils::unzip(zip, list = TRUE)$Name
   gml <- contenido[grepl("\\.gml$", contenido, ignore.case = TRUE)]
   if (length(gml) == 0) stop("No encuentro ningún GML en ", zip, call. = FALSE)
   partes <- lapply(gml, function(g) {
-    e <- sf::st_read(paste0("/vsizip/", normalizePath(zip, winslash = "/"), "/", g), quiet = TRUE)
+    e <- sf::st_read(paste0("/vsizip/", normalizePath(zip, winslash = "/"), "/", g), quiet = TRUE, options = opciones)
     viviendas <- suppressWarnings(as.numeric(e$numberOfDwellings))
     con_viviendas <- !is.na(viviendas) & viviendas > 0
     e <- e[con_viviendas, ]

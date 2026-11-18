@@ -88,6 +88,7 @@
       "otros_gastos": "€{euros} a month in {territorio}, ECV {anio}",
       "otros_gastos_espana": "€{euros} a month, the figure for Spain: the {territorio} sample has fewer than {minimo} households; ECV {anio}",
       "otros_gastos_rango": "€{desde} to €{hasta} a month depending on the region, ECV {anio}",
+      "otros_gastos_superficie": "; with {superficie} m², × {factor}: only the part linked to floor area follows the floor area",
       "minimo_ficha": "The profile also gives the theoretical minimum for a {superficie} m² flat.",
       "ficha_mediana": "{ficha} (median of provinces)",
       "llave": "{ficha}: €{desde} to €{hasta} (tract quartiles)",
@@ -298,7 +299,7 @@
       "evolucion": "Over time",
       "evolucion_llega": "Rent as a share of income over time",
       "evolucion_grafico": "Chart over time: {titulo}, from {desde} to {hasta}",
-      "evolucion_banda": "Shaded band: the figure ± the approximate margin of the median rent.",
+      "evolucion_banda": "Shaded band: the figure ± the approximate 95% margin of each year's median rent. Whether two bands overlap does not settle a comparison between years: the difference has its own margin, larger than each year's.",
       "evolucion_pocos": "Hollow dot: fewer than {umbral} contracts.",
       "cabecera_periodo": "Year",
       "cabecera_variacion": "Change",
@@ -332,7 +333,7 @@
         "territorio": "Territory outside any province"
       },
       "fuente_ign": "Name and type: Spanish National Geographic Institute (IGN), administrative units (derived work from BDDAE 2026 CC-BY 4.0 ign.es).",
-      "contratos": "Median of {contratos} contracts · approximate margin ±{margen}%",
+      "contratos": "Median of {contratos} contracts · approximate 95% margin ±{margen}%",
       "contratos_sin_margen": "Median of {contratos} contracts",
       "contratos_secreto": "{contratos} contracts: with fewer than 10, the source does not publish the median",
       "pocos_contratos": "few contracts",
@@ -542,13 +543,15 @@
       "anio": "Survey",
       "toda_poblacion": "Whole population",
       "todas_edades": "All ages",
+      "urbanizacion": "Degree of urbanisation",
+      "todos_grados": "All degrees",
       "medida": "Measure",
       "medidas": {
         "sobrecarga": "Overburden (over 40%)",
         "pobreza": "Poverty after housing costs"
       },
       "nota_rentas": "{anio} survey, with {anterior} incomes.",
-      "nota_desglose": "By tenure or age, only the {anio} survey: Eurostat does not publish those breakdowns by region.",
+      "nota_desglose": "By tenure, age or degree of urbanisation, only the {anio} survey: Eurostat does not publish those breakdowns by region.",
       "nota_pobreza": "At-risk-of-poverty after housing costs: people whose equivalised income, once housing costs are paid, falls below the at-risk-of-poverty threshold ({umbral} € a year per equivalent adult in the {anio} survey: 60% of the median before paying for housing).",
       "nota_desglose_pobreza": "By tenure, Spain with the {anio} survey and the autonomous communities with three pooled waves ({desde}–{hasta}): Eurostat does not publish this rate by tenure, and the map shows no other countries.",
       "nota_desglose_pobreza_edad": "By age, countries and Spain with the {anio} survey and the autonomous communities with three pooled waves ({desde}–{hasta}): Eurostat does not publish this rate by region.",
@@ -560,7 +563,10 @@
         "Y_LT18": "Under 18",
         "Y18-64": "18 to 64",
         "Y_GE65": "65 and over",
-        "Y_GE18": "18 and over"
+        "Y_GE18": "18 and over",
+        "DEG1": "Cities",
+        "DEG2": "Towns and suburbs",
+        "DEG3": "Rural areas"
       }
     },
     "cifras": {
@@ -584,7 +590,7 @@
       "nota_pobreza_tenencia": "Eurostat does not publish this rate by tenure: only the autonomous communities are shown, with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample.",
       "nota_pobreza_edad": "By age, Eurostat publishes this rate by country (ilc_li45). Spain is shown by autonomous community from INE microdata with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample: countries and communities do not cover the same period. «18 and over» combines the 18-to-64 and 65-and-over groups.",
       "nota_regiones": "Eurostat publishes the rate by NUTS 2 region only for the whole population. Where it does not, the country or NUTS 1 figure is shown, hatched. Some countries have no regional figure in some years (Denmark, until 2024), and Eurostat sometimes publishes two regions together (FI19_20): they are left blank.",
-      "nota_paises": "By tenure or age, Eurostat publishes countries. Spain is shown by autonomous community from INE microdata with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample: countries and communities do not cover the same period.",
+      "nota_paises": "By tenure, age or degree of urbanisation, Eurostat publishes countries. Spain is shown by autonomous community from INE microdata with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample: countries and communities do not cover the same period.",
       "sin_mapa": "In the ladder, with no boundaries on the map: {lista}.",
       "recuadros": "Canary Islands, Madeira and the Azores, in insets.",
       "licencia": "© EuroGeographics for the administrative boundaries",
@@ -615,6 +621,7 @@
       "fuente_eurostat": "Eurostat ({tabla})",
       "muestra": "Sample: {n} people in {h} households",
       "olas": "Three pooled waves, {desde}–{hasta}",
+      "trienio": "With three pooled waves ({desde}–{hasta}): {v} · {n} people · {fiabilidad}",
       "anio": "{anio} survey",
       "bandera": "Eurostat flag: {b}",
       "nivel_pais": "Country figure: Eurostat does not publish its NUTS 2 regions.",
@@ -689,7 +696,11 @@
       "puesto": "Rank",
       "personas": "People",
       "hogares": "Households",
-      "fiabilidad": "Reliability"
+      "fiabilidad": "Reliability",
+      "valor_anio": "% {anio}",
+      "valor_trienio": "% {desde}–{hasta}",
+      "personas_trienio": "People {desde}–{hasta}",
+      "nota_trienio": "The {desde}–{hasta} columns pool three EU-SILC waves, like the figures by tenure and age of the communities, and their people are estimated distinct people (the survey repeats about three quarters of its sample from one year to the next); the others are from the {anio} survey, which the map, the rank and the sample refer to."
     },
     "metodo": {
       "titulo": "How it is calculated",
@@ -697,9 +708,9 @@
       "personas": "It counts people, not households.",
       "hipoteca": "Only mortgage interest counts, not capital repayments.",
       "renta": "Income refers to the year before the survey: the 2025 survey records 2024 incomes.",
-      "muestra": "No confidence intervals: the public microdata do not include the sample design. Each INE figure carries its number of observations and the EU-SILC reliability flag: not published below 20; hatched from 20 to 49.",
-      "compuerta": "The calculation reproduces Eurostat’s figures for Spain, each autonomous community, market-rate tenants, each age group and each degree of urbanisation (±0.1 points).",
-      "pobreza": "At-risk-of-poverty after housing costs (indicator 24): (disposable income − 12 × monthly housing costs) ÷ equivalence units, below 60% of median equivalised income before paying for housing. This is Eurostat’s method (ilc_li48): the figure for Spain from 2016 to 2025 reproduces Eurostat’s (±0.1 points), also by age (ilc_li45) and by degree of urbanisation. By tenure and by age, the autonomous communities pool three waves.",
+      "muestra": "No confidence intervals: the public microdata do not include the sample design. Each INE figure carries its number of observations and the EU-SILC reliability flag: not published below 20; hatched from 20 to 49. With three pooled waves, observations are estimated distinct people: the survey repeats about three quarters of its sample from one year to the next, and the same person is not counted twice.",
+      "compuerta": "The calculation reproduces Eurostat’s figures for Spain, each autonomous community, market-rate tenants, each age group and each degree of urbanisation (±0.1 points). By autonomous community, tenure, age and degree of urbanisation pool three waves; Eurostat does not publish communities by degree of urbanisation, and the three degrees rebuild each community’s total with the same waves.",
+      "pobreza": "At-risk-of-poverty after housing costs (indicator 24): (disposable income − 12 × monthly housing costs) ÷ equivalence units, below 60% of median equivalised income before paying for housing. This is Eurostat’s method (ilc_li48): the figure for Spain from 2016 to 2025 reproduces Eurostat’s (±0.1 points), also by age (ilc_li45) and by degree of urbanisation. By tenure and by age, the autonomous communities pool three waves, and the table of communities also gives their total with those three waves.",
       "marcas": "Eurostat figures carry their flags next to the value: b, break in series; u, low reliability (hatched on the map); e, estimate; p, provisional."
     },
     "acceso": {
@@ -801,7 +812,7 @@
       "hist-esfuerzo": {
         "corto": "Burden",
         "titulo": "Theoretical first-year burden",
-        "subtitulo": "First-year payments on a loan for 80% of the value of the standard home, as a percentage of the disposable income of the median household, without tax deductions. Quarterly. This is not the map's «Mortgage payment over household income» (indicator 17): same calculation, but with an 80 m² flat and the average net income of all households, which is higher than the median household's, so it comes out at about half (Spain, 2024: 18.1% on the map; 34.6% on average here).",
+        "subtitulo": "First-year payments on a loan for 80% of the value of the standard home, as a percentage of the disposable income of the median household, without tax deductions. Quarterly. This is not the map's «Mortgage payment over household income» (indicator 17): it shares the standard home, the loan, the rate and the term, but the map uses the appraised value and the average net income of all households, higher than that of the median household, so it comes out lower.",
         "fuente": "Source: own elaboration with data extracted from the Banco de España website (www.bde.es): Summary indicators, table 1.5, series D_TKB57210_IPV. Data downloaded on {version}."
       },
       "hist-tipos": {
@@ -924,9 +935,9 @@
       "nota_ruptura": "Weighting change: since November 2023 the CIS also weights by education level; the marked periods mix both methods and are not compared with those before or after.",
       "nota_agrupadas": "Ceuta and Melilla, with fewer than 200 interviews a year, are pooled two years at a time: the selected year and the one before.",
       "nota_margen": "The interval reflects sampling error and the effect of weighting: two communities whose intervals overlap cannot be told apart. The dashed line marks the figure for Spain.",
-      "fuente": "Source: own elaboration with the microdata of the barometers of the Centro de Investigaciones Sociológicas (CIS, www.cis.es) harmonised by Barómetro a barómetro (gastiaso.github.io/barometros, CC BY 4.0), edition {edicion}. Changes: figures by community and year computed with the CIS weight and rounded to one decimal. The CIS neither takes part in nor sponsors this atlas.",
+      "fuente": "Source: own elaboration with the microdata of the barometers of the Centro de Investigaciones Sociológicas (CIS, www.cis.es) harmonised by Barómetro a barómetro (gastiaso.github.io/barometros, CC BY 4.0), edition {edicion}. Changes: figures by community and year computed with the CIS weight for each community (PESOCCAA; Spain, with the whole-sample weight) and rounded to one decimal. The CIS neither takes part in nor sponsors this atlas.",
       "csv": "Download the table by community (CSV)",
-      "metodo": "Housing as a problem by community (CIS): from the microdata of the barometers from 2021 onwards, harmonised by Barómetro a barómetro, with the CIS weight. Base: all respondents asked the question (don’t know and no answer count). Each year pools the interviews of its barometers (in 2025, from about 1,000 to 7,600 per community); 95% Wilson interval with the design effect of the weighting; nothing with fewer than 50 interviews. Validation: each month for Spain computed this way reproduces the CIS figure to one decimal."
+      "metodo": "Housing as a problem by community (CIS): from the microdata of the barometers from 2021 onwards, harmonised by Barómetro a barómetro, with the weight the CIS provides for estimates by community (PESOCCAA); Spain, with the whole-sample weight (PESO). Base: all respondents asked the question (don’t know and no answer count). Each year pools the interviews of its barometers (in 2025, from about 1,000 to 7,600 per community); 95% Wilson interval with the design effect of the weighting; nothing with fewer than 50 interviews. Validation: each month for Spain computed this way reproduces the CIS figure to one decimal. The community figures do not add up to Spain's: each has its own weighting."
     },
     "metodo": {
       "titulo": "How to read these series",
@@ -1027,7 +1038,7 @@
       "unidad": "€ per employee per year (gross)",
       "definicion": "Average gross annual wage of employees with tax residence in the province, overall and aged 26 to 35.",
       "calculo": "Published by the Spanish Tax Agency (AEAT, Labour market and pensions in tax sources, table by province, age and sex): wages / employees, overall and for the 26 to 35 age band; regions and Spain, with their published figure. The Basque Country and Navarre are not covered (foral tax residence) and have no data.",
-      "lectura": "Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «young adult, 26 to 35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region, and then to monthly net pay spread over 12, with the employee's social security contribution and the average AEAT withholding by region and income band (plan §3.1, method B)."
+      "lectura": "Actual pay over the year: it includes people who worked only a few months. It is a mean, not a median; the «young adult, 26 to 35» token converts it to a median with the median-to-mean ratio of the estimated average wage in its region, adjusted with the ECV to pay received over the year (including people who worked only a few months), and then to monthly net pay spread over 12, with the employee's social security contribution and the average AEAT withholding by region and income band (plan §3.1, method B)."
     },
     "alquiler_mes": {
       "nombre": "Monthly rent (median)",
@@ -1095,9 +1106,9 @@
     "esfuerzo_hipotecario": {
       "nombre": "Mortgage payment over household income",
       "unidad": "% of household income",
-      "definicion": "Share of the average net income of the area's households taken by the first-year payment of a mortgage on an 80 m² flat.",
-      "calculo": "First-year annual payment of a French-amortisation loan for 80% of the appraised value of 80 m², over 25 years at the Bank of Spain's rate on new home-purchase loans (average of the year's twelve months), divided by the average net household income from the ADRH (INE) for the same year and area, × 100. The income is the one published at each level; where INE does not publish it, no value for the province and the region (Navarre until 2020, Álava and the Basque Country until 2019, Gipuzkoa in 2015) and, for Spain until 2020, the household-weighted mean of the municipalities, estimated.",
-      "lectura": "A theoretical calculation: it assumes the remaining 20% and purchase costs are available. It is not the Banco de España's «theoretical first-year burden» shown in the Time machine: the calculation is the same, but the Banco de España uses the standard home it defines and the income of the median household, while here it is an 80 m² flat and the average net income of all households in the area, which is higher. That is why this figure comes out at about half (Spain, 2024: 18.1% here and 34.6% on average for the Banco de España)."
+      "definicion": "Share of the average net income of the area's households taken by the first-year payment of a mortgage on the standard home: the average floor area of home sales in Spain.",
+      "calculo": "First-year annual payment of a French-amortisation loan for 80% of the appraised value of the standard home, at the Bank of Spain's rate on new home-purchase loans (average of the year's twelve months) and the average term of new mortgages (average of twelve quarters), divided by the average net household income from the ADRH (INE) for the same year and area, × 100. The standard home and the term are those of the Banco de España's theoretical burden: the average floor area of home sales in Spain according to Registradores (three-year average) and the average term of its new mortgages. The income is the one published at each level; where INE does not publish it, no value for the province and the region (Navarre until 2020, Álava and the Basque Country until 2019, Gipuzkoa in 2015) and, for Spain until 2020, the household-weighted mean of the municipalities, estimated.",
+      "lectura": "A theoretical calculation: it assumes the remaining 20% and purchase costs are available. It uses the assumptions of the Banco de España's «theoretical first-year burden» shown in the Time machine (standard home, loan, rate and term), but not its income or its price: the Banco divides by the disposable income of the median household, which is not published by area, while here it is the average net income of all households in the area, which is higher, with the appraised value. That is why this figure comes out below the Banco's."
     },
     "hogares_alquiler": {
       "nombre": "Renting households",
@@ -1125,13 +1136,13 @@
       "unidad": "net € per month",
       "definicion": "Net monthly pay needed so that the tract's median monthly rent does not exceed 30% of pay. Alongside, the theoretical minimum: the same calculation for a 50 m² flat.",
       "calculo": "Median monthly rent of flats / 0.30 (threshold can be changed to 40%). Theoretical minimum (cut superficie, group 50): median rent per m² of flats × 50 / 0.30 (floor area can be changed to 70 or 90 m² on the website). Each figure carries the status of its rent.",
-      "lectura": "It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² at the median; the 50 m² minimum falls below it and is never given without it. The 30% is a convention and counts rent only: Law 12/2023 and Eurostat also count utilities and use household income. On the website, renters' other housing costs (ECV) can be added."
+      "lectura": "It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² (the ratio of median monthly rent to median rent per m², not the median of floor areas); the 50 m² minimum falls below it and is never given without it. The 30% is a convention and counts rent only: Law 12/2023 and Eurostat also count utilities and use household income. On the website, renters' other housing costs (ECV) can be added."
     },
     "sobrecarga": {
       "nombre": "Housing cost overburden rate (Eurostat method)",
       "unidad": "% of people",
       "definicion": "People living in households whose total housing costs, net of housing allowances, exceed 40% of disposable income, also net of allowances.",
-      "calculo": "EU-SILC microdata (INE) with Eurostat’s method: only mortgage interest counts; previous-year income; person weights. Reproduces Eurostat figures (±0.1 points); for Spain also by degree of urbanisation (ilc_lvho07d). Region × tenure and age breakdowns pool three waves.",
+      "calculo": "EU-SILC microdata (INE) with Eurostat’s method: only mortgage interest counts; previous-year income; person weights. Reproduces Eurostat figures (±0.1 points); for Spain also by degree of urbanisation (ilc_lvho07d). Region × tenure, age and degree-of-urbanisation breakdowns pool three waves.",
       "lectura": "Measures the burden on those already housed; outright owners dominate it and it misses people unable to leave home. Read it alongside unsuccessful housing search (23) and by tenure, especially market-rate renting."
     },
     "busqueda_sin_exito": {
@@ -1250,7 +1261,8 @@
       "contrato": "Age of the rental contract (IPVA)",
       "superficie": "Assumed floor area (theoretical minimum of the pay needed)",
       "urbanizacion": "Degree of urbanisation",
-      "hogar": "Household type (residual income line)"
+      "hogar": "Household type (residual income line)",
+      "olas": "Pooled survey waves, whole population (anio, the last one)"
     },
     "edad": {
       "Y_LT18": "Under 18",
@@ -1317,6 +1329,9 @@
       "alquiler_fotocasa": "Rent, Fotocasa (private asking-price data)",
       "venta_idealista": "Sale, Idealista (private asking-price data)",
       "venta_fotocasa": "Sale, Fotocasa (private asking-price data)"
+    },
+    "olas": {
+      "trienio": "Three waves: the year's and the two before it"
     },
     "sexo": {
       "M": "Men",

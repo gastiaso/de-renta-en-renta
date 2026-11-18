@@ -248,8 +248,10 @@ test_that("los territorios del seccionado que la base no trae van como ausente y
 # --- Fiabilidad de las medianas: contratos y margen (preguntas 12 y 15 ampliadas) ----------------
 
 test_that("margen aproximado de la mediana: 0,929 × (P75 − P25) / (P50 × √n), solo con 10 o más contratos", {
-  expect_equal(sprintf("%.1f", margen_mediana(8, 10, 12, 10)), "11.8")
-  expect_equal(margen_mediana(8, 10, 12, 10), 100 * FACTOR_MARGEN_MEDIANA * 4 / (10 * sqrt(10)))
+  # Al 95 % (18-nov-2026): 1,96 errores típicos; el error típico solo sería el 11,8 %
+  expect_equal(sprintf("%.1f", margen_mediana(8, 10, 12, 10)), "23.0")
+  expect_equal(margen_mediana(8, 10, 12, 10), 100 * stats::qnorm(0.975) * FACTOR_MARGEN_MEDIANA * 4 / (10 * sqrt(10)))
+  expect_equal(sprintf("%.1f", margen_mediana(8, 10, 12, 10) / Z_MARGEN_MEDIANA), "11.8")
   expect_equal(round(FACTOR_MARGEN_MEDIANA, 3), 0.929)
   expect_true(is.na(margen_mediana(8, 10, 12, 9)))
   expect_true(all(is.na(margen_mediana(c(NA, 8, 8), c(10, NA, 10), c(12, 12, NA), 20))))
@@ -311,9 +313,9 @@ test_that("la compuerta de la fiabilidad cuadra con datos coherentes y ve los de
   expect_equal(filter(c2, id == "contratos_mediana", anio == 2021L, detalle == "sc VC")$calculado, 1)
   suma <- filter(c2, id == "contratos_suma", anio == 2021L)
   expect_setequal(suma$detalle[suma$calculado != suma$referencia], c("provincia 28 VC", "Espa\u00f1a desde secciones VC"))
-  # Margen fuera del 1–40 % en una sección: alerta
+  # Margen fuera del rango (del 1–40 % del error típico, × 1,96 desde el 18-nov-2026: 1,96–78,4 %) en una sección: alerta
   m <- mutate(l, valor = ifelse(indicador == "margen_alquiler_m2" & geo_id == "2800101001" & anio == 2021L & grupo == "VC",
-                                55, valor))
+                                90, valor))
   expect_equal(filter(comprobar_fiabilidad_serpavi(m), id == "margen_rango", anio == 2021L,
                       detalle == "margen_alquiler_m2 VC")$calculado, 1)
 })

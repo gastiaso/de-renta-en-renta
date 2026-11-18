@@ -15,9 +15,10 @@
 #     agrupados (FI19_20), y las referencias UE-27 y España. Las comunidades y España llevan la cifra
 #     de los microdatos del INE (sobrecarga_ecv) los años que la hay, con su muestra; el resto, la de
 #     Eurostat. El puesto es el de armar_escalera();
-#   - con tenencia o edad, el último año: países de Eurostat (ilc_lvho07c, ilc_lvho07a) y España por
-#     comunidades con las olas agrupadas de la ECV (sobrecarga_agrupada); la referencia España, la ola
-#     del último año.
+#   - con tenencia, edad o grado de urbanización (este, desde el 18-nov-2026, si se da la tabla de
+#     ilc_lvho07d), el último año: países de Eurostat (ilc_lvho07c, ilc_lvho07a, ilc_lvho07d) y España
+#     por comunidades con las olas agrupadas de la ECV (sobrecarga_agrupada); la referencia España, la
+#     ola del último año.
 # Mapa y escalera salen de la misma lista: la escalera ordena lo que pinta el mapa.
 #
 # Cifras: valor × 10 en enteros con el redondeo de la guía (valor_web(), R/web_exportar.R). Las del
@@ -56,14 +57,35 @@ cortes_de_indicadores <- function(indicadores, codigo = "sobrecarga") {
 }
 # Grupos que puede pintar el mapa: los que Eurostat publica por país y la ECV por comunidad
 # (el de 15 a 29 años no está agrupado por comunidad; propiedad y alquiler juntos, no en Eurostat).
+# El grado de urbanización (ilc_lvho07d; 18-nov-2026), solo si se da su tabla (grupos_mapa_sobrecarga()).
 GRUPOS_MAPA_SOBRECARGA <- list(tenencia = c("RENT_MKT", "RENT_FR", "OWN_L", "OWN_NL"),
-                               edad = c("Y_LT18", "Y18-64", "Y_GE65"))
+                               edad = c("Y_LT18", "Y18-64", "Y_GE65"),
+                               urbanizacion = c("DEG1", "DEG2", "DEG3"))
+TABLA_SOBRECARGA_URBANIZACION <- "ilc_lvho07d"
+
+grupos_mapa_sobrecarga <- function(urbanizacion = NULL) {
+  if (is.null(urbanizacion)) GRUPOS_MAPA_SOBRECARGA[c("tenencia", "edad")] else GRUPOS_MAPA_SOBRECARGA
+}
+
+# Cifras de Eurostat de una vista con desglose de la sobrecarga: geo, valor y bandera, con su tabla.
+# `urbanizacion`: la de leer_eurostat_ilc_lvho07d() (sin ella, el grado no tiene cifras).
+eurostat_desglose_sobrecarga <- function(europa, corte, grupo, anio, urbanizacion = NULL) {
+  if (corte == "urbanizacion") {
+    u <- if (is.null(urbanizacion)) europa[0, ] else urbanizacion[urbanizacion$grado == grupo & urbanizacion$anio == anio, ]
+    return(list(datos = u[c("geo", "valor", "bandera")], tabla = TABLA_SOBRECARGA_URBANIZACION))
+  }
+  tabla <- if (corte == "tenencia") "ilc_lvho07c" else "ilc_lvho07a"
+  eu <- europa[europa$conjunto == tabla & europa$anio == anio &
+                 europa$tenencia == (if (corte == "tenencia") grupo else "TOTAL") &
+                 europa$edad == (if (corte == "edad") grupo else "TOTAL"), ]
+  list(datos = eu[c("geo", "valor", "bandera")], tabla = tabla)
+}
 AGREGADOS_EUROSTAT <- c("EU", "EA")                  # además de los códigos de más de dos letras
 MARCO_SOBRECARGA_3035 <- c(xmin = 2000000, ymin = 1100000, xmax = 7450000, ymax = 5630000)
 CENTRO_SOBRECARGA_3035 <- c(4321000, 3210000)        # origen de la LAEA de Europa
 RECUADROS_SOBRECARGA <- c("ES70", "PT30", "PT20")    # Canarias, Madeira y Azores, de abajo arriba
 TABLA_EUROSTAT_FUENTE <- c(ilc_lvho07a = "eurostat_ilc_lvho07", ilc_lvho07c = "eurostat_ilc_lvho07",
-                           ilc_lvho07_r = "eurostat_ilc_lvho07_r")
+                           ilc_lvho07_r = "eurostat_ilc_lvho07_r", ilc_lvho07d = "eurostat_ilc_lvho07d")
 
 es_pais_eurostat <- function(geo) grepl("^[A-Z]{2}$", geo) & !geo %in% AGREGADOS_EUROSTAT
 
@@ -100,19 +122,16 @@ vista_total_sobrecarga <- function(europa, anual, anio) {
     select(all_of(COLUMNAS_VISTA_SOBRECARGA))
 }
 
-# Tenencia o edad, un año: países de Eurostat, comunidades con las olas agrupadas de la ECV y las
-# referencias (UE-27 de Eurostat; España, la ola del año). Ordenadas de más a menos; sin valor, al final.
-vista_desglose_sobrecarga <- function(europa, agrupada, anual, corte, grupo, anio) {
-  tabla <- if (corte == "tenencia") "ilc_lvho07c" else "ilc_lvho07a"
-  eu <- europa |>
-    filter(conjunto == tabla, .data$anio == .env$anio,
-           tenencia == if (corte == "tenencia") grupo else "TOTAL",
-           edad == if (corte == "edad") grupo else "TOTAL")
-  ten <- if (corte == "tenencia") grupo else "TOTAL"
-  ed <- if (corte == "edad") grupo else "TOTAL"
+# Tenencia, edad o grado de urbanización, un año: países de Eurostat, comunidades con las olas
+# agrupadas de la ECV y las referencias (UE-27 de Eurostat; España, la ola del año). Ordenadas de más
+# a menos; sin valor, al final. `urbanizacion`: la tabla de ilc_lvho07d (para el grado).
+vista_desglose_sobrecarga <- function(europa, agrupada, anual, corte, grupo, anio, urbanizacion = NULL) {
+  e <- eurostat_desglose_sobrecarga(europa, corte, grupo, anio, urbanizacion)
+  tabla <- e$tabla
+  eu <- e$datos
   desde_eurostat <- function(d, bloque, nivel) {
     d |> transmute(geo, nivel = nivel, bloque = bloque, valor, fuente = unname(TABLA_EUROSTAT_FUENTE[tabla]),
-                   tabla = tabla, bandera = bandera_eurostat(europa, tabla, geo, .env$anio, ten, ed),
+                   tabla = tabla, bandera = as.character(bandera),
                    n = NA_integer_, hogares = NA_integer_, fiabilidad = NA_character_)
   }
   paises <- desde_eurostat(filter(eu, es_pais_eurostat(geo), geo != "ES"), "europa", 0L)
@@ -132,19 +151,20 @@ vista_desglose_sobrecarga <- function(europa, agrupada, anual, corte, grupo, ani
     select(all_of(COLUMNAS_VISTA_SOBRECARGA))
 }
 
-# Todas las vistas: el total de cada año con regiones y cada grupo de GRUPOS_MAPA_SOBRECARGA el
+# Todas las vistas: el total de cada año con regiones y cada grupo de grupos_mapa_sobrecarga() el
 # último año. Una lista con corte, grupo, año, versión NUTS y filas.
-vistas_sobrecarga <- function(europa, anual, agrupada) {
+vistas_sobrecarga <- function(europa, anual, agrupada, urbanizacion = NULL) {
   anios <- sort(unique(europa$anio[europa$conjunto == "ilc_lvho07_r"]))
   ultimo <- max(anios)
   totales <- lapply(anios, function(a) {
     list(clave = paste0("total-", a), corte = "total", grupo = "total", anio = a,
          filas = vista_total_sobrecarga(europa, anual, a))
   })
-  desgloses <- unlist(lapply(names(GRUPOS_MAPA_SOBRECARGA), function(corte) {
-    lapply(GRUPOS_MAPA_SOBRECARGA[[corte]], function(g) {
+  grupos <- grupos_mapa_sobrecarga(urbanizacion)
+  desgloses <- unlist(lapply(names(grupos), function(corte) {
+    lapply(grupos[[corte]], function(g) {
       list(clave = paste(corte, g, ultimo, sep = "-"), corte = corte, grupo = g, anio = ultimo,
-           filas = vista_desglose_sobrecarga(europa, agrupada, anual, corte, g, ultimo))
+           filas = vista_desglose_sobrecarga(europa, agrupada, anual, corte, g, ultimo, urbanizacion))
     })
   }), recursive = FALSE)
   vistas <- Filter(function(v) nrow(v$filas) > 0, c(totales, desgloses))     # un grupo sin datos no se ofrece
@@ -249,10 +269,13 @@ vistas_pobreza <- function(ahc, anual, agrupada, edad = NULL) {
 
 # Bloque `pobreza` de sobrecarga.json: años, olas, cortes (columna cortes_web del indicador 24),
 # grupos del mapa, umbral anual de cada ola (euros), España en total y por tenencia, edad y grado de
-# urbanización, cada ola, y la serie de España y de la UE-27 de Eurostat (`ahc`, con `rupturas`, las
-# de rupturas_serie_pobreza()). `edad`: la tabla de ilc_li45 (con ella, el mapa también va por edad).
+# urbanización, cada ola, el total de cada comunidad con el último trienio (`trienio`, decisión del
+# autor del 18-nov-2026: la tabla de comunidades y la ficha lo dan junto a la cifra anual) y la serie
+# de España y de la UE-27 de Eurostat (`ahc`, con `rupturas`, las de rupturas_serie_pobreza()).
+# `edad`: la tabla de ilc_li45 (con ella, el mapa también va por edad). `agrupada`: el último trienio.
 datos_pobreza_web <- function(anual, agrupada, vistas, indicadores, ahc = NULL, rupturas = NULL, edad = NULL) {
   esp <- anual[anual$corte != "region", ]
+  tri <- agrupada[agrupada$corte == "total", ]
   umbrales <- dplyr::distinct(anual, anio, umbral)
   serie <- if (!is.null(ahc)) serie_espana_pobreza(ahc)
   if (is.null(rupturas)) rupturas <- lapply(SERIES_ESPANA_POBREZA, function(s) integer())
@@ -270,6 +293,12 @@ datos_pobreza_web <- function(anual, agrupada, vistas, indicadores, ahc = NULL, 
       fiabilidad <- fiabilidad_eusilc(f$n_personas)
       list(anio = f$anio, corte = f$corte, grupo = if (f$corte == "total") "total" else f$grupo,
            v = valor_web(if (fiabilidad == "no publicable") NA_real_ else f$valor),
+           n = f$n_personas, hogares = f$n_hogares, fiabilidad = fiabilidad)
+    }),
+    trienio = lapply(seq_len(nrow(tri)), function(i) {
+      f <- tri[i, ]
+      fiabilidad <- fiabilidad_eusilc(f$n_personas)
+      list(geo = f$region, v = valor_web(if (fiabilidad == "no publicable") NA_real_ else f$valor),
            n = f$n_personas, hogares = f$n_hogares, fiabilidad = fiabilidad)
     }),
     serie = if (!is.null(serie)) list(
@@ -500,9 +529,12 @@ respaldos_geometria <- function(vistas, rutas_nuts) {
 # Exportación completa a <dir_web>/datos/sobrecarga/. `modulos`: list(ccaa, edad, tenencia) del
 # módulo de acceso; `rutas_nuts`: c("2021" = fichero_nuts_2021, "2024" = fichero_nuts_2024);
 # `indicadores`: inventario/indicadores.csv (cortes del mapa); `quintil`: sobrecarga de España por
-# quintil de renta (calcular_sobrecarga_quintil()). Borra antes lo exportado la vez anterior.
+# quintil de renta (calcular_sobrecarga_quintil()); `urbanizacion`: ilc_lvho07d
+# (leer_eurostat_ilc_lvho07d(); con ella, el mapa también va por grado de urbanización, 18-nov-2026).
+# Borra antes lo exportado la vez anterior.
 exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, rutas_nuts, indicadores, quintil = NULL,
-                                    rupturas = NULL, dir_web = "web", fecha = format(Sys.Date()), pobreza = NULL) {
+                                    rupturas = NULL, dir_web = "web", fecha = format(Sys.Date()), pobreza = NULL,
+                                    urbanizacion = NULL) {
   dir <- file.path(dir_web, "datos", DIR_SOBRECARGA_WEB)
   cortes <- cortes_de_indicadores(indicadores)
   unlink(dir, recursive = TRUE)
@@ -510,7 +542,7 @@ exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, ruta
   # Cruces agrupados: la web pinta el trienio más reciente (agrupar_trienios(), R/fuente_ine_ecv.R)
   agrupada <- ultima_agrupacion(agrupada)
   if (!is.null(pobreza)) pobreza$agrupada <- ultima_agrupacion(pobreza$agrupada)
-  vistas <- lapply(vistas_sobrecarga(europa, anual, agrupada), function(v) c(list(medida = "sobrecarga"), v))
+  vistas <- lapply(vistas_sobrecarga(europa, anual, agrupada, urbanizacion), function(v) c(list(medida = "sobrecarga"), v))
   # Indicador 24 (tarea 65, parte B): `pobreza` = list(anual, agrupada, eurostat, rupturas, edad) con
   # pobreza_vivienda_ecv, pobreza_vivienda_agrupada, eurostat_ahc, rupturas_serie_pobreza() y
   # eurostat_ahc_edad (ilc_li45: los países del mapa por edad)
@@ -548,7 +580,7 @@ exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, ruta
     anio_desgloses = max(vapply(de_sobrecarga, `[[`, 0L, "anio")),
     olas = list(anuales = I(sort(unique(anual$anio))), agrupadas = I(c(unique(agrupada$anio_inicio), unique(agrupada$anio_fin)))),
     cortes = lapply(cortes, I),
-    grupos_mapa = lapply(GRUPOS_MAPA_SOBRECARGA, I),
+    grupos_mapa = lapply(grupos_mapa_sobrecarga(urbanizacion), I),
     geometrias = stats::setNames(as.list(file.path("datos", DIR_SOBRECARGA_WEB, basename(rutas_geo))), names(rutas_geo)),
     limites = I(limites_sobrecarga()),
     recuadros = I(RECUADROS_SOBRECARGA),
@@ -593,9 +625,10 @@ exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, ruta
 #     cifras de Eurostat sin su tabla o con una marca distinta de la de la fuente;
 #   web_sobrecarga_geometria (alerta): territorios de una vista que el mapa no puede pintar (sin
 #     geometría en su versión NUTS ni de respaldo) y vistas cuya geometría no se lee.
-# `indicadores` (cortes del mapa) y `quintil` (España por quintil de renta), como en la exportación.
+# `indicadores` (cortes del mapa), `quintil` (España por quintil de renta) y `urbanizacion`
+# (ilc_lvho07d), como en la exportación.
 comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, modulos, indicadores, quintil = NULL,
-                                     rupturas = NULL, dir_web = "web", pobreza = NULL) {
+                                     rupturas = NULL, dir_web = "web", pobreza = NULL, urbanizacion = NULL) {
   dir <- file.path(dir_web, "datos", DIR_SOBRECARGA_WEB)
   x <- jsonlite::fromJSON(file.path(dir, "sobrecarga.json"), simplifyVector = FALSE)
   agrupada <- ultima_agrupacion(agrupada)   # el trienio que pinta la web, como en la exportación
@@ -631,7 +664,8 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
     !identical(as.integer(unlist(x$anios)), anios_mapa),
     !identical(as.integer(x$anio_desgloses), max(anios_mapa)),
     !identical(as.integer(unlist(x$olas$anuales)), sort(unique(as.integer(anual$anio)))),
-    !identical(as.integer(unlist(x$olas$agrupadas)), as.integer(c(unique(agrupada$anio_inicio), unique(agrupada$anio_fin))))))
+    !identical(as.integer(unlist(x$olas$agrupadas)), as.integer(c(unique(agrupada$anio_inicio), unique(agrupada$anio_fin)))),
+    !identical(lapply(x$grupos_mapa, function(g) as.character(unlist(g))), grupos_mapa_sobrecarga(urbanizacion))))
   del_ine <- function(geo, anio, corte, grupo, agrupado) {
     if (agrupado) {
       d <- agrupada[agrupada$corte == corte & agrupada$grupo == grupo, ]
@@ -670,7 +704,13 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
       t_eu <- if (vista$corte == "tenencia") "ilc_lvho07c" else "ilc_lvho07a"
       ten <- if (vista$corte == "tenencia") vista$grupo else "TOTAL"
       ed <- if (vista$corte == "edad") vista$grupo else "TOTAL"
-      d_eu <- europa[europa$conjunto == t_eu & europa$anio == vista$anio & europa$tenencia == ten & europa$edad == ed, ]
+      if (vista$corte == "urbanizacion") {   # grado de urbanización: ilc_lvho07d (18-nov-2026)
+        t_eu <- TABLA_SOBRECARGA_URBANIZACION
+        d_eu <- if (is.null(urbanizacion)) tibble::tibble(geo = character(), valor = numeric(), bandera = character()) else
+          urbanizacion[urbanizacion$grado == vista$grupo & urbanizacion$anio == vista$anio, ]
+      } else {
+        d_eu <- europa[europa$conjunto == t_eu & europa$anio == vista$anio & europa$tenencia == ten & europa$edad == ed, ]
+      }
       con_es <- any(anual$anio == vista$anio & anual$corte == vista$corte & anual$grupo == vista$grupo)
       esperados <- c(d_eu$geo[(es_pais_eurostat(d_eu$geo) & d_eu$geo != "ES") | d_eu$geo == "EU27_2020"],
                      if (con_es) "ES", unique(agrupada$region[agrupada$corte == vista$corte & agrupada$grupo == vista$grupo]))
@@ -678,7 +718,7 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
       ine <- del_ine(geo, vista$anio, vista$corte, vista$grupo, FALSE)
       ine_agr <- del_ine(geo, vista$anio, vista$corte, vista$grupo, TRUE)
       ref <- ifelse(es_com, publicable(ine_agr$valor, ine_agr$n),
-                    ifelse(geo == "ES", publicable(ine$valor, ine$n), ue(t_eu, geo, vista$anio, ten, ed)))
+                    ifelse(geo == "ES", publicable(ine$valor, ine$n), d_eu$valor[match(geo, d_eu$geo)]))
       fuente_esp <- ifelse(es_com | geo == "ES", "ine_ecv", unname(TABLA_EUROSTAT_FUENTE[t_eu]))
       bloque_esp <- ifelse(geo %in% c("EU27_2020", "ES"), "referencia", ifelse(grepl("^ES", geo), "comunidad", "europa"))
       mal <- !geo %in% esperados | distinto(v, redondeo_guia(ref)) | fuente != fuente_esp | bloque != bloque_esp
@@ -709,7 +749,11 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
     ten_v <- if (vista$corte == "tenencia") vista$grupo else "TOTAL"
     ed_v <- if (vista$corte == "edad") vista$grupo else "TOTAL"
     bandera <- campo(f, "bandera", NA_character_)
-    marca_fuente <- ifelse(is.na(tabla), NA_character_, ue(tabla, geo, vista$anio, ten_v, ed_v, "bandera"))
+    marca_fuente <- if (vista$corte == "urbanizacion") {
+      ifelse(is.na(tabla), NA_character_, as.character(d_eu$bandera[match(geo, d_eu$geo)]))
+    } else {
+      ifelse(is.na(tabla), NA_character_, ue(tabla, geo, vista$anio, ten_v, ed_v, "bandera"))
+    }
     mal_muestra <- (ine_f & mal_muestra) |
       (!ine_f & (!is.na(n_leido) | !is.na(fia) | is.na(tabla) | marca_distinta(bandera, marca_fuente)))
     anota("web_sobrecarga_muestra", vista$clave, mal_muestra)
@@ -794,7 +838,8 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
 # «pobreza: …»: cada vista frente a ilc_li48 (por edad, ilc_li45) y a los objetivos de la ECV (valor con el redondeo de la
 # guía, bloque, fuente, tabla y marca, puestos de 1 a n de más a menos, territorios esperados), la
 # muestra de las cifras del INE, la geometría, y el bloque `pobreza` (años, cortes, grupos, umbrales,
-# España por tenencia, edad y urbanización, y la serie de ilc_li48 con sus marcas y rupturas).
+# España por tenencia, edad y urbanización, el total de las comunidades con el último trienio y la
+# serie de ilc_li48 con sus marcas y rupturas).
 # `pobreza`: list(anual, agrupada, eurostat, rupturas, edad), como en la exportación. Devuelve
 # una lista de tibbles (id, detalle, calculado = número de fallos).
 comprobar_web_pobreza <- function(x, pobreza, indicadores, dir_web = "web", geometrias = list()) {
@@ -900,6 +945,16 @@ comprobar_web_pobreza <- function(x, pobreza, indicadores, dir_web = "web", geom
   anota("web_sobrecarga_muestra", "pobreza: desgloses de España (tenencia, edad y urbanización)",
         campo(l, "n", NA_integer_)[m] != esp$n_personas | campo(l, "hogares", NA_integer_)[m] != esp$n_hogares |
           campo(l, "fiabilidad", NA_character_)[m] != fiabilidad_eusilc(esp$n_personas))
+  # Total de cada comunidad con el último trienio (18-nov-2026): valor, muestra y marca de EU-SILC
+  tri <- agrupada[agrupada$corte == "total", ]
+  lt <- p$trienio
+  mt <- match(tri$region, campo(lt, "geo", ""))
+  anota("web_sobrecarga_valores", "pobreza: total de las comunidades con el último trienio",
+        c(is.na(mt) | distinto(vapply(lt, function(r) num(r$v), 0)[mt], redondeo_guia(publicable(tri$valor, tri$n_personas))),
+          rep(TRUE, abs(length(lt) - nrow(tri)))))
+  anota("web_sobrecarga_muestra", "pobreza: total de las comunidades con el último trienio",
+        campo(lt, "n", NA_integer_)[mt] != tri$n_personas | campo(lt, "hogares", NA_integer_)[mt] != tri$n_hogares |
+          campo(lt, "fiabilidad", NA_character_)[mt] != fiabilidad_eusilc(tri$n_personas))
 
   # Serie de España y de la UE-27 de Eurostat (ilc_li48, grado TOTAL), con sus marcas y las rupturas
   # del atlas del indicador 24

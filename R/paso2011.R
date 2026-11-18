@@ -293,8 +293,8 @@ paso2011_armonizar <- function(censo_2021, vut_2021, tenencia, vut_provincias, v
 
 # Compuerta de las dos tablas de paso 2011 y de las series que las usan (inventario/referencias_validacion.csv).
 # En `anio`, 2011 para la tabla del Censo (`paso`) y 2020 para la de las viviendas turísticas (`paso_vut`):
-#   cierre_poblacional y cobertura_destino: las mismas de F1, con la población del Censo 2011 (los
-#     municipios sin población no entran en el cierre);
+#   cierre_poblacional, cobertura_destino y paso_cruce_municipios: las mismas de F1, con la población
+#     del Censo 2011 (los municipios sin población no entran en el cierre);
 #   cobertura_destino_excepcion: las excepciones de inventario/excepciones_cobertura.csv de ese año;
 #   paso2011_cobertura_posterior (alerta): secciones de 2021 sin nada de la tabla cuyos edificios del
 #     Catastro son todos posteriores a su año (paso2011_posteriores()); no cuentan en cobertura_destino;
@@ -329,6 +329,7 @@ paso2011_comprobar <- function(paso, paso_vut, agregado, censo, censo_2021, tene
     bind_rows(
       comprobar_cierre_poblacional(poblacion, tabla, anios[k], grupos),
       comprobar_cobertura_destino(tabla, setdiff(secciones_2021, posteriores), anios[k], excepciones),
+      comprobar_cruce_municipios(tabla, grupos, anios[k]),
       tibble::tibble(id = "paso2011_cobertura_posterior", anio = as.integer(anios[k]), detalle = posteriores,
                      calculado = 1, referencia = 0)
     )

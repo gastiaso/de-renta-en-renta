@@ -14,7 +14,7 @@
 | **Recommended age** | From your first payslip |
 | **Playing time** | From one minute («Can you afford it?») to an afternoon (the long table in R, Python or DuckDB) |
 | **What you need** | A web browser. Nothing to install, and the income you type never leaves your device |
-| **Edition** | v1.1.0, 12 November 2026 ([changelog](CHANGELOG.md), in Spanish) |
+| **Edition** | v1.2.0, 18 November 2026 ([changelog](CHANGELOG.md), in Spanish) |
 
 > **Board under construction.** Figures, methods and this rulebook are provisional and are revised with each edition. If something does not add up, [let us know](#contact).
 
@@ -50,7 +50,7 @@ The game uses two families of figures that **never mix**:
 
 ## 2. What's in the box
 
-- **1 home board** with 24 squares: 17 lead to a map, a profile or a page; the striped ones are under construction.
+- **1 home board** with 24 squares: 21 lead to a map, a profile or a page (four to «Rules of the game», with provisional summaries); the 3 striped ones are under construction.
 - **36,333 map squares**: the 2021 census tracts, with their 8,131 municipalities, 52 provinces and 19 autonomous communities and cities.
 - **5 profile tokens**, each with its own income and home.
 - **17 maps** in the selector, plus a «Can you afford it?» for each token.
@@ -88,7 +88,7 @@ The game uses two families of figures that **never mix**:
 | 21 | Net monthly pay needed to stay under the threshold | Tract | 2015–2024 | Map (the opening one) |
 | 22 | Housing cost overburden rate (Eurostat method) | European region; autonomous community in Spain | Spain since 2004; autonomous communities, 2016–2025; regions, 2021–2025 | Overburden |
 | 23 | Unsuccessful housing search | Autonomous community | 2025 | Overburden |
-| 24 | At-risk-of-poverty rate after deducting housing costs | Autonomous community | 2016–2025; Spain and EU-27 since 2004 | Overburden |
+| 24 | At-risk-of-poverty rate after housing costs | Autonomous community | 2016–2025; Spain since 2004 and EU-27 since 2010 | Overburden |
 
 Definition, calculation and reading of each one: [dictionary on the «Data» page](https://gastiaso.github.io/de-renta-en-renta/data.html) and [`inventario/indicadores.csv`](inventario/indicadores.csv).
 
@@ -154,7 +154,11 @@ Each block expands. Names in quotation marks are those of the website's buttons.
 | Variable-rate mortgage | Map of mortgage payment over income |
 | The Euribor goes up | Time machine: interest rates |
 | Pensions go up | «Can you afford it?» with the pension |
-| Housing Act · Public housing · Rent review · Parents as guarantors · Notary · Service charges and levies · Inheritance | Coming soon |
+| Housing Act | «Rules of the game» (provisional summaries) |
+| Rent review | «Rules of the game»: rent review |
+| Parents as guarantors | «Rules of the game»: deposit and guarantees |
+| Service charges and levies | «Rules of the game»: contract costs |
+| Public housing · Notary · Inheritance | Coming soon |
 
 </details>
 </details>
@@ -273,7 +277,7 @@ Another board: a survey, not a register; regions and countries, not tracts. It m
 <details>
 <summary><b>On a phone</b></summary>
 
-<p align="center"><img src="docs/capturas/en/movil.png" width="300" alt="The map on a phone: «Can you afford it?» with the young adult token in Seville"></p>
+<p align="center"><img src="docs/capturas/en/movil.png" width="300" alt="The map on a phone: «Can you afford it?» with the young adult (26 to 35) token in Seville"></p>
 
 Everything fits in one column. The bar folds into «More options»; the map moves with two fingers, so that one finger scrolls the page; the profile and «Your pay» go below the map. With a story open, the map stays at the top and the step right below it, with the buttons in view.
 
@@ -291,7 +295,7 @@ Everything fits in one column. The bar folds into «More options»; the map move
 8. **Four statuses**: data, estimated (rebuilt with a written rule), statistical confidentiality and no data.
 9. **Fixed geography.** Every series is brought to the 2021 tracts, so that years can be compared without boundaries moving.
 10. **Euros of each year**, except where you choose otherwise (the profile's changes over time and the time machine).
-11. **What does not add up does not go out.** More than 200 checks test the pipeline against the figures published by the sources and against itself; if a blocking check fails, nothing is published.
+11. **What does not add up does not go out.** More than 250 checks test the pipeline against the figures published by the sources and against itself; if a blocking check fails, nothing is published.
 
 ## 7. What the board does not see
 
@@ -307,8 +311,8 @@ All the caveats, in the [«Method in two pages»](https://gastiaso.github.io/de-
 ## 8. Squares under construction
 
 - **«Moving in»**: Idealista's asking prices by municipality and what moving in costs compared with staying. The pipeline has it ready as a removable layer, switched off; it will go live when Idealista authorises it in writing, and it will never be in the downloads.
-- **«Housing Act»**: a tab, «Rules of the game», with summaries of the laws in force.
-- **«Public housing»** (subsidised housing) and the other striped squares on the board.
+- **«Rules of the game»**: summaries of the national rules on renting and buying, with their articles of the consolidated BOE. The «Housing Act», «Rent review», «Parents as guarantors» and «Service charges and levies» squares already lead to the page, but the summaries are provisional: until their legal review, only their titles are published.
+- **«Public housing»** (subsidised housing), **«Notary»** and **«Inheritance»**: striped squares on the board.
 
 ## 9. Playing with the data
 
@@ -323,7 +327,7 @@ geo_id | nivel | anio | indicador | corte | grupo | valor | estado | fuente | ge
 | [`tabla_larga.parquet`](https://gastiaso.github.io/de-renta-en-renta/descargas/tabla_larga.parquet) | The indicators, from tract to Spain |
 | [`historico.parquet`](https://gastiaso.github.io/de-renta-en-renta/descargas/historico.parquet) | The time machine series |
 | [`version.json`](https://gastiaso.github.io/de-renta-en-renta/descargas/version.json) | Date, commit, coverage by indicator, licences and SHA-256 sums |
-| [Release `v1.1.0`](https://github.com/gastiaso/de-renta-en-renta/releases/tag/v1.1.0) | All of the above, the website data and the base map, with `SHA256SUMS` |
+| [Release `v1.2.0`](https://github.com/gastiaso/de-renta-en-renta/releases/tag/v1.2.0) | All of the above, the website data and the base map, with `SHA256SUMS` |
 
 ```r
 library(arrow); library(dplyr)

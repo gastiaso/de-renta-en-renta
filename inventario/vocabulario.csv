@@ -82,3 +82,5 @@ zona_tensionada,2,Declarada en todo el municipio,Declared in the whole municipal
 corte,hogar,Tipo de hogar (línea de ingreso residual),Household type (residual income line)
 hogar,una_persona,Una persona,One person
 hogar,dos_adultos,Dos adultos sin menores,Two adults without children
+corte,olas,"Olas de la encuesta agrupadas, toda la población (anio, la última)","Pooled survey waves, whole population (anio, the last one)"
+olas,trienio,Tres olas: la del año y las dos anteriores,Three waves: the year's and the two before it

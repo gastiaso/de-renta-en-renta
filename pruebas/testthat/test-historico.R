@@ -222,6 +222,17 @@ test_that("la compuerta del m\u00f3dulo pasa con datos coherentes y falla donde 
   f$periodo[1] <- "1988-T1"
   mal <- hist_comprobar(h, x$bde, trim_mivau(), territorios_prueba(), f, referencias_prueba(), rupturas_prueba()[2, ])
   expect_equal(sum(mal$calculado[mal$id == "hist_fechas"]), 2)
+  # Revisión del 18-nov-2026: una fecha de evento en una serie anual (el sueldo, 1995–1997) se sitúa
+  # bien, sin NA; fuera de la serie, mal situada
+  f <- dplyr::bind_rows(fechas_prueba(), tibble::tibble(id = "anual", serie = "sueldo_asalariado", geo_id = "00",
+                                                        periodo = c("1996"), tipo = "evento", texto_es = "a",
+                                                        texto_en = "a", fuente = "ine_cne"))
+  bien <- hist_comprobar(h, x$bde, trim_mivau(), territorios_prueba(), f, referencias_prueba(), rupturas_prueba())
+  expect_false(anyNA(bien$calculado[bien$id == "hist_fechas"]))
+  expect_equal(sum(bien$calculado[bien$id == "hist_fechas"]), 0)
+  f$periodo[f$id == "anual"] <- "1999"
+  fuera <- hist_comprobar(h, x$bde, trim_mivau(), territorios_prueba(), f, referencias_prueba(), rupturas_prueba())
+  expect_equal(sum(fuera$calculado[fuera$id == "hist_fechas"]), 1)
   # Una cifra publicada que no cuadra
   r <- referencias_prueba()
   r$valor[1] <- 3.3

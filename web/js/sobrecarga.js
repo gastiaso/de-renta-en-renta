@@ -220,6 +220,9 @@ function pintarControles() {
   botones($('sc-tenencia'), opcionesDe('tenencia', 'sobrecarga.controles.toda_poblacion'), (g) => elegir('tenencia', g));
   botones($('sc-edad'), opcionesDe('edad', 'sobrecarga.controles.todas_edades'), (g) => elegir('edad', g));
   $('sc-edad-grupo').hidden = !S.gruposCon(datos, 'edad', estado.medida).length;   // sin grupos de edad, sin el selector
+  // Grado de urbanización (18-nov-2026): solo la sobrecarga lo trae en el mapa
+  botones($('sc-urbanizacion'), opcionesDe('urbanizacion', 'sobrecarga.controles.todos_grados'), (g) => elegir('urbanizacion', g));
+  $('sc-urbanizacion-grupo').hidden = !S.gruposCon(datos, 'urbanizacion', estado.medida).length;
   const total = estado.corte === 'total';
   botones($('sc-anio'), conf().anios.map((a) => ({
     valor: a, texto: String(a), activo: a === estado.anio, desactivado: !total && a !== estado.anio,
@@ -500,6 +503,11 @@ function pintarDetalle() {
     lineas.push(`${t('sobrecarga.detalle.fuente_eurostat', { tabla: fila.tabla })} · ${t('sobrecarga.detalle.anio', { anio: v.anio })}`);
     if (fila.bandera) lineas.push(t('sobrecarga.detalle.bandera', { b: textoMarcas(fila.bandera) }));
   }
+  // Pobreza tras la vivienda, toda la población: la comunidad también con el último trienio (18-nov-2026)
+  const tri = pobreza() && v.corte === 'total' && fila.bloque === 'comunidad' ? S.trienioDe(datos, fila.geo) : null;
+  if (tri) {
+    lineas.push(t('sobrecarga.detalle.trienio', { ...olas(), v: pct(esc(tri)), n: t.numero(tri.n), fiabilidad: t(`vocabulario.fiabilidad.${tri.fiabilidad}`) }));
+  }
   if (v.corte === 'total' && !pobreza() && fila.nivel === 0) lineas.push(t('sobrecarga.detalle.nivel_pais'));
   if (v.corte === 'total' && !pobreza() && fila.nivel === 1) lineas.push(t('sobrecarga.detalle.nivel_nuts1'));
   if (valor === null) lineas.unshift(t('sobrecarga.detalle.sin_valor'));
@@ -515,19 +523,34 @@ function pintarDetalle() {
   );
 }
 
+// Con la pobreza tras la vivienda y toda la población, dos columnas más, junto a la cifra de la
+// encuesta del año (la que pinta el mapa y da el puesto): el total de cada comunidad con el último
+// trienio de olas y sus personas distintas estimadas (18-nov-2026; decisión del autor: al lado del año).
 function pintarComunidades() {
   const v = vista();
   const filas = v.filas.filter((f) => f.bloque === 'comunidad').sort((a, b) => (a.puesto ?? 1e9) - (b.puesto ?? 1e9));
   const c = (k) => t(`sobrecarga.comunidades.${k}`);
+  const conTrienio = pobreza() && v.corte === 'total' && Boolean(datos.pobreza?.trienio?.length);
+  const cifra = (fila) => (esc(fila) === null ? '—' : t.numero(esc(fila), 1));
+  // Puesto, personas, hogares y fiabilidad son los de la encuesta del año
+  const cabecera = [c('comunidad'), conTrienio ? t('sobrecarga.comunidades.valor_anio', { anio: v.anio }) : c('valor'),
+    ...(conTrienio ? [t('sobrecarga.comunidades.valor_trienio', olas()), t('sobrecarga.comunidades.personas_trienio', olas())] : []),
+    ...['puesto', 'personas', 'hogares', 'fiabilidad'].map(c)];
+  const tri = (f) => (conTrienio ? S.trienioDe(datos, f.geo) : null);
   $('sc-comunidades').querySelector('.sc-tabla-marco').replaceChildren(el('table', { class: 'sc-tabla' },
-    el('thead', {}, el('tr', {}, ['comunidad', 'valor', 'puesto', 'personas', 'hogares', 'fiabilidad'].map((k) => el('th', { scope: 'col' }, c(k))))),
+    el('thead', {}, el('tr', {}, cabecera.map((texto) => el('th', { scope: 'col' }, texto)))),
     el('tbody', {}, filas.map((f) => el('tr', {},
       el('th', { scope: 'row' }, nombre(f.geo)),
-      el('td', {}, esc(f) === null ? '—' : t.numero(esc(f), 1)),
+      el('td', {}, cifra(f)),
+      conTrienio ? el('td', {}, cifra(tri(f))) : null,
+      conTrienio ? el('td', {}, tri(f)?.n ? t.numero(tri(f).n) : '—') : null,
       el('td', {}, f.puesto ?? '—'),
       el('td', {}, f.n ? t.numero(f.n) : '—'),
       el('td', {}, f.hogares ? t.numero(f.hogares) : '—'),
       el('td', {}, f.fiabilidad ? t(`vocabulario.fiabilidad.${f.fiabilidad}`) : t('sobrecarga.cifras.eurostat')))))));
+  const nota = $('sc-comunidades-nota');
+  nota.hidden = !conTrienio;
+  nota.textContent = conTrienio ? t('sobrecarga.comunidades.nota_trienio', { anio: v.anio, ...olas() }) : '';
 }
 
 // --- La escalera --------------------------------------------------------------------------------

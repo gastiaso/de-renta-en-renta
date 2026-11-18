@@ -179,3 +179,34 @@ test_that("las segregaciones forman grupos de municipios y el cierre se mide por
   expect_true(any(is.na(sin$calculado) | abs(sin$calculado) > 0.5))
   expect_true(all(abs(con$calculado) < 1e-9))
 })
+
+test_that("el callejero no casa vías de dos municipios que siguen en los dos seccionados (18-nov-2026)", {
+  # Talayuela (10186) pierde Tiétar (10904), que conserva sus códigos de vía; Rosalejo (10901) sigue y
+  # numera sus vías por su cuenta. Tiétar toca a Rosalejo en algo más del 1 % de su superficie: los tres
+  # forman un grupo, pero Rosalejo → Tiétar no es un par permitido (cuota < UMBRAL_CRUCE_MUNICIPIO).
+  cuadro <- function(x0, y0, x1, y1) sf::st_polygon(list(rbind(c(x0, y0), c(x1, y0), c(x1, y1), c(x0, y1), c(x0, y0))))
+  a <- sf::st_sf(seccion = c("1018601001", "1090101001"), municipio = c("10186", "10901"),
+                 geometry = sf::st_sfc(cuadro(0, 0, 10, 10), cuadro(10, 0, 12, 10), crs = 25830))
+  b <- sf::st_sf(seccion = c("1018601001", "1090401001", "1090101001"), municipio = c("10186", "10904", "10901"),
+                 geometry = sf::st_sfc(cuadro(0, 0, 6, 10), cuadro(6, 0, 10.3, 10), cuadro(10.3, 0, 12, 10), crs = 25830))
+  g <- geo_grupos_municipio(a, b)
+  expect_setequal(g$municipio, c("10186", "10901", "10904"))
+  p <- geo_pares_permitidos(g)
+  expect_equal(paste(p$municipio_origen, p$municipio_destino), "10186 10904")
+  tramo <- function(seccion, via, ein, esn) tibble::tibble(seccion = seccion, municipio = substr(seccion, 1, 5), via = via,
+                                                           pseudovia = "00000", tinum = 1L, ein = ein, esn = esn)
+  origen <- bind_rows(tramo("1018601001", "00012", 1L, 99L), tramo("1090101001", "00012", 1L, 51L))
+  destino <- bind_rows(tramo("1090401001", "00012", 1L, 99L), tramo("1090101001", "00012", 1L, 51L))
+  t <- geo_tabla_paso_callejero(origen, destino, grupos = g)
+  # Rosalejo pasa entero a sí mismo; Talayuela, a Tiétar (su vía 00012 la conserva Tiétar)
+  expect_equal(t$destino[t$origen == "1090101001"], "1090101001")
+  expect_equal(t$fraccion[t$origen == "1090101001"], 1)
+  expect_equal(t$destino[t$origen == "1018601001"], "1090401001")
+  expect_equal(comprobar_cruce_municipios(t, g, 2011L)$calculado, 0)
+  # Con todo el grupo casando entre sí (como antes), Rosalejo se repartía y la compuerta lo ve
+  todo <- g
+  attr(todo, "pares") <- NULL
+  t2 <- geo_tabla_paso_callejero(origen, destino, grupos = todo)
+  expect_true(any(t2$origen == "1090101001" & t2$destino == "1090401001"))
+  expect_equal(comprobar_cruce_municipios(t2, g, 2011L)$calculado, 2)
+})

@@ -117,7 +117,8 @@ export function resumenResidual(calculo, secciones, x, valorLinea, { real = fals
   let encima = 0;
   for (let i = 0; i < secciones.length; i++) {
     const r = calculo.calcular(secciones[i], (serie) => x(serie, i));
-    const terminos = real ? (r?.real ? { ...r, alquiler: r.real.alquiler } : null) : r;
+    // El piso real lleva sus otros gastos (sin el factor de la superficie de la ficha; calculoLlega())
+    const terminos = real ? (r?.real ? { ...r, alquiler: r.real.alquiler, ...(Number.isFinite(r.real.otros) ? { otros: r.real.otros } : {}) } : null) : r;
     const residual = ingresoResidual(terminos);
     if (residual === null) continue;
     con++;

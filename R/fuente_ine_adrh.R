@@ -18,9 +18,11 @@ seccionado_adrh <- function(anio_adrh) anio_adrh + 1L
 
 # Lee los indicadores pedidos de una tabla del ADRH (cualquier tabla provincial: renta,
 # demografía…). Devuelve una fila por territorio, año e indicador: nivel (municipio, distrito
-# o seccion), código y valor. Formato español: «.» de miles, «,» decimal; «.» solo es dato
-# no disponible (secreto estadístico). `ambito`: prefijo de los códigos que se quedan ("" = todos;
-# "28" = la provincia de Madrid).
+# o seccion), código y valor. Formato español: «.» de miles, «,» decimal. Las cifras sin número
+# se quedan fuera: «.» (secreto estadístico), «..» (dato no disponible) y vacío (sin publicar ese
+# año: los territorios forales antes de entrar en el ADRH; ver estado_marca_adrh()). La diferencia
+# entre secreto y sin publicar la recupera armonizar_ine_adrh() por provincia y año. `ambito`:
+# prefijo de los códigos que se quedan ("" = todos; "28" = la provincia de Madrid).
 leer_ine_adrh <- function(ruta, indicadores, ambito = "") {
   datos <- readr::read_delim(
     ruta, delim = ";", col_types = readr::cols(.default = readr::col_character()),
@@ -135,14 +137,20 @@ comprobar_suma_secciones <- function(poblacion) {
 #   renta_uc_mediana: mediana (único origen u origen dominante).
 # `tablas`: lista con nombre = año del ADRH y valor = tabla de paso hacia 2021. Las secciones
 # de 2021 que no reciben ningún origen con dato quedan «secreto»; si falta alguno de sus
-# orígenes, el valor pasa a «estimado».
+# orígenes, el valor pasa a «estimado». Las de una provincia sin ninguna sección publicada ese
+# año e indicador quedan «ausente», no «secreto» (revisión del 18-nov-2026): son los huecos
+# forales (País Vasco y Navarra en los primeros años), que la fuente no publica, como en los
+# indicadores 4–6 (estado_marca_adrh()). De ahí pasa al 14 y a la llave, que toman el peor estado.
 armonizar_ine_adrh <- function(renta, pesos, tablas, version) {
   peso_de <- c(renta_persona = "poblacion", renta_hogar = "hogares", renta_uc_mediana = NA)
+  publicadas <- renta |> filter(nivel == "seccion") |>
+    distinct(anio, indicador, provincia = substr(codigo, 1, 2))
   por_anio <- lapply(names(tablas), function(a_txt) {
     a <- as.integer(a_txt)
     t <- tablas[[a_txt]]
     destinos <- tibble::tibble(seccion = sort(unique(t$destino)))
     bind_rows(lapply(names(peso_de), function(ind) {
+      con_dato <- publicadas$provincia[publicadas$anio == a & publicadas$indicador == ind]
       valores <- renta |> filter(anio == a, nivel == "seccion", indicador == ind) |>
         select(seccion = codigo, valor)
       r <- if (is.na(peso_de[[ind]])) {
@@ -157,6 +165,7 @@ armonizar_ine_adrh <- function(renta, pesos, tablas, version) {
         left_join(geo_cobertura_origenes(valores, t), by = "seccion") |>
         mutate(
           estado = case_when(!is.na(estado) & estado == "ausente" ~ "ausente",
+                             is.na(valor) & !substr(seccion, 1, 2) %in% con_dato ~ "ausente",
                              is.na(valor) ~ "secreto",
                              completos < origenes ~ "estimado",
                              TRUE ~ estado),

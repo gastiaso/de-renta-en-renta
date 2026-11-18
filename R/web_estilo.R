@@ -150,7 +150,9 @@ generar_tokens_css <- function(tokens, ruta = file.path("web", "estilo", "tokens
     ".cabecera-carta { font-family: var(--fuente-cabecera-carta); font-size: max(22px, 1.5rem); font-weight: 400; }",
     ""
   )
-  writeLines(css, ruta, useBytes = TRUE)
+  con <- file(ruta, open = "wb")   # saltos de línea LF, también en Windows (.gitattributes; tarea 58)
+  on.exit(close(con))
+  writeLines(css, con, sep = "\n", useBytes = TRUE)
   ruta
 }
 

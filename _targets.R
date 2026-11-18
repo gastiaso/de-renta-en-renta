@@ -89,7 +89,8 @@ sobrecarga <- list(
   tar_target(eurostat_sobrecarga_urbanizacion, leer_eurostat_ilc_lvho07d(fichero_eurostat_sobrecarga_urbanizacion)),
   tar_target(comprobaciones_sobrecarga,
              comprobar_sobrecarga_ecv(sobrecarga_ecv, eurostat_sobrecarga, eurostat_europa,
-                                      urbanizacion = eurostat_sobrecarga_urbanizacion)),
+                                      urbanizacion = eurostat_sobrecarga_urbanizacion,
+                                      agrupada = sobrecarga_agrupada)),   # comunidad × grado (18-nov-2026)
   tar_target(validacion_sobrecarga, validar_referencias(comprobaciones_sobrecarga, referencias)),
   tar_target(fichero_nuts_2021, descargar_gisco_nuts("2021"), format = "file"),
   tar_target(fichero_nuts_2024, descargar_gisco_nuts("2024"), format = "file"),
@@ -181,7 +182,8 @@ pasos_2021 <- tarchetypes::tar_map(
   # Cierre y cobertura sobre las tablas que se usan (combinadas)
   tar_target(comprobacion_paso, bind_rows(
     comprobar_cierre_poblacional(poblacion_adrh, paso_final, anio, grupos, excluir = huerfanas_adrh$codigo),
-    comprobar_cobertura_destino(paso_final, secciones_2021$seccion, anio, excepciones_cobertura))),
+    comprobar_cobertura_destino(paso_final, secciones_2021$seccion, anio, excepciones_cobertura),
+    comprobar_cruce_municipios(paso_final, grupos, anio))),
   tar_target(diagnostico_paso, geo_diagnostico_paso(poblacion_adrh, paso_callejero, anio)),
   tar_target(comparacion_paso, comparar_vias_paso(poblacion_adrh, paso_callejero, paso_catastro, anio, municipios_cubiertos)),
   tar_target(tabla_adrh, stats::setNames(list(paso_final), anio))
@@ -222,7 +224,10 @@ prueba_f1 <- list(
 
   # Vía (b): edificios del Catastro de los municipios con secciones «estimado» en alguna tabla.
   # Se leen municipio a municipio (ramas dinámicas): un municipio nuevo no obliga a releer el resto.
-  tar_target(municipios_catastro_feeds, municipios_catastro_provincias(PROVINCIAS)),
+  # Feeds ATOM guardados en datos/brutos/catastro/feeds/ (tarea 58): solo se piden los que faltan
+  tar_target(feeds_catastro_atom, descargar_feeds_catastro(PROVINCIAS), format = "file",
+             cue = tarchetypes::tar_cue_age(feeds_catastro_atom, as.difftime(DIAS_RENOVAR_FEEDS, units = "days"))),
+  tar_target(municipios_catastro_feeds, municipios_catastro_provincias(PROVINCIAS, feeds_catastro_atom)),
   tar_target(municipios_catastro_sel, seleccionar_municipios_catastro(
     tablas_paso_callejero, nombres_municipios, municipios_catastro_feeds, extra = grupos_municipio$municipio)),
   tar_target(municipios_forales, municipios_catastro_sel$municipio[municipios_catastro_sel$foral]),
@@ -239,7 +244,9 @@ prueba_f1 <- list(
   # seleccionados (por la sección de 2021 en la que caen). Fuera del ámbito (PROVINCIA sin
   # forales), el bloque no entra: targets no admite ramas sobre una lista vacía.
   if (length(intersect(PROVINCIAS, PROVINCIAS_FORALES))) list(
-    tar_target(zips_forales_feeds, zips_catastro_forales(PROVINCIAS)),
+    tar_target(feeds_forales_atom, descargar_feeds_forales(PROVINCIAS), format = "file",   # tarea 58
+               cue = tarchetypes::tar_cue_age(feeds_forales_atom, as.difftime(DIAS_RENOVAR_FEEDS, units = "days"))),
+    tar_target(zips_forales_feeds, zips_catastro_forales(PROVINCIAS, feeds_forales_atom)),
     tar_target(urls_forales, seleccionar_zips_forales(zips_forales_feeds, municipios_forales)),
     tar_target(zips_forales, descargar_catastro_foral(urls_forales), pattern = map(urls_forales), format = "file"),
     tar_target(edificios_foral, leer_catastro_foral(zips_forales), pattern = map(zips_forales), iteration = "list"),
@@ -333,6 +340,11 @@ bloque_serpavi <- list(
   tar_target(comprobaciones_fiabilidad, comprobar_fiabilidad_serpavi(larga_serpavi)),
   tar_target(validacion_fiabilidad, validar_referencias(comprobaciones_fiabilidad, referencias)),
   tar_target(resumen_larga_serpavi, resumen_serpavi(larga_serpavi)),
+  # Revisión del 18-nov-2026: las dos cifras del método corto que estaban escritas a mano
+  tar_target(subida_metodo_corto, cifra_subida_serpavi(larga_serpavi)),
+  tar_target(cobertura_metodo_corto, cifra_cobertura_serpavi(larga_serpavi, poblacion_adrh, tablas_paso_adrh[["2024"]])),
+  tar_target(validacion_metodo_corto, validar_referencias(
+    comprobar_cifras_metodo_corto(subida_metodo_corto, cobertura_metodo_corto), referencias)),
   tar_target(resumen_fiabilidad, resumen_fiabilidad_serpavi(larga_serpavi)),
   # Tarea 42: viviendas alquiladas del SERPAVI frente a hogares en alquiler del Censo 2021, en las
   # mismas secciones y el mismo año (R/serpavi_universo.R; nota §7.1). No aísla a las personas jurídicas.
@@ -516,7 +528,8 @@ bloque_mochila <- list(
   tar_target(mochila, {
     validacion_salarios
     # 2015–2018, con la relación de 2019; escalada con la ECV solo si avisa y se valida (pregunta 44 f)
-    calcular_mochila_serie(salarios_aeat, formas_mochila, correccion = correccion_mochila$factores)
+    calcular_mochila_serie(salarios_aeat, formas_mochila, correccion = correccion_mochila$factores,
+                           composicion = composicion_mochila)
   }),
   tar_target(fichero_mochila, {
     ruta <- "datos/intermedios/mochila/mochila.csv"
@@ -528,11 +541,14 @@ bloque_mochila <- list(
   tarchetypes::tar_combine(ecv_mochila, ecv_por_anio[["ecv_asalariados"]], command = dplyr::bind_rows(!!!.x)),
   tar_target(validacion_mochila_ecv, validar_referencias(
     comprobar_mochila_ecv(mochila, ecv_mochila, ccaa,
-                          espana = mochila_espana(salarios_aeat, formas_mochila, correccion = correccion_mochila$factores)),
+                          espana = mochila_espana(salarios_aeat, formas_mochila, correccion = correccion_mochila$factores,
+                                                  composicion = composicion_mochila)),
     referencias)),
   # Pregunta 44 f: relación mediana/media de 2015 a 2018 frente a 2019 con la ECV (quienes trabajaron
   # los doce meses, de 26 a 35 años), y corrección solo si avisa y el método se valida en 2020–2024
   tar_target(correccion_mochila, ecv_mochila_correccion(ecv_mochila, formas_mochila)),
+  # Revisión del 18-nov-2026: de la relación de quien trabajó el año entero a la de lo cobrado en el año
+  tar_target(composicion_mochila, ecv_mochila_composicion(ecv_mochila)),
   tar_target(validacion_mochila_relacion, validar_referencias(correccion_mochila$comprobaciones, referencias)),
   # Paso 3: de bruto anual a neto mensual en 12 (regla 8); control con el neto de la ECV
   tar_target(validacion_mochila_neto_ecv,
@@ -743,7 +759,7 @@ bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL)
   }),
   # 17 con el tipo de los préstamos nuevos para vivienda del Banco de España (D_IMVTIPLV, del módulo
   # histórico) y la renta neta media por hogar del ADRH (plan §11, pregunta 45 d y e revisadas); el
-  # tipo medio del INE sigue con su compuerta (validacion_hipotecas)
+  # tipo medio del INE sigue con su compuerta (validacion_hipotecas). Superficie y plazo: terminos_17
   tar_target(tipo_bde_anual, compraventa_tipo_bde(series_bde)),
   # Renta por hogar de provincias, comunidades y España: la publicada por el INE (tabla de totales
   # 53689 del ADRH; 11-nov-2026), con su compuerta frente a la media de los municipios
@@ -756,13 +772,19 @@ bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL)
     validacion_renta_hogar_publicada   # la compuerta va antes
     compraventa_renta_hogar(renta_adrh, pesos_adrh_prueba, territorios_2021, publicada = renta_hogar_publicada)
   }),
+  # Revisión del 18-nov-2026 (decisión del autor): la vivienda tipo y el plazo del 17, los del esfuerzo
+  # teórico del Banco de España (superficie media de Registradores, tres años; plazo medio, doce trimestres)
+  tar_target(terminos_17, compraventa_terminos_17(compraventa_superficie_registradores(registradores),
+                                                  compraventa_plazo_bde(series_bde))),
   tar_target(derivados_compraventa, armonizar_derivados_compraventa(larga_valor_tasado, larga_salarios, tipo_bde_anual,
                                                                     renta_hogar = renta_hogar_17,
                                                                     version_renta = max(version_de(fichero_adrh_renta),
-                                                                                        version_de(fichero_adrh_renta_totales)))),
-  tar_target(validacion_derivados_compraventa, validar_referencias(
+                                                                                        version_de(fichero_adrh_renta_totales)),
+                                                                    terminos_17 = terminos_17)),
+  tar_target(validacion_derivados_compraventa, validar_referencias(bind_rows(
     comprobar_derivados_compraventa(derivados_compraventa, larga_valor_tasado, larga_salarios, tipo_bde_anual,
-                                    renta_hogar = renta_hogar_17),
+                                    renta_hogar = renta_hogar_17, terminos_17 = terminos_17),
+    compraventa_esfuerzo_bde(derivados_compraventa, series_bde)),
     referencias)),
   # 11 desde Registradores, por provincia (R/fuente_registradores.R; plan §11, pregunta 45 a y b
   # revisadas): fichero manual en datos/brutos/registradores/, compuerta de lectura y coherencia con
@@ -814,7 +836,7 @@ bloque_zonas_tensionadas <- if (AMBITO != "") list(tar_target(larga_zonas_tensio
     comprobar_zonas_tensionadas(zonas_tensionadas, boe_zonas_tensionadas, territorios_2021), referencias)),
   tar_target(larga_zonas_tensionadas, {
     validacion_zonas_tensionadas   # la compuerta va antes que la tabla larga
-    armonizar_zonas_tensionadas(zonas_tensionadas, territorios_2021, version = version_de(fichero_zonas_tensionadas)) |>
+    armonizar_zonas_tensionadas(zonas_tensionadas, territorios_2021, version = version_zonas_tensionadas(zonas_tensionadas)) |>
       validar_tabla_larga(indicadores, fuentes, vocabulario)
   }),
   tar_target(resumen_larga_zonas_tensionadas, resumen_zonas_tensionadas(larga_zonas_tensionadas, zonas_tensionadas))
@@ -965,7 +987,8 @@ bloque_web <- list(
                             quintil = sobrecarga_quintil, rupturas = rupturas_sobrecarga, dir_web = DIR_WEB,
                             pobreza = list(anual = pobreza_vivienda_ecv, agrupada = pobreza_vivienda_agrupada,
                                            eurostat = eurostat_ahc, rupturas = rupturas_serie_pobreza(rupturas),
-                                           edad = eurostat_ahc_edad))   # tarea 65, parte B; por edad, 18-nov-2026
+                                           edad = eurostat_ahc_edad),   # tarea 65, parte B; por edad, 18-nov-2026
+                            urbanizacion = eurostat_sobrecarga_urbanizacion)   # 22 por grado de urbanización (18-nov-2026)
   }, format = "file"),
   tar_target(validacion_web_sobrecarga, {
     ficheros_web_sobrecarga
@@ -975,7 +998,8 @@ bloque_web <- list(
                                                  rupturas = rupturas_sobrecarga, dir_web = DIR_WEB,
                                                  pobreza = list(anual = pobreza_vivienda_ecv, agrupada = pobreza_vivienda_agrupada,
                                                                 eurostat = eurostat_ahc, rupturas = rupturas_serie_pobreza(rupturas),
-                                                                edad = eurostat_ahc_edad)),   # tarea 65, parte B; por edad, 18-nov-2026
+                                                                edad = eurostat_ahc_edad),   # tarea 65, parte B; por edad, 18-nov-2026
+                                                 urbanizacion = eurostat_sobrecarga_urbanizacion),   # 18-nov-2026
                         referencias)
   }),
   # Portada (tarea 24; R/web_portada.R): cifras de las cartas en datos/portada.json, desde la tabla

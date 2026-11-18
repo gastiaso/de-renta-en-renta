@@ -154,6 +154,19 @@ test_that("prórrogas (pregunta 46 e): resolución nueva que alarga la declaraci
   expect_equal(v("08118", 2103), 0)
 })
 
+test_that("la versión de la tabla larga es la fecha del BOE más reciente del inventario (tarea 58)", {
+  z <- tibble::tibble(boe = c("BOE-A-2099-1", "BOE-A-2099-7", "BOE-A-2099-3"),
+                      fecha_publicacion = as.Date(c("2099-03-15", "2099-11-03", NA)))
+  expect_equal(version_zonas_tensionadas(z), "2099-11-03")
+  expect_error(version_zonas_tensionadas(z[3, ]), "ninguna fecha")
+  # no depende de la fecha del fichero: la misma con el CSV recién copiado
+  ruta <- tempfile(fileext = ".csv")
+  file.copy(file.path("..", "..", "inventario", "zonas_tensionadas.csv"), ruta)
+  real <- leer_zonas_tensionadas(ruta)
+  expect_equal(version_zonas_tensionadas(real), format(max(real$fecha_publicacion), "%Y-%m-%d"))
+  expect_true(version_zonas_tensionadas(real) < format(Sys.Date() + 1, "%Y-%m-%d"))
+})
+
 test_that("el inventario real cumple su forma: códigos de cinco cifras, ámbitos y fechas", {
   z <- leer_zonas_tensionadas(file.path("..", "..", "inventario", "zonas_tensionadas.csv"))
   expect_true(all(grepl("^[0-9]{5}$", z$municipio)))

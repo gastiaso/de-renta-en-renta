@@ -14,6 +14,26 @@ test_that("parámetros de la consulta de la página, como lista con nombre (tare
   expect_equal(parametros_consulta_navegador(""), stats::setNames(list(), character(0)))
 })
 
+test_that("las páginas que no salen de tar_make() quedan pendientes solo si no existen (tarea 58)", {
+  raiz <- tempfile("web")
+  dir.create(file.path(raiz, "web", "descargas"), recursive = TRUE)
+  expect_equal(paginas_pendientes_navegador(raiz), c("metodo.html", "method.html", "descargas/version.json"))
+  writeLines("{}", file.path(raiz, "web", "descargas", "version.json"))
+  writeLines("<html></html>", file.path(raiz, "web", "metodo.html"))
+  expect_equal(paginas_pendientes_navegador(raiz), "method.html")
+  expect_equal(ruta_destino_navegador(c("metodo.html#71-alquiler", "mapa.html?mapa=x", "reglas.html")),
+               c("metodo.html", "mapa.html", "reglas.html"))
+  url <- "http://127.0.0.1:2345/"
+  errores <- c("carga: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:2345/metodo.html",
+               "carga: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:2345/descargas/version.json",
+               "carga: Failed to load resource: the server responded with a status of 404 (Not Found) http://127.0.0.1:2345/datos/otro.json",
+               "excepcion: TypeError 404 http://127.0.0.1:2345/metodo.html")
+  expect_equal(error_pendiente_navegador(errores, c("metodo.html", "descargas/version.json"), url), c(TRUE, TRUE, FALSE, FALSE))
+  # Con las páginas presentes (o en la web publicada), ningún error se da por pendiente
+  expect_equal(error_pendiente_navegador(errores, character(0), url), rep(FALSE, 4))
+  expect_equal(error_pendiente_navegador(character(0), "metodo.html", url), logical(0))
+})
+
 test_that("la web en un navegador recalcula una muestra y coincide con R (plan §6.5)", {
   raiz <- file.path("..", "..")
   almacen <- file.path(raiz, "_targets")

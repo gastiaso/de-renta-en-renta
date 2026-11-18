@@ -80,7 +80,8 @@ test_that("las olas agrupadas reparten el peso, cada una con su umbral, y marcan
   a <- calcular_pobreza_vivienda_agrupada(list(otra, ecv_pobreza))
   mercado <- a[a$corte == "tenencia" & a$grupo == "RENT_MKT" & a$region == "ES51", ]
   expect_equal(mercado$valor, 50)                                     # el 3, pobre en 2024 y no en 2025
-  expect_equal(mercado$n_personas, 2L)
+  expect_equal(mercado$n_personas_olas, 2L)                           # la misma persona en las dos olas
+  expect_equal(mercado$n_personas, 1L)                                # distintas estimadas: 1 + 0,25 × 1 → 1 (18-nov-2026)
   expect_equal(mercado$fiabilidad, "no publicable")
   expect_equal(c(unique(a$anio_inicio), unique(a$anio_fin), unique(a$olas)), c(2024L, 2025L, 2L))
 })
@@ -204,10 +205,24 @@ test_that("en la tabla larga va como el 22: España, comunidades y cruces agrupa
   expect_true(all(l$indicador == "pobreza_tras_vivienda" & l$fuente == "ine_ecv"))
   expect_equal(nrow(l[l$geo_id == "00" & l$corte == "total" & l$grupo == "total", ]), 1L)
   expect_setequal(unique(l$corte[l$geo_id == "00"]), c("total", "tenencia", "edad", "urbanizacion"))
-  # Comunidades: el total de cada ola y los cruces agrupados por tenencia y edad (el total agrupado,
-  # solo para la compuerta, no entra)
-  expect_setequal(unique(l$corte[l$nivel == "ccaa"]), c("total", "tenencia", "edad"))
+  # Comunidades: el total de cada ola, los cruces agrupados por tenencia y edad y, desde el 18-nov-2026,
+  # el total agrupado, con corte «olas» y grupo «trienio» para no chocar con el total anual del mismo año
+  expect_setequal(unique(l$corte[l$nivel == "ccaa"]), c("total", "tenencia", "edad", "olas"))
   expect_equal(nrow(l[l$nivel == "ccaa" & l$corte == "total", ]), 2L)
+  tri <- l[l$nivel == "ccaa" & l$corte == "olas", ]
+  expect_equal(nrow(tri), 2L)
+  expect_equal(unique(tri$grupo), "trienio")
+  expect_equal(unique(tri$anio), 2025L)
+  expect_false(anyDuplicated(l[c("geo_id", "nivel", "anio", "corte", "grupo")]) > 0)
+  expect_equal(unname(CORTE_TOTAL_AGRUPADO), c("olas", "trienio"))
+  # Con valor (más de 20 observaciones), el total agrupado es el de calcular_pobreza_vivienda_agrupada()
+  grande <- a
+  grande$n_personas <- 500L
+  lg <- armonizar_pobreza_vivienda_ecv(r, grande, ccaa, version = "2026-11-18")
+  expect_equal(lg$valor[lg$geo_id == "13" & lg$corte == "olas"], a$valor[a$region == "ES30" & a$corte == "total"])
+  expect_equal(lg$estado[lg$geo_id == "13" & lg$corte == "olas"], "dato")
+  expect_silent(validar_tabla_larga(lg, vocabulario = readr::read_csv(file.path("..", "..", "inventario", "vocabulario.csv"),
+                                                                      show_col_types = FALSE)))
   expect_true(all(c("Y_LT18", "Y18-64", "Y_GE18") %in% l$grupo[l$geo_id == "13" & l$corte == "edad"]))
   expect_equal(sort(l$grupo[l$geo_id == "00" & l$corte == "urbanizacion"]), c("DEG1", "DEG2", "DEG3"))
   voc <- readr::read_csv(file.path("..", "..", "inventario", "vocabulario.csv"), show_col_types = FALSE)

@@ -119,7 +119,8 @@ test_that("la tabla anual agrupa Ceuta de dos en dos años, marca la ruptura y e
   expect_equal(a23$meses, 2L)
   expect_equal(a23$estado, "dato")
   base <- m[m$codigo == "01" & m$anio == 2023 & m$pregunta == "espana" & m$en_base, ]
-  expect_equal(a23$valor, 100 * sum(base$peso * base$menciona) / sum(base$peso))
+  # Las comunidades, con peso_ccaa (revisión del 18-nov-2026)
+  expect_equal(a23$valor, 100 * sum(base$peso_ccaa * base$menciona) / sum(base$peso_ccaa))
   # Ceuta 2023: 2022 y 2023 juntos (90 entrevistas); 2022, solo (30), ausente
   c23 <- fila("18", 2023)
   expect_equal(c(c23$anios, c23$entrevistas, c23$desde, c23$hasta), c("2", "90", "2022-10", "2023-11"))
@@ -224,4 +225,29 @@ test_that("el JSON y el CSV de la web dan la tabla redondeada, con la fuente y l
   x$filas$valor[which(!is.na(x$filas$valor))[1]] <- 0
   jsonlite::write_json(x, rutas[["json"]], auto_unbox = TRUE, digits = NA, na = "null")
   expect_equal(cis_ccaa_comprobar_web(tab, rutas)$calculado, c(1, 0))
+})
+
+test_that("las comunidades se ponderan con peso_ccaa y España con peso (18-nov-2026)", {
+  # Sin el Parquet: menciones con la forma de cis_ccaa_menciones(). En Madrid, peso y peso_ccaa no
+  # coinciden (como desde la ruptura R10, con el ajuste por nivel educativo dentro de cada comunidad)
+  n <- 60L
+  m <- tibble::tibble(estudio = "3500", mes = "2025-10", anio = 2025L, codigo = "13", pregunta = "espana",
+                      peso = rep(c(0.5, 1.5), length.out = n), peso_ccaa = rep(c(1.5, 0.5), length.out = n),
+                      en_base = TRUE, menciona = rep(c(TRUE, FALSE), length.out = n))
+  rupturas <- tibble::tibble(ruptura = character(), mes = character(), estudio = character(), tipo = character(),
+                             conceptos = character(), estado = character(), descripcion = character())
+  tab <- cis_ccaa_tabla(m, comunidades_inventadas()[2, ], rupturas, nombres_inventados())
+  madrid <- tab[tab$codigo == "13" & tab$pregunta == "espana", ]
+  espana <- tab[tab$codigo == "00" & tab$pregunta == "espana", ]
+  expect_equal(madrid$valor, 100 * sum(m$peso_ccaa * m$menciona) / sum(m$peso_ccaa))   # 75 %
+  expect_equal(espana$valor, 100 * sum(m$peso * m$menciona) / sum(m$peso))              # 25 %
+  expect_equal(madrid$valor, 75)
+  expect_equal(espana$valor, 25)
+})
+
+test_that("un peso 0 deja fuera a la persona y no para la compuerta (18-nov-2026)", {
+  con_cero <- cis_ccaa_estimar(c(TRUE, FALSE, TRUE, TRUE), c(0.5, 1.5, 0.5, 0))
+  sin <- cis_ccaa_estimar(c(TRUE, FALSE, TRUE), c(0.5, 1.5, 0.5))
+  expect_equal(con_cero, sin)
+  expect_equal(con_cero$entrevistas, 3L)
 })

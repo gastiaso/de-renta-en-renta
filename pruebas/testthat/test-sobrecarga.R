@@ -38,7 +38,8 @@ test_that("las olas agrupadas reparten el peso y marcan la fiabilidad por tamañ
   a <- calcular_sobrecarga_agrupada(list(otra, ecv_prueba))
   mercado <- a[a$corte == "tenencia" & a$grupo == "RENT_MKT" & a$region == "ES30", ]
   expect_equal(mercado$valor, 100)                 # el mismo hogar en las dos olas
-  expect_equal(mercado$n_personas, 4L)             # 2 personas × 2 olas
+  expect_equal(mercado$n_personas_olas, 4L)        # 2 personas × 2 olas
+  expect_equal(mercado$n_personas, 2L)             # distintas estimadas: 2 + 0,25 × 2 = 2,5 → 2 (18-nov-2026)
   expect_equal(mercado$fiabilidad, "no publicable")
   expect_equal(unique(a$olas), 2L)
   expect_equal(c(unique(a$anio_inicio), unique(a$anio_fin)), c(2024L, 2025L))
@@ -99,6 +100,50 @@ test_that("la tasa por grado de urbanización usa DB100 y se compara con ilc_lvh
   refs <- readr::read_csv(file.path("..", "..", "inventario", "referencias_validacion.csv"), show_col_types = FALSE)
   expect_equal(refs$tipo[refs$id == "sobrecarga_es_urbanizacion"], "bloqueo")
   expect_equal(refs$tolerancia[refs$id == "sobrecarga_es_urbanizacion"], "±0,1 puntos")
+})
+
+test_that("comunidad × grado de urbanización con las olas agrupadas y su compuerta de coherencia (18-nov-2026)", {
+  a <- calcular_sobrecarga_agrupada(list(ecv_prueba))
+  valor <- function(r, c, g) a$valor[a$region == r & a$corte == c & a$grupo == g]
+  # ES30: hogar 1 (DEG1, 2 personas, sí), 2 (DEG1, peso 2, no) y 6 (sin grado, no); ES51: 3 (DEG2, sí) y 5 (DEG2, no)
+  expect_equal(valor("ES30", "total", "TOTAL"), 40)
+  expect_equal(valor("ES30", "urbanizacion", "DEG1"), 50)
+  expect_equal(valor("ES51", "urbanizacion", "DEG2"), 50)
+  expect_length(valor("ES51", "urbanizacion", "DEG3"), 0)            # el 4, rural, sin gasto declarado
+  expect_equal(a$peso[a$region == "ES30" & a$corte == "total"], 5)
+  expect_equal(a$fiabilidad[a$region == "ES30" & a$grupo == "DEG1"], "no publicable")
+  comp <- comprobar_sobrecarga_urbanizacion_ccaa(a)
+  expect_equal(unique(comp$id), "sobrecarga_ccaa_urbanizacion_total")
+  expect_equal(comp$detalle, c("ES30, media ponderada de 1 grados de urbanización frente al total",
+                               "ES51, media ponderada de 1 grados de urbanización frente al total"))
+  # El hogar 6, sin grado, solo cuenta en el total: la compuerta lo ve en ES30 (50 frente a 40)
+  expect_equal(comp$calculado, c(50, 50))
+  expect_equal(comp$referencia, c(40, 50))
+  # Con grado, los grados rehacen el total
+  con_grado <- ecv_prueba
+  con_grado$hogares$grado_urbanizacion[6] <- "1"
+  cg <- comprobar_sobrecarga_urbanizacion_ccaa(calcular_sobrecarga_agrupada(list(con_grado)))
+  expect_equal(cg$calculado, cg$referencia)
+  # Sin el total de una comunidad, sin cifra (falla)
+  expect_true(is.na(comprobar_sobrecarga_urbanizacion_ccaa(a[a$corte != "total", ])$referencia[1]))
+  # Desde comprobar_sobrecarga_ecv(), con `agrupada`
+  r <- calcular_sobrecarga_ecv(ecv_prueba)
+  eurostat <- tibble::tibble(conjunto = c("ilc_lvho07a", "ilc_lvho07c"), geo = "ES", tenencia = c("TOTAL", "RENT_MKT"),
+                             anio = 2025L, valor = c(42.9, 100))
+  ce <- suppressMessages(comprobar_sobrecarga_ecv(r, eurostat, agrupada = a))
+  expect_equal(sum(ce$id == "sobrecarga_ccaa_urbanizacion_total"), 2L)
+  refs <- readr::read_csv(file.path("..", "..", "inventario", "referencias_validacion.csv"), show_col_types = FALSE)
+  expect_equal(refs$tipo[refs$id == "sobrecarga_ccaa_urbanizacion_total"], "bloqueo")
+  expect_equal(refs$tolerancia[refs$id == "sobrecarga_ccaa_urbanizacion_total"], "±0,01 puntos")
+  # En la tabla larga: comunidad × grado con `anio` la última ola; el total agrupado, no
+  ccaa <- tibble::tibble(codigo = c("13", "09"), nuts2 = c("ES30", "ES51"))
+  l <- armonizar_sobrecarga_ecv(r, a, ccaa, version = "2026-11-18")
+  expect_setequal(unique(l$corte[l$nivel == "ccaa"]), c("total", "tenencia", "edad", "urbanizacion"))
+  expect_equal(nrow(l[l$nivel == "ccaa" & l$corte == "total", ]), 2L)       # solo el total anual
+  expect_equal(sort(l$grupo[l$geo_id == "13" & l$corte == "urbanizacion"]), "DEG1")
+  expect_equal(unique(l$anio[l$corte == "urbanizacion"]), 2025L)
+  expect_true(all(l$estado[l$nivel == "ccaa" & l$corte == "urbanizacion"] == "secreto"))   # menos de 20 observaciones
+  expect_false(anyDuplicated(l[c("geo_id", "nivel", "anio", "corte", "grupo")]) > 0)
 })
 
 test_that("ilc_lvho07d en JSON-stat: solo porcentajes y los grados de urbanización", {
@@ -183,4 +228,14 @@ test_that("el JSON-stat de Eurostat se lee casilla a casilla, con sus marcas", {
   expect_equal(d$bandera, c("b", NA, NA, "b", NA, NA))
   j$size <- list(1L, 2L, 1L, 2L)
   expect_error(tabla_jsonstat(j), "JSON-stat")
+})
+
+test_that("las olas agrupadas cuentan personas distintas, no personas-ola (18-nov-2026)", {
+  # Panel rotatorio: de una ola a otra se renueva una cuarta parte
+  expect_equal(n_distintas_rotacion(c(100, 100, 100)), 150)
+  expect_equal(n_distintas_rotacion(40), 40)
+  expect_equal(n_distintas_rotacion(numeric()), 0)
+  # 3 olas de 20 personas: 60 personas-ola («normal») pero 30 distintas («baja»)
+  expect_equal(fiabilidad_eusilc(60), "normal")
+  expect_equal(fiabilidad_eusilc(floor(n_distintas_rotacion(c(20, 20, 20)))), "baja")
 })

@@ -158,3 +158,63 @@ test_that("las huérfanas salen del cierre y las excepciones de cobertura no blo
   c2 <- comprobar_cobertura_destino(tabla, c("2800101001", "2800101002"), 2017L, exc)
   expect_equal(c2$calculado[c2$id == "cobertura_destino"], 1)
 })
+
+# Tarea 58: feeds ATOM guardados en datos/brutos/catastro/feeds/, con respuestas simuladas (en ISO-8859-1,
+# como las del Catastro) y un enlace por municipio.
+feed_catastro_inventado <- function(req) {
+  feed <- sub(".*atom_(\\d{2})\\.xml$", "\\1", req$url)
+  municipios <- switch(feed, "30" = c("30001-ABANILLA", "30026-MAZARRÓN"), "51" = "30016-CARTAGENA",
+                       "28" = "28900-MADRID", stop("feed inesperado: ", feed))
+  enlaces <- sprintf('<entry><link href="https://www.catastro.hacienda.gob.es/INSPIRE/Buildings/%s/%s/A.ES.SDGC.BU.%s.zip"/></entry>',
+                     feed, municipios, substr(municipios, 1, 5))
+  httr2::response(200, body = iconv(paste0("<feed>", paste(enlaces, collapse = ""), "</feed>"), "UTF-8", "latin1", toRaw = TRUE)[[1]])
+}
+
+test_that("los feeds del Catastro se guardan y la segunda vez no se piden (tarea 58)", {
+  dir <- tempfile("feeds")
+  pedidas <- character(0)
+  simulado <- function(req) { pedidas <<- c(pedidas, req$url); feed_catastro_inventado(req) }
+  # Murcia: su feed y el de la gerencia de Cartagena (51), en el orden de feeds_catastro()
+  rutas <- httr2::with_mocked_responses(simulado, descargar_feeds_catastro("30", dir = dir, pausa = 0))
+  expect_equal(basename(rutas), c("ES.SDGC.bu.atom_30.xml", "ES.SDGC.bu.atom_51.xml"))
+  expect_equal(pedidas, url_catastro_provincia(c("30", "51")))
+  m <- municipios_catastro_provincias("30", rutas)
+  expect_equal(m$codigo_catastro, c("30001", "30026", "30016"))
+  expect_equal(m$nombre_catastro, c("ABANILLA", "MAZARRÓN", "CARTAGENA"))   # de latin1 a UTF-8
+  expect_equal(unique(m$provincia), "30")
+  # Con los ficheros en la carpeta, ninguna petición
+  pedidas <- character(0)
+  sin_red <- function(req) stop("no debería pedir ", req$url)
+  expect_equal(httr2::with_mocked_responses(sin_red, descargar_feeds_catastro("30", dir = dir, pausa = 0)), rutas)
+  expect_length(pedidas, 0L)
+  expect_identical(municipios_catastro_provincias("30", rutas), m)
+  # Falta uno de los feeds guardados: error
+  expect_error(municipios_catastro_provincias("30", rutas[1]), "Falta el feed del Catastro 51")
+  # Forzar con la red caída conserva el anterior y avisa; sin anterior, se detiene
+  r28 <- httr2::with_mocked_responses(simulado, descargar_feeds_catastro("28", dir = dir, pausa = 0))
+  expect_warning(otra <- httr2::with_mocked_responses(function(req) httr2::response(503),
+                   descargar_feeds_catastro("28", dir = dir, forzar = TRUE, pausa = 0)), "se conserva")
+  expect_equal(otra, r28)
+  expect_equal(municipios_catastro_provincias("28", otra)$codigo_catastro, "28900")
+  expect_error(httr2::with_mocked_responses(function(req) httr2::response(503),
+                 descargar_feeds_catastro("28", dir = tempfile("vacia"), pausa = 0)), "No se ha podido descargar")
+  expect_false(any(grepl("\\.parcial$", list.files(dir))))
+})
+
+test_that("un feed con más de DIAS_RENOVAR_FEEDS días se vuelve a pedir (18-nov-2026)", {
+  dir <- tempfile("feeds")
+  pedidas <- character(0)
+  simulado <- function(req) { pedidas <<- c(pedidas, req$url); feed_catastro_inventado(req) }
+  rutas <- httr2::with_mocked_responses(simulado, descargar_feeds_catastro("28", dir = dir, pausa = 0))
+  expect_false(feed_caducado(rutas))
+  Sys.setFileTime(rutas, Sys.time() - (DIAS_RENOVAR_FEEDS + 1) * 86400)
+  expect_true(feed_caducado(rutas))
+  pedidas <- character(0)
+  httr2::with_mocked_responses(simulado, descargar_feeds_catastro("28", dir = dir, pausa = 0))
+  expect_equal(pedidas, url_catastro_provincia("28"))
+  expect_false(feed_caducado(rutas))
+  # Caducado y con la red caída: se conserva y avisa
+  Sys.setFileTime(rutas, Sys.time() - (DIAS_RENOVAR_FEEDS + 1) * 86400)
+  expect_warning(httr2::with_mocked_responses(function(req) httr2::response(503),
+                   descargar_feeds_catastro("28", dir = dir, pausa = 0)), "se conserva")
+})

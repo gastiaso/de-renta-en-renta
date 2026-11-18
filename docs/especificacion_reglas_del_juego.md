@@ -60,16 +60,14 @@ Al pie de la página, fijo: «Resúmenes informativos, sin valor jurídico. El t
 
 ## Método: dónde viven los textos
 
-- **A · CSV → JSON → página** (como las historias y las casillas): `inventario/reglas.csv` con los campos de arriba; `exportar_web_reglas()` escribe `web/datos/reglas.json`; `web/reglas.html` y `web/js/reglas.js` lo pintan en los dos idiomas (`?idioma=en`). Cumple la regla 7, deja comprobar los textos con compuertas y reutiliza el contrato de las historias.
-- **B · Markdown y pandoc** (como «Método»): `docs/reglas_del_juego.md` y `docs/rules_of_the_game.md`, convertidos en el flujo de publicación. Más cómodo para escribir; las compuertas tendrían que leer Markdown y la página no existe en local hasta publicar.
-- **C · HTML escrito a mano.** Sin compuertas.
+- **A · CSV → JSON → página** (como las historias y las casillas): `inventario/reglas.csv` con los campos de arriba; `reglas_exportar_web()` escribe `web/datos/reglas.json`; `web/reglas.html` y `web/js/reglas.js` lo pintan en los dos idiomas (`?idioma=en`). Cumple la regla 7, deja comprobar los textos con compuertas y reutiliza el contrato de las historias.
 
-**Recomendación: A.** Los textos legales cambian por artículos sueltos y las comprobaciones (fechas, literales, enlaces) son por fila.
+**Elegida: A.** Los textos legales cambian por artículos sueltos y las comprobaciones (fechas, literales, enlaces) son por fila.
 
 ## Mantenimiento al día
 
 - **Fuente nueva** `boe_legislacion` en `inventario/fuentes.csv`, y fila en `inventario/calendario_fuentes.csv`: cadencia «continua», revisión mensual y, además, con cada resolución trimestral de zonas tensionadas (`zonas_tensionadas`, meses 1, 4, 7 y 10).
-- **Comprobación automática** (`reglas_comprobar_boe()`, objetivo `validacion_reglas`): por cada norma citada, los metadatos de la API (`fecha_actualizacion`, y si la norma consta derogada o con la vigencia agotada) frente a `texto_consultado`. Un XML pequeño por norma, con caché en `datos/brutos/boe_legislacion/`.
+- **Comprobación automática** (`reglas_comprobar()`, objetivo `validacion_reglas`): por cada norma citada, los metadatos de la API (`fecha_actualizacion`, y si la norma consta derogada o con la vigencia agotada) frente a `texto_consultado`. Un XML pequeño por norma, con caché en `datos/brutos/boe_legislacion/`.
 - **Literales** (`inventario/reglas_literales.csv`): cada cifra legal de un resumen y de una casilla de la portada («Fianza: un mes»; «dos mensualidades»; «30 %»; «tres años») lleva una fila con la norma, el bloque del artículo (`/texto/bloque/{id_bloque}`, versión vigente) y el fragmento literal que la sostiene. La compuerta comprueba que el fragmento sigue en la versión vigente.
 - **Decretos-leyes.** Entran en vigor cuando ellos mismos disponen (en general, al publicarse) y quedan derogados si el Congreso no los convalida en los 30 días siguientes a su promulgación (Constitución, art. 86.2). Un resumen que dependa de uno lleva el estado `vigente_pendiente_convalidacion` hasta que el BOE publique la convalidación o la derogación. Las versiones con efectos futuros (el Real Decreto-ley 28/2026, desde el 15-nov-2026) no se resumen como vigentes: van en «cambios», con su fecha.
 - **Procedimiento** (en `docs/actualizacion.md`): con la alerta, releer el artículo en el BOE, rehacer el resumen, actualizar `texto_consultado` y `revisado`, y anotar el cambio en `CHANGELOG.md`.
@@ -128,7 +126,7 @@ Al pie de la página, fijo: «Resúmenes informativos, sin valor jurídico. El t
 
 ## Pruebas
 
-- R: `reglas_comprobar_boe()` con metadatos inventados (al día, actualizada, derogada); `reglas_literal` con un fragmento que está y otro que no; un decreto-ley pendiente fuera de plazo.
+- R: `reglas_comprobar()` con metadatos inventados (al día, actualizada, derogada); `reglas_literal` con un fragmento que está y otro que no; un decreto-ley pendiente fuera de plazo.
 - Web (node): la página carga `reglas.json`, pinta el estado y el pie, las anclas existen, el inglés trae los mismos ids; las casillas activas de la portada llevan a anclas existentes.
 
 ## Esfuerzo

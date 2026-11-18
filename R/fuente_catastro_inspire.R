@@ -9,12 +9,15 @@ url_catastro_provincia <- function(provincia) {
   sprintf("https://www.catastro.hacienda.gob.es/INSPIRE/buildings/%s/ES.SDGC.bu.atom_%s.xml", provincia, provincia)
 }
 
-# Enlaces de los zips municipales de una provincia, con el nombre que da el Catastro.
-municipios_catastro <- function(provincia) {
-  # El feed viene en ISO-8859-1
-  xml <- httr2::request(url_catastro_provincia(provincia)) |>
-    httr2::req_user_agent("Mozilla/5.0 (compatible; de-renta-en-renta; R httr2)") |>
-    httr2::req_perform() |> httr2::resp_body_raw() |> rawToChar() |> iconv(from = "latin1", to = "UTF-8")
+# Feeds ATOM guardados (tarea 58, 18-nov-2026): con datos/brutos/ completo, tar_make() no pide la
+# red. Van con sus zips, que no se renuevan con el calendario (fila catastro_inspire, «fija»): para
+# renovarlos, se borra la carpeta y tar_make() los vuelve a pedir (si la lista de zips no cambia,
+# no se rehace nada más).
+CATASTRO_DIR_FEEDS <- file.path("datos", "brutos", "catastro", "feeds")
+
+# Enlaces de los zips municipales de una provincia (`xml`, el texto del feed), con el nombre que da
+# el Catastro.
+municipios_catastro <- function(xml) {
   urls <- unique(regmatches(xml, gregexpr("https://[^\"<]+\\.zip", xml))[[1]])
   tibble::tibble(
     url = urls,
@@ -39,12 +42,23 @@ feeds_catastro <- function(provincias) {
   bind_rows(propios, gerencias)
 }
 
-# Municipios del Catastro de las provincias pedidas, con la provincia del INE a la que pertenecen.
-municipios_catastro_provincias <- function(provincias, pausa = 0.3) {
+# Feeds del Catastro de las provincias pedidas, con caché por fichero en `dir` (objetivo
+# feeds_catastro_atom, format = "file"): solo se piden los que faltan. Rutas en el orden de
+# feeds_catastro().
+descargar_feeds_catastro <- function(provincias, dir = CATASTRO_DIR_FEEDS, forzar = FALSE, pausa = 0.3) {
+  urls <- url_catastro_provincia(feeds_catastro(provincias)$feed)
+  vapply(urls, function(u) descargar_feed(u, file.path(dir, basename(u)), forzar, pausa), "", USE.NAMES = FALSE)
+}
+
+# Municipios del Catastro de las provincias pedidas, con la provincia del INE a la que pertenecen,
+# leídos de los feeds guardados (`rutas`, de descargar_feeds_catastro(); el feed viene en ISO-8859-1).
+municipios_catastro_provincias <- function(provincias, rutas = descargar_feeds_catastro(provincias)) {
   f <- feeds_catastro(provincias)
   bind_rows(lapply(seq_len(nrow(f)), function(i) {
-    Sys.sleep(pausa)
-    municipios_catastro(f$feed[i]) |> mutate(provincia = f$provincia[i])
+    ruta <- rutas[basename(rutas) == basename(url_catastro_provincia(f$feed[i]))]
+    if (length(ruta) != 1) stop("Falta el feed del Catastro ", f$feed[i], " entre los guardados", call. = FALSE)
+    xml <- readBin(ruta, "raw", file.size(ruta)) |> rawToChar() |> iconv(from = "latin1", to = "UTF-8")
+    municipios_catastro(xml) |> mutate(provincia = f$provincia[i])
   }))
 }
 
