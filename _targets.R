@@ -84,8 +84,12 @@ sobrecarga <- list(
   tar_target(eurostat_sobrecarga, leer_eurostat_ilc_lvho07(fichero_eurostat_sobrecarga)),
   tar_target(fichero_eurostat_europa, descargar_eurostat_europa(), format = "file"),
   tar_target(eurostat_europa, leer_eurostat_europa(fichero_eurostat_europa)),
+  # Por grado de urbanización (ilc_lvho07d, R/fuente_eurostat_ilc_lvho07d.R; 18-nov-2026)
+  tar_target(fichero_eurostat_sobrecarga_urbanizacion, descargar_eurostat_ilc_lvho07d(), format = "file"),
+  tar_target(eurostat_sobrecarga_urbanizacion, leer_eurostat_ilc_lvho07d(fichero_eurostat_sobrecarga_urbanizacion)),
   tar_target(comprobaciones_sobrecarga,
-             comprobar_sobrecarga_ecv(sobrecarga_ecv, eurostat_sobrecarga, eurostat_europa)),
+             comprobar_sobrecarga_ecv(sobrecarga_ecv, eurostat_sobrecarga, eurostat_europa,
+                                      urbanizacion = eurostat_sobrecarga_urbanizacion)),
   tar_target(validacion_sobrecarga, validar_referencias(comprobaciones_sobrecarga, referencias)),
   tar_target(fichero_nuts_2021, descargar_gisco_nuts("2021"), format = "file"),
   tar_target(fichero_nuts_2024, descargar_gisco_nuts("2024"), format = "file"),
@@ -112,7 +116,8 @@ bloque_pobreza_vivienda <- list(
   tar_target(pobreza_vivienda_ecv, dplyr::bind_rows(lapply(olas_ine_ecv, calcular_pobreza_vivienda_ecv))),
   tar_target(pobreza_vivienda_agrupada, agrupar_trienios(olas_ine_ecv, calcular_pobreza_vivienda_agrupada)),
   tar_target(validacion_pobreza_vivienda, validar_referencias(
-    comprobar_pobreza_vivienda(pobreza_vivienda_ecv, eurostat_ahc, umbral_ecv, edad = eurostat_ahc_edad), referencias)),
+    comprobar_pobreza_vivienda(pobreza_vivienda_ecv, eurostat_ahc, umbral_ecv, edad = eurostat_ahc_edad,
+                               agrupada = pobreza_vivienda_agrupada), referencias)),   # comunidad × edad (18-nov-2026)
   tar_target(larga_pobreza_vivienda, {
     validacion_pobreza_vivienda   # la compuerta va antes que la tabla larga
     armonizar_pobreza_vivienda_ecv(pobreza_vivienda_ecv, pobreza_vivienda_agrupada, ccaa, version = version_de(csv_ine_ecv_2025)) |>
@@ -959,7 +964,8 @@ bloque_web <- list(
                             c("2021" = fichero_nuts_2021, "2024" = fichero_nuts_2024), indicadores,
                             quintil = sobrecarga_quintil, rupturas = rupturas_sobrecarga, dir_web = DIR_WEB,
                             pobreza = list(anual = pobreza_vivienda_ecv, agrupada = pobreza_vivienda_agrupada,
-                                           eurostat = eurostat_ahc, rupturas = rupturas_serie_pobreza(rupturas)))   # tarea 65, parte B
+                                           eurostat = eurostat_ahc, rupturas = rupturas_serie_pobreza(rupturas),
+                                           edad = eurostat_ahc_edad))   # tarea 65, parte B; por edad, 18-nov-2026
   }, format = "file"),
   tar_target(validacion_web_sobrecarga, {
     ficheros_web_sobrecarga
@@ -968,7 +974,8 @@ bloque_web <- list(
                                                  indicadores, quintil = sobrecarga_quintil,
                                                  rupturas = rupturas_sobrecarga, dir_web = DIR_WEB,
                                                  pobreza = list(anual = pobreza_vivienda_ecv, agrupada = pobreza_vivienda_agrupada,
-                                                                eurostat = eurostat_ahc, rupturas = rupturas_serie_pobreza(rupturas))),   # tarea 65, parte B
+                                                                eurostat = eurostat_ahc, rupturas = rupturas_serie_pobreza(rupturas),
+                                                                edad = eurostat_ahc_edad)),   # tarea 65, parte B; por edad, 18-nov-2026
                         referencias)
   }),
   # Portada (tarea 24; R/web_portada.R): cifras de las cartas en datos/portada.json, desde la tabla
@@ -1083,7 +1090,8 @@ bloque_historias <- if (AMBITO != "") list() else list(
 #   targets::tar_make(names = c(fichero_cis_vivienda, validacion_web_cis))
 CIS_DESDE <- 2014L
 bloque_cis <- list(
-  # Barómetros cuya página no está en la dirección habitual (título alargado: postelectorales de 2023)
+  # Barómetros cuya página no está en la dirección habitual (título alargado: julio de 2016, marzo y
+  # diciembre de 2019 y los postelectorales de junio y septiembre de 2023)
   tar_target(fichero_cis_url_excepciones, "inventario/cis_url_excepciones.csv", format = "file"),
   tar_target(cis_url_excepciones, cis_leer_url_excepciones(fichero_cis_url_excepciones)),
   tar_target(cis_estudios, cis_descargar_estudios(CIS_DESDE, excepciones = cis_url_excepciones), format = "file",

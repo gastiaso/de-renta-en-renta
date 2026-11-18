@@ -154,16 +154,41 @@ vistas_sobrecarga <- function(europa, anual, agrupada) {
 # --- Riesgo de pobreza tras los gastos de vivienda (indicador 24; tarea 65, parte B) -------------
 #
 # Segunda medida del mapa y de la escalera (`medida = "pobreza"` en cada vista; la sobrecarga lleva
-# `medida = "sobrecarga"`). Eurostat publica la tasa solo por país (ilc_li48), sin regiones ni
-# tenencia (la edad, ilc_li45, y el grado de urbanización solo van a los desgloses de España):
+# `medida = "sobrecarga"`). Eurostat publica la tasa solo por país, sin regiones ni tenencia: en total
+# (ilc_li48) y por edad (ilc_li45; el grado de urbanización solo va a los desgloses de España):
 #   - toda la población, cada ola de la ECV con cifra de Eurostat: los países (ilc_li48, grado TOTAL),
 #     la UE-27 y España de referencia, y las 19 comunidades con la ola del año (pobreza_vivienda_ecv);
 #   - por tenencia, la última ola: España con la ola del año y las comunidades con las olas agrupadas;
-#     sin países ni UE-27, que Eurostat no publica.
+#     sin países ni UE-27, que Eurostat no publica;
+#   - por edad (decisión del autor del 17-nov-2026), la última ola, si se da la tabla de ilc_li45
+#     (`edad`, leer_eurostat_ilc_li45(); ambos sexos): los países y la UE-27 de Eurostat, España con
+#     la ola del año y las comunidades con las olas agrupadas, como la sobrecarga por edad.
 # Mismas columnas y mismo orden que las vistas de la sobrecarga: de más a menos; sin valor, al final.
-GRUPOS_MAPA_POBREZA <- list(tenencia = c("RENT_MKT", "RENT_FR", "OWN_L", "OWN_NL"))
+GRUPOS_MAPA_POBREZA <- list(tenencia = c("RENT_MKT", "RENT_FR", "OWN_L", "OWN_NL"),
+                            edad = c("Y_LT18", "Y18-64", "Y_GE65", "Y_GE18"))
 TABLA_POBREZA <- "ilc_li48"
 FUENTE_POBREZA <- "eurostat_ilc_li48"
+TABLA_POBREZA_EDAD <- "ilc_li45"
+FUENTE_POBREZA_EDAD <- "eurostat_ilc_li45"
+
+# Grupos del mapa de la pobreza: sin la tabla por edad, sin edad.
+grupos_mapa_pobreza <- function(edad = NULL) {
+  if (is.null(edad)) GRUPOS_MAPA_POBREZA["tenencia"] else GRUPOS_MAPA_POBREZA
+}
+
+# Cifras de Eurostat de una vista de la pobreza (datos con geo, valor y bandera; su tabla y su
+# fuente): ilc_li48 con toda la población, ilc_li45 con un grupo de edad (ambos sexos) y ninguna con
+# la tenencia.
+eurostat_vista_pobreza <- function(ahc, edad, corte, grupo, anio) {
+  if (corte == "total") {
+    return(list(datos = ahc[ahc$grado == "TOTAL" & ahc$anio == anio, ], tabla = TABLA_POBREZA, fuente = FUENTE_POBREZA))
+  }
+  if (corte == "edad" && !is.null(edad)) {
+    return(list(datos = edad[edad$sexo == "T" & edad$edad == grupo & edad$anio == anio, ],
+                tabla = TABLA_POBREZA_EDAD, fuente = FUENTE_POBREZA_EDAD))
+  }
+  list(datos = ahc[0, ], tabla = TABLA_POBREZA, fuente = FUENTE_POBREZA)
+}
 
 # Filas del INE de la medida (anual o agrupada) con las columnas de la web.
 filas_ine_pobreza <- function(d, geo, bloque, nivel) {
@@ -171,28 +196,28 @@ filas_ine_pobreza <- function(d, geo, bloque, nivel) {
                  bandera = NA_character_, n = n_personas, hogares = n_hogares, fiabilidad = fiabilidad_eusilc(n_personas))
 }
 
-vista_pobreza <- function(ahc, anual, agrupada, corte, grupo, anio) {
+vista_pobreza <- function(ahc, anual, agrupada, corte, grupo, anio, edad = NULL) {
   a <- anual[anual$anio == anio, ]
+  e <- eurostat_vista_pobreza(ahc, edad, corte, grupo, anio)
+  desde_eurostat <- function(d, bloque, nivel) {
+    d |> transmute(geo, nivel = nivel, bloque = bloque, valor, fuente = e$fuente, tabla = e$tabla,
+                   bandera, n = NA_integer_, hogares = NA_integer_, fiabilidad = NA_character_)
+  }
   if (corte == "total") {
-    eu <- ahc[ahc$grado == "TOTAL" & ahc$anio == anio, ]
-    desde_eurostat <- function(d, bloque, nivel) {
-      d |> transmute(geo, nivel = nivel, bloque = bloque, valor, fuente = FUENTE_POBREZA, tabla = TABLA_POBREZA,
-                     bandera, n = NA_integer_, hogares = NA_integer_, fiabilidad = NA_character_)
-    }
     es <- a[a$corte == "total", ]
     com <- a[a$corte == "region", ]
-    filas <- bind_rows(
-      desde_eurostat(eu[es_pais_eurostat(eu$geo) & eu$geo != "ES", ], "europa", 0L),
-      desde_eurostat(eu[eu$geo == "EU27_2020", ], "referencia", NA_integer_),
-      filas_ine_pobreza(es, "ES", "referencia", NA_integer_),
-      filas_ine_pobreza(com, com$grupo, "comunidad", 2L)
-    )
+    com_geo <- com$grupo
   } else {
     es <- a[a$corte == corte & a$grupo == grupo, ]
     com <- agrupada[agrupada$corte == corte & agrupada$grupo == grupo, ]
-    filas <- bind_rows(filas_ine_pobreza(es, "ES", "referencia", NA_integer_),
-                       filas_ine_pobreza(com, com$region, "comunidad", 2L))
+    com_geo <- com$region
   }
+  filas <- bind_rows(
+    desde_eurostat(e$datos[es_pais_eurostat(e$datos$geo) & e$datos$geo != "ES", ], "europa", 0L),
+    desde_eurostat(e$datos[e$datos$geo == "EU27_2020", ], "referencia", NA_integer_),
+    filas_ine_pobreza(es, "ES", "referencia", NA_integer_),
+    filas_ine_pobreza(com, com_geo, "comunidad", 2L)
+  )
   filas |>
     mutate(valor = if_else(!is.na(fiabilidad) & fiabilidad == "no publicable", NA_real_, valor)) |>
     arrange(is.na(valor), desc(valor)) |>
@@ -201,8 +226,8 @@ vista_pobreza <- function(ahc, anual, agrupada, corte, grupo, anio) {
 }
 
 # Vistas de la medida: el total de cada ola con cifra de Eurostat de España y cada grupo de
-# GRUPOS_MAPA_POBREZA la última ola. Como vistas_sobrecarga(), con `medida` y la versión NUTS.
-vistas_pobreza <- function(ahc, anual, agrupada) {
+# grupos_mapa_pobreza(edad) la última ola. Como vistas_sobrecarga(), con `medida` y la versión NUTS.
+vistas_pobreza <- function(ahc, anual, agrupada, edad = NULL) {
   con_eurostat <- unique(ahc$anio[ahc$geo == "ES" & ahc$grado == "TOTAL"])
   anios <- sort(intersect(unique(anual$anio), con_eurostat))
   if (!length(anios)) stop("Sin olas de la ECV con cifra de ilc_li48 para el mapa de la pobreza tras la vivienda", call. = FALSE)
@@ -211,10 +236,11 @@ vistas_pobreza <- function(ahc, anual, agrupada) {
     list(clave = paste0("pobreza-total-", a), medida = "pobreza", corte = "total", grupo = "total", anio = a,
          filas = vista_pobreza(ahc, anual, agrupada, "total", "total", a))
   })
-  desgloses <- unlist(lapply(names(GRUPOS_MAPA_POBREZA), function(corte) {
-    lapply(GRUPOS_MAPA_POBREZA[[corte]], function(g) {
+  grupos <- grupos_mapa_pobreza(edad)
+  desgloses <- unlist(lapply(names(grupos), function(corte) {
+    lapply(grupos[[corte]], function(g) {
       list(clave = paste("pobreza", corte, g, ultimo, sep = "-"), medida = "pobreza", corte = corte, grupo = g,
-           anio = ultimo, filas = vista_pobreza(ahc, anual, agrupada, corte, g, ultimo))
+           anio = ultimo, filas = vista_pobreza(ahc, anual, agrupada, corte, g, ultimo, edad))
     })
   }), recursive = FALSE)
   vistas <- Filter(function(v) nrow(v$filas) > 0, c(totales, desgloses))
@@ -224,8 +250,8 @@ vistas_pobreza <- function(ahc, anual, agrupada) {
 # Bloque `pobreza` de sobrecarga.json: años, olas, cortes (columna cortes_web del indicador 24),
 # grupos del mapa, umbral anual de cada ola (euros), España en total y por tenencia, edad y grado de
 # urbanización, cada ola, y la serie de España y de la UE-27 de Eurostat (`ahc`, con `rupturas`, las
-# de rupturas_serie_pobreza()).
-datos_pobreza_web <- function(anual, agrupada, vistas, indicadores, ahc = NULL, rupturas = NULL) {
+# de rupturas_serie_pobreza()). `edad`: la tabla de ilc_li45 (con ella, el mapa también va por edad).
+datos_pobreza_web <- function(anual, agrupada, vistas, indicadores, ahc = NULL, rupturas = NULL, edad = NULL) {
   esp <- anual[anual$corte != "region", ]
   umbrales <- dplyr::distinct(anual, anio, umbral)
   serie <- if (!is.null(ahc)) serie_espana_pobreza(ahc)
@@ -237,7 +263,7 @@ datos_pobreza_web <- function(anual, agrupada, vistas, indicadores, ahc = NULL, 
     olas = list(anuales = I(sort(unique(anual$anio))),
                 agrupadas = I(c(unique(agrupada$anio_inicio), unique(agrupada$anio_fin)))),
     cortes = lapply(cortes_de_indicadores(indicadores, "pobreza_tras_vivienda"), I),
-    grupos_mapa = lapply(GRUPOS_MAPA_POBREZA, I),
+    grupos_mapa = lapply(grupos_mapa_pobreza(edad), I),
     umbrales = lapply(seq_len(nrow(umbrales)), function(i) list(anio = umbrales$anio[i], euros = redondear_empate_arriba(umbrales$umbral[i], 0L))),
     espana = lapply(seq_len(nrow(esp)), function(i) {
       f <- esp[i, ]
@@ -485,9 +511,11 @@ exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, ruta
   agrupada <- ultima_agrupacion(agrupada)
   if (!is.null(pobreza)) pobreza$agrupada <- ultima_agrupacion(pobreza$agrupada)
   vistas <- lapply(vistas_sobrecarga(europa, anual, agrupada), function(v) c(list(medida = "sobrecarga"), v))
-  # Indicador 24 (tarea 65, parte B): `pobreza` = list(anual, agrupada, eurostat, rupturas) con
-  # pobreza_vivienda_ecv, pobreza_vivienda_agrupada, eurostat_ahc y rupturas_serie_pobreza()
-  vistas_p <- if (is.null(pobreza)) list() else vistas_pobreza(pobreza$eurostat, pobreza$anual, pobreza$agrupada)
+  # Indicador 24 (tarea 65, parte B): `pobreza` = list(anual, agrupada, eurostat, rupturas, edad) con
+  # pobreza_vivienda_ecv, pobreza_vivienda_agrupada, eurostat_ahc, rupturas_serie_pobreza() y
+  # eurostat_ahc_edad (ilc_li45: los países del mapa por edad)
+  vistas_p <- if (is.null(pobreza)) list() else
+    vistas_pobreza(pobreza$eurostat, pobreza$anual, pobreza$agrupada, pobreza$edad)
   de_sobrecarga <- vistas
   vistas <- c(vistas, vistas_p)
 
@@ -547,7 +575,8 @@ exportar_web_sobrecarga <- function(anual, agrupada, europa, ccaa, modulos, ruta
                   tenencia = con_v(modulo$tenencia), razones = con_v(modulo$razones))
   )
   if (length(vistas_p)) {
-    datos$pobreza <- datos_pobreza_web(pobreza$anual, pobreza$agrupada, vistas_p, indicadores, pobreza$eurostat, pobreza$rupturas)
+    datos$pobreza <- datos_pobreza_web(pobreza$anual, pobreza$agrupada, vistas_p, indicadores, pobreza$eurostat, pobreza$rupturas,
+                                       pobreza$edad)
   }
   ruta <- file.path(dir, "sobrecarga.json")
   jsonlite::write_json(datos, ruta, auto_unbox = TRUE, digits = NA, na = "null", null = "null")
@@ -594,6 +623,15 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
   anota("web_sobrecarga_valores", "cortes del mapa",
         !setequal(names(x$cortes), names(esperados)) ||
           any(vapply(names(esperados), function(k) !identical(as.numeric(unlist(x$cortes[[k]])), esperados[[k]]), TRUE)))
+  # Bloque de la raíz (indicador 22), como «pobreza: bloque»: años del mapa (los de ilc_lvho07_r), ola de
+  # los desgloses (la última), olas anuales y trienio de los cruces, de donde salen los rótulos
+  # «{desde}–{hasta}» de la web (revisión del 17-nov-2026: no los comprobaba nadie)
+  anios_mapa <- sort(unique(as.integer(europa$anio[europa$conjunto == "ilc_lvho07_r"])))
+  anota("web_sobrecarga_valores", "sobrecarga: bloque", c(
+    !identical(as.integer(unlist(x$anios)), anios_mapa),
+    !identical(as.integer(x$anio_desgloses), max(anios_mapa)),
+    !identical(as.integer(unlist(x$olas$anuales)), sort(unique(as.integer(anual$anio)))),
+    !identical(as.integer(unlist(x$olas$agrupadas)), as.integer(c(unique(agrupada$anio_inicio), unique(agrupada$anio_fin))))))
   del_ine <- function(geo, anio, corte, grupo, agrupado) {
     if (agrupado) {
       d <- agrupada[agrupada$corte == corte & agrupada$grupo == grupo, ]
@@ -753,11 +791,11 @@ comprobar_web_sobrecarga <- function(anual, agrupada, europa, escalera, ccaa, mo
 
 # Ida y vuelta del indicador 24 en sobrecarga.json, con los mismos ids que la sobrecarga
 # (web_sobrecarga_valores, web_sobrecarga_muestra y web_sobrecarga_geometria) y el detalle
-# «pobreza: …»: cada vista frente a ilc_li48 y a los objetivos de la ECV (valor con el redondeo de la
+# «pobreza: …»: cada vista frente a ilc_li48 (por edad, ilc_li45) y a los objetivos de la ECV (valor con el redondeo de la
 # guía, bloque, fuente, tabla y marca, puestos de 1 a n de más a menos, territorios esperados), la
 # muestra de las cifras del INE, la geometría, y el bloque `pobreza` (años, cortes, grupos, umbrales,
 # España por tenencia, edad y urbanización, y la serie de ilc_li48 con sus marcas y rupturas).
-# `pobreza`: list(anual, agrupada, eurostat, rupturas), como en la exportación. Devuelve
+# `pobreza`: list(anual, agrupada, eurostat, rupturas, edad), como en la exportación. Devuelve
 # una lista de tibbles (id, detalle, calculado = número de fallos).
 comprobar_web_pobreza <- function(x, pobreza, indicadores, dir_web = "web", geometrias = list()) {
   ahc <- pobreza$eurostat; anual <- pobreza$anual; agrupada <- pobreza$agrupada
@@ -771,13 +809,14 @@ comprobar_web_pobreza <- function(x, pobreza, indicadores, dir_web = "web", geom
     filas[[length(filas) + 1L]] <<- tibble::tibble(id = id, detalle = detalle, calculado = as.numeric(sum(mal | is.na(mal))))
   }
   vistas <- Filter(function(v) identical(v$medida, "pobreza"), x$vistas)
+  grupos <- grupos_mapa_pobreza(pobreza$edad)
   ultimo <- max(anual$anio)
   anios_esp <- sort(intersect(unique(anual$anio), unique(ahc$anio[ahc$geo == "ES" & ahc$grado == "TOTAL"])))
   con_datos <- function(k) {   # grupos del mapa con alguna cifra (un grupo sin datos no se ofrece)
-    intersect(GRUPOS_MAPA_POBREZA[[k]], c(anual$grupo[anual$corte == k & anual$anio == ultimo], agrupada$grupo[agrupada$corte == k]))
+    intersect(grupos[[k]], c(anual$grupo[anual$corte == k & anual$anio == ultimo], agrupada$grupo[agrupada$corte == k]))
   }
   claves_esp <- c(paste0("pobreza-total-", anios_esp),
-                  unlist(lapply(names(GRUPOS_MAPA_POBREZA), function(k) {
+                  unlist(lapply(names(grupos), function(k) {
                     if (length(con_datos(k))) paste("pobreza", k, con_datos(k), ultimo, sep = "-")
                   })))
   claves <- vapply(vistas, function(v) v$clave, "")
@@ -790,19 +829,19 @@ comprobar_web_pobreza <- function(x, pobreza, indicadores, dir_web = "web", geom
     n_leido <- campo(f, "n", NA_integer_); h_leido <- campo(f, "hogares", NA_integer_)
     fia <- campo(f, "fiabilidad", NA_character_)
     a <- anual[anual$anio == vista$anio, ]
+    e <- eurostat_vista_pobreza(ahc, pobreza$edad, vista$corte, vista$grupo, vista$anio)
+    eu <- e$datos
     if (vista$corte == "total") {
-      eu <- ahc[ahc$grado == "TOTAL" & ahc$anio == vista$anio, ]
       com <- a[a$corte == "region", ]
       es <- a[a$corte == "total", ]
-      esperados <- c(eu$geo[(es_pais_eurostat(eu$geo) & eu$geo != "ES") | eu$geo == "EU27_2020"], "ES", com$grupo)
-      i_com <- match(geo, com$grupo)
+      com_geo <- com$grupo
     } else {
-      eu <- ahc[0, ]
       es <- a[a$corte == vista$corte & a$grupo == vista$grupo, ]
       com <- agrupada[agrupada$corte == vista$corte & agrupada$grupo == vista$grupo, ]
-      esperados <- c(if (nrow(es)) "ES", com$region)
-      i_com <- match(geo, com$region)
+      com_geo <- com$region
     }
+    i_com <- match(geo, com_geo)
+    esperados <- c(eu$geo[(es_pais_eurostat(eu$geo) & eu$geo != "ES") | eu$geo == "EU27_2020"], if (nrow(es)) "ES", com_geo)
     i_eu <- match(geo, eu$geo)
     de_es <- function(col) if (nrow(es)) es[[col]][1] else NA
     ine <- list(valor = ifelse(geo == "ES", de_es("valor"), com$valor[i_com]),
@@ -811,7 +850,7 @@ comprobar_web_pobreza <- function(x, pobreza, indicadores, dir_web = "web", geom
     es_ine <- geo == "ES" | grepl("^ES[0-9]", geo)
     ref <- ifelse(es_ine, publicable(ine$valor, ine$n), eu$valor[i_eu])
     bloque_esp <- ifelse(geo %in% c("EU27_2020", "ES"), "referencia", ifelse(es_ine, "comunidad", "europa"))
-    fuente_esp <- ifelse(es_ine, "ine_ecv", FUENTE_POBREZA)
+    fuente_esp <- ifelse(es_ine, "ine_ecv", e$fuente)
     mal <- !geo %in% esperados | distinto(v, redondeo_guia(ref)) | fuente != fuente_esp | bloque != bloque_esp
     con_v <- which(!is.na(v))
     orden <- con_v[order(puesto[con_v])]
@@ -823,7 +862,7 @@ comprobar_web_pobreza <- function(x, pobreza, indicadores, dir_web = "web", geom
     mal_muestra <- ifelse(es_ine,
                           is.na(n_leido) | is.na(h_leido) | n_leido != ine$n | h_leido != ine$h | is.na(fia) |
                             fia != fiabilidad_eusilc(n_leido) | (fia == "no publicable" & !is.na(v)),
-                          !is.na(n_leido) | !is.na(fia) | is.na(tabla) | tabla != TABLA_POBREZA |
+                          !is.na(n_leido) | !is.na(fia) | is.na(tabla) | tabla != e$tabla |
                             xor(is.na(bandera), is.na(marca_fuente)) |
                             (!is.na(bandera) & !is.na(marca_fuente) & bandera != marca_fuente))
     anota("web_sobrecarga_muestra", paste("pobreza:", vista$clave), mal_muestra)
@@ -844,7 +883,7 @@ comprobar_web_pobreza <- function(x, pobreza, indicadores, dir_web = "web", geom
     !identical(as.integer(unlist(p$olas$agrupadas)), as.integer(c(unique(agrupada$anio_inicio), unique(agrupada$anio_fin)))),
     !setequal(names(p$cortes), names(esperados)) ||
       any(vapply(names(esperados), function(k) !identical(as.numeric(unlist(p$cortes[[k]])), esperados[[k]]), TRUE)),
-    !identical(lapply(p$grupos_mapa, function(g) as.character(unlist(g))), GRUPOS_MAPA_POBREZA),
+    !identical(lapply(p$grupos_mapa, function(g) as.character(unlist(g))), grupos),
     !identical(as.integer(x$indicadores$pobreza_tras_vivienda), 24L)))
   u <- dplyr::distinct(anual, anio, umbral)
   anios_u <- vapply(p$umbrales, function(r) as.integer(r$anio), 0L)

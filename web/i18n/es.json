@@ -129,6 +129,8 @@
       },
       "corto": {
         "imv": "la línea del ingreso mínimo vital",
+        "imv_2020": "la línea del ingreso mínimo vital (IMV desde el 1 de junio de 2020)",
+        "pnc": "la línea de la pensión no contributiva (antes del ingreso mínimo vital)",
         "ecv": "la línea del umbral de riesgo de pobreza de la ECV"
       },
       "hogar": {
@@ -549,6 +551,7 @@
       "nota_desglose": "Con tenencia o edad, solo la encuesta de {anio}: Eurostat no publica esos desgloses por regiones.",
       "nota_pobreza": "Riesgo de pobreza tras la vivienda: personas cuya renta por unidad de consumo, una vez pagados los gastos de vivienda, queda por debajo del umbral de riesgo de pobreza ({umbral} € al año por unidad de consumo en la encuesta de {anio}: el 60 % de la mediana antes de pagar la vivienda).",
       "nota_desglose_pobreza": "Por tenencia, España con la encuesta de {anio} y las comunidades con tres olas agrupadas ({desde}–{hasta}): Eurostat no publica esta tasa por tenencia, y el mapa no pinta otros países.",
+      "nota_desglose_pobreza_edad": "Por edad, los países y España con la encuesta de {anio} y las comunidades con tres olas agrupadas ({desde}–{hasta}): Eurostat no publica esta tasa por regiones.",
       "grupos": {
         "RENT_MKT": "Alquiler de mercado",
         "RENT_FR": "Alquiler reducido o cesión",
@@ -556,7 +559,8 @@
         "OWN_NL": "Propiedad sin hipoteca",
         "Y_LT18": "Menos de 18 años",
         "Y18-64": "18 a 64 años",
-        "Y_GE65": "65 y más años"
+        "Y_GE65": "65 y más años",
+        "Y_GE18": "18 y más años"
       }
     },
     "cifras": {
@@ -578,6 +582,7 @@
       "fuente_pobreza_tenencia": "INE (microdatos de la ECV): España, {anio}; comunidades, {desde}–{hasta}",
       "nota_pobreza": "Eurostat publica esta tasa solo por país, sin regiones. Las comunidades y España salen de los microdatos del INE con el mismo método y la misma encuesta; la cifra de España reproduce la de Eurostat (±0,1 puntos).",
       "nota_pobreza_tenencia": "Eurostat no publica esta tasa por régimen de tenencia: solo se pintan las comunidades, con tres olas agrupadas ({desde}–{hasta}), porque una sola ola no da muestra suficiente.",
+      "nota_pobreza_edad": "Por edad, Eurostat publica esta tasa por país (ilc_li45). España va por comunidades con los microdatos del INE y tres olas agrupadas ({desde}–{hasta}), porque una sola ola no da muestra suficiente: países y comunidades no son del mismo periodo. «18 y más años» reúne los grupos de 18 a 64 y de 65 y más.",
       "nota_regiones": "Eurostat publica la tasa por regiones NUTS 2 solo para toda la población. Donde no las publica se pinta el dato del país o de NUTS 1, con trama. Algunos países no tienen dato regional algunos años (Dinamarca, hasta 2024) y Eurostat publica a veces dos regiones juntas (FI19_20): quedan sin pintar.",
       "nota_paises": "Con tenencia o edad, Eurostat publica países. España va por comunidades con los microdatos del INE y tres olas agrupadas ({desde}–{hasta}), porque una sola ola no da muestra suficiente: países y comunidades no son del mismo periodo.",
       "sin_mapa": "En la escalera, sin geometría en el mapa: {lista}.",
@@ -656,7 +661,7 @@
       "grafico": "Tasa de sobrecarga en España y en la UE-27, toda la población y alquiler a precio de mercado, {desde}–{hasta}"
     },
     "desgloses": {
-      "titulo": "España por tenencia, edad y renta",
+      "titulo": "España por tenencia, edad, renta y grado de urbanización",
       "titulo_pobreza": "España por tenencia, edad y grado de urbanización: riesgo de pobreza tras la vivienda",
       "subtitulo": "Microdatos de la ECV, cálculo propio · cada cifra con su muestra",
       "anio": "Encuesta",
@@ -666,7 +671,7 @@
       "urbanizacion": "Por grado de urbanización",
       "total": "Toda la población",
       "muestra_corta": "{n} pers.",
-      "nota": "Los grupos de menores de 18 y de 15 a 29 años se solapan. «Propiedad» y «Alquiler o cesión gratuita» reúnen las categorías de Eurostat.",
+      "nota": "Los grupos de menores de 18 y de 15 a 29 años se solapan. «Propiedad» y «Alquiler o cesión gratuita» reúnen las categorías de Eurostat. El grado de urbanización es el de Eurostat (ilc_lvho07d), según la zona donde está la vivienda.",
       "nota_pobreza": "Los grupos de edad son los de Eurostat (ilc_li45): «18 y más años» reúne los de 18 a 64 y 65 y más. El grado de urbanización es el de Eurostat (ilc_li48), según la zona donde está la vivienda. «Propiedad» y «Alquiler o cesión gratuita» reúnen las categorías de Eurostat. España reproduce las cifras de Eurostat por edad y por grado de urbanización (±0,1 puntos).",
       "nota_quintil": "Quintiles de renta disponible equivalente (la del hogar entre sus unidades de consumo, escala de la OCDE modificada) de toda la población, ponderada por persona. Solo España: sin quintil por país ni por comunidad.",
       "quintiles": {
@@ -693,8 +698,8 @@
       "hipoteca": "De la hipoteca entran los intereses, no la devolución del capital.",
       "renta": "La renta es la del año anterior a la encuesta: la ECV de 2025 recoge las rentas de 2024.",
       "muestra": "Sin intervalos de confianza: los microdatos públicos no traen el diseño de la muestra. Cada cifra del INE lleva su número de observaciones y la marca de fiabilidad de EU-SILC: sin publicar con menos de 20; con trama, de 20 a 49.",
-      "compuerta": "El cálculo reproduce las cifras de Eurostat de España, de cada comunidad, de los inquilinos a precio de mercado y de cada grupo de edad (±0,1 puntos).",
-      "pobreza": "Riesgo de pobreza tras la vivienda (indicador 24): (renta disponible − 12 × gasto mensual en vivienda) ÷ unidades de consumo, por debajo del 60 % de la mediana de la renta por unidad de consumo antes de pagar la vivienda. Es el método de Eurostat (ilc_li48): la cifra de España de 2016 a 2025 reproduce la suya (±0,1 puntos), también por edad (ilc_li45) y por grado de urbanización.",
+      "compuerta": "El cálculo reproduce las cifras de Eurostat de España, de cada comunidad, de los inquilinos a precio de mercado, de cada grupo de edad y de cada grado de urbanización (±0,1 puntos).",
+      "pobreza": "Riesgo de pobreza tras la vivienda (indicador 24): (renta disponible − 12 × gasto mensual en vivienda) ÷ unidades de consumo, por debajo del 60 % de la mediana de la renta por unidad de consumo antes de pagar la vivienda. Es el método de Eurostat (ilc_li48): la cifra de España de 2016 a 2025 reproduce la suya (±0,1 puntos), también por edad (ilc_li45) y por grado de urbanización. Por tenencia y por edad, las comunidades agrupan tres olas.",
       "marcas": "Las cifras de Eurostat llevan sus marcas junto al valor: b, ruptura de serie; u, poca fiabilidad (con trama en el mapa); e, estimación; p, provisional."
     },
     "acceso": {
@@ -771,6 +776,7 @@
       "SK": "Eslovaquia",
       "TR": "Turquía",
       "UA": "Ucrania",
+      "UK": "Reino Unido",
       "XK": "Kosovo",
       "EU27_2020": "UE-27"
     }
@@ -1125,7 +1131,7 @@
       "nombre": "Tasa de sobrecarga por gastos de vivienda (método Eurostat)",
       "unidad": "% de las personas",
       "definicion": "Personas que viven en hogares cuyo gasto total en vivienda, neto de ayudas, supera el 40 % de su renta disponible, también neta de ayudas.",
-      "calculo": "Microdatos de la ECV con el método de Eurostat: de la hipoteca, solo los intereses; renta del año anterior; ponderación por persona. Reproduce las cifras de Eurostat (±0,1 puntos). Los cruces por comunidad, tenencia y edad agrupan tres olas.",
+      "calculo": "Microdatos de la ECV con el método de Eurostat: de la hipoteca, solo los intereses; renta del año anterior; ponderación por persona. Reproduce las cifras de Eurostat (±0,1 puntos), también las de España por grado de urbanización (ilc_lvho07d). Los cruces por comunidad, tenencia y edad agrupan tres olas.",
       "lectura": "Mide la carga de quien ya tiene casa; la dominan los propietarios sin hipoteca y no ve a quien no ha podido emanciparse. Se lee junto a la búsqueda de vivienda sin éxito (23) y por tenencia, sobre todo en el alquiler a precio de mercado."
     },
     "busqueda_sin_exito": {
@@ -1139,7 +1145,7 @@
       "nombre": "Tasa de riesgo de pobreza tras los gastos de vivienda",
       "unidad": "% de las personas",
       "definicion": "Personas cuya renta disponible por unidad de consumo, una vez restado el gasto total en vivienda, queda por debajo del umbral de riesgo de pobreza (60 % de la mediana de la renta por unidad de consumo antes de restar la vivienda).",
-      "calculo": "Microdatos de la ECV con el método de Eurostat (ilc_li48): renta disponible del año anterior menos 12 veces el gasto mensual en vivienda (de la hipoteca, solo intereses), entre las unidades de consumo de la escala de la OCDE modificada; umbral de la ola sin recalcular; ponderación por persona. Reproduce las cifras de España de Eurostat, también por edad (ilc_li45) y grado de urbanización (±0,1 puntos). Los cruces por comunidad y tenencia agrupan tres olas.",
+      "calculo": "Microdatos de la ECV con el método de Eurostat (ilc_li48): renta disponible del año anterior menos 12 veces el gasto mensual en vivienda (de la hipoteca, solo intereses), entre las unidades de consumo de la escala de la OCDE modificada; umbral de la ola sin recalcular; ponderación por persona. Reproduce las cifras de España de Eurostat, también por edad (ilc_li45) y grado de urbanización (±0,1 puntos). Los cruces por comunidad, tenencia y edad agrupan tres olas.",
       "lectura": "Es la versión estadística del enfoque residual: no fija un porcentaje máximo de gasto, sino si lo que queda tras pagar la vivienda llega al umbral de pobreza. Se lee junto a la sobrecarga (22), que mide la proporción de la renta, y por tenencia, sobre todo en el alquiler."
     },
     "contratos_alquiler": {
@@ -1209,6 +1215,7 @@
     "eurostat_ilc_lvho07_r": "Tasa de sobrecarga por regiones NUTS 2 (ilc_lvho07_r)",
     "eurostat_ilc_li48": "Tasa de riesgo de pobreza tras deducir los gastos de vivienda por grado de urbanización (ilc_li48)",
     "eurostat_ilc_li45": "Tasa de riesgo de pobreza tras deducir los gastos de vivienda por edad y sexo (ilc_li45)",
+    "eurostat_ilc_lvho07d": "Tasa de sobrecarga por gastos de vivienda por grado de urbanización (ilc_lvho07d)",
     "eurostat_nuts": "Geometrías NUTS 2021 y 2024 (Nuts2json / GISCO)",
     "eustat_nastat": "Indicadores de renta del País Vasco (Eustat) y Navarra (Nastat)",
     "ine_epa_deciles": "Decil de salarios del empleo principal (EPA)",

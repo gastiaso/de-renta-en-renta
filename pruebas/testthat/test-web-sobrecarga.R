@@ -198,6 +198,16 @@ test_that("la exportación escribe sobrecarga.json y su geometría y pasa la com
   c2 <- comprobar()
   mal <- c2[c2$calculado > 0, ]
   expect_equal(mal$id, c("web_sobrecarga_valores", "web_sobrecarga_muestra"))
+  # Revisión del 17-nov-2026: el bloque de la raíz (años, ola de los desgloses, olas y trienio del 22)
+  expect_equal(c1$calculado[c1$detalle == "sobrecarga: bloque"], 0)
+  texto <- sub('"agrupadas":[2023,2025]', '"agrupadas":[2016,2017]', texto, fixed = TRUE)
+  texto <- sub('"anuales":[2025]', '"anuales":[2024,2025]', texto, fixed = TRUE)
+  writeLines(texto, rutas[1], useBytes = TRUE)
+  cb <- comprobar()
+  expect_equal(cb$calculado[cb$detalle == "sobrecarga: bloque"], 2)
+  texto <- sub('"agrupadas":[2016,2017]', '"agrupadas":[2023,2025]', texto, fixed = TRUE)   # se deja como estaba
+  texto <- sub('"anuales":[2024,2025]', '"anuales":[2025]', texto, fixed = TRUE)
+  writeLines(texto, rutas[1], useBytes = TRUE)
   expect_equal(mal$detalle, c("total-2025", "total-2025"))
 
   texto <- sub(',"bandera":"u"', "", readLines(rutas[1], warn = FALSE, encoding = "UTF-8"), fixed = TRUE)
@@ -255,7 +265,10 @@ test_that("pobreza tras la vivienda: vistas de países y comunidades, bloque pro
   anterior <- dplyr::mutate(agrupada_p_sc, anio_inicio = 2022L, anio_fin = 2024L, valor = valor + 10)
   pobreza <- list(anual = anual_p_sc, agrupada = dplyr::bind_rows(anterior, agrupada_p_sc), eurostat = ahc_sc,
                   rupturas = list(ES_TOTAL = c(2013L, 2025L), EU27_TOTAL = integer()))
-  rutas <- exportar_web_sobrecarga(anual_sc, dplyr::bind_rows(dplyr::mutate(agrupada_sc, anio_fin = 2024L), agrupada_sc),
+  # El 22 también con un trienio anterior distinto (revisión del 17-nov-2026: antes, el mismo trienio con
+  # otro año final, que no distinguía cuál se exportaba)
+  agrupada_22 <- dplyr::bind_rows(dplyr::mutate(agrupada_sc, anio_inicio = 2022L, anio_fin = 2024L, valor = valor + 10), agrupada_sc)
+  rutas <- exportar_web_sobrecarga(anual_sc, agrupada_22,
                                    europa, ccaa_sc, modulos_sc(), c("2024" = ruta), ind_p_sc,
                                    quintil = quintil_sc, dir_web = dir, fecha = "2026-11-17", pobreza = pobreza)
   x <- jsonlite::fromJSON(rutas[1], simplifyVector = FALSE)
@@ -264,6 +277,9 @@ test_that("pobreza tras la vivienda: vistas de países y comunidades, bloque pro
   pten <- x$vistas[[which(claves == "pobreza-tenencia-RENT_MKT-2025")]]$filas
   expect_equal(pten[[which(vapply(pten, `[[`, "", "geo") == "ES30")]]$v, valor_web(48.35))   # del trienio 2023–2025, no del anterior
   expect_equal(unlist(x$pobreza$olas$agrupadas), c(2023L, 2025L))
+  expect_equal(unlist(x$olas$agrupadas), c(2023L, 2025L))            # el 22, también el último trienio
+  sten <- x$vistas[[which(claves == "tenencia-RENT_MKT-2025")]]$filas
+  expect_equal(sten[[which(vapply(sten, `[[`, "", "geo") == "ES30")]]$v, valor_web(34.21))
   # Serie de España y de la UE-27 de ilc_li48, con sus marcas y las rupturas del atlas del 24
   s <- x$pobreza$serie
   expect_equal(unlist(s$anios), c(2024L, 2025L))
@@ -285,7 +301,7 @@ test_that("pobreza tras la vivienda: vistas de países y comunidades, bloque pro
   pt <- x$vistas[[which(claves == "pobreza-total-2025")]]$filas
   expect_equal(pt[[which(vapply(pt, `[[`, "", "geo") == "AA")]]$v, 313L)                 # 31,26 → 31,3 (× 10 en entero)
 
-  comprobar <- function(p = pobreza) comprobar_web_sobrecarga(anual_sc, agrupada_sc, europa, armar_escalera(europa), ccaa_sc, modulos_sc(),
+  comprobar <- function(p = pobreza) comprobar_web_sobrecarga(anual_sc, agrupada_22, europa, armar_escalera(europa), ccaa_sc, modulos_sc(),
                                                               ind_p_sc, quintil = quintil_sc, dir_web = dir, pobreza = p)
   c1 <- comprobar()
   expect_true(any(grepl("^pobreza: ", c1$detalle)))
@@ -308,6 +324,67 @@ test_that("pobreza tras la vivienda: vistas de países y comunidades, bloque pro
   mal <- c2[c2$calculado > 0, ]
   expect_equal(mal$detalle, c("pobreza: pobreza-total-2025", "pobreza: pobreza-total-2025", "pobreza: umbrales"))
   expect_equal(mal$id, c("web_sobrecarga_valores", "web_sobrecarga_muestra", "web_sobrecarga_valores"))
+})
+
+test_that("pobreza tras la vivienda por edad (18-nov-2026): países de ilc_li45, comunidades agrupadas e ida y vuelta", {
+  edad <- tibble::tibble(conjunto = "ilc_li45", geo = c("AA", "BB", "ES", "EU27_2020", "AA", "AA", "BB"),
+                         edad = c("Y_LT18", "Y_LT18", "Y_LT18", "Y_LT18", "Y_LT18", "Y_GE18", "Y_GE18"),
+                         sexo = c("T", "T", "T", "T", "F", "T", "T"), anio = c(rep(2025L, 4), 2025L, 2025L, 2024L),
+                         valor = c(41.04, 22, 39, 31.5, 99, 25, 30), bandera = c(NA, "u", NA, NA, NA, NA, NA))
+  anual <- dplyr::bind_rows(anual_p_sc, tibble::tibble(anio = 2025L, indicador = "pobreza_tras_vivienda", umbral = 12220.35,
+                                                       corte = "edad", grupo = "Y_LT18", valor = 39.0, peso = 1,
+                                                       n_personas = 13000L, n_hogares = 6000L))
+  agrupada <- dplyr::bind_rows(agrupada_p_sc, tibble::tibble(
+    fiabilidad = "normal", anio_inicio = 2023L, anio_fin = 2025L, olas = 3L, indicador = "pobreza_tras_vivienda",
+    region = c("ES30", "ES61", "ES30", "ES61"), corte = c("edad", "edad", "total", "total"), grupo = c("Y_LT18", "Y_LT18", "TOTAL", "TOTAL"),
+    valor = c(30.1, 50.9, 23, 37), peso = 1, n_personas = c(1900L, 2400L, 8000L, 9000L), n_hogares = c(800L, 900L, 3000L, 3500L)))
+  v <- vista_pobreza(ahc_sc, anual, agrupada, "edad", "Y_LT18", 2025L, edad)
+  expect_equal(v$geo, c("ES61", "AA", "ES", "EU27_2020", "ES30", "BB"))   # sin ES como país ni el sexo F
+  expect_equal(v$puesto, 1:6)
+  expect_equal(c(v$tabla[v$geo == "BB"], v$bandera[v$geo == "BB"], v$fuente[v$geo == "BB"]), c("ilc_li45", "u", "eurostat_ilc_li45"))
+  expect_equal(v$bloque[v$geo == "EU27_2020"], "referencia")
+  expect_equal(v$fuente[v$geo == "ES30"], "ine_ecv")
+  # Sin la tabla por edad, ni grupos ni vistas de edad
+  expect_equal(names(grupos_mapa_pobreza()), "tenencia")
+  expect_equal(grupos_mapa_pobreza(edad)$edad, c("Y_LT18", "Y18-64", "Y_GE65", "Y_GE18"))
+
+  dir <- tempfile("web_")
+  ruta <- tempfile(fileext = ".gpkg")
+  on.exit(unlink(c(dir, ruta), recursive = TRUE))
+  sf::st_write(nuts_sc(), ruta, quiet = TRUE)
+  europa <- filter(europa_sc(), anio >= 2024)
+  pobreza <- list(anual = anual, agrupada = agrupada, eurostat = ahc_sc, edad = edad,
+                  rupturas = list(ES_TOTAL = integer(), EU27_TOTAL = integer()))
+  rutas <- exportar_web_sobrecarga(anual_sc, agrupada_sc, europa, ccaa_sc, modulos_sc(), c("2024" = ruta), ind_p_sc,
+                                   quintil = quintil_sc, dir_web = dir, fecha = "2026-11-18", pobreza = pobreza)
+  x <- jsonlite::fromJSON(rutas[1], simplifyVector = FALSE)
+  claves <- vapply(x$vistas, `[[`, "", "clave")
+  expect_true("pobreza-edad-Y_LT18-2025" %in% claves)
+  expect_false("pobreza-edad-Y18-64-2025" %in% claves)                    # sin ninguna cifra: no se ofrece
+  expect_equal(lapply(x$pobreza$grupos_mapa, unlist), grupos_mapa_pobreza(edad))
+  pe <- x$vistas[[which(claves == "pobreza-edad-Y_LT18-2025")]]$filas
+  expect_equal(pe[[which(vapply(pe, `[[`, "", "geo") == "AA")]]$v, 410L)   # 41,04 → 41,0
+  # El total agrupado de las comunidades (solo para la compuerta) no va a la web
+  expect_false(any(vapply(x$vistas, function(w) identical(w$corte, "total") && identical(w$grupo, "TOTAL"), TRUE)))
+
+  comprobar <- function(p = pobreza) comprobar_web_sobrecarga(anual_sc, agrupada_sc, europa, armar_escalera(europa), ccaa_sc, modulos_sc(),
+                                                              ind_p_sc, quintil = quintil_sc, dir_web = dir, pobreza = p)
+  c1 <- comprobar()
+  expect_true("pobreza: pobreza-edad-Y_LT18-2025" %in% c1$detalle)
+  expect_equal(sum(c1$calculado), 0)
+  # Sin la tabla por edad en la compuerta, la vista y los grupos de edad sobran
+  sin_edad <- comprobar(pobreza[names(pobreza) != "edad"])
+  expect_gt(sin_edad$calculado[sin_edad$detalle == "pobreza: vistas"], 0)
+  expect_gt(sin_edad$calculado[sin_edad$detalle == "pobreza: bloque"], 0)
+  # Un país de ilc_li45 cambiado y su marca quitada: la compuerta lo ve
+  texto <- readLines(rutas[1], warn = FALSE, encoding = "UTF-8")
+  texto <- sub('"geo":"AA","nivel":0,"bloque":"europa","v":410', '"geo":"AA","nivel":0,"bloque":"europa","v":411', texto, fixed = TRUE)
+  texto <- sub('"tabla":"ilc_li45","bandera":"u"', '"tabla":"ilc_li45"', texto, fixed = TRUE)
+  writeLines(texto, rutas[1], useBytes = TRUE)
+  c2 <- comprobar()
+  mal <- c2[c2$calculado > 0, ]
+  expect_equal(mal$detalle, c("pobreza: pobreza-edad-Y_LT18-2025", "pobreza: pobreza-edad-Y_LT18-2025"))
+  expect_equal(mal$id, c("web_sobrecarga_valores", "web_sobrecarga_muestra"))
 })
 
 test_that("las rupturas del atlas en la serie salen de inventario/rupturas.csv (pregunta abierta 34)", {

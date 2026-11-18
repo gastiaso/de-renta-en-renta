@@ -129,6 +129,8 @@
       },
       "corto": {
         "imv": "minimum living income line",
+        "imv_2020": "minimum living income line (IMV since 1 June 2020)",
+        "pnc": "non-contributory pension line (before the minimum living income)",
         "ecv": "Living Conditions Survey at-risk-of-poverty threshold"
       },
       "hogar": {
@@ -549,6 +551,7 @@
       "nota_desglose": "By tenure or age, only the {anio} survey: Eurostat does not publish those breakdowns by region.",
       "nota_pobreza": "At-risk-of-poverty after housing costs: people whose equivalised income, once housing costs are paid, falls below the at-risk-of-poverty threshold ({umbral} € a year per equivalent adult in the {anio} survey: 60% of the median before paying for housing).",
       "nota_desglose_pobreza": "By tenure, Spain with the {anio} survey and the autonomous communities with three pooled waves ({desde}–{hasta}): Eurostat does not publish this rate by tenure, and the map shows no other countries.",
+      "nota_desglose_pobreza_edad": "By age, countries and Spain with the {anio} survey and the autonomous communities with three pooled waves ({desde}–{hasta}): Eurostat does not publish this rate by region.",
       "grupos": {
         "RENT_MKT": "Market-rate renting",
         "RENT_FR": "Reduced rent or rent-free",
@@ -556,7 +559,8 @@
         "OWN_NL": "Owner without mortgage",
         "Y_LT18": "Under 18",
         "Y18-64": "18 to 64",
-        "Y_GE65": "65 and over"
+        "Y_GE65": "65 and over",
+        "Y_GE18": "18 and over"
       }
     },
     "cifras": {
@@ -578,6 +582,7 @@
       "fuente_pobreza_tenencia": "INE (EU-SILC microdata): Spain, {anio}; autonomous communities, {desde}–{hasta}",
       "nota_pobreza": "Eurostat publishes this rate by country only, without regions. Spain and its autonomous communities come from INE microdata with the same method and survey; the figure for Spain reproduces Eurostat’s (±0.1 points).",
       "nota_pobreza_tenencia": "Eurostat does not publish this rate by tenure: only the autonomous communities are shown, with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample.",
+      "nota_pobreza_edad": "By age, Eurostat publishes this rate by country (ilc_li45). Spain is shown by autonomous community from INE microdata with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample: countries and communities do not cover the same period. «18 and over» combines the 18-to-64 and 65-and-over groups.",
       "nota_regiones": "Eurostat publishes the rate by NUTS 2 region only for the whole population. Where it does not, the country or NUTS 1 figure is shown, hatched. Some countries have no regional figure in some years (Denmark, until 2024), and Eurostat sometimes publishes two regions together (FI19_20): they are left blank.",
       "nota_paises": "By tenure or age, Eurostat publishes countries. Spain is shown by autonomous community from INE microdata with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample: countries and communities do not cover the same period.",
       "sin_mapa": "In the ladder, with no boundaries on the map: {lista}.",
@@ -656,7 +661,7 @@
       "grafico": "Overburden rate in Spain and the EU-27, whole population and market-rate renting, {desde}–{hasta}"
     },
     "desgloses": {
-      "titulo": "Spain by tenure, age and income",
+      "titulo": "Spain by tenure, age, income and degree of urbanisation",
       "titulo_pobreza": "Spain by tenure, age and degree of urbanisation: at-risk-of-poverty after housing costs",
       "subtitulo": "EU-SILC microdata, own calculation · each figure with its sample",
       "anio": "Survey",
@@ -666,7 +671,7 @@
       "urbanizacion": "By degree of urbanisation",
       "total": "Whole population",
       "muestra_corta": "{n} people",
-      "nota": "The under-18 and 15-to-29 groups overlap. «Owner» and «Tenant or rent-free» combine Eurostat’s categories.",
+      "nota": "The under-18 and 15-to-29 groups overlap. «Owner» and «Tenant or rent-free» combine Eurostat’s categories. The degree of urbanisation is Eurostat’s (ilc_lvho07d), by the area where the dwelling is.",
       "nota_pobreza": "Age groups are Eurostat’s (ilc_li45): «18 and over» combines 18 to 64 and 65 and over. The degree of urbanisation is Eurostat’s (ilc_li48), by the area where the dwelling is. «Owner» and «Tenant or rent-free» combine Eurostat’s categories. Spain reproduces Eurostat’s figures by age and by degree of urbanisation (±0.1 points).",
       "nota_quintil": "Quintiles of equivalised disposable income (household income divided by its consumption units, modified OECD scale) of the whole population, weighted by person. Spain only: no quintile by country or by autonomous community.",
       "quintiles": {
@@ -693,8 +698,8 @@
       "hipoteca": "Only mortgage interest counts, not capital repayments.",
       "renta": "Income refers to the year before the survey: the 2025 survey records 2024 incomes.",
       "muestra": "No confidence intervals: the public microdata do not include the sample design. Each INE figure carries its number of observations and the EU-SILC reliability flag: not published below 20; hatched from 20 to 49.",
-      "compuerta": "The calculation reproduces Eurostat’s figures for Spain, each autonomous community, market-rate tenants and each age group (±0.1 points).",
-      "pobreza": "At-risk-of-poverty after housing costs (indicator 24): (disposable income − 12 × monthly housing costs) ÷ equivalence units, below 60% of median equivalised income before paying for housing. This is Eurostat’s method (ilc_li48): the figure for Spain from 2016 to 2025 reproduces Eurostat’s (±0.1 points), also by age (ilc_li45) and by degree of urbanisation.",
+      "compuerta": "The calculation reproduces Eurostat’s figures for Spain, each autonomous community, market-rate tenants, each age group and each degree of urbanisation (±0.1 points).",
+      "pobreza": "At-risk-of-poverty after housing costs (indicator 24): (disposable income − 12 × monthly housing costs) ÷ equivalence units, below 60% of median equivalised income before paying for housing. This is Eurostat’s method (ilc_li48): the figure for Spain from 2016 to 2025 reproduces Eurostat’s (±0.1 points), also by age (ilc_li45) and by degree of urbanisation. By tenure and by age, the autonomous communities pool three waves.",
       "marcas": "Eurostat figures carry their flags next to the value: b, break in series; u, low reliability (hatched on the map); e, estimate; p, provisional."
     },
     "acceso": {
@@ -771,6 +776,7 @@
       "SK": "Slovakia",
       "TR": "Türkiye",
       "UA": "Ukraine",
+      "UK": "United Kingdom",
       "XK": "Kosovo",
       "EU27_2020": "EU-27"
     }
@@ -1125,7 +1131,7 @@
       "nombre": "Housing cost overburden rate (Eurostat method)",
       "unidad": "% of people",
       "definicion": "People living in households whose total housing costs, net of housing allowances, exceed 40% of disposable income, also net of allowances.",
-      "calculo": "EU-SILC microdata (INE) with Eurostat’s method: only mortgage interest counts; previous-year income; person weights. Reproduces Eurostat figures (±0.1 points). Region × tenure and age breakdowns pool three waves.",
+      "calculo": "EU-SILC microdata (INE) with Eurostat’s method: only mortgage interest counts; previous-year income; person weights. Reproduces Eurostat figures (±0.1 points); for Spain also by degree of urbanisation (ilc_lvho07d). Region × tenure and age breakdowns pool three waves.",
       "lectura": "Measures the burden on those already housed; outright owners dominate it and it misses people unable to leave home. Read it alongside unsuccessful housing search (23) and by tenure, especially market-rate renting."
     },
     "busqueda_sin_exito": {
@@ -1139,7 +1145,7 @@
       "nombre": "At-risk-of-poverty rate after housing costs",
       "unidad": "% of people",
       "definicion": "People whose equivalised disposable income, once total housing costs are deducted, falls below the at-risk-of-poverty threshold (60% of median equivalised income before deducting housing costs).",
-      "calculo": "EU-SILC microdata (INE) with Eurostat’s method (ilc_li48): previous-year disposable income minus 12 times monthly housing costs (only mortgage interest counts), divided by modified OECD equivalence units; the wave’s threshold is not recalculated; person weights. Reproduces Eurostat’s figures for Spain, also by age (ilc_li45) and degree of urbanisation (±0.1 points). Region × tenure breakdowns pool three waves.",
+      "calculo": "EU-SILC microdata (INE) with Eurostat’s method (ilc_li48): previous-year disposable income minus 12 times monthly housing costs (only mortgage interest counts), divided by modified OECD equivalence units; the wave’s threshold is not recalculated; person weights. Reproduces Eurostat’s figures for Spain, also by age (ilc_li45) and degree of urbanisation (±0.1 points). Region × tenure and age breakdowns pool three waves.",
       "lectura": "The statistical version of the residual-income approach: instead of a maximum cost share, it asks whether what is left after paying for housing reaches the poverty threshold. Read it alongside the overburden rate (22), which measures the income share, and by tenure, especially renting."
     },
     "contratos_alquiler": {
@@ -1209,6 +1215,7 @@
     "eurostat_ilc_lvho07_r": "Housing cost overburden rate by NUTS 2 region (ilc_lvho07_r)",
     "eurostat_ilc_li48": "At-risk-of-poverty rate after deducting housing costs by degree of urbanisation (ilc_li48)",
     "eurostat_ilc_li45": "At-risk-of-poverty rate after deducting housing costs by age and sex (ilc_li45)",
+    "eurostat_ilc_lvho07d": "Housing cost overburden rate by degree of urbanisation (ilc_lvho07d)",
     "eurostat_nuts": "NUTS 2021 and 2024 boundaries (Nuts2json / GISCO)",
     "eustat_nastat": "Income indicators for the Basque Country (Eustat) and Navarre (Nastat)",
     "ine_epa_deciles": "Wage deciles of the main job (Labour Force Survey)",

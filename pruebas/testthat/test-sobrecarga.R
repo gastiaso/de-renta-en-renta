@@ -7,6 +7,7 @@ ecv_prueba <- list(
     id_hogar           = c("1", "2", "3", "4", "5", "6"),
     region             = c("ES30", "ES30", "ES51", "ES51", "ES51", "ES30"),
     peso_hogar         = 1,
+    grado_urbanizacion = c("1", "1", "2", "3", "2", NA),
     tenencia           = c(3L, 1L, 3L, 2L, 4L, 2L),
     gasto_vivienda_mes = c(500, 100, 400, NA, 300, 400),
     renta_disponible   = c(12000, 30000, 2000, 20000, 10000, 12000),
@@ -75,11 +76,47 @@ test_that("la comparación con Eurostat se detiene si falta la referencia nacion
   expect_equal(comp$id, c("sobrecarga_es_total", "sobrecarga_es_mercado"))
 })
 
+test_that("la tasa por grado de urbanización usa DB100 y se compara con ilc_lvho07d (18-nov-2026)", {
+  r <- calcular_sobrecarga_ecv(ecv_prueba)
+  valor <- function(g) r$valor[r$corte == "urbanizacion" & r$grupo == g]
+  # Ciudades: hogares 1 (2 personas, sí) y 2 (peso 2, no); pueblos: 3 (sí) y 5 (no); el 6, sin grado,
+  # solo en el total; el 4 (rural) no declara gasto
+  expect_equal(valor("DEG1"), 50)
+  expect_equal(valor("DEG2"), 50)
+  expect_equal(sort(r$grupo[r$corte == "urbanizacion"]), c("DEG1", "DEG2"))
+  expect_equal(r$n_personas[r$corte == "urbanizacion" & r$grupo == "DEG1"], 3L)
+  eurostat <- tibble::tibble(conjunto = c("ilc_lvho07a", "ilc_lvho07c"), geo = "ES", tenencia = c("TOTAL", "RENT_MKT"),
+                             anio = 2025L, valor = c(42.9, 100))
+  urb <- tibble::tibble(conjunto = "ilc_lvho07d", geo = "ES", grado = c("TOTAL", "DEG1", "DEG2", "DEG3"), anio = 2025L,
+                        valor = c(42.9, 50, 50.1, 7), bandera = NA_character_)
+  comp <- suppressMessages(comprobar_sobrecarga_ecv(r, eurostat, urbanizacion = urb))
+  u <- comp[comp$id == "sobrecarga_es_urbanizacion", ]
+  expect_equal(u$detalle, c("ES, DEG1", "ES, DEG2"))
+  expect_equal(u$referencia, c(50, 50.1))
+  expect_equal(unique(u$anio), 2025L)
+  expect_error(suppressMessages(comprobar_sobrecarga_ecv(r, eurostat, urbanizacion = urb[urb$grado != "DEG2", ])),
+               "ilc_lvho07d")
+  refs <- readr::read_csv(file.path("..", "..", "inventario", "referencias_validacion.csv"), show_col_types = FALSE)
+  expect_equal(refs$tipo[refs$id == "sobrecarga_es_urbanizacion"], "bloqueo")
+  expect_equal(refs$tolerancia[refs$id == "sobrecarga_es_urbanizacion"], "±0,1 puntos")
+})
+
+test_that("ilc_lvho07d en JSON-stat: solo porcentajes y los grados de urbanización", {
+  d <- data.frame(freq = "A", unit = c("PC", "PC", "PC", "THS"), deg_urb = c("TOTAL", "DEG1", "DEG9", "DEG1"),
+                  geo = "ES", time = "2025", valor = c(7.2, 8.2, 1, 3), bandera = c("", "b", "", ""))
+  n <- normalizar_eurostat_ilc_lvho07d(d)
+  expect_equal(n$grado, c("DEG1", "TOTAL"))
+  expect_equal(n$bandera, c("b", NA))
+  expect_equal(unique(n$conjunto), "ilc_lvho07d")
+  expect_error(normalizar_eurostat_ilc_lvho07d(d[d$deg_urb == "TOTAL", ]), "grado de urbanizaci")
+  expect_error(normalizar_eurostat_ilc_lvho07d(d[, setdiff(names(d), "deg_urb")]), "dimensiones")
+})
+
 # Quintiles de renta (pregunta abierta 31): diez hogares de una persona, rentas de 1.000 a 10.000 €
 # y una unidad de consumo cada uno; gasto de 100 € al mes (1.200 € al año).
 ecv_quintil <- list(
   hogares = tibble::tibble(
-    anio = 2025L, id_hogar = as.character(1:10), region = "ES30", peso_hogar = 1, tenencia = 3L,
+    anio = 2025L, id_hogar = as.character(1:10), region = "ES30", peso_hogar = 1, grado_urbanizacion = "1", tenencia = 3L,
     gasto_vivienda_mes = 100, renta_disponible = seq(1000, 10000, 1000), ayuda_vivienda = 0, unidades_consumo = 1
   ),
   personas = tibble::tibble(id_persona = paste0(1:10, "01"), id_hogar = as.character(1:10), peso_persona = 1, edad = 40L)

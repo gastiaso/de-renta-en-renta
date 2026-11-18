@@ -124,6 +124,7 @@ Sources cited by the indicator inventory; `calculo_propio` marks derived figures
 | `eurostat_ilc_lvho07_r` | Housing cost overburden rate by NUTS 2 region (ilc\_lvho07\_r) |
 | `eurostat_ilc_li48` | At-risk-of-poverty rate after deducting housing costs by degree of urbanisation (ilc\_li48) |
 | `eurostat_ilc_li45` | At-risk-of-poverty rate after deducting housing costs by age and sex (ilc\_li45) |
+| `eurostat_ilc_lvho07d` | Housing cost overburden rate by degree of urbanisation (ilc\_lvho07d) |
 | `bde_accesibilidad` | Housing affordability indicators (years of income, theoretical burden) |
 | `calculo_propio` | Own calculation from the sources of each term |
 | `boe_imv` | Minimum living income and non-contributory pension: annual amounts (uprating rules) |
@@ -423,10 +424,10 @@ The 24 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 
 - **Unit:** % of people
 - **Family:** Overburden and access (survey)
-- **Sources:** `ine_ecv`, `eurostat_ilc_lvho07`, `eurostat_ilc_lvho07_r`
+- **Sources:** `ine_ecv`, `eurostat_ilc_lvho07`, `eurostat_ilc_lvho07_r`, `eurostat_ilc_lvho07d`
 - **Version:** v0.1
 - **Definition:** People living in households whose total housing costs, net of housing allowances, exceed 40% of disposable income, also net of allowances.
-- **Calculation:** EU-SILC microdata (INE) with Eurostat’s method: only mortgage interest counts; previous-year income; person weights. Reproduces Eurostat figures (±0.1 points). Region × tenure and age breakdowns pool three waves.
+- **Calculation:** EU-SILC microdata (INE) with Eurostat’s method: only mortgage interest counts; previous-year income; person weights. Reproduces Eurostat figures (±0.1 points); for Spain also by degree of urbanisation (ilc\_lvho07d). Region × tenure and age breakdowns pool three waves.
 - **Reading:** Measures the burden on those already housed; outright owners dominate it and it misses people unable to leave home. Read it alongside unsuccessful housing search (23) and by tenure, especially market-rate renting.
 
 ### `busqueda_sin_exito`
@@ -450,7 +451,7 @@ The 24 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Sources:** `ine_ecv`, `eurostat_ilc_li48`, `eurostat_ilc_li45`
 - **Version:** v1.2
 - **Definition:** People whose equivalised disposable income, once total housing costs are deducted, falls below the at-risk-of-poverty threshold (60% of median equivalised income before deducting housing costs).
-- **Calculation:** EU-SILC microdata (INE) with Eurostat’s method (ilc\_li48): previous-year disposable income minus 12 times monthly housing costs (only mortgage interest counts), divided by modified OECD equivalence units; the wave’s threshold is not recalculated; person weights. Reproduces Eurostat’s figures for Spain, also by age (ilc\_li45) and degree of urbanisation (±0.1 points). Region × tenure breakdowns pool three waves.
+- **Calculation:** EU-SILC microdata (INE) with Eurostat’s method (ilc\_li48): previous-year disposable income minus 12 times monthly housing costs (only mortgage interest counts), divided by modified OECD equivalence units; the wave’s threshold is not recalculated; person weights. Reproduces Eurostat’s figures for Spain, also by age (ilc\_li45) and degree of urbanisation (±0.1 points). Region × tenure and age breakdowns pool three waves.
 - **Reading:** The statistical version of the residual-income approach: instead of a maximum cost share, it asks whether what is left after paying for housing reaches the poverty threshold. Read it alongside the overburden rate (22), which measures the income share, and by tenure, especially renting.
 
 ### `contratos_alquiler`

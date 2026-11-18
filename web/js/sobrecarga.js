@@ -64,6 +64,9 @@ const pct = (v) => S.porcentaje(v, t);
 const nombre = (geo, opciones) => S.nombreDe(geo, datos, t, ordenNatural, opciones);
 const conf = () => S.confMedida(datos, estado.medida);
 const pobreza = () => estado.medida === 'pobreza';
+// Vista sin países: la pobreza tras la vivienda por tenencia (Eurostat no la publica por tenencia).
+// Por edad, la pobreza va como la sobrecarga: países de Eurostat (ilc_li45) y comunidades agrupadas.
+const soloEspana = (v) => pobreza() && v.corte === 'tenencia';
 const olas = () => ({ desde: conf().olas.agrupadas[0], hasta: conf().olas.agrupadas[1] });
 // Marcas de Eurostat con su significado: «b (ruptura de serie), u (poca fiabilidad)»
 const textoMarcas = (bandera) => S.marcasDe(bandera)
@@ -174,24 +177,29 @@ function botones(contenedor, opciones, alElegir) {
 function elegir(corte, grupo) {
   if (grupo === 'total') {
     if (estado.corte !== corte) return;
-    Object.assign(estado, { corte: 'total', grupo: 'total', anio: anioTotal });
+    Object.assign(estado, { corte: 'total', grupo: 'total', anio: anioTotalEn(conf()) });
   } else {
     Object.assign(estado, { corte, grupo, anio: conf().anio_desgloses });
   }
   pintarTodo();
 }
 
+// Año de toda la población en la medida de `c` (conf()): el último elegido, si esa medida lo tiene; si
+// no, su último año. `anioTotal` no se reescribe: al volver a la medida que lo tiene, se recupera
+// (revisión del 17-nov-2026: de la pobreza en 2018 a la sobrecarga, que empieza en 2021, y vuelta).
+const anioTotalEn = (c) => (c.anios.includes(anioTotal) ? anioTotal : S.ultimoAnio(datos, estado.medida));
+
 // Cambio de medida: se conservan el corte y el grupo si la otra medida los tiene; si no, toda la
-// población. El año de toda la población, si la otra medida no lo tiene, pasa al último.
+// población. El año de toda la población, si la otra medida no lo tiene, pasa al último sin olvidar el
+// elegido (anioTotalEn()).
 function elegirMedida(medida) {
   if (medida === estado.medida) return;
   estado.medida = medida;
   const c = conf();
-  if (!c.anios.includes(anioTotal)) anioTotal = S.ultimoAnio(datos, medida);
   if (estado.corte !== 'total' && !S.gruposCon(datos, estado.corte, medida).includes(estado.grupo)) {
     Object.assign(estado, { corte: 'total', grupo: 'total' });
   }
-  estado.anio = estado.corte === 'total' ? anioTotal : c.anio_desgloses;
+  estado.anio = estado.corte === 'total' ? anioTotalEn(c) : c.anio_desgloses;
   if (!c.olas.anuales.includes(anioDesgloses)) anioDesgloses = Math.max(...c.olas.anuales);
   pintarTodo();
 }
@@ -211,7 +219,7 @@ function pintarControles() {
   ];
   botones($('sc-tenencia'), opcionesDe('tenencia', 'sobrecarga.controles.toda_poblacion'), (g) => elegir('tenencia', g));
   botones($('sc-edad'), opcionesDe('edad', 'sobrecarga.controles.todas_edades'), (g) => elegir('edad', g));
-  $('sc-edad-grupo').hidden = !S.gruposCon(datos, 'edad', estado.medida).length;   // la pobreza tras la vivienda, sin edad
+  $('sc-edad-grupo').hidden = !S.gruposCon(datos, 'edad', estado.medida).length;   // sin grupos de edad, sin el selector
   const total = estado.corte === 'total';
   botones($('sc-anio'), conf().anios.map((a) => ({
     valor: a, texto: String(a), activo: a === estado.anio, desactivado: !total && a !== estado.anio,
@@ -225,8 +233,9 @@ function pintarControles() {
     const umbral = S.umbralDe(datos, estado.anio);
     if (umbral !== null) notas.push(t('sobrecarga.controles.nota_pobreza', { umbral: t.numero(umbral), anio: estado.anio }));
   }
-  if (!total) notas.push(t(pobreza() ? 'sobrecarga.controles.nota_desglose_pobreza' : 'sobrecarga.controles.nota_desglose',
-    { anio: conf().anio_desgloses, ...olas() }));
+  const notaDesglose = !pobreza() ? 'sobrecarga.controles.nota_desglose'
+    : (estado.corte === 'edad' ? 'sobrecarga.controles.nota_desglose_pobreza_edad' : 'sobrecarga.controles.nota_desglose_pobreza');
+  if (!total) notas.push(t(notaDesglose, { anio: conf().anio_desgloses, ...olas() }));
   $('sc-nota-controles').textContent = notas.join(' ');
 }
 
@@ -416,8 +425,8 @@ function seleccionar(geo) {
 function pintarCabeceraMapa() {
   const v = vista();
   const total = v.corte === 'total';
-  if (pobreza()) {
-    // Eurostat publica la pobreza tras la vivienda solo por país y sin tenencia
+  if (pobreza() && v.corte !== 'edad') {
+    // Eurostat publica la pobreza tras la vivienda solo por país y sin tenencia (por edad, como la sobrecarga)
     $('sc-mapa-titulo').textContent = t(total ? 'sobrecarga.mapa.titulo_paises' : 'sobrecarga.mapa.titulo_pobreza_tenencia');
     $('sc-mapa-fuente').textContent = t(total ? 'sobrecarga.mapa.fuente_pobreza' : 'sobrecarga.mapa.fuente_pobreza_tenencia',
       { anio: v.anio, ...olas() });
@@ -438,7 +447,7 @@ function pintarNotaMapa(geojson) {
   const ids = new Set(geojson.features.map((f) => f.properties.id));
   const sinMapa = S.pintables(v).filter((f) => !ids.has(f.geo)).map((f) => nombre(f.geo));
   const clave = pobreza()
-    ? (v.corte === 'total' ? 'sobrecarga.mapa.nota_pobreza' : 'sobrecarga.mapa.nota_pobreza_tenencia')
+    ? ({ total: 'sobrecarga.mapa.nota_pobreza', edad: 'sobrecarga.mapa.nota_pobreza_edad' }[v.corte] ?? 'sobrecarga.mapa.nota_pobreza_tenencia')
     : (v.corte === 'total' ? 'sobrecarga.mapa.nota_regiones' : 'sobrecarga.mapa.nota_paises');
   const partes = [t(clave, olas())];
   if (sinMapa.length) partes.push(t('sobrecarga.mapa.sin_mapa', { lista: sinMapa.join(', ') }));
@@ -466,10 +475,11 @@ function pintarLeyenda() {
 // Bajo el puesto, en letra de nota (decisión del autor, 12-nov-2026): el orden no tiene márgenes de
 // error (las cifras van sin intervalos) y sale de la lista de la vista (R/web_sobrecarga.R): con toda
 // la población, todos los territorios del mismo año de encuesta (armar_escalera()); con tenencia o
-// edad, los países y España con el último año y las comunidades con las olas agrupadas de la ECV.
+// edad, los países y España con el último año y las comunidades con las olas agrupadas de la ECV (la
+// pobreza por tenencia, sin países).
 const notaPuesto = (v) => (v.corte === 'total'
   ? t('sobrecarga.detalle.puesto_nota', { anio: v.anio })
-  : t(pobreza() ? 'sobrecarga.detalle.puesto_nota_pobreza_olas' : 'sobrecarga.detalle.puesto_nota_olas', { anio: v.anio, ...olas() }));
+  : t(soloEspana(v) ? 'sobrecarga.detalle.puesto_nota_pobreza_olas' : 'sobrecarga.detalle.puesto_nota_olas', { anio: v.anio, ...olas() }));
 
 function pintarDetalle() {
   const v = vista();
@@ -529,7 +539,7 @@ function pintarEscalera() {
   const valores = v.filas.map(esc).filter((x) => x !== null);
   const maximo = Math.max(...valores, 1);
   const periodo = v.corte === 'total' ? String(v.anio)
-    : t(pobreza() ? 'sobrecarga.escalera.periodo_pobreza' : 'sobrecarga.escalera.periodo_paises', { anio: v.anio, ...olas() });
+    : t(soloEspana(v) ? 'sobrecarga.escalera.periodo_pobreza' : 'sobrecarga.escalera.periodo_paises', { anio: v.anio, ...olas() });
   $('sc-escalera-sub').textContent = t('sobrecarga.escalera.subtitulo', { n: t.numero(S.puestos(v)), periodo });
 
   const peldano = (fila) => {
@@ -705,9 +715,8 @@ function pintarDesgloses() {
   // Con la pobreza tras la vivienda, España en total y por tenencia, edad (ilc_li45) y grado de
   // urbanización, sin quintil; cada medida con su nota de los grupos
   $('sc-desgloses-titulo').textContent = t(pobreza() ? 'sobrecarga.desgloses.titulo_pobreza' : 'sobrecarga.desgloses.titulo');
-  document.querySelector('[data-i18n="sobrecarga.desgloses.nota_quintil"]').hidden = pobreza();
-  document.querySelector('[data-i18n="sobrecarga.desgloses.nota"]').hidden = pobreza();
-  document.querySelector('[data-i18n="sobrecarga.desgloses.nota_pobreza"]').hidden = !pobreza();
+  const visibles = S.notasDesgloses(estado.medida);
+  for (const n of S.NOTAS_DESGLOSES) document.querySelector(`[data-i18n="sobrecarga.desgloses.${n}"]`).hidden = !visibles.includes(n);
   const filas = S.filasDesgloses(datos, estado.medida, anioDesgloses);
   const total = filas.find((f) => f.corte === 'total');
   const item = (f, texto, clase) => ({

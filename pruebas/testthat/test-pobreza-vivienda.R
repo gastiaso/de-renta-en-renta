@@ -85,6 +85,38 @@ test_that("las olas agrupadas reparten el peso, cada una con su umbral, y marcan
   expect_equal(c(unique(a$anio_inicio), unique(a$anio_fin), unique(a$olas)), c(2024L, 2025L, 2L))
 })
 
+test_that("comunidad × edad con las olas agrupadas, con su compuerta de coherencia con el total (18-nov-2026)", {
+  a <- calcular_pobreza_vivienda_agrupada(list(ecv_pobreza))
+  valor <- function(r, c, g) a$valor[a$region == r & a$corte == c & a$grupo == g]
+  # ES30: el 101 (30 años, pobre), el 201 (40) y el 202 (10); ES51: el 301 (50) y el 501 (70)
+  expect_equal(valor("ES30", "total", "TOTAL"), 100 / 3)
+  expect_equal(valor("ES30", "edad", "Y18-64"), 50)
+  expect_equal(valor("ES30", "edad", "Y_LT18"), 0)
+  expect_equal(valor("ES30", "edad", "Y_GE18"), 50)
+  expect_length(valor("ES30", "edad", "Y_GE65"), 0)                  # sin personas de 65 y más
+  expect_equal(valor("ES51", "edad", "Y_GE65"), 0)
+  expect_setequal(unique(a$grupo[a$corte == "edad"]), EDADES_POBREZA)
+  comp <- comprobar_pobreza_edad_ccaa(a)
+  expect_equal(unique(comp$id), "ahc_ccaa_edad_total")
+  expect_equal(nrow(comp), 4L)                                        # dos comunidades × dos comprobaciones
+  expect_equal(comp$calculado, comp$referencia)
+  expect_equal(unique(comp$anio), 2025L)
+  # Un grupo de edad alterado: la compuerta lo ve
+  mal <- a
+  mal$valor[mal$region == "ES30" & mal$grupo == "Y18-64"] <- 60
+  m <- comprobar_pobreza_edad_ccaa(mal)
+  expect_equal(sum(abs(m$calculado - m$referencia) > 0.01), 2L)
+  # Desde comprobar_pobreza_vivienda(), con `agrupada`
+  r <- calcular_pobreza_vivienda_ecv(ecv_pobreza)
+  eurostat <- tibble::tibble(conjunto = "ilc_li48", geo = "ES", grado = c("TOTAL", "DEG1", "DEG2", "DEG3"),
+                             anio = 2025L, valor = 20, bandera = NA_character_)
+  ce <- comprobar_pobreza_vivienda(r, eurostat, agrupada = a)
+  expect_equal(sum(ce$id == "ahc_ccaa_edad_total"), 4L)
+  refs <- readr::read_csv(file.path("..", "..", "inventario", "referencias_validacion.csv"), show_col_types = FALSE)
+  expect_equal(refs$tipo[refs$id == "ahc_ccaa_edad_total"], "bloqueo")
+  expect_equal(refs$tolerancia[refs$id == "ahc_ccaa_edad_total"], "±0,01 puntos")
+})
+
 test_that("los trienios móviles agrupan cada ola con las dos anteriores, y la web pinta el último", {
   ola <- function(anio) {
     o <- ecv_pobreza
@@ -172,6 +204,11 @@ test_that("en la tabla larga va como el 22: España, comunidades y cruces agrupa
   expect_true(all(l$indicador == "pobreza_tras_vivienda" & l$fuente == "ine_ecv"))
   expect_equal(nrow(l[l$geo_id == "00" & l$corte == "total" & l$grupo == "total", ]), 1L)
   expect_setequal(unique(l$corte[l$geo_id == "00"]), c("total", "tenencia", "edad", "urbanizacion"))
+  # Comunidades: el total de cada ola y los cruces agrupados por tenencia y edad (el total agrupado,
+  # solo para la compuerta, no entra)
+  expect_setequal(unique(l$corte[l$nivel == "ccaa"]), c("total", "tenencia", "edad"))
+  expect_equal(nrow(l[l$nivel == "ccaa" & l$corte == "total", ]), 2L)
+  expect_true(all(c("Y_LT18", "Y18-64", "Y_GE18") %in% l$grupo[l$geo_id == "13" & l$corte == "edad"]))
   expect_equal(sort(l$grupo[l$geo_id == "00" & l$corte == "urbanizacion"]), c("DEG1", "DEG2", "DEG3"))
   voc <- readr::read_csv(file.path("..", "..", "inventario", "vocabulario.csv"), show_col_types = FALSE)
   expect_true(all(paste(l$corte[l$corte != "total"], l$grupo[l$corte != "total"]) %in% paste(voc$grupo, voc$clave)))

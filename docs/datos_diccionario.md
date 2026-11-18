@@ -124,6 +124,7 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 | `eurostat_ilc_lvho07_r` | Tasa de sobrecarga por regiones NUTS 2 (ilc\_lvho07\_r) |
 | `eurostat_ilc_li48` | Tasa de riesgo de pobreza tras deducir los gastos de vivienda por grado de urbanización (ilc\_li48) |
 | `eurostat_ilc_li45` | Tasa de riesgo de pobreza tras deducir los gastos de vivienda por edad y sexo (ilc\_li45) |
+| `eurostat_ilc_lvho07d` | Tasa de sobrecarga por gastos de vivienda por grado de urbanización (ilc\_lvho07d) |
 | `bde_accesibilidad` | Indicadores de accesibilidad a la vivienda (años de renta, esfuerzo teórico) |
 | `calculo_propio` | Cálculo propio a partir de las fuentes de cada término |
 | `boe_imv` | Ingreso mínimo vital y pensión no contributiva: cuantías anuales (normas de revalorización) |
@@ -423,10 +424,10 @@ Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 
 - **Unidad:** % de las personas
 - **Familia:** Sobrecarga y acceso (encuesta)
-- **Fuentes:** `ine_ecv`, `eurostat_ilc_lvho07`, `eurostat_ilc_lvho07_r`
+- **Fuentes:** `ine_ecv`, `eurostat_ilc_lvho07`, `eurostat_ilc_lvho07_r`, `eurostat_ilc_lvho07d`
 - **Versión:** v0.1
 - **Definición:** Personas que viven en hogares cuyo gasto total en vivienda, neto de ayudas, supera el 40 % de su renta disponible, también neta de ayudas.
-- **Cálculo:** Microdatos de la ECV con el método de Eurostat: de la hipoteca, solo los intereses; renta del año anterior; ponderación por persona. Reproduce las cifras de Eurostat (±0,1 puntos). Los cruces por comunidad, tenencia y edad agrupan tres olas.
+- **Cálculo:** Microdatos de la ECV con el método de Eurostat: de la hipoteca, solo los intereses; renta del año anterior; ponderación por persona. Reproduce las cifras de Eurostat (±0,1 puntos), también las de España por grado de urbanización (ilc\_lvho07d). Los cruces por comunidad, tenencia y edad agrupan tres olas.
 - **Lectura:** Mide la carga de quien ya tiene casa; la dominan los propietarios sin hipoteca y no ve a quien no ha podido emanciparse. Se lee junto a la búsqueda de vivienda sin éxito (23) y por tenencia, sobre todo en el alquiler a precio de mercado.
 
 ### `busqueda_sin_exito`
@@ -450,7 +451,7 @@ Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Fuentes:** `ine_ecv`, `eurostat_ilc_li48`, `eurostat_ilc_li45`
 - **Versión:** v1.2
 - **Definición:** Personas cuya renta disponible por unidad de consumo, una vez restado el gasto total en vivienda, queda por debajo del umbral de riesgo de pobreza (60 % de la mediana de la renta por unidad de consumo antes de restar la vivienda).
-- **Cálculo:** Microdatos de la ECV con el método de Eurostat (ilc\_li48): renta disponible del año anterior menos 12 veces el gasto mensual en vivienda (de la hipoteca, solo intereses), entre las unidades de consumo de la escala de la OCDE modificada; umbral de la ola sin recalcular; ponderación por persona. Reproduce las cifras de España de Eurostat, también por edad (ilc\_li45) y grado de urbanización (±0,1 puntos). Los cruces por comunidad y tenencia agrupan tres olas.
+- **Cálculo:** Microdatos de la ECV con el método de Eurostat (ilc\_li48): renta disponible del año anterior menos 12 veces el gasto mensual en vivienda (de la hipoteca, solo intereses), entre las unidades de consumo de la escala de la OCDE modificada; umbral de la ola sin recalcular; ponderación por persona. Reproduce las cifras de España de Eurostat, también por edad (ilc\_li45) y grado de urbanización (±0,1 puntos). Los cruces por comunidad, tenencia y edad agrupan tres olas.
 - **Lectura:** Es la versión estadística del enfoque residual: no fija un porcentaje máximo de gasto, sino si lo que queda tras pagar la vivienda llega al umbral de pobreza. Se lee junto a la sobrecarga (22), que mide la proporción de la renta, y por tenencia, sobre todo en el alquiler.
 
 ### `contratos_alquiler`

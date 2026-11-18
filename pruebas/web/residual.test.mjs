@@ -269,6 +269,26 @@ test('remates: celda de la evolución, con la PNC antes del IMV, y textos en los
     if (idioma === 'en') assert.ok(!/NCP/.test(JSON.stringify(r)), 'en: sin «NCP»');
     for (const c of ['linea_residual', 'linea_residual_euros', 'queda_menos_linea']) assert.ok(j.interfaz.exportar.columnas[c], `${idioma} ${c}`);
     assert.deepEqual([...j.portada.cuenta.linea.matchAll(/\{(\w+)\}/g)].map((x) => x[1]).sort(), ['encima', 'linea', 'pct', 'total']);
+    // Revisión del 17-nov-2026: el nombre corto de la segunda cifra del sueldo necesario va por el tipo
+    for (const c of ['imv', 'imv_2020', 'pnc', 'ecv']) assert.ok(r.corto[c], `${idioma} corto.${c}`);
+  }
+});
+
+test('remates: la segunda cifra del sueldo necesario nombra la línea por su tipo (PNC antes de 2020)', () => {
+  // Elementos mínimos para crear() de ficha.js, sin navegador
+  const anterior = globalThis.document;
+  globalThis.document = { createElement: (tag) => ({ tag, className: '', textContent: '', partes: [], append(...x) { this.partes.push(...x); } }) };
+  try {
+    const tt = (clave, v = {}) => `${clave}|${Object.values(v).join('|')}`;
+    tt.numero = (x) => String(x);
+    const corto = (linea) => ficha.lineaSueldoConLinea(tt, { valor: 1400, linea, gastos: false }).partes[0].split('|')[1];
+    assert.equal(corto(R.lineaDelAnio(TABLA, 'imv', 2019, 'una_persona')), 'interfaz.residual.corto.pnc');
+    assert.equal(corto(R.lineaDelAnio(TABLA, 'imv', 2024, 'una_persona')), 'interfaz.residual.corto.imv');
+    assert.equal(corto(R.lineaDelAnio(TABLA, 'ecv', 2024, 'una_persona')), 'interfaz.residual.corto.ecv');
+    const de2020 = R.lineaDelAnio({ imv: { anios: { 2020: { una_persona: 461.5, dos_adultos: 599.95, tipo: 'imv' } } } }, 'imv', 2020, 'una_persona');
+    assert.equal(corto(de2020), 'interfaz.residual.corto.imv_2020');
+  } finally {
+    globalThis.document = anterior;
   }
 });
 
@@ -316,13 +336,16 @@ test('remates, muestra de R: el mismo sueldo necesario con la línea y lo que qu
   assert.ok(n > 1000);
 });
 
-test('remates: la cuenta de la portada con la línea, con los datos reales, da lo mismo que R', { skip: !existsSync(ruta) }, () => {
+test('remates: la cuenta de la portada con la línea, con los datos reales, da lo mismo que R', { skip: !existsSync(ruta) }, (ctx) => {
   const j = JSON.parse(readFileSync(ruta, 'utf8'));
-  if (!j.portada || !existsSync(join(raiz, 'web', 'datos', 'manifiesto.json'))) return;
+  // Sin datos reales de la web, se salta y lo dice; con ellos, la muestra tiene que traer la cuenta y ser
+  // del mismo año que el alquiler de la portada (revisión del 17-nov-2026: antes daba la prueba por buena)
+  if (!existsSync(join(raiz, 'web', 'datos', 'manifiesto.json'))) return ctx.skip('sin web/datos/manifiesto.json');
   const m = JSON.parse(leer('web', 'datos', 'manifiesto.json'));
-  if (m.ejemplo) return;
+  if (m.ejemplo) return ctx.skip('web/datos con la muestra de ejemplo');
+  assert.ok(j.portada, 'la muestra no trae la cuenta de la portada: escribir_muestra_residual(…, tar_read(cuenta_portada_residual))');
   const s = portada.seriesCuenta(m);
-  if (String(s.periodo) !== String(j.anio)) return;
+  assert.equal(String(s.periodo), String(j.anio), 'la portada usa otro año del alquiler que la muestra de R: rehacer la muestra');
   const secciones = JSON.parse(leer('web', ...m.secciones.split('/')));
   const columnas = Object.fromEntries(s.pedidos.map(([serie, p]) => {
     const r = m.indicadores[serie].ruta.replaceAll('{nivel}', 'sc').replaceAll('{anio}', p);

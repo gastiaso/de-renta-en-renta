@@ -139,12 +139,17 @@ cociente_sobrecarga <- function(gasto_mes, renta, ayuda) {
 # HH021 → categorías de tenencia de Eurostat (ilc_lvho07c)
 TENENCIA_EUROSTAT <- c("1" = "OWN_NL", "2" = "OWN_L", "3" = "RENT_MKT", "4" = "RENT_FR", "5" = "RENT_FR")
 
+# DB100 → grado de urbanización de Eurostat (deg_urb): ciudades, pueblos y zonas suburbanas, zonas
+# rurales (ilc_lvho07d para el 22; ilc_li48 para el 24).
+GRADOS_URBANIZACION_ECV <- c("1" = "DEG1", "2" = "DEG2", "3" = "DEG3")
+
 # Grupos de edad de Eurostat (ilc_lvho07a) que usa el atlas. Y15-29 se solapa con los otros.
 grupo_edad_eurostat <- function(edad) {
   dplyr::case_when(is.na(edad) ~ NA_character_, edad < 18 ~ "Y_LT18", edad < 65 ~ "Y18-64", TRUE ~ "Y_GE65")
 }
 
-# Personas con su cociente, su tenencia y su grupo de edad (una fila por persona).
+# Personas con su cociente, su tenencia, su grupo de edad y su grado de urbanización (una fila por
+# persona).
 personas_sobrecarga <- function(ecv, umbral = 0.40) {
   hogares <- ecv$hogares |>
     mutate(
@@ -156,7 +161,8 @@ personas_sobrecarga <- function(ecv, umbral = 0.40) {
     inner_join(hogares, by = "id_hogar") |>
     filter(!is.na(cociente), !is.na(peso_persona)) |>
     mutate(propietario = tenencia_eurostat %in% c("OWN_NL", "OWN_L"),
-           grupo_edad = grupo_edad_eurostat(edad))
+           grupo_edad = grupo_edad_eurostat(edad),
+           grado = unname(GRADOS_URBANIZACION_ECV[as.character(grado_urbanizacion)]))
 }
 
 # Personas con tenencia: las de los cortes por tenencia. Un hogar sin HH021 (uno en 2016) cuenta en
@@ -178,17 +184,20 @@ tasa_sobrecarga <- function(datos, corte, grupo, ambito = "ES") {
 
 # Tasa de sobrecarga (%): personas que viven en hogares cuyo cociente supera el umbral,
 # ponderadas por RB050. Cortes: total, tenencia (y propietarios e inquilinos agregados),
-# edad y región NUTS 2.
+# edad, grado de urbanización (DB100, los de ilc_lvho07d; 18-nov-2026) y región NUTS 2. Sin grado,
+# la persona cuenta en el total y no en ese corte.
 calcular_sobrecarga_ecv <- function(ecv, umbral = 0.40) {
   p <- personas_sobrecarga(ecv, umbral)
   jovenes <- filter(p, !is.na(edad), edad >= 15, edad <= 29)
   pt <- con_tenencia(p)
+  pg <- filter(p, !is.na(grado))
   bind_rows(
     tasa_sobrecarga(p, "total", "TOTAL"),
     tasa_sobrecarga(pt, "tenencia", pt$tenencia_eurostat),
     tasa_sobrecarga(pt, "tenencia", ifelse(pt$propietario, "OWN", "RENT")),
     tasa_sobrecarga(filter(p, !is.na(grupo_edad)), "edad", filter(p, !is.na(grupo_edad))$grupo_edad),
     tasa_sobrecarga(jovenes, "edad", "Y15-29"),
+    tasa_sobrecarga(pg, "urbanizacion", pg$grado),
     tasa_sobrecarga(p, "region", p$region)
   ) |>
     select(-ambito) |>
@@ -318,15 +327,17 @@ agrupar_trienios <- function(olas, calcular, n = OLAS_POR_AGRUPACION) {
 ultima_agrupacion <- function(agrupada) agrupada[agrupada$anio_fin == max(agrupada$anio_fin), ]
 
 # Empareja lo calculado con las cifras de Eurostat para la compuerta, año a año
-# (referencias sobrecarga_es_total, sobrecarga_es_mercado, sobrecarga_ccaa y, si se da
-# `europa`, sobrecarga_es_edad).
-comprobar_sobrecarga_ecv <- function(sobrecarga, eurostat, europa = NULL) {
+# (referencias sobrecarga_es_total, sobrecarga_es_mercado, sobrecarga_ccaa y, si se dan,
+# sobrecarga_es_edad con `europa` y sobrecarga_es_urbanizacion con `urbanizacion`, la tabla de
+# leer_eurostat_ilc_lvho07d(): España por grado de urbanización; sin cifra de Eurostat de un grado
+# de una ola, para).
+comprobar_sobrecarga_ecv <- function(sobrecarga, eurostat, europa = NULL, urbanizacion = NULL) {
   bind_rows(lapply(sort(unique(sobrecarga$anio)), function(a) {
-    comprobar_sobrecarga_anio(filter(sobrecarga, anio == a), eurostat, europa)
+    comprobar_sobrecarga_anio(filter(sobrecarga, anio == a), eurostat, europa, urbanizacion)
   }))
 }
 
-comprobar_sobrecarga_anio <- function(sobrecarga, eurostat, europa = NULL) {
+comprobar_sobrecarga_anio <- function(sobrecarga, eurostat, europa = NULL, urbanizacion = NULL) {
   anio_ecv <- unique(sobrecarga$anio)
   ref <- filter(eurostat, anio == anio_ecv)
   calc <- function(c, g) sobrecarga$valor[sobrecarga$corte == c & sobrecarga$grupo == g]
@@ -368,7 +379,18 @@ comprobar_sobrecarga_anio <- function(sobrecarga, eurostat, europa = NULL) {
     edades <- inner_join(calc_edad, ref_edad, by = c("grupo" = "edad"), suffix = c("", "_ref")) |>
       transmute(id = "sobrecarga_es_edad", detalle = paste("ES,", grupo), calculado = valor, referencia = valor_ref)
   }
-  bind_rows(nacional, regional, edades) |> mutate(anio = anio_ecv, .after = id)
+  grados <- NULL
+  if (!is.null(urbanizacion)) {
+    ref_grado <- filter(urbanizacion, geo == "ES", anio == anio_ecv, grado %in% GRADOS_URBANIZACION_ECV)
+    grados <- filter(sobrecarga, corte == "urbanizacion") |>
+      left_join(select(ref_grado, grupo = grado, referencia = valor), by = "grupo") |>
+      transmute(id = "sobrecarga_es_urbanizacion", detalle = paste("ES,", grupo), calculado = valor, referencia)
+    if (anyNA(grados$referencia)) {
+      stop("Eurostat no publica todavía la sobrecarga de España por grado de urbanización (ilc_lvho07d) de ",
+           anio_ecv, ": no hay referencia para la compuerta", call. = FALSE)
+    }
+  }
+  bind_rows(nacional, regional, edades, grados) |> mutate(anio = anio_ecv, .after = id)
 }
 
 # Convención de EU-SILC: con menos de 20 observaciones no se publica; de 20 a 49, poco fiable.
@@ -377,7 +399,7 @@ fiabilidad_eusilc <- function(n) {
 }
 
 # Indicador 22 en la tabla larga (comunidades con el código del INE, desde la región NUTS 2):
-# - España («00»), cada año, en total y por tenencia y edad;
+# - España («00»), cada año, en total y por tenencia, edad y grado de urbanización;
 # - comunidades, cada año, en total;
 # - comunidad × tenencia y comunidad × edad con varias olas agrupadas (`agrupada`, un trienio por
 #   ola desde 2018 con agrupar_trienios()): `anio` es la última ola (2023–2025 → 2025), y la ficha lo dice.

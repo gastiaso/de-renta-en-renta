@@ -23,7 +23,7 @@
 import { ordenNatural } from './nombres.js';
 import { clasesTramos, rampaDeCss, TRAMOS_LLEGA } from './colores.js';
 import { eurosQueQuedan, SUPERFICIE_DOS_SUELDOS, SUPERFICIES } from './sueldo.js';
-import { claveLinea } from './residual.js';
+import { claveLinea, esInicioImv } from './residual.js';
 import { daSueldo, textoSupuestos } from './formulas.js';
 import { lineaTransparencia } from './transparencia.js';
 
@@ -141,8 +141,11 @@ export function lineaSueldoConLinea(t, conLinea) {
   if (!conLinea?.linea) return null;
   if (!Number.isFinite(conLinea.valor)) return crear('p', 'ficha-sueldo-linea', textoLineaResidual(t, conLinea.linea));
   const p = crear('p', 'ficha-sueldo-linea');
+  // El nombre corto, por el tipo de la línea de ese año: antes de 2020, la del IMV es la pensión no
+  // contributiva (revisión del 17-nov-2026); en 2020, con su rótulo
+  const tipo = esInicioImv(conLinea.linea) ? 'imv_2020' : conLinea.linea.tipo ?? conLinea.linea.linea;
   const texto = t(`interfaz.residual.sueldo_linea${conLinea.gastos ? '_gastos' : ''}`, {
-    corto: t(`interfaz.residual.corto.${conLinea.linea.linea}`), euros: t.numero(conLinea.linea.valor, 2),
+    corto: t(`interfaz.residual.corto.${tipo}`), euros: t.numero(conLinea.linea.valor, 2),
   });
   const partes = texto.split('{cifra}');
   partes.forEach((parte, i) => {

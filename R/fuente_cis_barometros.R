@@ -43,8 +43,9 @@ CIS_REFERENCIAS <- tibble::tribble(
   2026L, 7L,   "espana",   43.0,        "nota del CIS de 14-9-2026: 37,5 + 5,5 puntos (julio)"
 )
 
-# Dirección de la página de un barómetro. Algunos estudios llevan un título alargado (los
-# postelectorales de junio y septiembre de 2023) y su página no está en la dirección habitual: sus
+# Dirección de la página de un barómetro. Algunos estudios llevan un título alargado (julio de 2016,
+# los macrobarómetros y barómetros electorales de marzo y diciembre de 2019 y los postelectorales de
+# junio y septiembre de 2023) y su página no está en la dirección habitual: sus
 # direcciones van en inventario/cis_url_excepciones.csv (`excepciones`, de cis_leer_url_excepciones()).
 cis_url_estudio <- function(anio, mes, excepciones = NULL) {
   clave <- sprintf("%d-%02d", as.integer(anio), as.integer(mes))
@@ -58,10 +59,17 @@ cis_leer_url_excepciones <- function(ruta) {
   x <- readr::read_csv(ruta, col_types = readr::cols(.default = "c"), na = "", progress = FALSE)
   falta <- setdiff(c("mes", "estudio", "url", "nota"), names(x))
   if (length(falta)) stop("Faltan columnas en ", ruta, ": ", paste(falta, collapse = ", "), call. = FALSE)
-  mal <- !grepl("^\\d{4}-(0[1-9]|1[0-2])$", x$mes) | !grepl("^\\d+$", x$estudio) |
-    !startsWith(x$url, paste0(CIS_WEB, "/es/estudios/")) | duplicated(x$mes)
-  if (any(mal)) stop(ruta, ": filas con mes, estudio o dirección no válidos, o meses repetidos: ",
-                     paste(which(mal), collapse = ", "), call. = FALSE)
+  # La dirección tiene que nombrar el mes y el año de su fila («…-de-junio-2023…»), y ningún mes ni
+  # estudio puede repetirse (revisión del 17-nov-2026). Las celdas vacías son filas malas.
+  mes_bien <- !is.na(x$mes) & grepl("^\\d{4}-(0[1-9]|1[0-2])$", x$mes)
+  nombre_mes <- ifelse(mes_bien, paste0("-de-", CIS_MESES[as.integer(substr(x$mes, 6, 7))], "-", substr(x$mes, 1, 4)), NA_character_)
+  mal <- !mes_bien | is.na(x$estudio) | !grepl("^\\d+$", x$estudio) |
+    is.na(x$url) | !startsWith(x$url, paste0(CIS_WEB, "/es/estudios/")) |
+    !(mes_bien & !is.na(x$url) & mapply(function(n, u) isTRUE(grepl(n, u, fixed = TRUE)), nombre_mes, x$url)) |
+    duplicated(x$mes) | duplicated(x$estudio)
+  mal <- mal %in% TRUE
+  if (any(mal)) stop(ruta, ": filas con mes, estudio o dirección no válidos (la dirección ha de nombrar el mes y el año ",
+                     "de su fila), o meses o estudios repetidos: ", paste(which(mal), collapse = ", "), call. = FALSE)
   x
 }
 
@@ -111,7 +119,13 @@ cis_descargar_estudio <- function(anio, mes, dir = CIS_DIR, hoy = Sys.Date(), pa
   json <- paste0(base, ".json")
   sin <- paste0(base, ".sin_estudio")
   excepcion <- !is.null(excepciones) && clave %in% excepciones$mes
-  if (file.exists(json)) return(json)
+  if (file.exists(json)) {
+    if (!excepcion) return(json)
+    # Con excepción, el JSON guardado tiene que ser del estudio de la tabla; si no (la tabla se ha
+    # corregido después de la descarga), se vuelve a pedir la página (revisión del 17-nov-2026)
+    guardado <- cis_estudio_ld(paste(readLines(json, encoding = "UTF-8", warn = FALSE), collapse = "\n"))
+    if (identical(guardado, excepciones$estudio[match(clave, excepciones$mes)])) return(json)
+  }
   if (file.exists(sin) && !excepcion) return(NA_character_)
   inicio <- as.Date(sprintf("%d-%02d-01", as.integer(anio), as.integer(mes)))
   if (inicio > hoy) return(NA_character_)

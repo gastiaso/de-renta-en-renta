@@ -56,6 +56,10 @@ export const filasDesgloses = (datos, medida, anio) =>
 // Cortes con alguna fila, en el orden de ORDEN_DESGLOSES.
 export const cortesDesgloses = (filas) =>
   Object.keys(ORDEN_DESGLOSES).filter((c) => filas.some((f) => f.corte === c && ORDEN_DESGLOSES[c].includes(f.grupo)));
+// Notas bajo los desgloses (claves de sobrecarga.desgloses.*; la página las tiene todas y enseña las de
+// la medida): la pobreza, la suya; la sobrecarga, la de los grupos y la del quintil.
+export const NOTAS_DESGLOSES = ['nota', 'nota_quintil', 'nota_pobreza'];
+export const notasDesgloses = (medida) => (medida === 'pobreza' ? ['nota_pobreza'] : ['nota', 'nota_quintil']);
 
 // Valor real de una cifra (null si no hay).
 export const valorDe = (fila, escala = 10) => (fila?.v === null || fila?.v === undefined ? null : fila.v / escala);

@@ -136,9 +136,10 @@ test('pobreza: serie de ilc_li48 y desgloses de España por edad y grado de urba
   // Notas de los desgloses: la de cada medida, en los dos idiomas, y la página tiene las dos
   const html = readFileSync(join(raiz, 'web', 'sobrecarga.html'), 'utf8');
   assert.match(html, /data-i18n="sobrecarga\.desgloses\.nota_pobreza" hidden/);
-  const js = readFileSync(join(raiz, 'web', 'js', 'sobrecarga.js'), 'utf8');
-  assert.match(js, /sobrecarga\.desgloses\.nota"\]'\)\.hidden = pobreza\(\)/);
-  assert.match(js, /sobrecarga\.desgloses\.nota_pobreza"\]'\)\.hidden = !pobreza\(\)/);
+  // Qué notas se ven con cada medida (revisión del 17-nov-2026: antes se buscaba el texto del código)
+  assert.deepEqual(S.notasDesgloses('pobreza'), ['nota_pobreza']);
+  assert.deepEqual(S.notasDesgloses('sobrecarga'), ['nota', 'nota_quintil']);
+  for (const n of S.NOTAS_DESGLOSES) assert.match(html, new RegExp(`data-i18n="sobrecarga\\.desgloses\\.${n}"`), `la página tiene la nota ${n}`);
   for (const idioma of ['es', 'en']) {
     const s = leer('web', 'i18n', `${idioma}.json`).sobrecarga;
     for (const k of ['nota_pobreza', 'urbanizacion']) assert.ok(s.desgloses[k]?.length, `${idioma} desgloses.${k}`);
@@ -153,9 +154,10 @@ test('pobreza: serie de ilc_li48 y desgloses de España por edad y grado de urba
 test('textos de la pobreza tras la vivienda en los dos idiomas, con las mismas marcas', () => {
   const marcas = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((x) => x[1]).sort();
   const claves = ['controles.medida', 'controles.medidas.sobrecarga', 'controles.medidas.pobreza', 'controles.nota_pobreza',
-    'controles.nota_desglose_pobreza', 'mapa.titulo_pobreza_tenencia', 'mapa.fuente_pobreza', 'mapa.fuente_pobreza_tenencia',
-    'mapa.nota_pobreza', 'mapa.nota_pobreza_tenencia', 'detalle.puesto_nota_pobreza_olas', 'escalera.periodo_pobreza',
-    'desgloses.titulo_pobreza', 'metodo.pobreza'];
+    'controles.nota_desglose_pobreza', 'controles.nota_desglose_pobreza_edad', 'mapa.titulo_pobreza_tenencia',
+    'mapa.fuente_pobreza', 'mapa.fuente_pobreza_tenencia', 'mapa.nota_pobreza', 'mapa.nota_pobreza_tenencia',
+    'mapa.nota_pobreza_edad', 'detalle.puesto_nota_pobreza_olas', 'escalera.periodo_pobreza', 'desgloses.titulo_pobreza',
+    'metodo.pobreza'];
   const es = leer('web', 'i18n', 'es.json').sobrecarga;
   const en = leer('web', 'i18n', 'en.json').sobrecarga;
   const de = (d, k) => k.split('.').reduce((x, p) => x?.[p], d);
@@ -168,6 +170,10 @@ test('textos de la pobreza tras la vivienda en los dos idiomas, con las mismas m
   for (const k of claves.filter((x) => !x.startsWith('metodo.') && !x.startsWith('controles.medida'))) {
     assert.ok(js.includes(`'sobrecarga.${k}'`), `sobrecarga.js usa ${k}`);
   }
+  // Botón del grupo «18 y más» (pobreza por edad, 18-nov-2026) y grado de urbanización en la nota de la sobrecarga
+  assert.ok(es.controles.grupos.Y_GE18 && en.controles.grupos.Y_GE18);
+  assert.match(es.desgloses.nota, /ilc_lvho07d/);
+  assert.match(en.desgloses.nota, /ilc_lvho07d/);
   const html = readFileSync(join(raiz, 'web', 'sobrecarga.html'), 'utf8');
   assert.match(html, /data-i18n="sobrecarga\.metodo\.pobreza"/);
   assert.match(html, /id="sc-medida"/);
@@ -278,7 +284,8 @@ test('exportación del pipeline: vistas, escalera, muestra y geometrías', { ski
         assert.ok(['normal', 'baja', 'no publicable'].includes(f.fiabilidad), `${v.clave} ${f.geo}: fiabilidad`);
         if (f.fiabilidad === 'no publicable') assert.equal(f.v, null);
       } else {
-        assert.ok(f.tabla?.startsWith(v.medida === 'pobreza' ? 'ilc_li48' : 'ilc_lvho07'), `${v.clave} ${f.geo}: tabla de Eurostat`);
+        const tabla = v.medida !== 'pobreza' ? 'ilc_lvho07' : (v.corte === 'edad' ? 'ilc_li45' : 'ilc_li48');
+        assert.ok(f.tabla?.startsWith(tabla), `${v.clave} ${f.geo}: tabla de Eurostat`);
         assert.equal(f.n, undefined);
       }
     }
@@ -287,7 +294,20 @@ test('exportación del pipeline: vistas, escalera, muestra y geometrías', { ski
     assert.equal(comunidades.length, 19, `${v.clave}: comunidades`);
     // Referencias: España siempre; la UE-27, salvo en la pobreza tras la vivienda por tenencia (Eurostat no la publica)
     assert.ok(S.referencia(v, 'ES'), `${v.clave}: España`);
-    if (!(v.medida === 'pobreza' && v.corte !== 'total')) assert.ok(S.referencia(v, 'EU27_2020'), `${v.clave}: UE-27`);
+    if (!(v.medida === 'pobreza' && v.corte === 'tenencia')) assert.ok(S.referencia(v, 'EU27_2020'), `${v.clave}: UE-27`);
+  }
+  // Nombres (revisión del 17-nov-2026: el Reino Unido de la pobreza de 2016–2018 salía «UK (UK)»): cada
+  // territorio que no es una comunidad tiene nombre de país en los dos idiomas, o nombre propio y país
+  for (const idioma of ['es', 'en']) {
+    const paises = leer('web', 'i18n', `${idioma}.json`).sobrecarga.paises;
+    const sinNombre = new Set();
+    for (const v of d.vistas) {
+      for (const { geo } of v.filas) {
+        if (d.comunidades?.[geo] || paises[geo]) continue;
+        if (!d.nombres?.[geo] || !paises[geo.slice(0, 2)]) sinNombre.add(`${v.clave} ${geo}`);
+      }
+    }
+    assert.deepEqual([...sinNombre], [], `${idioma}: territorios sin nombre`);
   }
   for (const ruta of Object.values(d.geometrias)) {
     const g = leer('web', ruta);
@@ -322,7 +342,14 @@ test('exportación del pipeline: vistas, escalera, muestra y geometrías', { ski
   const p = d.pobreza;
   for (const a of p.anios) assert.ok(S.vistaDe(d, { medida: 'pobreza', anio: a }), `pobreza ${a}`);
   assert.deepEqual(S.gruposCon(d, 'tenencia', 'pobreza'), ['RENT_MKT', 'RENT_FR', 'OWN_L', 'OWN_NL']);
-  assert.deepEqual(S.gruposCon(d, 'edad', 'pobreza'), []);
+  // Por edad (18-nov-2026): los cuatro grupos de ilc_li45, con países de Eurostat y las 19 comunidades
+  assert.deepEqual(S.gruposCon(d, 'edad', 'pobreza'), ['Y_LT18', 'Y18-64', 'Y_GE65', 'Y_GE18']);
+  for (const g of S.gruposCon(d, 'edad', 'pobreza')) {
+    const v = S.vistaDe(d, { medida: 'pobreza', corte: 'edad', grupo: g });
+    assert.ok(v.filas.filter((f) => f.bloque === 'europa').length > 20, `pobreza edad ${g}: países`);
+  }
+  // Sobrecarga de España por grado de urbanización (18-nov-2026), cada ola
+  assert.equal(d.espana.anual.filter((f) => f.corte === 'urbanizacion').length, 3 * d.olas.anuales.length);
   assert.ok(p.umbrales.length === p.olas.anuales.length && p.umbrales.every((u) => u.euros > 5000 && u.euros < 20000));
   assert.equal(p.espana.filter((f) => f.corte === 'total').length, p.olas.anuales.length);
   const pt = S.vistaDe(d, { medida: 'pobreza' });
