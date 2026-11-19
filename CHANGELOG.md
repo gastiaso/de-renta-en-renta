@@ -30,6 +30,8 @@ Lo hecho desde la v1.1.0 (decisión del autor, 18-nov-2026). Novedades principal
 - la revisión del código del 18-nov-2026: el margen de la mediana al 95 % y solo sobre el alquiler, los otros gastos de vivienda con la superficie, las tablas de paso desde el Censo 2011, el CIS por comunidad con su peso propio, la mochila con el factor de composición de la ECV y el indicador 17 con los supuestos del Banco de España;
 - la prueba de reproducción en limpio y sus arreglos, la revisión independiente y la auditoría de la documentación.
 
+Release `v1.2.0` (datos y código del commit `4354766`, sin cambios sin commit), publicada el 19-nov-2026. Contra el sitio publicado, la prueba en el navegador (`comprobar_web_navegador()`, 300 secciones) da 0 en sus 71 comprobaciones de 20 tipos y el PMTiles se sirve por rangos.
+
 ### Corregido (18-nov-2026, revisión del código)
 
 - **Margen y otros gastos de vivienda** (`web/js/sueldo.js`, `web/js/formulas.js`, `web/js/principal.js`): el margen de la mediana del alquiler solo toca el alquiler, como ya hacía la regla residual. Antes tocaba también los otros gastos: con 700 € de alquiler, 150 € de otros gastos, un margen del 5 % y el umbral del 30 %, el intervalo del sueldo necesario salía de ±142 € en lugar de ±117 €; y con 2.000 € de ingreso, 500 € de alquiler, 150 € de otros gastos y un margen del 8 %, «¿te llega?» marcaba «en el límite» sin estarlo. `intervaloMargen()` y `enLimiteLlega()` reciben la parte fija (`fijoDe()`, `fijoLlega()`).
