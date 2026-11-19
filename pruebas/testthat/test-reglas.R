@@ -124,8 +124,9 @@ test_that("el inventario real se lee y tiene las columnas de la especificación"
   expect_true(all(reglas$estado %in% REGLAS_ESTADOS))
   expect_true(all(normas$estado %in% REGLAS_ESTADOS))
   expect_true(all(literales$ambito %in% c("regla", "casilla")))
-  # Sin el BOE: las comprobaciones que no lo necesitan pasan
-  x <- reglas_comprobar_completo(reglas, normas, hoy = as.Date("2026-11-13"))
+  # Sin el BOE: las comprobaciones que no lo necesitan pasan (hoy: la última consulta del inventario, para
+  # que la prueba no dependa del reloj ni se rompa al renovar la consulta)
+  x <- reglas_comprobar_completo(reglas, normas, hoy = max(as.Date(reglas$texto_consultado)))
   expect_equal(sum(x$calculado[x$id == "reglas_completo"]), 0)
 })
 
