@@ -179,7 +179,7 @@ gh release create v0.1.0 publicacion/* --target main --latest --title "v0.1.0" -
 
 En la web: *Releases → Draft a new release*, etiqueta `v0.1.0` sobre `main`, arrastrar los cinco ficheros de `publicacion/`, marcar *Set as the latest release* y publicar.
 
-Las etiquetas siguen la versión del atlas: `v0.1.0` (9-nov-2026), `v0.4.0` (10-nov-2026, con F3 a F6 y sin la oferta de Idealista), `v1.0.0` (11-nov-2026, commit `df67c1b`), `v1.1.0` (12-nov-2026, commit `8f356db`) y `v1.2.0` (19-nov-2026, commit `4354766`). La etiqueta va sobre el commit de la publicación, el mismo que se pone como `ref` en el flujo.
+Las etiquetas siguen la versión del atlas: `v0.1.0` (9-nov-2026), `v0.4.0` (10-nov-2026, con F3 a F6 y sin la oferta de Idealista), `v1.0.0` (11-nov-2026, commit `df67c1b`), `v1.1.0` (12-nov-2026, commit `8f356db`) y `v1.2.0` (19-nov-2026, commit `4354766`). La etiqueta va sobre el commit de la publicación, el mismo que se pone como `ref` en el flujo. Excepción: el 21-nov-2026 se publicó el sitio con `b7de592` y los datos de la v1.2.0, sin release nuevo, para encender la capa del Notariado (decisión del autor); `b7de592` es desde entonces la `ref` por defecto.
 
 ### 5. Publicar y comprobar
 

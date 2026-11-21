@@ -4,6 +4,10 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Publicado en Pages (21-nov-2026, sin release nuevo)
+
+- Sitio montado con el código y la nota de `b7de592` y los datos del release `v1.2.0`, con la capa del Notariado del *release* en borrador (decisión del autor): el mapa y la ficha del Notariado, sin descarga en CSV. `b7de592` pasa a ser la `ref` por defecto del flujo. Antes de lanzarlo, el sitio montado en local igual que el flujo dio 0 en las 71 comprobaciones de `comprobar_web_navegador()`; contra el sitio publicado, también. Siguen como en la v1.2.0 lo que sale de los datos: los resúmenes de «Reglas del juego» (en revisión jurídica) y los tramos del mapa del 17.
+
 ### Añadido (19 y 21-nov-2026, Notariado con licencia propia no comercial, solo web)
 
 - Fuentes `notariado` (Portal Estadístico, capa ArcGIS del mapa de precios; foto de 12 meses guardada con su fecha) y `notariado_cien` (CIEN, «Estadísticas al completo»), con licencia «© Consejo General del Notariado, solo uso no comercial» (`LICENCIA_DATOS.md`; decisiones del autor del 19-nov-2026). Se descargan cuando el calendario de fuentes dice que toca (`cal_toca()`).
