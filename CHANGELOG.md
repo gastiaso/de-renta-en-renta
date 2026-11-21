@@ -4,6 +4,12 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (21-nov-2026, aviso de coherencia del Notariado con el MIVAU)
+
+- `comprobar_notariado_mivau()` y el objetivo `validacion_notariado_mivau`: dos alertas que comparan el precio medio por compraventa de la foto del Portal Estadístico con el valor medio de las compraventas de vivienda libre del MIVAU (`mivau_transacciones`), en la media de los cuatro últimos trimestres cerrados antes de la foto. `notariado_mivau_espana` (±15 %): +5,7 % en la foto del 21-oct-2026 (227.374 € frente a 215.115 €, de 2025-T2 a 2026-T1). `notariado_mivau_provincias` (más de un 25 %): 0 de 52 (de −6,1 a +13,7 %). Ninguna cifra publicada cambia.
+- Se hace con el precio y no con el número de compraventas que pedía la tarea: el atlas tiene del MIVAU el valor medio, no el recuento. El contraste del recuento queda por decidir (pide una descarga nueva).
+- Flujo de pruebas en GitHub (tarea 54): comprobadas en sus registros las cuatro cuestiones pendientes (tiempo sin caché, paquetes compilados, mapa base con el GDAL de Ubuntu y acciones de r-lib); `docs/backlog.md`.
+
 ### Actualizado (21-nov-2026, fuentes que tocaban según el calendario)
 
 - **Banco de España, tipos de referencia** (`bde_tipos_referencia`, tabla 19.1): la descarga del 21-nov-2026 completa octubre de 2026 (tipo medio de los préstamos hipotecarios a más de tres años, 3,236 %). Cambia el módulo histórico (`historico` y su fichero de la web); el tipo anual y los términos del indicador 17 llegan a 2025 y salen idénticos. `ultimo_dato` del calendario, 2026-10.

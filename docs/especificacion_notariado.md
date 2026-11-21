@@ -77,6 +77,8 @@ Resultado en el pipeline, 19-nov-2026 (foto del 21-oct-2026; CIEN hasta mayo de 
 | `notariado_rango` | Precios publicables fuera de 50–20.000 €/m²; informadas por encima del total | bloqueo | 0 |
 | `notariado_foto` | Días entre las fechas de datos de las cinco capas (±2) | bloqueo | 0 |
 | `notariado_foto_antiguedad` | Días desde la foto (±120) | alerta | 29 |
+| `notariado_mivau_espana` | Precio medio por compraventa de España frente al valor medio del MIVAU de los cuatro últimos trimestres cerrados antes de la foto (±15 %) | alerta | +5,7 % (227.374 € frente a 215.115 €, de 2025-T2 a 2026-T1) |
+| `notariado_mivau_provincias` | Provincias con precio publicable a más de un 25 % del valor medio del MIVAU | alerta | 0 de 52 (de −6,1 a +13,7 %) |
 | `notariado_cien_territorios` | Nombres sin correspondencia y filas repetidas | bloqueo | 0 |
 | `notariado_cien_suma_ccaa` | Por año, comunidades = España | bloqueo | 0 en 2007–2026 |
 | `notariado_cien_suma_provincias` | Por año, provincias = comunidad (Ceuta y Melilla dentro de Andalucía) | bloqueo | 0 en 2007–2026 |
@@ -86,7 +88,7 @@ Resultado en el pipeline, 19-nov-2026 (foto del 21-oct-2026; CIEN hasta mayo de 
 | `notariado_cien_rango` | Cuantías fuera de 20.000–1.000.000 €; números negativos | bloqueo | 0 |
 | `web_notariado` | Ida y vuelta de `web/datos/notariado/`, licencia en el manifiesto, ficheros de más y series en el manifiesto general | bloqueo | 0 |
 
-Coherencia entre fuentes, por revisar: penotariado no tiene serie con que contrastar el CIEN, y el Notariado no se compara con Registradores (regla 5). Cabría un aviso que compare el número de compraventas de penotariado de España con la suma de 12 meses de las transacciones del MIVAU (`mivau_transacciones`), que salen de los mismos ficheros notariales.
+Coherencia entre fuentes: penotariado no tiene serie con que contrastar el CIEN, y el Notariado no se compara con Registradores (regla 5). Desde el 21-nov-2026, dos alertas (`comprobar_notariado_mivau()`, objetivo `validacion_notariado_mivau`) comparan el precio medio por compraventa de la foto con el valor medio de las compraventas de vivienda libre del MIVAU (`mivau_transacciones`, tabla 34020150), que sale de las mismas escrituras. Las dos cifras no miden lo mismo: la foto son 12 meses móviles de todas las viviendas, y el MIVAU va unos meses por detrás y cuenta la vivienda libre; con precios al alza, la foto queda por encima (+5,7 % en España). Los márgenes (±15 % en España, 25 % por provincia) dejan pasar ese desfase y avisan de un error de nivel: unidades, o una foto de otra clase de fincas. El número de compraventas no se contrasta: el atlas no baja el del MIVAU (sería otra tabla del boletín, una descarga nueva que decide el autor).
 
 ## Licencia y atribución en la web
 
@@ -110,7 +112,7 @@ Las demás, cerradas en el repaso de pendientes del 21-nov-2026. El criterio com
 5. **Sin más series del CIEN ni la mensual:** las hipotecas para comprar vivienda son las que hablan del acceso, y la ficha trabaja con años.
 6. **Las fotos se siguen guardando** (fuera de git, con su fecha), y la serie propia no se publica todavía: con una sola foto no hay serie. Se decide cuando haya dos fotos de fin de año (enero de 2028); hasta entonces, la web enseña la última.
 7. **Numeración 25 a 29,** también en el plan (§5, tabla F): ya están así en el inventario, las pruebas, la web y el registro de cambios.
-8. **Aviso de coherencia con las transacciones del MIVAU: sí, como `alerta`,** en una tarea de la v1.3 (`docs/backlog.md`). Las transacciones del MIVAU salen de los mismos ficheros notariales, así que vería un filtro mal aplicado a toda la foto, que las sumas internas no ven. Es una compuerta, no un indicador: no mezcla fuentes (regla 5).
+8. **Aviso de coherencia con las transacciones del MIVAU: sí, como `alerta`.** Las transacciones del MIVAU salen de los mismos ficheros notariales, así que vería un error de nivel en toda la foto, que las sumas internas no ven. Es una compuerta, no un indicador: no mezcla fuentes (regla 5). Hecho el 21-nov-2026 con el precio medio, no con el número de compraventas que proponía esta decisión: de `mivau_transacciones` el atlas tiene el valor medio y no el recuento («Compuertas», arriba).
 
 La etiqueta de la licencia se queda sin enlace a la fuente (alternativa de «Licencia y atribución en la web»): la procedencia ya se cita en la etiqueta, la ficha y la nota.
 

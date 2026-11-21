@@ -484,6 +484,48 @@ comprobar_notariado_cien <- function(cien, referencia = CIEN_REFERENCIA_ESPANA) 
   )
 }
 
+# Coherencia con otra fuente (alertas; inventario/referencias_validacion.csv): el precio medio por
+# compraventa de la foto de penotariado frente al valor medio de las compraventas de vivienda libre
+# del MIVAU (mivau_transacciones, tabla 34020150), que sale de las mismas escrituras. Se toma la
+# media de los `n_trimestres` últimos trimestres del MIVAU cerrados antes de la foto:
+#   notariado_mivau_espana: desviación (%) de España;
+#   notariado_mivau_provincias: provincias con precio publicable cuya desviación pasa de `margen_provincia`
+#     (%) o que no tienen los trimestres del MIVAU.
+# Las dos cifras no miden lo mismo: la foto son 12 meses móviles de todas las viviendas y el MIVAU va
+# unos meses por detrás y cuenta la vivienda libre; con precios al alza, la foto queda por encima. Es
+# un aviso de nivel (unidades, o una foto de otra clase de fincas), no un indicador: no mezcla
+# fuentes (regla 5). El número de compraventas no se contrasta: el atlas no baja el del MIVAU.
+# Sin trimestres del MIVAU, NA (la alerta salta).
+comprobar_notariado_mivau <- function(pen, transacciones_trimestral, n_trimestres = 4L, margen_provincia = 25) {
+  fin <- as.Date(sprintf("%d-%02d-01", transacciones_trimestral$anio, 3L * transacciones_trimestral$trimestre)) + 31
+  fin <- as.Date(format(fin, "%Y-%m-01")) - 1                       # último día del trimestre
+  t <- transacciones_trimestral[fin <= pen$fecha & !is.na(transacciones_trimestral$valor) &
+                                  transacciones_trimestral$nivel %in% c("nacional", "provincia"), ]
+  t <- t[order(t$nivel, t$geo_id, t$anio, t$trimestre), ]
+  clave <- paste(t$nivel, t$geo_id)
+  orden <- stats::ave(seq_along(clave), clave, FUN = function(i) rev(seq_along(i)))   # 1 = el más reciente
+  t <- t[orden <= n_trimestres, ]
+  clave <- paste(t$nivel, t$geo_id)
+  mivau <- tapply(t$valor, clave, function(v) if (length(v) == n_trimestres) mean(v) else NA_real_)
+  esp <- t[t$nivel == "nacional", ]
+  periodo <- if (nrow(esp)) sprintf("%d-T%d a %d-T%d", esp$anio[1], esp$trimestre[1], esp$anio[nrow(esp)], esp$trimestre[nrow(esp)])
+             else "sin trimestres"
+  f <- pen$filas[pen$filas$nivel %in% c("nacional", "provincia") & !is.na(pen$filas$total_informados) &
+                   pen$filas$total_informados >= NOTARIADO_MIN_INFORMADAS, ]
+  ref <- unname(mivau[paste(f$nivel, f$geo_id)])
+  dev <- 100 * (f$precio_medio / ref - 1)
+  nac <- f$nivel == "nacional"
+  fuera <- !nac & (is.na(dev) | abs(dev) > margen_provincia)
+  anio <- as.integer(format(pen$fecha, "%Y"))
+  tibble::tibble(
+    id = c("notariado_mivau_espana", "notariado_mivau_provincias"), anio = anio,
+    detalle = c(sprintf("precio medio por compraventa de España frente al valor medio del MIVAU de %s (%%)", periodo),
+                sprintf("provincias fuera de ±%s %% del valor medio del MIVAU de %s%s", format(margen_provincia), periodo,
+                        if (any(fuera)) paste0(": ", paste(sort(f$geo_id[fuera]), collapse = ", ")) else "")),
+    calculado = c(if (any(nac)) dev[nac][1] else NA_real_, sum(fuera)),
+    referencia = 0)
+}
+
 # ---- Armonización (formato de la tabla larga, fuera de ella) -------------------------------------
 
 # Penotariado en el formato de la tabla larga: España, comunidad, provincia y municipio (el código

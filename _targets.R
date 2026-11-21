@@ -930,6 +930,10 @@ bloque_notariado <- if (!NOTARIADO || AMBITO != "") list(
   tar_target(validacion_notariado, validar_referencias(bind_rows(
     comprobar_penotariado(penotariado, territorios_2021),
     comprobar_notariado_cien(notariado_cien)), referencias)),
+  # Aviso de coherencia con el valor medio escriturado del MIVAU (alertas): objetivo aparte, para que
+  # un boletín nuevo del Ministerio no rehaga la capa
+  tar_target(validacion_notariado_mivau, validar_referencias(
+    comprobar_notariado_mivau(penotariado, transacciones_trim), referencias)),
   tar_target(larga_notariado, {
     validacion_notariado   # la compuerta va antes
     bind_rows(armonizar_penotariado(penotariado, territorios_2021),

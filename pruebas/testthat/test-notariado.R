@@ -141,6 +141,43 @@ test_that("penotariado: la compuerta pasa con la foto coherente y salta con suma
   expect_equal(valor("notariado_municipios"), 1)
 })
 
+test_that("penotariado frente al MIVAU: los cuatro últimos trimestres cerrados antes de la foto, España y provincias", {
+  pen <- foto_n()                                                              # foto del 21-10-2026
+  # Valor medio del MIVAU: España 190.000 € de media en los cuatro trimestres; el de 2026-T4 acaba después de la foto
+  trim <- function(nivel, geo_id, valores, anio = c(2025L, 2026L, 2026L, 2026L, 2026L), trimestre = c(4L, 1L, 2L, 3L, 4L)) {
+    tibble::tibble(nivel = nivel, geo_id = geo_id, anio = anio, trimestre = trimestre, valor = valores)
+  }
+  tt <- dplyr::bind_rows(trim("nacional", "00", c(180000, 185000, 195000, 200000, 900000)),
+                         trim("provincia", "04", c(120000, 120000, 120000, 120000, 1)),
+                         trim("provincia", "11", c(190400, 190400, 190400, 190400, 1)),
+                         trim("provincia", "28", c(200000, 200000, 200000, 200000, 1)),
+                         trim("ccaa", "13", c(1, 1, 1, 1, 1)))
+  r <- comprobar_notariado_mivau(pen, tt)
+  expect_equal(r$id, c("notariado_mivau_espana", "notariado_mivau_provincias"))
+  expect_equal(r$anio, c(2026L, 2026L))
+  expect_equal(r$calculado[1], 100 * (200000 / 190000 - 1))                    # España: 2.000 € × 100 m² frente a 190.000
+  expect_match(r$detalle[1], "2025-T4 a 2026-T3")
+  expect_equal(r$calculado[2], 1)                                              # Madrid: 270.000 frente a 200.000 (+35 %)
+  expect_match(r$detalle[2], ": 28$")
+  expect_equal(comprobar_notariado_mivau(pen, tt, margen_provincia = 40)$calculado[2], 0)
+
+  # Una provincia sin sus cuatro trimestres cuenta como fuera; sin trimestres de España, NA (la alerta salta)
+  corto <- tt[!(tt$geo_id == "04" & tt$anio == 2025L), ]
+  expect_match(comprobar_notariado_mivau(pen, corto)$detalle[2], ": 04, 28$")
+  vacio <- comprobar_notariado_mivau(pen, tt[tt$nivel != "nacional", ])
+  expect_true(is.na(vacio$calculado[1]))
+  expect_match(vacio$detalle[1], "sin trimestres")
+  # Los trimestres sin cifra no cuentan: se toman los cuatro anteriores con valor
+  hueco <- tt
+  hueco$valor[hueco$nivel == "nacional" & hueco$anio == 2026L & hueco$trimestre == 3L] <- NA
+  hueco <- dplyr::bind_rows(trim("nacional", "00", 175000, 2025L, 3L), hueco)
+  expect_match(comprobar_notariado_mivau(pen, hueco)$detalle[1], "2025-T3 a 2026-T2")
+
+  referencias <- readr::read_csv(file.path("..", "..", "inventario", "referencias_validacion.csv"), show_col_types = FALSE)
+  expect_warning(validar_referencias(r, referencias), "notariado_mivau_provincias")   # alerta: avisa y no detiene
+  expect_silent(validar_referencias(comprobar_notariado_mivau(pen, tt, margen_provincia = 40), referencias))
+})
+
 test_that("penotariado: tabla con el umbral de 20 informadas (secreto), los estimados y sin códigos postales", {
   pen <- foto_n()
   larga <- armonizar_penotariado(pen, ter_n)
