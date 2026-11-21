@@ -11,7 +11,8 @@ const MANIFIESTOS = ['datos/manifiesto.json', 'datos/ejemplo/manifiesto.json'];
 // que el pipeline escribe siempre (apagada, {"capa": …, "activa": false}) y el flujo de Pages también
 // (R/web_portales.R; docs/publicacion.md). Sus series y mapas se suman a los del manifiesto general
 // (unirCapas). La muestra de datos/ejemplo/ no tiene capas. La del Notariado (19-nov-2026; licencia
-// propia no comercial, solo web; R/web_notariado.R) va en git y llega al sitio con web/.
+// propia no comercial, solo web; R/web_notariado.R) no va en git: llega al sitio del release en
+// borrador «notariado» (21-nov-2026; docs/publicacion.md, «Capa del Notariado»).
 export const CAPAS = ['datos/portales/manifiesto.json', 'datos/notariado/manifiesto.json'];
 const memoria = new Map();
 
