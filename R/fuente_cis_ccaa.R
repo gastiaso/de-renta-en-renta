@@ -25,7 +25,8 @@
 #     hasta 6,7 puntos, más que su margen, porque el ajuste por nivel educativo se hace dentro de
 #     cada comunidad); España, con `peso`, que reproduce la serie nacional publicada. Las cifras de
 #     las comunidades así ponderadas no suman la de España, ni tienen por qué: la compuerta de la
-#     suma (cis_ccaa_suma) mide la lectura con `peso` (cis_ccaa_por_anio());
+#     suma (cis_ccaa_suma) mide la lectura con `peso` (cis_ccaa_por_anio()), y `peso_ccaa` lo vigila
+#     cis_ccaa_peso_ccaa (19-nov-2026);
 #   - base: quien tiene una primera mención distinta de «no procede» (NP); NS y NC cuentan;
 #   - año: todas las entrevistas del año juntas (no la media de los meses); el año en curso, con los
 #     meses publicados y rotulado «hasta {mes}»;
@@ -262,7 +263,14 @@ cis_ccaa_tabla <- function(menciones, comunidades, rupturas, nombres) {
 #   cis_ccaa_espana (bloqueo): cada mes de España calculado desde el Parquet, a un decimal, frente a
 #     la cifra publicada de la serie nacional (tabla cis_vivienda), ±0,1 puntos, las dos preguntas;
 #   cis_ccaa_suma (bloqueo): por año natural y pregunta, la media de las comunidades ponderada por la
-#     suma de sus pesos, frente a la cifra de España (diferencia máxima);
+#     suma de sus pesos, frente a la cifra de España (diferencia máxima). Todo con `peso`: no mira las
+#     cifras de las comunidades que se publican, que van con `peso_ccaa`;
+#   cis_ccaa_peso_ccaa (bloqueo; 19-nov-2026): por estudio y comunidad, suma de `peso_ccaa` entre las
+#     entrevistas, frente a 1 (±0,1). En la edición v2026-10, de 0,9515 a 1,0409; con `peso`, de 0,16 a
+#     1,60. Es la compuerta propia de las cifras de las comunidades: un peso de otra escala o de otra
+#     columna se sale;
+#   cis_ccaa_peso_cero (alerta; 19-nov-2026): una fila por estudio y comunidad con entrevistas de
+#     `peso_ccaa` 0, que cis_ccaa_estimar() deja fuera (en la v2026-10, una: estudio 3366, Asturias);
 #   cis_ccaa_muestra (bloqueo): entrevistas de cada estudio en el Parquet frente a las de los
 #     metadatos, y frente al (N) de las tabulaciones del CIS de ese mes (tabla cis_vivienda);
 #   cis_ccaa_codigos (bloqueo): PROB_007 con la etiqueta «La vivienda» en las dos preguntas; las 19
@@ -294,6 +302,19 @@ cis_ccaa_comprobar <- function(leido, menciones, mensual, por_anio, tabla, comun
                          calculado = abs(agregada$agregada - agregada$valor), referencia = 0)
   # muestra
   d <- leido$microdatos
+  # peso_ccaa: por estudio y comunidad, su suma entre las entrevistas (cerca de 1) y los ceros
+  por_ccaa <- d |>
+    dplyr::group_by(estudio, mes, ccaa) |>
+    dplyr::summarise(n = dplyr::n(), suma = sum(peso_ccaa, na.rm = TRUE), ceros = sum(peso_ccaa == 0, na.rm = TRUE),
+                     .groups = "drop")
+  peso_ccaa <- tibble::tibble(id = "cis_ccaa_peso_ccaa", anio = as.integer(substr(por_ccaa$mes, 1, 4)),
+                              detalle = sprintf("estudio %s, %s: suma de peso_ccaa / entrevistas", por_ccaa$estudio, por_ccaa$ccaa),
+                              calculado = por_ccaa$suma / por_ccaa$n, referencia = 1)
+  con_ceros <- por_ccaa[por_ccaa$ceros > 0, ]
+  peso_cero <- tibble::tibble(id = "cis_ccaa_peso_cero", anio = as.integer(substr(con_ceros$mes, 1, 4)),
+                              detalle = sprintf("estudio %s, %s: %d de %d entrevistas con peso_ccaa 0", con_ceros$estudio,
+                                                con_ceros$ccaa, con_ceros$ceros, con_ceros$n),
+                              calculado = as.numeric(con_ceros$ceros), referencia = rep(0, nrow(con_ceros)))
   por_estudio <- dplyr::count(d, estudio, mes, name = "n_parquet")
   meta <- dplyr::left_join(por_estudio, leido$estudios[c("estudio", "n")], by = "estudio")
   n_pub <- dplyr::distinct(dplyr::filter(pub, !is.na(n_publicado)), mes, n_publicado)
@@ -336,7 +357,7 @@ cis_ccaa_comprobar <- function(leido, menciones, mensual, por_anio, tabla, comun
     tibble::tibble(id = "cis_ccaa_meses", anio = sin_contraste$anio,
                    detalle = sprintf("%s %s sin cifra nacional publicada", sin_contraste$mes, sin_contraste$pregunta),
                    calculado = rep(1, nrow(sin_contraste)), referencia = rep(0, nrow(sin_contraste))))
-  dplyr::bind_rows(espana, suma, muestra, codigos, margen, meses) |>
+  dplyr::bind_rows(espana, suma, peso_ccaa, peso_cero, muestra, codigos, margen, meses) |>
     dplyr::mutate(anio = as.integer(anio), calculado = as.numeric(calculado), referencia = as.numeric(referencia))
 }
 

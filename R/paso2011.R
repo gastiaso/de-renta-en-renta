@@ -155,11 +155,12 @@ paso2011_origen_edificios <- function(edificios, secciones, crs) {
 
 # Tabla de la vía (b) desde las secciones del Censo 2011, como geo_tabla_paso_catastro(): solo los
 # edificios construidos hasta `anio_max` (los de año desconocido, también) y sin cruzar municipios
-# salvo dentro de un grupo de fusión o segregación. `agregado`: paso2011_origen_edificios().
+# salvo entre un municipio y su predecesor o su sucesor en un grupo de fusión o segregación
+# (cruce_permitido(); 19-nov-2026). `agregado`: paso2011_origen_edificios().
 paso2011_tabla_catastro <- function(agregado, anio_max, grupos = NULL) {
   agregado |>
     filter(is.na(anio_construccion) | anio_construccion <= anio_max,
-           agrupar_municipio(substr(origen, 1, 5), grupos) == agrupar_municipio(substr(destino, 1, 5), grupos)) |>
+           cruce_permitido(substr(origen, 1, 5), substr(destino, 1, 5), grupos)) |>
     group_by(origen, destino) |>
     summarise(portales = sum(viviendas), .groups = "drop") |>
     group_by(origen) |>

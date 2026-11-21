@@ -13,7 +13,7 @@
       "alquiler_m2": 14,
       "superficie_tipica": 62.0571428571429,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1511.2,
+      "ingreso_mochila": 1512.3,
       "ingreso_transistor": 1755
     },
     {
@@ -24,7 +24,7 @@
       "alquiler_m2": 13.7,
       "superficie_tipica": 65.6934306569343,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1528.9,
+      "ingreso_mochila": 1530.1,
       "ingreso_transistor": 1636.9
     },
     {
@@ -35,7 +35,7 @@
       "alquiler_m2": 8.2,
       "superficie_tipica": 83.0243902439024,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1323.9,
+      "ingreso_mochila": 1324.8,
       "ingreso_transistor": 1536.7
     },
     {
@@ -46,7 +46,7 @@
       "alquiler_m2": 9.2,
       "superficie_tipica": 72.6413043478261,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1200.3,
+      "ingreso_mochila": 1201.2,
       "ingreso_transistor": 1508.9
     },
     {
@@ -57,7 +57,7 @@
       "alquiler_m2": 7.7,
       "superficie_tipica": 71.4285714285714,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1400.5,
+      "ingreso_mochila": 1401.5,
       "ingreso_transistor": 1674.9
     },
     {
@@ -68,7 +68,7 @@
       "alquiler_m2": 9.6,
       "superficie_tipica": 74.8229166666667,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1189.3,
+      "ingreso_mochila": 1190.2,
       "ingreso_transistor": 1472
     },
     {
@@ -79,7 +79,7 @@
       "alquiler_m2": 7.1,
       "superficie_tipica": 75.7464788732394,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1333.6,
+      "ingreso_mochila": 1334.5,
       "ingreso_transistor": 1448.5
     },
     {
@@ -90,7 +90,7 @@
       "alquiler_m2": 7.3,
       "superficie_tipica": 68.4931506849315,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1332.9,
+      "ingreso_mochila": 1333.9,
       "ingreso_transistor": 1807.2
     },
     {
@@ -101,7 +101,7 @@
       "alquiler_m2": 17.8,
       "superficie_tipica": 62.0571428571429,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1511.2,
+      "ingreso_mochila": 1512.3,
       "ingreso_transistor": 1755
     },
     {
@@ -112,7 +112,7 @@
       "alquiler_m2": 24.8,
       "superficie_tipica": 62.0571428571429,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1511.2,
+      "ingreso_mochila": 1512.3,
       "ingreso_transistor": 1755
     },
     {
@@ -123,7 +123,7 @@
       "alquiler_m2": 14.4,
       "superficie_tipica": 65.6934306569343,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1528.9,
+      "ingreso_mochila": 1530.1,
       "ingreso_transistor": 1636.9
     },
     {
@@ -134,7 +134,7 @@
       "alquiler_m2": 10.6,
       "superficie_tipica": 72.6413043478261,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1200.3,
+      "ingreso_mochila": 1201.2,
       "ingreso_transistor": 1508.9
     },
     {
@@ -145,7 +145,7 @@
       "alquiler_m2": 12.1,
       "superficie_tipica": 66.1157024793389,
       "ingreso_tartera": 1237.4,
-      "ingreso_mochila": 1511.2,
+      "ingreso_mochila": 1512.3,
       "ingreso_transistor": 1755
     },
     {
@@ -9928,13 +9928,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1511.2,
+      "ingreso": 1512.3,
       "alquiler": 700,
-      "ratio": 0.463208046585495,
+      "ratio": 0.462871123454341,
       "tramo": 2,
       "sueldo_minimo": 2333.33333333333,
       "sueldo_real": 2896,
-      "euros": 811
+      "euros": 812
     },
     {
       "geo_id": "08019",
@@ -9945,13 +9945,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1528.9,
+      "ingreso": 1530.1,
       "alquiler": 685,
-      "ratio": 0.448034534632742,
+      "ratio": 0.447683157963532,
       "tramo": 2,
       "sueldo_minimo": 2283.33333333333,
       "sueldo_real": 3000,
-      "euros": 844
+      "euros": 845
     },
     {
       "geo_id": "46250",
@@ -9962,13 +9962,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1323.9,
+      "ingreso": 1324.8,
       "alquiler": 410,
-      "ratio": 0.309691064279779,
+      "ratio": 0.309480676328502,
       "tramo": 1,
       "sueldo_minimo": 1366.66666666667,
       "sueldo_real": 2269.33333333333,
-      "euros": 914
+      "euros": 915
     },
     {
       "geo_id": "41091",
@@ -9979,13 +9979,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1200.3,
+      "ingreso": 1201.2,
       "alquiler": 460,
-      "ratio": 0.383237523952345,
+      "ratio": 0.382950382950383,
       "tramo": 1,
       "sueldo_minimo": 1533.33333333333,
       "sueldo_real": 2227.66666666667,
-      "euros": 740
+      "euros": 741
     },
     {
       "geo_id": "50297",
@@ -9996,13 +9996,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1400.5,
+      "ingreso": 1401.5,
       "alquiler": 385,
-      "ratio": 0.274901820778293,
+      "ratio": 0.274705672493757,
       "tramo": 0,
       "sueldo_minimo": 1283.33333333333,
       "sueldo_real": 1833.33333333333,
-      "euros": 1016
+      "euros": 1017
     },
     {
       "geo_id": "29067",
@@ -10013,13 +10013,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1189.3,
+      "ingreso": 1190.2,
       "alquiler": 480,
-      "ratio": 0.403598755570504,
+      "ratio": 0.403293564106873,
       "tramo": 2,
       "sueldo_minimo": 1600,
       "sueldo_real": 2394.33333333333,
-      "euros": 709
+      "euros": 710
     },
     {
       "geo_id": "15030",
@@ -10030,13 +10030,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1333.6,
+      "ingreso": 1334.5,
       "alquiler": 355,
-      "ratio": 0.26619676064787,
+      "ratio": 0.266017234919446,
       "tramo": 0,
       "sueldo_minimo": 1183.33333333333,
       "sueldo_real": 1792.66666666667,
-      "euros": 979
+      "euros": 980
     },
     {
       "geo_id": "33044",
@@ -10047,13 +10047,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1332.9,
+      "ingreso": 1333.9,
       "alquiler": 365,
-      "ratio": 0.273838997674244,
+      "ratio": 0.273633705675088,
       "tramo": 0,
       "sueldo_minimo": 1216.66666666667,
       "sueldo_real": 1666.66666666667,
-      "euros": 968
+      "euros": 969
     },
     {
       "geo_id": "2807901001",
@@ -10064,13 +10064,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1511.2,
+      "ingreso": 1512.3,
       "alquiler": 890,
-      "ratio": 0.588935944944415,
+      "ratio": 0.588507571249091,
       "tramo": 2,
       "sueldo_minimo": 2966.66666666667,
       "sueldo_real": 4255.66666666667,
-      "euros": 621
+      "euros": 622
     },
     {
       "geo_id": "2807905001",
@@ -10081,13 +10081,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1511.2,
+      "ingreso": 1512.3,
       "alquiler": 1240,
-      "ratio": 0.820539968237162,
+      "ratio": 0.819943132976261,
       "tramo": 2,
       "sueldo_minimo": 4133.33333333333,
       "sueldo_real": 4500,
-      "euros": 271
+      "euros": 272
     },
     {
       "geo_id": "0801901001",
@@ -10098,13 +10098,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1528.9,
+      "ingreso": 1530.1,
       "alquiler": 720,
-      "ratio": 0.470926810124926,
+      "ratio": 0.470557479903274,
       "tramo": 2,
       "sueldo_minimo": 2400,
       "sueldo_real": 2789.66666666667,
-      "euros": 809
+      "euros": 810
     },
     {
       "geo_id": "4109101001",
@@ -10115,13 +10115,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1200.3,
+      "ingreso": 1201.2,
       "alquiler": 530,
-      "ratio": 0.441556277597267,
+      "ratio": 0.441225441225441,
       "tramo": 2,
       "sueldo_minimo": 1766.66666666667,
       "sueldo_real": 2303.66666666667,
-      "euros": 670
+      "euros": 671
     },
     {
       "geo_id": "28",
@@ -10132,13 +10132,13 @@
       "pagas": null,
       "segundo": null,
       "superficie": 50,
-      "ingreso": 1511.2,
+      "ingreso": 1512.3,
       "alquiler": 605,
-      "ratio": 0.400344097406035,
+      "ratio": 0.400052899556966,
       "tramo": 2,
       "sueldo_minimo": 2016.66666666667,
       "sueldo_real": 2666.66666666667,
-      "euros": 906
+      "euros": 907
     },
     {
       "geo_id": "13",

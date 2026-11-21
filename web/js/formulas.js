@@ -20,6 +20,10 @@ export function factorOtrosGastos(superficie) {
   if (!Number.isFinite(superficie) || !(superficie > 0)) return 1;
   return 1 - OTROS_PARTE_SUPERFICIE + (OTROS_PARTE_SUPERFICIE * superficie) / OTROS_SUPERFICIE_REFERENCIA;
 }
+// Otros gastos de una cifra: los del territorio × el factor de su superficie; sin superficie (el piso
+// real, la llave), tal cual; null sin cifra. Las columnas otros_gastos y otros_gastos_minimo del CSV
+// (19-nov-2026).
+export const otrosConFactor = (valor, superficie = null) => (Number.isFinite(valor) ? valor * factorOtrosGastos(superficie) : null);
 const otrosDe = (s) => (Number.isFinite(s?.otros) ? s.otros : 0);
 const sinOtros = (s) => s?.otros === undefined || s?.otros === null || s?.otros === 0;
 // Los otros gastos con la superficie: la cifra (o su expresión en el mapa) × el factor, si no es 1.
@@ -87,7 +91,9 @@ export function minimoDe(mapaDef, x, supuestos, serie = (s) => s) {
 // Con los otros gastos de vivienda encendidos (supuestos.gastos), lo dice con su cifra: la del
 // territorio (`otros`, supuestosEn() de sueldo.js) o, sin territorio, la horquilla de las comunidades.
 // `otros`: otro texto para esa cifra (el comparador da la de sus dos columnas).
-export function textoSupuestos(t, mapaDef, supuestos, otros = textoOtrosGastos(t, supuestos)) {
+// Con el mínimo al lado, el factor de la superficie solo va con el mínimo: la cifra con el alquiler real
+// suma los otros gastos tal cual, y el texto lo dice (textoOtrosGastos(), `minimo`; 19-nov-2026).
+export function textoSupuestos(t, mapaDef, supuestos, otros = textoOtrosGastos(t, supuestos, { minimo: Boolean(mapaDef?.minimo) })) {
   if ((mapaDef?.formula ?? 'directo') === 'directo') return null;
   const umbral = t.porcentaje(supuestos.umbral);
   const sufijo = otros ? '_gastos' : '';
@@ -98,8 +104,10 @@ export function textoSupuestos(t, mapaDef, supuestos, otros = textoOtrosGastos(t
 // Texto de los otros gastos de vivienda de unos supuestos (null si están apagados): con territorio,
 // «149 € al mes en Aragón, ECV 2024», o la cifra de España si su muestra no llega; sin él, «de 114
 // a 161 € al mes según la comunidad, ECV 2024». Con otra superficie que la de referencia, el factor
-// («; con 70 m², × 1,20: …»). Lo usan la leyenda, la ficha, la imagen y «Tu sueldo».
-export function textoOtrosGastos(t, supuestos) {
+// («; con 70 m², × 1,20: …»). Lo usan la leyenda, la ficha, la imagen y «Tu sueldo». Con `minimo` (el
+// sueldo necesario, con el alquiler real y el mínimo teórico al lado), el factor se dice del mínimo
+// («; en el mínimo de 70 m², × 1,20: …; con el alquiler real, la cifra tal cual»; 19-nov-2026).
+export function textoOtrosGastos(t, supuestos, { minimo = false } = {}) {
   const g = supuestos?.gastos;
   if (!g) return null;
   const anio = g.anio_ecv;
@@ -109,7 +117,7 @@ export function textoOtrosGastos(t, supuestos) {
   // Con otra superficie que la de referencia, el factor de los otros gastos (18-nov-2026)
   const factor = factorOtrosGastos(supuestos.superficie_m2);
   const sufijo = factor === 1 ? ''
-    : t('interfaz.leyenda.otros_gastos_superficie', { superficie: t.numero(supuestos.superficie_m2), factor: t.numero(factor, 2) });
+    : t(`interfaz.leyenda.otros_gastos_superficie${minimo ? '_minimo' : ''}`, { superficie: t.numero(supuestos.superficie_m2), factor: t.numero(factor, 2) });
   if (de && Number.isFinite(supuestos.otros)) {
     if (de.espana) {
       return t('interfaz.leyenda.otros_gastos_espana', { euros: euros(supuestos.otros), territorio: nombre(de.ccaa), minimo: t.numero(g.minimo ?? 0), anio }) + sufijo;

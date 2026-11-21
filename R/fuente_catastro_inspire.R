@@ -213,10 +213,10 @@ geo_tabla_paso_catastro <- function(edificios, origen, destino = NULL, anio_max 
   # Solo pares del mismo municipio: un edificio junto a un límite municipal puede caer en
   # municipios distintos en dos seccionados porque los límites se digitalizan de forma distinta;
   # el callejero tampoco cruza municipios (sin esto, la prueba de cierre falla en 2015). Dentro de
-  # un grupo de fusión o segregación (`grupos`), sí.
+  # un grupo de fusión o segregación (`grupos`), solo entre un municipio y su predecesor o su sucesor
+  # (cruce_permitido(), como el callejero; 19-nov-2026).
   tibble::tibble(origen = o, destino = d, viviendas = edificios$viviendas) |>
-    filter(!is.na(origen), !is.na(destino),
-           agrupar_municipio(substr(origen, 1, 5), grupos) == agrupar_municipio(substr(destino, 1, 5), grupos)) |>
+    filter(!is.na(origen), !is.na(destino), cruce_permitido(substr(origen, 1, 5), substr(destino, 1, 5), grupos)) |>
     group_by(origen, destino) |>
     summarise(portales = sum(viviendas), .groups = "drop") |>    # «portales» = viviendas, para reutilizar las funciones
     group_by(origen) |>

@@ -288,7 +288,7 @@ Everything fits in one column. The bar folds into «More options»; the map move
 1. **Staying and moving in do not mix.** No figure combines current leases and asking prices; when they appear together, each carries its name.
 2. **Net income, over 12 payments.** If rent were divided by one of a salary's 14 payments, its weight would come out inflated by around 17%.
 3. **The threshold is a convention.** 30% (or 40%) only counts rent, unless you add the other costs. The same share leaves much less room on a low salary than on a high one.
-4. **Pay needed always comes with two figures.** In 2024, in the median tract, €1,900 net a month with actual rent and €1,217 as a minimum with a 50 m² flat. Rented flats measure about 79 m² at the median.
+4. **Pay needed always comes with two figures.** In 2024, in the median tract, €1,900 net a month with actual rent and €1,217 as a minimum with a 50 m² flat. Rented flats measure about 79 m² (the median, across tracts, of the ratio of each tract's monthly rent to its rent per m²).
 5. **Each indicator at its own scale.** A provincial figure is never split among tracts, and medians are never added up.
 6. **Same year top and bottom.** Rent and income are from the same year; when that is not possible (the current year's minimum wage), a notice says so.
 7. **Each figure says how much it weighs.** Leases behind each median and an approximate margin; below 30 leases the figure is indicative and its annual change is not interpreted.
@@ -377,7 +377,7 @@ targets::tar_make()                      # downloads, calculates and runs the ga
 testthat::test_dir("pruebas/testthat")
 ```
 
-From scratch it downloads about 9.6 GB. Three sources cannot be downloaded automatically (SERPAVI, the Land Registrars and the IGN units): `tar_make()` stops and says what to download and under what name. A full run for all of Spain takes about three and a half hours; with `PROVINCIA=28` in the environment it is limited to one province. The step-by-step guide, in Spanish: [`docs/reproducir.md`](docs/reproducir.md). To see the website:
+From scratch it downloads about 9.6 GB. Three sources cannot be downloaded automatically (SERPAVI, the Land Registrars and the IGN units): `tar_make()` stops and says what to download and under what name. A full run for all of Spain takes about three and a quarter hours of computation, plus the downloads (measured on 18 Nov 2026 in a clean copy with a complete `datos/brutos/`: 3 h 56 min, 2 h 12 min of it for the Cadastre); with `PROVINCIA=28` in the environment it is limited to one province. The step-by-step guide, in Spanish: [`docs/reproducir.md`](docs/reproducir.md). To see the website:
 
 ```sh
 node web/servir.mjs                      # http://localhost:8000

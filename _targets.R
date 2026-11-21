@@ -26,7 +26,10 @@ inventario <- list(
   tar_target(fichero_rupturas, "inventario/rupturas.csv", format = "file"),
   tar_target(fuentes, readr::read_csv(fichero_fuentes, show_col_types = FALSE)),
   tar_target(indicadores, readr::read_csv(fichero_indicadores, show_col_types = FALSE)),
-  tar_target(referencias, readr::read_csv(fichero_referencias, show_col_types = FALSE)),
+  # Solo lo que usa validar_referencias(): cambiar una descripción no deja desactualizadas las compuertas
+  # (19-nov-2026)
+  tar_target(referencias, readr::read_csv(fichero_referencias, show_col_types = FALSE,
+                                          col_select = c("id", "tolerancia", "tipo"))),
   tar_target(rupturas, readr::read_csv(fichero_rupturas, col_types = readr::cols(.default = "c"))),
   tar_target(fichero_ccaa, "geo/ccaa.csv", format = "file"),
   tar_target(ccaa, readr::read_csv(fichero_ccaa, col_types = "ccc")),

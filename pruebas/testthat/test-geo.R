@@ -217,4 +217,41 @@ test_that("el callejero no casa vías de dos municipios que siguen en los dos se
                                  bind_rows(destino, sin_num("1090401001", "00099")), grupos = g)
   expect_false(any(t3$origen == "1090101001" & t3$destino == "1090401001"))
   expect_equal(comprobar_cruce_municipios(t3, g, 2011L)$calculado, 0)
+  # Sin cruces, el detalle dice «ninguna», no « -> » (19-nov-2026)
+  expect_equal(comprobar_cruce_municipios(t, g, 2011L)$detalle, "ninguna")
+  # El Catastro, con los mismos pares (19-nov-2026): un edificio de Rosalejo que en 2021 cae en Tiétar
+  # (límites digitalizados de otra forma) no cruza; uno de Talayuela que pasa a Tiétar, sí
+  edif <- tibble::tibble(x = c(5, 10.9, 11, 7), y = 5, viviendas = c(10, 3, 20, 8),
+                         destino = c("1018601001", "1090401001", "1090101001", "1090401001"))
+  k <- geo_tabla_paso_catastro(edif, a, NULL, grupos = g)
+  expect_false(any(k$origen == "1090101001" & k$destino == "1090401001"))
+  expect_equal(k$fraccion[k$origen == "1090101001"], 1)
+  expect_true(any(k$origen == "1018601001" & k$destino == "1090401001"))
+  expect_equal(comprobar_cruce_municipios(k, g, 2011L)$calculado, 0)
+  # Con todo el grupo (como antes del 19-nov-2026), el edificio de Rosalejo cruzaba, y la compuerta, que
+  # ahora mira todas las vías y no solo el callejero, lo ve
+  k2 <- geo_tabla_paso_catastro(edif, a, NULL, grupos = todo)
+  expect_true(any(k2$origen == "1090101001" & k2$destino == "1090401001"))
+  expect_equal(comprobar_cruce_municipios(k2, g, 2011L)$calculado, 1)
+  expect_match(comprobar_cruce_municipios(k2, g, 2011L)$detalle, "10901 -> 10904", fixed = TRUE)
+  # Lo mismo en la tabla desde el Censo 2011 (agregado por par de secciones y año de construcción)
+  agregado <- tibble::tibble(origen = c("1018601001", "1090101001", "1090101001"),
+                             destino = c("1090401001", "1090401001", "1090101001"),
+                             anio_construccion = c(1990L, 1990L, NA), edificios = 1L, viviendas = c(8, 3, 20))
+  k3 <- paso2011_tabla_catastro(agregado, 2011L, g)
+  expect_equal(nrow(k3), 2L)
+  expect_false(any(k3$origen == "1090101001" & k3$destino == "1090401001"))
+  expect_equal(nrow(paso2011_tabla_catastro(agregado, 2011L, todo)), 3L)
+})
+
+test_that("el umbral de los pares permitidos incluye el caso exacto (19-nov-2026)", {
+  # cuota >= UMBRAL_CRUCE_MUNICIPIO: en el umbral, permitido; una milésima por debajo, no
+  g <- tibble::tibble(municipio = c("10186", "10901", "10904"), grupo = "10186")
+  attr(g, "pares") <- tibble::tibble(municipio_origen = c("10186", "10901"), municipio_destino = "10904",
+                                     cuota = c(UMBRAL_CRUCE_MUNICIPIO, UMBRAL_CRUCE_MUNICIPIO - 1e-3))
+  p <- geo_pares_permitidos(g)
+  expect_equal(paste(p$municipio_origen, p$municipio_destino), "10186 10904")
+  expect_equal(cruce_permitido(c("10186", "10901", "10901"), c("10904", "10904", "10901"), g), c(TRUE, FALSE, TRUE))
+  # Sin grupos, solo el mismo municipio
+  expect_equal(cruce_permitido(c("10186", "10186"), c("10186", "10904")), c(TRUE, FALSE))
 })

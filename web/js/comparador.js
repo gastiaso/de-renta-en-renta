@@ -86,7 +86,7 @@ export function supuestosDeColumnas(supuestos, { seccion, nivelA = 'sc', compara
 // Texto de los supuestos de una fila derivada. Con los otros gastos de vivienda, la cifra de cada
 // columna, una sola vez si es la misma: «149 € al mes en Madrid, ECV 2024; 145 € al mes en España, ECV 2024».
 export function textoSupuestosFila(t, derivado, columnas) {
-  const otros = [...new Set([columnas.a, columnas.b].map((s) => textoOtrosGastos(t, s)).filter(Boolean))].join('; ');
+  const otros = [...new Set([columnas.a, columnas.b].map((s) => textoOtrosGastos(t, s, { minimo: Boolean(derivado?.minimo) })).filter(Boolean))].join('; ');
   return textoSupuestos(t, derivado, columnas.a, otros || undefined);
 }
 

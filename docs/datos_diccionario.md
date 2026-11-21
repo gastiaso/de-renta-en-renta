@@ -418,7 +418,7 @@ Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Versión:** v0.1
 - **Definición:** Sueldo neto mensual necesario para que el alquiler mensual mediano de la sección no pase del 30 % del sueldo. Al lado, el mínimo teórico: el mismo cálculo con un piso de 50 m².
 - **Cálculo:** Alquiler mensual mediano de la vivienda colectiva / 0,30 (umbral cambiable al 40 %). Mínimo teórico (corte superficie, grupo 50): alquiler mediano por m² de la vivienda colectiva × 50 / 0,30 (superficie cambiable a 70 y 90 m² en la web). Cada cifra lleva el estado de su alquiler.
-- **Lectura:** Es el alquiler expresado en otra unidad, no un indicador nuevo. La cifra principal paga la vivienda alquilada mediana de la sección, de unos 79 m² (cociente entre la mediana del alquiler mensual y la del alquiler por m², no la mediana de las superficies); el mínimo de 50 m² queda por debajo y no se da sin ella. El 30 % es una convención y solo cuenta el alquiler: la Ley 12/2023 y Eurostat cuentan además los suministros y usan la renta del hogar. En la web se pueden añadir los otros gastos de vivienda de los inquilinos (ECV).
+- **Lectura:** Es el alquiler expresado en otra unidad, no un indicador nuevo. La cifra principal paga la vivienda alquilada mediana de la sección, de unos 79 m² (mediana, por sección, del cociente entre el alquiler mensual mediano y el alquiler mediano por m²; no es la mediana de las superficies); el mínimo de 50 m² queda por debajo y no se da sin ella. El 30 % es una convención y solo cuenta el alquiler: la Ley 12/2023 y Eurostat cuentan además los suministros y usan la renta del hogar. En la web se pueden añadir los otros gastos de vivienda de los inquilinos (ECV).
 
 ### `sobrecarga`
 
@@ -478,8 +478,8 @@ Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Fuentes:** `calculo_propio`, `mivau_serpavi`
 - **Versión:** v0.1
 - **Auxiliar de:** [`alquiler_mes`](#alquiler_mes), [`esfuerzo_residentes`](#esfuerzo_residentes), [`sueldo_necesario`](#sueldo_necesario)
-- **Definición:** Error típico aproximado de la mediana del alquiler mensual (8), en porcentaje de la mediana, por tipología.
-- **Cálculo:** 0,929 × (P75 − P25) / (P50 × √n), con los cuartiles y los contratos (n) del SERPAVI; solo donde se publica la mediana (10 o más contratos).
+- **Definición:** Margen aproximado al 95 % (1,96 errores típicos) de la mediana del alquiler mensual (8), en porcentaje de la mediana, por tipología.
+- **Cálculo:** 1,821 × (P75 − P25) / (P50 × √n), con los cuartiles y los contratos (n) del SERPAVI: 1,96 veces el error típico aproximado de la mediana, 0,929 × (P75 − P25) / (P50 × √n); solo donde se publica la mediana (10 o más contratos).
 - **Lectura:** Orden de magnitud del ruido de la mediana: supone una distribución regular dentro del territorio y no corrige que sean contratos vigentes, no nuevos. Acompaña al 8, al 14 y a la cifra principal del 21, que son el alquiler mensual en otra unidad.
 
 ### `margen_alquiler_m2`
@@ -491,9 +491,9 @@ Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Fuentes:** `calculo_propio`, `mivau_serpavi`
 - **Versión:** v0.1
 - **Auxiliar de:** [`alquiler_m2`](#alquiler_m2), [`peso_alquiler_ingreso`](#peso_alquiler_ingreso)
-- **Definición:** Error típico aproximado de la mediana del alquiler por metro cuadrado (9), en porcentaje de la mediana, por tipología.
-- **Cálculo:** 0,929 × (P75 − P25) / (P50 × √n), con los cuartiles del alquiler por m² y los contratos (n) del SERPAVI; solo donde se publica la mediana (10 o más contratos).
-- **Lectura:** Vale también para el 15 y para el mínimo de 50 m² del 21, que son el alquiler por m² en otra unidad: la ficha avisa cuando «¿te llega?» queda en el límite entre dos tramos.
+- **Definición:** Margen aproximado al 95 % (1,96 errores típicos) de la mediana del alquiler por metro cuadrado (9), en porcentaje de la mediana, por tipología.
+- **Cálculo:** 1,821 × (P75 − P25) / (P50 × √n), con los cuartiles del alquiler por m² y los contratos (n) del SERPAVI: 1,96 veces el error típico aproximado de la mediana, 0,929 × (P75 − P25) / (P50 × √n); solo donde se publica la mediana (10 o más contratos).
+- **Lectura:** Vale también para el 15 y para el mínimo teórico del 21 (50 m² o la superficie elegida en la web), que son el alquiler por m² en otra unidad: la ficha avisa cuando «¿te llega?» queda en el límite entre dos tramos.
 
 ### `linea_imv`
 

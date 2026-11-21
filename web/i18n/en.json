@@ -89,6 +89,7 @@
       "otros_gastos_espana": "€{euros} a month, the figure for Spain: the {territorio} sample has fewer than {minimo} households; ECV {anio}",
       "otros_gastos_rango": "€{desde} to €{hasta} a month depending on the region, ECV {anio}",
       "otros_gastos_superficie": "; with {superficie} m², × {factor}: only the part linked to floor area follows the floor area",
+      "otros_gastos_superficie_minimo": "; in the {superficie} m² minimum, × {factor}: only the part linked to floor area follows the floor area; with actual rent, the figure as it is",
       "minimo_ficha": "The profile also gives the theoretical minimum for a {superficie} m² flat.",
       "ficha_mediana": "{ficha} (median of provinces)",
       "llave": "{ficha}: €{desde} to €{hasta} (tract quartiles)",
@@ -273,6 +274,7 @@
         "superficie_m2": "floor_area_m2",
         "umbral": "threshold",
         "otros_gastos": "other_housing_costs_month",
+        "otros_gastos_minimo": "other_housing_costs_minimum_month",
         "contratos": "contracts",
         "margen_pct": "margin_pct",
         "valor_minimo": "minimum_value",
@@ -1136,7 +1138,7 @@
       "unidad": "net € per month",
       "definicion": "Net monthly pay needed so that the tract's median monthly rent does not exceed 30% of pay. Alongside, the theoretical minimum: the same calculation for a 50 m² flat.",
       "calculo": "Median monthly rent of flats / 0.30 (threshold can be changed to 40%). Theoretical minimum (cut superficie, group 50): median rent per m² of flats × 50 / 0.30 (floor area can be changed to 70 or 90 m² on the website). Each figure carries the status of its rent.",
-      "lectura": "It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² (the ratio of median monthly rent to median rent per m², not the median of floor areas); the 50 m² minimum falls below it and is never given without it. The 30% is a convention and counts rent only: Law 12/2023 and Eurostat also count utilities and use household income. On the website, renters' other housing costs (ECV) can be added."
+      "lectura": "It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² (the median, across tracts, of the ratio of median monthly rent to median rent per m²; not the median of floor areas); the 50 m² minimum falls below it and is never given without it. The 30% is a convention and counts rent only: Law 12/2023 and Eurostat also count utilities and use household income. On the website, renters' other housing costs (ECV) can be added."
     },
     "sobrecarga": {
       "nombre": "Housing cost overburden rate (Eurostat method)",
@@ -1169,16 +1171,16 @@
     "margen_alquiler_mes": {
       "nombre": "Approximate margin of the median monthly rent",
       "unidad": "% of the median",
-      "definicion": "Approximate standard error of the median monthly rent (8), as a percentage of the median, by building type.",
-      "calculo": "0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI quartiles and tenancies (n); only where the median is published (10 or more tenancies).",
+      "definicion": "Approximate 95% margin (1.96 standard errors) of the median monthly rent (8), as a percentage of the median, by building type.",
+      "calculo": "1.821 × (P75 − P25) / (P50 × √n), using the SERPAVI quartiles and tenancies (n): 1.96 times the approximate standard error of the median, 0.929 × (P75 − P25) / (P50 × √n); only where the median is published (10 or more tenancies).",
       "lectura": "Order of magnitude of the noise in the median: it assumes a regular distribution within the area and does not correct for current rather than new tenancies. It accompanies 8, 14 and the main figure of 21, which are monthly rent in another unit."
     },
     "margen_alquiler_m2": {
       "nombre": "Approximate margin of the median rent per m²",
       "unidad": "% of the median",
-      "definicion": "Approximate standard error of the median rent per square metre (9), as a percentage of the median, by building type.",
-      "calculo": "0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI rent-per-m² quartiles and tenancies (n); only where the median is published (10 or more tenancies).",
-      "lectura": "It also applies to 15 and to the 50 m² minimum of 21, which are rent per m² in another unit: the profile warns when «Can you make rent?» sits on the edge between two bands."
+      "definicion": "Approximate 95% margin (1.96 standard errors) of the median rent per square metre (9), as a percentage of the median, by building type.",
+      "calculo": "1.821 × (P75 − P25) / (P50 × √n), using the SERPAVI rent-per-m² quartiles and tenancies (n): 1.96 times the approximate standard error of the median, 0.929 × (P75 − P25) / (P50 × √n); only where the median is published (10 or more tenancies).",
+      "lectura": "It also applies to 15 and to the theoretical minimum of 21 (50 m² or the floor area chosen on the website), which are rent per m² in another unit: the profile warns when «Can you make rent?» sits on the edge between two bands."
     },
     "linea_imv": {
       "nombre": "Residual income line: minimum living income",

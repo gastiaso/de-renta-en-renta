@@ -45,8 +45,11 @@ HIST_SERIES_BDE <- tibble::tribble(
   "tipo_prestamos",   "si_1_5", "D_IMVTIPLV",             "mensual",    "porcentaje", "bde_accesibilidad",
   "plazo_hipotecas",  "si_1_5", NA_character_,            "trimestral", "meses",      "bde_accesibilidad"
 )
-# Series sin código fijo: se buscan por su descripción (cuarta fila de la cabecera del CSV)
+# Series sin código fijo: se buscan por su descripción (cuarta fila de la cabecera del CSV), y su
+# unidad (quinta fila) tiene que ser la esperada (19-nov-2026): el plazo llega en meses («Meses») y
+# compraventa_plazo_bde() lo divide entre 12; en años, el 17 saldría con un plazo doce veces corto.
 HIST_DESCRIPCION_BDE <- c(plazo_hipotecas = "plazo medio.*hipotecas")
+HIST_UNIDAD_BDE <- c(plazo_hipotecas = "^meses$")
 # Series del módulo que no se publican: solo sirven a una compuerta o a otra serie (el euríbor, a
 # mibor_euribor desde 1999)
 HIST_SOLO_COMPUERTA <- c("valor_tasado_bde", "euribor", "plazo_hipotecas")
@@ -103,16 +106,22 @@ hist_leer_bde <- function(ruta, codigos) {
 }
 
 # Código de la serie de una tabla del Banco de España cuya descripción (cuarta fila de la cabecera)
-# casa con `patron` (sin distinguir mayúsculas). Se para si no casa ninguna o casa más de una.
-hist_codigo_bde <- function(ruta, patron) {
+# casa con `patron` (sin distinguir mayúsculas). Se para si no casa ninguna o casa más de una, y, con
+# `unidad` (expresión regular), si la unidad de la serie (quinta fila) no casa con ella.
+hist_codigo_bde <- function(ruta, patron, unidad = NULL) {
   x <- readr::read_csv(ruta, col_names = FALSE, n_max = 6L, col_types = readr::cols(.default = "c"),
                        locale = readr::locale(encoding = "latin1"), na = character(), progress = FALSE)
   codigos <- unlist(x[1, -1], use.names = FALSE)
   descripciones <- unlist(x[4, -1], use.names = FALSE)
+  unidades <- unlist(x[5, -1], use.names = FALSE)
   k <- which(grepl(patron, descripciones, ignore.case = TRUE))
   if (length(k) != 1L) {
     stop("Tabla del Banco de Espa\u00f1a ", basename(ruta), ": ", length(k), " series casan con \u00ab", patron,
          "\u00bb", if (length(k)) paste0(" (", paste(descripciones[k], collapse = "; "), ")") else "", call. = FALSE)
+  }
+  if (!is.null(unidad) && !grepl(unidad, trimws(unidades[k]), ignore.case = TRUE)) {
+    stop("Tabla del Banco de España ", basename(ruta), ": la serie ", codigos[k], " («", descripciones[k],
+         "») viene en «", unidades[k], "» y se esperaba «", unidad, "»", call. = FALSE)
   }
   codigos[k]
 }
@@ -123,7 +132,8 @@ hist_codigo_bde <- function(ruta, patron) {
 hist_leer_bde_tablas <- function(rutas, series = HIST_SERIES_BDE, desde = HIST_DESDE) {
   dplyr::bind_rows(lapply(seq_len(nrow(series)), function(i) {
     s <- series[i, ]
-    if (is.na(s$codigo)) s$codigo <- hist_codigo_bde(rutas[[s$tabla]], HIST_DESCRIPCION_BDE[[s$serie]])
+    if (is.na(s$codigo)) s$codigo <- hist_codigo_bde(rutas[[s$tabla]], HIST_DESCRIPCION_BDE[[s$serie]],
+                                                    unidad = if (s$serie %in% names(HIST_UNIDAD_BDE)) HIST_UNIDAD_BDE[[s$serie]])
     d <- hist_leer_bde(rutas[[s$tabla]], s$codigo)
     if (s$frecuencia == "trimestral") {
       fuera <- sum(!is.na(d$valor) & d$mes %% 3L != 0L)

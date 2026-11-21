@@ -418,7 +418,7 @@ The 24 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Version:** v0.1
 - **Definition:** Net monthly pay needed so that the tract's median monthly rent does not exceed 30% of pay. Alongside, the theoretical minimum: the same calculation for a 50 m² flat.
 - **Calculation:** Median monthly rent of flats / 0.30 (threshold can be changed to 40%). Theoretical minimum (cut superficie, group 50): median rent per m² of flats × 50 / 0.30 (floor area can be changed to 70 or 90 m² on the website). Each figure carries the status of its rent.
-- **Reading:** It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² (the ratio of median monthly rent to median rent per m², not the median of floor areas); the 50 m² minimum falls below it and is never given without it. The 30% is a convention and counts rent only: Law 12/2023 and Eurostat also count utilities and use household income. On the website, renters' other housing costs (ECV) can be added.
+- **Reading:** It is rent expressed in another unit, not a new indicator. The main figure pays for the tract's median rented home, around 79 m² (the median, across tracts, of the ratio of median monthly rent to median rent per m²; not the median of floor areas); the 50 m² minimum falls below it and is never given without it. The 30% is a convention and counts rent only: Law 12/2023 and Eurostat also count utilities and use household income. On the website, renters' other housing costs (ECV) can be added.
 
 ### `sobrecarga`
 
@@ -478,8 +478,8 @@ The 24 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Sources:** `calculo_propio`, `mivau_serpavi`
 - **Version:** v0.1
 - **Auxiliary of:** [`alquiler_mes`](#alquiler_mes), [`esfuerzo_residentes`](#esfuerzo_residentes), [`sueldo_necesario`](#sueldo_necesario)
-- **Definition:** Approximate standard error of the median monthly rent (8), as a percentage of the median, by building type.
-- **Calculation:** 0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI quartiles and tenancies (n); only where the median is published (10 or more tenancies).
+- **Definition:** Approximate 95% margin (1.96 standard errors) of the median monthly rent (8), as a percentage of the median, by building type.
+- **Calculation:** 1.821 × (P75 − P25) / (P50 × √n), using the SERPAVI quartiles and tenancies (n): 1.96 times the approximate standard error of the median, 0.929 × (P75 − P25) / (P50 × √n); only where the median is published (10 or more tenancies).
 - **Reading:** Order of magnitude of the noise in the median: it assumes a regular distribution within the area and does not correct for current rather than new tenancies. It accompanies 8, 14 and the main figure of 21, which are monthly rent in another unit.
 
 ### `margen_alquiler_m2`
@@ -491,9 +491,9 @@ The 24 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Sources:** `calculo_propio`, `mivau_serpavi`
 - **Version:** v0.1
 - **Auxiliary of:** [`alquiler_m2`](#alquiler_m2), [`peso_alquiler_ingreso`](#peso_alquiler_ingreso)
-- **Definition:** Approximate standard error of the median rent per square metre (9), as a percentage of the median, by building type.
-- **Calculation:** 0.929 × (P75 − P25) / (P50 × √n), using the SERPAVI rent-per-m² quartiles and tenancies (n); only where the median is published (10 or more tenancies).
-- **Reading:** It also applies to 15 and to the 50 m² minimum of 21, which are rent per m² in another unit: the profile warns when «Can you make rent?» sits on the edge between two bands.
+- **Definition:** Approximate 95% margin (1.96 standard errors) of the median rent per square metre (9), as a percentage of the median, by building type.
+- **Calculation:** 1.821 × (P75 − P25) / (P50 × √n), using the SERPAVI rent-per-m² quartiles and tenancies (n): 1.96 times the approximate standard error of the median, 0.929 × (P75 − P25) / (P50 × √n); only where the median is published (10 or more tenancies).
+- **Reading:** It also applies to 15 and to the theoretical minimum of 21 (50 m² or the floor area chosen on the website), which are rent per m² in another unit: the profile warns when «Can you make rent?» sits on the edge between two bands.
 
 ### `linea_imv`
 

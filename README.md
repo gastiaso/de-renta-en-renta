@@ -288,7 +288,7 @@ Todo cabe en una columna. La barra se pliega en «Más opciones»; el mapa se mu
 1. **Quedarse y entrar no se mezclan.** Ninguna cifra combina contratos vigentes y precios de oferta; cuando aparecen juntos, cada uno lleva su nombre.
 2. **Ingresos netos, en 12 pagas.** Si el alquiler se dividiera entre una de las 14 pagas de un sueldo, su peso saldría inflado en torno a un 17 %.
 3. **El umbral es una convención.** El 30 % (o el 40 %) solo cuenta el alquiler, salvo que añadas los otros gastos. La misma proporción deja mucho menos margen a un sueldo bajo que a uno alto.
-4. **El sueldo necesario va siempre con dos cifras.** En 2024, en la sección mediana, 1.900 € netos al mes con el alquiler real y 1.217 € como mínimo con un piso de 50 m². Los pisos alquilados miden unos 79 m² de mediana.
+4. **El sueldo necesario va siempre con dos cifras.** En 2024, en la sección mediana, 1.900 € netos al mes con el alquiler real y 1.217 € como mínimo con un piso de 50 m². Los pisos alquilados miden unos 79 m² (mediana, entre las secciones, del cociente entre el alquiler mensual y el alquiler por m² de cada una).
 5. **Cada indicador, en su escala.** Nunca se reparte una cifra provincial entre secciones ni se suman medianas.
 6. **Mismo año arriba y abajo.** Alquiler e ingreso son del mismo año; si no puede ser (el salario mínimo del año en curso), se avisa.
 7. **Cada cifra dice cuánto pesa.** Contratos detrás de cada mediana y margen aproximado; con menos de 30 contratos, la cifra es orientativa y su variación anual no se interpreta.
@@ -377,7 +377,7 @@ targets::tar_make()                      # descarga, calcula y pasa la compuerta
 testthat::test_dir("pruebas/testthat")
 ```
 
-Desde cero se bajan unos 9,6 GB. Tres fuentes no se dejan descargar de forma automática (SERPAVI, Registradores y las unidades del IGN): `tar_make()` se detiene y dice qué bajar y con qué nombre. Una pasada completa para toda España tarda unas tres horas y media; con `PROVINCIA=28` en el entorno se limita a una provincia. La guía paso a paso, en [`docs/reproducir.md`](docs/reproducir.md). Para ver la web:
+Desde cero se bajan unos 9,6 GB. Tres fuentes no se dejan descargar de forma automática (SERPAVI, Registradores y las unidades del IGN): `tar_make()` se detiene y dice qué bajar y con qué nombre. Una pasada completa para toda España tarda unas tres horas y cuarto de cálculo, más las descargas (medido el 18-nov-2026 en una copia limpia con `datos/brutos/` completo: 3 h 56 min, 2 h 12 min de ellas del Catastro); con `PROVINCIA=28` en el entorno se limita a una provincia. La guía paso a paso, en [`docs/reproducir.md`](docs/reproducir.md). Para ver la web:
 
 ```sh
 node web/servir.mjs                      # http://localhost:8000

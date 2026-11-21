@@ -48,6 +48,13 @@ test_that("la compuerta lee las dos frases del texto y las compara con lo calcul
   writeLines(sub("en 2024 tiene", "en 2023 tiene", ok), md, useBytes = TRUE)
   r4 <- comprobar_cifras_metodo_corto(s, c, md)
   expect_equal(r4$detalle[r4$calculado != r4$referencia], "año de la cobertura")
+  # Redondeo como se escribe (19-nov-2026): un empate exacto va hacia arriba, no al par como round()
+  s_empate <- s
+  s_empate$subida_mediana <- 42.5
+  writeLines(sub("del 45 %", "del 43 %", ok), md, useBytes = TRUE)
+  r5 <- comprobar_cifras_metodo_corto(s_empate, c, md)
+  expect_equal(r5$referencia[r5$detalle == "mediana de la subida del alquiler por m² (%)"], 43)
+  expect_equal(r5$calculado, r5$referencia)
   writeLines("Otra cosa.", md)
   expect_true(all(is.na(comprobar_cifras_metodo_corto(s, c, md)$calculado)))
   # El método corto del repositorio tiene las dos frases

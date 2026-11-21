@@ -23,7 +23,7 @@ import {
   fichaVacia, fichaSeccion, fichaSeries, fichaError, fichaSinSeccion, fichaContexto, fichaTerritorio, nombresTerritorio,
   fichaDeclaraciones, textoResto, fichaResidentes, textoLineaResidual, TEXTOS_RESIDUAL, celdaLinea,
 } from './ficha.js';
-import { formulaDe, daSueldo, minimoDe, textoSupuestos, textoOtrosGastos, fijoDe } from './formulas.js';
+import { formulaDe, daSueldo, minimoDe, textoSupuestos, textoOtrosGastos, fijoDe, otrosConFactor } from './formulas.js';
 import {
   modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega, resumenLlegaReal,
   marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, fijoLlega, estadoLlega, perfilesDelAnio,
@@ -1377,8 +1377,15 @@ async function exportarCsv(v) {
     fiabilidad,
     minimo,
     // Otros gastos de vivienda (12-nov-2026): la cifra sumada en cada fila (en «¿te llega?», la que
-    // usa el mapa con el alquiler de la columna valor)
-    otros: v.gastos && (derivado || v.modo === 'llega') ? (codigo) => otrosGastosEn(v.gastos, codigo, nivel)?.valor ?? null : null,
+    // usa el mapa con el alquiler de la columna valor: con «Tu ficha» y otra superficie, × el factor,
+    // como calculoLlega(); la llave, tal cual). En el sueldo necesario, la de la cifra con el alquiler
+    // real (tal cual) y, en otra columna, la del mínimo teórico, con el factor (19-nov-2026)
+    otros: v.gastos && (derivado || v.modo === 'llega')
+      ? (codigo) => otrosConFactor(otrosGastosEn(v.gastos, codigo, nivel)?.valor, v.modo === 'llega' && estado.ficha !== 'llave' ? v.superficie : null)
+      : null,
+    otrosMinimo: v.gastos && derivado && defMinimo
+      ? (codigo) => otrosConFactor(otrosGastosEn(v.gastos, codigo, nivel)?.valor, v.supuestos?.superficie_m2)
+      : null,
     linea: lineaCsv(v, nivel, datos.valores, serie),   // tarea 65 (remates): la línea de ingreso residual
     etiqueta: etiquetaPrivada(serie),   // F5: columna «etiqueta» (dato privado de oferta)
     categoria: categorias ? (x) => t(`vocabulario.${categorias.vocabulario}.${x}`) : null,   // F5: indicador 20

@@ -57,15 +57,18 @@ const COLUMNAS = ['codigo', 'nombre', 'nivel', 'indicador', 'tipologia', 'period
 //   en la columna valor_minimo, al lado de la cifra principal (valor, con el alquiler real);
 //   otros(codigo): con el selector «Añadir otros gastos de vivienda» (decisión del autor, 12-nov-2026),
 //   la cifra (€ al mes) que se ha sumado al alquiler en cada fila, en la columna otros_gastos;
+//   otrosMinimo(codigo): en el sueldo necesario, la que se ha sumado al mínimo teórico, con el factor de
+//   su superficie (factorOtrosGastos() de formulas.js), en la columna otros_gastos_minimo (19-nov-2026:
+//   la de otros_gastos es la de la cifra con el alquiler real, que la suma tal cual);
 //   linea: tarea 65 (remates), en «¿te llega?», { nombre, valor, distancia }: la línea de ingreso
 //   residual del año y del hogar de la ficha (su nombre y su cifra en € al mes, al céntimo; en la
 //   llave, «no se aplica» y sin cifra) en todas las filas, y, con `distancia(codigo, i)` (solo las
 //   fichas de una persona: con «Tu ficha» despejaría el sueldo escrito), lo que queda tras pagar la
 //   vivienda menos la línea, al céntimo, en la columna queda_menos_linea.
 // Los textos (cabecera, nivel, indicador…) llegan ya traducidos, salvo los que pide `t`.
-export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, nombreDe, indicador, unidad, tipologia, periodo, fuente, transformar, decimales, supuestos, desde = null, fiabilidad = null, etiqueta = null, categoria = null, minimo = null, otros = null, linea = null }) {
+export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, nombreDe, indicador, unidad, tipologia, periodo, fuente, transformar, decimales, supuestos, desde = null, fiabilidad = null, etiqueta = null, categoria = null, minimo = null, otros = null, otrosMinimo = null, linea = null }) {
   const columnas = [...COLUMNAS, ...(fiabilidad ? ['contratos', 'margen_pct'] : []), ...(supuestos ? ['superficie_m2', 'umbral'] : []),
-    ...(otros ? ['otros_gastos'] : []),
+    ...(otros ? ['otros_gastos'] : []), ...(otrosMinimo ? ['otros_gastos_minimo'] : []),
     ...(linea ? ['linea_residual', 'linea_residual_euros', ...(linea.distancia ? ['queda_menos_linea'] : [])] : []),   // tarea 65
     ...(minimo ? ['valor_minimo'] : []), ...(categoria ? ['categoria'] : []), ...(etiqueta ? ['etiqueta'] : [])];   // F5
   const cabecera = columnas.map((c) => t(`interfaz.exportar.columnas.${c}`));
@@ -85,6 +88,10 @@ export function tablaCsv({ t, codigos, valores, estados, nombresEstado, nivel, n
     if (supuestos) fila.push(supuestos.superficie_m2, supuestos.umbral);
     if (otros) {   // otros gastos de vivienda (12-nov-2026)
       const o = otros(codigo);
+      fila.push(Number.isFinite(o) ? redondear(o, 1) : null);
+    }
+    if (otrosMinimo) {   // 19-nov-2026
+      const o = otrosMinimo(codigo);
       fila.push(Number.isFinite(o) ? redondear(o, 1) : null);
     }
     if (linea) {   // tarea 65 (remates)

@@ -27,8 +27,8 @@ valor_tasado_m2,provincia_ccaa,anclado_septiles,2015,2025,1100;1300;1500;1700;19
 precio_compra_m2,provincia_ccaa,anclado_septiles,2015,2025,950;1200;1400;1650;1950;2550,35,26,provincia 2015: 29-35-12-10-6-8-2 / provincia 2025: 13-15-15-12-13-15-15 / ccaa 2015: 11-26-21-16-11-16-0 / ccaa 2025: 5-5-16-11-16-21-26
 anios_salario_compra,municipio,recalibrado,2015,2024,3.5;4;4.5;5.5;6;7.5,28,20,municipio 2015: 12-11-15-28-8-18-7 / municipio 2024: 15-10-10-20-12-15-18
 anios_salario_compra,provincia_ccaa,anclado_septiles,2015,2024,3.5;4;4.5;5;6;6.5,41,24,provincia 2015: 0-6-12-25-25-12-19 / provincia 2024: 21-15-21-8-15-8-12 / ccaa 2015: 0-0-6-12-41-18-24 / ccaa 2024: 0-18-18-12-18-12-24
-esfuerzo_hipotecario,municipio,recalibrado,2015,2024,10;11.5;13;14.5;16.5;20,22,26,municipio 2015: 7-17-15-22-14-14-10 / municipio 2024: 11-7-11-12-15-18-26
-esfuerzo_hipotecario,provincia_ccaa,recalibrado,2015,2024,11;12;13;14;16;18.5,27,32,provincia 2015: 2-8-10-27-16-22-16 / provincia 2024: 23-13-6-8-23-12-15 / ccaa 2015: 0-0-5-26-26-26-16 / ccaa 2024: 5-16-5-5-32-16-21
+esfuerzo_hipotecario,municipio,recalibrado,2015,2024,12.5;14.5;16;18;21;25,24,22,municipio 2015: 4-16-11-20-24-12-13 / municipio 2024: 13-8-12-12-15-18-22
+esfuerzo_hipotecario,provincia_ccaa,recalibrado,2015,2024,13.5;15;16.5;18;20;23,35,25,provincia 2015: 2-2-12-22-20-22-18 / provincia 2024: 25-15-8-13-15-12-12 / ccaa 2015: 0-0-0-24-24-18-35 / ccaa 2024: 5-16-11-16-21-11-21
 hogares_alquiler,seccion,recalibrado,2021,2021,7;10;12;15;19;24,16,16,seccion 2021: 14-16-11-15-16-13-15
 hogares_alquiler,provincia_ccaa,recalibrado,2021,2021,11;12;13;14;16;21,26,26,provincia 2021: 25-15-10-15-12-10-13 / ccaa 2021: 5-26-5-16-16-11-21
 sueldo_necesario,seccion,recalibrado,2015,2024,1100;1300;1500;1700;2000;2400,25,25,seccion 2015: 25-19-16-17-9-9-6 / seccion 2024: 4-8-11-16-14-21-25

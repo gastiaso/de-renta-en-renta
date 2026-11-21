@@ -65,7 +65,10 @@ comprobar_cifras_metodo_corto <- function(subida, cobertura, ruta = file.path("d
                 "población en secciones con dato (%)"),
     calculado = c(t[["desde"]], t[["hasta"]], t[["secciones"]], t[["subida"]], t[["anio"]], t[["pct_secciones"]],
                   t[["pct_poblacion"]]),
-    referencia = c(subida$desde, subida$hasta, subida$secciones, round(subida$subida_mediana), cobertura$anio,
-                   round(cobertura$pct_secciones), round(cobertura$pct_poblacion))
+    # Al entero como se escribe, con el empate hacia arriba (42,5 → 43), no con round(), que va al par
+    # (guía, «Redondeo»; 19-nov-2026)
+    referencia = c(subida$desde, subida$hasta, subida$secciones, redondear_empate_arriba(subida$subida_mediana, 0L),
+                   cobertura$anio, redondear_empate_arriba(cobertura$pct_secciones, 0L),
+                   redondear_empate_arriba(cobertura$pct_poblacion, 0L))
   )
 }

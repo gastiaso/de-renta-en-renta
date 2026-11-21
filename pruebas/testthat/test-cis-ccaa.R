@@ -270,3 +270,41 @@ test_that("un peso 0 deja fuera a la persona y no para la compuerta (18-nov-2026
   expect_equal(pesos(NA_real_), 1)
   expect_equal(pesos(c(0, -1, NA_real_)), 2)
 })
+
+test_that("peso_ccaa tiene compuerta propia: su suma por estudio y comunidad, y los ceros (19-nov-2026)", {
+  le <- cis_ccaa_leer(edicion_inventada())
+  com <- comunidades_inventadas()
+  m <- cis_ccaa_menciones(le, com)
+  mens <- cis_ccaa_mensual(m)
+  pa <- cis_ccaa_por_anio(m)
+  tab <- cis_ccaa_tabla(m, com, le$rupturas, nombres_inventados())
+  cv <- tibble::tibble(periodo = character(), pregunta = character(), total = numeric(), n = numeric())
+  refs <- readr::read_csv(file.path("..", "..", "inventario", "referencias_validacion.csv"), show_col_types = FALSE)
+  compuerta <- function(l) {
+    k <- cis_ccaa_comprobar(l, m, mens, pa, tab, com, cv)
+    suppressWarnings(validar_referencias(k[k$id %in% c("cis_ccaa_peso_ccaa", "cis_ccaa_peso_cero"), ], refs))
+  }
+  # Con peso_ccaa 1, la suma entre las entrevistas es 1 en los 9 estudios y comunidades, sin ceros
+  v <- compuerta(le)
+  expect_equal(sum(v$id == "cis_ccaa_peso_ccaa"), 9L)
+  expect_true(all(v$correcto))
+  expect_equal(sum(v$id == "cis_ccaa_peso_cero"), 0L)
+  # Un cero en Andalucía (3001): una fila de alerta; la suma, 39/40, sigue dentro
+  l <- le
+  l$microdatos$peso_ccaa[1] <- 0
+  v <- compuerta(l)
+  cero <- v[v$id == "cis_ccaa_peso_cero", ]
+  expect_equal(nrow(cero), 1L)
+  expect_match(cero$detalle, "3001, Andalucía: 1 de 40", fixed = TRUE)
+  expect_true(all(v$correcto[v$id == "cis_ccaa_peso_ccaa"]))
+  # Con `peso` (0,5 y 1,5 alternos: suma 1 por entrevista) no se distingue, pero un peso de otra escala
+  # (en %) o de otra columna sí: la compuerta para el pipeline
+  l <- le
+  l$microdatos$peso_ccaa <- 100 * l$microdatos$peso_ccaa
+  expect_error(validar_referencias(cis_ccaa_comprobar(l, m, mens, pa, tab, com, cv) |>
+                                     dplyr::filter(id == "cis_ccaa_peso_ccaa"), refs), "cis_ccaa_peso_ccaa")
+  l <- le
+  l$microdatos$peso_ccaa[l$microdatos$ccaa == "Madrid (Comunidad de)"] <- 1.2
+  v <- suppressWarnings(tryCatch(compuerta(l), error = function(e) conditionMessage(e)))
+  expect_match(v, "Madrid", fixed = TRUE)
+})

@@ -119,6 +119,15 @@ geo_pares_permitidos <- function(grupos, umbral = UMBRAL_CRUCE_MUNICIPIO) {
   p |> filter(cuota >= umbral) |> distinct(municipio_origen, municipio_destino)
 }
 
+# ¿Puede una tabla de paso llevar del municipio `origen` al `destino`? El mismo municipio, o un par de
+# geo_pares_permitidos(). Vale para el callejero y, desde el 19-nov-2026, también para el Catastro, que
+# antes cruzaba a cualquier municipio del grupo (revisión independiente de 4354766, propuesta c; en las
+# tablas de entonces, todos sus cruces eran ya pares permitidos).
+cruce_permitido <- function(origen, destino, grupos = NULL) {
+  permitidos <- geo_pares_permitidos(grupos)
+  origen == destino | paste(origen, destino) %in% paste(permitidos$municipio_origen, permitidos$municipio_destino)
+}
+
 # Código de grupo de cada municipio (el propio si no está en ninguno).
 agrupar_municipio <- function(municipio, grupos = NULL) {
   if (is.null(grupos) || nrow(grupos) == 0) return(municipio)
@@ -329,14 +338,11 @@ comprobar_cierre_poblacional <- function(poblacion, tabla, anio, grupos = NULL, 
 # Cruce de municipios en la vía del callejero (paso_cruce_municipios, bloqueo; revisión del
 # 18-nov-2026): secciones de origen que la tabla reparte, por el callejero, a otro municipio que no
 # es su sucesor ni su predecesor (geo_pares_permitidos()). El cierre poblacional no lo ve, porque se
-# mide por grupo. La vía del Catastro sí puede cruzar dentro de un grupo: es un reparto por edificios.
+# mide por grupo. Desde el 19-nov-2026 mira todas las vías (callejero, Catastro y código): el Catastro
+# se limita a los mismos pares (cruce_permitido()). Sin cruces, el detalle dice «ninguna».
 comprobar_cruce_municipios <- function(tabla, grupos, anio) {
-  permitidos <- geo_pares_permitidos(grupos)
-  malos <- tabla |>
-    filter(metodo == "callejero", substr(origen, 1, 5) != substr(destino, 1, 5),
-           !paste(substr(origen, 1, 5), substr(destino, 1, 5)) %in%
-             paste(permitidos$municipio_origen, permitidos$municipio_destino))
-  pares <- unique(paste(substr(malos$origen, 1, 5), "->", substr(malos$destino, 1, 5)))
+  malos <- tabla[which(!cruce_permitido(substr(tabla$origen, 1, 5), substr(tabla$destino, 1, 5), grupos)), ]
+  pares <- if (nrow(malos)) unique(paste(substr(malos$origen, 1, 5), "->", substr(malos$destino, 1, 5))) else character(0)
   tibble::tibble(id = "paso_cruce_municipios", anio = as.integer(anio),
                  detalle = if (length(pares)) paste(utils::head(sort(pares), 10), collapse = "; ") else "ninguna",
                  calculado = length(unique(malos$origen)), referencia = 0)

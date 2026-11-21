@@ -413,6 +413,23 @@ test_that("17 con la vivienda tipo y el plazo del Banco de España (revisión de
   esp <- e$valor[e$geo_id == "00"]
   expect_equal(k$calculado, 100 * (esp / 35 - 1))
   expect_equal(k$id, "compraventa_esfuerzo_bde")
+  # Banda razonada (19-nov-2026): referencia DIFERENCIA_ESFUERZO_BDE y ±10 puntos del inventario. Con
+  # la diferencia de fondo (atlas 21,8 % frente a 34,5 %) pasa; con el plazo en meses, no
+  expect_equal(k$referencia, DIFERENCIA_ESFUERZO_BDE)
+  refs <- readr::read_csv(file.path("..", "..", "inventario", "referencias_validacion.csv"), show_col_types = FALSE)
+  fila <- refs[refs$id == "compraventa_esfuerzo_bde", ]
+  expect_equal(leer_tolerancia(fila$tolerancia), 10)
+  banco <- tibble::tibble(serie = "esfuerzo_teorico", geo_id = "00", nivel = "nacional", frecuencia = "trimestral",
+                          anio = 2024L, subperiodo = 1:4, valor = 34.5)
+  con <- function(valor) {
+    d1 <- tibble::tibble(indicador = "esfuerzo_hipotecario", nivel = "nacional", geo_id = "00", anio = 2024L, valor = valor)
+    v <- validar_referencias(compraventa_esfuerzo_bde(d1, banco), refs)
+    v$correcto
+  }
+  expect_true(con(21.8))
+  cuota_anios <- 100 * 12 * cuota_hipoteca(0.8 * 2000 * 95, 3.47, 24.55)
+  cuota_meses <- 100 * 12 * cuota_hipoteca(0.8 * 2000 * 95, 3.47, 24.55 * 12)
+  expect_false(suppressWarnings(con(21.8 * cuota_meses / cuota_anios)))
 })
 
 test_that("una serie del Banco de España sin código fijo se encuentra por su descripción", {
@@ -422,4 +439,10 @@ test_that("una serie del Banco de España sin código fijo se encuentra por su d
                '"MAR 2024","3,2","289"', '"FUENTE","x","x"', '"NOTAS","x","x"'), ruta)
   expect_equal(hist_codigo_bde(ruta, HIST_DESCRIPCION_BDE[["plazo_hipotecas"]]), "D_B")
   expect_error(hist_codigo_bde(ruta, "superficie"), "0 series")
+  # La unidad de la quinta fila (19-nov-2026): «Meses», que compraventa_plazo_bde() pasa a años
+  expect_equal(hist_codigo_bde(ruta, HIST_DESCRIPCION_BDE[["plazo_hipotecas"]], HIST_UNIDAD_BDE[["plazo_hipotecas"]]), "D_B")
+  ruta2 <- tempfile(fileext = ".csv")
+  writeLines(sub('"%","Meses"', '"%","Años"', readLines(ruta), fixed = TRUE), ruta2)
+  expect_error(hist_codigo_bde(ruta2, HIST_DESCRIPCION_BDE[["plazo_hipotecas"]], HIST_UNIDAD_BDE[["plazo_hipotecas"]]),
+               "se esperaba")
 })

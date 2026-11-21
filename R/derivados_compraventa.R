@@ -295,14 +295,21 @@ comprobar_derivados_compraventa <- function(derivados, larga_valor_tasado, larga
 # trimestres), pero el Banco divide por la renta bruta disponible del hogar mediano (Encuesta
 # Financiera de las Familias) y valora la vivienda con su precio medio, y el atlas, por la renta neta
 # media por hogar del ADRH con el valor tasado: no cuadra, y la alerta mide cuánto se separa (en %).
-compraventa_esfuerzo_bde <- function(derivados, series_bde) {
+# Banda razonada (decisión del 19-nov-2026, «por decidir» de la revisión de 4354766): con referencia 0
+# avisaba los diez años y no vigilaba nada. La diferencia es de fondo y estable (de −25,3 % en 2015 a
+# −36,9 % en 2024, media −31,1 %): la referencia es DIFERENCIA_ESFUERZO_BDE y la tolerancia (±10
+# puntos, en el inventario) deja holgura a la deriva lenta de la renta y del precio. Lo que vigila: el
+# plazo sin pasar a años (con 3.500 meses la cuota baja a poco más que los intereses: unos −65 %), la
+# superficie de otra serie o la renta de otra unidad.
+DIFERENCIA_ESFUERZO_BDE <- -31
+compraventa_esfuerzo_bde <- function(derivados, series_bde, referencia = DIFERENCIA_ESFUERZO_BDE) {
   e <- derivados[derivados$indicador == "esfuerzo_hipotecario" & derivados$nivel == "nacional" & !is.na(derivados$valor), ]
   if (!nrow(e)) return(tibble::tibble(id = character(), anio = integer(), detalle = character(), calculado = numeric(),
                                       referencia = numeric()))
   bde <- vapply(e$anio, function(a) hist_valor_en(series_bde, "esfuerzo_teorico", "00", as.character(a)), numeric(1))
   tibble::tibble(id = "compraventa_esfuerzo_bde", anio = as.integer(e$anio),
                  detalle = sprintf("Espa\u00f1a: atlas %.1f %% frente a %.1f %% del Banco de Espa\u00f1a (media del a\u00f1o)", e$valor, bde),
-                 calculado = 100 * (e$valor / bde - 1), referencia = 0)
+                 calculado = 100 * (e$valor / bde - 1), referencia = referencia)
 }
 
 # Compuerta de coherencia entre la tasación y las escrituras (el «hecho cuando» de F4). Las webs

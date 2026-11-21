@@ -314,3 +314,88 @@ test('con otra superficie solo crecen los otros gastos ligados a los metros', ()
   assert.deepEqual(e.gasto[2][0], '*');
   assert.ok(cerca(e.gasto[2][2], factorOtrosGastos(70)));
 });
+
+// Revisión independiente de 4354766, propuesta g (19-nov-2026): el factor de la superficie solo se dice
+// junto al mínimo teórico; el CSV da los otros gastos de cada cifra (con el factor donde la cifra lo
+// lleva), y el cableado del margen en principal.js (fijoDe, fijoLlega) queda vigilado.
+const { otrosConFactor } = await modulo('web/js/formulas.js');
+const { resumenResidual } = await modulo('web/js/residual.js');
+
+test('el factor de la superficie se dice del mínimo, no de la cifra con el alquiler real', () => {
+  const g = sueldo.gastosDelAnio(TABLA, 2024, CCAA_DE_PROVINCIA, NOMBRES);
+  const s70 = sueldo.supuestosEn({ superficie_m2: 70, umbral: 0.3, gastos: g }, '5029701001');
+  // Sueldo necesario (alquiler real con el mínimo al lado): «en el mínimo de 70 m²»
+  const real = textoSupuestos(t, { formula: 'alquiler_mes_a_sueldo', minimo: {} }, s70);
+  assert.match(real, /otros_gastos_superficie_minimo\{\\"superficie\\":\\"70\\"/);
+  // Mapa del mínimo solo, o «¿te llega?» de «Tu ficha»: el factor va con la cifra
+  assert.match(textoSupuestos(t, { formula: 'alquiler_m2_a_sueldo' }, s70), /otros_gastos_superficie\{/);
+  assert.match(textoOtrosGastos(t, s70), /otros_gastos_superficie\{/);
+  // Con 50 m², sin factor y sin sufijo
+  const s50 = sueldo.supuestosEn({ superficie_m2: 50, umbral: 0.3, gastos: g }, '5029701001');
+  assert.doesNotMatch(textoSupuestos(t, { formula: 'alquiler_mes_a_sueldo', minimo: {} }, s50), /superficie_minimo/);
+  // El comparador, igual que la leyenda
+  const c = supuestosDeColumnas({ ...s70 }, { seccion: '5029701001', comparado: { nivel: 'nacional', codigo: '00' }, periodo: 2024 });
+  assert.match(textoSupuestosFila(t, { formula: 'alquiler_mes_a_sueldo', minimo: {} }, c), /otros_gastos_superficie_minimo/);
+  // Los dos idiomas tienen el texto
+  for (const idioma of ['es', 'en']) {
+    const dic = JSON.parse(leer('web', 'i18n', `${idioma}.json`));
+    assert.match(dic.interfaz.leyenda.otros_gastos_superficie_minimo, /\{superficie\}.*\{factor\}/);
+    assert.ok(dic.interfaz.exportar.columnas.otros_gastos_minimo);
+  }
+});
+
+test('el CSV da los otros gastos de cada cifra: tal cual con el alquiler real y con el factor en el mínimo', () => {
+  assert.equal(otrosConFactor(150), 150);
+  assert.ok(cerca(otrosConFactor(150, 70), 150 * 1.2));
+  assert.equal(otrosConFactor(undefined, 70), null);
+  const tt = (c) => c.split('.').at(-1);
+  const { cabecera, filas } = exportar.tablaCsv({
+    t: tt, codigos: ['5029701001'], valores: [800], estados: Uint8Array.from([0]),
+    nombresEstado: ['dato', 'estimado', 'secreto', 'ausente'], nivel: 'sc', nombreDe: (c) => c, indicador: 'i', unidad: 'u',
+    tipologia: '', periodo: 2024, fuente: 'f', decimales: 0, supuestos: { superficie_m2: 70, umbral: 0.3 },
+    transformar: (x) => (x + 162.4) / 0.3,
+    minimo: { valores: [12], transformar: (x) => (x * 70 + otrosConFactor(162.4, 70)) / 0.3 },
+    otros: () => otrosConFactor(162.4), otrosMinimo: () => otrosConFactor(162.4, 70),
+  });
+  const de = (columna) => filas[0][cabecera.indexOf(columna)];
+  assert.equal(de('otros_gastos'), 162.4);
+  assert.equal(de('otros_gastos_minimo'), 194.9);   // 162,4 × 1,2 = 194,88
+  assert.equal(de('valor'), Math.round((800 + 162.4) / 0.3));
+  assert.equal(de('valor_minimo'), Math.round((12 * 70 + 162.4 * 1.2) / 0.3));
+  // Sin otrosMinimo, sin la columna
+  const sin = exportar.tablaCsv({
+    t: tt, codigos: ['5029701001'], valores: [800], estados: Uint8Array.from([0]), nombresEstado: ['dato'], nivel: 'sc',
+    nombreDe: (c) => c, indicador: 'i', unidad: 'u', tipologia: '', periodo: 2024, fuente: 'f', decimales: 0, otros: () => 162.4,
+  });
+  assert.equal(sin.cabecera.includes('otros_gastos_minimo'), false);
+});
+
+test('«Lo que queda» con el piso real resta sus otros gastos tal cual, sin el factor de la ficha', () => {
+  const g = sueldo.gastosDelAnio(TABLA, 2024, CCAA_DE_PROVINCIA, NOMBRES);
+  const c = sueldo.calculoLlega({ ficha: 'peon', perfiles: {}, sueldo: { neto: 1500, pagas: 12 }, superficie: 70, gastos: g });
+  // 1.500 − 900 − 162,4 = 437,6: con una línea de 437 queda encima; con el factor (194,88) quedaría debajo
+  const x = (serie) => (serie === 'alquiler_m2' ? 12 : serie === 'alquiler_mes' ? 900 : null);
+  const real = resumenResidual(c, ['5029701001'], x, 437, { real: true });
+  assert.deepEqual([real.con, real.encima], [1, 1]);
+  const debajo = resumenResidual(c, ['5029701001'], x, 438, { real: true });
+  assert.equal(debajo.encima, 0);
+});
+
+test('principal.js: el margen de la ficha, de «en el límite» y de la evolución deja fuera los otros gastos', () => {
+  const js = leer('web', 'js', 'principal.js');
+  // Cada intervalo del sueldo necesario lleva su parte fija (fijoDe), y ninguno se calcula sin ella
+  const intervalos = js.match(/intervaloMargen\([^;]*\);/g) ?? [];
+  assert.ok(intervalos.length >= 2, 'los dos intervalos (ficha y comparador o ficha de territorio)');
+  for (const i of intervalos) assert.match(i, /intervaloMargen\(valor, margen, fijoDe\(v\.mapa, supuestos\)\)/);
+  // «En el límite» de «¿te llega?», con fijoLlega
+  const limites = js.match(/enLimiteLlega\([^;]*?\)\s*[;:]/g) ?? [];
+  assert.ok(limites.length >= 1);
+  for (const l of limites) assert.match(l, /enLimiteLlega\(r\.ratio, margen, fijoLlega\(r\)\)/);
+  // La evolución guarda la parte fija de cada año (sueldo necesario y «¿te llega?») y la banda la recibe
+  assert.match(js, /fijo = fijoDe\(v\.mapa, s\);/);
+  assert.match(js, /fijo = fijoLlega\(r\);/);
+  assert.match(js, /bandaMargen\(cifras, [^,]+, fijos\)/);
+  // El CSV: otros gastos con el factor donde la cifra lo lleva
+  assert.match(js, /otrosConFactor\(otrosGastosEn\(v\.gastos, codigo, nivel\)\?\.valor, v\.modo === 'llega' && estado\.ficha !== 'llave' \? v\.superficie : null\)/);
+  assert.match(js, /otrosMinimo: v\.gastos && derivado && defMinimo/);
+});
