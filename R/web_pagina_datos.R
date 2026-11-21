@@ -17,7 +17,7 @@ FICHEROS_DICCIONARIO_DATOS <- c(es = "datos_diccionario.md", en = "data_dictiona
 # Version del atlas en que entra cada fase del plan (plan, 7). F1b no tuvo version propia: la
 # sobrecarga se publico con la v0.1 (backlog, F2).
 # Las lineas de ingreso residual (tarea 65) entran sin fase del plan, con la v1.2.
-VERSION_DE_FASE <- c(F1b = "v0.1", F2 = "v0.1", F3 = "v0.2", F4 = "v0.3", F5 = "v0.4", F6 = "v1.0", v1.2 = "v1.2")
+VERSION_DE_FASE <- c(F1b = "v0.1", F2 = "v0.1", F3 = "v0.2", F4 = "v0.3", F5 = "v0.4", F6 = "v1.0", v1.2 = "v1.2", v1.3 = "v1.3")
 
 TEXTOS_DICCIONARIO_DATOS <- list(
   es = list(

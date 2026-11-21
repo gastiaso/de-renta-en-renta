@@ -1,6 +1,8 @@
 # De renta en renta — Plan de integración por fases
 
-*Borrador v0.57 · 19 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+*Borrador v0.58 · 21 de noviembre de 2026 · Todo lo que sigue es provisional y se revisa en cada fase.*
+
+**Cambios en la v0.58:** el Notariado, integrado (19 y 21-nov-2026): indicadores 25 a 29, solo en la web y con licencia propia no comercial; del Portal Estadístico, precio escriturado por m², precio medio y compraventas en 12 meses, por municipio; del CIEN, hipotecas para compra de vivienda y su cuantía media, por provincia, 2007–2025. Decisión del autor (21-nov-2026): sus cifras no van en git ni en el *release* público, sino en un *release* en borrador que solo baja el flujo de Pages (`docs/especificacion_notariado.md`, opción D). Detalle en `CHANGELOG.md`.
 
 **Cambios en la v0.57:** Notariado (decisiones del autor, 19-nov-2026). El CIEN del Notariado (series de actos notariales por España, comunidad y provincia) puede entrar sin autorización, porque su aviso legal solo la exige para los usos comerciales; el autor asume el riesgo de esa lectura. Sus cifras irán con licencia propia no comercial (© Consejo General del Notariado) y solo en la web, fuera de la tabla larga, las descargas y el *release*; el resto sigue en CC BY-SA 4.0 y el código en MIT. El Portal Estadístico (precio de compraventa por municipio y código postal) entra igual: la licencia propia y la web sin descargas cumplen el §4 de sus términos (nada de bases de datos consultables con fines comerciales), y el autor asume el riesgo del §6, que prohíbe ponerlo a disposición del público sin autorización aunque no haya fin comercial; nunca se mezcla con Registradores (11). Sustituye a la decisión del 10-nov-2026 (pregunta 45 a) en lo que toca al Notariado. Detalle en `docs/backlog.md`, «Para la v1.3».
 

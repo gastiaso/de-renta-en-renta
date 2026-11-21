@@ -110,6 +110,8 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 | `mivau_serpavi` | Sistema Estatal de Referencia del Precio del Alquiler de Vivienda (SERPAVI): base de datos |
 | `gv_emal` | Estadística del Mercado del Alquiler (fianzas) |
 | `ine_ipva` | Índice de Precios de Vivienda en Alquiler (IPVA) |
+| `notariado` | Portal Estadístico del Notariado: compraventa de vivienda (capa del mapa de precios) |
+| `notariado_cien` | CIEN del Notariado: «Estadísticas al completo» (hipotecas para compra de vivienda) |
 | `registradores` | Estadística Registral Inmobiliaria: compraventas de inmuebles de uso residencial por provincia (Colegio de Registradores; base de datos con licencia ODbL) |
 | `mivau_valor_tasado` | Valor tasado de la vivienda libre |
 | `portales` | Informes de precios de oferta (salas de prensa de Idealista y Fotocasa) |
@@ -134,7 +136,7 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 
 ## Diccionario de indicadores
 
-Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas de ingreso residual), en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el código. «Versión» es la del atlas en que entra cada indicador: los que entran en una versión posterior a la del release todavía no están en la tabla larga.
+Los 29 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas de ingreso residual), en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el código. «Versión» es la del atlas en que entra cada indicador: los que entran en una versión posterior a la del release todavía no están en la tabla larga.
 
 | Nº | Código | Nombre | Unidad | Versión |
 | --- | --- | --- | --- | --- |
@@ -162,6 +164,11 @@ Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 | 22 | [`sobrecarga`](#sobrecarga) | Tasa de sobrecarga por gastos de vivienda (método Eurostat) | % de las personas | v0.1 |
 | 23 | [`busqueda_sin_exito`](#busqueda_sin_exito) | Búsqueda de vivienda sin éxito | % de las personas de 16 o más años | v0.1 |
 | 24 | [`pobreza_tras_vivienda`](#pobreza_tras_vivienda) | Tasa de riesgo de pobreza tras los gastos de vivienda | % de las personas | v1.2 |
+| 25 | [`precio_escriturado_m2`](#precio_escriturado_m2) | Precio escriturado de compraventa por metro cuadrado | € por m² | v1.3 |
+| 26 | [`precio_escriturado_vivienda`](#precio_escriturado_vivienda) | Precio escriturado medio por compraventa de vivienda | € por vivienda | v1.3 |
+| 27 | [`compraventas_notariado`](#compraventas_notariado) | Compraventas de vivienda escrituradas en 12 meses | compraventas | v1.3 |
+| 28 | [`hipotecas_compra_vivienda`](#hipotecas_compra_vivienda) | Hipotecas para compra de vivienda | hipotecas al año | v1.3 |
+| 29 | [`cuantia_hipoteca_vivienda`](#cuantia_hipoteca_vivienda) | Cuantía media de las hipotecas para compra de vivienda | € por hipoteca | v1.3 |
 | Auxiliar | [`contratos_alquiler`](#contratos_alquiler) | Contratos de alquiler de la mediana | contratos | v0.1 |
 | Auxiliar | [`margen_alquiler_mes`](#margen_alquiler_mes) | Margen aproximado de la mediana del alquiler mensual | % de la mediana | v0.1 |
 | Auxiliar | [`margen_alquiler_m2`](#margen_alquiler_m2) | Margen aproximado de la mediana del alquiler por m² | % de la mediana | v0.1 |
@@ -455,6 +462,66 @@ Los 24 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Definición:** Personas cuya renta disponible por unidad de consumo, una vez restado el gasto total en vivienda, queda por debajo del umbral de riesgo de pobreza (60 % de la mediana de la renta por unidad de consumo antes de restar la vivienda).
 - **Cálculo:** Microdatos de la ECV con el método de Eurostat (ilc\_li48): renta disponible del año anterior menos 12 veces el gasto mensual en vivienda (de la hipoteca, solo intereses), entre las unidades de consumo de la escala de la OCDE modificada; umbral de la ola sin recalcular; ponderación por persona. Reproduce las cifras de España de Eurostat, también por edad (ilc\_li45) y grado de urbanización (±0,1 puntos). Los cruces por comunidad, tenencia y edad agrupan tres olas.
 - **Lectura:** Es la versión estadística del enfoque residual: no fija un porcentaje máximo de gasto, sino si lo que queda tras pagar la vivienda llega al umbral de pobreza. Se lee junto a la sobrecarga (22), que mide la proporción de la renta, y por tenencia, sobre todo en el alquiler.
+
+### `precio_escriturado_m2`
+
+**25 · Precio escriturado de compraventa por metro cuadrado**
+
+- **Unidad:** € por m²
+- **Familia:** Coste de la vivienda
+- **Fuentes:** `notariado`
+- **Versión:** v1.3
+- **Definición:** Precio medio por metro cuadrado de las compraventas de vivienda escrituradas ante notario en los últimos 12 meses (todas las viviendas: nuevas y usadas, pisos y unifamiliares).
+- **Cálculo:** Cifra publicada por el Consejo General del Notariado en su Portal Estadístico (capa del mapa de precios, consultada en cada actualización y guardada con su fecha): una foto móvil de 12 meses, sin serie pública. Con menos de 20 compraventas con precio y superficie informados, el atlas no publica el precio (secreto). Cada nivel con su cifra publicada; nada se agrega.
+- **Lectura:** Es precio escriturado, no de oferta, de tasación ni inscrito: no se compara con el precio por m² de Registradores (11), que mide otra superficie. Una sola foto de 12 meses, fechada en la ficha. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga.
+
+### `precio_escriturado_vivienda`
+
+**26 · Precio escriturado medio por compraventa de vivienda**
+
+- **Unidad:** € por vivienda
+- **Familia:** Coste de la vivienda
+- **Fuentes:** `notariado`
+- **Versión:** v1.3
+- **Definición:** Precio medio de las compraventas de vivienda escrituradas ante notario en los últimos 12 meses.
+- **Cálculo:** Cifra publicada por el Consejo General del Notariado en su Portal Estadístico, de la misma foto de 12 meses que el 25 y con el mismo umbral de 20 compraventas informadas. La superficie media no se publica aparte: es este precio entre el del 25.
+- **Lectura:** Precio por vivienda, sea cual sea su tamaño: sube donde las viviendas que se venden son más grandes. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga.
+
+### `compraventas_notariado`
+
+**27 · Compraventas de vivienda escrituradas en 12 meses**
+
+- **Unidad:** compraventas
+- **Familia:** Estructura y presión
+- **Fuentes:** `notariado`
+- **Versión:** v1.3
+- **Definición:** Número de compraventas de vivienda escrituradas ante notario en los últimos 12 meses.
+- **Cálculo:** Cifra publicada por el Consejo General del Notariado en su Portal Estadístico, de la misma foto que el 25. Se publica en todos los territorios que la traen, sin umbral: es el recuento que sostiene el precio. Un municipio sin compraventas en los 12 meses no sale en la fuente (sin dato).
+- **Lectura:** Dice cuántas compraventas sostienen el precio del 25 y el 26, y el tamaño del mercado de compra. Es fecha de firma de la escritura, no de inscripción. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga.
+
+### `hipotecas_compra_vivienda`
+
+**28 · Hipotecas para compra de vivienda**
+
+- **Unidad:** hipotecas al año
+- **Familia:** Estructura y presión
+- **Fuentes:** `notariado_cien`
+- **Versión:** v1.3
+- **Definición:** Número de hipotecas inmobiliarias firmadas ante notario en el año cuya finalidad es la adquisición de vivienda.
+- **Cálculo:** Cifra anual publicada por el CIEN del Consejo General del Notariado («Estadísticas al completo»: acto 1203, hipoteca inmobiliaria, subcategoría adquisición de vivienda), en España, comunidad y provincia, desde 2007; solo los años con los doce meses publicados. Andalucía sale de la suma de sus ocho provincias, porque el CIEN la da con Ceuta y Melilla, que van juntas como una provincia y quedan sin dato.
+- **Lectura:** Es fecha de firma (autorización), no de inscripción: no coincide con la Estadística de Hipotecas del INE, que cuenta las inscritas y todas las finalidades. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga.
+
+### `cuantia_hipoteca_vivienda`
+
+**29 · Cuantía media de las hipotecas para compra de vivienda**
+
+- **Unidad:** € por hipoteca
+- **Familia:** Coste de la vivienda
+- **Fuentes:** `notariado_cien`
+- **Versión:** v1.3
+- **Definición:** Importe medio del préstamo de las hipotecas para la adquisición de vivienda firmadas ante notario en el año.
+- **Cálculo:** Cifra anual publicada por el CIEN del Consejo General del Notariado (la misma serie que el 28, cuantía promedio). Andalucía, sin Ceuta y Melilla: media de sus ocho provincias ponderada por las hipotecas con cuantía informada, que reproduce la media publicada de cada comunidad (compuerta notariado\_cien\_cuantia).
+- **Lectura:** Es el importe del préstamo, no el precio de la vivienda. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga.
 
 ### `contratos_alquiler`
 

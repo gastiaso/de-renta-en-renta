@@ -4,6 +4,15 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (19 y 21-nov-2026, Notariado con licencia propia no comercial, solo web)
+
+- Fuentes `notariado` (Portal Estadístico, capa ArcGIS del mapa de precios; foto de 12 meses guardada con su fecha) y `notariado_cien` (CIEN, «Estadísticas al completo»), con licencia «© Consejo General del Notariado, solo uso no comercial» (`LICENCIA_DATOS.md`; decisiones del autor del 19-nov-2026). Se descargan cuando el calendario de fuentes dice que toca (`cal_toca()`).
+- Indicadores 25 a 29: precio escriturado por m², precio medio por compraventa y compraventas en 12 meses (municipio a España, foto del 21-oct-2026; sin precio con menos de 20 compraventas informadas: 2.475 de los 7.451 municipios con compraventas tienen precio), e hipotecas para compra de vivienda y su cuantía media (provincia a España, 2007–2025; Andalucía sin Ceuta y Melilla). España, 2025: 385.194 hipotecas para compra de vivienda.
+- `R/fuente_notariado.R`, `R/web_notariado.R`, `bloque_notariado` (`NOTARIADO=FALSE` la apaga), compuertas `notariado_*`, `notariado_cien_*` y `web_notariado`, `inventario/notariado_cien_territorios.csv`; `docs/especificacion_notariado.md`, con ocho preguntas por revisar.
+- Capa web en `web/datos/notariado/`: mapas municipales y provinciales con la etiqueta de la licencia, sin CSV (aviso propio) y la fecha de la foto en la ficha.
+- **Fuera de git y del release público** (decisión del autor del 21-nov-2026, para que las cifras no estén en el repositorio público ni en su historia): `empaquetar_notariado()` prepara `publicacion_notariado/notariado.tar.gz` y su `SHA256SUMS` para el *release* en borrador «notariado», que nunca se publica; el flujo de Pages lo baja (su trabajo de montaje pasa a `contents: write`, solo para ver el borrador), comprueba la suma y las rutas y lo monta, y sin él deja la capa apagada. `empaquetar_publicacion()` comprueba que nada del Notariado entra en el paquete público (`sin_notariado`) y el flujo rechaza la capa en `datos_web.tar.gz`.
+- Nota metodológica §7.11 y filas de §2.1–§2.4; `docs/publicacion.md`, «Capa del Notariado».
+
 ### Cambiado (19-nov-2026, «por decidir» de la revisión de 4354766)
 
 - **Compuerta `compraventa_esfuerzo_bde`:** mide la distancia a la diferencia de fondo con el Banco de España (−31 %, ±10 puntos), no a 0, con lo que avisaba los diez años y no vigilaba nada; ahora pasa en los diez (de −25,3 a −36,9 %) y vería, por ejemplo, el plazo sin pasar a años (unos −65 %). El plazo del Banco se busca por su descripción y, además, por su unidad: «Meses» (`hist_codigo_bde()`, `HIST_UNIDAD_BDE`).

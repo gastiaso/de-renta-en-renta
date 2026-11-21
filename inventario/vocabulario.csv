@@ -76,6 +76,8 @@ oferta_privada,alquiler_fotocasa,"Alquiler, Fotocasa (dato privado de oferta)","
 oferta_privada,venta_idealista,"Venta, Idealista (dato privado de oferta)","Sale, Idealista (private asking-price data)"
 oferta_privada,venta_fotocasa,"Venta, Fotocasa (dato privado de oferta)","Sale, Fotocasa (private asking-price data)"
 etiqueta,portales,Dato privado de oferta,Private asking-price data
+etiqueta,notariado,"© Consejo General del Notariado, solo uso no comercial","© Consejo General del Notariado, non-commercial use only"
+etiqueta,notariado_cien,"© Consejo General del Notariado, solo uso no comercial","© Consejo General del Notariado, non-commercial use only"
 zona_tensionada,0,Sin declaración en vigor,No declaration in force
 zona_tensionada,1,Declarada en parte del municipio,Declared in part of the municipality
 zona_tensionada,2,Declarada en todo el municipio,Declared in the whole municipality

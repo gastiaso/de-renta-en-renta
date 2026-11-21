@@ -66,6 +66,7 @@ Los ficheros del release los prepara `empaquetar_publicacion()` (`R/publicar.R`)
 | `datos/brutos/`, `datos/intermedios/` (incluida la tabla larga) | `targets::tar_make()` | La tabla larga, en el release |
 | `web/datos/` (salvo la muestra de `web/datos/ejemplo/` y la capa de portales) | `targets::tar_make(names = c(ficheros_web, validacion_web))` | Release |
 | `web/datos/portales/` (capa de portales, tarea 35) | `targets::tar_make(names = c(ficheros_web_portales, validacion_web_portales))`, con `PORTALES=TRUE` (apagada, solo el manifiesto vacío) | No va en el release; ver «Capa de portales» |
+| `web/datos/notariado/` (capa del Notariado, 19-nov-2026) | `targets::tar_make(names = c(ficheros_web_notariado, validacion_web_notariado))` (con `NOTARIADO=FALSE`, apagada: solo el manifiesto vacío) | Fuera de git y del release público: release en borrador «notariado» (`empaquetar_notariado()`); ver «Capa del Notariado» |
 | `*.pmtiles` (`geo/referencia/`, `web/teselas/`) | `targets::tar_make(names = fichero_mapa_base)` | Release |
 | `publicacion/` | `empaquetar_publicacion()` | Es el release |
 | `web/metodo.html`, `web/method.html`, `web/metodo_corto.html`, `web/short_method.html`, `web/datos.html`, `web/data.html`, `web/descargas/` | Copias locales para ver las páginas de texto (pandoc y la copia de `publicacion/`) | Las genera el flujo |
@@ -88,6 +89,31 @@ La capa de precios de oferta (indicador 13, alquiler de Idealista) es solo web: 
 3. **Propuesta:** el mismo fichero aparte, en un release en borrador (por ejemplo, `capa-portales`), que no es público: solo lo ven quienes pueden escribir en el repositorio. Para leer un borrador, el token del flujo necesita `contents: write`, así que lo bajaría un trabajo propio con ese permiso, antes del que monta el sitio (que sigue con `contents: read`), y se lo pasaría como artefacto de la ejecución, con un día de vida. Contras: los artefactos de un repositorio público los puede bajar cualquier usuario de GitHub mientras duran, y el flujo gana un trabajo con permiso de escritura. Las cifras se sirven igual en el sitio (cualquiera puede pedir los JSON de `datos/portales/`), pero no quedan en el release público ni en un fichero único.
 
 **Antes de cualquiera de las tres:** las condiciones generales de Idealista (30-abr-2025) piden su autorización escrita para incorporar su contenido a otro sitio web y para enlazar sus páginas en profundidad (fila `portales` de `inventario/fuentes.csv`). Sin esa autorización, ninguna opción resuelve el problema de fondo; con ella, lo que diga decide la forma. Hasta entonces, el sitio de la v1.0 saldría con la capa apagada.
+
+## Capa del Notariado (19-nov-2026)
+
+Las cifras del Notariado (indicadores 25 a 29: Portal Estadístico y CIEN) van con licencia propia no comercial, «© Consejo General del Notariado, solo uso no comercial», y solo en la web (decisiones del autor del 19-nov-2026; `docs/especificacion_notariado.md`). El pipeline las escribe en su carpeta, `web/datos/notariado/` (`R/web_notariado.R`), con manifiesto propio, y la web las suma al manifiesto general como la capa de portales (`unirCapas()`).
+
+**Cómo llegan al sitio** (decisión del autor del 21-nov-2026: fuera de git, para que las cifras no estén en el repositorio público ni en su historia): la carpeta no va en git ni en el release público. Va en un **release en borrador**, «notariado», que solo ven quienes pueden escribir en el repositorio y que **nunca se publica** (publicarlo crearía la etiqueta y lo haría público). El flujo de Pages lo baja al montar el sitio (por eso su trabajo de montaje tiene `contents: write`: los borradores no se ven con `read`; ningún paso escribe y el checkout no guarda el token), comprueba su suma y que solo trae `datos/notariado/`, y lo monta. Sin el borrador, o con la suma mal, el sitio sale con la capa apagada (`{"capa":"notariado","activa":false}`) y el flujo avisa. Pesa unos 170 KB (127 ficheros) con la foto del 21-oct-2026 y el CIEN de 2007 a 2025. No entra en el paquete público:
+- `empaquetar_publicacion()` deja fuera `datos/notariado/` del `.tar.gz` y se detiene si el paquete la llevara: comprobación `sin_notariado` (ningún fichero de `datos/notariado/` en el `.tar.gz`, ninguna serie de las fuentes `notariado` o `notariado_cien` en el manifiesto general, ninguna fila suya en la tabla larga ni en el histórico). `version.json` lo dice en `licencia.excepciones.notariado`. Lo prueba `test-publicar.R`;
+- el flujo rechaza un `datos_web.tar.gz` con `datos/notariado/`.
+
+**Para actualizarla:** `targets::tar_make()` baja la foto de penotariado y las series del CIEN cuando el calendario de fuentes dice que toca (`cal_toca()`, filas `notariado` y `notariado_cien` de `inventario/calendario_fuentes.csv`). Después, en R y en la raíz del proyecto, con la compuerta de la capa:
+
+```r
+empaquetar_notariado(validacion = targets::tar_read(validacion_web_notariado))   # a publicacion_notariado/
+```
+
+La primera vez, en PowerShell, se crea el borrador; las siguientes, se sustituyen sus ficheros:
+
+```powershell
+gh release create notariado publicacion_notariado/notariado.tar.gz publicacion_notariado/SHA256SUMS --draft --title "Capa del Notariado (borrador: no publicar)" --notes "Uso interno del flujo de Pages. No publicar."
+gh release upload notariado publicacion_notariado/notariado.tar.gz publicacion_notariado/SHA256SUMS --clobber
+```
+
+Y se vuelve a lanzar «Publicar en Pages». **Para retirarla:** `gh release delete notariado` y otra publicación con el flujo; `NOTARIADO=FALSE` antes de `tar_make()` deja de consultarla. Ninguna cifra suya está en la historia de git (nota metodológica, §2.4).
+
+Alternativas estudiadas (especificación, «Cómo llegan las cifras al sitio»): consulta directa desde el navegador (el servicio ArcGIS de penotariado manda CORS abierto, el del CIEN no), montaje en el flujo de Pages con una consulta a las fuentes en cada publicación, y la carpeta en git, implementada el 19-nov-2026 y descartada antes de subirla.
 
 ## Antes de la primera publicación: decisiones del autor
 

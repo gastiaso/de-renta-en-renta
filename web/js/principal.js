@@ -56,6 +56,7 @@ import {
 } from './evolucion.js';
 import { cargarHistorias, buscarHistoria, pasoDe, cambiosDePaso } from './historias.js';
 import { crearPanelHistoria } from './panel_historia.js';
+import { notaFoto, avisoSinDescarga } from './notariado.js';   // capa del Notariado (19-nov-2026)
 
 const estado = { idioma: 'es', ...leerEstado() };
 let sueldo = leerSueldoCompartido();   // solo en memoria; en el enlace, solo con «Compartir»
@@ -1199,6 +1200,9 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
   if (tieneNivel) notas.push(...notaPercentil(v, valor, periodoBase ?? v.periodo, nivel, codigo), ...notaGastosFicha(v, supuestos));
   // F5: en los mapas sin sección, cómo se lee el indicador (el 20: política pública, no mercado)
   if (nivelMinimoDe(v) !== 'sc') notas.push(t(`indicadores.${idTextos(estado.mapa)}.lectura`));
+  // Notariado (19-nov-2026): de cuándo es la foto de 12 meses y el umbral del precio
+  const foto = v.modo === 'necesario' ? notaFoto(t, m.indicadores[base]) : null;
+  if (foto) notas.push(foto);
   if (Number.isFinite(tipicaFicha?.valor)) {
     notas.push(t('interfaz.ficha.superficie_tipica', { superficie: t.numero(tipicaFicha.valor), anio: t.periodo(tipicaFicha.anio) }));
   }
@@ -1475,9 +1479,10 @@ async function exportar(formato) {
     }
   }
   const v = vista();
-  // Decisión 3: los datos privados de oferta (capa de portales) no se descargan en CSV
+  // Decisión 3: los datos privados de oferta (capa de portales) no se descargan en CSV; las cifras del
+  // Notariado tampoco (licencia propia no comercial, 19-nov-2026)
   if (!descargaPermitida(formato, etiquetaPrivada(v.seriesColor[0]))) {
-    barra.avisar(t('interfaz.exportar.privado'), true);
+    barra.avisar(avisoSinDescarga(t, m.indicadores[v.seriesColor[0]]), true);
     return;
   }
   barra.ocupado(formato, true);

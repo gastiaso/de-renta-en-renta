@@ -29,13 +29,20 @@
 #     también en el sitio);
 #   - manifiesto: exportación real (ejemplo = false) con mapa base PMTiles en teselas/;
 #   - formato: el PMTiles empieza por «PMTiles» y los Parquet empiezan y acaban por «PAR1»;
-#   - tar_completo: el .tar.gz lleva todos los ficheros de datos/ (salvo la capa de portales), y solo esos;
+#   - tar_completo: el .tar.gz lleva todos los ficheros de datos/ (salvo las capas de portales y del
+#     Notariado), y solo esos;
 #   - versiones: cada fuente y versión del manifiesto está en la tabla larga (la exportación de la
 #     web y la tabla larga son de la misma pasada del pipeline);
 #   - sin_portales (tarea 35; backlog, decisión 3): el paquete no lleva la capa de portales: ni
 #     datos/portales/ en el .tar.gz, ni series de los portales en el manifiesto, ni el corte
 #     oferta_privada o la fuente portales en la tabla larga. La capa sale de web/datos/portales/
 #     y se monta en el sitio por su cuenta (docs/publicacion.md, «Capa de portales»).
+#   - sin_notariado (decisiones del autor del 19-nov-2026; docs/especificacion_notariado.md): las
+#     cifras del Notariado (fuentes notariado y notariado_cien, licencia propia no comercial) no van
+#     en el paquete: ni datos/notariado/ en el .tar.gz, ni sus series en el manifiesto general, ni sus
+#     filas en la tabla larga ni en el histórico. La capa tampoco va en git: empaquetar_notariado() la
+#     prepara aparte para el release en borrador «notariado», que solo baja el flujo de Pages
+#     (decisión del autor del 21-nov-2026; docs/publicacion.md, «Capa del Notariado»).
 #   - reglas_sin_borrador (tarea 64; decisión del autor, 13-nov-2026): ningún resumen de «Reglas del
 #     juego» en borrador (sin la revisión jurídica del autor) lleva texto en el datos/reglas.json del
 #     .tar.gz. Al empaquetar, ese fichero se sustituye un momento por su versión publicable
@@ -56,7 +63,10 @@ FICHEROS_RELEASE <- c(datos = "datos_web.tar.gz", tabla = "tabla_larga.parquet",
 LICENCIAS_PUBLICACION <- list(
   datos = "CC BY-SA 4.0 (LICENCIA_DATOS.md)",
   excepciones = list(registradores = paste("ODbL 1.0 (Open Database License): las filas de la fuente registradores",
-                                           "(indicador 11) y lo que derive de ellas; LICENCIA_DATOS.md")),
+                                           "(indicador 11) y lo que derive de ellas; LICENCIA_DATOS.md"),
+                      notariado = paste("© Consejo General del Notariado, solo uso no comercial: las cifras de las fuentes",
+                                        "notariado y notariado_cien (indicadores 25 a 29) no van en este paquete; solo se",
+                                        "consultan en la web (LICENCIA_DATOS.md)")),
   codigo = "MIT (LICENSE)"
 )
 DESTINO_DESCARGAS <- "descargas"   # carpeta del sitio con la tabla larga y version.json
@@ -168,9 +178,14 @@ reglas_borradores_en_tar <- function(tar) {
   reglas_borradores_con_texto(jsonlite::read_json(ruta))
 }
 
-# Ficheros de web/datos/ que van al release, con la ruta desde web/: todo menos la muestra y la capa
-# de portales (datos/portales/: solo web, decisión 3; R/web_portales.R).
-CARPETAS_FUERA_RELEASE <- c("ejemplo/", "portales/")
+# Ficheros de web/datos/ que van al release, con la ruta desde web/: todo menos la muestra y las capas
+# solo web: portales (datos/portales/, decisión 3; R/web_portales.R) y Notariado (datos/notariado/,
+# licencia propia no comercial; R/web_notariado.R).
+CARPETAS_FUERA_RELEASE <- c("ejemplo/", "portales/", "notariado/")
+# Carpetas de web/datos/ que van en git (y llegan al sitio con web/): solo la muestra. La capa del Notariado
+# llega al sitio desde el release en borrador «notariado» (empaquetar_notariado())
+CARPETAS_DATOS_EN_GIT <- c("ejemplo/")
+CARPETA_NOTARIADO <- "datos/notariado/"
 ficheros_datos_publicacion <- function(dir_web = "web") {
   rutas <- list.files(file.path(dir_web, "datos"), recursive = TRUE, all.files = FALSE)
   fuera <- Reduce(`|`, lapply(CARPETAS_FUERA_RELEASE, function(c) startsWith(rutas, c)), FALSE)
@@ -194,6 +209,34 @@ sha256_fichero <- function(ruta) digest::digest(ruta, algo = "sha256", file = TR
 escribir_texto_lf <- function(lineas, ruta) {
   writeBin(charToRaw(enc2utf8(paste0(paste(lineas, collapse = "\n"), "\n"))), ruta)
   ruta
+}
+
+# Paquete de la capa del Notariado (decisión del autor del 21-nov-2026): sus cifras, con licencia
+# propia no comercial, no van en git ni en el release público. Este paquete, notariado.tar.gz con
+# datos/notariado/ y su SHA256SUMS, se sube al release en borrador «notariado», que solo ven quienes
+# tienen permiso de escritura en el repositorio; el flujo de Pages lo baja y lo monta en el sitio
+# (docs/publicacion.md, «Capa del Notariado»). Solo empaqueta la capa encendida y validada: el
+# manifiesto con activa = true y, si se da, la compuerta web_notariado sin fallos.
+FICHEROS_NOTARIADO <- c(datos = "notariado.tar.gz", sumas = "SHA256SUMS")
+empaquetar_notariado <- function(dir_web = "web", dir_salida = "publicacion_notariado", validacion = NULL) {
+  carpeta <- file.path(dir_web, CARPETA_NOTARIADO)
+  manifiesto <- file.path(carpeta, "manifiesto.json")
+  if (!file.exists(manifiesto)) stop("Falta ", manifiesto, ": targets::tar_make() con NOTARIADO encendido.", call. = FALSE)
+  if (!isTRUE(jsonlite::read_json(manifiesto)$activa)) {
+    stop("La capa del Notariado está apagada (", manifiesto, "): no hay nada que empaquetar.", call. = FALSE)
+  }
+  if (!is.null(validacion) && !all(validacion$correcto)) {
+    stop("La compuerta de la capa del Notariado tiene fallos: no se empaqueta.", call. = FALSE)
+  }
+  rutas <- sort(file.path(sub("/$", "", CARPETA_NOTARIADO), list.files(carpeta, recursive = TRUE)))
+  dir.create(dir_salida, recursive = TRUE, showWarnings = FALSE)
+  salida <- file.path(dir_salida, FICHEROS_NOTARIADO)
+  names(salida) <- names(FICHEROS_NOTARIADO)
+  tar_datos_publicacion(dir_web, rutas, salida[["datos"]])
+  escribir_texto_lf(paste0(sha256_fichero(salida[["datos"]]), "  ", FICHEROS_NOTARIADO[["datos"]]), salida[["sumas"]])
+  message("Paquete del Notariado: ", length(rutas), " ficheros en ", salida[["datos"]],
+          ". Súbelo al release en borrador «notariado» (docs/publicacion.md, «Capa del Notariado»).")
+  invisible(salida)
 }
 
 # Dónde deja el flujo cada fichero del release en el sitio.
@@ -274,15 +317,19 @@ cobertura_publicacion <- function(tabla_larga, indicadores = NULL) {
 # más lo del release.
 sitio_publicacion <- function(dir_web, datos, salida, url_mapa) {
   web <- list.files(dir_web, recursive = TRUE, all.files = FALSE)
-  fuera_de_git <- (startsWith(web, "datos/") & !startsWith(web, "datos/ejemplo/")) | grepl("\\.pmtiles$", web) |
+  en_git <- Reduce(`|`, lapply(CARPETAS_DATOS_EN_GIT, function(c) startsWith(web, paste0("datos/", c))), FALSE)
+  fuera_de_git <- (startsWith(web, "datos/") & !en_git) | grepl("\\.pmtiles$", web) |
     startsWith(web, paste0(DESTINO_DESCARGAS, "/"))
   desarrollo <- web %in% EXCLUIDOS_SITIO | sub("/.*", "", web) %in% EXCLUIDOS_SITIO
+  notariado <- web[startsWith(web, CARPETA_NOTARIADO)]   # del release en borrador «notariado»
   web <- web[!fuera_de_git & !desarrollo]
   descargas <- salida[c("tabla", "historico", "version")]
   data.frame(
-    ruta = c(web, datos, url_mapa, file.path(DESTINO_DESCARGAS, basename(descargas))),
-    bytes = c(file.size(file.path(dir_web, c(web, datos))), file.size(salida[["mapa"]]), file.size(descargas)),
-    origen = c(rep("web", length(web)), rep("release", length(datos) + 1L + length(descargas)))
+    ruta = c(web, datos, url_mapa, file.path(DESTINO_DESCARGAS, basename(descargas)), notariado),
+    bytes = c(file.size(file.path(dir_web, c(web, datos))), file.size(salida[["mapa"]]), file.size(descargas),
+              file.size(file.path(dir_web, notariado))),
+    origen = c(rep("web", length(web)), rep("release", length(datos) + 1L + length(descargas)),
+               rep("borrador", length(notariado)))
   )
 }
 
@@ -322,6 +369,12 @@ comprobar_publicacion <- function(manifiesto, salida, datos, sitio, tabla_larga,
     dplyr::count() |>
     dplyr::collect()
   portales_larga <- if (nrow(portales_larga)) as.numeric(portales_larga$n[1]) else 0
+  # Notariado (19-nov-2026): sus cifras no van en el paquete (licencia propia no comercial; solo web)
+  notariado_tar <- sum(startsWith(en_tar, "datos/notariado/"))
+  notariado_manifiesto <- sum(vapply(manifiesto$indicadores, function(x)
+    isTRUE(x$fuente %in% FUENTES_NOTARIADO_PUBLICACION), TRUE))
+  notariado_larga <- filas_notariado(tabla_larga)
+  notariado_historico <- filas_notariado(salida[["historico"]])
   # Tarea 64: ningún resumen de «Reglas del juego» en borrador con texto
   reglas_borrador <- if (file.path("datos", FICHERO_REGLAS_WEB) %in% en_tar) reglas_borradores_en_tar(salida[["datos"]]) else 0
 
@@ -346,8 +399,22 @@ comprobar_publicacion <- function(manifiesto, salida, datos, sitio, tabla_larga,
     fila("sin_portales", "ficheros de datos/portales/ en el .tar.gz", portales_tar, 0, portales_tar == 0),
     fila("sin_portales", "series de los portales en el manifiesto", portales_manifiesto, 0, portales_manifiesto == 0),
     fila("sin_portales", "filas de los portales en la tabla larga", portales_larga, 0, portales_larga == 0),
+    fila("sin_notariado", "ficheros de datos/notariado/ en el .tar.gz", notariado_tar, 0, notariado_tar == 0),
+    fila("sin_notariado", "series del Notariado en el manifiesto", notariado_manifiesto, 0, notariado_manifiesto == 0),
+    fila("sin_notariado", "filas del Notariado en la tabla larga", notariado_larga, 0, notariado_larga == 0),
+    fila("sin_notariado", "filas del Notariado en el histórico", notariado_historico, 0, notariado_historico == 0),
     fila("reglas_sin_borrador", "res\u00famenes de datos/reglas.json en borrador con texto", reglas_borrador, 0, reglas_borrador == 0)
   )
+}
+
+# Filas de las fuentes del Notariado en un Parquet (0 si no existe o no tiene columna fuente).
+FUENTES_NOTARIADO_PUBLICACION <- c("notariado", "notariado_cien")
+filas_notariado <- function(parquet) {
+  if (is.null(parquet) || is.na(parquet) || !file.exists(parquet)) return(0)
+  d <- arrow::open_dataset(parquet)
+  if (!"fuente" %in% names(d)) return(0)
+  n <- d |> dplyr::filter(fuente %in% FUENTES_NOTARIADO_PUBLICACION) |> dplyr::count() |> dplyr::collect()
+  if (nrow(n)) as.numeric(n$n[1]) else 0
 }
 
 leer_bytes <- function(ruta, n, desde_el_final = FALSE) {

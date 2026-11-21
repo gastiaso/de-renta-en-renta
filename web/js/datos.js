@@ -10,8 +10,9 @@ const MANIFIESTOS = ['datos/manifiesto.json', 'datos/ejemplo/manifiesto.json'];
 // Capas desmontables (guía, regla 6), aparte de la exportación general: cada una con su manifiesto,
 // que el pipeline escribe siempre (apagada, {"capa": …, "activa": false}) y el flujo de Pages también
 // (R/web_portales.R; docs/publicacion.md). Sus series y mapas se suman a los del manifiesto general
-// (unirCapas). La muestra de datos/ejemplo/ no tiene capas.
-const CAPAS = ['datos/portales/manifiesto.json'];
+// (unirCapas). La muestra de datos/ejemplo/ no tiene capas. La del Notariado (19-nov-2026; licencia
+// propia no comercial, solo web; R/web_notariado.R) va en git y llega al sitio con web/.
+export const CAPAS = ['datos/portales/manifiesto.json', 'datos/notariado/manifiesto.json'];
 const memoria = new Map();
 
 async function pedir(ruta) {
@@ -67,7 +68,9 @@ export function unirCapas(m, capas) {
     }
     return out;
   };
-  const cabeceras = Object.fromEntries(activas.map((c) => [c.capa, { version: c.version, generado: c.generado }]));
+  const cabeceras = Object.fromEntries(activas.map((c) => [c.capa, {
+    version: c.version, generado: c.generado, ...(c.licencia ? { licencia: c.licencia } : {}), ...(c.foto ? { foto: c.foto } : {}),
+  }]));
   const entrar = activas.find((c) => c.entrar)?.entrar;
   return {
     ...m, indicadores: sumar(m.indicadores, 'indicadores'), mapas: sumar(m.mapas, 'mapas'), capas: cabeceras,

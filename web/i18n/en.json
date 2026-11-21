@@ -249,6 +249,7 @@
       "hecho": "Downloaded: {fichero}",
       "error": "The download could not be prepared.",
       "privado": "Private asking-price data cannot be downloaded: it can be viewed on the map, in the profile and in the source's report.",
+      "notariado": "Notaries' figures cannot be downloaded (© Consejo General del Notariado, non-commercial use only): they can be viewed on the map and in the profile.",
       "nombre_seccion": "{municipio}, district {distrito}, tract {seccion}",
       "nombre_distrito": "{municipio}, district {distrito}",
       "ingreso_peon": "the income typed in",
@@ -382,6 +383,7 @@
         "nota": "List published every quarter in the BOE by the Ministry of Housing and Urban Agenda (Law 12/2023, art. 18): in force for three years from the day after publication. For declarations covering part of a municipality, the map paints the whole municipality with its own category; the exact area is the one in the declaration."
       },
       "superficie_tipica": "Typical size of rented flats: {superficie} m² in {anio} (median monthly rent / median rent per m², multi-family housing; SERPAVI).",
+      "foto_notariado": "Sales notarised in the 12 months before the Notaries' Statistical Portal snapshot of {fecha}. No price with fewer than {minimo} reported sales.",
       "cis_ccaa": {
         "titulo": "Housing as a problem (CIS)",
         "linea": "Housing among Spain’s three main problems: {cifra}% ({periodo}; ±{margen} points; {entrevistas} interviews).",
@@ -1161,6 +1163,41 @@
       "calculo": "EU-SILC microdata (INE) with Eurostat’s method (ilc_li48): previous-year disposable income minus 12 times monthly housing costs (only mortgage interest counts), divided by modified OECD equivalence units; the wave’s threshold is not recalculated; person weights. Reproduces Eurostat’s figures for Spain, also by age (ilc_li45) and degree of urbanisation (±0.1 points). Region × tenure and age breakdowns pool three waves.",
       "lectura": "The statistical version of the residual-income approach: instead of a maximum cost share, it asks whether what is left after paying for housing reaches the poverty threshold. Read it alongside the overburden rate (22), which measures the income share, and by tenure, especially renting."
     },
+    "precio_escriturado_m2": {
+      "nombre": "Notarised sale price per square metre",
+      "unidad": "€ per m²",
+      "definicion": "Average price per square metre of housing sales notarised over the last 12 months (all dwellings: new and second-hand, flats and single-family houses).",
+      "calculo": "Published by the General Council of Notaries on its Statistical Portal (price-map layer, queried at each update and kept with its date): a rolling 12-month snapshot, with no public series. With fewer than 20 sales reporting price and floor area, the atlas does not publish the price (withheld). Each level with its published figure; nothing is aggregated.",
+      "lectura": "A notarised price, not an asking, appraised or registered one: it is not compared with the Land Registrars' price per m² (11), which measures a different floor area. A single 12-month snapshot, dated in the profile. © Consejo General del Notariado, non-commercial use only: shown on the map and in the profile, not downloadable."
+    },
+    "precio_escriturado_vivienda": {
+      "nombre": "Average notarised price per home sale",
+      "unidad": "€ per home",
+      "definicion": "Average price of housing sales notarised over the last 12 months.",
+      "calculo": "Published by the General Council of Notaries on its Statistical Portal, from the same 12-month snapshot as 25 and with the same threshold of 20 reported sales. The average floor area is not published separately: it is this price divided by that of 25.",
+      "lectura": "Price per home, whatever its size: it is higher where the homes sold are larger. © Consejo General del Notariado, non-commercial use only: shown on the map and in the profile, not downloadable."
+    },
+    "compraventas_notariado": {
+      "nombre": "Home sales notarised over 12 months",
+      "unidad": "sales",
+      "definicion": "Number of housing sales notarised over the last 12 months.",
+      "calculo": "Published by the General Council of Notaries on its Statistical Portal, from the same snapshot as 25. Published for every area that has it, with no threshold: it is the count behind the price. A municipality with no sales in the 12 months is absent from the source (no data).",
+      "lectura": "Shows how many sales stand behind the prices of 25 and 26, and the size of the purchase market. It is the date the deed is signed, not registered. © Consejo General del Notariado, non-commercial use only: shown on the map and in the profile, not downloadable."
+    },
+    "hipotecas_compra_vivienda": {
+      "nombre": "Mortgages for home purchase",
+      "unidad": "mortgages per year",
+      "definicion": "Number of real-estate mortgages signed before a notary in the year whose purpose is buying a home.",
+      "calculo": "Annual figure published by the General Council of Notaries' CIEN («Full statistics»: act 1203, real-estate mortgage, home-purchase subcategory), for Spain, regions and provinces, since 2007; only years with all twelve months published. Andalusia is the sum of its eight provinces, because CIEN includes Ceuta and Melilla in it, which come together as one province and are left without data.",
+      "lectura": "It is the signing (authorisation) date, not the registration date: it does not match INE's Mortgage Statistics, which counts registered mortgages for all purposes. © Consejo General del Notariado, non-commercial use only: shown on the map and in the profile, not downloadable."
+    },
+    "cuantia_hipoteca_vivienda": {
+      "nombre": "Average amount of home-purchase mortgages",
+      "unidad": "€ per mortgage",
+      "definicion": "Average loan amount of home-purchase mortgages signed before a notary in the year.",
+      "calculo": "Annual figure published by the General Council of Notaries' CIEN (same series as 28, average amount). Andalusia, without Ceuta and Melilla: mean of its eight provinces weighted by mortgages with a reported amount, which reproduces each region's published mean (check notariado_cien_cuantia).",
+      "lectura": "It is the loan amount, not the price of the home. © Consejo General del Notariado, non-commercial use only: shown on the map and in the profile, not downloadable."
+    },
     "contratos_alquiler": {
       "nombre": "Rental contracts behind the median",
       "unidad": "contracts",
@@ -1203,7 +1240,8 @@
     "gv_emal": "Rental Market Statistics (deposits)",
     "nastat_epav": "Housing Rental Price Statistics (EPAV)",
     "ine_ipva": "Rental Housing Price Index (IPVA)",
-    "notariado": "Notaries’ Statistical Portal",
+    "notariado": "Notaries’ Statistical Portal: home sales (price-map layer)",
+    "notariado_cien": "Notaries’ CIEN: «Full statistics» (home-purchase mortgages)",
     "registradores": "Land Registry Real Estate Statistics: residential property sales by province (Spanish Land Registrars' Association; database under the ODbL)",
     "mivau_valor_tasado": "Appraised value of open-market housing",
     "mivau_transacciones": "Real estate transactions (sales): average value of open-market housing sales",
@@ -1284,7 +1322,9 @@
       "ausente": "No data"
     },
     "etiqueta": {
-      "portales": "Private asking-price data"
+      "portales": "Private asking-price data",
+      "notariado": "© Consejo General del Notariado, non-commercial use only",
+      "notariado_cien": "© Consejo General del Notariado, non-commercial use only"
     },
     "familia": {
       "A": "Ability to pay",

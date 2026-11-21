@@ -10,7 +10,10 @@
 #   - version.json        → descargas/ (fecha, commit, versiones de las fuentes y cobertura por
 #                           indicador; rellena la caja de descarga de la página «Datos»)
 # La capa de portales (indicador 13) no viaja en el release: el sitio la lleva apagada
-# (datos/portales/manifiesto.json).
+# (datos/portales/manifiesto.json). La del Notariado (indicadores 25 a 29, licencia propia no
+# comercial) tampoco, ni va en git: llega del release en borrador «notariado» (notariado.tar.gz y su
+# SHA256SUMS, de empaquetar_notariado()), que solo ven quienes pueden escribir en el repositorio; sin
+# él, el sitio la lleva apagada.
 # Los ficheros del release los prepara empaquetar_publicacion() (R/publicar.R), con SHA256SUMS.
 #
 # Sin secretos: usa el token que GitHub da a cada ejecución, con permisos mínimos por trabajo.
@@ -44,7 +47,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: read
+      # write solo para ver el release en borrador «notariado» (los borradores no se ven con read).
+      # Ningún paso escribe en el repositorio y el checkout no guarda el token.
+      contents: write
     steps:
       - name: Copiar el repositorio
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -68,6 +73,23 @@ jobs:
           gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName > "$RUNNER_TEMP/etiqueta"
           ls -l "$rel"
 
+      - name: Bajar la capa del Notariado (release en borrador)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Licencia propia no comercial (decisión del autor del 21-nov-2026): fuera de git y del release
+          # público. Sin el borrador, o con la suma mal, el sitio sale con la capa apagada.
+          nota="$RUNNER_TEMP/notariado"
+          mkdir -p "$nota"
+          if gh release download notariado --repo "$GITHUB_REPOSITORY" --dir "$nota" \
+               --pattern notariado.tar.gz --pattern SHA256SUMS 2> /dev/null \
+             && (cd "$nota" && sha256sum --check --strict SHA256SUMS); then
+            ls -l "$nota"
+          else
+            echo "::warning::Sin el release en borrador «notariado» (o con la suma mal): la capa del Notariado sale apagada."
+            rm -f "$nota"/*
+          fi
+
       - name: Comprobar las sumas SHA-256
         working-directory: ${{ runner.temp }}/release
         run: |
@@ -87,12 +109,12 @@ jobs:
           # Herramientas de desarrollo: no se publican
           rm -rf "$sitio/LEEME.md" "$sitio/servir.mjs" "$sitio/herramientas"
 
-          # Datos de la web: solo rutas bajo datos/, sin la muestra (va en git), sin la capa de portales
-          # (solo web, fuera del paquete) y sin subir de carpeta
+          # Datos de la web: solo rutas bajo datos/, sin la muestra (va en git), sin las capas de portales
+          # y del Notariado (solo web, fuera del paquete) y sin subir de carpeta
           tar -tzf "$rel/datos_web.tar.gz" > "$RUNNER_TEMP/lista_datos.txt"
           if grep -v -E '^datos/' "$RUNNER_TEMP/lista_datos.txt" | grep -q . \
-             || grep -E '^datos/ejemplo/|^datos/portales/|(^|/)\.\.(/|$)' "$RUNNER_TEMP/lista_datos.txt" | grep -q .; then
-            echo "::error::datos_web.tar.gz lleva rutas fuera de datos/, la muestra de datos/ejemplo/ o la capa de portales."
+             || grep -E '^datos/ejemplo/|^datos/portales/|^datos/notariado/|(^|/)\.\.(/|$)' "$RUNNER_TEMP/lista_datos.txt" | grep -q .; then
+            echo "::error::datos_web.tar.gz lleva rutas fuera de datos/, la muestra de datos/ejemplo/ o una capa solo web (portales, Notariado)."
             exit 1
           fi
           tar -xzf "$rel/datos_web.tar.gz" -C "$sitio" --no-same-owner --no-same-permissions
@@ -108,6 +130,23 @@ jobs:
           # este manifiesto y no pide nada más.
           mkdir -p "$sitio/datos/portales"
           printf '%s\n' '{"capa":"portales","activa":false}' > "$sitio/datos/portales/manifiesto.json"
+
+          # Capa del Notariado (indicadores 25 a 29; licencia propia no comercial, solo web): del release
+          # en borrador «notariado», solo con rutas bajo datos/notariado/; sin él, apagada.
+          nota="$RUNNER_TEMP/notariado/notariado.tar.gz"
+          if [ -f "$nota" ]; then
+            tar -tzf "$nota" > "$RUNNER_TEMP/lista_notariado.txt"
+            if grep -v -E '^datos/notariado/' "$RUNNER_TEMP/lista_notariado.txt" | grep -q . \
+               || grep -E '(^|/)\.\.(/|$)' "$RUNNER_TEMP/lista_notariado.txt" | grep -q .; then
+              echo "::error::notariado.tar.gz lleva rutas fuera de datos/notariado/."
+              exit 1
+            fi
+            tar -xzf "$nota" -C "$sitio" --no-same-owner --no-same-permissions
+          fi
+          if [ ! -f "$sitio/datos/notariado/manifiesto.json" ]; then
+            mkdir -p "$sitio/datos/notariado"
+            printf '%s\n' '{"capa":"notariado","activa":false}' > "$sitio/datos/notariado/manifiesto.json"
+          fi
 
           # El manifiesto de la exportación dice dónde va el mapa base
           manifiesto="$sitio/datos/manifiesto.json"

@@ -10,6 +10,9 @@ tar_option_set(packages = c("dplyr", "readr", "sf"), memory = "transient", garba
 
 # Capa de precios de oferta de los portales (plan, §2.2). Apagada por defecto.
 PORTALES <- identical(toupper(Sys.getenv("PORTALES", "FALSE")), "TRUE")
+# Capa del Notariado (licencia propia no comercial, solo web; 19-nov-2026). Encendida por defecto:
+# NOTARIADO=FALSE la apaga (docs/especificacion_notariado.md, plan de retirada).
+NOTARIADO <- !identical(toupper(Sys.getenv("NOTARIADO", "TRUE")), "FALSE")
 
 # Olas de la ECV (año de la encuesta; las rentas son del año anterior). Cada ola da sus cifras
 # anuales; cada trienio de olas seguidas (agrupar_trienios(), R/fuente_ine_ecv.R), los cruces que una
@@ -906,6 +909,45 @@ bloque_portales <- if (!PORTALES || AMBITO != "") list(
   })
 )
 
+# Notariado (decisiones del autor del 19-nov-2026; docs/especificacion_notariado.md; R/fuente_notariado.R
+# y R/web_notariado.R): Portal Estadístico (penotariado, indicadores 25 a 27, foto móvil de 12 meses
+# por municipio) y CIEN (indicadores 28 y 29, hipotecas para compra de vivienda por provincia y año).
+# Licencia propia no comercial y solo web: larga_notariado tiene el formato de la tabla larga pero no
+# entra en ella, ni en las descargas, ni en el release (empaquetar_publicacion(), sin_notariado); sale
+# a web/datos/notariado/, fuera de git: al sitio por el release en borrador «notariado» (empaquetar_notariado()). Nunca se mezcla con Registradores (11). Con NOTARIADO=FALSE o
+# PROVINCIA, la capa queda apagada (solo el manifiesto vacío) y no se consulta nada.
+bloque_notariado <- if (!NOTARIADO || AMBITO != "") list(
+  tar_target(ficheros_web_notariado, notariado_apagar_web(dir_web = DIR_WEB), format = "file")
+) else list(
+  tar_target(ficheros_penotariado, descargar_penotariado(), format = "file",
+             cue = tarchetypes::tar_cue_force(cal_toca("notariado"))),
+  tar_target(penotariado, leer_penotariado(ficheros_penotariado)),
+  tar_target(ficheros_notariado_cien, descargar_notariado_cien(), format = "file",
+             cue = tarchetypes::tar_cue_force(cal_toca("notariado_cien"))),
+  tar_target(fichero_notariado_cien_territorios, "inventario/notariado_cien_territorios.csv", format = "file"),
+  tar_target(notariado_cien_territorios, leer_notariado_cien_territorios(fichero_notariado_cien_territorios)),
+  tar_target(notariado_cien, leer_notariado_cien(ficheros_notariado_cien, notariado_cien_territorios)),
+  tar_target(validacion_notariado, validar_referencias(bind_rows(
+    comprobar_penotariado(penotariado, territorios_2021),
+    comprobar_notariado_cien(notariado_cien)), referencias)),
+  tar_target(larga_notariado, {
+    validacion_notariado   # la compuerta va antes
+    bind_rows(armonizar_penotariado(penotariado, territorios_2021),
+              armonizar_notariado_cien(notariado_cien, territorios_2021, version = version_de(ficheros_notariado_cien))) |>
+      validar_tabla_larga(indicadores, fuentes, vocabulario)
+  }),
+  tar_target(resumen_notariado, notariado_resumen(larga_notariado)),
+  tar_target(ficheros_web_notariado, notariado_exportar_web(larga_notariado, indicadores, jerarquia_2021, territorios_2021,
+                                                            vocabulario = vocabulario, foto = penotariado$fecha,
+                                                            ultimo_mes = cien_ultimo_mes(notariado_cien),
+                                                            dir_web = DIR_WEB), format = "file"),
+  tar_target(validacion_web_notariado, {
+    ficheros_web_notariado
+    validar_referencias(notariado_comprobar_web(larga_notariado, indicadores, jerarquia_2021, territorios_2021,
+                                                dir_web = DIR_WEB), referencias)
+  })
+)
+
 # Tabla larga única: cada bloque entra después de pasar su compuerta
 bloque_tabla_larga <- list(
   tar_target(tabla_larga, {
@@ -1309,4 +1351,5 @@ list(inventario, sobrecarga, prueba_f1, mapa_base, bloque_renta_adrh, bloque_adr
      bloque_pobreza_vivienda,         # tarea 65, parte B, riesgo de pobreza tras la vivienda (24)
      bloque_ipc,                      # tarea 45, IPC
      bloque_historias,                # tarea 49, primeras historias
-     bloque_reglas)                   # tarea 64, reglas del juego
+     bloque_reglas,                   # tarea 64, reglas del juego
+     bloque_notariado)                # Notariado, solo web (19-nov-2026)

@@ -279,7 +279,9 @@ test_that("el flujo de Pages cuadra con el empaquetado", {
   expect_equal(flujo$jobs$montar$steps[[1]]$with$ref, "${{ inputs.ref }}")
   expect_length(flujo$permissions, 0)
   expect_setequal(names(flujo$jobs), c("montar", "desplegar"))
-  expect_equal(flujo$jobs$montar$permissions, list(contents = "read"))
+  # write solo para ver el release en borrador «notariado» (21-nov-2026); el checkout no guarda el token
+  expect_equal(flujo$jobs$montar$permissions, list(contents = "write"))
+  expect_false(isTRUE(flujo$jobs$montar$steps[[1]]$with$`persist-credentials`))
   expect_equal(flujo$jobs$desplegar$permissions, list(pages = "write", `id-token` = "write"))
   expect_equal(flujo$jobs$desplegar$needs, "montar")
   expect_equal(flujo$jobs$desplegar$environment$name, "github-pages")
@@ -326,4 +328,61 @@ test_that("el flujo de Pages cuadra con el empaquetado", {
 
   expect_false(any(grepl("secrets\\.", texto)))
   expect_false(any(grepl("gastiaso|de-renta-en-renta", texto)))
+})
+
+test_that("Notariado (19 y 21-nov-2026): la capa va en el sitio desde el borrador, no en git ni en el paquete", {
+  raiz <- proyecto_falso()
+  escribir <- function(ruta, texto) {
+    dir.create(dirname(file.path(raiz, ruta)), recursive = TRUE, showWarnings = FALSE)
+    writeLines(texto, file.path(raiz, ruta), useBytes = TRUE)
+  }
+  escribir("web/datos/notariado/manifiesto.json",
+           '{"capa":"notariado","activa":true,"indicadores":{"precio_escriturado_m2":{"fuente":"notariado"}}}')
+  escribir("web/datos/notariado/municipio/precio_escriturado_m2/2026.json", '{"v":[12345],"e":"0"}')
+  res <- suppressMessages(empaquetar_falso(raiz))
+  expect_true(all(res$comprobaciones$correcto))
+  expect_equal(res$comprobaciones$valor[res$comprobaciones$id == "sin_notariado"], c(0, 0, 0, 0))
+  tar <- file.path(raiz, "publicacion", "datos_web.tar.gz")
+  expect_false(any(startsWith(utils::untar(tar, list = TRUE, tar = "internal"), "datos/notariado")))
+  # En el sitio sí, desde el release en borrador «notariado» (no va en git ni en el release público)
+  en_sitio <- res$sitio[startsWith(res$sitio$ruta, "datos/notariado/"), ]
+  expect_setequal(en_sitio$ruta, c("datos/notariado/manifiesto.json", "datos/notariado/municipio/precio_escriturado_m2/2026.json"))
+  expect_equal(unique(en_sitio$origen), "borrador")
+  expect_false("notariado/" %in% CARPETAS_DATOS_EN_GIT)
+  ignorar <- readLines(file.path("..", "..", ".gitignore"), encoding = "UTF-8")
+  expect_false(any(grepl("^!web/datos/notariado", ignorar)))
+  expect_true("publicacion_notariado/" %in% ignorar)
+  # version.json lo dice en las licencias
+  v <- jsonlite::fromJSON(file.path(raiz, "publicacion", "version.json"))
+  expect_match(v$licencia$excepciones$notariado, "no van en este paquete")
+
+  # Si la tabla larga llevara filas del Notariado, no empaqueta
+  larga <- arrow::read_parquet(file.path(raiz, "datos/intermedios/tabla_larga.parquet"))
+  fila <- tibble::tibble(geo_id = "00", nivel = "nacional", anio = 2025L, indicador = "hipotecas_compra_vivienda", corte = "total",
+                         grupo = "total", valor = 1, estado = "dato", fuente = "notariado_cien", geo_ref = "2021", version = "2026-11-19")
+  con_notariado <- file.path(raiz, "datos/intermedios/tabla_larga_con_notariado.parquet")
+  arrow::write_parquet(dplyr::bind_rows(larga, fila), con_notariado)
+  expect_error(suppressMessages(capture.output(
+    empaquetar_publicacion(dir_web = file.path(raiz, "web"), pmtiles = file.path(raiz, "geo/referencia/mapa_base_2021.pmtiles"),
+                           tabla_larga = con_notariado, historico = file.path(raiz, "datos/intermedios/historico.parquet"),
+                           dir_salida = file.path(raiz, "publicacion"),
+                           fuentes = file.path(raiz, "inventario/fuentes.csv"), indicadores = file.path(raiz, "inventario/indicadores.csv"),
+                           commit = COMMIT_FALSO, fecha = "2026-11-08T12:00:00+0100"))), "sin_notariado")
+  # El flujo de Pages rechaza un paquete con la capa y la deja apagada si la referencia no la trae
+  flujo <- paste(readLines(file.path("..", "..", ".github", "workflows", "pages.yml"), encoding = "UTF-8"), collapse = "\n")
+  expect_match(flujo, "^datos/notariado/|", fixed = TRUE)
+  expect_match(flujo, '{"capa":"notariado","activa":false}', fixed = TRUE)
+  expect_match(flujo, "gh release download notariado", fixed = TRUE)
+  expect_match(flujo, "sha256sum --check --strict SHA256SUMS", fixed = TRUE)
+
+  # El paquete aparte: solo datos/notariado/, con su suma, y nada si la capa está apagada o falla
+  paquete <- suppressMessages(empaquetar_notariado(dir_web = file.path(raiz, "web"), dir_salida = file.path(raiz, "publicacion_notariado")))
+  dentro <- utils::untar(paquete[["datos"]], list = TRUE, tar = "internal")
+  expect_setequal(dentro[!endsWith(dentro, "/")],
+                  c("datos/notariado/manifiesto.json", "datos/notariado/municipio/precio_escriturado_m2/2026.json"))
+  expect_equal(readLines(paquete[["sumas"]]), paste0(sha256_fichero(paquete[["datos"]]), "  notariado.tar.gz"))
+  expect_error(empaquetar_notariado(dir_web = file.path(raiz, "web"), dir_salida = file.path(raiz, "publicacion_notariado"),
+                                    validacion = data.frame(correcto = c(TRUE, FALSE))), "fallos")
+  escribir("web/datos/notariado/manifiesto.json", '{"capa":"notariado","activa":false}')
+  expect_error(empaquetar_notariado(dir_web = file.path(raiz, "web"), dir_salida = file.path(raiz, "publicacion_notariado")), "apagada")
 })

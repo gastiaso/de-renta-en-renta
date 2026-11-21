@@ -23,6 +23,9 @@ web/datos/*
 # Ficheros del release (empaquetar_publicacion(), docs/publicacion.md), páginas «Método»,
 # «Método en dos páginas» y «Datos», que genera el flujo de Pages desde docs/, y la copia local de las descargas
 publicacion/
+# Paquete de la capa del Notariado (empaquetar_notariado()): va al release en borrador «notariado», nunca
+# al público (docs/publicacion.md, «Capa del Notariado»)
+publicacion_notariado/
 web/metodo.html
 web/method.html
 web/datos.html

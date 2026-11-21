@@ -249,6 +249,7 @@
       "hecho": "Descargado: {fichero}",
       "error": "No se ha podido preparar la descarga.",
       "privado": "Los datos privados de oferta no se descargan: se consultan en el mapa, en la ficha y en el informe de su fuente.",
+      "notariado": "Las cifras del Notariado no se descargan (© Consejo General del Notariado, solo uso no comercial): se consultan en el mapa y en la ficha.",
       "nombre_seccion": "{municipio}, distrito {distrito}, sección {seccion}",
       "nombre_distrito": "{municipio}, distrito {distrito}",
       "ingreso_peon": "los ingresos escritos",
@@ -382,6 +383,7 @@
         "nota": "Relación que publica el Ministerio de Vivienda y Agenda Urbana en el BOE cada trimestre (Ley 12/2023, art. 18): tres años de vigencia desde el día siguiente a la publicación. En las declaraciones de una parte del municipio, el mapa pinta el municipio entero con su propia categoría; el ámbito exacto es el de la declaración."
       },
       "superficie_tipica": "Superficie típica de los pisos alquilados: {superficie} m² en {anio} (alquiler mensual mediano / alquiler por m² mediano, vivienda colectiva; SERPAVI).",
+      "foto_notariado": "Compraventas escrituradas en los 12 meses anteriores a la foto del Portal Estadístico del Notariado del {fecha}. Sin precio con menos de {minimo} compraventas informadas.",
       "cis_ccaa": {
         "titulo": "La vivienda como problema (CIS)",
         "linea": "La vivienda, entre los tres principales problemas de España: {cifra} % ({periodo}; ±{margen} puntos; {entrevistas} entrevistas).",
@@ -1161,6 +1163,41 @@
       "calculo": "Microdatos de la ECV con el método de Eurostat (ilc_li48): renta disponible del año anterior menos 12 veces el gasto mensual en vivienda (de la hipoteca, solo intereses), entre las unidades de consumo de la escala de la OCDE modificada; umbral de la ola sin recalcular; ponderación por persona. Reproduce las cifras de España de Eurostat, también por edad (ilc_li45) y grado de urbanización (±0,1 puntos). Los cruces por comunidad, tenencia y edad agrupan tres olas.",
       "lectura": "Es la versión estadística del enfoque residual: no fija un porcentaje máximo de gasto, sino si lo que queda tras pagar la vivienda llega al umbral de pobreza. Se lee junto a la sobrecarga (22), que mide la proporción de la renta, y por tenencia, sobre todo en el alquiler."
     },
+    "precio_escriturado_m2": {
+      "nombre": "Precio escriturado de compraventa por metro cuadrado",
+      "unidad": "€ por m²",
+      "definicion": "Precio medio por metro cuadrado de las compraventas de vivienda escrituradas ante notario en los últimos 12 meses (todas las viviendas: nuevas y usadas, pisos y unifamiliares).",
+      "calculo": "Cifra publicada por el Consejo General del Notariado en su Portal Estadístico (capa del mapa de precios, consultada en cada actualización y guardada con su fecha): una foto móvil de 12 meses, sin serie pública. Con menos de 20 compraventas con precio y superficie informados, el atlas no publica el precio (secreto). Cada nivel con su cifra publicada; nada se agrega.",
+      "lectura": "Es precio escriturado, no de oferta, de tasación ni inscrito: no se compara con el precio por m² de Registradores (11), que mide otra superficie. Una sola foto de 12 meses, fechada en la ficha. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga."
+    },
+    "precio_escriturado_vivienda": {
+      "nombre": "Precio escriturado medio por compraventa de vivienda",
+      "unidad": "€ por vivienda",
+      "definicion": "Precio medio de las compraventas de vivienda escrituradas ante notario en los últimos 12 meses.",
+      "calculo": "Cifra publicada por el Consejo General del Notariado en su Portal Estadístico, de la misma foto de 12 meses que el 25 y con el mismo umbral de 20 compraventas informadas. La superficie media no se publica aparte: es este precio entre el del 25.",
+      "lectura": "Precio por vivienda, sea cual sea su tamaño: sube donde las viviendas que se venden son más grandes. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga."
+    },
+    "compraventas_notariado": {
+      "nombre": "Compraventas de vivienda escrituradas en 12 meses",
+      "unidad": "compraventas",
+      "definicion": "Número de compraventas de vivienda escrituradas ante notario en los últimos 12 meses.",
+      "calculo": "Cifra publicada por el Consejo General del Notariado en su Portal Estadístico, de la misma foto que el 25. Se publica en todos los territorios que la traen, sin umbral: es el recuento que sostiene el precio. Un municipio sin compraventas en los 12 meses no sale en la fuente (sin dato).",
+      "lectura": "Dice cuántas compraventas sostienen el precio del 25 y el 26, y el tamaño del mercado de compra. Es fecha de firma de la escritura, no de inscripción. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga."
+    },
+    "hipotecas_compra_vivienda": {
+      "nombre": "Hipotecas para compra de vivienda",
+      "unidad": "hipotecas al año",
+      "definicion": "Número de hipotecas inmobiliarias firmadas ante notario en el año cuya finalidad es la adquisición de vivienda.",
+      "calculo": "Cifra anual publicada por el CIEN del Consejo General del Notariado («Estadísticas al completo»: acto 1203, hipoteca inmobiliaria, subcategoría adquisición de vivienda), en España, comunidad y provincia, desde 2007; solo los años con los doce meses publicados. Andalucía sale de la suma de sus ocho provincias, porque el CIEN la da con Ceuta y Melilla, que van juntas como una provincia y quedan sin dato.",
+      "lectura": "Es fecha de firma (autorización), no de inscripción: no coincide con la Estadística de Hipotecas del INE, que cuenta las inscritas y todas las finalidades. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga."
+    },
+    "cuantia_hipoteca_vivienda": {
+      "nombre": "Cuantía media de las hipotecas para compra de vivienda",
+      "unidad": "€ por hipoteca",
+      "definicion": "Importe medio del préstamo de las hipotecas para la adquisición de vivienda firmadas ante notario en el año.",
+      "calculo": "Cifra anual publicada por el CIEN del Consejo General del Notariado (la misma serie que el 28, cuantía promedio). Andalucía, sin Ceuta y Melilla: media de sus ocho provincias ponderada por las hipotecas con cuantía informada, que reproduce la media publicada de cada comunidad (compuerta notariado_cien_cuantia).",
+      "lectura": "Es el importe del préstamo, no el precio de la vivienda. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga."
+    },
     "contratos_alquiler": {
       "nombre": "Contratos de alquiler de la mediana",
       "unidad": "contratos",
@@ -1203,7 +1240,8 @@
     "gv_emal": "Estadística del Mercado del Alquiler (fianzas)",
     "nastat_epav": "Estadística de Precios de Alquiler de Vivienda (EPAV)",
     "ine_ipva": "Índice de Precios de Vivienda en Alquiler (IPVA)",
-    "notariado": "Portal Estadístico del Notariado",
+    "notariado": "Portal Estadístico del Notariado: compraventa de vivienda (capa del mapa de precios)",
+    "notariado_cien": "CIEN del Notariado: «Estadísticas al completo» (hipotecas para compra de vivienda)",
     "registradores": "Estadística Registral Inmobiliaria: compraventas de inmuebles de uso residencial por provincia (Colegio de Registradores; base de datos con licencia ODbL)",
     "mivau_valor_tasado": "Valor tasado de la vivienda libre",
     "mivau_transacciones": "Transacciones inmobiliarias (compraventa): valor medio de las de vivienda libre",
@@ -1284,7 +1322,9 @@
       "ausente": "Sin dato"
     },
     "etiqueta": {
-      "portales": "Dato privado de oferta"
+      "portales": "Dato privado de oferta",
+      "notariado": "© Consejo General del Notariado, solo uso no comercial",
+      "notariado_cien": "© Consejo General del Notariado, solo uso no comercial"
     },
     "familia": {
       "A": "Capacidad de pago",
