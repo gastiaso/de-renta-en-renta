@@ -391,6 +391,16 @@ test_that("17 con la vivienda tipo y el plazo del Banco de España (revisión de
   p <- compraventa_plazo_bde(bde)
   expect_equal(p$plazo[p$anio == 2024], 25)
   expect_true(all(is.na(p$plazo[p$anio != 2024])))
+  # Empates a la centésima, hacia arriba (21-nov-2026): 294,54 meses son 24,545 años; 191 m² entre
+  # tres años, 95,125 de media con 95,12 · 95,125 · 95,13
+  bde_empate <- bde
+  bde_empate$valor <- 294.54
+  p_empate <- compraventa_plazo_bde(bde_empate)
+  expect_equal(p_empate$plazo[p_empate$anio == 2024], 24.55)
+  reg_empate <- reg
+  reg_empate$importe_medio <- c(1, 190240, 1, 190250, 1, 190260, 1, 190250)   # 95,12 · 95,125 · 95,13 · 95,125
+  s_empate <- compraventa_superficie_registradores(reg_empate)
+  expect_equal(s_empate$superficie[s_empate$anio == 2023], 95.13)             # media 95,125
   t17 <- compraventa_terminos_17(s, p)
   tipo <- tibble::tibble(anio = 2024L, tipo = 3.26)
   d <- armonizar_derivados_compraventa(larga_vt_prueba(), larga_sal_prueba(), tipo, terminos_17 = t17)

@@ -98,20 +98,25 @@ Coherencia entre fuentes, por revisar: penotariado no tiene serie con que contra
 
 Se borra el *release* en borrador «notariado» (`gh release delete notariado`) y se vuelve a publicar con el flujo, que sin él deja el sitio sin la capa. `NOTARIADO=FALSE` antes de `targets::tar_make()` (o quitar el bloque de `_targets.R`) deja `web/datos/notariado/` con solo `{"capa":"notariado","activa":false}` y no consulta nada. Ninguna cifra está en la historia de git. Las fotos de `datos/brutos/notariado/` y las consultas de `datos/brutos/notariado_cien/` (fuera de git) se borran. Los indicadores 25 a 29 pueden quedarse en el inventario sin datos, o salir de él con sus textos.
 
-## Por revisar (preguntas para el autor)
+## Decisiones (eran las preguntas «por revisar»)
 
-1. ~~¿Ficheros en git (C) o montaje en el flujo (B)?~~ Decidida por el autor (21-nov-2026): *release* en borrador (D).
-2. ¿Umbral de 20 compraventas informadas, o 10 con aviso de «pocas compraventas» por debajo de 30?
-3. ¿Desgloses por obra nueva y usada, y por piso y unifamiliar, en provincia y comunidad?
-4. ¿Códigos postales en la ficha del municipio?
-5. ¿Más series del CIEN? ¿La serie mensual de las hipotecas en la ficha de provincia?
-6. ¿Se guardan las fotos de penotariado para construir una serie propia (una por año, la última del año) y publicarla como años del 25 al 27? Hoy la web enseña solo la última.
-7. ¿Numeración 25 a 29 en el plan (tabla de indicadores, §5), o indicadores sin número?
-8. ¿Un aviso de coherencia con las transacciones del MIVAU?
+1. ¿Ficheros en git (C) o montaje en el flujo (B)? Decidida por el autor (21-nov-2026): *release* en borrador (D).
+
+Las demás, cerradas en el repaso de pendientes del 21-nov-2026. El criterio común: los términos del Portal Estadístico prohíben poner sus datos a disposición del público sin autorización, y ese riesgo, que el autor asume, crece con cada cifra que se copia y con lo fina que sea; se publica lo que responde a la pregunta del atlas y nada más.
+
+2. **Umbral: 20 compraventas informadas.** El precio es una media, no una mediana, y la fuente no da su dispersión: no se puede acompañar de un margen, como el alquiler del SERPAVI (que por eso admite 10 testigos con su aviso). Con 20 tienen precio 2.475 de los 7.451 municipios con compraventas.
+3. **Sin desgloses** por obra nueva y usada ni por piso y unifamiliar: multiplican las cifras copiadas, y la pregunta del atlas es el acceso, no el producto.
+4. **Sin códigos postales** en la ficha del municipio: es la escala más fina de la fuente, sin geometría en el atlas, y con el umbral de 20 quedaría casi vacía.
+5. **Sin más series del CIEN ni la mensual:** las hipotecas para comprar vivienda son las que hablan del acceso, y la ficha trabaja con años.
+6. **Las fotos se siguen guardando** (fuera de git, con su fecha), y la serie propia no se publica todavía: con una sola foto no hay serie. Se decide cuando haya dos fotos de fin de año (enero de 2028); hasta entonces, la web enseña la última.
+7. **Numeración 25 a 29,** también en el plan (§5, tabla F): ya están así en el inventario, las pruebas, la web y el registro de cambios.
+8. **Aviso de coherencia con las transacciones del MIVAU: sí, como `alerta`,** en una tarea de la v1.3 (`docs/backlog.md`). Las transacciones del MIVAU salen de los mismos ficheros notariales, así que vería un filtro mal aplicado a toda la foto, que las sumas internas no ven. Es una compuerta, no un indicador: no mezcla fuentes (regla 5).
+
+La etiqueta de la licencia se queda sin enlace a la fuente (alternativa de «Licencia y atribución en la web»): la procedencia ya se cita en la etiqueta, la ficha y la nota.
 
 ## Hecho cuando
 
 - Las dos fuentes en el inventario, con su licencia; `tar_make()` las baja, pasa las compuertas `notariado_*`, `notariado_cien_*` y `web_notariado` y escribe `web/datos/notariado/`. **Hecho (19-nov-2026).**
-- La web enseña los mapas 25 a 29 con la etiqueta de la licencia y sin CSV, y la ficha cita la foto. **Hecho en código y pruebas; sin mirar aún en el navegador.**
-- `empaquetar_publicacion()` deja fuera todo lo del Notariado (`sin_notariado`) y el flujo de Pages monta la carpeta desde el *release* en borrador «notariado» (21-nov-2026). **Hecho en código y pruebas; sin publicar.**
+- La web enseña los mapas 25 a 29 con la etiqueta de la licencia y sin CSV, y la ficha cita la foto. **Hecho (21-nov-2026): comprobado en el navegador, en local y contra el sitio publicado.**
+- `empaquetar_publicacion()` deja fuera todo lo del Notariado (`sin_notariado`) y el flujo de Pages monta la carpeta desde el *release* en borrador «notariado» (21-nov-2026). **Hecho y publicado (21-nov-2026, con `b7de592`).**
 - Nota metodológica (§7.11 y las filas de licencias de §2.2 y §2.4) y `LICENCIA_DATOS.md`. **Hecho.**

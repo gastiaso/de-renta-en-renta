@@ -1867,7 +1867,7 @@ testthat::test_dir("pruebas/testthat")    # tests with made-up data
 targets::tar_read(validacion_f1)          # one gate: columns calculado, referencia, correcto
 ```
 
-**Duration.** A full run from scratch takes about three and a quarter hours of computation, three and a half with the downloads (plan §6.3; `docs/reproducir.md`):
+**Duration.** A full run from scratch takes about three and a quarter hours of computation, plus the downloads, which depend on the connection (plan §6.3; `docs/reproducir.md`):
 - reading the State Cadastre buildings, 2 h 16 min;
 - comparing boundaries, 21 min;
 - reading the foral cadastres, about 17 min.

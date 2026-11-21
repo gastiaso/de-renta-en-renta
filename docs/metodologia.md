@@ -1867,7 +1867,7 @@ testthat::test_dir("pruebas/testthat")    # pruebas con datos inventados
 targets::tar_read(validacion_f1)          # una compuerta: columnas calculado, referencia, correcto
 ```
 
-**Duración.** Una pasada completa desde cero tarda unas tres horas y cuarto de cálculo, tres y media con las descargas (plan §6.3; `docs/reproducir.md`):
+**Duración.** Una pasada completa desde cero tarda unas tres horas y cuarto de cálculo, más las descargas, que dependen de la línea (plan §6.3; `docs/reproducir.md`):
 - leer los edificios del Catastro estatal, 2 h 16 min;
 - comparar límites, 21 min;
 - leer los catastros forales, unos 17 min.

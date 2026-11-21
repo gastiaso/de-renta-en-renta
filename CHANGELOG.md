@@ -4,6 +4,12 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Cambiado (21-nov-2026, repaso de pendientes)
+
+- **Indicador 17:** el plazo y la superficie de la vivienda tipo se redondean a la centésima con el empate hacia arriba (`redondear_empate_arriba()`), como el tipo, y no con `round()`. No cambia ninguna cifra: ninguno de los 36 términos de 2007 a 2025 cae en un empate, y `terminos_17` sale idéntico. Pruebas nuevas con un empate en cada término.
+- **Duración de una pasada:** §10 de la nota metodológica (las dos versiones) y `docs/reproducir.md` dicen lo que el README y la guía: unas tres horas y cuarto de cálculo, más las descargas; fuera «tres y media con las descargas».
+- **Decisiones anotadas, sin cambio en el código ni en las cifras:** plan v0.59 (§11: cerradas las preguntas 53 a 56 y 58, y la 57 salvo las prórrogas de zonas tensionadas; las 43 a 48 y la 59 dejan de figurar como abiertas; la 52, abierta solo en la autorización de Idealista; §5, tabla F con los indicadores 25 a 29); `docs/especificacion_notariado.md` (umbral de 20, sin desgloses, códigos postales ni más series; serie propia, en enero de 2028; aviso de coherencia con el MIVAU, como tarea); `docs/backlog.md`, «Decisiones del 21-nov-2026» y «Por decidir», con lo que queda y de quién depende; guía, regla 6, con la capa del Notariado.
+
 ### Publicado en Pages (21-nov-2026, sin release nuevo)
 
 - Sitio montado con el código y la nota de `b7de592` y los datos del release `v1.2.0`, con la capa del Notariado del *release* en borrador (decisión del autor): el mapa y la ficha del Notariado, sin descarga en CSV. `b7de592` pasa a ser la `ref` por defecto del flujo. Antes de lanzarlo, el sitio montado en local igual que el flujo dio 0 en las 71 comprobaciones de `comprobar_web_navegador()`; contra el sitio publicado, también. Siguen como en la v1.2.0 lo que sale de los datos: los resúmenes de «Reglas del juego» (en revisión jurídica) y los tramos del mapa del 17.

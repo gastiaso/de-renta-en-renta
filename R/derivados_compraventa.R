@@ -160,7 +160,7 @@ compraventa_superficie_registradores <- function(registradores, anios_media = 3L
   anios <- sort(unique(a$anio))
   tibble::tibble(anio = as.integer(anios), superficie = vapply(anios, function(t) {
     v <- s[as.character(seq(t - anios_media + 1L, t))]
-    if (anyNA(v)) NA_real_ else round(mean(v), 2)
+    if (anyNA(v)) NA_real_ else redondear_empate_arriba(mean(v), 2L)
   }, numeric(1)))
 }
 
@@ -168,7 +168,8 @@ compraventa_superficie_registradores <- function(registradores, anios_media = 3L
 # nuevas (Registradores, serie plazo_hipotecas de series_bde), media de los doce trimestres que
 # acaban en el cuarto del año; sin los doce, NA. El Banco lo publica en meses («Plazo medio de las
 # hipotecas. Meses»; 294,58 de media en 2022–2024): se pasa a años, que es lo que pide
-# cuota_hipoteca(). A dos decimales.
+# cuota_hipoteca(). A dos decimales, con el empate hacia arriba (como el tipo del 17), igual que la
+# superficie: round() va al par y el binario puede dejar un empate por debajo.
 compraventa_plazo_bde <- function(series_bde, serie = "plazo_hipotecas", trimestres = 12L) {
   d <- series_bde[series_bde$serie == serie, ]
   if (!nrow(d)) return(tibble::tibble(anio = integer(), plazo = numeric()))
@@ -178,7 +179,7 @@ compraventa_plazo_bde <- function(series_bde, serie = "plazo_hipotecas", trimest
   tibble::tibble(anio = as.integer(anios), plazo = vapply(anios, function(t) {
     fin <- t * 4L + 4L
     v <- d$valor[match(seq(fin - trimestres + 1L, fin), clave)]
-    if (anyNA(v)) NA_real_ else round(mean(v) / 12, 2)
+    if (anyNA(v)) NA_real_ else redondear_empate_arriba(mean(v) / 12, 2L)
   }, numeric(1)))
 }
 

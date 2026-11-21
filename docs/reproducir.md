@@ -128,7 +128,7 @@ Rehace lo que dependía del ámbito; las descargas de la pasada corta no se repi
 
 | Paso | Tiempo |
 |---|---|
-| Pasada completa desde cero | Unas 3 h 30 min. La nota metodológica (§10) da unas tres horas y cuarto de cálculo, sobre todo la lectura de los edificios del Catastro estatal (2 h 16 min), la comparación de límites (21 min) y los catastros forales (unos 17 min); las descargas dependen de la línea |
+| Pasada completa desde cero | De tres horas y cuarto a cuatro horas de cálculo, más las descargas (unos 9,6 GB). La nota metodológica (§10) da unas tres horas y cuarto de cálculo, sobre todo la lectura de los edificios del Catastro estatal (2 h 16 min), la comparación de límites (21 min) y los catastros forales (unos 17 min); las descargas dependen de la línea |
 | Mapa base (`fichero_mapa_base` y su compuerta) | Unos 9 min, dentro de lo anterior |
 | Pasada completa sin descargas | 3 h 56 min de cálculo con `datos/brutos/` completo (18-nov-2026, en el equipo del autor con otras sesiones abiertas); el Catastro estatal (`edificios_municipio`), 2 h 12 min |
 | Pasada corta con `PROVINCIA=28` | Sin medir. Mucho menos que la completa: del Catastro solo lee Madrid (73 de 1.421 municipios) y no lee los forales. Se anota en la tarea 58 |
