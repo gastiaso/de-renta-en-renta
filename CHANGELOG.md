@@ -4,6 +4,13 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Actualizado (21-nov-2026, fuentes que tocaban según el calendario)
+
+- **Banco de España, tipos de referencia** (`bde_tipos_referencia`, tabla 19.1): la descarga del 21-nov-2026 completa octubre de 2026 (tipo medio de los préstamos hipotecarios a más de tres años, 3,236 %). Cambia el módulo histórico (`historico` y su fichero de la web); el tipo anual y los términos del indicador 17 llegan a 2025 y salen idénticos. `ultimo_dato` del calendario, 2026-10.
+- **INE, hipotecas** (`ine_hipotecas`): las tablas 24460 y 24457 vuelven idénticas a las del 9-nov-2026 (la mensual llega a agosto de 2026). Ninguna cifra cambia.
+- **CIS, barómetro de noviembre** (`cis_barometros`): todavía sin publicar en su dirección habitual el 21-nov-2026 (404). Sigue pendiente, como los portales (manual).
+- Pasada completa sin fallos de compuerta (16 objetivos rehechos). Los ficheros anteriores, en `datos/brutos/_anteriores/2026-11-21/`.
+
 ### Cambiado (21-nov-2026, repaso de pendientes)
 
 - **Indicador 17:** el plazo y la superficie de la vivienda tipo se redondean a la centésima con el empate hacia arriba (`redondear_empate_arriba()`), como el tipo, y no con `round()`. No cambia ninguna cifra: ninguno de los 36 términos de 2007 a 2025 cae en un empate, y `terminos_17` sale idéntico. Pruebas nuevas con un empate en cada término.
