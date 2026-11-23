@@ -62,7 +62,7 @@ No figure in the atlas combines the two sources. When they appear together, each
 | Land Registrars (sale price, by province) | ODbL | Attribution; anything derived from their database is also published under ODbL |
 | European geometries (GISCO) | Non-commercial use | © EuroGeographics notice on the map |
 | Idealista | Terms of its website | Only on the site, with a link to the report, and «coming soon» until it authorises it; nothing of it in the downloads |
-| Notaries | All rights reserved | Not used |
+| General Council of Notaries (Statistical Portal and CIEN; indicators 25 to 29) | © Consejo General del Notariado, non-commercial use only | Website only, with the label on the map, the profile, the legend and the image, and no CSV download; outside the long table, the downloads and the *release* |
 | Derivatives of the atlas | CC BY-SA 4.0 | Attribution and share-alike |
 
 The full table, with what each source requires and the withdrawal plan, is in the methodological note (§2.2 and §2.4); the text of each licence, in `inventario/fuentes.csv`.

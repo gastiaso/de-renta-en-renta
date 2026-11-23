@@ -62,7 +62,7 @@ Ninguna cifra del atlas combina las dos fuentes. Cuando aparecen juntas, cada un
 | Registradores (precio de compraventa, por provincia) | ODbL | Citar; lo que derive de su base de datos se publica también con ODbL |
 | Geometrías europeas (GISCO) | Uso no comercial | Aviso de © EuroGeographics en el mapa |
 | Idealista | Condiciones de su web | Solo en la web, con enlace al informe, y «próximamente» hasta que lo autorice; nada suyo en las descargas |
-| Notariado | Derechos reservados | No se usa |
+| Consejo General del Notariado (Portal Estadístico y CIEN; indicadores 25 a 29) | © Consejo General del Notariado, solo uso no comercial | Solo en la web, con la etiqueta en el mapa, la ficha, la leyenda y la imagen, y sin descarga en CSV; fuera de la tabla larga, las descargas y el *release* |
 | Derivados del atlas | CC BY-SA 4.0 | Citar y compartir igual |
 
 La tabla completa, con lo que obliga cada fuente y el plan de retirada, está en la nota metodológica (§2.2 y §2.4); el texto de cada licencia, en `inventario/fuentes.csv`.

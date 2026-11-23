@@ -4,6 +4,10 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (23-nov-2026, el Notariado en el «Método en dos páginas»)
+
+- La tabla de licencias del «Método en dos páginas» (`docs/metodo_corto.md` y `docs/short_method.md`) aún decía «Notariado · Derechos reservados · No se usa», de antes de las decisiones del 19 y el 21-nov-2026. Ahora da lo mismo que la nota (§2): Portal Estadístico y CIEN, indicadores 25 a 29, con «© Consejo General del Notariado, solo uso no comercial», solo en la web y sin descarga en CSV ni entrada en la tabla larga, las descargas o el *release*. Lo vieron la revisión independiente y la lectura del sitio (23-nov-2026).
+
 ### Corregido (23-nov-2026, «¿te llega?» con ingreso provincial en la vista de España)
 
 - Con «Joven de 26 a 35» o «Pensionista», cuyo ingreso es de cada provincia, «¿te llega?» salía entero en gris en la vista de España de las pantallas pequeñas y del móvil (zoom 3,9): por debajo del zoom 4 se pintan las comunidades, y una ficha de ingreso provincial no tiene cifra por comunidad (sin dato a propósito), mientras la leyenda decía «en cada provincia». Lo vio la lectura del sitio publicado (23-nov-2026). Con esas fichas, las provincias se ven ya desde su primera tesela (zoom 3) y las comunidades solo por debajo (`ponerCorteComunidades()` en `web/js/mapa.js`, `corteComunidadesLlega()` en `web/js/sueldo.js`); con las demás fichas y en el sueldo necesario, el corte sigue en el zoom 4.
