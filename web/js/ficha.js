@@ -305,7 +305,7 @@ function lineaDosSueldos(t, valor, opciones, decimales) {
 // (las fichas de una persona) da la proporción con el alquiler mensual mediano real.
 // Tarea 44: en «¿te llega?», bajo el título, qué estadístico usa la ficha y de quién, en una línea
 // (lineaMetodo). Tarea 41: la llave lleva el aviso de lectura del indicador 14, el mismo cociente.
-function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, tipologia = null, fiabilidad = null, intervalo = null, enLimite = false, sinNivel = null, sueldo = null, notas = [], grupo = null, etiqueta = null, minimo = null, conLinea = null }) {
+function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, estado, estados, ejemplo, aviso, tipologia = null, fiabilidad = null, intervalo = null, enLimite = false, sinNivel = null, sueldo = null, notas = [], grupo = null, etiqueta = null, minimo = null, conLinea = null, periodoTexto = null, textoSecreto = null }) {
   const bloque = crear('section', 'ficha-valor');
   const cifra = crear('p', 'ficha-cifra');
   const sinCifra = sinNivel ? t('interfaz.ficha.sin_dato_nivel') : '—';
@@ -402,12 +402,13 @@ function bloqueValor({ t, modo, mapaId, mapaDef, ficha, supuestos, anio, valor, 
     if (ejemplo) bloque.append(crear('p', 'etiqueta-ejemplo', t('avisos.ejemplo')));
     return bloque;
   }
-  const partes = [t('interfaz.ficha.anio', { anio: t.periodo(anio) })];
+  // Notariado (23-nov-2026): la foto de 12 meses, rotulada como tal, y el umbral del atlas en vez de «secreto»
+  const partes = [periodoTexto ?? t('interfaz.ficha.anio', { anio: t.periodo(anio) })];
   if (tipologia) partes.push(t(`vocabulario.tipologia.${tipologia}`));
   // Con 0 contratos, no es «sin dato»: no hay contratos de alquiler registrados (pregunta 12 ampliada)
   partes.push(fiabilidad?.tipo === 'sin_contratos'
     ? t(`interfaz.ficha.sin_contratos.${tipologia ?? 'VC'}`)
-    : t(`vocabulario.estado.${estados[estado]}`));
+    : estados[estado] === 'secreto' && textoSecreto ? textoSecreto : t(`vocabulario.estado.${estados[estado]}`));
   bloque.append(crear('p', 'ficha-estado', partes.join(' · ')));
   if (aviso) bloque.append(crear('p', 'nota', aviso));
   for (const nota of notas) bloque.append(crear('p', 'nota', nota));

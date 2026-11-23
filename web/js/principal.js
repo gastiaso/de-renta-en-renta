@@ -57,7 +57,7 @@ import {
 } from './evolucion.js';
 import { cargarHistorias, buscarHistoria, pasoDe, cambiosDePaso } from './historias.js';
 import { crearPanelHistoria } from './panel_historia.js';
-import { notaFoto, avisoSinDescarga } from './notariado.js';   // capa del Notariado (19-nov-2026)
+import { notaFoto, avisoSinDescarga, periodoFoto, textoSecretoNotariado } from './notariado.js';   // capa del Notariado (19-nov-2026)
 
 const estado = { idioma: 'es', ...leerEstado() };
 let sueldo = leerSueldoCompartido();   // solo en memoria; en el enlace, solo con «Compartir»
@@ -606,6 +606,7 @@ async function actualizar() {
     conSupuestos: usaSupuestos(v.mapa), fuera: v.fuera ? textoFuera(v.fuera) : null,
     supuestos: v.supuestos,   // tarea 40: con el mínimo al lado, el texto de los supuestos lo dice
     relativa, alCambiarEscala, tipica: textoTipica(v),   // decisiones del autor del 11-nov-2026
+    periodoTexto: v.modo === 'necesario' && !v.fuera ? periodoFoto(t, m.indicadores[v.seriesColor[0]], 'interfaz.leyenda.periodo_foto') : null,
   };
   let resumen = null;
   let detalle = null;
@@ -829,7 +830,8 @@ async function contextoSinMediana(v, codigo, x) {
 function pintarEvolucion(hueco, series, v, codigo, nivel = 'sc') {
   const base = v.seriesColor[0];
   const periodos = series[base]?.anios;
-  if (!periodos) return;
+  // Con un solo periodo (la foto del Notariado) no hay evolución que enseñar, ni euros que elegir (23-nov-2026)
+  if (!periodos || periodos.length < 2) return;
   // Valor de cada serie en un periodo (si la serie no lo tiene, sin dato).
   const en = (serie, p) => {
     const s = series[serie];
@@ -1215,6 +1217,8 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
     estado: estadoCifraT, estados: m.codificacion.estados, ejemplo: m.ejemplo,
     aviso: [v.fuera && textoFuera(v.fuera), avisoAnios(v)].filter(Boolean).join(' ') || null, alCerrar: () => elegirTerritorio(null),
     fiabilidad, intervalo, enLimite, sueldo, notas, minimo, conLinea,
+    periodoTexto: v.modo === 'necesario' && !v.fuera ? periodoFoto(t, m.indicadores[base]) : null,   // Notariado (23-nov-2026)
+    textoSecreto: v.modo === 'necesario' ? textoSecretoNotariado(t, m.indicadores[base]) : null,
   });
   pintarResidentes(huecoResidentes, v, nivel, codigo).catch((error) => console.error(error));   // tarea 41
   // F5: declaraciones de zona tensionada del municipio (indicador 20; datos/zonas_tensionadas.json)

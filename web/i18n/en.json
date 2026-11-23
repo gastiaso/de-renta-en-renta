@@ -81,6 +81,7 @@
         "provincia_ccaa": "provinces and regions"
       },
       "secreto": "Statistical confidentiality",
+      "periodo_foto": "12 months to {fecha}",
       "supuestos": "{superficie} m² · {umbral} threshold",
       "supuestos_gastos": "{superficie} m² plus other housing costs ({otros}) · {umbral} threshold",
       "supuestos_real": "Median monthly rent in the tract · {umbral} threshold",
@@ -384,6 +385,8 @@
       },
       "superficie_tipica": "Typical size of rented flats: {superficie} m² in {anio} (median monthly rent / median rent per m², multi-family housing; SERPAVI).",
       "foto_notariado": "Sales notarised in the 12 months before the Notaries' Statistical Portal snapshot of {fecha}. No price with fewer than {minimo} reported sales.",
+      "periodo_foto": "Data for the 12 months to {fecha}",
+      "secreto_notariado": "No price: fewer than {minimo} reported sales",
       "cis_ccaa": {
         "titulo": "Housing as a problem (CIS)",
         "linea": "Housing among Spain’s three main problems: {cifra}% ({periodo}; ±{margen} points; {entrevistas} interviews).",

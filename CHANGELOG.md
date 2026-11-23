@@ -4,6 +4,16 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (23-nov-2026, textos de la capa del Notariado)
+
+Lo vio la lectura del sitio (23-nov-2026); se aplica con lo que ella recomendaba (decisión del autor, 23-nov-2026).
+
+- **La foto de 12 meses rotulada como tal:** la leyenda y la ficha de las series del Portal Estadístico (25 a 27) decían «2026» y «Datos de 2026» para compraventas de octubre de 2025 a octubre de 2026. Ahora, «12 meses hasta el 21 de octubre de 2026» y «Datos de los 12 meses hasta…» (`periodoFoto()`, `web/js/notariado.js`). El CIEN (28 y 29), por años, sigue igual.
+- **Sin evolución de un solo punto:** la ficha enseñaba «Evolución» con una sola fila, y el selector de euros la dejaba en «—». Con un solo periodo no hay bloque de evolución (`pintarEvolucion()`, `web/js/principal.js`).
+- **El umbral del atlas, no «secreto estadístico»:** un municipio con menos de 20 compraventas informadas (Abenójar, 18) salía «Sin dato por secreto estadístico», como si lo ocultara la fuente. Ahora, «Sin precio: menos de 20 compraventas informadas» (`textoSecretoNotariado()`); el resto de las series sigue con «secreto estadístico».
+- Pruebas en `pruebas/web/notariado.test.mjs`; `validacion_i18n` y `comprobar_web_navegador()` en verde.
+- **Por decidir, de esa lectura:** activar la casilla «Notaría» de la portada (la compuerta de las casillas comprueba los mapas del manifiesto general, donde la capa no va: habría que darle el de la capa y decidir qué hace la casilla con `NOTARIADO=FALSE`); quitar la superficie típica de los pisos alquilados en las fichas del Notariado, que invita a multiplicarla por el precio escriturado por m²; y la licencia dentro de cada JSON de la capa (hoy, solo en su manifiesto).
+
 ### Añadido (23-nov-2026, aviso de los borradores de «Reglas del juego» en el repositorio)
 
 - El sitio publicado enseña solo los títulos de los resúmenes en revisión, pero `inventario/reglas.csv` los trae enteros en el repositorio público. `inventario/LEEME.md` y la especificación (`docs/especificacion_reglas_del_juego.md`) avisan ahora de que los que tienen `revisado` = `borrador` (hoy, los siete) no tienen revisión jurídica, no son textos publicados y no deben citarse (decisión del autor, 23-nov-2026, tras la lectura del sitio; se descartó sacarlos de git, que rompería las compuertas `reglas_*`).

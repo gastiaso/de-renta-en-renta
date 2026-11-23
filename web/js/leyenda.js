@@ -206,7 +206,8 @@ export function pintarLeyenda(contenedor, t, datos) {
 
   // Bajo el título: unidad (o vivienda e ingreso de «¿te llega?»), periodo y tipología.
   const detalle = [necesario ? t(`indicadores.${datos.mapaId}.unidad`) : datos.vivienda];
-  if (datos.periodo !== undefined && datos.periodo !== null) detalle.push(t.periodo(datos.periodo));
+  if (datos.periodoTexto) detalle.push(datos.periodoTexto);   // Notariado: la foto de 12 meses (23-nov-2026)
+  else if (datos.periodo !== undefined && datos.periodo !== null) detalle.push(t.periodo(datos.periodo));
   if (datos.tipologia) detalle.push(t(`vocabulario.tipologia.${datos.tipologia}`));
   if (datos.grupo) detalle.push(datos.grupo);   // F5: operación y portal (indicador 13)
   const cuerpo = [];

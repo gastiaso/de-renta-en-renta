@@ -81,6 +81,7 @@
         "provincia_ccaa": "provincias y comunidades"
       },
       "secreto": "Secreto estadístico",
+      "periodo_foto": "12 meses hasta el {fecha}",
       "supuestos": "{superficie} m² · umbral del {umbral}",
       "supuestos_gastos": "{superficie} m² y otros gastos de vivienda ({otros}) · umbral del {umbral}",
       "supuestos_real": "Alquiler mensual mediano de la sección · umbral del {umbral}",
@@ -384,6 +385,8 @@
       },
       "superficie_tipica": "Superficie típica de los pisos alquilados: {superficie} m² en {anio} (alquiler mensual mediano / alquiler por m² mediano, vivienda colectiva; SERPAVI).",
       "foto_notariado": "Compraventas escrituradas en los 12 meses anteriores a la foto del Portal Estadístico del Notariado del {fecha}. Sin precio con menos de {minimo} compraventas informadas.",
+      "periodo_foto": "Datos de los 12 meses hasta el {fecha}",
+      "secreto_notariado": "Sin precio: menos de {minimo} compraventas informadas",
       "cis_ccaa": {
         "titulo": "La vivienda como problema (CIS)",
         "linea": "La vivienda, entre los tres principales problemas de España: {cifra} % ({periodo}; ±{margen} puntos; {entrevistas} entrevistas).",

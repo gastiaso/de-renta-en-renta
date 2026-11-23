@@ -161,3 +161,24 @@ test('exportación del pipeline: manifiesto con licencia, series del Notariado y
     assert.equal(Object.values(m.indicadores).filter((d) => notariado.esNotariado(d)).length, 0);
   }
 });
+
+test('lectura del sitio (23-nov-2026): la foto rotulada como 12 meses, el umbral en vez de «secreto» y sin evolución de un punto', () => {
+  const def = { fuente: 'notariado', foto: '2026-10-21', minimo_informadas: 20 };
+  assert.equal(notariado.periodoFoto(t.es, def), 'Datos de los 12 meses hasta el 21 de octubre de 2026');
+  assert.equal(notariado.periodoFoto(t.en, def), 'Data for the 12 months to 21 October 2026');
+  assert.equal(notariado.periodoFoto(t.es, def, 'interfaz.leyenda.periodo_foto'), '12 meses hasta el 21 de octubre de 2026');
+  assert.equal(notariado.periodoFoto(t.es, { fuente: 'notariado_cien' }), null);   // el CIEN, por años: el rótulo de siempre
+  assert.equal(notariado.textoSecretoNotariado(t.es, def), 'Sin precio: menos de 20 compraventas informadas');
+  assert.equal(notariado.textoSecretoNotariado(t.en, def), 'No price: fewer than 20 reported sales');
+  assert.equal(notariado.textoSecretoNotariado(t.es, { fuente: 'serpavi' }), null);   // el resto, «secreto estadístico»
+  // Cableado: la ficha y la leyenda reciben el rótulo; la ficha, el texto del umbral; sin evolución con un periodo
+  const principal = readFileSync(join(raiz, 'web', 'js', 'principal.js'), 'utf8');
+  assert.match(principal, /periodoTexto: v\.modo === 'necesario' && !v\.fuera \? periodoFoto\(t, m\.indicadores\[v\.seriesColor\[0\]\], 'interfaz\.leyenda\.periodo_foto'\) : null,/);
+  assert.match(principal, /periodoTexto: v\.modo === 'necesario' && !v\.fuera \? periodoFoto\(t, m\.indicadores\[base\]\) : null,/);
+  assert.match(principal, /textoSecreto: v\.modo === 'necesario' \? textoSecretoNotariado\(t, m\.indicadores\[base\]\) : null,/);
+  assert.match(principal, /if \(!periodos \|\| periodos\.length < 2\) return;/);
+  const ficha = readFileSync(join(raiz, 'web', 'js', 'ficha.js'), 'utf8');
+  assert.match(ficha, /const partes = \[periodoTexto \?\? t\('interfaz\.ficha\.anio'/);
+  assert.match(ficha, /estados\[estado\] === 'secreto' && textoSecreto \? textoSecreto :/);
+  assert.match(readFileSync(join(raiz, 'web', 'js', 'leyenda.js'), 'utf8'), /if \(datos\.periodoTexto\) detalle\.push\(datos\.periodoTexto\);/);
+});
