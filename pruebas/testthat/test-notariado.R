@@ -173,9 +173,24 @@ test_that("penotariado frente al MIVAU: los cuatro últimos trimestres cerrados 
   hueco <- dplyr::bind_rows(trim("nacional", "00", 175000, 2025L, 3L), hueco)
   expect_match(comprobar_notariado_mivau(pen, hueco)$detalle[1], "2025-T3 a 2026-T2")
 
+  # Número de compraventas (22-nov-2026): los 12 meses de la foto frente a la suma de los cuatro trimestres
+  nn <- dplyr::bind_rows(trim("nacional", "00", c(250, 260, 270, 280, 9999)),      # 1.060 frente a 1.000 de la foto
+                         trim("provincia", "04", c(40, 40, 40, 40, 1)),            # 160 frente a 150
+                         trim("provincia", "11", c(60, 60, 65, 65, 1)),            # 250 frente a 250
+                         trim("provincia", "28", c(100, 100, 100, 100, 1)))        # 400 frente a 600 (+50 %)
+  rn <- comprobar_notariado_mivau(pen, tt, nn)
+  expect_equal(rn$id, c("notariado_mivau_espana", "notariado_mivau_provincias", "notariado_mivau_compraventas",
+                        "notariado_mivau_compraventas_provincias"))
+  expect_equal(rn[1:2, ], r)                                                   # el precio, como sin el recuento
+  expect_equal(rn$calculado[3], 100 * (1000 / 1060 - 1))
+  expect_match(rn$detalle[3], "compraventas de España frente a las del MIVAU de 2025-T4 a 2026-T3")
+  expect_equal(rn$calculado[4], 1)
+  expect_match(rn$detalle[4], "de las compraventas del MIVAU de 2025-T4 a 2026-T3: 28$")
+  expect_equal(comprobar_notariado_mivau(pen, tt, nn[nn$geo_id != "11", ])$calculado[4], 2)   # sin trimestres, fuera
+
   referencias <- readr::read_csv(file.path("..", "..", "inventario", "referencias_validacion.csv"), show_col_types = FALSE)
-  expect_warning(validar_referencias(r, referencias), "notariado_mivau_provincias")   # alerta: avisa y no detiene
-  expect_silent(validar_referencias(comprobar_notariado_mivau(pen, tt, margen_provincia = 40), referencias))
+  expect_warning(validar_referencias(rn, referencias), "notariado_mivau_compraventas_provincias")   # alerta: avisa y no detiene
+  expect_silent(validar_referencias(comprobar_notariado_mivau(pen, tt, nn, margen_provincia = 60), referencias))
 })
 
 test_that("penotariado: tabla con el umbral de 20 informadas (secreto), los estimados y sin códigos postales", {

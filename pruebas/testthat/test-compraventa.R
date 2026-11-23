@@ -456,3 +456,24 @@ test_that("una serie del Banco de España sin código fijo se encuentra por su d
   expect_error(hist_codigo_bde(ruta2, HIST_DESCRIPCION_BDE[["plazo_hipotecas"]], HIST_UNIDAD_BDE[["plazo_hipotecas"]]),
                "se esperaba")
 })
+
+test_that("el boletín del Ministerio: se guarda el Excel y se rechaza lo que no lo es (22-nov-2026)", {
+  dir <- withr::local_tempdir()
+  ole2 <- as.raw(c(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0x00))
+  pedidas <- character(0)
+  sirve <- function(bytes) function(url, destino, forzar) {
+    pedidas <<- c(pedidas, url)
+    dir.create(dirname(destino), recursive = TRUE, showWarnings = FALSE)
+    writeBin(bytes, destino)
+    destino
+  }
+  ruta <- descargar_mivau_boletin("34010110", dir = dir, descargar = sirve(ole2))
+  expect_equal(basename(ruta), "34010110.xls")
+  expect_true(es_xls(ruta))
+  expect_equal(pedidas, "https://cdn.transportes.gob.es/estadistica/BoletinOnline2/34010110.xls")
+  # Una página web con estado 200, como la de la dirección antigua: fuera el fichero y error
+  pagina <- charToRaw("<!DOCTYPE html><html lang=\"es-ES\"></html>")
+  expect_error(descargar_mivau_boletin("35101000", dir = dir, descargar = sirve(pagina)), "no ha devuelto un Excel")
+  expect_false(file.exists(file.path(dir, "35101000.xls")))
+  expect_true(file.exists(ruta))
+})

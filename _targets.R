@@ -745,8 +745,15 @@ bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL)
   tar_target(tasaciones_territorios, leer_mivau_trimestral(ficheros_valor_tasado[2], 0L)),
   tar_target(valor_tasado_municipios, leer_mivau_valor_tasado_municipios(ficheros_valor_tasado[3])),
   tar_target(transacciones_territorios, leer_mivau_trimestral(fichero_transacciones)),
+  # Número total de compraventas de vivienda (34010110): solo para el aviso de coherencia del
+  # Notariado (validacion_notariado_mivau, 22-nov-2026); no es un indicador
+  tar_target(fichero_transacciones_numero, descargar_mivau_boletin(FICHEROS_MIVAU[["transacciones_numero"]],
+                                                                   dir = file.path("datos", "brutos", "mivau_transacciones")),
+             format = "file"),
+  tar_target(transacciones_numero_territorios, leer_mivau_trimestral(fichero_transacciones_numero, 0L)),
   tar_target(nombres_casados_mivau, casar_nombres_mivau(
-    unique(c(valor_tasado_territorios$nombre, tasaciones_territorios$nombre, transacciones_territorios$nombre)),
+    unique(c(valor_tasado_territorios$nombre, tasaciones_territorios$nombre, transacciones_territorios$nombre,
+             transacciones_numero_territorios$nombre)),
     valor_tasado_municipios, territorios_2021, nombres_mivau)),
   tar_target(niveles_casados_mivau, niveles_mivau(nombres_casados_mivau, territorios_2021)),
   tar_target(valor_tasado_trim, valor_tasado_trimestral(valor_tasado_territorios, tasaciones_territorios,
@@ -754,6 +761,7 @@ bloque_compraventa <- if (AMBITO != "") list(tar_target(larga_compraventa, NULL)
   tar_target(validacion_valor_tasado, validar_referencias(
     comprobar_mivau_valor_tasado(valor_tasado_trim, nombres_casados_mivau, territorios_2021), referencias)),
   tar_target(transacciones_trim, codificar_mivau_trimestral(transacciones_territorios, niveles_casados_mivau)),
+  tar_target(transacciones_numero_trim, codificar_mivau_trimestral(transacciones_numero_territorios, niveles_casados_mivau)),
   # «Hecho cuando» de F4: la tasación y las escrituras, coherentes (R/derivados_compraventa.R)
   tar_target(validacion_coherencia_compraventa, validar_referencias(
     comprobar_coherencia_compraventa(valor_tasado_trim, transacciones_trim), referencias)),
@@ -930,10 +938,10 @@ bloque_notariado <- if (!NOTARIADO || AMBITO != "") list(
   tar_target(validacion_notariado, validar_referencias(bind_rows(
     comprobar_penotariado(penotariado, territorios_2021),
     comprobar_notariado_cien(notariado_cien)), referencias)),
-  # Aviso de coherencia con el valor medio escriturado del MIVAU (alertas): objetivo aparte, para que
-  # un boletín nuevo del Ministerio no rehaga la capa
+  # Aviso de coherencia con las transacciones del MIVAU, precio medio y número de compraventas
+  # (alertas): objetivo aparte, para que un boletín nuevo del Ministerio no rehaga la capa
   tar_target(validacion_notariado_mivau, validar_referencias(
-    comprobar_notariado_mivau(penotariado, transacciones_trim), referencias)),
+    comprobar_notariado_mivau(penotariado, transacciones_trim, transacciones_numero_trim), referencias)),
   tar_target(larga_notariado, {
     validacion_notariado   # la compuerta va antes
     bind_rows(armonizar_penotariado(penotariado, territorios_2021),

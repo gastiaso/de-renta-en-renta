@@ -1,7 +1,9 @@
 # MIVAU, Valor tasado de la vivienda libre (indicador 12, F4) y Transacciones inmobiliarias
 # (compraventas ante notario que publica el MIVAU), del Boletín estadístico en línea del Ministerio
-# (apps.fomento.gob.es/BoletinOnline2, ficheros .XLS de «sedal»; la web del MIVAU rechaza las
-# descargas automáticas, el boletín no). Reutilización autorizada por el aviso legal del MIVAU
+# (boletinestadistico.transportes.gob.es, con los ficheros .xls en cdn.transportes.gob.es; la web
+# del MIVAU rechaza las descargas automáticas, el boletín no). Hasta noviembre de 2026 estaba en
+# apps.fomento.gob.es/BoletinOnline2, que desde entonces responde con una página web y no con la
+# tabla (comprobado el 22-nov-2026). Reutilización autorizada por el aviso legal del MIVAU
 # (citando la fuente y la fecha de la última actualización).
 #   35101000: valor tasado medio (€/m²) de España, comunidades y provincias, trimestral desde 1995,
 #     una hoja por cuatrienio;
@@ -9,7 +11,9 @@
 #   35103500: valor tasado medio (€/m²) y número de tasaciones de los municipios de más de 25.000
 #     habitantes, una hoja por trimestre desde 2005, con el municipio por su nombre;
 #   34020150: valor medio (€) de las transacciones de vivienda libre ante notario, España,
-#     comunidades y provincias, trimestral desde 2004 (compuerta de coherencia).
+#     comunidades y provincias, trimestral desde 2004 (compuerta de coherencia);
+#   34010110: número total de compraventas de vivienda de esos territorios, trimestral desde 2004
+#     (solo para el aviso de coherencia del Notariado, R/fuente_notariado.R).
 # El atlas usa años: el valor del año es la media de sus cuatro trimestres ponderada por el número
 # de tasaciones (medias ponderadas: regla 1); sin los cuatro trimestres, «ausente».
 # Los nombres del Ministerio se casan con los códigos del INE por su forma normalizada (sin tildes,
@@ -18,11 +22,27 @@
 # «Provincia»/«Municipio» y por las columnas «Total»).
 
 FICHEROS_MIVAU <- c(valor_tasado = "35101000", tasaciones = "35103000", valor_tasado_municipios = "35103500",
-                    transacciones_valor = "34020150")
+                    transacciones_valor = "34020150", transacciones_numero = "34010110")
 
-descargar_mivau_boletin <- function(id, dir = file.path("datos", "brutos", "mivau_valor_tasado"), forzar = FALSE) {
-  descargar_con_cache(sprintf("https://apps.fomento.gob.es/BoletinOnline2/sedal/%s.XLS", id),
-                      file.path(dir, sprintf("%s.xls", id)), forzar)
+MIVAU_BOLETIN_URL <- "https://cdn.transportes.gob.es/estadistica/BoletinOnline2/%s.xls"
+
+# ¿Es un Excel binario (.xls)? Los ocho bytes de la cabecera OLE2.
+es_xls <- function(ruta) {
+  identical(readBin(ruta, "raw", 8L), as.raw(c(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1)))
+}
+
+# Una tabla del boletín, con caché. Si lo que llega no es un Excel (la dirección antigua devolvía
+# una página web con estado 200), se borra y se detiene: no se guarda como si fuera la tabla.
+descargar_mivau_boletin <- function(id, dir = file.path("datos", "brutos", "mivau_valor_tasado"), forzar = FALSE,
+                                    descargar = descargar_con_cache) {
+  url <- sprintf(MIVAU_BOLETIN_URL, id)
+  ruta <- descargar(url, file.path(dir, sprintf("%s.xls", id)), forzar)
+  if (!es_xls(ruta)) {
+    unlink(ruta)
+    stop("Boletín del Ministerio: ", url, " no ha devuelto un Excel (¿ha cambiado de dirección?). ",
+         "Si era una renovación, los ficheros anteriores vuelven con cal_restaurar().", call. = FALSE)
+  }
+  ruta
 }
 
 # Número de una celda leída como texto: «1477.4000000000001» (el binario de 1.477,4) -> 1477.4 con

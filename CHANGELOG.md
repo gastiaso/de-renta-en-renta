@@ -4,6 +4,13 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido y corregido (22-nov-2026, número de compraventas del MIVAU y dirección de su boletín)
+
+- **Descarga** (autorizada por el autor): tabla 34010110 del boletín estadístico del Ministerio, número total de compraventas de vivienda de España, comunidades y provincias por trimestre (0,1 MB). Solo alimenta el aviso de coherencia del Notariado; no es un indicador.
+- Dos alertas más en `validacion_notariado_mivau`: `notariado_mivau_compraventas` (compraventas de España de la foto frente a la suma de los cuatro últimos trimestres del MIVAU, ±15 %: −5,3 %, 699.562 frente a 738.787) y `notariado_mivau_compraventas_provincias` (más de un 25 %: 0 de 52; de −11,8 a +9,8 %).
+- **Corregido:** el boletín del Ministerio cambió de dirección y la antigua responde con una página web. `descargar_mivau_boletin()` baja de `cdn.transportes.gob.es/estadistica/BoletinOnline2/` y se detiene si lo que llega no es un Excel (`es_xls()`); antes lo habría guardado como si fuera la tabla. Afectaba a la renovación del valor tasado y de las transacciones. Los ficheros ya descargados no cambian.
+- Ninguna cifra publicada cambia.
+
 ### Añadido (21-nov-2026, aviso de coherencia del Notariado con el MIVAU)
 
 - `comprobar_notariado_mivau()` y el objetivo `validacion_notariado_mivau`: dos alertas que comparan el precio medio por compraventa de la foto del Portal Estadístico con el valor medio de las compraventas de vivienda libre del MIVAU (`mivau_transacciones`), en la media de los cuatro últimos trimestres cerrados antes de la foto. `notariado_mivau_espana` (±15 %): +5,7 % en la foto del 21-oct-2026 (227.374 € frente a 215.115 €, de 2025-T2 a 2026-T1). `notariado_mivau_provincias` (más de un 25 %): 0 de 52 (de −6,1 a +13,7 %). Ninguna cifra publicada cambia.
