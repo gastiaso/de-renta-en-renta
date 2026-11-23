@@ -4,6 +4,14 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (23-nov-2026, revisión independiente desde la v1.2.0)
+
+- `empaquetar_notariado()` se niega a escribir en la carpeta del *release* público o en una con otros ficheros: `gh release upload … publicacion/*` habría subido `notariado.tar.gz` al *release* público y su `SHA256SUMS` habría pisado el del paquete.
+- CIEN (`descargar_notariado_cien()`): una respuesta que no es JSON (una página web con estado 200) cuenta como un fallo; se conserva la consulta anterior y se avisa, en lugar de guardarla encima.
+- Boletín del Ministerio (`descargar_mivau_boletin()`): con `forzar`, si llega una página web en lugar del Excel, vuelve la versión anterior con un aviso (guía, «Descargas»).
+- Pruebas nuevas para lo que ninguna vigilaba: de 26 mutaciones de las compuertas nuevas (`notariado_*`, `notariado_cien_*`, `notariado_mivau_*`, `web_notariado`, `sin_notariado`), la unidad del plazo del Banco al leer sus tablas y el redondeo del 17, las pruebas anteriores dejaban pasar 21 y las nuevas una, una comprobación redundante a propósito. También el bloqueo del CSV y la etiqueta del Notariado en la imagen (`principal.js`), y los comentarios de `pruebas/web/notariado.test.mjs`, que aún decían que la capa va en git.
+- Ninguna cifra publicada cambia: la tabla larga, `web/datos` y la capa quedan como estaban. Las propuestas sin aplicar, en `docs/backlog.md` («Por decidir»).
+
 ### Corregido (23-nov-2026, avisos dentro de las pruebas)
 
 - `geo_tabla_paso_callejero()` (`R/comun_geo.R`): sin tabla de topes y con grupos de municipios, `summarise()` probaba `max()` en un grupo vacío y avisaba («ningún argumento finito»). Ahora solo agrupa los topes si los hay. Daba los tres avisos de `test-geo.R`; las pasadas del pipeline no lo registraban.

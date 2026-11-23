@@ -5,9 +5,12 @@
 //   - cada serie lleva la etiqueta de su fuente en los dos idiomas, y el CSV no se ofrece (la imagen,
 //     sí), con su propio aviso;
 //   - la ficha cita la fecha de la foto de 12 meses y el umbral de 20 compraventas;
-//   - con la exportación del pipeline (web/datos/notariado/, que va en git): el manifiesto existe y,
-//     encendido, lleva la licencia, sus series son de las dos fuentes del Notariado y ninguna está en
-//     el manifiesto general.
+//   - con la exportación del pipeline (web/datos/notariado/, fuera de git desde el 21-nov-2026: llega al
+//     sitio del release en borrador «notariado»): el manifiesto existe y, encendido, lleva la licencia,
+//     sus series son de las dos fuentes del Notariado y ninguna está en el manifiesto general;
+//   - el cableado de principal.js (revisión del 23-nov-2026): el CSV se bloquea con el aviso de la
+//     fuente, y la etiqueta va sobre el mapa, en la leyenda, en la ficha y en el subtítulo y el pie de
+//     la imagen.
 // Se ejecutan desde la raíz del proyecto, sin paquetes:
 //   node --test pruebas/web/notariado.test.mjs
 
@@ -113,7 +116,24 @@ test('los nombres, unidades y lecturas de los indicadores 25 a 29 están en los 
   }
 });
 
-// Con la exportación del pipeline (va en git: web/datos/notariado/)
+test('principal.js: el CSV del Notariado se bloquea con su aviso y la etiqueta va en todo lo que se ve y en la imagen', () => {
+  const js = readFileSync(join(raiz, 'web', 'js', 'principal.js'), 'utf8');
+  // La etiqueta sale de la fuente de la serie (vocabulario.etiqueta.<fuente>)
+  assert.match(js, /function etiquetaPrivada\(serie\) \{\s*const fuente = m\.indicadores\[serie\]\?\.fuente;\s*return fuente && t\.existe\(`vocabulario\.etiqueta\.\$\{fuente\}`\)/);
+  // La descarga mira la serie que da color y, sin permiso, avisa con el texto de su fuente y no sigue
+  assert.match(js, /if \(!descargaPermitida\(formato, etiquetaPrivada\(v\.seriesColor\[0\]\)\)\) \{\s*barra\.avisar\(avisoSinDescarga\(t, m\.indicadores\[v\.seriesColor\[0\]\]\), true\);\s*return;/);
+  // Sobre el mapa, en la leyenda y en la ficha
+  assert.match(js, /el\.privado\.textContent = etiqueta \?\? '';/);
+  assert.match(js, /grupo: v\.modo === 'necesario' \? grupoDe\(v\.mapa\) : null, etiqueta,/);
+  assert.match(js, /etiqueta: etiquetaVista\(v\),/);
+  // En la imagen, en el subtítulo y al pie
+  const png = js.slice(js.indexOf('async function exportarPng'), js.indexOf('async function exportar(formato)'));
+  assert.match(png, /const etiqueta = etiquetaVista\(v\);/);
+  assert.match(png, /const partes = etiqueta \? \[etiqueta\] : \[\];/);
+  assert.match(png, /pie: \[\s*\.\.\.\(etiqueta \? \[etiqueta\] : \[\]\)/);
+});
+
+// Con la exportación del pipeline (web/datos/notariado/, fuera de git: solo si se ha generado aquí)
 const rutaCapa = join(raiz, 'web', 'datos', 'notariado', 'manifiesto.json');
 test('exportación del pipeline: manifiesto con licencia, series del Notariado y nada en el manifiesto general', { skip: !existsSync(rutaCapa) && 'sin web/datos/notariado/' }, () => {
   const capa = leerJson('web', 'datos', 'notariado', 'manifiesto.json');

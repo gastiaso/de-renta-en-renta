@@ -397,6 +397,11 @@ test_that("17 con la vivienda tipo y el plazo del Banco de España (revisión de
   bde_empate$valor <- 294.54
   p_empate <- compraventa_plazo_bde(bde_empate)
   expect_equal(p_empate$plazo[p_empate$anio == 2024], 24.55)
+  # Revisión del 23-nov-2026: 24,545 lo redondea igual round(); 289,38 meses son 24,115 años, que round()
+  # baja a 24,11 (el binario lo guarda por debajo)
+  bde_empate$valor <- 289.38
+  p_empate <- compraventa_plazo_bde(bde_empate)
+  expect_equal(p_empate$plazo[p_empate$anio == 2024], 24.12)
   reg_empate <- reg
   reg_empate$importe_medio <- c(1, 190240, 1, 190250, 1, 190260, 1, 190250)   # 95,12 · 95,125 · 95,13 · 95,125
   s_empate <- compraventa_superficie_registradores(reg_empate)
@@ -476,4 +481,27 @@ test_that("el boletín del Ministerio: se guarda el Excel y se rechaza lo que no
   expect_error(descargar_mivau_boletin("35101000", dir = dir, descargar = sirve(pagina)), "no ha devuelto un Excel")
   expect_false(file.exists(file.path(dir, "35101000.xls")))
   expect_true(file.exists(ruta))
+})
+
+test_that("el boletín del Ministerio: con forzar y una página web, se conserva el Excel anterior (revisión del 23-nov-2026)", {
+  dir <- withr::local_tempdir()
+  ole2 <- as.raw(c(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0x01, 0x02))
+  # Como descargar_con_cache(): sin forzar, la caché; con forzar, lo nuevo pisa lo anterior
+  sirve <- function(bytes) function(url, destino, forzar) {
+    if (file.exists(destino) && !forzar) return(destino)
+    writeBin(bytes, destino)
+    destino
+  }
+  ruta <- descargar_mivau_boletin("34020150", dir = dir, descargar = sirve(ole2))
+  pagina <- charToRaw("<!DOCTYPE html><html lang=\"es-ES\"></html>")
+  expect_warning(otra <- descargar_mivau_boletin("34020150", dir = dir, forzar = TRUE, descargar = sirve(pagina)),
+                 "se conserva la versión anterior")
+  expect_equal(otra, ruta)
+  expect_equal(readBin(ruta, "raw", 100), ole2)
+  expect_false(file.exists(paste0(ruta, ".anterior")))
+  # Un Excel nuevo con forzar sustituye al anterior, sin dejar la copia
+  ole2_b <- c(ole2[1:8], as.raw(c(0x09, 0x09)))
+  descargar_mivau_boletin("34020150", dir = dir, forzar = TRUE, descargar = sirve(ole2_b))
+  expect_equal(readBin(ruta, "raw", 100), ole2_b)
+  expect_false(file.exists(paste0(ruta, ".anterior")))
 })

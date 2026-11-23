@@ -430,3 +430,141 @@ test_that("el inventario trae las dos fuentes, sus indicadores, su etiqueta y su
   expect_equal(sort(t$geo_id[t$nivel == "provincia" & !is.na(t$geo_id)]), sprintf("%02d", 1:50))
   expect_false(anyDuplicated(t$nombre_cien[t$nivel == "provincia"]) > 0)
 })
+
+# ---- Revisión independiente desde la v1.2.0 (23-nov-2026): casos que ninguna prueba veía ----
+
+test_that("penotariado: la compuerta ve una foto a medias, un nivel vacío y precios por encima del techo", {
+  pen <- foto_n()
+  esperados <- c(nacional = 1, ccaa = 2, provincia = 3)
+  valor <- function(r, id, i = 1) r$calculado[r$id == id][i]
+  # Una capa con los datos de otro día: la foto mezclaría dos meses
+  mal <- pen
+  mal$definiciones$ultima_edicion_datos[4] <- "2026-09-15T10:00:00Z"
+  r <- comprobar_penotariado(mal, ter_n, hoy = as.Date("2026-11-19"), esperados = esperados)
+  expect_equal(valor(r, "notariado_foto"), 36)
+  # Sin filas de códigos postales
+  mal <- pen
+  mal$filas <- mal$filas[mal$filas$nivel != "cp", ]
+  r <- comprobar_penotariado(mal, ter_n, hoy = as.Date("2026-11-19"), esperados = esperados)
+  expect_equal(valor(r, "notariado_niveles", 4), 1)
+  # Un precio publicable por encima de 20.000 €/m² (con su identidad) y otro vacío
+  mal <- pen
+  f <- mal$filas
+  k <- f$nivel == "municipio" & f$geo_id == "28079"
+  f$precio_m2[k] <- 25000; f$precio_medio[k] <- 25000 * f$superficie_media[k]
+  f$precio_m2[f$nivel == "provincia" & f$geo_id == "04"] <- NA
+  mal$filas <- f
+  r <- comprobar_penotariado(mal, ter_n, hoy = as.Date("2026-11-19"), esperados = esperados)
+  expect_equal(valor(r, "notariado_rango"), 2)
+  # Un precio medio a un 2 % del precio por m² × la superficie: la identidad (±1 %) no se cumple
+  mal <- pen
+  k <- mal$filas$nivel == "provincia" & mal$filas$geo_id == "11"
+  mal$filas$precio_medio[k] <- mal$filas$precio_medio[k] * 1.02
+  r <- comprobar_penotariado(mal, ter_n, hoy = as.Date("2026-11-19"), esperados = esperados)
+  expect_equal(valor(r, "notariado_identidad"), 1)
+})
+
+test_that("penotariado frente al MIVAU: con más de cuatro trimestres, los cuatro últimos; y las desviaciones a la baja", {
+  pen <- foto_n()                                                              # foto del 21-10-2026
+  trim <- function(nivel, geo_id, valores, anio, trimestre) {
+    tibble::tibble(nivel = nivel, geo_id = geo_id, anio = anio, trimestre = trimestre, valor = valores)
+  }
+  a5 <- c(2025L, 2026L, 2026L, 2026L, 2026L); t5 <- c(4L, 1L, 2L, 3L, 4L)
+  tt <- dplyr::bind_rows(trim("nacional", "00", c(100000, 110000, 120000), 2025L, 1:3),   # trimestres anteriores
+                         trim("nacional", "00", c(180000, 185000, 195000, 200000, 900000), a5, t5),
+                         trim("provincia", "04", rep(126000, 5), a5, t5),
+                         trim("provincia", "11", rep(190400, 5), a5, t5),
+                         trim("provincia", "28", rep(255000, 5), a5, t5))
+  r <- comprobar_notariado_mivau(pen, tt)
+  expect_equal(r$calculado[1], 100 * (200000 / 190000 - 1))                    # 2025-T4 a 2026-T3, no 2025-T1 a T4
+  expect_match(r$detalle[1], "2025-T4 a 2026-T3")
+  expect_equal(r$calculado[2], 0)
+  # Una provincia muy por debajo también sale: compraventas de Madrid, 600 en la foto frente a 1.000
+  nn <- dplyr::bind_rows(trim("nacional", "00", c(250, 260, 270, 220, 1), a5, t5),
+                         trim("provincia", "04", c(40, 40, 40, 30, 1), a5, t5),
+                         trim("provincia", "11", c(60, 60, 65, 65, 1), a5, t5),
+                         trim("provincia", "28", c(250, 250, 250, 250, 1), a5, t5))
+  rn <- comprobar_notariado_mivau(pen, tt, nn)
+  expect_equal(rn$calculado[3], 0)                                             # 1.000 frente a 1.000
+  expect_equal(rn$calculado[4], 1)                                             # Madrid, −40 %
+  expect_match(rn$detalle[4], ": 28$")
+})
+
+test_that("penotariado: el umbral de 20 compraventas informadas es «20 o más»", {
+  pen <- foto_n()
+  con <- function(informadas) {
+    p <- pen
+    p$filas$total_informados[p$filas$nivel == "municipio" & p$filas$geo_id == "04002"] <- informadas
+    l <- armonizar_penotariado(p, ter_n)
+    l$estado[l$indicador == "precio_escriturado_m2" & l$geo_id == "04002"]
+  }
+  expect_equal(con(20), "dato")
+  expect_equal(con(19), "secreto")
+})
+
+test_that("CIEN: la compuerta ve los meses que no suman el año y las cuantías fuera de rango", {
+  cien <- cien_n()
+  mal <- cien
+  mal$n[mal$periodicidad == "mensual" & mal$anio == 2024 & mal$mes == 1] <- 101
+  mal$cuantia[mal$nivel == "provincia" & mal$nombre_cien == "Cádiz" & mal$anio == 2024] <- 10000
+  r <- comprobar_notariado_cien(mal, referencia = c("2024" = 1000))
+  expect_equal(r$calculado[r$id == "notariado_cien_meses"], 1)
+  expect_equal(r$calculado[r$id == "notariado_cien_rango"], 1)
+})
+
+test_that("CIEN: la cuantía de Andalucía pesa por las hipotecas con cuantía informada, no por el número", {
+  cien <- cien_n()
+  cien$n_cuantia[cien$nivel == "provincia" & cien$nombre_cien == "Almería" & cien$anio == 2024] <- 50
+  larga <- armonizar_notariado_cien(cien, ter_n, version = "2026-11-19")
+  x <- larga[larga$indicador == "cuantia_hipoteca_vivienda" & larga$nivel == "ccaa" & larga$geo_id == "01", ]
+  expect_equal(x$valor, (50 * 100000 + 250 * 128000) / 300)                      # no (100 × 100.000 + 250 × 128.000) / 350
+  expect_equal(larga$valor[larga$indicador == "hipotecas_compra_vivienda" & larga$nivel == "ccaa" & larga$geo_id == "01"], 350)
+})
+
+test_that("web_notariado salta sin la licencia, apagada, con series ajenas, sin fichero o fuera del índice", {
+  dir <- withr::local_tempdir()
+  ind_g <- dplyr::bind_rows(tibble::tibble(id = 1, codigo = "renta_persona", unidad_es = "€ por persona y año", nucleo_v01 = TRUE,
+                                           cortes_web = "10;20", escala_web = NA), ind_n)
+  pen <- foto_n()
+  larga <- dplyr::bind_rows(armonizar_penotariado(pen, ter_n), armonizar_notariado_cien(cien_n(), ter_n, version = "2026-11-19"))
+  notariado_exportar_web(larga, ind_g, jer_n, ter_n, vocabulario = voc_n, foto = pen$fecha, dir_web = dir, fecha = "2026-11-19")
+  ruta <- file.path(dir, "datos", "notariado", "manifiesto.json")
+  original <- jsonlite::read_json(ruta)
+  comprobar <- function(m = original, l = larga) {
+    jsonlite::write_json(m, ruta, auto_unbox = TRUE, digits = NA, null = "null")
+    x <- notariado_comprobar_web(l, ind_g, jer_n, ter_n, dir_web = dir)
+    stats::setNames(x$calculado, x$detalle)
+  }
+  expect_true(all(comprobar() == 0))
+  sin_licencia <- original; sin_licencia$licencia <- NULL
+  expect_equal(comprobar(sin_licencia)[["licencia en el manifiesto"]], 1)
+  apagada <- original; apagada$activa <- FALSE
+  expect_equal(comprobar(apagada)[["capa encendida en el manifiesto"]], 1)
+  ajena <- original; ajena$indicadores$precio_escriturado_m2$fuente <- "ine_adrh"
+  expect_equal(comprobar(ajena)[["series de una fuente que no es del Notariado"]], 1)
+  # Una serie de la capa que el manifiesto no trae, y una fila sin hueco en el índice de su nivel
+  mas <- dplyr::bind_rows(larga, dplyr::mutate(larga[larga$indicador == "hipotecas_compra_vivienda" & larga$nivel == "nacional", ],
+                                               anio = 2023L))
+  expect_gte(comprobar(l = mas)[["series de la capa sin fichero"]], 1)
+  fuera <- dplyr::bind_rows(larga, dplyr::mutate(larga[larga$indicador == "compraventas_notariado" & larga$geo_id == "04001", ],
+                                                 geo_id = "04999"))
+  expect_equal(comprobar(l = fuera)[["filas sin hueco en el indice de su nivel"]], 1)
+  # Una serie del Notariado en el manifiesto general de la web
+  dir.create(file.path(dir, "datos"), showWarnings = FALSE)
+  jsonlite::write_json(list(indicadores = list(precio_escriturado_m2 = list(fuente = "notariado"))),
+                       file.path(dir, "datos", "manifiesto.json"), auto_unbox = TRUE)
+  expect_equal(comprobar()[["series del Notariado en el manifiesto general"]], 1)
+})
+
+test_that("CIEN: una página web con estado 200 no pisa la consulta anterior, y sin anterior se detiene", {
+  dir <- withr::local_tempdir()
+  f <- descargar_notariado_cien(dir = dir, pedir = servicio_cien_n(), hasta = as.Date("2026-11-19"))
+  antes <- tools::md5sum(f)
+  Sys.setFileTime(f, Sys.time() - 40 * 86400)
+  pagina <- function(...) charToRaw("<!DOCTYPE html><html><body>Mantenimiento</body></html>")
+  avisos <- testthat::capture_warnings(g <- descargar_notariado_cien(dir = dir, pedir = pagina))
+  expect_length(avisos, 5)
+  expect_true(all(grepl("se conserva la anterior.*no es JSON", avisos)))
+  expect_equal(tools::md5sum(g), antes)
+  expect_error(descargar_notariado_cien(dir = withr::local_tempdir(), pedir = pagina), "no es JSON")
+})

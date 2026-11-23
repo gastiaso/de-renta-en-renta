@@ -286,3 +286,17 @@ test_that("descargas cortadas: el CSV del INE sin la \u00faltima fila entera y l
   expect_error(suppressWarnings(hist_descargar_entera("http://127.0.0.1:9/no", destino, hist_csv_ine_entero)), "cortada")
   expect_false(file.exists(destino))
 })
+
+test_that("hist_leer_bde_tablas: el plazo, buscado por su descripción, tiene que venir en meses (revisión del 23-nov-2026)", {
+  meses <- meses_de(1987:1988)
+  trim <- ifelse(grepl("^(MAR|JUN|SEP|DIC)", meses), "290", "_")
+  en_porcentaje <- csv_bde(meses, list("Plazo medio de las hipotecas" = trim))   # unidades de csv_bde(): «Porcentaje»
+  series <- tibble::tribble(~serie, ~tabla, ~codigo, ~frecuencia, ~unidad, ~fuente,
+                            "plazo_hipotecas", "si", NA_character_, "trimestral", "meses", "bde_accesibilidad")
+  expect_error(hist_leer_bde_tablas(c(si = en_porcentaje), series, desde = 1987L), "se esperaba")
+  en_meses <- tempfile(fileext = ".csv")
+  writeLines(sub('"Porcentaje"', '"Meses"', readLines(en_porcentaje), fixed = TRUE, useBytes = TRUE), en_meses, useBytes = TRUE)
+  x <- hist_leer_bde_tablas(c(si = en_meses), series, desde = 1987L)
+  expect_equal(nrow(x), 8L)
+  expect_true(all(x$valor == 290))
+})

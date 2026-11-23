@@ -32,13 +32,26 @@ es_xls <- function(ruta) {
 }
 
 # Una tabla del boletín, con caché. Si lo que llega no es un Excel (la dirección antigua devolvía
-# una página web con estado 200), se borra y se detiene: no se guarda como si fuera la tabla.
+# una página web con estado 200), se borra y se detiene: no se guarda como si fuera la tabla. Con
+# `forzar` y una versión anterior en su sitio, esa se aparta antes de pedir la nueva y vuelve, con un
+# aviso, si lo que llega no es un Excel (guía, «Descargas»: si una descarga falla, se conserva la
+# versión anterior; revisión del 23-nov-2026). Tras cal_actualizar() («mover»), la anterior está en
+# datos/brutos/_anteriores/ y vuelve con cal_restaurar().
 descargar_mivau_boletin <- function(id, dir = file.path("datos", "brutos", "mivau_valor_tasado"), forzar = FALSE,
                                     descargar = descargar_con_cache) {
   url <- sprintf(MIVAU_BOLETIN_URL, id)
-  ruta <- descargar(url, file.path(dir, sprintf("%s.xls", id)), forzar)
+  destino <- file.path(dir, sprintf("%s.xls", id))
+  anterior <- paste0(destino, ".anterior")
+  guardada <- forzar && file.exists(destino) && es_xls(destino) && file.copy(destino, anterior, overwrite = TRUE)
+  if (guardada) on.exit(unlink(anterior), add = TRUE)
+  ruta <- descargar(url, destino, forzar)
   if (!es_xls(ruta)) {
     unlink(ruta)
+    if (guardada && file.rename(anterior, ruta)) {
+      warning("Boletín del Ministerio: ", url, " no ha devuelto un Excel (¿ha cambiado de dirección?): se conserva ",
+              "la versión anterior de ", ruta, call. = FALSE)
+      return(ruta)
+    }
     stop("Boletín del Ministerio: ", url, " no ha devuelto un Excel (¿ha cambiado de dirección?). ",
          "Si era una renovación, los ficheros anteriores vuelven con cal_restaurar().", call. = FALSE)
   }

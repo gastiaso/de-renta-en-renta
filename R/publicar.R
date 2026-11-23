@@ -216,9 +216,19 @@ escribir_texto_lf <- function(lineas, ruta) {
 # datos/notariado/ y su SHA256SUMS, se sube al release en borrador «notariado», que solo ven quienes
 # tienen permiso de escritura en el repositorio; el flujo de Pages lo baja y lo monta en el sitio
 # (docs/publicacion.md, «Capa del Notariado»). Solo empaqueta la capa encendida y validada: el
-# manifiesto con activa = true y, si se da, la compuerta web_notariado sin fallos.
+# manifiesto con activa = true y, si se da, la compuerta web_notariado sin fallos. Nunca en la
+# carpeta del release público (revisión del 23-nov-2026): «gh release upload … publicacion/*» lo
+# subiría al público y SHA256SUMS pisaría el suyo. La salida solo puede tener ficheros de este paquete.
 FICHEROS_NOTARIADO <- c(datos = "notariado.tar.gz", sumas = "SHA256SUMS")
 empaquetar_notariado <- function(dir_web = "web", dir_salida = "publicacion_notariado", validacion = NULL) {
+  absoluta <- function(p) file.path(normalizePath(dirname(p), "/", mustWork = FALSE), basename(p))   # aunque no exista
+  publica <- eval(formals(empaquetar_publicacion)$dir_salida)
+  ajenos <- setdiff(list.files(dir_salida, all.files = TRUE, no.. = TRUE), FICHEROS_NOTARIADO)
+  if (identical(tolower(absoluta(dir_salida)), tolower(absoluta(publica))) || length(ajenos)) {
+    stop("empaquetar_notariado(): ", dir_salida, "/ no es una carpeta solo para el paquete del Notariado",
+         if (length(ajenos)) paste0(" (tiene ", paste(ajenos, collapse = ", "), ")"),
+         ". Su sitio es publicacion_notariado/, nunca la del release público.", call. = FALSE)
+  }
   carpeta <- file.path(dir_web, CARPETA_NOTARIADO)
   manifiesto <- file.path(carpeta, "manifiesto.json")
   if (!file.exists(manifiesto)) stop("Falta ", manifiesto, ": targets::tar_make() con NOTARIADO encendido.", call. = FALSE)

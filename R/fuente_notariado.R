@@ -229,6 +229,12 @@ descargar_notariado_cien <- function(dir = DIR_NOTARIADO_CIEN, forzar = FALSE, p
   if (!any(vapply(todos, caducado, TRUE))) return(todos)
   guardar <- function(destino, url, campos) {
     cuerpo <- tryCatch(pedir(url, campos), error = function(e) e)
+    # Una página web con estado 200 (mantenimiento, otra dirección) no se guarda encima de la anterior
+    # (revisión del 23-nov-2026): lo que no es JSON cuenta como un fallo
+    if (!inherits(cuerpo, "error") && length(cuerpo) &&
+        !tryCatch(isTRUE(jsonlite::validate(cien_texto(cuerpo))), error = function(e) FALSE)) {
+      cuerpo <- simpleError("la respuesta no es JSON (¿una página web?)")
+    }
     if (inherits(cuerpo, "error") || !length(cuerpo)) {
       motivo <- if (inherits(cuerpo, "error")) conditionMessage(cuerpo) else "respuesta vacía"
       if (file.exists(destino)) {

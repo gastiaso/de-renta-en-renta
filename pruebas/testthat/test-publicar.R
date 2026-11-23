@@ -386,3 +386,46 @@ test_that("Notariado (19 y 21-nov-2026): la capa va en el sitio desde el borrado
   escribir("web/datos/notariado/manifiesto.json", '{"capa":"notariado","activa":false}')
   expect_error(empaquetar_notariado(dir_web = file.path(raiz, "web"), dir_salida = file.path(raiz, "publicacion_notariado")), "apagada")
 })
+
+test_that("Notariado (revisión del 23-nov-2026): sus series en el manifiesto general o en el histórico paran el paquete", {
+  # Una serie del Notariado en el manifiesto general de la web
+  raiz <- proyecto_falso()
+  ruta_m <- file.path(raiz, "web/datos/manifiesto.json")
+  m <- jsonlite::read_json(ruta_m)
+  m$indicadores$precio_escriturado_m2 <- list(fuente = "notariado", version = "2026-10-21")
+  writeLines(jsonlite::toJSON(m, auto_unbox = TRUE), ruta_m, useBytes = TRUE)
+  expect_error(suppressMessages(capture.output(empaquetar_falso(raiz))), "sin_notariado")
+  # Filas del Notariado en la tabla del módulo histórico (escrita de nuevo, sin leerla: en Windows, el
+  # Parquet leído queda mapeado y no se puede reescribir)
+  raiz <- proyecto_falso()
+  arrow::write_parquet(tibble::tibble(serie = c("anios_renta", "hipotecas_compra_vivienda"), geo_id = "00", nivel = "nacional",
+                                      frecuencia = c("trimestral", "anual"), anio = c(2026L, 2025L), subperiodo = c(1L, NA),
+                                      valor = c(8.0, 1), unidad = c("anios", "hipotecas"),
+                                      fuente = c("bde_accesibilidad", "notariado_cien"), codigo = c("D_TKB57110_IPV", "1203"),
+                                      version = "2026-11-05"),
+                       file.path(raiz, "datos/intermedios/historico.parquet"))
+  expect_error(suppressMessages(capture.output(empaquetar_falso(raiz))), "sin_notariado")
+})
+
+test_that("empaquetar_notariado() no escribe en la carpeta del release público (revisión del 23-nov-2026)", {
+  raiz <- proyecto_falso()
+  dir.create(file.path(raiz, "web/datos/notariado"), recursive = TRUE)
+  writeLines('{"capa":"notariado","activa":true,"indicadores":{}}', file.path(raiz, "web/datos/notariado/manifiesto.json"))
+  suppressMessages(empaquetar_falso(raiz))
+  publica <- file.path(raiz, "publicacion")
+  antes <- tools::md5sum(file.path(publica, list.files(publica)))
+  # Con el paquete público dentro: ni notariado.tar.gz al lado ni su SHA256SUMS encima del público
+  expect_error(empaquetar_notariado(dir_web = file.path(raiz, "web"), dir_salida = publica), "release público")
+  expect_equal(tools::md5sum(file.path(publica, list.files(publica))), antes)
+  # Vacía, pero es la de empaquetar_publicacion()
+  withr::with_dir(raiz, {
+    unlink("publicacion", recursive = TRUE)
+    expect_error(empaquetar_notariado(dir_salida = "publicacion"), "release público")
+    expect_error(empaquetar_notariado(dir_salida = "./publicacion"), "release público")
+    expect_length(list.files("publicacion"), 0)
+    # Su carpeta, sí
+    paquete <- suppressMessages(empaquetar_notariado())
+    expect_equal(dirname(paquete[["datos"]]), "publicacion_notariado")
+    expect_true(file.exists(paquete[["datos"]]))
+  })
+})
