@@ -495,6 +495,32 @@ Repaso de todo lo que seguía «por decidir» o «por revisar» en este backlog,
 - **Tareas 44 y 51:** los textos de las fichas y los cortes revisados a mano, publicados desde la v1.0, se dan por buenos.
 - **Notariado:** en «Para la v1.3».
 
+## Decisiones del 23-nov-2026
+
+Respuestas del autor a lo que dejaron por decidir la revisión independiente desde la v1.2.0 y la lectura del sitio publicado (noche del 22 al 23-nov-2026). Letras (a)–(g): las de la revisión, en «Por decidir»; L: las de la lectura.
+
+**Para hacer ya** (sin pasada completa):
+
+- **(a) Foto del Notariado a medias:** se aplica ya el parche de `descargar_penotariado()` (capas dentro de un `tryCatch`, la foto anterior con aviso si falla a medias y el aviso de antigüedad de 120 días en la propia descarga), con sus pruebas en `test-notariado.R`. Aceptadas las cinco peticiones pequeñas a ArcGIS del siguiente `tar_make()`.
+- **(c) Ventana del MIVAU:** las provincias con los mismos trimestres que España, y la alerta salta si el último trimestre de España acaba más de 270 días antes de la foto.
+- **(d) Provincia «ND» en el CIEN:** esas comunidades fuera de la suma de `notariado_cien_suma_provincias`, contadas en una fila de alerta aparte.
+- **(e) Cifras del Notariado en git:** se reescribe la frase en la nota (§2), `docs/publicacion.md` y la especificación: ningún fichero ni serie suya está en git; solo una decena de cifras de España, citadas con su fuente en la documentación y en las compuertas.
+- **(f) Flujo de Pages:** falla si el *release* público lleva algún fichero fuera de `SHA256SUMS`, `version.json`, `datos_web.tar.gz`, `tabla_larga.parquet`, `historico.parquet` y `*.pmtiles`.
+- **(g) Tabla 34010110:** ya, a `bloque_notariado`, con su propio casado de nombres (con `NOTARIADO=FALSE` no se baja).
+- **L11, casilla «Notaría»:** activa con la capa encendida, hacia `mapa.html?mapa=precio_escriturado_m2`; con `NOTARIADO=FALSE`, «próximamente». La compuerta de las casillas lee también el manifiesto de la capa.
+- **L15, portada y mapa:** viniendo de la portada, el resumen de «¿te llega?» abre con la cifra del alquiler real, la que da la portada.
+- **L10, superficie típica:** fuera de las fichas de los indicadores 25 a 29.
+- **L22:** la licencia dentro de cada JSON de la capa del Notariado (se rehace la capa y se vuelve a subir su *release* en borrador) y `datos/ejemplo/` fuera del artefacto de Pages.
+- **L18, inglés:** sin espacio antes de % y un solo formato de euros («€1,237»), también en `web/js/i18n.js`; «94th percentile»; «tract» siempre para la sección censal; «Can you make rent?» también en la portada.
+- **L6 (b), «Reglas del juego»:** mientras dure la revisión jurídica, cada sección enseña ya la norma y los artículos citados, con su enlace al BOE y la fecha (hechos, sin interpretación).
+- **Pie de «Reglas del juego»:** «consultados entre el 13 y el 17 de noviembre de 2026» (el intervalo de las consultas).
+
+**Con la próxima pasada completa** (cambian `inventario/` y rehacen buena parte del pipeline):
+
+- **(b) `notariado_cien_espana`:** tolerancia de ±1 %.
+- **L13, cortes del 16:** recalibrados con 2025.
+- **Comillas inglesas** en las 11 cadenas de `inventario/indicadores.csv` (10) y `fuentes.csv` (1).
+
 ## Por decidir
 
 Lo que queda, y de quién depende:
@@ -507,7 +533,7 @@ Lo que queda, y de quién depende:
 - **Fuentes que el calendario da por pendientes:** renovadas el 21-nov-2026 con el sí del autor (`cal_actualizar()` y `tar_make()`; `docs/actualizacion.md`). Los tipos de referencia del Banco de España ganan octubre de 2026 (tipo medio de las hipotecas, 3,236 %): cambia solo el módulo histórico, que la página no dibuja en esa serie. Las hipotecas del INE vuelven idénticas (la mensual sigue en agosto de 2026; el tipo anual de 2025 ya estaba y `ANIOS_VALOR_TASADO` no cambia hasta el de 2026, en febrero de 2027). **Siguen pendientes:** el barómetro de noviembre del CIS, que el 21-nov-2026 no estaba en su dirección habitual (404; `cis_estudios` lo vuelve a pedir en cada `tar_make()` mientras toque, y hasta entonces `tar_outdated()` lista la cadena del CIS), y los portales (manual).
 - **Con fecha:** el formato de las prórrogas de zonas tensionadas, en marzo de 2027 (pregunta 57 g); la serie propia del Notariado, en enero de 2028.
 - **Flujo de pruebas en GitHub (tarea 54), comprobado el 21-nov-2026** en sus registros: sin caché (ejecución del 11-nov-2026, commit `df67c1b`), 2 min 18 s, con 35 s para restaurar `renv`; con caché, unos 2 min 30 s (8 s). Los 97 paquetes de `renv.lock` se instalan compilados, ninguno desde el código fuente. Las pruebas del mapa base pasan con el GDAL 3.8.4 de Ubuntu 24.04 (92 expectativas). Las acciones de r-lib (v2.14.0, fijadas por commit) no dejan avisos ni anotaciones. Última ejecución (commit `4da0487`): 432 pruebas, 3 saltadas, 0 fallos. Los cinco avisos que quedaban dentro de las pruebas (`test-geo.R`, tres de `max()` sin datos, y `test-otros-gastos.R`, dos de redondeo) se corrigieron el 23-nov-2026 en el código, no en las pruebas (CHANGELOG); ninguna cifra cambia.
-- **Revisión independiente desde la v1.2.0 (23-nov-2026), propuestas sin aplicar** (las que tocan `inventario/referencias_validacion.csv` rehacen todo el pipeline: mejor con la próxima pasada completa):
+- **Revisión independiente desde la v1.2.0 (23-nov-2026), propuestas: decididas por el autor el mismo día** (abajo, «Decisiones del 23-nov-2026»; las que tocan `inventario/referencias_validacion.csv` rehacen todo el pipeline: mejor con la próxima pasada completa):
   - (a) `descargar_penotariado()`: si falla a mitad de una foto (una capa vacía o una página que no llega), se detiene aunque haya foto anterior, y `ultima_consulta.txt` ya la da por consultada; y la alerta `notariado_foto_antiguedad` solo se recalcula cuando cambia la foto o el CIEN, así que no ve un servicio parado. Propuesta, con parche probado: las capas dentro de un `tryCatch`, la foto anterior con aviso y el aviso de antigüedad en la propia descarga (120 días). Aplicarlo con la próxima foto (hacia el 21-dic-2026), cuando `ficheros_penotariado` vaya a pedir la red de todos modos;
   - (b) `notariado_cien_espana`, exacta y de bloqueo sobre 2025: si el CIEN revisa 2025, la renovación de los 30 días (hacia el 19-dic-2026) para el pipeline. Propuesta: tolerancia de ±1 % (alternativa: referencia en 2024);
   - (c) ventana del MIVAU en `comprobar_notariado_mivau()`: cada provincia toma sus cuatro últimos trimestres con cifra y no hay límite de antigüedad. Propuesta: las provincias con los trimestres de España, y la alerta salta si el último trimestre de España acaba más de 270 días antes de la foto (hoy, 204);

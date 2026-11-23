@@ -4,6 +4,10 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Decidido (23-nov-2026, lo que dejaron por decidir la revisión y la lectura del sitio)
+
+- Respuestas del autor, en `docs/backlog.md` («Decisiones del 23-nov-2026»): trece cosas para hacer ya (el parche de la foto del Notariado, la ventana del MIVAU, las provincias «ND» del CIEN, la frase de las cifras en git, la comprobación del flujo de Pages, la tabla 34010110 en el bloque del Notariado, la casilla «Notaría», el resumen del mapa viniendo de la portada, la superficie típica fuera de las fichas del Notariado, la licencia en cada JSON de la capa y `datos/ejemplo/` fuera del sitio, el formato del inglés, las normas y artículos de «Reglas del juego» y la fecha de su pie) y tres con la próxima pasada completa (tolerancia de `notariado_cien_espana`, cortes del 16 con 2025 y comillas inglesas del inventario). Sin cambios en el código ni en las cifras en esta entrada.
+
 ### Corregido (23-nov-2026, diccionario, pie de la portada y CIS en el móvil)
 
 De la lectura del sitio (23-nov-2026), con lo que ella recomendaba (decisión del autor, 23-nov-2026).
