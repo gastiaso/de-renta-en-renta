@@ -166,3 +166,12 @@ test('contrato del JSON exportado por el pipeline', { skip: !existsSync(exportad
   // 2023 (ruptura R10) marcado
   assert.ok(filas.filter((f) => f.anio === 2023).every((f) => f.ruptura));
 });
+
+test('ficha de comunidad: el enlace lleva a la tabla por comunidad de la Máquina del tiempo (23-nov-2026)', () => {
+  const js = leerTexto('web', 'js', 'cis_ccaa.js');
+  assert.match(js, /enlace\.href = `historico\.html\$\{t\.idioma === 'en' \? '\?idioma=en' : ''\}#hi-cis-ccaa`;/);
+  assert.doesNotMatch(js, /#hist-cis`/);
+  // El ancla existe en la página y la página baja hasta ella cuando ya ha pintado (historico.js)
+  assert.match(leerTexto('web', 'historico.html'), /id="hi-cis-ccaa"/);
+  assert.match(leerTexto('web', 'js', 'historico.js'), /if \(ancla\) ancla\.scrollIntoView\(\);/);
+});

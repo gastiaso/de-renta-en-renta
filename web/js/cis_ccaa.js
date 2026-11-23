@@ -126,7 +126,8 @@ export async function pintarCisFicha(hueco, codigo, t, vigente = () => true) {
   const bloque = crear('section', 'ficha-cis');
   const nota = crear('p', 'nota', `${t('interfaz.ficha.cis_ccaa.nota')} `);
   const enlace = crear('a', null, t('nav.historico'));
-  enlace.href = `historico.html${t.idioma === 'en' ? '?idioma=en' : ''}#hist-cis`;
+  // A la tabla por comunidad, no a la serie nacional del mismo bloque (lectura del sitio, 23-nov-2026)
+  enlace.href = `historico.html${t.idioma === 'en' ? '?idioma=en' : ''}#hi-cis-ccaa`;
   nota.append(enlace);
   bloque.append(crear('h3', 'ficha-indicador', t('interfaz.ficha.cis_ccaa.titulo')), crear('p', 'ficha-estado', linea), nota);
   hueco.replaceChildren(bloque);

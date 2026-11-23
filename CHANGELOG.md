@@ -4,6 +4,10 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (23-nov-2026, de la ficha de comunidad a la tabla del CIS por comunidad)
+
+- El enlace «Máquina del tiempo» de la línea del CIS en la ficha de comunidad llevaba a la serie nacional del bloque (`historico.html#hist-cis`), no a la tabla por comunidad. Ahora va a `#hi-cis-ccaa` (`web/js/cis_ccaa.js`). Lo vio la lectura del sitio (23-nov-2026). La tabla sigue abriendo en el último año completo, como se decidió para la tarea 63 (e); la ficha da el año en curso. Prueba en `pruebas/web/cis_ccaa.test.mjs`.
+
 ### Corregido (23-nov-2026, los botones de las historias a la vista en escritorio)
 
 - En un portátil (1366 × 768 o 1280 × 720), «Anterior / Siguiente / Salir» de las historias quedaban por debajo de lo que enseña la columna lateral (en «padres», a 771-815 px con la columna hasta 736) y había que desplazarla para avanzar. Lo vio la lectura del sitio (23-nov-2026), y la auditoría del 11-nov-2026 ya lo proponía. Los botones van fijos al pie de la columna en todas las anchuras (`position: sticky`, `web/estilo/sitio.css`), como ya iban en el móvil. Pruebas en `pruebas/web/historias.test.mjs` y `movil.test.mjs`.
