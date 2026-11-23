@@ -374,6 +374,10 @@ test_that("Notariado (19 y 21-nov-2026): la capa va en el sitio desde el borrado
   expect_match(flujo, '{"capa":"notariado","activa":false}', fixed = TRUE)
   expect_match(flujo, "gh release download notariado", fixed = TRUE)
   expect_match(flujo, "sha256sum --check --strict SHA256SUMS", fixed = TRUE)
+  # El release público, solo con los ficheros del paquete; la muestra de ejemplo, fuera del sitio (23-nov-2026)
+  expect_match(flujo, "--json assets --jq '.assets[].name'", fixed = TRUE)
+  expect_match(flujo, "grep -v -x -E 'SHA256SUMS|version\\.json|datos_web\\.tar\\.gz|tabla_larga\\.parquet|historico\\.parquet|.+\\.pmtiles'", fixed = TRUE)
+  expect_match(flujo, '"$sitio/herramientas" "$sitio/datos/ejemplo"', fixed = TRUE)
 
   # El paquete aparte: solo datos/notariado/, con su suma, y nada si la capa está apagada o falla
   paquete <- suppressMessages(empaquetar_notariado(dir_web = file.path(raiz, "web"), dir_salida = file.path(raiz, "publicacion_notariado")))

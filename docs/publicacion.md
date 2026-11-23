@@ -111,7 +111,7 @@ gh release create notariado publicacion_notariado/notariado.tar.gz publicacion_n
 gh release upload notariado publicacion_notariado/notariado.tar.gz publicacion_notariado/SHA256SUMS --clobber
 ```
 
-Y se vuelve a lanzar «Publicar en Pages». **Para retirarla:** `gh release delete notariado` y otra publicación con el flujo; `NOTARIADO=FALSE` antes de `tar_make()` deja de consultarla. Ninguna cifra suya está en la historia de git (nota metodológica, §2.4).
+Y se vuelve a lanzar «Publicar en Pages». **Para retirarla:** `gh release delete notariado` y otra publicación con el flujo; `NOTARIADO=FALSE` antes de `tar_make()` deja de consultarla. Ningún fichero ni serie suya está en git, tampoco en su historia; solo una decena de cifras de España, citadas con su fuente en la documentación y en las compuertas (decisión del autor, 23-nov-2026); nota metodológica, §2.4).
 
 Alternativas estudiadas (especificación, «Cómo llegan las cifras al sitio»): consulta directa desde el navegador (el servicio ArcGIS de penotariado manda CORS abierto, el del CIEN no), montaje en el flujo de Pages con una consulta a las fuentes en cada publicación, y la carpeta en git, implementada el 19-nov-2026 y descartada antes de subirla.
 

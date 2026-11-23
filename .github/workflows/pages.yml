@@ -73,6 +73,14 @@ jobs:
             --pattern SHA256SUMS --pattern version.json --pattern datos_web.tar.gz \
             --pattern tabla_larga.parquet --pattern historico.parquet --pattern '*.pmtiles'
           gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName > "$RUNNER_TEMP/etiqueta"
+          # El release público solo lleva los ficheros del paquete (decisión del autor, 23-nov-2026): un
+          # notariado.tar.gz subido ahí por error, o cualquier otro fichero, para la publicación
+          gh release view --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' > "$RUNNER_TEMP/ficheros_release.txt"
+          ajenos=$(grep -v -x -E 'SHA256SUMS|version\.json|datos_web\.tar\.gz|tabla_larga\.parquet|historico\.parquet|.+\.pmtiles' "$RUNNER_TEMP/ficheros_release.txt" || true)
+          if [ -n "$ajenos" ]; then
+            echo "::error::El release público lleva ficheros que no son del paquete: $(echo $ajenos)"
+            exit 1
+          fi
           ls -l "$rel"
 
       - name: Bajar la capa del Notariado (release en borrador)
@@ -108,8 +116,9 @@ jobs:
           rel="$RUNNER_TEMP/release"
           sitio="$RUNNER_TEMP/sitio"
           cp -R web "$sitio"
-          # Herramientas de desarrollo: no se publican
-          rm -rf "$sitio/LEEME.md" "$sitio/servir.mjs" "$sitio/herramientas"
+          # Herramientas de desarrollo: no se publican; tampoco la muestra de ejemplo (va en git), que
+          # solo sirve en local (js/datos.js; 23-nov-2026)
+          rm -rf "$sitio/LEEME.md" "$sitio/servir.mjs" "$sitio/herramientas" "$sitio/datos/ejemplo"
 
           # Datos de la web: solo rutas bajo datos/, sin la muestra (va en git), sin las capas de portales
           # y del Notariado (solo web, fuera del paquete) y sin subir de carpeta

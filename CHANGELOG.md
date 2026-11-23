@@ -4,6 +4,13 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Cambiado (23-nov-2026, decisiones del autor: cifras del Notariado en git y flujo de Pages)
+
+- **(e) Cifras del Notariado en git:** la nota (§2.4, las dos lenguas), `docs/publicacion.md` y la especificación decían «ninguna cifra suya está en la historia de git», y hay una decena de cifras de España citadas. Ahora: ningún fichero ni serie suya está en git; solo esas cifras, citadas con su fuente en la documentación y en las compuertas.
+- **(f) El release público, solo con su paquete:** el flujo de Pages falla si el *release* lleva algún fichero fuera de `SHA256SUMS`, `version.json`, `datos_web.tar.gz`, `tabla_larga.parquet`, `historico.parquet` y `*.pmtiles` (un `notariado.tar.gz` subido ahí por error, por ejemplo). El *release* `v1.2.0` lleva exactamente esos seis.
+- **L22, muestra de ejemplo fuera del sitio:** `web/datos/ejemplo/` va en git y solo sirve en local; el flujo ya no la publica.
+- Pruebas en `test-publicar.R`. Llegan al sitio con la próxima publicación, con esta `ref` o posterior.
+
 ### Decidido (23-nov-2026, lo que dejaron por decidir la revisión y la lectura del sitio)
 
 - Respuestas del autor, en `docs/backlog.md` («Decisiones del 23-nov-2026»): trece cosas para hacer ya (el parche de la foto del Notariado, la ventana del MIVAU, las provincias «ND» del CIEN, la frase de las cifras en git, la comprobación del flujo de Pages, la tabla 34010110 en el bloque del Notariado, la casilla «Notaría», el resumen del mapa viniendo de la portada, la superficie típica fuera de las fichas del Notariado, la licencia en cada JSON de la capa y `datos/ejemplo/` fuera del sitio, el formato del inglés, las normas y artículos de «Reglas del juego» y la fecha de su pie) y tres con la próxima pasada completa (tolerancia de `notariado_cien_espana`, cortes del 16 con 2025 y comillas inglesas del inventario). Sin cambios en el código ni en las cifras en esta entrada.
