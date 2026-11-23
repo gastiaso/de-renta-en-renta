@@ -109,6 +109,7 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
     locale: {
       'NavigationControl.ZoomIn': t('interfaz.mapa.acercar'),
       'NavigationControl.ZoomOut': t('interfaz.mapa.alejar'),
+      'AttributionControl.ToggleAttribution': t('interfaz.mapa.atribucion'),   // 23-nov-2026: no en inglés
       ...gestos.textos,
     },
   };

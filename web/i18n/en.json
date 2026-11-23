@@ -44,6 +44,7 @@
       "region": "Census tract map",
       "acercar": "Zoom in",
       "alejar": "Zoom out",
+      "atribucion": "Show or hide the map sources",
       "sin_dato_escala": "This map has no data at this scale: zoom in.",
       "cargando": "Loading the map…",
       "lienzo": "Map. Arrow keys move it; plus and minus zoom in and out; Enter picks the area at the centre.",
@@ -74,7 +75,7 @@
       "sin_dato": "No data",
       "juego": "Bands for {escala}: they change as the map zooms in or out.",
       "juego_cambio": "Scale changed: bands now for {escala}.",
-      "anclaje": "Bands set with the latest year ({anio}): earlier years gather in the lower bands.",
+      "anclaje": "Bands set with the {anio} data: in other years, figures may gather in the outer bands.",
       "juegos": {
         "seccion": "census sections",
         "municipio": "municipalities",
@@ -84,8 +85,8 @@
       "periodo_foto": "12 months to {fecha}",
       "supuestos": "{superficie} m² · {umbral} threshold",
       "supuestos_gastos": "{superficie} m² plus other housing costs ({otros}) · {umbral} threshold",
-      "supuestos_real": "Median monthly rent in the tract · {umbral} threshold",
-      "supuestos_real_gastos": "Median monthly rent in the tract plus other housing costs ({otros}) · {umbral} threshold",
+      "supuestos_real": "Median monthly rent · {umbral} threshold",
+      "supuestos_real_gastos": "Median monthly rent plus other housing costs ({otros}) · {umbral} threshold",
       "otros_gastos": "€{euros} a month in {territorio}, ECV {anio}",
       "otros_gastos_espana": "€{euros} a month, the figure for Spain: the {territorio} sample has fewer than {minimo} households; ECV {anio}",
       "otros_gastos_rango": "€{desde} to €{hasta} a month depending on the region, ECV {anio}",
@@ -127,7 +128,7 @@
       "nombre": {
         "imv": "the guaranteed income of the minimum living income scheme (IMV) for {hogar}",
         "imv_2020": "the guaranteed income of the minimum living income scheme (IMV since 1 June 2020) for {hogar}",
-        "pnc": "the annual non-contributory pension divided by 12 for {hogar} (before the minimum living income)",
+        "pnc": "the annual non-contributory pension divided by 12 for {hogar}, the line used before the minimum living income",
         "ecv": "the at-risk-of-poverty threshold of the {ola} Living Conditions Survey for {hogar}"
       },
       "corto": {
@@ -146,8 +147,8 @@
       "frase_debajo": "What is left is €{distancia} below {linea}.",
       "frase_encima": "What is left is €{distancia} above {linea}.",
       "frase_igual": "What is left equals {linea}.",
-      "no_aplica": "The residual income line does not apply to «Neighbourhood household»: its income is the income of all the households in the tract, of unknown size.",
-      "llave_proporcion": "With «Neighbourhood household», the map uses the share-of-income rule ({umbral}), not «What is left»: the key has no residual income line, because its income is the income of all the households in the tract, of unknown size.",
+      "no_aplica": "The residual income line does not apply to “Neighbourhood household”: its income is the income of all the households in the tract, of unknown size.",
+      "llave_proporcion": "With “Neighbourhood household”, the map uses the share-of-income rule ({umbral}), not “What is left”: the key has no residual income line, because its income is the income of all the households in the tract, of unknown size.",
       "sin_linea": "No {linea} for {anio}: the latest year with a figure is {ultimo}.",
       "sin_linea_corto": "No residual income line for this year.",
       "sin_fichero": "The residual income lines are not available in this view.",
@@ -176,7 +177,7 @@
       },
       "evolucion_pnc": "Pension: up to 2019, before the minimum living income, the annual non-contributory pension divided by 12.",
       "evolucion_2020": "IMV since 1 June 2020: the same figure for the whole year.",
-      "no_aplica_corto": "Does not apply to «Neighbourhood household»"
+      "no_aplica_corto": "Does not apply to “Neighbourhood household”"
     },
     "sueldo": {
       "intro_necesario": "Net pay needed so that rent stays under the threshold. With an income figure or a token, the map switches to “Can you make rent?”.",
@@ -324,7 +325,7 @@
       "del_ingreso_gastos": "of income goes on rent and other housing costs",
       "alquiler_ingreso": "Rent: €{alquiler} · income: €{ingreso} a month",
       "minimo": "Theoretical minimum for a {superficie} m² flat: €{cifra} net a month",
-      "real_llega": "With the tract's median monthly rent (€{alquiler}): {pct} of income",
+      "real_llega": "With the median monthly rent (€{alquiler}): {pct} of income",
       "sin_seccion": "Area without a census section",
       "sin_seccion_texto": "Common land that belongs to no municipality. The INE assigns it no section and it has no population, so there are no data.",
       "provincias": "Provinces",
@@ -463,7 +464,7 @@
     "descripcion": "What renting costs in each census tract in Spain and whose pay covers it: map, tokens and housing cost overburden.",
     "proximamente": "coming soon",
     "te_llega": "Can you afford it?",
-    "privacidad": "What you type never leaves this device: the sum is done in the browser and it goes to the map after «#», which the browser does not send.",
+    "privacidad": "What you type never leaves this device: the sum is done in the browser and it goes to the map after “#”, which the browser does not send.",
     "sueldo_error": "Type a net monthly income in euros, for example 1500.",
     "cifra": {
       "decimos": "On the minimum wage, rent takes more than 30% of pay in {n} out of 10 tracts ({anio})",
@@ -473,7 +474,7 @@
       "resultado": "With €{neto} net a month, the usual rent of each tract does not exceed {umbral} of your income in {pct} of tracts with data ({caben} of {total}).",
       "nota": "This is the rent of people who already have a lease; people looking for a flat today usually pay more.",
       "sin_datos": "No tracts with data to do the sum.",
-      "error": "The sum could not be done here: «Can you afford it?» does it on the map.",
+      "error": "The sum could not be done here: “Can you afford it?” does it on the map.",
       "linea": "After paying that rent, what is left does not fall below {linea} in {pct} ({encima} of {total})."
     },
     "dado": "Roll the die",
@@ -585,6 +586,8 @@
     },
     "mapa": {
       "region": "Map of Europe of the overburden rate",
+      "region_pobreza": "Map of Europe of the at-risk-of-poverty rate after housing costs",
+      "lienzo": "Map. Arrow keys move it; plus and minus zoom in and out.",
       "titulo_regiones": "Europe by region",
       "titulo_paises": "Europe by country; Spain by autonomous community",
       "fuente_regiones": "Eurostat (ilc_lvho07_r), {anio}; autonomous communities and Spain, INE (EU-SILC microdata)",
@@ -595,7 +598,7 @@
       "fuente_pobreza_tenencia": "INE (EU-SILC microdata): Spain, {anio}; autonomous communities, {desde}–{hasta}",
       "nota_pobreza": "Eurostat publishes this rate by country only, without regions. Spain and its autonomous communities come from INE microdata with the same method and survey; the figure for Spain reproduces Eurostat’s (±0.1 points).",
       "nota_pobreza_tenencia": "Eurostat does not publish this rate by tenure: only the autonomous communities are shown, with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample.",
-      "nota_pobreza_edad": "By age, Eurostat publishes this rate by country (ilc_li45). Spain is shown by autonomous community from INE microdata with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample: countries and communities do not cover the same period. «18 and over» combines the 18-to-64 and 65-and-over groups.",
+      "nota_pobreza_edad": "By age, Eurostat publishes this rate by country (ilc_li45). Spain is shown by autonomous community from INE microdata with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample: countries and communities do not cover the same period. “18 and over” combines the 18-to-64 and 65-and-over groups.",
       "nota_regiones": "Eurostat publishes the rate by NUTS 2 region only for the whole population. Where it does not, the country or NUTS 1 figure is shown, hatched. Some countries have no regional figure in some years (Denmark, until 2024), and Eurostat sometimes publishes two regions together (FI19_20): they are left blank.",
       "nota_paises": "By tenure, age or degree of urbanisation, Eurostat publishes countries. Spain is shown by autonomous community from INE microdata with three pooled waves ({desde}–{hasta}), because a single wave does not give a large enough sample: countries and communities do not cover the same period.",
       "sin_mapa": "In the ladder, with no boundaries on the map: {lista}.",
@@ -614,7 +617,7 @@
       "o_mas": "{x}% or more",
       "sin_dato": "No data",
       "grueso": "Country or NUTS 1 figure",
-      "muestra": "Small sample or low reliability (EU-SILC: 20 to 49 observations; Eurostat flag «u»)"
+      "muestra": "Small sample or low reliability (EU-SILC: 20 to 49 observations; Eurostat flag “u”)"
     },
     "detalle": {
       "region": "Selected area",
@@ -667,10 +670,10 @@
       "fuente_pobreza": "Eurostat (ilc_li48), from the first year published: for Spain, since 2004; the EU-27, since 2010. From 2016 to 2025, the calculation from EU-SILC microdata reproduces these figures (±0.1 points).",
       "rupturas_atlas_pobreza": "Break in series set by the atlas, not flagged by Eurostat (hollow point and broken line): {lista}. Since the 2013 survey, INE has obtained income by combining the interview with administrative records (tax agency, Social Security and the foral treasuries), and income sets both the threshold and what is left after paying for housing.",
       "grafico_pobreza": "At-risk-of-poverty rate after housing costs in Spain and the EU-27, whole population, {desde}–{hasta}",
-      "rupturas": "Break in series (Eurostat flag «b»; hollow point and broken line): {lista}. Figures before and after are not fully comparable.",
+      "rupturas": "Break in series (Eurostat flag “b”; hollow point and broken line): {lista}. Figures before and after are not fully comparable.",
       "rupturas_atlas": "Break in series set by the atlas, not flagged by Eurostat (hollow point and broken line): {lista}. Since the 2013 survey, INE has obtained income by combining the interview with administrative records (tax agency, Social Security and the foral treasuries), and income is the denominator of the rate.",
       "ruptura_atlas": "break in series set by the atlas (income from administrative records since 2013), not flagged by Eurostat",
-      "estimados": "Eurostat estimates (flag «e»): {lista}.",
+      "estimados": "Eurostat estimates (flag “e”): {lista}.",
       "tabla": "Show the figures",
       "grafico": "Overburden rate in Spain and the EU-27, whole population and market-rate renting, {desde}–{hasta}"
     },
@@ -685,8 +688,8 @@
       "urbanizacion": "By degree of urbanisation",
       "total": "Whole population",
       "muestra_corta": "{n} people",
-      "nota": "The under-18 and 15-to-29 groups overlap. «Owner» and «Tenant or rent-free» combine Eurostat’s categories. The degree of urbanisation is Eurostat’s (ilc_lvho07d), by the area where the dwelling is.",
-      "nota_pobreza": "Age groups are Eurostat’s (ilc_li45): «18 and over» combines 18 to 64 and 65 and over. The degree of urbanisation is Eurostat’s (ilc_li48), by the area where the dwelling is. «Owner» and «Tenant or rent-free» combine Eurostat’s categories. Spain reproduces Eurostat’s figures by age and by degree of urbanisation (±0.1 points).",
+      "nota": "The under-18 and 15-to-29 groups overlap. “Owner” and “Tenant or rent-free” combine Eurostat’s categories. The degree of urbanisation is Eurostat’s (ilc_lvho07d), by the area where the dwelling is.",
+      "nota_pobreza": "Age groups are Eurostat’s (ilc_li45): “18 and over” combines 18 to 64 and 65 and over. The degree of urbanisation is Eurostat’s (ilc_li48), by the area where the dwelling is. “Owner” and “Tenant or rent-free” combine Eurostat’s categories. Spain reproduces Eurostat’s figures by age and by degree of urbanisation (±0.1 points).",
       "nota_quintil": "Quintiles of equivalised disposable income (household income divided by its consumption units, modified OECD scale) of the whole population, weighted by person. Spain only: no quintile by country or by autonomous community.",
       "quintiles": {
         "QU1": "First quintile (lowest-income 20%)",
@@ -723,7 +726,7 @@
     "acceso": {
       "titulo": "Those who cannot get in",
       "subtitulo": "Unsuccessful housing search · EU-SILC {anio}",
-      "definicion": "People aged 16 or over who actively looked for housing in the last 12 months without moving. Overburden misses them: it measures those already housed.",
+      "definicion": "People aged 16 or over who actively looked for housing in the last 12 months without moving. Overburden and poverty after housing costs miss them: they measure those already housed.",
       "espana": "Spain",
       "razon": "Main reason: excessive price, for {x}% of those who searched without success.",
       "comunidades": "By autonomous community",
@@ -819,7 +822,7 @@
       "hist-esfuerzo": {
         "corto": "Burden",
         "titulo": "Theoretical first-year burden",
-        "subtitulo": "First-year payments on a loan for 80% of the value of the standard home, as a percentage of the disposable income of the median household, without tax deductions. Quarterly. This is not the map's «Mortgage payment over household income» (indicator 17): it shares the standard home, the loan, the rate and the term, but the map uses the appraised value and the average net income of all households, higher than that of the median household, so it comes out lower.",
+        "subtitulo": "First-year payments on a loan for 80% of the value of the standard home, as a percentage of the disposable income of the median household, without tax deductions. Quarterly. This is not the map's “Mortgage payment over household income” (indicator 17): it shares the standard home, the loan, the rate and the term, but the map uses the appraised value and the average net income of all households, higher than that of the median household, so it comes out lower.",
         "fuente": "Source: own elaboration with data extracted from the Banco de España website (www.bde.es): Summary indicators, table 1.5, series D_TKB57210_IPV. Data downloaded on {version}."
       },
       "hist-tipos": {
@@ -952,8 +955,8 @@
       "esfuerzo": "Theoretical burden (Banco de España): first-year payments on a loan for 80% of the value of that home, at the average rate on new housing loans and the average mortgage term, as a percentage of the disposable income of the median household. No tax deductions throughout the series.",
       "tipos": "Rates (Banco de España): the main line is the rate on new loans to households for house purchase, since January 1989, the same one the Banco de España uses for the theoretical burden (up to 2002, under its Circular 8/1990; since 2003, under Circular 4/2002: break marked). As a reference, the one-year MIBOR up to December 1998 and the 12-month Euribor since January 1999: they are different indices and the change is marked.",
       "tasado": "Appraised value (MIVAU): average appraisal value of open-market housing per square metre, not the price paid. A year in the Banco de España table is the simple mean of its four quarters.",
-      "sueldo": "Wage (INE, National Accounts): gross wages and salaries of the whole economy divided by the employees of each year, including those who work part of the year or part-time. The series starts in 1995, with the current accounting base. It lies above the AEAT average wage used by the «Young adult, 26 to 35» token (in 2024, €31,200 against €24,962): the National Accounts divide by the average number of employees over the year, so someone who works a few months counts only for that share, and they include the Basque Country and Navarre, which the AEAT does not cover.",
-      "euros": "Euros: the appraised value and the average wage open in euros of the last year with an annual CPI average, adjusted for inflation: each period is multiplied by the general CPI of that year and divided by that of its own year (INE, annual averages of the general index, base 2025; a quarter uses the average of its year). INE does not provide that index before 2002, so in constant euros both series start in 2002; periods of the current year, with no annual average yet, are left out as well. «Euros of each year» shows the figures as the source publishes them, from 1995. The other series are ratios or interest rates and do not change. The map, its legends, the stories and the data table are always in euros of each year.",
+      "sueldo": "Wage (INE, National Accounts): gross wages and salaries of the whole economy divided by the employees of each year, including those who work part of the year or part-time. The series starts in 1995, with the current accounting base. It lies above the AEAT average wage used by the “Young adult, 26 to 35” token (in 2024, €31,200 against €24,962): the National Accounts divide by the average number of employees over the year, so someone who works a few months counts only for that share, and they include the Basque Country and Navarre, which the AEAT does not cover.",
+      "euros": "Euros: the appraised value and the average wage open in euros of the last year with an annual CPI average, adjusted for inflation: each period is multiplied by the general CPI of that year and divided by that of its own year (INE, annual averages of the general index, base 2025; a quarter uses the average of its year). INE does not provide that index before 2002, so in constant euros both series start in 2002; periods of the current year, with no annual average yet, are left out as well. “Euros of each year” shows the figures as the source publishes them, from 1995. The other series are ratios or interest rates and do not change. The map, its legends, the stories and the data table are always in euros of each year.",
       "mezcla": "Each series keeps its source, unit and period (quarter, month or year): they are not combined into an indicator. The charts share the time axis so that they can be read one below the other.",
       "compuerta": "Validation: the series reproduce the figures the Banco de España publishes in its PDF table and the reference rate published in the Official State Gazette; the MIVAU appraised value matches the one reproduced by the Banco de España in every quarter since 1995. If the Banco de España revises a series, the gate warns and asks for the reference to be updated, without blocking."
     },

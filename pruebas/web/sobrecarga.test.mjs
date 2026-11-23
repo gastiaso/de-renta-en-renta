@@ -441,3 +441,22 @@ test('«Puesto X de N»: debajo, en letra de nota, qué vale ese orden, en los d
   assert.match(js, /'sobrecarga\.detalle\.puesto_nota'/);
   assert.match(js, /'sobrecarga\.detalle\.puesto_nota_olas'/);
 });
+
+test('lectura del sitio (23-nov-2026): rótulos de «Sobrecarga» y de MapLibre en el idioma de la página', () => {
+  const es = JSON.parse(readFileSync(join(process.cwd(), 'web', 'i18n', 'es.json'), 'utf8'));
+  const en = JSON.parse(readFileSync(join(process.cwd(), 'web', 'i18n', 'en.json'), 'utf8'));
+  assert.equal(es.sobrecarga.desgloses?.grupos?.DEG2 ?? es.vocabulario.urbanizacion.DEG2, 'Pueblos y zonas suburbanas');
+  assert.doesNotMatch(JSON.stringify(es), /Pueblos y suburbios/);
+  assert.match(es.sobrecarga.acceso.definicion, /La sobrecarga y la pobreza tras la vivienda no las ven/);
+  for (const d of [es, en]) {
+    assert.ok(d.sobrecarga.mapa.region_pobreza && d.sobrecarga.mapa.lienzo && d.interfaz.mapa.atribucion);
+  }
+  const js = readFileSync(join(process.cwd(), 'web', 'js', 'sobrecarga.js'), 'utf8');
+  assert.match(js, /setAttribute\('aria-label', t\(pobreza\(\) \? 'sobrecarga\.mapa\.region_pobreza' : 'sobrecarga\.mapa\.region'\)\)/);
+  assert.match(js, /'AttributionControl\.ToggleAttribution': t\('interfaz\.mapa\.atribucion'\)/);
+  assert.match(js, /'Map\.Title': t\('sobrecarga\.mapa\.lienzo'\)/);
+  assert.match(readFileSync(join(process.cwd(), 'web', 'js', 'mapa.js'), 'utf8'), /'AttributionControl\.ToggleAttribution': t\('interfaz\.mapa\.atribucion'\)/);
+  // «de la sección» solo en lo que es de la sección, y sin doble paréntesis en la línea de la PNC
+  assert.doesNotMatch(es.interfaz.leyenda.supuestos_real + es.interfaz.ficha.real_llega, /de la sección/);
+  assert.doesNotMatch(es.interfaz.residual.nombre.pnc, /\(/);
+});

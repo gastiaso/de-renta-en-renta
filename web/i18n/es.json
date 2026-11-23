@@ -44,6 +44,7 @@
       "region": "Mapa de secciones censales",
       "acercar": "Acercar",
       "alejar": "Alejar",
+      "atribucion": "Ver u ocultar las fuentes del mapa",
       "sin_dato_escala": "Este mapa no tiene datos a esta escala: acerca el mapa.",
       "cargando": "Cargando el mapa…",
       "lienzo": "Mapa. Las flechas lo mueven; más y menos, lo acercan y lo alejan; Intro elige el territorio del centro.",
@@ -74,7 +75,7 @@
       "sin_dato": "Sin dato",
       "juego": "Tramos para {escala}: cambian al acercar o alejar el mapa.",
       "juego_cambio": "Cambio de escala: ahora, tramos para {escala}.",
-      "anclaje": "Tramos fijados con el último año ({anio}): los años anteriores se acumulan en los tramos bajos.",
+      "anclaje": "Tramos fijados con los datos de {anio}: en los demás años, las cifras pueden acumularse en los tramos de los extremos.",
       "juegos": {
         "seccion": "secciones censales",
         "municipio": "municipios",
@@ -84,8 +85,8 @@
       "periodo_foto": "12 meses hasta el {fecha}",
       "supuestos": "{superficie} m² · umbral del {umbral}",
       "supuestos_gastos": "{superficie} m² y otros gastos de vivienda ({otros}) · umbral del {umbral}",
-      "supuestos_real": "Alquiler mensual mediano de la sección · umbral del {umbral}",
-      "supuestos_real_gastos": "Alquiler mensual mediano de la sección y otros gastos de vivienda ({otros}) · umbral del {umbral}",
+      "supuestos_real": "Alquiler mensual mediano · umbral del {umbral}",
+      "supuestos_real_gastos": "Alquiler mensual mediano y otros gastos de vivienda ({otros}) · umbral del {umbral}",
       "otros_gastos": "{euros} € al mes en {territorio}, ECV {anio}",
       "otros_gastos_espana": "{euros} € al mes, la cifra de España: la muestra de {territorio} no llega a {minimo} hogares; ECV {anio}",
       "otros_gastos_rango": "de {desde} a {hasta} € al mes según la comunidad, ECV {anio}",
@@ -127,7 +128,7 @@
       "nombre": {
         "imv": "la renta garantizada del ingreso mínimo vital para {hogar}",
         "imv_2020": "la renta garantizada del ingreso mínimo vital (IMV desde el 1 de junio de 2020) para {hogar}",
-        "pnc": "la pensión no contributiva anual entre 12 para {hogar} (antes del ingreso mínimo vital)",
+        "pnc": "la pensión no contributiva anual entre 12 para {hogar}, la línea anterior al ingreso mínimo vital",
         "ecv": "la línea del umbral de riesgo de pobreza de la ECV de {ola} para {hogar}"
       },
       "corto": {
@@ -324,7 +325,7 @@
       "del_ingreso_gastos": "del ingreso se va en alquiler y otros gastos de vivienda",
       "alquiler_ingreso": "Alquiler: {alquiler} € · ingreso: {ingreso} € al mes",
       "minimo": "Mínimo teórico con un piso de {superficie} m²: {cifra} € netos al mes",
-      "real_llega": "Con el alquiler mensual mediano de la sección ({alquiler} €): {pct} del ingreso",
+      "real_llega": "Con el alquiler mensual mediano ({alquiler} €): {pct} del ingreso",
       "sin_seccion": "Territorio sin sección censal",
       "sin_seccion_texto": "Monte o terreno comunal que no pertenece a ningún término municipal. El INE no le asigna sección y no tiene población, así que no hay datos.",
       "provincias": "Provincias",
@@ -572,7 +573,7 @@
         "Y_GE65": "65 y más años",
         "Y_GE18": "18 y más años",
         "DEG1": "Ciudades",
-        "DEG2": "Pueblos y suburbios",
+        "DEG2": "Pueblos y zonas suburbanas",
         "DEG3": "Zonas rurales"
       }
     },
@@ -585,6 +586,8 @@
     },
     "mapa": {
       "region": "Mapa de Europa de la tasa de sobrecarga",
+      "region_pobreza": "Mapa de Europa de la tasa de riesgo de pobreza tras los gastos de vivienda",
+      "lienzo": "Mapa. Las flechas lo mueven; más y menos, lo acercan y lo alejan.",
       "titulo_regiones": "Europa por regiones",
       "titulo_paises": "Europa por países; España por comunidades",
       "fuente_regiones": "Eurostat (ilc_lvho07_r), {anio}; comunidades y España, INE (microdatos de la ECV)",
@@ -723,7 +726,7 @@
     "acceso": {
       "titulo": "Quien no consigue entrar",
       "subtitulo": "Búsqueda de vivienda sin éxito · ECV {anio}",
-      "definicion": "Personas de 16 o más años que han buscado vivienda activamente en los últimos 12 meses sin llegar a cambiarse. La sobrecarga no las ve: mide a quien ya tiene casa.",
+      "definicion": "Personas de 16 o más años que han buscado vivienda activamente en los últimos 12 meses sin llegar a cambiarse. La sobrecarga y la pobreza tras la vivienda no las ven: miden a quien ya tiene casa.",
       "espana": "España",
       "razon": "Razón principal: el precio excesivo, para el {x} % de quienes buscaron sin éxito.",
       "comunidades": "Por comunidad",

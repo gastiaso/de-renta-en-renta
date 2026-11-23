@@ -151,6 +151,8 @@ function guardarEstado() {
 }
 
 function pintarTodo() {
+  // El mapa se nombra por la medida que enseña (23-nov-2026): la sobrecarga o la pobreza tras la vivienda
+  document.getElementById('sc-mapa')?.setAttribute('aria-label', t(pobreza() ? 'sobrecarga.mapa.region_pobreza' : 'sobrecarga.mapa.region'));
   pintarControles();
   pintarCifras();
   pintarCabeceraMapa();
@@ -279,6 +281,8 @@ function crearMapa() {
     locale: {
       'NavigationControl.ZoomIn': t('sobrecarga.mapa.acercar'),
       'NavigationControl.ZoomOut': t('sobrecarga.mapa.alejar'),
+      'AttributionControl.ToggleAttribution': t('interfaz.mapa.atribucion'),   // 23-nov-2026: no en inglés
+      'Map.Title': t('sobrecarga.mapa.lienzo'),
       'CooperativeGesturesHandler.WindowsHelpText': t('sobrecarga.mapa.gesto_windows'),
       'CooperativeGesturesHandler.MacHelpText': t('sobrecarga.mapa.gesto_mac'),
       'CooperativeGesturesHandler.MobileHelpText': t('sobrecarga.mapa.gesto_movil'),

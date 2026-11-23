@@ -205,9 +205,9 @@ test('leyenda: el juego de cortes de la escala que se ve, aviso al cambiar y añ
   const aviso = municipio.buscar('leyenda-juego-cambio')[0];
   assert.equal(aviso.textContent, 'Cambio de escala: ahora, tramos para municipios.');
   assert.equal(aviso.atributos.role, 'status');
-  assert.match(municipio.buscar('leyenda-anclaje')[0].textContent, /^Tramos fijados con el último año \(2024\)/);
+  assert.match(municipio.buscar('leyenda-anclaje')[0].textContent, /^Tramos fijados con los datos de 2024: /);   // no «el último año» (23-nov-2026)
   const en = leyenda('en', { modo: 'necesario', mapaId: 'alquiler_mes', mapaDef, nivel: 'municipio' });
-  assert.match(en.buscar('leyenda-anclaje')[0].textContent, /^Bands set with the latest year \(2024\)/);
+  assert.match(en.buscar('leyenda-anclaje')[0].textContent, /^Bands set with the 2024 data: /);
   // Un solo juego (o ninguno): sin línea de escala
   const uno = leyenda('es', { modo: 'necesario', mapaId: 'alquiler_mes', mapaDef: MAPA_ALQUILER, nivel: 'municipio' });
   assert.deepEqual(uno.buscar('leyenda-juego'), []);

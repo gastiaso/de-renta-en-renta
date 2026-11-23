@@ -4,6 +4,17 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (23-nov-2026, textos de prioridad baja de la lectura del sitio)
+
+- **«de la sección» fuera de las secciones:** la ficha del municipio y la leyenda de la comunidad decían «alquiler mensual mediano de la sección». Ahora, «alquiler mensual mediano», que vale en todos los niveles (`supuestos_real`, `supuestos_real_gastos`, `real_llega`; en inglés, sin «in the tract»).
+- **Año de anclaje del 16:** «Tramos fijados con el último año (2024)», cuando el último ya es 2025. Ahora, «Tramos fijados con los datos de {anio}: en los demás años, las cifras pueden acumularse en los tramos de los extremos» (`interfaz.leyenda.anclaje`). Recalibrar sus cortes con 2025 sigue por decidir.
+- **Línea de la PNC:** sin el doble paréntesis («… (antes del ingreso mínimo vital) (430,38 € al mes en 2017)»): «…, la línea anterior al ingreso mínimo vital (430,38 € …)».
+- **«Sobrecarga»:** «Pueblos y zonas suburbanas» también en el selector, como en el vocabulario; «Quien no consigue entrar» dice que no lo ven ni la sobrecarga ni la pobreza tras la vivienda; el mapa se nombra por la medida que enseña; y el lienzo de MapLibre lleva nombre en el idioma de la página («Map» antes).
+- **MapLibre:** el botón de las fuentes del mapa, «Ver u ocultar las fuentes del mapa», no «Toggle attribution», en el mapa y en «Sobrecarga».
+- **Inglés:** comillas inglesas (“ ”) en lugar de «» en 18 cadenas escritas a mano de `web/i18n/en.json`. Las 11 que vienen de `inventario/indicadores.csv` (10) y `inventario/fuentes.csv` (1) siguen con «»: cambiarlas allí rehace buena parte del pipeline, y van con la próxima pasada completa.
+- Pruebas: `pruebas/web/sobrecarga.test.mjs` y `familias.test.mjs`; `validacion_i18n` y `comprobar_web_navegador()` en verde.
+- **Por decidir, de esa lectura:** que la portada dé las dos cifras de «¿te llega?» (el 9 % del alquiler real y el 49,2 % de 50 m²) en el orden del mapa; recalibrar los cortes del 16 con 2025; y el resto del inglés (espacio antes de %, un solo formato de euros, «94th percentile», «tract» frente a «census section», «Can you afford it?» frente a «Can you make rent?»).
+
 ### Corregido (23-nov-2026, textos de la capa del Notariado)
 
 Lo vio la lectura del sitio (23-nov-2026); se aplica con lo que ella recomendaba (decisión del autor, 23-nov-2026).
