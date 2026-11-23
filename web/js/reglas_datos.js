@@ -130,6 +130,13 @@ export function fechaConsulta(datos) {
   return datos?.consultado ?? null;
 }
 
+// ¿Están todos los resúmenes en revisión (el sitio publicado antes de la firma)? La entradilla lo dice
+// y no promete enlaces que aún no salen (lectura del sitio, 23-nov-2026). Sin resúmenes, false.
+export function todosEnRevision(datos) {
+  const lista = resumenes(datos);
+  return lista.length > 0 && lista.every(enRevision);
+}
+
 // Resúmenes en borrador con texto (la página local los cuenta en el aviso de arriba).
 export function borradores(datos) {
   return resumenes(datos).filter((r) => esBorrador(r) && !enRevision(r)).length;

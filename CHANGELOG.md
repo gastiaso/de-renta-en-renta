@@ -4,6 +4,11 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (23-nov-2026, entradilla de «Reglas del juego» mientras los resúmenes están en revisión)
+
+- En el sitio publicado, con los siete resúmenes en revisión jurídica, la entradilla prometía lo que no sale («Cada resumen enlaza los artículos del BOE consolidado y da la fecha del texto consultado»). Con todos en revisión dice ahora que solo se publican los títulos hasta que termine (`reglas.entradilla_revision`, en los dos idiomas; `todosEnRevision()` en `web/js/reglas_datos.js`); con algún resumen publicado, o en la vista local con borradores, la de siempre. Lo vio la lectura del sitio (23-nov-2026). Prueba en `pruebas/web/reglas.test.mjs`.
+- Siguen por decidir, de esa lectura: enseñar, mientras dure la revisión, la norma y los artículos citados de cada sección (hechos, sin interpretación); un aviso de que los borradores de `inventario/reglas.csv` se leen en el repositorio; y la fecha de consulta del pie («el 13», cuando la LAU se consultó el 17).
+
 ### Corregido (23-nov-2026, de la ficha de comunidad a la tabla del CIS por comunidad)
 
 - El enlace «Máquina del tiempo» de la línea del CIS en la ficha de comunidad llevaba a la serie nacional del bloque (`historico.html#hist-cis`), no a la tabla por comunidad. Ahora va a `#hi-cis-ccaa` (`web/js/cis_ccaa.js`). Lo vio la lectura del sitio (23-nov-2026). La tabla sigue abriendo en el último año completo, como se decidió para la tarea 63 (e); la ficha da el año en curso. Prueba en `pruebas/web/cis_ccaa.test.mjs`.

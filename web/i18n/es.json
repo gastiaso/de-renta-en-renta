@@ -966,6 +966,7 @@
     "antetitulo": "Normativa vigente",
     "titulo": "Reglas del juego",
     "entradilla": "Resúmenes de las normas estatales que fijan las condiciones del alquiler y la compra de vivienda habitual: qué dicen, a quién se aplican, cómo han cambiado y qué relación tienen con las cifras del atlas. Cada resumen enlaza los artículos del BOE consolidado y da la fecha del texto consultado. Las normas autonómicas, salvo las declaraciones de zonas tensionadas, quedan fuera.",
+    "entradilla_revision": "Resúmenes de las normas estatales que fijan las condiciones del alquiler y la compra de vivienda habitual: qué dicen, a quién se aplican, cómo han cambiado y qué relación tienen con las cifras del atlas. Están en revisión jurídica y, hasta que termine, solo se publican sus títulos; cada resumen enlazará entonces los artículos del BOE consolidado y dará la fecha del texto consultado. Las normas autonómicas, salvo las declaraciones de zonas tensionadas, quedan fuera.",
     "distintivo": "Resúmenes informativos, sin valor jurídico ni carácter de asesoramiento. El texto oficial es el del BOE.",
     "carga": "Cargando los resúmenes…",
     "error_carga": "No se han podido cargar los resúmenes (datos/reglas.json).",

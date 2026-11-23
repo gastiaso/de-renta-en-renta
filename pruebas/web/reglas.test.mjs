@@ -100,13 +100,18 @@ test('versión publicada: un resumen en revisión sale sin texto, con su título
   const r = R.resumenes(d).find((x) => x.id === 'duracion_prueba');
   assert.ok(R.enRevision(r));
   assert.equal(R.borradores(d), 0);   // sin aviso de vista local
+  assert.equal(R.todosEnRevision(d), false);   // uno en revisión, los demás con texto: la entradilla de siempre
   assert.deepEqual(R.lineasEstado(r, d, 'es'), [{ clave: 'reglas.estado.en_revision', valores: {} }]);
   assert.equal(R.enIdioma(r.titulo, 'en'), 'Test duration');
+  // Con todos en revisión (el sitio antes de la firma), la entradilla condicional (23-nov-2026)
+  for (const x of d.reglas) x.en_revision = true;
+  assert.equal(R.todosEnRevision(d), true);
+  assert.equal(R.todosEnRevision({ reglas: [] }), false);
 });
 
 test('textos de la página en los dos idiomas', () => {
   const claves = ['nav.reglas', 'reglas.titulo_pagina', 'reglas.descripcion', 'reglas.antetitulo', 'reglas.titulo',
-    'reglas.entradilla', 'reglas.distintivo', 'reglas.carga', 'reglas.error_carga', 'reglas.indice', 'reglas.aviso_borradores',
+    'reglas.entradilla', 'reglas.entradilla_revision', 'reglas.distintivo', 'reglas.carga', 'reglas.error_carga', 'reglas.indice', 'reglas.aviso_borradores',
     'reglas.borrador', 'reglas.consultado', 'reglas.revisado', 'reglas.sin_revisar', 'reglas.declaraciones',
     'reglas.pie.informativo', 'reglas.pie.boe', 'reglas.pie.patrocinio', 'reglas.estado.vigente_desde', 'reglas.estado.pendiente',
     'reglas.estado.en_revision', 'interfaz.ficha.zonas.que_supone', 'interfaz.ficha.zonas.regla_tope',
@@ -115,6 +120,10 @@ test('textos de la página en los dos idiomas', () => {
     const t = traductor(idioma);
     for (const clave of claves) assert.ok(t(clave).length > 0, `${clave} (${idioma})`);
   }
+  // Con todo en revisión, la entradilla no promete los enlaces al BOE (23-nov-2026)
+  assert.match(traductor('es')('reglas.entradilla_revision'), /solo se publican sus títulos/);
+  assert.doesNotMatch(traductor('es')('reglas.entradilla_revision'), /Cada resumen enlaza/);
+  assert.match(traductor('en')('reglas.entradilla_revision'), /only their titles are published/);
   // Nombre y subtítulo decididos (13-nov-2026)
   assert.equal(traductor('es')('nav.reglas'), 'Reglas del juego');
   assert.equal(traductor('es')('reglas.antetitulo'), 'Normativa vigente');

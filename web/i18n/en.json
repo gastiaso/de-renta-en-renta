@@ -966,6 +966,7 @@
     "antetitulo": "Rules in force",
     "titulo": "Rules of the game",
     "entradilla": "Summaries of the state rules that set the conditions for renting and buying a main residence: what they say, who they apply to, how they have changed and how they relate to the atlas figures. Each summary links the articles of the consolidated Official State Gazette (BOE) and gives the date of the text consulted. Regional rules, except the declarations of stressed areas, are left out. Legal names are given in Spanish, with a gloss.",
+    "entradilla_revision": "Summaries of the state rules that set the conditions for renting and buying a main residence: what they say, who they apply to, how they have changed and how they relate to the atlas figures. They are under legal review and, until it ends, only their titles are published; each summary will then link the articles of the consolidated Official State Gazette (BOE) and give the date of the text consulted. Regional rules, except the declarations of stressed areas, are left out. Legal names are given in Spanish, with a gloss.",
     "distintivo": "Summaries for information only, with no legal value and not advice. The official text is the one in the BOE.",
     "carga": "Loading the summaries…",
     "error_carga": "The summaries could not be loaded (datos/reglas.json).",

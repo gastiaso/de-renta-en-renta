@@ -108,6 +108,9 @@ function pintar() {
   const avisoBorrador = $('rg-aviso-borrador');
   avisoBorrador.hidden = n === 0;
   avisoBorrador.textContent = n ? t('reglas.aviso_borradores', { n }) : '';
+  // Entradilla: con todo en revisión, sin prometer los enlaces al BOE que aún no salen
+  const entradilla = document.querySelector('.rg-entradilla');
+  if (entradilla) entradilla.textContent = t(R.todosEnRevision(datos) ? 'reglas.entradilla_revision' : 'reglas.entradilla');
   // Índice
   $('rg-indice').replaceChildren(...lista.map((r) => el('a', { href: `#${r.ancla ?? R.ancla(r.id)}` }, R.enIdioma(r.titulo, estado.idioma))));
   // Resúmenes
