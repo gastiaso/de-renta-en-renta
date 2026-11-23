@@ -116,8 +116,11 @@ function pintar() {
   // Resúmenes
   $('rg-resumenes').replaceChildren(...lista.map(seccion));
   // Pie: fecha de consulta del BOE
-  const consultado = R.fechaConsulta(datos);
-  $('rg-pie-boe').textContent = t('reglas.pie.boe', { fecha: consultado ? fecha(consultado) : '—' });
+  const p = R.periodoConsulta(datos);
+  $('rg-pie-boe').textContent = !p ? t('reglas.pie.boe', { fecha: '—' })
+    : p.desde === p.hasta ? t('reglas.pie.boe', { fecha: fecha(p.desde) })
+      // En el mismo mes, el primer día sin mes ni año: «entre el 13 y el 19 de noviembre de 2026»
+      : t('reglas.pie.boe_intervalo', { desde: p.desde.slice(0, 7) === p.hasta.slice(0, 7) ? String(Number(p.desde.slice(8))) : fecha(p.desde), hasta: fecha(p.hasta) });
 }
 
 function seccion(r) {
@@ -128,7 +131,13 @@ function seccion(r) {
   s.append(el('h2', { id: `${id}-titulo`, class: 'rg-h2' }, R.enIdioma(r.titulo, idioma)));
   if (borrador) s.append(el('p', { class: 'rg-marca-borrador' }, t('reglas.borrador')));
   s.append(el('p', { class: 'rg-linea-estado' }, R.lineasEstado(r, datos, idioma, fecha).map((l) => t(l.clave, l.valores)).join(' ')));
-  if (R.enRevision(r)) return s;
+  // En revisión (decisión del autor, 23-nov-2026): sin el resumen, pero con las normas y artículos citados,
+  // enlazados al BOE, y la fecha del texto consultado: hechos, sin interpretación
+  if (R.enRevision(r)) {
+    if (r.normas?.length) s.append(bloqueNormas(r, idioma));
+    if (r.texto_consultado) s.append(el('p', { class: 'nota rg-consulta' }, t('reglas.consultado', { fecha: fecha(r.texto_consultado) })));
+    return s;
+  }
 
   for (const clave of R.SECCIONES) {
     const parrafos = R.enIdioma(r[clave], idioma) ?? [];
@@ -143,19 +152,23 @@ function seccion(r) {
     s.append(bloque);
   }
 
-  // Normas citadas, con su enlace al BOE consolidado (o al diario, si el BOE no la consolida)
-  const normas = R.normasDe(r, datos);
-  const bloqueNormas = el('div', { class: 'rg-bloque rg-normas' }, el('h3', { class: 'rg-h3' }, t('reglas.secciones.normas')));
-  bloqueNormas.append(el('ul', { class: 'rg-lista rg-lista-normas' }, normas.map((n) => el('li', {},
-    el('a', { href: n.url, rel: 'noopener', hreflang: 'es' }, R.etiquetaNorma(n, idioma)),
-    n.ficha ? el('span', { class: 'rg-norma-nombre' }, ` · ${R.enIdioma(n.ficha.nombre, idioma)}`) : null))));
-  s.append(bloqueNormas);
+  s.append(bloqueNormas(r, idioma));
 
   // Fecha del texto consultado y de la revisión
   const pie = [t('reglas.consultado', { fecha: fecha(r.texto_consultado) })];
   pie.push(borrador ? t('reglas.sin_revisar') : t('reglas.revisado', { fecha: fecha(r.revisado) }));
   s.append(el('p', { class: 'nota rg-consulta' }, pie.join(' ')));
   return s;
+}
+
+// Normas citadas, con su enlace al BOE consolidado (o al diario, si el BOE no la consolida)
+function bloqueNormas(r, idioma) {
+  const normas = R.normasDe(r, datos);
+  const bloque = el('div', { class: 'rg-bloque rg-normas' }, el('h3', { class: 'rg-h3' }, t('reglas.secciones.normas')));
+  bloque.append(el('ul', { class: 'rg-lista rg-lista-normas' }, normas.map((n) => el('li', {},
+    el('a', { href: n.url, rel: 'noopener', hreflang: 'es' }, R.etiquetaNorma(n, idioma)),
+    n.ficha ? el('span', { class: 'rg-norma-nombre' }, ` · ${R.enIdioma(n.ficha.nombre, idioma)}`) : null))));
+  return bloque;
 }
 
 // Declaraciones de zona tensionada de las comunidades autónomas (inventario/zonas_tensionadas.csv)

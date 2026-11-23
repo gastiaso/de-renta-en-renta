@@ -19,7 +19,7 @@ orden,id,texto_es,texto_en,familia,destino,destino_en,activa
 18,hipoteca_variable,Hipoteca variable,Variable-rate mortgage,compra,mapa.html?mapa=esfuerzo_hipotecario,,TRUE
 19,parque_publico,Parque público,Public housing,especial,,,FALSE
 20,sube_euribor,Sube el euríbor,The Euribor goes up,compra,historico.html#hist-tipos,,TRUE
-21,notaria,Notaría,Notary,compra,,,FALSE
+21,notaria,Notaría,Notary,compra,mapa.html?mapa=precio_escriturado_m2,,TRUE
 22,derramas,Comunidad y derramas,Service charges and levies,barrio,reglas.html#gastos-contrato,,TRUE
 23,herencia,Herencia,Inheritance,compra,,,FALSE
 24,cobra_pension,Suben las pensiones,Pensions go up,ingresos,mapa.html?ficha=transistor,,TRUE

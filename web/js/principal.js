@@ -6,7 +6,7 @@
 import {
   leerEstado, guardarEstado, vistaATexto, textoAVista, leerSueldoCompartido, enlaceVista, leerTerritorio, territorioATexto,
 } from './estado.js';
-import { cargarIdioma, traducirPagina } from './i18n.js';
+import { cargarIdioma, traducirPagina, ordinalIngles } from './i18n.js';
 import {
   cargarManifiesto, cargarSecciones, cargarTerritorios, cargarPerfiles, cargarCajas, cargarSalarios,
   cargarIndice, cargarValores, cargarSeries, valorDe, periodoPara, periodosDe, fueraDeSerie,
@@ -57,10 +57,13 @@ import {
 } from './evolucion.js';
 import { cargarHistorias, buscarHistoria, pasoDe, cambiosDePaso } from './historias.js';
 import { crearPanelHistoria } from './panel_historia.js';
-import { notaFoto, avisoSinDescarga, periodoFoto, textoSecretoNotariado } from './notariado.js';   // capa del Notariado (19-nov-2026)
+import { notaFoto, avisoSinDescarga, periodoFoto, textoSecretoNotariado, esNotariado } from './notariado.js';   // capa del Notariado (19-nov-2026)
 
 const estado = { idioma: 'es', ...leerEstado() };
 let sueldo = leerSueldoCompartido();   // solo en memoria; en el enlace, solo con «Compartir»
+// Desde el botón «¿Te llega?» de la portada (decisión del autor, 23-nov-2026): el resumen abre con la
+// cifra del alquiler real, la que da la portada, hasta que se cambie el sueldo o la ficha
+let desdePortada = Boolean(sueldo?.desdePortada);
 if (sueldo && !estado.ficha) estado.ficha = 'peon';
 if (!estado.historia) estado.paso = undefined;   // tarea 49: un paso sin historia no dice nada
 
@@ -636,13 +639,19 @@ async function actualizar() {
     } else {
       const r = resumenLlega(v.calculo, secciones ?? [], valorEn, v.umbral);
       const clave = `interfaz.sueldo.${estado.ficha === 'peon' ? 'resumen_peon' : 'resumen_ficha'}${conGastos ? '_gastos' : ''}`;
-      resumen = !r.con ? t('interfaz.sueldo.sin_datos') : t(clave, {
-        vivienda, umbral: t.porcentaje(v.umbral),
-        pct: t.porcentaje(r.proporcion), caben: t.numero(r.caben), total: t.numero(r.con), ficha: t(`fichas.${estado.ficha}`),
-      });
       // Tarea 40: al lado, la misma proporción con el alquiler mensual mediano real de cada sección
       const real = r.con ? resumenLlegaReal(v.calculo, secciones ?? [], valorEn, v.umbral) : null;
-      if (real) resumen += ` ${t('interfaz.sueldo.resumen_real', { vivienda, pct: t.porcentaje(real.proporcion), caben: t.numero(real.caben), total: t.numero(real.con) })}`;
+      const cifras = (x) => ({ pct: t.porcentaje(x.proporcion), caben: t.numero(x.caben), total: t.numero(x.con) });
+      if (desdePortada && real && estado.ficha === 'peon' && !conGastos) {
+        // Desde la portada: primero la cifra que dio ella (el alquiler real) y después la de la superficie
+        resumen = `${t('interfaz.sueldo.resumen_real_primero', { umbral: t.porcentaje(v.umbral), ...cifras(real) })} ${
+          t('interfaz.sueldo.resumen_minimo_despues', { vivienda, ...cifras(r) })}`;
+      } else {
+        resumen = !r.con ? t('interfaz.sueldo.sin_datos') : t(clave, {
+          vivienda, umbral: t.porcentaje(v.umbral), ...cifras(r), ficha: t(`fichas.${estado.ficha}`),
+        });
+        if (real) resumen += ` ${t('interfaz.sueldo.resumen_real', { vivienda, ...cifras(real) })}`;
+      }
       // Tarea 65 (decisiones del 17-nov-2026): «Lo que queda» con la llave va con la proporción y lo dice
       if (v.residual?.enLlave) leyenda.avisoRegla = textoReglaLlave(v);
     }
@@ -1150,7 +1159,9 @@ function notaPercentil(v, valor, anio, nivel, codigo) {
   if (p.sinCurva) return p.desde ? [t('interfaz.ficha.percentil_desde', { anio: p.desde })] : [];
   const ambito = p.ambito === '00' ? t('vocabulario.nivel.nacional') : ordenNatural(territorios.ccaa?.[p.ambito] ?? p.ambito);
   const clave = p.percentil <= 0 ? 'percentil_bajo' : p.percentil >= 100 ? 'percentil_alto' : 'percentil';
-  return [t(`interfaz.ficha.${clave}`, { percentil: t.numero(Math.round(p.percentil)), ambito, anio: p.anio })];
+  // En inglés, ordinal («the 94th percentile»; decisión del autor, 23-nov-2026)
+  const n = Math.round(p.percentil);
+  return [t(`interfaz.ficha.${clave}`, { percentil: t.idioma === 'en' ? ordinalIngles(n) : t.numero(n), ambito, anio: p.anio })];
 }
 
 // Ficha de un municipio, una provincia o una comunidad: la cifra del mapa activo publicada en su
@@ -1169,7 +1180,10 @@ async function pintarFichaTerritorio(v, { nivel, codigo }, yo) {
   const segunda = (calculo ? calculo.serieReal : v.mapa.minimo ? serieTipo(v.mapa.minimo.base) : null);
   if (segunda && m.indicadores[segunda] && nivelesDe(segunda).includes(nivel)) auxiliares.push(segunda);
   // Decisión del autor (11-nov-2026): en la ficha de municipio, su superficie típica (SERPAVI)
-  const pedirTipica = nivel === 'municipio' ? superficieTipicaEn(nivel, codigo, v.referencia).catch(() => null) : null;
+  // Fuera de las fichas del Notariado (decisión del autor, 23-nov-2026): junto al precio escriturado por
+  // m² invitaba a multiplicarlos, y son fuentes y viviendas distintas
+  const conTipica = nivel === 'municipio' && !(v.modo === 'necesario' && esNotariado(m.indicadores[v.seriesColor[0]]));
+  const pedirTipica = conTipica ? superficieTipicaEn(nivel, codigo, v.referencia).catch(() => null) : null;
   const lecturas = tieneNivel && !v.fuera ? await lecturasTerritorio([...v.seriesColor, ...auxiliares], nivel, codigo, v.referencia) : {};
   const tipicaFicha = await pedirTipica;
   if (yo !== turnoFicha) return;
@@ -1616,6 +1630,7 @@ function alPulsarSinSeccion(hueco) {
 }
 
 function alCambiarSueldo(cambio) {
+  if ('sueldo' in cambio || 'ficha' in cambio) desdePortada = false;
   if ('sueldo' in cambio) {
     sueldo = cambio.sueldo;
     if (cambio.escrito) estado.ficha = sueldo ? 'peon' : estado.ficha === 'peon' ? undefined : estado.ficha;

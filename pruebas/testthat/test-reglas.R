@@ -273,6 +273,10 @@ test_that("datos/reglas.json: ida y vuelta, borradores marcados y versión publi
   expect_null(p$reglas[[2]]$que_dice)
   expect_equal(p$reglas[[2]]$titulo$es, "Duración")
   expect_equal(p$reglas[[1]]$que_dice$es, j$reglas[[1]]$que_dice$es)
+  # En revisión salen, como hechos, sus normas citadas y la fecha del texto consultado (23-nov-2026)
+  expect_equal(p$reglas[[2]]$normas, j$reglas[[2]]$normas)
+  expect_equal(p$reglas[[2]]$texto_consultado, j$reglas[[2]]$texto_consultado)
+  expect_setequal(names(p$reglas[[2]]), c("id", "ancla", "orden", "titulo", "normas", "texto_consultado", "en_revision"))
 })
 
 test_that("empaquetar: el .tar.gz no lleva texto en borrador y el fichero local se restaura", {

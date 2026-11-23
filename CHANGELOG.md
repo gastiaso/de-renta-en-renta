@@ -4,6 +4,24 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Cambiado (23-nov-2026, decisiones del autor: Notariado, portada, «Reglas del juego» e inglés)
+
+Lo que el autor decidió el 23-nov-2026 sobre la revisión independiente desde la v1.2.0 y la lectura del sitio (`docs/backlog.md`, «Decisiones del 23-nov-2026»).
+
+- **(a) Foto del Notariado a medias:** `descargar_penotariado()` usa la foto anterior, con aviso, si una capa falla o llega vacía a mitad de la descarga (sin anterior, se detiene), y avisa en la propia descarga si la foto tiene más de 120 días (`PENOTARIADO_DIAS_AVISO`). El parche de la revisión, con sus pruebas en `test-notariado.R`.
+- **(b) `notariado_cien_espana`:** la desviación en % frente a la cifra anotada, con ±1 (antes, exacta): el CIEN revisa sus últimos meses. Se hizo ya y no con la próxima pasada: cambiar `referencias_validacion.csv` solo rehace las compuertas (unos 7 minutos). Hoy, 0 %.
+- **(c) Ventana del MIVAU:** las provincias con los mismos cuatro trimestres que España (una sin alguno, sin cifra y fuera), y la alerta salta si el último de España acaba más de 270 días antes de la foto (`dias_max`; hoy, 204). Las cuatro alertas, como estaban (+5,7 %, 0, −5,3 %, 0).
+- **(d) Provincias «ND» en el CIEN:** su comunidad sale de `notariado_cien_suma_provincias` (de bloqueo) y se cuenta en `notariado_cien_provincias_nd`, de alerta, nueva. Hoy, 0 todos los años.
+- **(g) Tabla 34010110:** en `bloque_notariado`, con su propio casado de nombres (`nombres_casados_numero`): con `NOTARIADO=FALSE` no se baja ni entra en el casado del valor tasado, que no cambia.
+- **L22, licencia en cada JSON de la capa:** cada fichero de valores de `web/datos/notariado/` lleva también `"licencia"`, añadida al texto sin volver a escribir las cifras. Hay que rehacer el paquete y subirlo al *release* en borrador «notariado» (`docs/publicacion.md`, «Capa del Notariado»).
+- **L11, casilla «Notaría»:** activa, hacia `mapa.html?mapa=precio_escriturado_m2`; con la capa apagada (`casillas_segun_capas()`), «próximamente». `validacion_portada` acepta también los mapas del manifiesto de la capa.
+- **L10:** las fichas de los indicadores del Notariado no llevan la superficie típica de los pisos alquilados.
+- **L15:** el botón «¿Te llega?» de la portada lleva `desde=portada` en el fragmento, y el mapa abre su resumen con la cifra del alquiler real, la de la portada (con 1.200 €, el 9 %, 2.346 de 26.137), y después la de 50 m² (49,2 %), hasta que se cambia el sueldo o la ficha.
+- **L6 (b), «Reglas del juego»:** los resúmenes en revisión enseñan ya sus normas y artículos citados, con su enlace al BOE, y la fecha del texto consultado; el resumen, no (`reglas_para_publicar()` conserva `normas` y `texto_consultado`).
+- **Pie de «Reglas del juego»:** el intervalo de las consultas del BOE de las normas citadas («consultados entre el 13 y el 19 de noviembre de 2026»), no la más antigua.
+- **L18, inglés:** «The 94th percentile of wages» (ordinal, `ordinalIngles()`), «census tracts» y «Area without a census tract», «Can you make rent?» también en la portada, sin espacio antes de % y «€{umbral} a year». Los euros de las unidades («€ per month») y las 11 comillas vienen del inventario: con la próxima pasada completa.
+- Pruebas: testthat (`test-notariado.R`, `test-portada.R`, `test-reglas.R`) y web (`notariado`, `portada`, `reglas`, `datos`); comprobado en el navegador en local. Ninguna cifra publicada cambia.
+
 ### Cambiado (23-nov-2026, decisiones del autor: cifras del Notariado en git y flujo de Pages)
 
 - **(e) Cifras del Notariado en git:** la nota (§2.4, las dos lenguas), `docs/publicacion.md` y la especificación decían «ninguna cifra suya está en la historia de git», y hay una decena de cifras de España citadas. Ahora: ningún fichero ni serie suya está en git; solo esas cifras, citadas con su fuente en la documentación y en las compuertas.

@@ -43,7 +43,8 @@ export { leerSueldo };
 // Enlace del botón «¿Te llega?»: el mapa con «Tu ficha» y el sueldo en el fragmento (nunca en la
 // consulta), en 12 pagas, igual que «Compartir».
 export function enlaceTeLlega(neto, idioma) {
-  return `${conIdioma('mapa.html?ficha=peon', idioma)}${fragmentoSueldo({ neto, pagas: 12 })}`;
+  // `desde=portada` (23-nov-2026): el mapa abre su resumen con la misma cifra que da la portada
+  return `${conIdioma('mapa.html?ficha=peon', idioma)}${fragmentoSueldo({ neto, pagas: 12 })}&desde=portada`;
 }
 
 // Texto con marcas «{nombre}» en un elemento: el texto tal cual y cada cifra en su <span>. Con

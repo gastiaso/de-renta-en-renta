@@ -105,7 +105,8 @@ export function leerSueldoCompartido() {
   const neto = numero('sueldo');
   history.replaceState(null, '', `${location.pathname}${location.search}`);
   if (!neto) return null;
-  return { neto, pagas: p.get('pagas') === '14' ? 14 : 12, segundo: numero('segundo') };
+  // `desde=portada`: el botón «¿Te llega?» de la portada (23-nov-2026); el mapa abre el resumen con su cifra
+  return { neto, pagas: p.get('pagas') === '14' ? 14 : 12, segundo: numero('segundo'), desdePortada: p.get('desde') === 'portada' };
 }
 
 // Fragmento con el sueldo (#sueldo=1500&pagas=14&segundo=900), o '' sin sueldo. El de «Compartir»

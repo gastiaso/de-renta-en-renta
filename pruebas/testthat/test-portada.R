@@ -52,14 +52,15 @@ test_that("las casillas del CSV cumplen las reglas de la especificación", {
 test_that("la compuerta de las casillas detecta destinos mal puestos", {
   cs <- leer_casillas_portada(raiz_portada("inventario", "casillas_portada.csv"))
   mal <- cs
-  mal$destino[mal$id == "notaria"] <- "mapa.html"                  # inactiva con destino
+  mal$destino[mal$id == "herencia"] <- "mapa.html"                 # inactiva con destino
   mal$destino[mal$id == "paga_alquiler"] <- "mapa.html?mapa=no_existe"
   mal$destino[mal$id == "mudanza"] <- "mapa.html?clave_rara=1"
   mal$destino[mal$id == "fianza"] <- "metodo.html#no-existe"
   mal$id[2] <- mal$id[1]
   mal$familia[mal$orden == 7] <- "barrio"                          # esquina sin la familia especial
   mapas <- c("sueldo_necesario", "alquiler_mes", "viviendas_turisticas", "hogares_alquiler", "zona_tensionada",
-             "var_alquiler", "anios_salario_compra", "esfuerzo_hipotecario")
+             "var_alquiler", "anios_salario_compra", "esfuerzo_hipotecario",
+             "precio_escriturado_m2")   # de la capa del Notariado (23-nov-2026)
   anclas <- list(metodo.html = "71-alquiler-indicadores-8-y-9", method.html = "71-rent-indicators-8-and-9")
   claves <- claves_estado_web(raiz_portada("web", "js", "estado.js"))
   expect_true(all(comprobar_casillas_portada(cs, mapas = mapas, anclas = anclas, claves_estado = claves)$calculado ==
@@ -79,6 +80,20 @@ test_that("el destino en inglés lleva el idioma o la página inglesa", {
   expect_equal(destino_ingles("datos.html"), "data.html")
   expect_equal(destino_ingles("metodo.html#a", "method.html#b"), "method.html#b")
   expect_equal(destino_ingles(""), "")
+})
+
+test_that("la casilla del Notariado, activa solo con su capa encendida (23-nov-2026)", {
+  cs <- leer_casillas_portada(raiz_portada("inventario", "casillas_portada.csv"))
+  n <- cs[cs$id == "notaria", ]
+  expect_true(n$activa)
+  expect_equal(n$destino, "mapa.html?mapa=precio_escriturado_m2")
+  expect_identical(casillas_segun_capas(cs, notariado = TRUE), cs)
+  apagada <- casillas_segun_capas(cs, notariado = FALSE)
+  expect_false(apagada$activa[apagada$id == "notaria"])
+  expect_equal(apagada$destino[apagada$id == "notaria"], "")
+  expect_identical(apagada[apagada$id != "notaria", ], cs[cs$id != "notaria", ])
+  # Apagada, la compuerta sigue limpia: sin destino ni mapa que comprobar
+  expect_equal(comprobar_casillas_portada(apagada)$calculado, c(24, rep(0, 12)))
 })
 
 test_that("las casillas se escriben en el HTML entre sus marcas, sin enlace las inactivas", {

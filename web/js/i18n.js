@@ -3,6 +3,14 @@
 // `interfaz` se escriben a mano y el pipeline las conserva (web/LEEME.md).
 
 export const IDIOMAS = ['es', 'en'];
+
+// Ordinal inglés de un entero (1st, 2nd, 3rd, 4th, 11th, 12th, 13th, 21st…): el percentil en inglés
+// (23-nov-2026).
+export function ordinalIngles(n) {
+  const resto100 = n % 100;
+  const sufijo = resto100 >= 11 && resto100 <= 13 ? 'th' : { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] ?? 'th';
+  return `${n}${sufijo}`;
+}
 const LOCALES = { es: 'es-ES', en: 'en-GB' };
 const diccionarios = new Map();
 

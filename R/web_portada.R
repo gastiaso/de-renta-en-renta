@@ -41,6 +41,18 @@ leer_casillas_portada <- function(ruta = RUTA_CASILLAS_PORTADA) {
     mutate(across(c(destino, destino_en), function(x) dplyr::coalesce(x, "")))
 }
 
+# Casillas que llevan a una capa solo web, el Notariado (decision del autor, 23-nov-2026): con la capa
+# apagada (NOTARIADO=FALSE o una sola provincia), vuelven a «próximamente»: inactivas y sin destino.
+CASILLAS_NOTARIADO <- "notaria"
+casillas_segun_capas <- function(casillas, notariado = TRUE) {
+  if (notariado) return(casillas)
+  apagar <- casillas$id %in% CASILLAS_NOTARIADO
+  casillas$activa[apagar] <- FALSE
+  casillas$destino[apagar] <- ""
+  casillas$destino_en[apagar] <- ""
+  casillas
+}
+
 # --- Destinos ----------------------------------------------------------------------------------
 
 # Destino en ingles de una casilla: el de la columna destino_en o, si va vacia, el mismo con el

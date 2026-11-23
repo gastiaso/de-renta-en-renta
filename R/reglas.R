@@ -567,11 +567,14 @@ reglas_comprobar_web <- function(reglas, normas, ruta) {
 
 # reglas.json para el release (R/publicar.R): los resumenes en borrador quedan sin texto, solo con su
 # id, ancla, orden y titulo, y `en_revision` (la pagina lo dice; las anclas de la portada siguen
-# existiendo). Nada en borrador sale en el release ni en el sitio.
+# existiendo). Nada en borrador sale en el release ni en el sitio. Si salen, como hechos sin
+# interpretacion, las normas y articulos citados (con su enlace al BOE) y la fecha del texto
+# consultado (decision del autor, 23-nov-2026).
 reglas_para_publicar <- function(json) {
   json$reglas <- lapply(json$reglas %||% list(), function(r) {
     if (!isTRUE(r$borrador) && !identical(r$revisado, REGLAS_BORRADOR)) return(r)
-    list(id = r$id, ancla = r$ancla, orden = r$orden, titulo = r$titulo, en_revision = TRUE)
+    list(id = r$id, ancla = r$ancla, orden = r$orden, titulo = r$titulo, normas = r$normas,
+         texto_consultado = r$texto_consultado, en_revision = TRUE)
   })
   json$borradores <- 0L
   json$en_revision <- sum(vapply(json$reglas, function(r) isTRUE(r$en_revision), TRUE))
@@ -583,6 +586,6 @@ reglas_para_publicar <- function(json) {
 reglas_borradores_con_texto <- function(json) {
   sum(vapply(json$reglas %||% list(), function(r) {
     (isTRUE(r$borrador) || identical(r$revisado, REGLAS_BORRADOR)) &&
-      any(c("que_dice", "a_quien", "cambios", "en_el_atlas", "normas") %in% names(r))
+      any(c("que_dice", "a_quien", "cambios", "en_el_atlas") %in% names(r))   # las normas citadas, no (23-nov-2026)
   }, TRUE))
 }

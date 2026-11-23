@@ -125,6 +125,15 @@ export function lineasEstado(regla, datos, idioma, fecha = (x) => x) {
   return lineas;
 }
 
+// Intervalo de las consultas del BOE de las normas citadas (decisión del autor, 23-nov-2026: el pie dice
+// «entre el 13 y el 17», no solo una fecha): { desde, hasta } (AAAA-MM-DD) o, sin fechas, null.
+export function periodoConsulta(datos) {
+  const fechas = Object.values(datos?.normas ?? {}).map((n) => n?.texto_consultado)
+    .filter((f) => /^\d{4}-\d{2}-\d{2}$/.test(f ?? '')).sort();
+  if (!fechas.length) return datos?.consultado ? { desde: datos.consultado, hasta: datos.consultado } : null;
+  return { desde: fechas[0], hasta: fechas.at(-1) };
+}
+
 // Fecha más reciente de consulta del BOE (la del pie).
 export function fechaConsulta(datos) {
   return datos?.consultado ?? null;

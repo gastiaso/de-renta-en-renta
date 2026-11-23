@@ -914,3 +914,12 @@ test('§6.5: el sueldo necesario que calcula la página coincide con el de R', {
   assert.ok(resultado.conValor > 0, 'hay valores que comparar');
   assert.deepEqual(resultado.diferencias.slice(0, 5), [], `${resultado.diferencias.length} diferencias`);
 });
+
+test('inglés (23-nov-2026): el percentil, ordinal', async () => {
+  const { ordinalIngles } = await modulo('web/js/i18n.js');
+  assert.deepEqual([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 94, 101, 111].map(ordinalIngles),
+    ['1st', '2nd', '3rd', '4th', '11th', '12th', '13th', '21st', '22nd', '23rd', '94th', '101st', '111th']);
+  const en = JSON.parse(readFileSync(join(raiz, 'web', 'i18n', 'en.json'), 'utf8'));
+  assert.match(en.interfaz.ficha.percentil, /^The \{percentil\} percentile of wages/);
+  assert.doesNotMatch(JSON.stringify(en), /\d %|census section|Can you afford it/);
+});

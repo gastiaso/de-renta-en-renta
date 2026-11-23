@@ -208,6 +208,8 @@
       "tipica_elegir": "Para usar la superficie típica, elige una sección o un municipio, o acerca el mapa a uno; mientras, {superficie} m².",
       "superficie_minimo": "El mapa usa el alquiler mensual mediano de cada sección; la vivienda elegida cambia el mínimo teórico que la ficha da al lado.",
       "resumen_real": "Con el piso mediano que se alquila en cada sección en lugar de {vivienda}, en el {pct} ({caben} de {total}).",
+      "resumen_real_primero": "El piso mediano que se alquila en cada sección no pasa del {umbral} de tus ingresos en el {pct} de las secciones con dato ({caben} de {total}).",
+      "resumen_minimo_despues": "Con {vivienda}, en el {pct} ({caben} de {total}).",
       "peon_sin_sueldo": "Escribe unos ingresos para usar tu ficha.",
       "resumen_peon": "El alquiler de {vivienda} no pasa del {umbral} de tus ingresos en el {pct} de las secciones con dato ({caben} de {total}).",
       "resumen_ficha": "El alquiler de {vivienda} no pasa del {umbral} de los ingresos de «{ficha}» en el {pct} de las secciones con dato ({caben} de {total}).",
@@ -998,6 +1000,7 @@
     "pie": {
       "informativo": "Resúmenes informativos, sin valor jurídico. El texto oficial es el publicado en el BOE; según su aviso legal, los textos consolidados del BOE tienen carácter meramente informativo y solo la edición electrónica del diario oficial da fe.",
       "boe": "Basado en datos de la Agencia Estatal Boletín Oficial del Estado (www.boe.es), consultados el {fecha}.",
+      "boe_intervalo": "Basado en datos de la Agencia Estatal Boletín Oficial del Estado (www.boe.es), consultados entre el {desde} y el {hasta}.",
       "patrocinio": "La AEBOE no participa en este atlas ni lo patrocina."
     }
   },

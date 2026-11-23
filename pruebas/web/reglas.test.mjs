@@ -218,3 +218,18 @@ test('datos/reglas.json real: mismos resúmenes que el inventario, con sus texto
     }
   }
 });
+
+test('decisiones del 23-nov-2026: el pie con el intervalo de consultas y las normas de los resúmenes en revisión', () => {
+  const d = { consultado: '2026-11-19', normas: { a: { texto_consultado: '2026-11-17' }, b: { texto_consultado: '2026-11-13' }, c: { texto_consultado: '' } } };
+  assert.deepEqual(R.periodoConsulta(d), { desde: '2026-11-13', hasta: '2026-11-17' });
+  assert.deepEqual(R.periodoConsulta({ consultado: '2026-11-19', normas: {} }), { desde: '2026-11-19', hasta: '2026-11-19' });
+  assert.equal(R.periodoConsulta({}), null);
+  const js = readFileSync(join(raiz, 'web', 'js', 'reglas.js'), 'utf8');
+  assert.match(js, /t\('reglas\.pie\.boe_intervalo', \{ desde: p\.desde\.slice\(0, 7\) === p\.hasta\.slice\(0, 7\) \? String\(Number\(p\.desde\.slice\(8\)\)\) : fecha\(p\.desde\), hasta: fecha\(p\.hasta\) \}\)/);
+  // En revisión: las normas citadas y la fecha del texto consultado, sin resumen
+  const enRevision = js.slice(js.indexOf('if (R.enRevision(r)) {'), js.indexOf('for (const clave of R.SECCIONES)'));
+  assert.match(enRevision, /bloqueNormas\(r, idioma\)/);
+  assert.match(enRevision, /t\('reglas\.consultado'/);
+  assert.match(enRevision, /return s;/);
+  for (const idioma of ['es', 'en']) assert.ok(traductor(idioma)('reglas.pie.boe_intervalo').includes('{desde}'));
+});

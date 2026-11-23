@@ -77,7 +77,7 @@
       "juego_cambio": "Scale changed: bands now for {escala}.",
       "anclaje": "Bands set with the {anio} data: in other years, figures may gather in the outer bands.",
       "juegos": {
-        "seccion": "census sections",
+        "seccion": "census tracts",
         "municipio": "municipalities",
         "provincia_ccaa": "provinces and regions"
       },
@@ -208,6 +208,8 @@
       "tipica_elegir": "To use the typical size, pick a tract or a municipality, or zoom in on one; meanwhile, {superficie} m².",
       "superficie_minimo": "The map uses each tract's median monthly rent; the home size chosen changes the theoretical minimum the profile gives alongside.",
       "resumen_real": "With each tract's median rented home instead of {vivienda}, in {pct} ({caben} of {total}).",
+      "resumen_real_primero": "Each tract's median rented home stays within {umbral} of your income in {pct} of tracts with data ({caben} of {total}).",
+      "resumen_minimo_despues": "With {vivienda}, in {pct} ({caben} of {total}).",
       "peon_sin_sueldo": "Type an income figure to use your token.",
       "resumen_peon": "Rent for {vivienda} stays within {umbral} of your income in {pct} of tracts with data ({caben} of {total}).",
       "resumen_ficha": "Rent for {vivienda} stays within {umbral} of the income of “{ficha}” in {pct} of tracts with data ({caben} of {total}).",
@@ -326,7 +328,7 @@
       "alquiler_ingreso": "Rent: €{alquiler} · income: €{ingreso} a month",
       "minimo": "Theoretical minimum for a {superficie} m² flat: €{cifra} net a month",
       "real_llega": "With the median monthly rent (€{alquiler}): {pct} of income",
-      "sin_seccion": "Area without a census section",
+      "sin_seccion": "Area without a census tract",
       "sin_seccion_texto": "Common land that belongs to no municipality. The INE assigns it no section and it has no population, so there are no data.",
       "provincias": "Provinces",
       "superficie": "Area",
@@ -344,7 +346,7 @@
       "pocos_contratos": "few contracts",
       "intervalo": "Between {desde} and {hasta} {unidad}, given the margin of the median",
       "en_limite": "On the edge between two bands: given the margin of the median, it could fall into the next one.",
-      "percentil": "Percentile {percentil} of wages ({ambito}, {anio}; pay received in the year by employees, net and spread over 12 months; Spanish Tax Agency).",
+      "percentil": "The {percentil} percentile of wages ({ambito}, {anio}; pay received in the year by employees, net and spread over 12 months; Spanish Tax Agency).",
       "percentil_bajo": "Below the 1st percentile of wages ({ambito}, {anio}; pay received in the year by employees, net and spread over 12 months; Spanish Tax Agency).",
       "percentil_alto": "Above the 99th percentile of wages ({ambito}, {anio}; pay received in the year by employees, net and spread over 12 months; Spanish Tax Agency).",
       "percentil_desde": "Wage percentile: from {anio}.",
@@ -463,7 +465,7 @@
     "titulo_pagina": "De renta en renta · Housing costs and wages, tract by tract",
     "descripcion": "What renting costs in each census tract in Spain and whose pay covers it: map, tokens and housing cost overburden.",
     "proximamente": "coming soon",
-    "te_llega": "Can you afford it?",
+    "te_llega": "Can you make rent?",
     "privacidad": "What you type never leaves this device: the sum is done in the browser and it goes to the map after “#”, which the browser does not send.",
     "sueldo_error": "Type a net monthly income in euros, for example 1500.",
     "cifra": {
@@ -474,7 +476,7 @@
       "resultado": "With €{neto} net a month, the usual rent of each tract does not exceed {umbral} of your income in {pct} of tracts with data ({caben} of {total}).",
       "nota": "This is the rent of people who already have a lease; people looking for a flat today usually pay more.",
       "sin_datos": "No tracts with data to do the sum.",
-      "error": "The sum could not be done here: “Can you afford it?” does it on the map.",
+      "error": "The sum could not be done here: “Can you make rent?” does it on the map.",
       "linea": "After paying that rent, what is left does not fall below {linea} in {pct} ({encima} of {total})."
     },
     "dado": "Roll the die",
@@ -498,17 +500,17 @@
       },
       "smi": {
         "titulo": "Minimum wage",
-        "texto": "With the {anio} minimum wage (€{neto} net a month, over 12 months), the rent of a {superficie} m² flat takes more than 30 % of pay in {pct30} of the tracts with data, and more than 40 % in {pct40}. With each tract's median monthly rent, in {pct30real} and {pct40real}.",
+        "texto": "With the {anio} minimum wage (€{neto} net a month, over 12 months), the rent of a {superficie} m² flat takes more than 30% of pay in {pct30} of the tracts with data, and more than 40% in {pct40}. With each tract's median monthly rent, in {pct30real} and {pct40real}.",
         "enlace": "See the map with the minimum wage"
       },
       "sobrecarga": {
         "titulo": "Overburden",
-        "texto": "In {anio}, {mercado} of people renting at market price spend more than 40 % of their disposable income on housing. Across the whole population, {total}.",
+        "texto": "In {anio}, {mercado} of people renting at market price spend more than 40% of their disposable income on housing. Across the whole population, {total}.",
         "enlace": "See overburden in Spain and Europe"
       },
       "sueldo_entrar": {
         "titulo": "Pay needed to move in",
-        "texto": "Net monthly pay needed for the rent of a flat on offer not to exceed 30 %, with the typical floor area of rented flats in the municipality and with 50 m². It comes from Idealista asking prices and will be published in bands."
+        "texto": "Net monthly pay needed for the rent of a flat on offer not to exceed 30%, with the typical floor area of rented flats in the municipality and with 50 m². It comes from Idealista asking prices and will be published in bands."
       },
       "brecha": {
         "titulo": "Moving in versus staying",
@@ -560,7 +562,7 @@
       },
       "nota_rentas": "{anio} survey, with {anterior} incomes.",
       "nota_desglose": "By tenure, age or degree of urbanisation, only the {anio} survey: Eurostat does not publish those breakdowns by region.",
-      "nota_pobreza": "At-risk-of-poverty after housing costs: people whose equivalised income, once housing costs are paid, falls below the at-risk-of-poverty threshold ({umbral} € a year per equivalent adult in the {anio} survey: 60% of the median before paying for housing).",
+      "nota_pobreza": "At-risk-of-poverty after housing costs: people whose equivalised income, once housing costs are paid, falls below the at-risk-of-poverty threshold (€{umbral} a year per equivalent adult in the {anio} survey: 60% of the median before paying for housing).",
       "nota_desglose_pobreza": "By tenure, Spain with the {anio} survey and the autonomous communities with three pooled waves ({desde}–{hasta}): Eurostat does not publish this rate by tenure, and the map shows no other countries.",
       "nota_desglose_pobreza_edad": "By age, countries and Spain with the {anio} survey and the autonomous communities with three pooled waves ({desde}–{hasta}): Eurostat does not publish this rate by region.",
       "grupos": {
@@ -998,6 +1000,7 @@
     "pie": {
       "informativo": "Summaries for information only, with no legal value. The official text is the one published in the BOE; according to its legal notice, the BOE consolidated texts are for information only and only the electronic edition of the official gazette is authentic.",
       "boe": "Based on data from the Agencia Estatal Boletín Oficial del Estado (www.boe.es), consulted on {fecha}.",
+      "boe_intervalo": "Based on data from the Agencia Estatal Boletín Oficial del Estado (www.boe.es), consulted between {desde} and {hasta}.",
       "patrocinio": "The AEBOE does not take part in or sponsor this atlas."
     }
   },

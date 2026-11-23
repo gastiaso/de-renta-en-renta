@@ -182,3 +182,9 @@ test('lectura del sitio (23-nov-2026): la foto rotulada como 12 meses, el umbral
   assert.match(ficha, /estados\[estado\] === 'secreto' && textoSecreto \? textoSecreto :/);
   assert.match(readFileSync(join(raiz, 'web', 'js', 'leyenda.js'), 'utf8'), /if \(datos\.periodoTexto\) detalle\.push\(datos\.periodoTexto\);/);
 });
+
+test('decisiones del 23-nov-2026: sin superficie típica en las fichas del Notariado', () => {
+  const principal = readFileSync(join(raiz, 'web', 'js', 'principal.js'), 'utf8');
+  assert.match(principal, /const conTipica = nivel === 'municipio' && !\(v\.modo === 'necesario' && esNotariado\(m\.indicadores\[v\.seriesColor\[0\]\]\)\);/);
+  assert.match(principal, /const pedirTipica = conTipica \?/);
+});

@@ -499,7 +499,7 @@ Repaso de todo lo que seguía «por decidir» o «por revisar» en este backlog,
 
 Respuestas del autor a lo que dejaron por decidir la revisión independiente desde la v1.2.0 y la lectura del sitio publicado (noche del 22 al 23-nov-2026). Letras (a)–(g): las de la revisión, en «Por decidir»; L: las de la lectura.
 
-**Para hacer ya** (sin pasada completa):
+**Para hacer ya** (sin pasada completa) · **HECHO (23-nov-2026)**, salvo subir el paquete de la capa al *release* en borrador, que hace el autor (CHANGELOG):
 
 - **(a) Foto del Notariado a medias:** se aplica ya el parche de `descargar_penotariado()` (capas dentro de un `tryCatch`, la foto anterior con aviso si falla a medias y el aviso de antigüedad de 120 días en la propia descarga), con sus pruebas en `test-notariado.R`. Aceptadas las cinco peticiones pequeñas a ArcGIS del siguiente `tar_make()`.
 - **(c) Ventana del MIVAU:** las provincias con los mismos trimestres que España, y la alerta salta si el último trimestre de España acaba más de 270 días antes de la foto.
@@ -517,7 +517,7 @@ Respuestas del autor a lo que dejaron por decidir la revisión independiente des
 
 **Con la próxima pasada completa** (cambian `inventario/` y rehacen buena parte del pipeline):
 
-- **(b) `notariado_cien_espana`:** tolerancia de ±1 %.
+- ~~(b) `notariado_cien_espana`: tolerancia de ±1 %~~: hecho ya (23-nov-2026); solo rehacía las compuertas.
 - **L13, cortes del 16:** recalibrados con 2025.
 - **Comillas inglesas** en las 11 cadenas de `inventario/indicadores.csv` (10) y `fuentes.csv` (1).
 

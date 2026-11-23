@@ -172,6 +172,20 @@ test_that("penotariado frente al MIVAU: los cuatro últimos trimestres cerrados 
   hueco$valor[hueco$nivel == "nacional" & hueco$anio == 2026L & hueco$trimestre == 3L] <- NA
   hueco <- dplyr::bind_rows(trim("nacional", "00", 175000, 2025L, 3L), hueco)
   expect_match(comprobar_notariado_mivau(pen, hueco)$detalle[1], "2025-T3 a 2026-T2")
+  # Ventana común (decisión del autor, 23-nov-2026): una provincia sin el último trimestre de España no
+  # toma otros cuatro; queda sin cifra y cuenta como fuera
+  sin_ultimo <- dplyr::bind_rows(trim("provincia", "11", 190400, 2025L, 3L),
+                                 tt[!(tt$geo_id == "11" & tt$anio == 2026L & tt$trimestre == 3L), ])
+  r_sin <- comprobar_notariado_mivau(pen, sin_ultimo, margen_provincia = 40)
+  expect_equal(r_sin$calculado[2], 1)
+  expect_match(r_sin$detalle[2], ": 11$")
+  # Tope de antigüedad: el último trimestre de España, más de 270 días antes de la foto (boletín parado)
+  viejo <- tt[!(tt$nivel == "nacional" & tt$anio == 2026L), ]
+  viejo <- dplyr::bind_rows(trim("nacional", "00", c(170000, 175000, 178000), 2025L, 1:3), viejo)   # hasta 2025-T4 (294 días)
+  r_viejo <- comprobar_notariado_mivau(pen, viejo)
+  expect_true(is.na(r_viejo$calculado[1]))
+  expect_match(r_viejo$detalle[1], "2025-T1 a 2025-T4 \\(más de 270 días antes de la foto\\)")
+  expect_false(is.na(comprobar_notariado_mivau(pen, viejo, dias_max = 300L)$calculado[1]))
 
   # Número de compraventas (22-nov-2026): los 12 meses de la foto frente a la suma de los cuatro trimestres
   nn <- dplyr::bind_rows(trim("nacional", "00", c(250, 260, 270, 280, 9999)),      # 1.060 frente a 1.000 de la foto
@@ -320,7 +334,22 @@ test_that("CIEN: compuerta de sumas, meses, referencia y cuantía ponderada", {
   expect_equal(valor("notariado_cien_suma_ccaa"), c(1, 0))
   expect_equal(valor("notariado_cien_suma_provincias")[1], 1)
   expect_equal(valor("notariado_cien_territorios")[1], 1)
-  expect_equal(valor("notariado_cien_espana"), 1000)
+  # España, en % frente a la cifra anotada (±1; decisión del autor, 23-nov-2026): 1.000 frente a 999
+  expect_equal(valor("notariado_cien_espana"), 100 * (1000 / 999 - 1))
+  expect_equal(r$referencia[r$id == "notariado_cien_espana"], 0)
+  expect_match(r$detalle[r$id == "notariado_cien_espana"], "frente a 999")
+
+  # Una provincia «ND» (decisión del autor, 23-nov-2026): su comunidad, fuera de la suma de provincias
+  # (no la cuenta como descuadrada) y contada en notariado_cien_provincias_nd
+  nd <- cien
+  k <- which(nd$nivel == "provincia" & nd$nombre_cien == "Cádiz" & nd$anio == 2024 & nd$periodicidad == "anual")
+  expect_length(k, 1)
+  nd$n[k] <- NA
+  nd$n_nd[k] <- TRUE
+  r_nd <- comprobar_notariado_cien(nd, referencia = c("2024" = 1000))
+  expect_equal(r_nd$calculado[r_nd$id == "notariado_cien_suma_provincias"][1], 0)
+  expect_equal(r_nd$calculado[r_nd$id == "notariado_cien_provincias_nd"][1], 1)
+  expect_equal(r$calculado[r$id == "notariado_cien_provincias_nd"], c(0, 0))
 })
 
 test_that("CIEN: tabla con años completos, Andalucía sin Ceuta y Melilla y Ceuta y Melilla sin dato", {
@@ -380,6 +409,13 @@ test_that("la capa sale en web/datos/notariado/, con su licencia y su compuerta,
   m <- jsonlite::fromJSON(file.path(dir, "datos", "notariado", "manifiesto.json"), simplifyVector = FALSE)
   expect_true(m$activa)
   expect_equal(m$licencia, "© Consejo General del Notariado, solo uso no comercial")
+  # La licencia también dentro de cada fichero de valores, sin tocar sus cifras (23-nov-2026)
+  for (f in setdiff(rutas, file.path(dir, "datos", "notariado", "manifiesto.json"))) {
+    v <- jsonlite::fromJSON(f, simplifyVector = FALSE)
+    expect_equal(v$licencia, "© Consejo General del Notariado, solo uso no comercial", info = f)
+    expect_true(all(c("v", "e") %in% names(v)), info = f)
+    expect_true(startsWith(readLines(f, warn = FALSE, encoding = "UTF-8")[1], "{\"licencia\":"), info = f)
+  }
   expect_equal(m$foto, "2026-10-21")
   expect_equal(m$cien_ultimo_mes, "2025-05")
   expect_setequal(names(m$indicadores), ind_n$codigo)
@@ -396,8 +432,8 @@ test_that("la capa sale en web/datos/notariado/, con su licencia y su compuerta,
   expect_equal(m$mapas$precio_escriturado_m2$nivel_minimo, "municipio")
   expect_equal(m$mapas$hipotecas_compra_vivienda$nivel_minimo, "provincia")
   # Municipios: 04001, 04002 (secreto), 11001 (estimado), 28079, y Ceuta y Melilla sin dato
-  expect_equal(readLines(file.path(dir, "datos", "notariado", "municipio", "precio_escriturado_m2", "2026.json")),
-               '{"v":[12500,null,18000,32000,null,null],"e":"021033"}')
+  expect_equal(readLines(file.path(dir, "datos", "notariado", "municipio", "precio_escriturado_m2", "2026.json"), encoding = "UTF-8"),
+               '{"licencia":"© Consejo General del Notariado, solo uso no comercial","v":[12500,null,18000,32000,null,null],"e":"021033"}')
 
   x <- notariado_comprobar_web(larga, ind_g, jer_n, ter_n, dir_web = dir)
   expect_true(all(x$calculado == 0), info = paste(x$detalle[x$calculado != 0], collapse = "; "))
@@ -567,4 +603,29 @@ test_that("CIEN: una página web con estado 200 no pisa la consulta anterior, y 
   expect_true(all(grepl("se conserva la anterior.*no es JSON", avisos)))
   expect_equal(tools::md5sum(g), antes)
   expect_error(descargar_notariado_cien(dir = withr::local_tempdir(), pedir = pagina), "no es JSON")
+})
+
+# Revisión del 23-nov-2026, hallazgos 8 y 9 (decisión del autor: aplicar ya): una foto que falla a medias
+# usa la anterior con aviso, y una foto vieja avisa en la propia descarga
+test_that("foto a medias: la anterior, con aviso; sin anterior, se detiene; y aviso de antigüedad", {
+  campos <- c("0" = "x", "1" = "cod_ccaa", "2" = "cod_prov", "3" = "cod_muni", "4" = "cp")
+  fila <- function(campo) list(attributes = c(stats::setNames(list("01"), campo), list(precio_m2 = 1000, precio_medio = 1e5,
+    superficie_media = 100, total = 50, total_informados = 40, es_estimado = 0)))
+  servicio <- function(fecha_ms, falla = FALSE) function(url, consulta = list()) {
+    capa <- sub("^.*/([0-9])(/query)?$", "\\1", url)
+    if (!grepl("/query$", url)) {
+      return(list(name = capa, editingInfo = list(lastEditDate = fecha_ms, dataLastEditDate = fecha_ms), fields = list()))
+    }
+    if (falla && capa == "3") stop("tiempo agotado")
+    list(features = list(fila(campos[[capa]])))
+  }
+  dir <- withr::local_tempdir()
+  f1 <- descargar_penotariado(dir = dir, pedir = servicio(1792585954664), hoy = as.Date("2026-11-23"))   # foto del 21-10-2026
+  expect_warning(f2 <- descargar_penotariado(dir = dir, pedir = servicio(1795000000000, falla = TRUE), hoy = as.Date("2026-11-23")),
+                 "se usa la de 2026-10-21")
+  expect_equal(f2, f1)
+  expect_error(descargar_penotariado(dir = withr::local_tempdir(), pedir = servicio(1795000000000, falla = TRUE),
+                                     hoy = as.Date("2026-11-23")), "No se ha podido descargar")
+  expect_warning(descargar_penotariado(dir = dir, pedir = servicio(1792585954664), hoy = as.Date("2027-03-01")), "131 días")
+  expect_silent(descargar_penotariado(dir = dir, pedir = servicio(1792585954664), hoy = as.Date("2026-11-23")))
 })

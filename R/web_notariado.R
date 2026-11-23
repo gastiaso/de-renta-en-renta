@@ -33,6 +33,16 @@ notariado_exportar_web <- function(larga, indicadores, jerarquia, territorios, v
   catalogo <- catalogo_web(series)
   catalogo$ruta <- ruta_web(catalogo$clave, catalogo$corte, prefijo = DIR_WEB_NOTARIADO)
   valores <- escribir_valores_web(series, catalogo, indices, dir_web)
+  # La licencia también dentro de cada fichero de valores (decisión del autor, 23-nov-2026): quien baje
+  # uno suelto la lleva consigo. Se añade al texto, sin volver a escribir las cifras
+  clave <- paste0("{\"licencia\":", jsonlite::toJSON(LICENCIA_NOTARIADO, auto_unbox = TRUE), ",")
+  for (f in valores) {
+    texto <- paste(readLines(f, encoding = "UTF-8", warn = FALSE), collapse = "\n")
+    if (!startsWith(texto, "{")) stop("Fichero de valores sin objeto JSON: ", f, call. = FALSE)
+    con <- file(f, open = "wb")
+    writeLines(enc2utf8(sub("^\\{", clave, texto)), con, useBytes = TRUE)
+    close(con)
+  }
   entradas <- indicadores_manifiesto_web(catalogo, indicadores)
   for (cl in names(entradas)) {
     if (identical(entradas[[cl]]$fuente, "notariado")) {

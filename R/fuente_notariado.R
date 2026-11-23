@@ -55,6 +55,8 @@ PENOTARIADO_CIFRAS <- c("precio_m2", "precio_medio", "superficie_media", "total"
 # Umbral de fiabilidad: sin precio (estado secreto) con menos de 20 compraventas con precio y
 # superficie informados en los 12 meses. El número de compraventas se publica siempre.
 NOTARIADO_MIN_INFORMADAS <- 20L
+# Días desde la foto a partir de los que la descarga avisa (como la alerta notariado_foto_antiguedad)
+PENOTARIADO_DIAS_AVISO <- 120
 
 CIEN_DATOS_URL <- "https://www.notariado.org/cienServices/service/buscador/json"
 CIEN_PORTLET_URL <- paste0("https://www.notariado.org/liferay/web/cien/estadisticas-al-completo?",
@@ -128,7 +130,8 @@ penotariado_ficheros <- function(carpeta) {
 }
 
 # Descarga de la foto vigente (si no está ya en la caché). Devuelve sus ficheros.
-descargar_penotariado <- function(dir = DIR_NOTARIADO, forzar = FALSE, pedir = penotariado_pedir, url = PENOTARIADO_URL) {
+descargar_penotariado <- function(dir = DIR_NOTARIADO, forzar = FALSE, pedir = penotariado_pedir, url = PENOTARIADO_URL,
+                                  hoy = Sys.Date()) {
   definiciones <- tryCatch(lapply(PENOTARIADO_CAPAS, function(capa) pedir(paste0(url, "/", capa), list(f = "json"))),
                            error = function(e) e)
   previas <- sort(list.dirs(dir, recursive = FALSE, full.names = TRUE))
@@ -144,6 +147,12 @@ descargar_penotariado <- function(dir = DIR_NOTARIADO, forzar = FALSE, pedir = p
   }
   fecha <- penotariado_fecha(definiciones[["nacional"]])
   if (is.na(fecha)) stop("La capa 0 del Notariado no trae editingInfo.lastEditDate: ¿ha cambiado el servicio?", call. = FALSE)
+  # Una foto que el servicio no renueva: aviso en cada consulta (la alerta notariado_foto_antiguedad
+  # solo se vuelve a calcular cuando cambian la foto o el CIEN)
+  if (as.numeric(hoy - fecha) > PENOTARIADO_DIAS_AVISO) {
+    warning("La foto del Portal Estadístico del Notariado es del ", format(fecha), " (", as.numeric(hoy - fecha),
+            " días): ¿ha dejado el servicio de renovarla o ha cambiado de dirección?", call. = FALSE)
+  }
   carpeta <- file.path(dir, format(fecha))
   ficheros <- penotariado_ficheros(carpeta)
   # Fecha de la última consulta, aunque la foto no sea nueva: el calendario de fuentes
@@ -156,9 +165,23 @@ descargar_penotariado <- function(dir = DIR_NOTARIADO, forzar = FALSE, pedir = p
   dir.create(carpeta, recursive = TRUE, showWarnings = FALSE)
   parciales <- paste0(ficheros, ".parcial")
   on.exit(unlink(parciales), add = TRUE)
-  for (k in seq_along(PENOTARIADO_CAPAS)) {
-    x <- penotariado_capa(PENOTARIADO_CAPAS[[k]], pedir = pedir, url = url)
-    readr::write_csv(x, parciales[k], na = "")
+  # Una página que falla o una capa vacía a mitad de la descarga: la foto anterior, con un aviso (guía,
+  # «Descargas»); sin anterior, se detiene
+  fallo <- tryCatch({
+    for (k in seq_along(PENOTARIADO_CAPAS)) {
+      x <- penotariado_capa(PENOTARIADO_CAPAS[[k]], pedir = pedir, url = url)
+      if (!nrow(x)) stop("la capa ", names(PENOTARIADO_CAPAS)[k], " llega sin filas", call. = FALSE)
+      readr::write_csv(x, parciales[k], na = "")
+    }
+    NULL
+  }, error = function(e) e)
+  if (!is.null(fallo)) {
+    if (length(previas)) {
+      warning("Falla la descarga de la foto del ", format(fecha), " del Notariado: se usa la de ",
+              basename(utils::tail(previas, 1)), "\n  ", conditionMessage(fallo), call. = FALSE)
+      return(penotariado_ficheros(utils::tail(previas, 1)))
+    }
+    stop("No se ha podido descargar la foto del ", format(fecha), " del Notariado\n  ", conditionMessage(fallo), call. = FALSE)
   }
   fechas <- function(d, campo) {
     ms <- d$editingInfo[[campo]] %||% NA_real_
@@ -443,7 +466,9 @@ comprobar_penotariado <- function(pen, territorios, hoy = Sys.Date(), esperados 
 #   notariado_cien_suma_provincias: por año, comunidades cuya suma de provincias no es la suya (con
 #     Ceuta y Melilla dentro de Andalucía, como las da el CIEN);
 #   notariado_cien_meses: por año completo, la suma de los meses de España menos el año;
-#   notariado_cien_espana: España en 2025 frente a CIEN_REFERENCIA_ESPANA;
+#   notariado_cien_espana: España en 2025 frente a CIEN_REFERENCIA_ESPANA, desviación en % (±1);
+#   notariado_cien_provincias_nd: por año, comunidades con alguna provincia «ND» (alerta), fuera
+#     de la suma de provincias;
 #   notariado_cien_cuantia: por año, la mayor desviación (%) de la cuantía media de una comunidad
 #     frente a la media de sus provincias ponderada por las hipotecas con cuantía (bloqueo: sostiene
 #     la cuantía de Andalucía sin Ceuta y Melilla, que el atlas calcula así);
@@ -459,10 +484,13 @@ comprobar_notariado_cien <- function(cien, referencia = CIEN_REFERENCIA_ESPANA) 
   pr <- a[a$nivel == "provincia", ]
   anios <- sort(unique(esp$anio))
   suma_ccaa <- vapply(anios, function(y) sum(cc$n[cc$anio == y], na.rm = TRUE) - sum(esp$n[esp$anio == y], na.rm = TRUE), 0)
+  # Comunidades con alguna provincia «ND» en el año: fuera de la suma de provincias, que no puede
+  # cuadrar, y contadas en notariado_cien_provincias_nd, de alerta (decision del autor, 23-nov-2026)
+  con_nd <- function(y) unique(pr$comunidad_cien[pr$anio == y & pr$n_nd %in% TRUE])
   suma_prov <- vapply(anios, function(y) {
-    p <- pr[pr$anio == y & !pr$n_nd, ]
+    p <- pr[pr$anio == y & !(pr$n_nd %in% TRUE), ]
     s <- tapply(p$n, p$comunidad_cien, sum)
-    c_y <- cc[cc$anio == y, ]
+    c_y <- cc[cc$anio == y & !cc$comunidad_cien %in% con_nd(y), ]
     sum(abs(s[c_y$comunidad_cien] - c_y$n) > 0, na.rm = TRUE)
   }, 0)
   completos <- cien_anios_completos(cien)
@@ -482,8 +510,14 @@ comprobar_notariado_cien <- function(cien, referencia = CIEN_REFERENCIA_ESPANA) 
          sum(duplicated(cien[c("nivel", "periodicidad", "nombre_cien", "anio", "mes")]))),
     fila("notariado_cien_suma_ccaa", "hipotecas: comunidades menos España", suma_ccaa, anio = anios),
     fila("notariado_cien_suma_provincias", "comunidades cuya suma de provincias no cuadra", suma_prov, anio = anios),
+    fila("notariado_cien_provincias_nd", "comunidades con alguna provincia sin dato (fuera de la suma de provincias)",
+         vapply(anios, function(y) length(con_nd(y)), 0), anio = anios),
     if (length(completos)) fila("notariado_cien_meses", "hipotecas: meses de España menos el año", meses, anio = completos),
-    fila("notariado_cien_espana", "hipotecas para compra de vivienda, España", ref, referencia, anio = as.integer(names(referencia))),
+    # Desviacion (%) frente a la cifra anotada, con ±1 (decision del autor, 23-nov-2026): el CIEN revisa
+    # sus ultimos meses, y la compuerta sigue viendo una unidad, un filtro o una serie equivocados
+    fila("notariado_cien_espana", sprintf("hipotecas para compra de vivienda, España: desviación (%%) frente a %s",
+                                         format(unname(referencia), big.mark = ".", decimal.mark = ",")),
+         100 * (ref / unname(referencia) - 1), 0, anio = as.integer(names(referencia))),
     fila("notariado_cien_cuantia", "cuantía media de una comunidad frente a sus provincias ponderadas (%)", cuantia, anio = anios),
     fila("notariado_cien_rango", "cuantías fuera de 20.000–1.000.000 € o números negativos",
          sum(cien$cuantia < 20000 | cien$cuantia > 1e6 | cien$n < 0, na.rm = TRUE))
@@ -506,20 +540,27 @@ comprobar_notariado_cien <- function(cien, referencia = CIEN_REFERENCIA_ESPANA) 
 # una foto de otra clase de fincas o recortada por un filtro), no indicadores: no mezclan fuentes
 # (regla 5). Sin trimestres del MIVAU, NA (la alerta salta).
 comprobar_notariado_mivau <- function(pen, transacciones_trimestral, numero_trimestral = NULL, n_trimestres = 4L,
-                                      margen_provincia = 25) {
-  # Agregado de los últimos trimestres por territorio (NA si no están todos) y el periodo de España
+                                      margen_provincia = 25, dias_max = 270L) {
+  # Agregado de los últimos trimestres de España cerrados antes de la foto, en España y en cada
+  # provincia (decisión del autor, 23-nov-2026: la misma ventana para todos; una provincia sin alguno de
+  # esos trimestres, NA, y cuenta como fuera). Si el último de España acaba más de `dias_max` días
+  # antes de la foto (el boletín ha dejado de publicarse), todo NA: salta la alerta. Y el periodo.
   ultimos <- function(trim, agregar) {
-    fin <- as.Date(sprintf("%d-%02d-01", trim$anio, 3L * trim$trimestre)) + 31
-    fin <- as.Date(format(fin, "%Y-%m-01")) - 1                     # último día del trimestre
-    t <- trim[fin <= pen$fecha & !is.na(trim$valor) & trim$nivel %in% c("nacional", "provincia"), ]
-    t <- t[order(t$nivel, t$geo_id, t$anio, t$trimestre), ]
-    clave <- paste(t$nivel, t$geo_id)
-    orden <- stats::ave(seq_along(clave), clave, FUN = function(i) rev(seq_along(i)))   # 1 = el más reciente
-    t <- t[orden <= n_trimestres, ]
+    fin_de <- function(x) {
+      fin <- as.Date(sprintf("%d-%02d-01", x$anio, 3L * x$trimestre)) + 31
+      as.Date(format(fin, "%Y-%m-01")) - 1                          # último día del trimestre
+    }
+    t <- trim[fin_de(trim) <= pen$fecha & !is.na(trim$valor) & trim$nivel %in% c("nacional", "provincia"), ]
     esp <- t[t$nivel == "nacional", ]
-    list(valor = tapply(t$valor, paste(t$nivel, t$geo_id), function(v) if (length(v) == n_trimestres) agregar(v) else NA_real_),
-         periodo = if (nrow(esp)) sprintf("%d-T%d a %d-T%d", esp$anio[1], esp$trimestre[1], esp$anio[nrow(esp)],
-                                          esp$trimestre[nrow(esp)]) else "sin trimestres")
+    esp <- utils::tail(esp[order(esp$anio, esp$trimestre), ], n_trimestres)
+    reciente <- nrow(esp) == n_trimestres && as.numeric(pen$fecha - max(fin_de(esp))) <= dias_max
+    t <- t[paste(t$anio, t$trimestre) %in% paste(esp$anio, esp$trimestre), ]
+    list(valor = tapply(t$valor, paste(t$nivel, t$geo_id),
+                        function(v) if (reciente && length(v) == n_trimestres) agregar(v) else NA_real_),
+         periodo = if (nrow(esp)) {
+           paste0(sprintf("%d-T%d a %d-T%d", esp$anio[1], esp$trimestre[1], esp$anio[nrow(esp)], esp$trimestre[nrow(esp)]),
+                  if (!reciente) sprintf(" (más de %d días antes de la foto)", dias_max) else "")
+         } else "sin trimestres")
   }
   anio <- as.integer(format(pen$fecha, "%Y"))
   contraste <- function(ids, f, cifra, mivau, espana, provincias) {

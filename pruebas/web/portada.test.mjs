@@ -148,6 +148,10 @@ test('historias: una entrada por historia del fichero, con su enlace al mapa en 
 test('casillas: cada destino existe (claves del mapa, mapas del manifiesto, anclas de las páginas)', () => {
   const real = existsSync(join(raiz, 'web', 'datos', 'manifiesto.json'));
   const m = real ? leerJson('web', 'datos', 'manifiesto.json') : null;
+  // Los mapas de la capa del Notariado (solo web) también son destinos (casilla «Notaría», 23-nov-2026)
+  const capa = real && existsSync(join(raiz, 'web', 'datos', 'notariado', 'manifiesto.json'))
+    ? leerJson('web', 'datos', 'notariado', 'manifiesto.json') : null;
+  const mapas = { ...(m?.mapas ?? {}), ...(capa?.mapas ?? {}) };
   const paginas = { 'mapa.html': ids(leerTexto('web', 'mapa.html')), 'sobrecarga.html': ids(leerTexto('web', 'sobrecarga.html')),
     'historico.html': ids(leerTexto('web', 'historico.html')) };   // F6, histórico
   for (const generada of ['metodo.html', 'method.html', 'datos.html', 'data.html']) {
@@ -161,7 +165,7 @@ test('casillas: cada destino existe (claves del mapa, mapas del manifiesto, ancl
         const p = new URLSearchParams(busqueda);
         const leido = leerEstado(busqueda);
         for (const clave of p.keys()) assert.ok(clave in leido, `${c.id}: clave ${clave} no válida en ${destino}`);
-        if (m && p.get('mapa')) assert.ok(m.mapas[p.get('mapa')], `${c.id}: mapa ${p.get('mapa')} no está en el manifiesto`);
+        if (m && p.get('mapa')) assert.ok(mapas[p.get('mapa')], `${c.id}: mapa ${p.get('mapa')} no está en el manifiesto ni en la capa del Notariado`);
       }
       if (ancla && paginas[pagina]) assert.ok(paginas[pagina].has(ancla), `${c.id}: ancla #${ancla} no está en ${pagina}`);
     }
@@ -229,8 +233,9 @@ test('«Tu sueldo» de la portada: el sueldo va tras «#», nunca en la consulta
   assert.equal(portada.leerSueldo('0'), null);
   assert.equal(portada.leerSueldo('200000'), null);
   const enlace = portada.enlaceTeLlega(1500, 'es');
-  assert.equal(enlace, 'mapa.html?ficha=peon#sueldo=1500');
-  assert.equal(portada.enlaceTeLlega(1500, 'en'), 'mapa.html?ficha=peon&idioma=en#sueldo=1500');
+  // `desde=portada` (23-nov-2026): el mapa abre su resumen con la cifra de la portada
+  assert.equal(enlace, 'mapa.html?ficha=peon#sueldo=1500&desde=portada');
+  assert.equal(portada.enlaceTeLlega(1500, 'en'), 'mapa.html?ficha=peon&idioma=en#sueldo=1500&desde=portada');
   const [consultaEnlace] = enlace.split('#');
   assert.doesNotMatch(consultaEnlace, /1500|sueldo/);
   assert.equal(fragmentoSueldo({ neto: 1500, pagas: 14, segundo: 900 }), '#sueldo=1500&pagas=14&segundo=900');
@@ -473,5 +478,18 @@ test('ficha: el ingreso de «Tu ficha» desglosado y el sueldo necesario en 14 p
   for (const idioma of ['es', 'en']) {
     const d = leerJson('web', 'i18n', `${idioma}.json`).interfaz.ficha.ingreso_peon;
     assert.deepEqual(Object.keys(d).sort(), ['12', '12_segundo', '14', '14_segundo']);
+  }
+});
+
+test('decisiones del 23-nov-2026: desde la portada, el resumen del mapa abre con la cifra del alquiler real', () => {
+  const estado = readFileSync(join(process.cwd(), 'web', 'js', 'estado.js'), 'utf8');
+  assert.match(estado, /desdePortada: p\.get\('desde'\) === 'portada'/);
+  const principal = readFileSync(join(process.cwd(), 'web', 'js', 'principal.js'), 'utf8');
+  assert.match(principal, /let desdePortada = Boolean\(sueldo\?\.desdePortada\);/);
+  assert.match(principal, /if \('sueldo' in cambio \|\| 'ficha' in cambio\) desdePortada = false;/);
+  assert.match(principal, /if \(desdePortada && real && estado\.ficha === 'peon' && !conGastos\) \{/);
+  for (const idioma of ['es', 'en']) {
+    const d = JSON.parse(readFileSync(join(process.cwd(), 'web', 'i18n', `${idioma}.json`), 'utf8'));
+    assert.ok(d.interfaz.sueldo.resumen_real_primero.includes('{pct}') && d.interfaz.sueldo.resumen_minimo_despues.includes('{vivienda}'));
   }
 });
