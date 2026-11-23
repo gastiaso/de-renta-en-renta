@@ -201,7 +201,10 @@ test('mapa.html: el panel con región aria-live, los tres botones y el selector;
   // Con un recorrido abierto, el mapa se queda fijo arriba y el paso va debajo, a la vista los dos
   assert.match(movil, /body\.con-historia \.mapa-marco \{[^}]*position: sticky; top: 0;/);
   assert.match(movil, /body\.con-historia \.mapa-columna, body\.con-historia \.lateral \{ display: contents; \}/);
-  assert.match(movil, /\.historia-acciones \{[^}]*position: sticky; bottom: 0;/);
+  // Los botones del paso, fijos al pie en todas las anchuras (23-nov-2026; antes, solo en el móvil), y
+  // el móvil no lo deshace
+  assert.match(css.slice(0, css.indexOf('@media (max-width: 760px)')), /\.historia-acciones \{[^}]*position: sticky; bottom: 0;/);
+  assert.doesNotMatch(movil, /\.historia-acciones \{[^}]*position: (static|relative)/);
 });
 
 test('menú: «Historias» en todas las páginas con menú, hacia mapa.html?historia=centro, y «Máquina del tiempo» al final', () => {

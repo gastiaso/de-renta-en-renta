@@ -4,6 +4,10 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (23-nov-2026, los botones de las historias a la vista en escritorio)
+
+- En un portátil (1366 × 768 o 1280 × 720), «Anterior / Siguiente / Salir» de las historias quedaban por debajo de lo que enseña la columna lateral (en «padres», a 771-815 px con la columna hasta 736) y había que desplazarla para avanzar. Lo vio la lectura del sitio (23-nov-2026), y la auditoría del 11-nov-2026 ya lo proponía. Los botones van fijos al pie de la columna en todas las anchuras (`position: sticky`, `web/estilo/sitio.css`), como ya iban en el móvil. Pruebas en `pruebas/web/historias.test.mjs` y `movil.test.mjs`.
+
 ### Corregido (23-nov-2026, la ficha a la vista en escritorio)
 
 - En escritorio, la ficha va en la columna lateral, debajo de «Tu sueldo», y la columna se desplaza por su cuenta: tras buscar un municipio o una sección, o pulsar el mapa, la ficha quedaba fuera de la vista (a 1366 × 768, tras elegir Zamora, su título a 1.422 px en una columna de 581 px a la vista) y a la derecha no cambiaba nada. Lo vio la lectura del sitio (23-nov-2026). `mostrarFicha()` (`web/js/movil.js`) desplaza ahora la columna hasta la ficha si su borde de arriba no se ve en la mitad de arriba (en el móvil sigue bajando la página), y el buscador la llama al elegir. Respeta «reducir movimiento». Prueba en `pruebas/web/movil.test.mjs`.

@@ -740,6 +740,10 @@ body {
 .historia-acciones .boton:disabled { border-style: dashed; color: var(--color-tenue); background: var(--color-crema); cursor: not-allowed; }
 .historia-acciones .boton-principal:disabled { border-color: var(--color-tinta); }
 .historia-salir { margin-left: auto; }
+/* Los botones del paso, siempre a mano: se quedan en el borde de abajo mientras se lee. En el móvil
+   desde la tarea 50; en escritorio, también (23-nov-2026): la columna lateral se desplaza por su
+   cuenta y, en un portátil, «Siguiente» quedaba por debajo de lo que se ve */
+.historia-acciones { position: sticky; bottom: 0; z-index: 1; margin: 12px -16px 0; padding: 8px 16px; background: var(--color-placa); border-top: 1px solid var(--color-tinta); }
 
 /* Móvil: mapa arriba, columna debajo */
 @media (max-width: 760px) {
@@ -782,8 +786,7 @@ body {
   .historia-cuerpo { display: flex; flex-direction: column; }
   .historia-elegir { order: 1; margin-top: 12px; }
   .historia .tarjeta-titulo { font-size: 1.05rem; }
-  /* Los botones del paso, siempre a mano: se quedan en el borde de abajo mientras se lee */
-  .historia-acciones { position: sticky; bottom: 0; margin: 8px -16px 0; padding: 8px 16px; background: var(--color-placa); border-top: 1px solid var(--color-tinta); }
+  .historia-acciones { margin-top: 8px; }   /* fijos al pie, como en escritorio */
   .leyenda { width: min(260px, calc(100% - 90px)); padding: 4px 8px 6px; font-size: 0.75rem; }
   .leyenda-titulo { font-size: 0.8rem; }
   .leyenda-unidad { margin-bottom: 4px; }

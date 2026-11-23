@@ -92,6 +92,13 @@ test('ficha en escritorio: la columna lateral baja hasta ella si no se ve; la p�
   assert.equal((buscador.match(/mostrarFicha\(el\.ficha\)/g) ?? []).length, 3);
 });
 
+test('historias: los botones del paso, fijos al pie también en escritorio (23-nov-2026)', () => {
+  const css = readFileSync(join(process.cwd(), 'web', 'estilo', 'sitio.css'), 'utf8');
+  const movil = css.indexOf('@media (max-width: 760px)');
+  const regla = css.search(/\n\.historia-acciones \{[^}]*position: sticky; bottom: 0;[^}]*background: var\(--color-placa\)/);
+  assert.ok(regla > 0 && regla < movil, 'la regla sticky va fuera de la media de pantallas estrechas');
+});
+
 test('barra: el botón pliega y despliega, con aria-expanded y su texto', () => {
   const oyentes = [];
   const boton = { atributos: {}, textContent: '', setAttribute(k, x) { this.atributos[k] = x; }, addEventListener: (_, f) => oyentes.push(f) };
