@@ -28,6 +28,7 @@ import {
   modoDe, superficieDe, umbralDe, calculoLlega, colorLlega, colorNecesario, resumenLlega, resumenLlegaReal,
   marcasRegla, tramoLlega, ingresoPeon, intervaloMargen, enLimiteLlega, fijoLlega, estadoLlega, perfilesDelAnio,
   eurosQueQuedan, superficieTipica, SUPERFICIE_TIPICA, gastosDelAnio, supuestosEn, otrosGastosEn, rangoOtrosGastos,
+  corteComunidadesLlega,
 } from './sueldo.js';
 import {
   admiteRelativa, municipioQueManda, cortesRelativos, soloEnMunicipio, MINIMO_SECCIONES_RELATIVA,
@@ -555,6 +556,7 @@ async function actualizar() {
   const v = vista();
   pintarBarra(v);
   mapa.ponerNivelMinimo(nivelMinimoDe(v));   // F5: sin sección, los municipios a toda escala
+  mapa.ponerCorteComunidades(corteComunidadesLlega(v.modo, v.perfiles?.[estado.ficha]));   // ficha de ingreso provincial: sin comunidades
   const etiqueta = etiquetaVista(v);         // F5: dato privado de oferta, también sobre el mapa
   el.privado.hidden = !etiqueta;
   el.privado.textContent = etiqueta ?? '';

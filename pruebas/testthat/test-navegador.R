@@ -57,7 +57,7 @@ test_that("la web en un navegador recalcula una muestra y coincide con R (plan �
   expect_equal(sum(r$id == "navegador_fichas"), 6L)
   expect_equal(sum(r$id == "navegador_redireccion"), 2L)
   expect_equal(sum(r$id == "navegador_territorio"), 4L)
-  expect_equal(sum(r$id == "navegador_clic"), 4L)
+  expect_equal(sum(r$id == "navegador_clic"), 5L)    # y «¿te llega?» con la ficha joven a zoom 3,5 (23-nov-2026)
   expect_equal(sum(r$id == "navegador_municipal"), 6L)
   expect_equal(sum(r$id == "navegador_leyenda"), 3L)
   expect_equal(sum(r$id == "navegador_residual"), 13L)   # 5 de la parte A, 7 de los remates de la web y la vuelta de la llave (17-nov-2026)

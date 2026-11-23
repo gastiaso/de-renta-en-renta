@@ -143,6 +143,23 @@ test('modo, superficie y umbral según la ficha (plan, §3.1)', () => {
   assert.equal(sueldo.umbralDe({ umbral: 35 }), 0.3);
 });
 
+test('¿te llega?: con una ficha de ingreso provincial, las provincias desde el zoom 3, sin comunidades en gris (23-nov-2026)', () => {
+  // Las comunidades no tienen ingreso de esas fichas: su expresión da 0 y saldrían «sin dato»
+  const mochila = sueldo.calculoLlega({ ficha: 'mochila', perfiles: PERFILES, superficie: 50 });
+  assert.equal(mochila.expresion('ccaa', 'ccaa').ingreso, 0);
+  assert.equal(sueldo.corteComunidadesLlega('llega', PERFILES.mochila), sueldo.ZOOM_PRIMERA_PROVINCIA);
+  assert.equal(sueldo.ZOOM_PRIMERA_PROVINCIA, 3);
+  assert.equal(sueldo.corteComunidadesLlega('llega', PERFILES.tartera), null);    // ingreso nacional: comunidades
+  assert.equal(sueldo.corteComunidadesLlega('llega', undefined), null);           // «Tu ficha»
+  assert.equal(sueldo.corteComunidadesLlega('necesario', PERFILES.mochila), null);
+  // El mapa aplica el corte en cada repintado, y lo deshace con null
+  const principal = readFileSync(join(raiz, 'web', 'js', 'principal.js'), 'utf8');
+  assert.match(principal, /mapa\.ponerCorteComunidades\(corteComunidadesLlega\(v\.modo, v\.perfiles\?\.\[estado\.ficha\]\)\)/);
+  const mapa = readFileSync(join(raiz, 'web', 'js', 'mapa.js'), 'utf8');
+  assert.match(mapa, /ponerCorteComunidades\(zoom = null\) \{\s*const nuevo = zoom \?\? CORTE_COMUNIDADES;/);
+  assert.match(mapa, /franjaComunidades\.hasta = nuevo;[^\n]*\n\s*franjaProvincias\.desde = nuevo;/);
+});
+
 test('¿te llega?: alquiler sobre ingreso para cada ficha', () => {
   const x = (valores) => (serie) => valores[serie] ?? null;
   const peon = sueldo.calculoLlega({ ficha: 'peon', perfiles: PERFILES, sueldo: { neto: 1500, pagas: 12 }, superficie: 50 });

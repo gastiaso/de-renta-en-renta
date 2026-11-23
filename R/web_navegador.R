@@ -598,8 +598,11 @@ comprobar_territorios_navegador <- function(b, evaluar, url, larga, espera = 60)
   # Mouse over the centre of the map at each scale: label first, then the profile of the click
   centro <- "(() => { const r = document.getElementById('mapa').getBoundingClientRect(); return JSON.stringify([r.left + r.width / 2, r.top + r.height / 2]); })()"
   etiqueta <- "JSON.stringify([...document.querySelectorAll('#mapa-etiqueta span')].map((s) => s.textContent))"
-  for (escala in list(c("3.50", "ccaa"), c("4.50", "provincia"), c("6.00", "municipio"), c("13.00", "sc"))) {
-    b$Page$navigate(sprintf("%smapa.html?mapa=sueldo_necesario&vista=%s/40.41680/-3.70380", url, escala[1]))
+  # El quinto caso: «¿te llega?» con una ficha de ingreso provincial (joven) no tiene cifra por
+  # comunidad, y a zoom 3,5 se ven ya las provincias, con su cifra (lectura del sitio, 23-nov-2026)
+  for (escala in list(c("3.50", "ccaa", ""), c("4.50", "provincia", ""), c("6.00", "municipio", ""), c("13.00", "sc", ""),
+                      c("3.50", "provincia", "&ficha=mochila"))) {
+    b$Page$navigate(sprintf("%smapa.html?mapa=sueldo_necesario%s&vista=%s/40.41680/-3.70380", url, escala[3], escala[1]))
     ok <- esperar_navegador(evaluar, "document.querySelector('#ficha .ficha-vacia') && document.querySelector('.maplibregl-canvas')", espera)
     Sys.sleep(3)
     xy <- if (ok) jsonlite::fromJSON(evaluar(centro)) else c(0, 0)
@@ -614,9 +617,10 @@ comprobar_territorios_navegador <- function(b, evaluar, url, larga, espera = 60)
     mal <- if (is.null(f) || !length(lineas)) TRUE else if (escala[2] == "sc") {
       !is.null(f$nivel) || !grepl(f$seccion, lineas[3], fixed = TRUE) || !startsWith(f$seccion, "28079")
     } else {
-      !identical(f$nivel, escala[2]) || !identical(f$nombre, lineas[1])
+      !identical(f$nivel, escala[2]) || !identical(f$nombre, lineas[1]) || (nzchar(escala[3]) && is.null(f$cifra))
     }
-    filas[[length(filas) + 1L]] <- fila("navegador_clic", sprintf("zoom %s: %s (%s)", escala[1], escala[2], paste(lineas, collapse = " / ")), mal)
+    filas[[length(filas) + 1L]] <- fila("navegador_clic", sprintf("zoom %s: %s%s (%s)", escala[1], escala[2], escala[3],
+                                                             paste(lineas, collapse = " / ")), mal)
   }
   filas
 }

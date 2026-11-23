@@ -4,6 +4,12 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (23-nov-2026, «¿te llega?» con ingreso provincial en la vista de España)
+
+- Con «Joven de 26 a 35» o «Pensionista», cuyo ingreso es de cada provincia, «¿te llega?» salía entero en gris en la vista de España de las pantallas pequeñas y del móvil (zoom 3,9): por debajo del zoom 4 se pintan las comunidades, y una ficha de ingreso provincial no tiene cifra por comunidad (sin dato a propósito), mientras la leyenda decía «en cada provincia». Lo vio la lectura del sitio publicado (23-nov-2026). Con esas fichas, las provincias se ven ya desde su primera tesela (zoom 3) y las comunidades solo por debajo (`ponerCorteComunidades()` en `web/js/mapa.js`, `corteComunidadesLlega()` en `web/js/sueldo.js`); con las demás fichas y en el sueldo necesario, el corte sigue en el zoom 4.
+- Pruebas: `pruebas/web/datos.test.mjs` y un quinto caso de `navegador_clic` en `comprobar_web_navegador()` (la ficha joven a zoom 3,5 da la provincia, con su cifra).
+- Ninguna cifra cambia. El sitio lo recibe cuando el flujo de Pages se lance con este código o posterior.
+
 ### Corregido (23-nov-2026, revisión independiente desde la v1.2.0)
 
 - `empaquetar_notariado()` se niega a escribir en la carpeta del *release* público o en una con otros ficheros: `gh release upload … publicacion/*` habría subido `notariado.tar.gz` al *release* público y su `SHA256SUMS` habría pisado el del paquete.

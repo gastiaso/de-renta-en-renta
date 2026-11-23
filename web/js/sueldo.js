@@ -110,6 +110,17 @@ export function perfilesDelAnio(perfiles, anio) {
   return Object.fromEntries(Object.entries(perfiles).map(([f, p]) => [f, f === 'llave' ? p : perfilDelAnio(p, anio)]));
 }
 
+// Zoom en que las provincias toman el relevo de las comunidades en el mapa (ponerCorteComunidades()
+// de mapa.js). En «¿te llega?» (y con la línea residual), una ficha de ingreso provincial no tiene
+// cifra por comunidad (sinIngresoEn() de calculoLlega()): las provincias se ven desde su primera
+// tesela, el zoom 3 (ZOOMS_MAPA_BASE de R/geo_mapa_base.R), y la vista de España de las pantallas
+// pequeñas y del móvil (zoom 3,9) ya no sale en gris (lectura del sitio, 23-nov-2026). Si no, null:
+// el corte de siempre.
+export const ZOOM_PRIMERA_PROVINCIA = 3;
+export function corteComunidadesLlega(modo, perfil) {
+  return modo === 'llega' && perfil?.nivel === 'provincia' ? ZOOM_PRIMERA_PROVINCIA : null;
+}
+
 function expresionIngresoPerfil(perfil, idSeccion) {
   const pares = Object.entries(perfil.neto_mensual ?? {}).filter(([, x]) => x > 0);
   if (perfil.nivel === 'provincia') {

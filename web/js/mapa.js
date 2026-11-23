@@ -226,6 +226,11 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
   // F5 (indicador 20 y demás mapas sin sección): nivel más fino del mapa activo. Con «municipio», la
   // capa de municipios se ve y responde a toda escala y las secciones se apagan (ponerNivelMinimo).
   let nivelMinimo = 'sc';
+  // Zoom en que las provincias toman el relevo de las comunidades: el de RELLENOS o el que pida
+  // ponerCorteComunidades() (23-nov-2026: «¿te llega?» con una ficha de ingreso provincial).
+  const franjaComunidades = RELLENOS.find((r) => r.capa === 'comunidades');
+  const franjaProvincias = RELLENOS.find((r) => r.capa === 'provincias');
+  const CORTE_COMUNIDADES = franjaComunidades?.franja ?? null;
   const CAPAS_SECCION = ['secciones-relleno', 'secciones-secreto', 'secciones-contorno', 'secciones-encima-halo', 'secciones-encima',
     'secciones-comparada-halo', 'secciones-comparada', 'secciones-seleccion-halo', 'secciones-seleccion'];
 
@@ -406,6 +411,23 @@ export function crearMapa({ contenedor, manifiesto, vista, t, alPulsar, alPulsar
       }
     },
     nivelMinimo: () => nivelMinimo,
+    // Zoom en que las provincias sustituyen a las comunidades (`null`: el de siempre, 4). «¿Te llega?»
+    // con una ficha de ingreso provincial (joven, pensionista) no tiene cifra por comunidad, y con el
+    // corte en 4 la vista de España de las pantallas pequeñas y del móvil (zoom 3,9) salía entera en
+    // gris (lectura del sitio, 23-nov-2026): las provincias se ven desde su primera tesela (zoom 3).
+    ponerCorteComunidades(zoom = null) {
+      const nuevo = zoom ?? CORTE_COMUNIDADES;
+      if (!franjaComunidades || !franjaProvincias || nuevo === franjaComunidades.franja) return;
+      franjaComunidades.franja = nuevo;
+      franjaComunidades.hasta = nuevo;   // las comunidades nunca son el nivel más fino (ponerNivelMinimo)
+      franjaProvincias.desde = nuevo;
+      for (const r of [franjaComunidades, franjaProvincias]) {
+        for (const id of [`${r.capa}-relleno`, `${r.capa}-encima-halo`, `${r.capa}-encima`]) {
+          if (mapa.getLayer(id)) mapa.setLayerZoomRange(id, r.desde, r.hasta);
+        }
+      }
+    },
+    corteComunidades: () => franjaComunidades?.franja ?? null,
     // Nivel que se ve a la escala actual (provincia, municipio o sección).
     nivelVisible() {
       const zoom = mapa.getZoom();
