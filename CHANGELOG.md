@@ -4,6 +4,10 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Añadido (23-nov-2026, aviso de los borradores de «Reglas del juego» en el repositorio)
+
+- El sitio publicado enseña solo los títulos de los resúmenes en revisión, pero `inventario/reglas.csv` los trae enteros en el repositorio público. `inventario/LEEME.md` y la especificación (`docs/especificacion_reglas_del_juego.md`) avisan ahora de que los que tienen `revisado` = `borrador` (hoy, los siete) no tienen revisión jurídica, no son textos publicados y no deben citarse (decisión del autor, 23-nov-2026, tras la lectura del sitio; se descartó sacarlos de git, que rompería las compuertas `reglas_*`).
+
 ### Corregido (23-nov-2026, entradilla de «Reglas del juego» mientras los resúmenes están en revisión)
 
 - En el sitio publicado, con los siete resúmenes en revisión jurídica, la entradilla prometía lo que no sale («Cada resumen enlaza los artículos del BOE consolidado y da la fecha del texto consultado»). Con todos en revisión dice ahora que solo se publican los títulos hasta que termine (`reglas.entradilla_revision`, en los dos idiomas; `todosEnRevision()` en `web/js/reglas_datos.js`); con algún resumen publicado, o en la vista local con borradores, la de siempre. Lo vio la lectura del sitio (23-nov-2026). Prueba en `pruebas/web/reglas.test.mjs`.

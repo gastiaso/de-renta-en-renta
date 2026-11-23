@@ -4,6 +4,8 @@
 
 **Estado: decidido (13-nov-2026), por hacer.** Preguntas del final cerradas por el autor; la revisión jurídica de cada resumen la hace él. Nada de esto está en el pipeline ni en la web. Los textos legales se consultaron en el BOE consolidado el 12-nov-2026, sin descargar ficheros.
 
+> **Aviso (23-nov-2026).** Los resúmenes de `inventario/reglas.csv` con `revisado` = `borrador` (hoy, los siete) no tienen revisión jurídica. En el sitio publicado solo salen sus títulos, «en revisión», hasta que el autor los revise y anote la fecha; el texto del repositorio es de trabajo, no una versión publicada, y no debe citarse.
+
 ## Por qué
 
 - La portada nombra reglas (fianza, zona tensionada, tope de alquileres, renovación, actualización de la renta, aval) y su especificación exige que no contradiga la ley (`docs/especificacion_portada.md`, «Exactitud de las etiquetas»). Hoy ese control es manual.
