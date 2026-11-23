@@ -5,7 +5,8 @@
 //     (aria-expanded), plegados al entrar;
 //   - al tocar un territorio en el mapa, la página baja hasta su ficha si no está a la vista, para
 //     que se lea sin desplazarse a mano.
-// En escritorio no hace nada: el botón no se ve y la ficha ya está al lado del mapa.
+// En escritorio, el botón no se ve y la ficha está al lado del mapa, en la columna lateral, que se
+// desplaza por su cuenta: al elegir un territorio, la columna baja hasta la ficha (23-nov-2026).
 
 export const ANCHO_MOVIL = 760;
 
@@ -22,9 +23,28 @@ export function hayQueDesplazar(rect, alto, fraccion = 0.5) {
 // Posición de desplazamiento que deja la ficha arriba, con un respiro de `respiro` px.
 export const destinoDesplazamiento = (rect, scrollY, respiro = 8) => Math.max(0, Math.round(scrollY + rect.top - respiro));
 
-// Baja hasta la ficha en pantallas estrechas, después de pintarla. Respeta «reducir movimiento».
+// En escritorio, posición de desplazamiento de la columna lateral que deja la ficha arriba.
+// `rectFicha` y `rectLateral`: getBoundingClientRect() de la ficha y de la columna.
+export const destinoLateral = (rectFicha, rectLateral, scrollTop, respiro = 8) =>
+  Math.max(0, Math.round(scrollTop + rectFicha.top - rectLateral.top - respiro));
+
+// Baja hasta la ficha después de pintarla: la página en pantallas estrechas; en escritorio, la
+// columna lateral (`.lateral`), donde la ficha va debajo de «Tu sueldo» y, tras buscar o pulsar el
+// mapa, quedaba fuera de la vista (lectura del sitio, 23-nov-2026). Respeta «reducir movimiento».
 export function mostrarFicha(ficha, ventana = globalThis) {
-  if (!ficha || !esPantallaEstrecha(ventana)) return;
+  if (!ficha) return;
+  if (!esPantallaEstrecha(ventana)) {
+    const lateral = ficha.closest?.('.lateral');
+    if (!lateral) return;
+    ventana.requestAnimationFrame(() => {
+      const rect = ficha.getBoundingClientRect();
+      const caja = lateral.getBoundingClientRect();
+      if (!hayQueDesplazar({ top: rect.top - caja.top }, caja.height)) return;
+      const suave = !ventana.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      lateral.scrollTo({ top: destinoLateral(rect, caja, lateral.scrollTop), behavior: suave ? 'smooth' : 'auto' });
+    });
+    return;
+  }
   ventana.requestAnimationFrame(() => {
     const rect = ficha.getBoundingClientRect();
     if (!hayQueDesplazar(rect, ventana.innerHeight)) return;

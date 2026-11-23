@@ -4,6 +4,10 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (23-nov-2026, la ficha a la vista en escritorio)
+
+- En escritorio, la ficha va en la columna lateral, debajo de «Tu sueldo», y la columna se desplaza por su cuenta: tras buscar un municipio o una sección, o pulsar el mapa, la ficha quedaba fuera de la vista (a 1366 × 768, tras elegir Zamora, su título a 1.422 px en una columna de 581 px a la vista) y a la derecha no cambiaba nada. Lo vio la lectura del sitio (23-nov-2026). `mostrarFicha()` (`web/js/movil.js`) desplaza ahora la columna hasta la ficha si su borde de arriba no se ve en la mitad de arriba (en el móvil sigue bajando la página), y el buscador la llama al elegir. Respeta «reducir movimiento». Prueba en `pruebas/web/movil.test.mjs`.
+
 ### Corregido (23-nov-2026, el Notariado en el «Método en dos páginas»)
 
 - La tabla de licencias del «Método en dos páginas» (`docs/metodo_corto.md` y `docs/short_method.md`) aún decía «Notariado · Derechos reservados · No se usa», de antes de las decisiones del 19 y el 21-nov-2026. Ahora da lo mismo que la nota (§2): Portal Estadístico y CIEN, indicadores 25 a 29, con «© Consejo General del Notariado, solo uso no comercial», solo en la web y sin descarga en CSV ni entrada en la tabla larga, las descargas o el *release*. Lo vieron la revisión independiente y la lectura del sitio (23-nov-2026).

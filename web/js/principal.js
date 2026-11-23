@@ -1674,13 +1674,16 @@ function prepararBuscador() {
       if (minimo !== 'sc') {
         const destino = territorioEnNivel({ nivel: o.tipo === 'municipio' ? 'municipio' : 'sc', codigo: o.codigo }, minimo);
         elegirTerritorio(destino.nivel, destino.codigo);
+        mostrarFicha(el.ficha);
         return mapa.irA(cajaTerritorio(cajas, destino));
       }
       if (o.tipo === 'municipio') {
         elegirTerritorio('municipio', o.codigo);   // su ficha (tarea 26)
+        mostrarFicha(el.ficha);                    // a la vista (23-nov-2026)
         return mapa.irA(caja);
       }
       elegirSeccion(o.codigo);
+      mostrarFicha(el.ficha);
       if (caja) {
         // Antes de mover: con «reducir movimiento» el mapa llega sin animación y avisa en el acto
         mapa.mapa.once('moveend', () => mapa.encuadrarSeccion(o.codigo));

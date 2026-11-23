@@ -65,6 +65,33 @@ test('ficha: a 375 px baja hasta ella (suave, o sin animación con «reducir mov
   assert.doesNotThrow(() => movil.mostrarFicha(null, v));
 });
 
+test('ficha en escritorio: la columna lateral baja hasta ella si no se ve; la página, no (23-nov-2026)', () => {
+  // Zamora a 1366 × 768: la columna empieza a 150 px y se ven 581; la ficha, a 1.422 px
+  const columna = (scrollTop = 0) => ({
+    scrollTop, desplazado: null,
+    getBoundingClientRect: () => ({ top: 150, height: 581 }),
+    scrollTo(o) { this.desplazado = o; },
+  });
+  const enColumna = (top, lateral) => ({ ...ficha(top), closest: (s) => (s === '.lateral' ? lateral : null) });
+  assert.equal(movil.destinoLateral({ top: 1422 }, { top: 150 }, 0), 1264);
+  assert.equal(movil.destinoLateral({ top: 100 }, { top: 150 }, 30), 0);
+  const v = ventana({ ancho: 1366, alto: 768 });
+  const c = columna();
+  movil.mostrarFicha(enColumna(1422, c), v);
+  assert.deepEqual(c.desplazado, { top: 1264, behavior: 'smooth' });
+  assert.equal(v.desplazado, null);                       // la página no se mueve
+  const r = columna(200);
+  movil.mostrarFicha(enColumna(1422, r), ventana({ ancho: 1366, alto: 768, reducir: true }));
+  assert.deepEqual(r.desplazado, { top: 1464, behavior: 'auto' });
+  const visible = columna();
+  movil.mostrarFicha(enColumna(300, visible), v);          // ya a la vista, arriba de la columna
+  assert.equal(visible.desplazado, null);
+  // El buscador también la enseña al elegir (principal.js)
+  const principal = readFileSync(join(process.cwd(), 'web', 'js', 'principal.js'), 'utf8');
+  const buscador = principal.slice(principal.indexOf('function prepararBuscador'), principal.indexOf('function pintarPie'));
+  assert.equal((buscador.match(/mostrarFicha\(el\.ficha\)/g) ?? []).length, 3);
+});
+
 test('barra: el botón pliega y despliega, con aria-expanded y su texto', () => {
   const oyentes = [];
   const boton = { atributos: {}, textContent: '', setAttribute(k, x) { this.atributos[k] = x; }, addEventListener: (_, f) => oyentes.push(f) };
