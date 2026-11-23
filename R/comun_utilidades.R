@@ -5,6 +5,15 @@
 # respecto a las cifras publicadas; sprintf() no.
 redondear_1 <- function(x) as.numeric(sprintf("%.1f", x))
 
+# Redondeo (redondear_1() u otro) que deja los NA como NA sin aviso: sprintf() los escribe «NA» y
+# as.numeric() avisa de la coerción. Para tablas con territorios sin muestra (23-nov-2026).
+redondear_con_na <- function(x, redondear = redondear_1) {
+  out <- rep(NA_real_, length(x))
+  ok <- !is.na(x)
+  out[ok] <- redondear(x[ok])
+  out
+}
+
 # Redondeo a `decimales` con los empates hacia arriba (lejos del cero) sobre la cifra decimal. Las
 # medias de cifras con pocos decimales caen en empates exactos (7,575; 3,465) que el binario guarda
 # por debajo, y sprintf() los baja (7,57; 3,46). Precios de los portales (anualizar_portales()) y

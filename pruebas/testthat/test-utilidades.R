@@ -14,6 +14,14 @@ test_that("redondear_empate_arriba sube los empates exactos que sprintf() baja",
   expect_equal(redondear_empate_arriba(12.25, 1L), 12.3)
 })
 
+test_that("redondear_con_na deja los NA sin aviso y redondea lo demás igual", {
+  expect_no_warning(r <- redondear_con_na(c(1.25, NA, 2.35)))
+  expect_equal(r, c(redondear_1(1.25), NA, redondear_1(2.35)))
+  expect_equal(redondear_con_na(c(NA, 0.1235), function(x) as.numeric(sprintf("%.3f", x))), c(NA, 0.123))
+  expect_identical(redondear_con_na(numeric()), numeric())
+  expect_identical(redondear_con_na(NA), NA_real_)
+})
+
 test_that("con_ceros respeta los valores ausentes", {
   expect_equal(con_ceros(c(5, NA), 3), c("005", NA))
 })

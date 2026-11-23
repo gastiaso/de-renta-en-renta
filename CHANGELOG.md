@@ -4,6 +4,13 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (23-nov-2026, avisos dentro de las pruebas)
+
+- `geo_tabla_paso_callejero()` (`R/comun_geo.R`): sin tabla de topes y con grupos de municipios, `summarise()` probaba `max()` en un grupo vacío y avisaba («ningún argumento finito»). Ahora solo agrupa los topes si los hay. Daba los tres avisos de `test-geo.R`; las pasadas del pipeline no lo registraban.
+- `otros_gastos_factores()` y `calcular_otros_gastos_ecv()` (`R/fuente_ine_ecv_gastos.R`): con una comunidad sin hogares en una ola, redondear su mediana, su media y su factor propio (NA) avisaba de una coerción (`sprintf()` escribe «NA»). Redondean con `redondear_con_na()` (`R/comun_utilidades.R`, nueva), que deja los NA como NA sin aviso. Daba los dos avisos de `test-otros-gastos.R`.
+- Las pruebas comprueban que esas llamadas no avisan (`expect_no_warning()`), y `test-utilidades.R` prueba `redondear_con_na()`.
+- Ninguna cifra cambia: `tar_make()` rehízo las diez tablas del callejero y los otros gastos, que salen idénticos, y nada de lo que cuelga de ellos (13 objetivos, 3.732 saltados).
+
 ### Añadido y corregido (22-nov-2026, número de compraventas del MIVAU y dirección de su boletín)
 
 - **Descarga** (autorizada por el autor): tabla 34010110 del boletín estadístico del Ministerio, número total de compraventas de vivienda de España, comunidades y provincias por trimestre (0,1 MB). Solo alimenta el aviso de coherencia del Notariado; no es un indicador.

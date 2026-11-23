@@ -111,7 +111,7 @@ otros_gastos_factores <- function(h, ccaa, minimo = otros_gastos_minimo()) {
   tibble::tibble(geo_id = ccaa$codigo) |>
     dplyr::left_join(propios, by = "geo_id") |>
     dplyr::mutate(n_factor = dplyr::coalesce(n_factor, 0L), espana = n_factor < minimo,
-                  factor = dplyr::if_else(espana, 1, redondear_3(factor_propio)))
+                  factor = dplyr::if_else(espana, 1, redondear_con_na(factor_propio, redondear_3)))
 }
 
 # Cifra de cada comunidad y de España por año de la ECV: una fila por año y territorio con
@@ -139,7 +139,7 @@ calcular_otros_gastos_ecv <- function(ecv_gastos, ccaa, minimo = otros_gastos_mi
   dplyr::bind_rows(espana, comunidades) |>
     dplyr::left_join(dplyr::select(espana, anio, mediana_es = mediana), by = "anio") |>
     dplyr::mutate(valor = redondear_1(redondear_1(mediana_es) * factor),
-                  mediana = redondear_1(mediana), media = redondear_1(media)) |>
+                  mediana = redondear_con_na(mediana), media = redondear_con_na(media)) |>
     dplyr::select(anio, geo_id, nivel, n_hogares, mediana, media, factor, n_factor, valor, espana) |>
     dplyr::arrange(anio, nivel != "nacional", geo_id)
 }

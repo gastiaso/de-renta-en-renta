@@ -197,7 +197,7 @@ test_that("el callejero no casa vías de dos municipios que siguen en los dos se
                                                            pseudovia = "00000", tinum = 1L, ein = ein, esn = esn)
   origen <- bind_rows(tramo("1018601001", "00012", 1L, 99L), tramo("1090101001", "00012", 1L, 51L))
   destino <- bind_rows(tramo("1090401001", "00012", 1L, 99L), tramo("1090101001", "00012", 1L, 51L))
-  t <- geo_tabla_paso_callejero(origen, destino, grupos = g)
+  expect_no_warning(t <- geo_tabla_paso_callejero(origen, destino, grupos = g))   # sin topes (23-nov-2026)
   # Rosalejo pasa entero a sí mismo; Talayuela, a Tiétar (su vía 00012 la conserva Tiétar)
   expect_equal(t$destino[t$origen == "1090101001"], "1090101001")
   expect_equal(t$fraccion[t$origen == "1090101001"], 1)
@@ -206,15 +206,15 @@ test_that("el callejero no casa vías de dos municipios que siguen en los dos se
   # Con todo el grupo casando entre sí (como antes), Rosalejo se repartía y la compuerta lo ve
   todo <- g
   attr(todo, "pares") <- NULL
-  t2 <- geo_tabla_paso_callejero(origen, destino, grupos = todo)
+  expect_no_warning(t2 <- geo_tabla_paso_callejero(origen, destino, grupos = todo))
   expect_true(any(t2$origen == "1090101001" & t2$destino == "1090401001"))
   expect_equal(comprobar_cruce_municipios(t2, g, 2011L)$calculado, 2)
   expect_match(comprobar_cruce_municipios(t2, g, 2011L)$detalle, "10901 -> 10904", fixed = TRUE)
   # Los tramos sin número (tinum 0) siguen la misma regla (19-nov-2026: ninguna prueba los cubría):
   # la vía 00099 de Rosalejo no casa con la 00099 de Tiétar
   sin_num <- function(seccion, via) mutate(tramo(seccion, via, 0L, 0L), tinum = 0L)
-  t3 <- geo_tabla_paso_callejero(bind_rows(origen, sin_num("1090101001", "00099")),
-                                 bind_rows(destino, sin_num("1090401001", "00099")), grupos = g)
+  expect_no_warning(t3 <- geo_tabla_paso_callejero(bind_rows(origen, sin_num("1090101001", "00099")),
+                                                   bind_rows(destino, sin_num("1090401001", "00099")), grupos = g))
   expect_false(any(t3$origen == "1090101001" & t3$destino == "1090401001"))
   expect_equal(comprobar_cruce_municipios(t3, g, 2011L)$calculado, 0)
   # Sin cruces, el detalle dice «ninguna», no « -> » (19-nov-2026)

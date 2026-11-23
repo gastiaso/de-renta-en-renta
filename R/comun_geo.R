@@ -157,10 +157,13 @@ geo_tabla_paso_callejero <- function(origen, destino, topes = NULL, grupos = NUL
   if (!is.null(grupos) && nrow(grupos) > 0) {
     origen$municipio <- agrupar_municipio(origen$municipio, grupos)
     destino$municipio <- agrupar_municipio(destino$municipio, grupos)
-    topes <- topes |>
-      mutate(municipio = agrupar_municipio(municipio, grupos)) |>
-      group_by(municipio, clave_via, paridad) |>
-      summarise(tope = max(tope), .groups = "drop")
+    # Sin topes no hay nada que agrupar: summarise() probaría max() en un grupo vacío y avisaría
+    if (nrow(topes) > 0) {
+      topes <- topes |>
+        mutate(municipio = agrupar_municipio(municipio, grupos)) |>
+        group_by(municipio, clave_via, paridad) |>
+        summarise(tope = max(tope), .groups = "drop")
+    }
   }
   o <- recortar_tramos(preparar_tramos(origen), topes)
   d <- recortar_tramos(preparar_tramos(destino), topes)
