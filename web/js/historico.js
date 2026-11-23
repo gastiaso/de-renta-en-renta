@@ -480,7 +480,8 @@ function pintarCisCcaa() {
     el('th', { scope: 'row' }, f.nombre, f.anios > 1 || f.ruptura
       ? el('span', { class: 'hi-cis-ccaa-marca' }, ` (${[f.anios > 1 ? C.textoPeriodoCis(f, t) : null, f.ruptura ? t('historico.cis_ccaa.marca_ruptura') : null].filter(Boolean).join('; ')})`)
       : null),
-    el('td', {}, C.textoCifraCis(f, t)),
+    // En el móvil la columna del margen no cabe: va debajo de la cifra (23-nov-2026)
+    el('td', {}, C.textoCifraCis(f, t), f.margen === null ? null : el('span', { class: 'hi-cis-ccaa-margen-movil' }, C.textoMargenCis(f, t))),
     el('td', { class: 'hi-cis-ccaa-barra', title: C.textoIntervaloCis(f, t) }, barra(f)),
     el('td', {}, C.textoMargenCis(f, t)),
     el('td', {}, t.numero(f.entrevistas)));

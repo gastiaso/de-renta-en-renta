@@ -230,3 +230,10 @@ test('portada: «Zona tensionada» y «Tope de alquileres», activas y con su ma
     assert.equal(fila('tope_alquileres').at(-1), m.ejemplo || m.mapas.var_alquiler ? 'TRUE' : 'FALSE');
   }
 });
+
+test('portada: el pie dice que sus fuentes son las de la tabla larga y remite a la nota (23-nov-2026)', () => {
+  const es = JSON.parse(readFileSync(join(process.cwd(), 'web', 'i18n', 'es.json'), 'utf8'));
+  const en = JSON.parse(readFileSync(join(process.cwd(), 'web', 'i18n', 'en.json'), 'utf8'));
+  assert.match(es.portada.pie.fuentes, /^Fuentes de la tabla larga: \{fuentes\}\. .*nota metodológica/);
+  assert.match(en.portada.pie.fuentes, /^Sources of the long table: \{fuentes\}\. .*methodological note/);
+});

@@ -4,6 +4,16 @@ Formato inspirado en *Keep a Changelog*, en castellano. Versiones previstas: v0.
 
 ## [Sin publicar]
 
+### Corregido (23-nov-2026, diccionario, pie de la portada y CIS en el móvil)
+
+De la lectura del sitio (23-nov-2026), con lo que ella recomendaba (decisión del autor, 23-nov-2026).
+
+- **Diccionario de datos:** los indicadores 25 a 29 (Notariado) llevaban «Versión: v1.3», bajo una entradilla que dice que los de una versión posterior al release aún no están en la tabla larga: daba a entender que entrarían, y la regla 6 dice que nunca. Ahora dicen «Solo web» («Website only»), y la entradilla lo explica (`R/web_pagina_datos.R`, `FUENTES_SOLO_WEB`; `docs/datos_diccionario.md` y `docs/data_dictionary.md` regenerados).
+- **Pie de la portada:** «Fuentes:» listaba solo las de la tabla larga (sin INSS, Banco de España, CIS, Eurostat, IGN, BOE ni Notariado). Ahora dice «Fuentes de la tabla larga: …» y remite a la nota (§2) para todas.
+- **CIS por comunidad en el móvil:** por debajo de 480 px se oculta la columna del margen y el dato desaparecía. Ahora va debajo de la cifra («±0,6 puntos»; `web/js/historico.js`, `web/estilo/historico.css`).
+- Pruebas: `test-pagina-datos.R`, `pruebas/web/cis_ccaa.test.mjs` y `transparencia.test.mjs`; `comprobar_web_navegador()` en verde.
+- **Por decidir, de esa lectura (L22):** la licencia dentro de cada JSON de la capa del Notariado (pide rehacer la capa y subir de nuevo su *release* en borrador) y sacar `datos/ejemplo/` del artefacto de Pages (toca el flujo de publicación).
+
 ### Corregido (23-nov-2026, textos de prioridad baja de la lectura del sitio)
 
 - **«de la sección» fuera de las secciones:** la ficha del municipio y la leyenda de la comunidad decían «alquiler mensual mediano de la sección». Ahora, «alquiler mensual mediano», que vale en todos los niveles (`supuestos_real`, `supuestos_real_gastos`, `real_llega`; en inglés, sin «in the tract»).

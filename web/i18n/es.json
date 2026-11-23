@@ -524,7 +524,7 @@
       "barrio": "Barrio"
     },
     "pie": {
-      "fuentes": "Fuentes: {fuentes}.",
+      "fuentes": "Fuentes de la tabla larga: {fuentes}. Todas las del atlas, en la nota metodológica (§2).",
       "fecha": "Datos generados el {fecha}.",
       "licencias": "Datos y textos:",
       "codigo": "Código:",

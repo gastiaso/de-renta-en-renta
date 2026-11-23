@@ -136,7 +136,7 @@ Sources cited by the indicator inventory; `calculo_propio` marks derived figures
 
 ## Indicator dictionary
 
-The 29 indicators of the plan and 5 auxiliaries (rent reliability and residual income lines), in the order of `inventario/indicadores.csv`. The `indicador` column of the long table holds the code. «Version» is the atlas version in which each indicator is added: those added in a version later than the release are not in the long table yet.
+The 29 indicators of the plan and 5 auxiliaries (rent reliability and residual income lines), in the order of `inventario/indicadores.csv`. The `indicador` column of the long table holds the code. “Version” is the atlas version in which each indicator is added: those added in a version later than the release are not in the long table yet. “Website only” marks those from sources with their own licence (the Notaries): they appear only on the map, never in the long table, the downloads or the release (`LICENCIA_DATOS.md`).
 
 | No. | Code | Name | Unit | Version |
 | --- | --- | --- | --- | --- |
@@ -164,11 +164,11 @@ The 29 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 | 22 | [`sobrecarga`](#sobrecarga) | Housing cost overburden rate (Eurostat method) | % of people | v0.1 |
 | 23 | [`busqueda_sin_exito`](#busqueda_sin_exito) | Unsuccessful housing search | % of people aged 16 and over | v0.1 |
 | 24 | [`pobreza_tras_vivienda`](#pobreza_tras_vivienda) | At-risk-of-poverty rate after housing costs | % of people | v1.2 |
-| 25 | [`precio_escriturado_m2`](#precio_escriturado_m2) | Notarised sale price per square metre | € per m² | v1.3 |
-| 26 | [`precio_escriturado_vivienda`](#precio_escriturado_vivienda) | Average notarised price per home sale | € per home | v1.3 |
-| 27 | [`compraventas_notariado`](#compraventas_notariado) | Home sales notarised over 12 months | sales | v1.3 |
-| 28 | [`hipotecas_compra_vivienda`](#hipotecas_compra_vivienda) | Mortgages for home purchase | mortgages per year | v1.3 |
-| 29 | [`cuantia_hipoteca_vivienda`](#cuantia_hipoteca_vivienda) | Average amount of home-purchase mortgages | € per mortgage | v1.3 |
+| 25 | [`precio_escriturado_m2`](#precio_escriturado_m2) | Notarised sale price per square metre | € per m² | Website only |
+| 26 | [`precio_escriturado_vivienda`](#precio_escriturado_vivienda) | Average notarised price per home sale | € per home | Website only |
+| 27 | [`compraventas_notariado`](#compraventas_notariado) | Home sales notarised over 12 months | sales | Website only |
+| 28 | [`hipotecas_compra_vivienda`](#hipotecas_compra_vivienda) | Mortgages for home purchase | mortgages per year | Website only |
+| 29 | [`cuantia_hipoteca_vivienda`](#cuantia_hipoteca_vivienda) | Average amount of home-purchase mortgages | € per mortgage | Website only |
 | Auxiliary | [`contratos_alquiler`](#contratos_alquiler) | Rental contracts behind the median | contracts | v0.1 |
 | Auxiliary | [`margen_alquiler_mes`](#margen_alquiler_mes) | Approximate margin of the median monthly rent | % of the median | v0.1 |
 | Auxiliary | [`margen_alquiler_m2`](#margen_alquiler_m2) | Approximate margin of the median rent per m² | % of the median | v0.1 |
@@ -470,7 +470,7 @@ The 29 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Unit:** € per m²
 - **Family:** Housing cost
 - **Sources:** `notariado`
-- **Version:** v1.3
+- **Version:** Website only
 - **Definition:** Average price per square metre of housing sales notarised over the last 12 months (all dwellings: new and second-hand, flats and single-family houses).
 - **Calculation:** Published by the General Council of Notaries on its Statistical Portal (price-map layer, queried at each update and kept with its date): a rolling 12-month snapshot, with no public series. With fewer than 20 sales reporting price and floor area, the atlas does not publish the price (withheld). Each level with its published figure; nothing is aggregated.
 - **Reading:** A notarised price, not an asking, appraised or registered one: it is not compared with the Land Registrars' price per m² (11), which measures a different floor area. A single 12-month snapshot, dated in the profile. © Consejo General del Notariado, non-commercial use only: shown on the map and in the profile, not downloadable.
@@ -482,7 +482,7 @@ The 29 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Unit:** € per home
 - **Family:** Housing cost
 - **Sources:** `notariado`
-- **Version:** v1.3
+- **Version:** Website only
 - **Definition:** Average price of housing sales notarised over the last 12 months.
 - **Calculation:** Published by the General Council of Notaries on its Statistical Portal, from the same 12-month snapshot as 25 and with the same threshold of 20 reported sales. The average floor area is not published separately: it is this price divided by that of 25.
 - **Reading:** Price per home, whatever its size: it is higher where the homes sold are larger. © Consejo General del Notariado, non-commercial use only: shown on the map and in the profile, not downloadable.
@@ -494,7 +494,7 @@ The 29 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Unit:** sales
 - **Family:** Structure and pressure
 - **Sources:** `notariado`
-- **Version:** v1.3
+- **Version:** Website only
 - **Definition:** Number of housing sales notarised over the last 12 months.
 - **Calculation:** Published by the General Council of Notaries on its Statistical Portal, from the same snapshot as 25. Published for every area that has it, with no threshold: it is the count behind the price. A municipality with no sales in the 12 months is absent from the source (no data).
 - **Reading:** Shows how many sales stand behind the prices of 25 and 26, and the size of the purchase market. It is the date the deed is signed, not registered. © Consejo General del Notariado, non-commercial use only: shown on the map and in the profile, not downloadable.
@@ -506,7 +506,7 @@ The 29 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Unit:** mortgages per year
 - **Family:** Structure and pressure
 - **Sources:** `notariado_cien`
-- **Version:** v1.3
+- **Version:** Website only
 - **Definition:** Number of real-estate mortgages signed before a notary in the year whose purpose is buying a home.
 - **Calculation:** Annual figure published by the General Council of Notaries' CIEN («Full statistics»: act 1203, real-estate mortgage, home-purchase subcategory), for Spain, regions and provinces, since 2007; only years with all twelve months published. Andalusia is the sum of its eight provinces, because CIEN includes Ceuta and Melilla in it, which come together as one province and are left without data.
 - **Reading:** It is the signing (authorisation) date, not the registration date: it does not match INE's Mortgage Statistics, which counts registered mortgages for all purposes. © Consejo General del Notariado, non-commercial use only: shown on the map and in the profile, not downloadable.
@@ -518,7 +518,7 @@ The 29 indicators of the plan and 5 auxiliaries (rent reliability and residual i
 - **Unit:** € per mortgage
 - **Family:** Housing cost
 - **Sources:** `notariado_cien`
-- **Version:** v1.3
+- **Version:** Website only
 - **Definition:** Average loan amount of home-purchase mortgages signed before a notary in the year.
 - **Calculation:** Annual figure published by the General Council of Notaries' CIEN (same series as 28, average amount). Andalusia, without Ceuta and Melilla: mean of its eight provinces weighted by mortgages with a reported amount, which reproduces each region's published mean (check notariado\_cien\_cuantia).
 - **Reading:** It is the loan amount, not the price of the home. © Consejo General del Notariado, non-commercial use only: shown on the map and in the profile, not downloadable.

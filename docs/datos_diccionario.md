@@ -136,7 +136,7 @@ Fuentes que cita el inventario de indicadores; `calculo_propio` marca los deriva
 
 ## Diccionario de indicadores
 
-Los 29 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas de ingreso residual), en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el código. «Versión» es la del atlas en que entra cada indicador: los que entran en una versión posterior a la del release todavía no están en la tabla larga.
+Los 29 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas de ingreso residual), en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el código. «Versión» es la del atlas en que entra cada indicador: los que entran en una versión posterior a la del release todavía no están en la tabla larga. «Solo web» marca los de fuentes con licencia propia (el Notariado): salen solo en el mapa, nunca en la tabla larga, las descargas ni el release (`LICENCIA_DATOS.md`).
 
 | Nº | Código | Nombre | Unidad | Versión |
 | --- | --- | --- | --- | --- |
@@ -164,11 +164,11 @@ Los 29 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 | 22 | [`sobrecarga`](#sobrecarga) | Tasa de sobrecarga por gastos de vivienda (método Eurostat) | % de las personas | v0.1 |
 | 23 | [`busqueda_sin_exito`](#busqueda_sin_exito) | Búsqueda de vivienda sin éxito | % de las personas de 16 o más años | v0.1 |
 | 24 | [`pobreza_tras_vivienda`](#pobreza_tras_vivienda) | Tasa de riesgo de pobreza tras los gastos de vivienda | % de las personas | v1.2 |
-| 25 | [`precio_escriturado_m2`](#precio_escriturado_m2) | Precio escriturado de compraventa por metro cuadrado | € por m² | v1.3 |
-| 26 | [`precio_escriturado_vivienda`](#precio_escriturado_vivienda) | Precio escriturado medio por compraventa de vivienda | € por vivienda | v1.3 |
-| 27 | [`compraventas_notariado`](#compraventas_notariado) | Compraventas de vivienda escrituradas en 12 meses | compraventas | v1.3 |
-| 28 | [`hipotecas_compra_vivienda`](#hipotecas_compra_vivienda) | Hipotecas para compra de vivienda | hipotecas al año | v1.3 |
-| 29 | [`cuantia_hipoteca_vivienda`](#cuantia_hipoteca_vivienda) | Cuantía media de las hipotecas para compra de vivienda | € por hipoteca | v1.3 |
+| 25 | [`precio_escriturado_m2`](#precio_escriturado_m2) | Precio escriturado de compraventa por metro cuadrado | € por m² | Solo web |
+| 26 | [`precio_escriturado_vivienda`](#precio_escriturado_vivienda) | Precio escriturado medio por compraventa de vivienda | € por vivienda | Solo web |
+| 27 | [`compraventas_notariado`](#compraventas_notariado) | Compraventas de vivienda escrituradas en 12 meses | compraventas | Solo web |
+| 28 | [`hipotecas_compra_vivienda`](#hipotecas_compra_vivienda) | Hipotecas para compra de vivienda | hipotecas al año | Solo web |
+| 29 | [`cuantia_hipoteca_vivienda`](#cuantia_hipoteca_vivienda) | Cuantía media de las hipotecas para compra de vivienda | € por hipoteca | Solo web |
 | Auxiliar | [`contratos_alquiler`](#contratos_alquiler) | Contratos de alquiler de la mediana | contratos | v0.1 |
 | Auxiliar | [`margen_alquiler_mes`](#margen_alquiler_mes) | Margen aproximado de la mediana del alquiler mensual | % de la mediana | v0.1 |
 | Auxiliar | [`margen_alquiler_m2`](#margen_alquiler_m2) | Margen aproximado de la mediana del alquiler por m² | % de la mediana | v0.1 |
@@ -470,7 +470,7 @@ Los 29 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Unidad:** € por m²
 - **Familia:** Coste de la vivienda
 - **Fuentes:** `notariado`
-- **Versión:** v1.3
+- **Versión:** Solo web
 - **Definición:** Precio medio por metro cuadrado de las compraventas de vivienda escrituradas ante notario en los últimos 12 meses (todas las viviendas: nuevas y usadas, pisos y unifamiliares).
 - **Cálculo:** Cifra publicada por el Consejo General del Notariado en su Portal Estadístico (capa del mapa de precios, consultada en cada actualización y guardada con su fecha): una foto móvil de 12 meses, sin serie pública. Con menos de 20 compraventas con precio y superficie informados, el atlas no publica el precio (secreto). Cada nivel con su cifra publicada; nada se agrega.
 - **Lectura:** Es precio escriturado, no de oferta, de tasación ni inscrito: no se compara con el precio por m² de Registradores (11), que mide otra superficie. Una sola foto de 12 meses, fechada en la ficha. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga.
@@ -482,7 +482,7 @@ Los 29 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Unidad:** € por vivienda
 - **Familia:** Coste de la vivienda
 - **Fuentes:** `notariado`
-- **Versión:** v1.3
+- **Versión:** Solo web
 - **Definición:** Precio medio de las compraventas de vivienda escrituradas ante notario en los últimos 12 meses.
 - **Cálculo:** Cifra publicada por el Consejo General del Notariado en su Portal Estadístico, de la misma foto de 12 meses que el 25 y con el mismo umbral de 20 compraventas informadas. La superficie media no se publica aparte: es este precio entre el del 25.
 - **Lectura:** Precio por vivienda, sea cual sea su tamaño: sube donde las viviendas que se venden son más grandes. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga.
@@ -494,7 +494,7 @@ Los 29 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Unidad:** compraventas
 - **Familia:** Estructura y presión
 - **Fuentes:** `notariado`
-- **Versión:** v1.3
+- **Versión:** Solo web
 - **Definición:** Número de compraventas de vivienda escrituradas ante notario en los últimos 12 meses.
 - **Cálculo:** Cifra publicada por el Consejo General del Notariado en su Portal Estadístico, de la misma foto que el 25. Se publica en todos los territorios que la traen, sin umbral: es el recuento que sostiene el precio. Un municipio sin compraventas en los 12 meses no sale en la fuente (sin dato).
 - **Lectura:** Dice cuántas compraventas sostienen el precio del 25 y el 26, y el tamaño del mercado de compra. Es fecha de firma de la escritura, no de inscripción. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga.
@@ -506,7 +506,7 @@ Los 29 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Unidad:** hipotecas al año
 - **Familia:** Estructura y presión
 - **Fuentes:** `notariado_cien`
-- **Versión:** v1.3
+- **Versión:** Solo web
 - **Definición:** Número de hipotecas inmobiliarias firmadas ante notario en el año cuya finalidad es la adquisición de vivienda.
 - **Cálculo:** Cifra anual publicada por el CIEN del Consejo General del Notariado («Estadísticas al completo»: acto 1203, hipoteca inmobiliaria, subcategoría adquisición de vivienda), en España, comunidad y provincia, desde 2007; solo los años con los doce meses publicados. Andalucía sale de la suma de sus ocho provincias, porque el CIEN la da con Ceuta y Melilla, que van juntas como una provincia y quedan sin dato.
 - **Lectura:** Es fecha de firma (autorización), no de inscripción: no coincide con la Estadística de Hipotecas del INE, que cuenta las inscritas y todas las finalidades. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga.
@@ -518,7 +518,7 @@ Los 29 indicadores del plan y 5 auxiliares (de fiabilidad del alquiler y líneas
 - **Unidad:** € por hipoteca
 - **Familia:** Coste de la vivienda
 - **Fuentes:** `notariado_cien`
-- **Versión:** v1.3
+- **Versión:** Solo web
 - **Definición:** Importe medio del préstamo de las hipotecas para la adquisición de vivienda firmadas ante notario en el año.
 - **Cálculo:** Cifra anual publicada por el CIEN del Consejo General del Notariado (la misma serie que el 28, cuantía promedio). Andalucía, sin Ceuta y Melilla: media de sus ocho provincias ponderada por las hipotecas con cuantía informada, que reproduce la media publicada de cada comunidad (compuerta notariado\_cien\_cuantia).
 - **Lectura:** Es el importe del préstamo, no el precio de la vivienda. © Consejo General del Notariado, solo uso no comercial: se ve en el mapa y en la ficha, sin descarga.

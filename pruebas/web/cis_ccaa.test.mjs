@@ -175,3 +175,13 @@ test('ficha de comunidad: el enlace lleva a la tabla por comunidad de la Máquin
   assert.match(leerTexto('web', 'historico.html'), /id="hi-cis-ccaa"/);
   assert.match(leerTexto('web', 'js', 'historico.js'), /if \(ancla\) ancla\.scrollIntoView\(\);/);
 });
+
+test('tabla por comunidad en el móvil: el margen, debajo de la cifra cuando se oculta su columna (23-nov-2026)', () => {
+  const js = leerTexto('web', 'js', 'historico.js');
+  assert.match(js, /el\('span', \{ class: 'hi-cis-ccaa-margen-movil' \}, C\.textoMargenCis\(f, t\)\)/);
+  const css = leerTexto('web', 'estilo', 'historico.css');
+  assert.match(css, /\.hi-cis-ccaa-margen-movil \{ display: none; \}/);
+  const movil = css.slice(css.indexOf('@media (max-width: 480px)'));
+  assert.match(movil, /td:nth-child\(4\) \{ display: none; \}/);
+  assert.match(movil, /\.hi-cis-ccaa-margen-movil \{ display: block;/);
+});

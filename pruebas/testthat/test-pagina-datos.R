@@ -70,6 +70,18 @@ test_that("el diccionario lleva las columnas con vocabulario y una ficha por ind
   expect_true("| `ine_adrh` | ADRH en |" %in% en)
 })
 
+test_that("los indicadores del Notariado dicen «solo web» en la versión, no una versión futura (23-nov-2026)", {
+  inv <- inventario_falso()
+  inv$indicadores$fuentes[2] <- "notariado"
+  es <- diccionario_datos_md(inv$indicadores, inv$vocabulario, inv$fuentes, "es")
+  en <- diccionario_datos_md(inv$indicadores, inv$vocabulario, inv$fuentes, "en")
+  expect_true(any(grepl("`alquiler_b`.*\\| Solo web \\|$", es)))
+  expect_true(any(grepl("`alquiler_b`.*\\| Website only \\|$", en)))
+  expect_true(any(grepl("^- \\*\\*Versi\u00f3n:\\*\\* Solo web$", es)))
+  expect_false(any(grepl("`renta_a`.*Solo web", es)))   # las demás fuentes, con su versión
+  expect_true(any(grepl("Solo web\u00bb marca", es)))
+})
+
 test_that("una fase sin versión del atlas detiene el diccionario", {
   inv <- inventario_falso()
   inv$indicadores$fase[1] <- "F9"

@@ -524,7 +524,7 @@
       "barrio": "Neighbourhood"
     },
     "pie": {
-      "fuentes": "Sources: {fuentes}.",
+      "fuentes": "Sources of the long table: {fuentes}. All the atlas sources are in the methodological note (§2).",
       "fecha": "Data generated on {fecha}.",
       "licencias": "Data and texts:",
       "codigo": "Code:",

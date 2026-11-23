@@ -33,11 +33,12 @@ TEXTOS_DICCIONARIO_DATOS <- list(
     fuente_intro = "Fuentes que cita el inventario de indicadores; `calculo_propio` marca los derivados. Su enlace y su licencia est\u00e1n en `inventario/fuentes.csv` (columnas `url` y `licencia`).",
     fuente = "Fuente",
     diccionario = "Diccionario de indicadores",
-    diccionario_intro = "Los {n} indicadores del plan y {m} auxiliares (de fiabilidad del alquiler y l\u00edneas de ingreso residual), en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el c\u00f3digo. \u00abVersi\u00f3n\u00bb es la del atlas en que entra cada indicador: los que entran en una versi\u00f3n posterior a la del release todav\u00eda no est\u00e1n en la tabla larga.",
+    diccionario_intro = "Los {n} indicadores del plan y {m} auxiliares (de fiabilidad del alquiler y l\u00edneas de ingreso residual), en el orden de `inventario/indicadores.csv`. La columna `indicador` de la tabla larga lleva el c\u00f3digo. \u00abVersi\u00f3n\u00bb es la del atlas en que entra cada indicador: los que entran en una versi\u00f3n posterior a la del release todav\u00eda no est\u00e1n en la tabla larga. \u00abSolo web\u00bb marca los de fuentes con licencia propia (el Notariado): salen solo en el mapa, nunca en la tabla larga, las descargas ni el release (`LICENCIA_DATOS.md`).",
     numero = "N\u00ba",
     nombre = "Nombre",
     unidad = "Unidad",
     version = "Versi\u00f3n",
+    solo_web = "Solo web",
     auxiliar = "Auxiliar",
     familia = "Familia",
     fuentes = "Fuentes",
@@ -59,11 +60,12 @@ TEXTOS_DICCIONARIO_DATOS <- list(
     fuente_intro = "Sources cited by the indicator inventory; `calculo_propio` marks derived figures. Their link and licence are in `inventario/fuentes.csv` (columns `url` and `licencia`).",
     fuente = "Source",
     diccionario = "Indicator dictionary",
-    diccionario_intro = "The {n} indicators of the plan and {m} auxiliaries (rent reliability and residual income lines), in the order of `inventario/indicadores.csv`. The `indicador` column of the long table holds the code. \u00abVersion\u00bb is the atlas version in which each indicator is added: those added in a version later than the release are not in the long table yet.",
+    diccionario_intro = "The {n} indicators of the plan and {m} auxiliaries (rent reliability and residual income lines), in the order of `inventario/indicadores.csv`. The `indicador` column of the long table holds the code. \u201cVersion\u201d is the atlas version in which each indicator is added: those added in a version later than the release are not in the long table yet. \u201cWebsite only\u201d marks those from sources with their own licence (the Notaries): they appear only on the map, never in the long table, the downloads or the release (`LICENCIA_DATOS.md`).",
     numero = "No.",
     nombre = "Name",
     unidad = "Unit",
     version = "Version",
+    solo_web = "Website only",
     auxiliar = "Auxiliary",
     familia = "Family",
     fuentes = "Sources",
@@ -141,6 +143,9 @@ valores_columnas_md <- function(indicadores, vocabulario, fuentes, idioma, tx) {
     tabla_md(c(tx$codigo, tx$fuente), fila_md(codigo_md(f$id), nombre)))
 }
 
+# Fuentes cuyas cifras solo van en la web, con licencia propia (LICENCIA_DATOS.md).
+FUENTES_SOLO_WEB <- c("notariado", "notariado_cien")
+
 indicadores_md <- function(indicadores, vocabulario, idioma, tx) {
   texto <- function(base) as.character(indicadores[[paste0(base, "_", idioma)]])
   nombre <- texto("nombre")
@@ -151,6 +156,11 @@ indicadores_md <- function(indicadores, vocabulario, idioma, tx) {
     stop("Fase sin versi\u00f3n del atlas en VERSION_DE_FASE: ", paste(sin_version, collapse = ", "), call. = FALSE)
   }
   version <- unname(VERSION_DE_FASE[fase])
+  # Fuentes con licencia propia, solo web (regla 6 de la guia; lectura del sitio, 23-nov-2026): nunca
+  # entran en la tabla larga, asi que su version no se anuncia
+  solo_web <- vapply(strsplit(indicadores$fuentes %||% rep("", nrow(indicadores)), ";", fixed = TRUE),
+                     function(f) any(trimws(f) %in% FUENTES_SOLO_WEB), logical(1))
+  version[solo_web] <- tx$solo_web
   auxiliar <- !is.na(indicadores$auxiliar_de) & nzchar(indicadores$auxiliar_de)
   numero <- ifelse(auxiliar | is.na(indicadores$id), tx$auxiliar, as.character(as.integer(indicadores$id)))
   enlace <- paste0("[", codigo_md(indicadores$codigo), "](#", indicadores$codigo, ")")
